@@ -1,0 +1,20 @@
+# permissions for end users to view obclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: obcluster-viewer-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters/status
+  verbs:
+  - get

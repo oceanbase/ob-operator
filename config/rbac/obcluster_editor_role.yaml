@@ -1,0 +1,24 @@
+# permissions for end users to edit obclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: obcluster-editor-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters/status
+  verbs:
+  - get

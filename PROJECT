@@ -1,0 +1,42 @@
+domain: oceanbase.com
+layout:
+- go.kubebuilder.io/v3
+multigroup: true
+projectName: ob-operator
+repo: github.com/oceanbase/ob-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oceanbase.com
+  group: cloud
+  kind: StatefulApp
+  path: github.com/oceanbase/ob-operator/api/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oceanbase.com
+  group: cloud
+  kind: OBCluster
+  path: github.com/oceanbase/ob-operator/apis/cloud/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: oceanbase.com
+  group: cloud
+  kind: RootService
+  path: github.com/oceanbase/ob-operator/apis/cloud/v1
+  version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  domain: oceanbase.com
+  group: cloud
+  kind: OBZone
+  path: github.com/oceanbase/ob-operator/apis/cloud/v1
+  version: v1
+version: "3"

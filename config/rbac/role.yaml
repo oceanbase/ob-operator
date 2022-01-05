@@ -1,0 +1,139 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps/sfinalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+  - patch
+  - update

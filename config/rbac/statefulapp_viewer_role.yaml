@@ -1,0 +1,20 @@
+# permissions for end users to view statefulapps.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: statefulapp-viewer-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - statefulapps/status
+  verbs:
+  - get

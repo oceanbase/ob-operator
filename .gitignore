@@ -1,0 +1,29 @@
+# Mac OS X
+.DS_Store
+
+# IDE
+.idea
+*.out
+*.swp
+*.swo
+*~
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin
+
+# lib & package
+.vendor/
+.glide/
+
+# Test binary
+*.test
+cover.out
+testbin/*
+
+# Kubernetes Generated files - skip generated files, except for vendored files
+# !vendor/**/zz_generated.*
