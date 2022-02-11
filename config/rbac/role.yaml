@@ -42,6 +42,84 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
+  - obzones
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obzones/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obzones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - rootservices
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - rootservices/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - rootservices/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
   - statefulapps
   verbs:
   - create
