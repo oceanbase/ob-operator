@@ -1,7 +1,6 @@
 apiVersion: cloud.oceanbase.com/v1
 kind: OBCluster
 metadata:
-  namespace: ob
   name: ob-test
 spec:
   version: v3.1.2-10000392021123010
