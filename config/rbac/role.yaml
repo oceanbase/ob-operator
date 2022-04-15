@@ -138,12 +138,6 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
-  - statefulapps/sfinalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
   - statefulapps/status
   verbs:
   - get

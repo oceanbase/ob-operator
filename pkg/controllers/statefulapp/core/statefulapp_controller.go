@@ -37,7 +37,7 @@ type StatefulAppReconciler struct {
 
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/sfinalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
