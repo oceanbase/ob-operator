@@ -53,6 +53,7 @@ func DiscoverGVK(gvk schema.GroupVersionKind) bool {
 		return true
 	}
 	discoveryClient := genericClient.DiscoveryClient
+	startTime := time.Now()
 
 	err := retry.OnError(
 		backOff,
@@ -75,11 +76,13 @@ func DiscoverGVK(gvk schema.GroupVersionKind) bool {
 
 	if err != nil {
 		if err == errKindNotFound {
-			klog.Errorf("not found kind %s in group version %s, waiting time %s", gvk.Kind, gvk.GroupVersion().String())
+			klog.Errorf("not found kind %s in group version %s, waiting time %s",
+				gvk.Kind, gvk.GroupVersion().String(), time.Since(startTime))
 			return false
 		}
 		// This might be caused by abnormal apiserver or etcd, ignore it
-		klog.Errorf("failed to find resources in group version %s: %v, waiting time %s", gvk.GroupVersion().String(), err)
+		klog.Errorf("failed to find resources in group version %s: %v, waiting time %s",
+			gvk.GroupVersion().String(), err, time.Since(startTime))
 	}
 	return true
 }

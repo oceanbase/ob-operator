@@ -110,14 +110,12 @@ func (ctrl *PodCtrl) CreatePod(subset cloudv1.Subset) error {
 	}
 
 	// update status
-	if err == nil {
-		err = UpdateStatus(ctrl.Resource, ctrl.StatefulApp)
-		if err != nil {
-			return err
-		}
+	err = UpdateStatus(ctrl.Resource, ctrl.StatefulApp)
+	if err != nil {
+		return err
 	}
 
-	return err
+	return nil
 }
 
 func (ctrl *PodCtrl) GetPodsByLables(namespace string, listOption client.ListOption) []corev1.Pod {
