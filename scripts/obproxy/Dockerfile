@@ -2,6 +2,7 @@ FROM openanolis/anolisos:8.4-x86_64
 
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
+
 WORKDIR /home/admin
 
 ENV TINI_VERSION v0.19.0
