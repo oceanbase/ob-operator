@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: oceanbase/obce-operator
-  newTag: v0.0.1
+  newTag: v1.0.1

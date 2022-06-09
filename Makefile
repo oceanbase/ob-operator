@@ -1,6 +1,6 @@
 VERSION := $(shell git rev-parse --short HEAD)
 # Image URL to use all building/pushing image targets
-IMG ?= oceanbase/obce-operator:v0.0.1
+IMG ?= hongxinsun/ob-operator:1.0.1
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -106,7 +106,7 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 export-crd: manifests kustomize ## Export CDR yaml.
 	$(KUSTOMIZE) build config/crd > deploy/crd.yaml
 
-export-operator: manifests kustomize docker-build docker-push ## Export operator yaml.
+export-operator: manifests kustomize # docker-build docker-push ## Export operator yaml.
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > deploy/operator.yaml
 

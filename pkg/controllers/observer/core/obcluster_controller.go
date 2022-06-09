@@ -59,9 +59,9 @@ type OBClusterCtrlOperator interface {
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/finalizers,verbs=update
-// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=services,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=services/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -155,6 +155,9 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 			case observerconst.OBClusterReady:
 				// OBCluster bootstrap succeeded
 				err = ctrl.OBClusterReadyForStep(observerconst.StepBootstrap, statefulApp)
+				if err == nil {
+					err = ctrl.CreateUserForObproxy()
+				}
 			}
 		}
 	}
@@ -180,7 +183,7 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 
 func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp) error {
 	// check version update
-	versionIsModified, err := judge.VersionIsModified(ctrl.OBCluster.Spec.Version, statefulApp)
+	versionIsModified, err := judge.VersionIsModified(ctrl.OBCluster.Spec.Tag, statefulApp)
 	if err != nil {
 		return err
 	}

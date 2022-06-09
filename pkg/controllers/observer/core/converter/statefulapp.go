@@ -39,11 +39,6 @@ func GenerateStatefulAppBootStrapZoneSpec(zone []cloudv1.Subset) []cloudv1.Subse
 	return res
 }
 
-func GenerateImage(version string) string {
-	image := fmt.Sprintf("%s-%s", observerconst.ImgProfix, version)
-	return image
-}
-
 func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	port := make([]corev1.ContainerPort, 0)
 	cablePort := corev1.ContainerPort{}
@@ -96,7 +91,7 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 
 	container := corev1.Container{
 		Name:            observerconst.ImgOb,
-		Image:           GenerateImage(obClusterSpec.Version),
+		Image:           fmt.Sprintf("%s:%s", obClusterSpec.ImageRepo, obClusterSpec.Tag),
 		ImagePullPolicy: observerconst.ImgPullPolicy,
 		Ports:           port,
 		Resources:       resources,

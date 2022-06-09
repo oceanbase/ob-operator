@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package judge
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -25,7 +24,6 @@ import (
 )
 
 func VersionIsModified(version string, statefulApp cloudv1.StatefulApp) (bool, error) {
-	newVersion := fmt.Sprintf("operator-%s", version)
 	var versionCurrent string
 	for _, container := range statefulApp.Spec.PodTemplate.Containers {
 		if container.Name == observerconst.ImgOb {
@@ -33,7 +31,7 @@ func VersionIsModified(version string, statefulApp cloudv1.StatefulApp) (bool, e
 			break
 		}
 	}
-	if newVersion == versionCurrent {
+	if version == versionCurrent {
 		return false, nil
 	}
 	return true, nil

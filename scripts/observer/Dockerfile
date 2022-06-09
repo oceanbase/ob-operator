@@ -6,7 +6,7 @@ WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY . .
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://mirrors.aliyun.com/goproxy/ go build -a -o cable cmd/cable/app.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://goproxy.cn go build -a -o cable cmd/cable/app.go
 
 # build server
 FROM openanolis/anolisos:8.4-x86_64

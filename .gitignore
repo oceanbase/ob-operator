@@ -1,6 +1,9 @@
 # Mac OS X
 .DS_Store
 
+# ctags
+tags
+
 # IDE
 .idea
 *.out
