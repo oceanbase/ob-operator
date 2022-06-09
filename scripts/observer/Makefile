@@ -13,7 +13,7 @@ IMAGE := oceanbase-ce
 # Use GOPROXY environment variable if set
 GOPROXY := $(shell go env GOPROXY)
 ifeq ($(GOPROXY),)
-GOPROXY := https://mirrors.aliyun.com/goproxy/
+GOPROXY := https://goproxy.cn
 endif
 
 export GOPROXY

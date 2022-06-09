@@ -3,7 +3,8 @@ kind: OBCluster
 metadata:
   name: ob-test
 spec:
-  version: v3.1.2-10000392021123010
+  imageRepo: oceanbase/oceanbase-ce
+  tag: operator-v3.1.3-10100032022041510
   clusterID: 1
   topology:
     - cluster: cn

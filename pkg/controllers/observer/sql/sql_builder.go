@@ -40,3 +40,11 @@ func DelServerSQLReplacer(serverIP string) *strings.Replacer {
 func GetRSJobStatusSQLReplacer(serverIP, port string) *strings.Replacer {
 	return strings.NewReplacer("${DELETE_SERVER_IP}", serverIP, "${DELETE_SERVER_PORT}", port)
 }
+
+func CreateUserSQLReplacer(user, password string) *strings.Replacer {
+	return strings.NewReplacer("${USER}", user, "${PASSWORD}", password)
+}
+
+func GrantPrivilegeSQLReplacer(privilege, object, user string) *strings.Replacer {
+	return strings.NewReplacer("${PRIVILEGE}", privilege, "${OBJECT}", object, "${USER}", user)
+}

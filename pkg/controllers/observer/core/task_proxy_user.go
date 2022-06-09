@@ -10,19 +10,24 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observerconst
+package core
 
-// StatefulApp
-const (
-	ImgOb         = "observer"
-	ImgPullPolicy = "IfNotPresent"
-
-	DatafileStorageName = "data-file"
-	DatafileStoragePath = "/home/admin/data_file"
-	DatalogStorageName  = "data-log"
-	DatalogStoragePath  = "/home/admin/data_log"
-	LogStorageName      = "log"
-	LogStoragePath      = "/home/admin/log"
-
-	CableReadinessPeriod = 2
+import (
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
+
+func (ctrl *OBClusterCtrl) CreateUserForObproxy() error {
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		return err
+	}
+	err = sql.CreateUser(clusterIP, "proxyro", "")
+	if err != nil {
+		return err
+	}
+	err = sql.GrantPrivilege(clusterIP, "select", "*.*", "proxyro")
+	if err != nil {
+		return err
+	}
+	return nil
+}

@@ -26,6 +26,16 @@ func SetServerOfflineTime(clusterIP string, offlineTime int) error {
 	return ExecSQL(clusterIP, ob.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
 }
 
+func CreateUser(clusterIP, user, password string) error {
+	sql := ReplaceAll(CreateUserSQLTemplate, CreateUserSQLReplacer(user, password))
+	return ExecSQL(clusterIP, ob.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+}
+
+func GrantPrivilege(clusterIP, privilege, object, user string) error {
+	sql := ReplaceAll(GrantPrivilegeSQLTemplate, GrantPrivilegeSQLReplacer(privilege, object, user))
+	return ExecSQL(clusterIP, ob.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+}
+
 func BootstrapForOB(IP, SQL string) {
 	setTimeOutRes := ExecSQL(IP, ob.OBSERVER_MYSQL_PORT, "", SetTimeoutSQL, 5)
 	if setTimeOutRes != nil {

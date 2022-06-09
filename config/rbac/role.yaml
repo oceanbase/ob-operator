@@ -14,6 +14,32 @@ rules:
   - create
   - patch
 - apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - services/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - cloud.oceanbase.com
   resources:
   - obclusters
@@ -87,32 +113,6 @@ rules:
   - cloud.oceanbase.com
   resources:
   - rootservices/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - services
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - services/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - services/status
   verbs:
   - get
   - patch

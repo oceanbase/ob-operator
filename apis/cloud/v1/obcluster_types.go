@@ -19,7 +19,8 @@ import (
 
 // OBClusterSpec defines the desired state of OBCluster
 type OBClusterSpec struct {
-	Version string `json:"version"`
+	ImageRepo string `json:"imageRepo"`
+	Tag       string `json:"tag"`
 	// +kubebuilder:validation:Minimum=1
 	ClusterID int           `json:"clusterID"`
 	Topology  []Cluster     `json:"topology"`

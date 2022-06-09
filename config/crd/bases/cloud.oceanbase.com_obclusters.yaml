@@ -39,6 +39,8 @@ spec:
               clusterID:
                 minimum: 1
                 type: integer
+              imageRepo:
+                type: string
               resources:
                 properties:
                   cpu:
@@ -77,6 +79,8 @@ spec:
                 - memory
                 - storage
                 type: object
+              tag:
+                type: string
               topology:
                 items:
                   properties:
@@ -108,13 +112,12 @@ spec:
                   - zone
                   type: object
                 type: array
-              version:
-                type: string
             required:
             - clusterID
+            - imageRepo
             - resources
+            - tag
             - topology
-            - version
             type: object
           status:
             description: OBClusterStatus defines the observed state of OBCluster
