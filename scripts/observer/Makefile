@@ -4,7 +4,7 @@ SHELL:=/usr/bin/env bash
 .DEFAULT_GOAL := help
 
 # Code
-VERSION := operator-v3.1.2-10000392021123010
+VERSION := operator-v3.1.3-10100042022051821
 
 # Define Docker related variables. Releases should modify and double check these vars.
 REGISTRY := oceanbase
