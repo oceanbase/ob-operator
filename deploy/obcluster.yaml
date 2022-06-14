@@ -2,6 +2,7 @@ apiVersion: cloud.oceanbase.com/v1
 kind: OBCluster
 metadata:
   name: ob-test
+  namespace: obcluster
 spec:
   imageRepo: oceanbase/oceanbase-ce
   tag: operator-v3.1.3-10100032022041510
