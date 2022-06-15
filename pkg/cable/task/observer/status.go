@@ -13,16 +13,18 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
-	"log"
 	"time"
+	"context"
 
+    log "github.com/sirupsen/logrus"
+	"github.com/oceanbase/ob-operator/pkg/util/shell"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
-	"github.com/oceanbase/ob-operator/pkg/cable/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 )
 
 
-func CheckOBServeStatus() {
+func CheckObserverStatus() {
 	time.Sleep(constant.GracefulTime)
 	// checker
 	tick := time.Tick(constant.TickTime)
@@ -44,10 +46,17 @@ func checkerOBServer() {
 	} else {
 		if status.Paused {
 			// update liveness
+			log.Info("observer process not running, but in paused status")
 			status.Liveness = true
 		} else {
-			log.Println("not Paused")
-			system.Exit()
+			log.Error("observer process not running, try restart...")
+            // TODO: config sleep time with parameters
+	        time.Sleep(constant.GracefulTime)
+            _, err := shell.NewCommand(constant.OBSERVER_START_COMMAND_WITHOUT_PARAM).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+            if err != nil {
+                log.Println("cmd exec error", err)
+            }
+			// system.Exit()
 		}
 	}
 }

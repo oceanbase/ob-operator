@@ -20,7 +20,7 @@ import (
     log "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/pkg/cable/task/observer"
-	"github.com/oceanbase/ob-operator/pkg/cable/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
@@ -55,8 +55,8 @@ func OBStart(c *gin.Context) {
 	log.Infof("start observer with param %s", util.CovertToJSON(param))
 
 	if !status.ObserverStarted {
-		go observer.StartOBServerProcess(*param)
-		go observer.CheckOBServeStatus()
+		go observer.StartObserverProcess(*param)
+		go observer.CheckObserverStatus()
 		status.ObserverStarted = true
 		SendResponse(c, NewSuccessResponse(status.ObserverStarted))
 	} else {

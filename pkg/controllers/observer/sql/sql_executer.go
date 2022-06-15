@@ -19,7 +19,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
-func ExecSQL(ip, port, db, SQL string, timeout int) error {
+func ExecSQL(ip string, port int, db string, SQL string, timeout int) error {
 	klog.Infoln(SQL)
 	client := ConnOB(ip, port, db, timeout)
 	if client != nil {
@@ -34,7 +34,7 @@ func ExecSQL(ip, port, db, SQL string, timeout int) error {
 	return nil
 }
 
-func GetOBServerFromDB(ip, port, db, SQL string) []model.AllServer {
+func GetOBServerFromDB(ip string, port int, db string, SQL string) []model.AllServer {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.AllServer, 0)
 	if client != nil {
@@ -52,7 +52,7 @@ func GetOBServerFromDB(ip, port, db, SQL string) []model.AllServer {
 	return res
 }
 
-func GetRootServiceFromDB(ip, port, db, SQL string) []model.AllVirtualCoreMeta {
+func GetRootServiceFromDB(ip string, port int, db string, SQL string) []model.AllVirtualCoreMeta {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.AllVirtualCoreMeta, 0)
 	if client != nil {
@@ -70,7 +70,7 @@ func GetRootServiceFromDB(ip, port, db, SQL string) []model.AllVirtualCoreMeta {
 	return res
 }
 
-func GetRSJobStatusFromDB(ip, port, db, SQL string) []model.RSJobStatus {
+func GetRSJobStatusFromDB(ip string, port int, db string, SQL string) []model.RSJobStatus {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.RSJobStatus, 0)
 	if client != nil {

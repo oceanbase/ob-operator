@@ -16,7 +16,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/oceanbase/ob-operator/pkg/cable/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
 )

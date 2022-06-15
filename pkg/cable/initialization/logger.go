@@ -13,10 +13,10 @@ See the Mulan PSL v2 for more details.
 package initialization
 
 import (
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/logger"
-	loggerConfig "github.com/oceanbase/ob-operator/pkg/cable/config/logger"
 )
 
 func InitLogger() {
-    logger.InitLogger(loggerConfig.DefaultLoggerConfig)
+    logger.InitLogger(logger.NewDefaultLoggerConfig(constant.AppCable))
 }

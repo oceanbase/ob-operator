@@ -15,12 +15,12 @@ package observer
 import (
 	"context"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 
+    log "github.com/sirupsen/logrus"
 	"github.com/oceanbase/ob-operator/pkg/util/shell"
-	"github.com/oceanbase/ob-operator/pkg/cable/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 )
 
 type StartObServerProcessArguments struct {
@@ -32,9 +32,9 @@ type StartObServerProcessArguments struct {
 	MemoryLimit int    `json:"memoryLimit" binding:"required"`
 }
 
-func StartOBServerProcess(param StartObServerProcessArguments) {
+func StartObserverProcess(param StartObServerProcessArguments) {
 	cpu := getCPU(param.CpuLimit)
-	memory := getMemory(param.MemoryLimit)
+	memory := getMemoryLimit(param.MemoryLimit)
 	systemMemory := getSystemMemory(param.MemoryLimit)
 	datafileSize := getDatafileSize(memory)
 	var cmd string
@@ -44,37 +44,36 @@ func StartOBServerProcess(param StartObServerProcessArguments) {
 	zoneName := param.ZoneName
 	rsList := param.RsList
 	deviceName := constant.NIC
-	memoryInt, err := strconv.Atoi(memory)
-	if memoryInt <= constant.MEMORY_SIMPLE {
+	if memory <= constant.MEMORY_SIMPLE {
 		// 2C, 10G
-		option = fmt.Sprintf("cpu_count=%s,memory_limit=%sG,system_memory=%sG,__min_full_resource_pool_memory=268435456,datafile_size=%sG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
+		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=268435456,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
 	} else {
 		// 16C, 64G
-		option = fmt.Sprintf("cpu_count=%s,memory_limit=%sG,system_memory=%sG,__min_full_resource_pool_memory=1073741824,datafile_size=%sG,net_thread_count=%d", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
+		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
 	}
 	cmd = replaceAll(constant.OBSERVER_START_COMMAND_TEMPLATE, startObServerParamReplacer(obClusterName, obClusterId, zoneName, deviceName, rsList, option))
-	_, err = shell.NewCommand(cmd).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+    _, err := shell.NewCommand(cmd).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
 	if err != nil {
-		log.Println("cmd exec error", err)
+		log.WithError(err).Errorf("start observer command exec error %v", err)
 	}
 }
 
-func getCPU(cpuLimit int) string {
+func getCPU(cpuLimit int) int {
 	if constant.CPU_COUNT+1 > cpuLimit {
-		return strconv.Itoa(constant.CPU_COUNT)
+		return constant.CPU_COUNT
 	}
-	return strconv.Itoa(cpuLimit - 1)
+	return cpuLimit - 1
 }
 
-func getMemory(memoryLimit int) string {
-	if memoryLimit == constant.MEMORY_LIMIT {
-		log.Println("memoryLimit is low")
+func getMemoryLimit(memoryLimit int) int {
+	if memoryLimit <= constant.MEMORY_LIMIT {
+		log.Errorf("memoryLimit is low")
 		return constant.MEMORY_LOW
 	}
-	return strconv.Itoa(int(float32(memoryLimit) * 0.9))
+	return int(float32(memoryLimit) * 0.9)
 }
 
-func getSystemMemory(memory int) string {
+func getSystemMemory(memory int) int {
 	tmp := float32(memory) * 0.9
 	var coefficient float32
 	if tmp >= 150 {
@@ -84,12 +83,11 @@ func getSystemMemory(memory int) string {
 	} else {
 		coefficient = 0.5
 	}
-	return strconv.Itoa(int(tmp * coefficient))
+	return int(tmp * coefficient)
 }
 
-func getDatafileSize(memoryLimit string) string {
-	tmp, _ := strconv.Atoi(memoryLimit)
-	return strconv.Itoa(tmp * 3)
+func getDatafileSize(memoryLimit int) int {
+	return memoryLimit * 3
 }
 
 func replaceAll(template string, replacers ...*strings.Replacer) string {

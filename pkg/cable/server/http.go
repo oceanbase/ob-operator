@@ -22,7 +22,7 @@ import (
     "github.com/pkg/errors"
 	"github.com/gin-gonic/gin"
     log "github.com/sirupsen/logrus"
-    "github.com/oceanbase/ob-operator/pkg/cable/config/constant"
+    "github.com/oceanbase/ob-operator/pkg/config/constant"
 )
 
 type Server struct {
