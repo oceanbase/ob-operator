@@ -54,7 +54,7 @@ func checkerOBServer() {
 	        time.Sleep(constant.GracefulTime)
             _, err := shell.NewCommand(constant.OBSERVER_START_COMMAND_WITHOUT_PARAM).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
             if err != nil {
-                log.Println("cmd exec error", err)
+                log.WithError(err).Errorf("restart observer command exec error", err)
             }
 			// system.Exit()
 		}

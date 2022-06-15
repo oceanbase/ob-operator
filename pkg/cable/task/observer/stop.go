@@ -13,9 +13,9 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
-	"log"
 	"time"
 
+    log "github.com/sirupsen/logrus"
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
@@ -24,14 +24,14 @@ import (
 func StopProcess() {
 	name := constant.ProcessObserver
 	pm := &system.ProcessManager{}
-	err := pm.TerminateProcessByName(constant.ProcessObserver)
+	err := pm.TerminateProcessByName(name)
 	if err != nil {
-		log.Println(err)
+		log.WithError(err).Errorf("terminate observer process got error %v", err)
 	}
 	time.Sleep(2 * time.Second)
 	err = pm.KillProcessByName(name)
 	if err != nil {
-		log.Println(err)
+		log.WithError(err).Errorf("kill observer process got error %v", err)
 	}
 	status.ObserverStarted = false
 }
