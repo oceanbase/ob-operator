@@ -12,7 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package status
 
-var ObserverStarted bool
-var Liveness bool
-var Readiness bool
-var Paused bool
+var ObserverStarted = false
+var ObserverProcessStarted = false
+var Liveness = false
+var Readiness = false
+var Paused = false
+
+var ObserverProcessStartTimes = 0

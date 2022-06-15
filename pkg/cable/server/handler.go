@@ -56,7 +56,7 @@ func OBStart(c *gin.Context) {
 
 	if !status.ObserverStarted {
 		go observer.StartObserverProcess(*param)
-		go observer.CheckObserverStatus()
+		go observer.CheckObserverLoop()
 		status.ObserverStarted = true
 		SendResponse(c, NewSuccessResponse(status.ObserverStarted))
 	} else {

@@ -22,6 +22,7 @@ const (
     CablePort = 19001
     GracefulTime = 10 * time.Second
     TickTime = 5 * time.Second
+    StartObserverRetryTimes = 3
 
 	CPU_COUNT                       = 16
 	MEMORY_LIMIT                    = 10
