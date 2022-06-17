@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
-    "fmt"
+	"fmt"
 	"strconv"
 	"strings"
 )

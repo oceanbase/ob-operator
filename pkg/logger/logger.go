@@ -23,7 +23,6 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-
 var textFormatter = &TextFormatter{
 	TimestampFormat:        "2006-01-02T15:04:05.99999-07:00", // log timestamp format
 	FullTimestamp:          true,

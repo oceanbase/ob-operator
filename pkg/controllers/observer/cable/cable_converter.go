@@ -20,9 +20,9 @@ import (
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/ob"
-	"github.com/oceanbase/ob-operator/pkg/config/constant"
 )
 
 func GenerateRSListFromSubset(subsets []cloudv1.SubsetStatus) string {

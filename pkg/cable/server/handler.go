@@ -13,15 +13,15 @@ See the Mulan PSL v2 for more details.
 package server
 
 import (
-    "fmt"
+	"fmt"
 
 	"github.com/gin-gonic/gin"
-    "github.com/pkg/errors"
-    log "github.com/sirupsen/logrus"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 
+	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/cable/task/observer"
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
-	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
 )
@@ -29,20 +29,20 @@ import (
 func GetNicInfo(c *gin.Context) {
 	data, err := system.GetNICInfo(constant.NIC)
 	if err != nil {
-        // TODO find a better way, panic just quit the process and the container should be recreated
+		// TODO find a better way, panic just quit the process and the container should be recreated
 		panic(err)
 	}
-    SendResponse(c, NewSuccessResponse(data))
+	SendResponse(c, NewSuccessResponse(data))
 }
 
 func Paused(c *gin.Context) {
-    // TODO send status map as a response
+	// TODO send status map as a response
 	status.Paused = true
 	SendResponse(c, NewSuccessResponse(status.Paused))
 }
 
 func Rework(c *gin.Context) {
-    // TODO send status map as a response
+	// TODO send status map as a response
 	status.Paused = false
 	SendResponse(c, NewSuccessResponse(status.Paused))
 }

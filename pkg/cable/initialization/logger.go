@@ -18,5 +18,5 @@ import (
 )
 
 func InitLogger() {
-    logger.InitLogger(logger.NewDefaultLoggerConfig(constant.AppCable))
+	logger.InitLogger(logger.NewDefaultLoggerConfig(constant.AppCable))
 }

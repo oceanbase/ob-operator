@@ -18,9 +18,9 @@ import (
 	"strconv"
 	"strings"
 
-    log "github.com/sirupsen/logrus"
-	"github.com/oceanbase/ob-operator/pkg/util/shell"
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/util/shell"
+	log "github.com/sirupsen/logrus"
 )
 
 type StartObServerProcessArguments struct {
@@ -52,7 +52,7 @@ func StartObserverProcess(param StartObServerProcessArguments) {
 		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
 	}
 	cmd = replaceAll(constant.OBSERVER_START_COMMAND_TEMPLATE, startObServerParamReplacer(obClusterName, obClusterId, zoneName, deviceName, rsList, option))
-    _, err := shell.NewCommand(cmd).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+	_, err := shell.NewCommand(cmd).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
 	if err != nil {
 		log.WithError(err).Errorf("start observer command exec error %v", err)
 	}

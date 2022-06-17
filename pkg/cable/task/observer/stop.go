@@ -15,10 +15,10 @@ package observer
 import (
 	"time"
 
-    log "github.com/sirupsen/logrus"
-	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
+	log "github.com/sirupsen/logrus"
 )
 
 func StopProcess() {

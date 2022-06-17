@@ -20,7 +20,6 @@ import (
 func main() {
 	util.FuncList = make([]func(), 0)
 
-
 	initialization.InitApp()
 
 	util.SignalHandler(util.FuncList)

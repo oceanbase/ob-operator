@@ -40,16 +40,16 @@ func GetOBServerFromDB(ip string, port int, db string, SQL string) []model.AllSe
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllServer{}).Raw(SQL).Rows()
-        if err == nil {
-            defer rows.Close()
-            var rowData model.AllServer
-            for rows.Next() {
-                err = client.ScanRows(rows, &rowData)
-                if err == nil {
-                    res = append(res, rowData)
-                }
-		    }
-        }
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllServer
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
 	}
 	return res
 }

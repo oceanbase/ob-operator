@@ -17,8 +17,8 @@ import (
 
 	"k8s.io/klog/v2"
 
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
 func SetServerOfflineTime(clusterIP string, offlineTime int) error {

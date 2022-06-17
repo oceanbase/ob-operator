@@ -13,16 +13,16 @@ See the Mulan PSL v2 for more details.
 package server
 
 import (
-    "fmt"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
-    "github.com/pkg/errors"
 	"github.com/gin-gonic/gin"
-    log "github.com/sirupsen/logrus"
-    "github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -57,7 +57,7 @@ func (S *Server) Init() {
 	}
 	S.Router = router
 	S.HttpServer = &http.Server{
-		Addr: fmt.Sprintf(":%d", constant.CablePort),
+		Addr:    fmt.Sprintf(":%d", constant.CablePort),
 		Handler: router,
 	}
 }
@@ -65,7 +65,7 @@ func (S *Server) Init() {
 func (S *Server) Run() {
 	err := S.HttpServer.ListenAndServe()
 	if err != nil {
-        log.WithError(err).Errorf("run server got exception: %v", err)
+		log.WithError(err).Errorf("run server got exception: %v", err)
 	}
 }
 
@@ -92,7 +92,7 @@ func GinLogger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		latency := timeEnd.Sub(timeStart)
 		comment := c.Errors
-        log.Infof("request: from %s, method %s, path %s, response: status code %s, latency %v, comment %v", clientIP, method, path, statusCode, latency, comment)
+		log.Infof("request: from %s, method %s, path %s, response: status code %s, latency %v, comment %v", clientIP, method, path, statusCode, latency, comment)
 	}
 }
 
@@ -100,7 +100,7 @@ func GinPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-                resp := NewErrorResponse(errors.New(fmt.Sprintf("recover error %v", err)))
+				resp := NewErrorResponse(errors.New(fmt.Sprintf("recover error %v", err)))
 				SendResponse(c, resp)
 			}
 		}()

@@ -15,7 +15,7 @@ package initialization
 import (
 	"context"
 
-    log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/pkg/cable/server"
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
@@ -23,29 +23,27 @@ import (
 )
 
 func InitApp() {
-    // init logger
-    InitLogger()
+	// init logger
+	InitLogger()
 
 	util.FuncList = append(util.FuncList, StopApp)
 
-    log.Info("init directory for oceanbase")
-    // TODO use paths in dockerfile and remove this process
+	log.Info("init directory for oceanbase")
+	// TODO use paths in dockerfile and remove this process
 	InitDir()
 
-    log.Info("init status variables")
-    // TODO set variable values, move from observer package to a meaningful one
+	log.Info("init status variables")
+	// TODO set variable values, move from observer package to a meaningful one
 	status.Readiness = false
 	status.ObserverStarted = false
 
-
-    log.Info("init http server")
+	log.Info("init http server")
 	server.CableServer.Init()
 	go server.CableServer.Run()
-
 
 }
 
 func StopApp() {
-    log.Info("stop cable server")
+	log.Info("stop cable server")
 	server.CableServer.Stop(context.TODO())
 }
