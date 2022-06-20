@@ -10,11 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package main
 
-const (
-	ProcessObserver = "observer"
+import (
+	"github.com/oceanbase/ob-operator/pkg/cable/initialization"
+	"github.com/oceanbase/ob-operator/pkg/util"
 )
 
-var OBStarted bool
-var Paused bool
+func main() {
+	util.FuncList = make([]func(), 0)
+
+	initialization.InitApp()
+
+	util.SignalHandler(util.FuncList)
+	select {}
+}

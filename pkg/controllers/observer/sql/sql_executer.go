@@ -19,7 +19,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
-func ExecSQL(ip, port, db, SQL string, timeout int) error {
+func ExecSQL(ip string, port int, db string, SQL string, timeout int) error {
 	klog.Infoln(SQL)
 	client := ConnOB(ip, port, db, timeout)
 	if client != nil {
@@ -34,56 +34,62 @@ func ExecSQL(ip, port, db, SQL string, timeout int) error {
 	return nil
 }
 
-func GetOBServerFromDB(ip, port, db, SQL string) []model.AllServer {
+func GetOBServerFromDB(ip string, port int, db string, SQL string) []model.AllServer {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.AllServer, 0)
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllServer{}).Raw(SQL).Rows()
-		defer rows.Close()
-		var rowData model.AllServer
-		for rows.Next() {
-			err = client.ScanRows(rows, &rowData)
-			if err == nil {
-				res = append(res, rowData)
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllServer
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
 			}
 		}
 	}
 	return res
 }
 
-func GetRootServiceFromDB(ip, port, db, SQL string) []model.AllVirtualCoreMeta {
+func GetRootServiceFromDB(ip string, port int, db string, SQL string) []model.AllVirtualCoreMeta {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.AllVirtualCoreMeta, 0)
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllVirtualCoreMeta{}).Raw(SQL).Rows()
-		defer rows.Close()
-		var rowData model.AllVirtualCoreMeta
-		for rows.Next() {
-			err = client.ScanRows(rows, &rowData)
-			if err == nil {
-				res = append(res, rowData)
-			}
-		}
+        if err == nil {
+            defer rows.Close()
+            var rowData model.AllVirtualCoreMeta
+            for rows.Next() {
+                err = client.ScanRows(rows, &rowData)
+                if err == nil {
+                    res = append(res, rowData)
+                }
+            }
+        }
 	}
 	return res
 }
 
-func GetRSJobStatusFromDB(ip, port, db, SQL string) []model.RSJobStatus {
+func GetRSJobStatusFromDB(ip string, port int, db string, SQL string) []model.RSJobStatus {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.RSJobStatus, 0)
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.RSJobStatus{}).Raw(SQL).Rows()
-		defer rows.Close()
-		var rowData model.RSJobStatus
-		for rows.Next() {
-			err = client.ScanRows(rows, &rowData)
-			if err == nil {
-				res = append(res, rowData)
-			}
-		}
+        if err == nil {
+            defer rows.Close()
+            var rowData model.RSJobStatus
+            for rows.Next() {
+                err = client.ScanRows(rows, &rowData)
+                if err == nil {
+                    res = append(res, rowData)
+                }
+            }
+        }
 	}
 	return res
 }

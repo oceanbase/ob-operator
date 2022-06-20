@@ -1,0 +1,5 @@
+2022-06-14T23:04:34.66905+08:00 INFO [26407,] caller=initialize/app.go:31:InitApp: init directory for oceanbase
+2022-06-14T23:04:34.68517+08:00 INFO [26407,] caller=initialize/app.go:35:InitApp: init status variables
+2022-06-14T23:04:34.6853+08:00 INFO [26407,] caller=initialize/app.go:41:InitApp: init http server
+2022-06-14T23:04:45.5401+08:00 INFO [26407,] caller=initialize/app.go:49:StopApp: stop cable server
+2022-06-14T23:04:45.54039+08:00 ERROR [26407,] caller=server/http.go:68:Run: run server got exception: http: Server closed fields: error="http: Server closed"

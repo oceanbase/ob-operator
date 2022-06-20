@@ -2,9 +2,10 @@ apiVersion: cloud.oceanbase.com/v1
 kind: OBCluster
 metadata:
   name: ob-test
+  namespace: obcluster
 spec:
-  imageRepo: oceanbase/oceanbase-ce
-  tag: operator-v3.1.3-10100032022041510
+  imageRepo: hongxinsun/oceanbase-cn
+  tag: v3.1.3-10100042022051821
   clusterID: 1
   topology:
     - cluster: cn

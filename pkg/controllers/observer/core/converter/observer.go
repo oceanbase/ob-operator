@@ -26,7 +26,7 @@ import (
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
 	obServerCurrentReplicas := make(map[string]bool)
 	for _, obServer := range obServerList {
-		if obServer.Status == observerconst.OBServerActive {
+		if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
 			obServerCurrentReplicas[obServer.Zone] = true
 		}
 	}

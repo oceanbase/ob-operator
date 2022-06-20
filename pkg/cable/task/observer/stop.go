@@ -13,44 +13,25 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
-	"log"
 	"time"
 
+	"github.com/oceanbase/ob-operator/pkg/cable/status"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/util/system"
+	log "github.com/sirupsen/logrus"
 )
 
-var Liveness bool
-var Readiness bool
-
-const GracefulTime = 10 * time.Second
-const TickTime = 5 * time.Second
-
-func CheckOBServeStatus() {
-	time.Sleep(GracefulTime)
-	// checker
-	tick := time.Tick(TickTime)
-	for {
-		select {
-		case <-tick:
-			checkerOBServer()
-		}
-	}
-}
-
-func checkerOBServer() {
-	name := ProcessObserver
+func StopProcess() {
+	name := constant.ProcessObserver
 	pm := &system.ProcessManager{}
-	status := pm.ProcessIsRunningByName(name)
-	if status {
-		// update liveness
-		Liveness = true
-	} else {
-		if Paused {
-			// update liveness
-			Liveness = true
-		} else {
-			log.Println("not Paused")
-			system.Exit()
-		}
+	err := pm.TerminateProcessByName(name)
+	if err != nil {
+		log.WithError(err).Errorf("terminate observer process got error %v", err)
 	}
+	time.Sleep(2 * time.Second)
+	err = pm.KillProcessByName(name)
+	if err != nil {
+		log.WithError(err).Errorf("kill observer process got error %v", err)
+	}
+	status.ObserverStarted = false
 }

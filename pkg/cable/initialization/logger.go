@@ -10,20 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package main
+package initialization
 
 import (
-	"github.com/oceanbase/ob-operator/pkg/cable/observer"
-	"github.com/oceanbase/ob-operator/pkg/cable/provider"
-	"github.com/oceanbase/ob-operator/pkg/util"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/logger"
 )
 
-func main() {
-	util.FuncList = make([]func(), 0)
-	observer.Paused = false
-
-	provider.InitForK8s()
-
-	util.SignalHandler(util.FuncList)
-	select {}
+func InitLogger() {
+	logger.InitLogger(logger.NewDefaultLoggerConfig(constant.AppCable))
 }

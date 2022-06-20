@@ -21,8 +21,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func ConnOB(IP, port, dbName string, timeout int) *gorm.DB {
-	connInfo := fmt.Sprintf("root:@tcp(%s:%s)/%s?timeout=%ds&charset=utf8&parseTime=True&loc=Local", IP, port, dbName, timeout)
+func ConnOB(IP string, port int, dbName string, timeout int) *gorm.DB {
+	connInfo := fmt.Sprintf("root:@tcp(%s:%d)/%s?timeout=%ds&charset=utf8&parseTime=True&loc=Local", IP, port, dbName, timeout)
 	client, err := gorm.Open("mysql", connInfo)
 	if err != nil {
 		errNum, errMsg := covertErrToMySQLError(err)

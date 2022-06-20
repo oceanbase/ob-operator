@@ -10,16 +10,19 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package provider
+package server
 
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -27,34 +30,34 @@ type Server struct {
 	HttpServer *http.Server
 }
 
-var Tiny Server
+var CableServer Server
 
 func (S *Server) Init() {
-	router := RouteCustom()
-	systemoperator := router.Group("/api/system")
+	router := NewCustomRouter()
+	systemGroup := router.Group("/api/system")
 	{
 		// status for nic & ip
-		systemoperator.GET("/info", Info)
+		systemGroup.GET("/info", GetNicInfo)
 		// paused
-		systemoperator.POST("/paused", Paused)
-		systemoperator.POST("/rework", Rework)
+		systemGroup.POST("/paused", Paused)
+		systemGroup.POST("/rework", Rework)
 	}
-	oboperator := router.Group("/api/ob")
+	obGroup := router.Group("/api/ob")
 	{
 		// start
-		oboperator.POST("/start", OBStart)
+		obGroup.POST("/start", OBStart)
 		// stop
-		oboperator.POST("/stop", OBStop)
+		obGroup.POST("/stop", OBStop)
 		// status
-		oboperator.GET("/status", OBStatus)
+		obGroup.GET("/status", OBStatus)
 		// readiness
-		oboperator.GET("/readiness", OBReadiness)
+		obGroup.GET("/readiness", OBReadiness)
 		// readiness update
-		oboperator.POST("/readinessUpdate", OBReadinessUpdate)
+		obGroup.POST("/readinessUpdate", OBReadinessUpdate)
 	}
 	S.Router = router
 	S.HttpServer = &http.Server{
-		Addr:    ":19001",
+		Addr:    fmt.Sprintf(":%d", constant.CablePort),
 		Handler: router,
 	}
 }
@@ -62,7 +65,7 @@ func (S *Server) Init() {
 func (S *Server) Run() {
 	err := S.HttpServer.ListenAndServe()
 	if err != nil {
-		log.Println(err)
+		log.WithError(err).Errorf("run server got exception: %v", err)
 	}
 }
 
@@ -70,7 +73,7 @@ func (S *Server) Stop(ctx context.Context) {
 	S.HttpServer.Shutdown(ctx)
 }
 
-func RouteCustom() *gin.Engine {
+func NewCustomRouter() *gin.Engine {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(GinLogger())
@@ -89,7 +92,7 @@ func GinLogger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		latency := timeEnd.Sub(timeStart)
 		comment := c.Errors
-		log.Println(clientIP, statusCode, method, path, latency, comment)
+		log.Infof("request: from %s, method %s, path %s, response: status code %s, latency %s, comment %v", clientIP, method, path, statusCode, latency.String(), comment)
 	}
 }
 
@@ -97,19 +100,17 @@ func GinPanic() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				log.Printf("[Error Info] %s", err)
-				// return
-				data := make(map[string]interface{})
-				Sender(c, 400, data)
+				resp := NewErrorResponse(errors.New(fmt.Sprintf("recover error %v", err)))
+				SendResponse(c, resp)
 			}
 		}()
 		c.Next()
 	}
 }
 
-func Sender(c *gin.Context, code int, data interface{}) {
-	responseJSON, _ := json.Marshal(data)
+func SendResponse(c *gin.Context, resp *ApiResponse) {
+	responseJSON, _ := json.Marshal(resp)
 	c.Writer.Header().Set("Content-Type", "application/json")
 	c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-	c.String(code, string(responseJSON))
+	c.String(resp.Code, string(responseJSON))
 }
