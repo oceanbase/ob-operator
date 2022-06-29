@@ -10,26 +10,21 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package provider
+package logger
 
 import (
-	"context"
-
-	"github.com/oceanbase/ob-operator/pkg/cable/observer"
-	"github.com/oceanbase/ob-operator/pkg/util"
+	"fmt"
 )
 
-func InitForK8s() {
-	DirInit()
-	// init http server
-	Tiny.Init()
-	// run http server
-	go Tiny.Run()
-	observer.Readiness = false
-	observer.OBStarted = false
-	util.FuncList = append(util.FuncList, StopForK8s)
-}
-
-func StopForK8s() {
-	Tiny.Stop(context.TODO())
+func NewDefaultLoggerConfig(app string) LoggerConfig {
+	loggerConfig := LoggerConfig{
+		Level:      "INFO",
+		Filename:   fmt.Sprintf("log/%s.log", app),
+		MaxSize:    64,
+		MaxAge:     7,
+		MaxBackups: 10,
+		LocalTime:  true,
+		Compress:   true,
+	}
+	return loggerConfig
 }

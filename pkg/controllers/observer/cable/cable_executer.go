@@ -23,7 +23,7 @@ import (
 )
 
 func CableStatusCheckExecuter(podIP string) error {
-	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableInfoUrl)
+	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableNicInfoUrl)
 	code, _ := util.HTTPGET(url)
 	if code != 200 {
 		return errors.New("cable get ip failed")

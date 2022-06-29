@@ -6,7 +6,7 @@ WORKDIR /workspace
 # Copy the Go Modules manifests
 COPY . .
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://goproxy.cn go build -a -o cable cmd/cable/app.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://goproxy.cn go build -a -o cable pkg/cable/main.go
 
 # build server
 FROM openanolis/anolisos:8.4-x86_64
@@ -19,7 +19,7 @@ COPY --from=builder /workspace/cable .
 RUN chmod +x /app/cable
 
 RUN useradd -m admin
-ENV OB_VERSION 3.1.2-10000392021123010
+ENV OB_VERSION 3.1.3-10100042022051821
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-libs-${OB_VERSION}.el8.x86_64.rpm
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-${OB_VERSION}.el8.x86_64.rpm
 RUN mkdir -p /home/admin/oceanbase/run

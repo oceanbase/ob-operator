@@ -4,11 +4,11 @@ SHELL:=/usr/bin/env bash
 .DEFAULT_GOAL := help
 
 # Code
-VERSION := operator-v3.1.2-10000392021123010
+VERSION := v3.1.3-10100042022051821
 
 # Define Docker related variables. Releases should modify and double check these vars.
-REGISTRY := oceanbase
-IMAGE := oceanbase-ce
+REGISTRY := hongxinsun
+IMAGE := oceanbase-cn
 
 # Use GOPROXY environment variable if set
 GOPROXY := $(shell go env GOPROXY)

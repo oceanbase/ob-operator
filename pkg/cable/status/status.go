@@ -10,26 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package status
 
-import (
-	"log"
-	"time"
+var ObserverStarted = false
+var ObserverProcessStarted = false
+var Liveness = false
+var Readiness = false
+var Paused = false
 
-	"github.com/oceanbase/ob-operator/pkg/util/system"
-)
-
-func StopProcess() {
-	name := ProcessObserver
-	pm := &system.ProcessManager{}
-	err := pm.TerminateProcessByName(name)
-	if err != nil {
-		log.Println(err)
-	}
-	time.Sleep(2 * time.Second)
-	err = pm.KillProcessByName(name)
-	if err != nil {
-		log.Println(err)
-	}
-	OBStarted = false
-}
+var ObserverProcessStartTimes = 0

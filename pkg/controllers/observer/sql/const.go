@@ -20,7 +20,7 @@ const (
 	SetTimeoutSQL                   = "SET ob_query_timeout = 600000000"
 	SetServerOfflineTimeSQLTemplate = "ALTER SYSTEM SET server_permanent_offline_time=${OFFLINE_TIME};"
 
-	GetOBServerSQL       = "SELECT id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, status FROM __all_server;"
+	GetOBServerSQL       = "SELECT id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, status, start_service_time FROM __all_server;"
 	AddServerSQLTemplate = "ALTER SYSTEM ADD SERVER '${SERVER_IP}' ZONE '${ZONE_NAME}';"
 	DelServerSQLTemplate = "ALTER SYSTEM DELETE SERVER '${SERVER_IP}';"
 

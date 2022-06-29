@@ -21,6 +21,7 @@ type AllServer struct {
 	WithRootService int64
 	WithPartition   int64
 	Status          string
+    StartServiceTime int64
 }
 
 type AllVirtualCoreMeta struct {
