@@ -182,6 +182,9 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 }
 
 func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp) error {
+	// check parameter and version in obcluster, set parameter when modified
+	ctrl.CheckAndSetParameters()
+
 	// check version update
 	versionIsModified, err := judge.VersionIsModified(ctrl.OBCluster.Spec.Tag, statefulApp)
 	if err != nil {

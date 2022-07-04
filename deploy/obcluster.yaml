@@ -25,6 +25,10 @@ spec:
         nodeSelector:
           topology.kubernetes.io/zone: zone3
         replicas: 1
+      parameters:
+        - name: freeze_trigger_percentage
+          value: "30"
+
   resources:
     cpu: 2
     memory: 10Gi

@@ -74,6 +74,7 @@ func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList str
 	obServerStartArgs["cpuLimit"] = cpu
 	memory, _ := obCluster.Spec.Resources.Memory.AsInt64()
 	obServerStartArgs["memoryLimit"] = memory / 1024 / 1024 / 1024
+	obServerStartArgs["customParameters"] = obCluster.Spec.Topology[0].Parameters
 	return obServerStartArgs
 }
 

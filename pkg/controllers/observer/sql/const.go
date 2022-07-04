@@ -31,4 +31,8 @@ const (
 	CreateUserSQLTemplate = "CREATE USER ${USER} identified by '${PASSWORD}';"
 
 	GrantPrivilegeSQLTemplate = "GRANT ${PRIVILEGE} on ${OBJECT} to ${USER};"
+
+	SetParameterTemplate = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
+
+	GetParameterTemplate = "SELECT zone, svr_ip, svr_port, name, value, scope, edit_level FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = '${NAME}'"
 )

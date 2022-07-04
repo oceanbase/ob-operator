@@ -13,15 +13,15 @@ See the Mulan PSL v2 for more details.
 package model
 
 type AllServer struct {
-	ID              int64
-	Zone            string
-	SvrIP           string
-	SvrPort         int64
-	InnerPort       int64
-	WithRootService int64
-	WithPartition   int64
-	Status          string
-    StartServiceTime int64
+	ID               int64
+	Zone             string
+	SvrIP            string
+	SvrPort          int64
+	InnerPort        int64
+	WithRootService  int64
+	WithPartition    int64
+	Status           string
+	StartServiceTime int64
 }
 
 type AllVirtualCoreMeta struct {
@@ -37,4 +37,14 @@ type RSJobStatus struct {
 	JobStatus  string
 	ReturnCode int64
 	Progress   int64
+}
+
+type SysParameterStat struct {
+	Zone      string
+	SvrIP     string
+	SvrPort   int64
+	Name      string
+	Value     string
+	Scope     string
+	EditLevel string
 }

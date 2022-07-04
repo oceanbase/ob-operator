@@ -28,8 +28,14 @@ type OBClusterSpec struct {
 }
 
 type Cluster struct {
-	Cluster string   `json:"cluster"`
-	Zone    []Subset `json:"zone"`
+	Cluster    string      `json:"cluster"`
+	Zone       []Subset    `json:"zone"`
+	Parameters []Parameter `json:"parameters"`
+}
+
+type Parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type ResourcesSpec struct {
