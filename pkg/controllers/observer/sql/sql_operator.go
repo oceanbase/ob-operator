@@ -36,6 +36,17 @@ func GrantPrivilege(clusterIP, privilege, object, user string) error {
 	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
 }
 
+func GetParameter(clusterIP, name string) []model.SysParameterStat {
+	sql := ReplaceAll(GetParameterTemplate, GetParameterSQLReplacer(name))
+	return GetSysParameterFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
+}
+
+// TODO: maybe need to set with scope
+func SetParameter(clusterIP, name, value string) error {
+	sql := ReplaceAll(SetParameterTemplate, SetParameterSQLReplacer(name, value))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+}
+
 func BootstrapForOB(IP, SQL string) {
 	setTimeOutRes := ExecSQL(IP, constant.OBSERVER_MYSQL_PORT, "", SetTimeoutSQL, 5)
 	if setTimeOutRes != nil {

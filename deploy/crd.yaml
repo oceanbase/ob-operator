@@ -80,6 +80,18 @@ spec:
                   properties:
                     cluster:
                       type: string
+                    parameters:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - name
+                        - value
+                        type: object
+                      type: array
                     zone:
                       items:
                         properties:
@@ -103,6 +115,7 @@ spec:
                       type: array
                   required:
                   - cluster
+                  - parameters
                   - zone
                   type: object
                 type: array
@@ -214,6 +227,18 @@ spec:
                   properties:
                     cluster:
                       type: string
+                    parameters:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - name
+                        - value
+                        type: object
+                      type: array
                     zone:
                       items:
                         properties:
@@ -237,6 +262,7 @@ spec:
                       type: array
                   required:
                   - cluster
+                  - parameters
                   - zone
                   type: object
                 type: array
@@ -330,6 +356,18 @@ spec:
                   properties:
                     cluster:
                       type: string
+                    parameters:
+                      items:
+                        properties:
+                          name:
+                            type: string
+                          value:
+                            type: string
+                        required:
+                        - name
+                        - value
+                        type: object
+                      type: array
                     zone:
                       items:
                         properties:
@@ -353,6 +391,7 @@ spec:
                       type: array
                   required:
                   - cluster
+                  - parameters
                   - zone
                   type: object
                 type: array

@@ -60,16 +60,16 @@ func GetRootServiceFromDB(ip string, port int, db string, SQL string) []model.Al
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllVirtualCoreMeta{}).Raw(SQL).Rows()
-        if err == nil {
-            defer rows.Close()
-            var rowData model.AllVirtualCoreMeta
-            for rows.Next() {
-                err = client.ScanRows(rows, &rowData)
-                if err == nil {
-                    res = append(res, rowData)
-                }
-            }
-        }
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllVirtualCoreMeta
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
 	}
 	return res
 }
@@ -80,16 +80,36 @@ func GetRSJobStatusFromDB(ip string, port int, db string, SQL string) []model.RS
 	if client != nil {
 		defer client.Close()
 		rows, err := client.Model(&model.RSJobStatus{}).Raw(SQL).Rows()
-        if err == nil {
-            defer rows.Close()
-            var rowData model.RSJobStatus
-            for rows.Next() {
-                err = client.ScanRows(rows, &rowData)
-                if err == nil {
-                    res = append(res, rowData)
-                }
-            }
-        }
+		if err == nil {
+			defer rows.Close()
+			var rowData model.RSJobStatus
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func GetSysParameterFromDB(ip string, port int, db string, SQL string) []model.SysParameterStat {
+	client := ConnOB(ip, port, db, 5)
+	res := make([]model.SysParameterStat, 0)
+	if client != nil {
+		defer client.Close()
+		rows, err := client.Model(&model.SysParameterStat{}).Raw(SQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.SysParameterStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
 	}
 	return res
 }

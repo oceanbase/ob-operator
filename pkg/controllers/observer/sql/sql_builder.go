@@ -49,3 +49,11 @@ func CreateUserSQLReplacer(user, password string) *strings.Replacer {
 func GrantPrivilegeSQLReplacer(privilege, object, user string) *strings.Replacer {
 	return strings.NewReplacer("${PRIVILEGE}", privilege, "${OBJECT}", object, "${USER}", user)
 }
+
+func SetParameterSQLReplacer(name, value string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
+}
+
+func GetParameterSQLReplacer(name string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name)
+}

@@ -24,12 +24,18 @@ import (
 )
 
 type StartObServerProcessArguments struct {
-	ClusterName string `json:"clusterName" binding:"required"`
-	ClusterId   int    `json:"clusterId" binding:"required"`
-	ZoneName    string `json:"zoneName" binding:"required"`
-	RsList      string `json:"rsList" binding:"required"`
-	CpuLimit    int    `json:"cpuLimit" binding:"required"`
-	MemoryLimit int    `json:"memoryLimit" binding:"required"`
+	ClusterName      string      `json:"clusterName" binding:"required"`
+	ClusterId        int         `json:"clusterId" binding:"required"`
+	ZoneName         string      `json:"zoneName" binding:"required"`
+	RsList           string      `json:"rsList" binding:"required"`
+	CpuLimit         int         `json:"cpuLimit" binding:"required"`
+	MemoryLimit      int         `json:"memoryLimit" binding:"required"`
+	CustomParameters []Parameter `json:"customParameters"`
+}
+
+type Parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 func StartObserverProcess(param StartObServerProcessArguments) {
@@ -44,12 +50,18 @@ func StartObserverProcess(param StartObServerProcessArguments) {
 	zoneName := param.ZoneName
 	rsList := param.RsList
 	deviceName := constant.NIC
+	customOption := ""
+	if param.CustomParameters != nil && len(param.CustomParameters) > 0 {
+		for _, p := range param.CustomParameters {
+			customOption = fmt.Sprintf("%s,%s=%s", customOption, p.Name, p.Value)
+		}
+	}
 	if memory <= constant.MEMORY_SIMPLE {
 		// 2C, 10G
-		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=268435456,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
+		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=268435456,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
 	} else {
 		// 16C, 64G
-		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d", cpu, memory, systemMemory, datafileSize, param.CpuLimit)
+		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
 	}
 	cmd = replaceAll(constant.OBSERVER_START_COMMAND_TEMPLATE, startObServerParamReplacer(obClusterName, obClusterId, zoneName, deviceName, rsList, option))
 	_, err := shell.NewCommand(cmd).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
