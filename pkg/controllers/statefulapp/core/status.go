@@ -119,7 +119,7 @@ func buildSubsetStatus(podCtrl PodCtrlOperator, pvcCtrl PVCCtrlOperator, statefu
 		}
 	}
 	podsStatus = converter.SortPodsStatus(podsStatus)
-	subsetStatus := converter.GenerateSubsetStatus(subset.Name, subset.Region, subset.Replicas, int32(replicas), podsStatus)
+	subsetStatus := converter.GenerateSubsetStatus(subset.Name, subset.Region, subset.Replicas, replicas, podsStatus)
 	return subsetStatus
 }
 

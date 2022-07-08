@@ -110,7 +110,6 @@ spec:
                           region:
                             type: string
                           replicas:
-                            format: int32
                             minimum: 1
                             type: integer
                         required:
@@ -151,10 +150,8 @@ spec:
                       items:
                         properties:
                           availableReplicas:
-                            format: int32
                             type: integer
                           expectedReplicas:
-                            format: int32
                             type: integer
                           name:
                             type: string

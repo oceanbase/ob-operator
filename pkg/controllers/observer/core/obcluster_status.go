@@ -184,7 +184,7 @@ func buildZoneStatus(statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string]
 	zoneStatus.ExpectedReplicas = zone.Replicas
 	// real AvailableReplicas from OB
 	nodeList := nodeMap[zone.Name]
-	zoneStatus.AvailableReplicas = int32(len(nodeList))
+	zoneStatus.AvailableReplicas = len(nodeList)
 	// StatefulApp is not ready
 	if subsetStatus.ExpectedReplicas != subsetStatus.AvailableReplicas {
 		zoneStatus.ZoneStatus = observerconst.OBZonePrepareing

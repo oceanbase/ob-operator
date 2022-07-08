@@ -4,8 +4,8 @@ metadata:
   name: ob-test
   namespace: obcluster
 spec:
-  imageRepo: hongxinsun/oceanbase-cn
-  tag: v3.1.3-10100042022051821
+  imageRepo: oceanbasedev/oceanbase-cn
+  tag: v3.1.3-bp1-1
   clusterID: 1
   topology:
     - cluster: cn

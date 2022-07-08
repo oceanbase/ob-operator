@@ -4,10 +4,10 @@ SHELL:=/usr/bin/env bash
 .DEFAULT_GOAL := help
 
 # Code
-VERSION := v3.1.3-10100042022051821
+VERSION := v3.1.3-bp1-1
 
 # Define Docker related variables. Releases should modify and double check these vars.
-REGISTRY := hongxinsun
+REGISTRY := oceanbasedev
 IMAGE := oceanbase-cn
 
 # Use GOPROXY environment variable if set

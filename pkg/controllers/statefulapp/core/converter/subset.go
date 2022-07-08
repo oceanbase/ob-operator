@@ -18,7 +18,7 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 )
 
-func GenerateSubsetStatus(subsetName, regionName string, expectedReplicas, availableReplicas int32, podsStatus []cloudv1.PodStatus) cloudv1.SubsetStatus {
+func GenerateSubsetStatus(subsetName, regionName string, expectedReplicas, availableReplicas int, podsStatus []cloudv1.PodStatus) cloudv1.SubsetStatus {
 	var subsetStatus cloudv1.SubsetStatus
 	subsetStatus.Name = subsetName
 	if regionName != "" {
