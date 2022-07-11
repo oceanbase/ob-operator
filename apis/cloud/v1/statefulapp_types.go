@@ -30,7 +30,7 @@ type Subset struct {
 	Region       string            `json:"region,omitempty"`
 	NodeSelector map[string]string `json:"nodeSelector"`
 	// +kubebuilder:validation:Minimum=1
-	Replicas int32 `json:"replicas"`
+	Replicas int `json:"replicas"`
 }
 
 type StorageTemplate struct {
@@ -48,8 +48,8 @@ type StatefulAppStatus struct {
 type SubsetStatus struct {
 	Name              string      `json:"name"`
 	Region            string      `json:"region,omitempty"`
-	ExpectedReplicas  int32       `json:"expectedReplicas"`
-	AvailableReplicas int32       `json:"availableReplicas"`
+	ExpectedReplicas  int         `json:"expectedReplicas"`
+	AvailableReplicas int         `json:"availableReplicas"`
 	Pods              []PodStatus `json:"pods"`
 }
 

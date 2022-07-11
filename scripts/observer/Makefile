@@ -7,7 +7,7 @@ SHELL:=/usr/bin/env bash
 VERSION := v3.1.3-10100042022051821
 
 # Define Docker related variables. Releases should modify and double check these vars.
-REGISTRY := hongxinsun
+REGISTRY := oceanbasedev
 IMAGE := oceanbase-cn
 
 # Use GOPROXY environment variable if set

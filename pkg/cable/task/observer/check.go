@@ -60,7 +60,7 @@ func checkerObserver() {
 				time.Sleep(constant.GracefulTime)
 				_, err := shell.NewCommand(constant.OBSERVER_START_COMMAND_WITHOUT_PARAM).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
 				if err != nil {
-					log.WithError(err).Errorf("restart observer command exec error", err)
+					log.WithError(err).Errorf("restart observer command exec error %v", err)
 				}
 				status.ObserverProcessStartTimes += 1
 			}
