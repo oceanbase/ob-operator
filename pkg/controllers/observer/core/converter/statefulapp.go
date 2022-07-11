@@ -43,7 +43,7 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	port := make([]corev1.ContainerPort, 0)
 	cablePort := corev1.ContainerPort{}
 	cablePort.Name = observerconst.CablePortName
-	cablePort.ContainerPort = int32(observerconst.CablePort)
+	cablePort.ContainerPort = observerconst.CablePort
 	cablePort.Protocol = corev1.ProtocolTCP
 	port = append(port, cablePort)
 	mysqlPort := corev1.ContainerPort{}

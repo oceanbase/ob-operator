@@ -17,6 +17,7 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/judge"
+	"k8s.io/klog/v2"
 )
 
 func (ctrl *OBClusterCtrl) OBServerCoordinator(statefulApp cloudv1.StatefulApp) error {
@@ -132,6 +133,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	// nil is need to add server
 	if err == nil {
 		// add server
+		klog.Info("need to add server")
 		return ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
 	}
 
@@ -141,6 +143,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	// nil need to del server
 	if err == nil {
 		// del server
+		klog.Info("need to delete server")
 		return ctrl.DelOBServer(clusterIP, zoneName, podIP)
 	}
 

@@ -92,7 +92,7 @@ func GinLogger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		latency := timeEnd.Sub(timeStart)
 		comment := c.Errors
-		log.Infof("request: from %s, method %s, path %s, response: status code %s, latency %s, comment %v", clientIP, method, path, statusCode, latency.String(), comment)
+		log.Infof("request: from %s, method %s, path %s, response: status code %d, latency %s, comment %v", clientIP, method, path, statusCode, latency.String(), comment)
 	}
 }
 

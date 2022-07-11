@@ -90,7 +90,7 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 	// judge witch ip need add
 	for _, subset := range statefulApp.Status.Subsets {
 		for _, pod := range subset.Pods {
-			if pod.PodPhase == statefulappCore.PodStatusRunning {
+			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
 				status := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
 				// Pod IP not in OBServerList, need to add server
 				// do one thing at a time
@@ -114,22 +114,31 @@ func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, st
 
 	// judge witch ip need del
 	for _, subset := range statefulApp.Status.Subsets {
-		runningPodList := getRunningPodListFromSubsetStatus(subset)
+		podListToDelete := getPodListToDeleteFromSubsetStatus(subset)
 		zoneSpec := GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
 		// number of observer in db > replica
 		if len(nodeMap[subset.Name]) > int(zoneSpec.Replicas) {
 			for _, pod := range nodeMap[subset.Name] {
-				status := IsOBServerInactiveOrDeletingAndNotInPodList(pod, runningPodList)
-				if status {
-					// OBServer IP not in PodList, need to delete server
-					// do one thing at a time
-					return nil, subset.Name, pod.ServerIP
+				for _, podToDelete := range podListToDelete {
+					if pod.ServerIP == podToDelete {
+						return nil, subset.Name, pod.ServerIP
+					}
 				}
 			}
 		}
 	}
 
 	return errors.New("none ip need del"), "", ""
+}
+
+func getPodListToDeleteFromSubsetStatus(subset cloudv1.SubsetStatus) []string {
+	podList := make([]string, 0)
+	for _, pod := range subset.Pods {
+		if pod.Index >= subset.ExpectedReplicas {
+			podList = append(podList, pod.PodIP)
+		}
+	}
+	return podList
 }
 
 func getRunningPodListFromSubsetStatus(subset cloudv1.SubsetStatus) []string {
