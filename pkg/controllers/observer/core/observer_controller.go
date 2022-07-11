@@ -122,7 +122,6 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 }
 
 func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) error {
-	klog.Info("maintain observer")
 	// get ClusterIP
 	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 	if err != nil {
