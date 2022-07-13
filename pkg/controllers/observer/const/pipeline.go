@@ -34,7 +34,7 @@ const (
 
 	AddServerTimeout                 = 60
 	TickPeriodForOBServerStatusCheck = 5 * time.Second
-	TickNumForOBServerStatusCheck    = 6
+	TickNumForOBServerStatusCheck    = 60
 
 	TickPeriodForRSJobStatusCheck = 5 * time.Second
 	TickNumForRSJobStatusCheck    = 12

@@ -51,10 +51,18 @@ func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv
 		if err != nil {
 			return err
 		}
+		err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
+		if err != nil {
+			return err
+		}
 	case observerconst.StepMaintain:
 		_, err = ctrl.GetServiceByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 		if err != nil {
 			err = ctrl.CreateService(statefulApp.Name)
+			if err != nil {
+				return err
+			}
+			err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
 			if err != nil {
 				return err
 			}

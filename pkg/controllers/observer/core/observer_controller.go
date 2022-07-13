@@ -78,6 +78,7 @@ func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp
 	if err == nil {
 		clusterStatus = observerconst.ScaleUP
 		// add server
+		klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 		err = ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
 		if err != nil {
 			return err
@@ -133,6 +134,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	// nil is need to add server
 	if err == nil {
 		// add server
+		klog.Infoln("-----------------------OBServerMaintain-----------------------")
 		klog.Info("need to add server")
 		return ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
 	}

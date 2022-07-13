@@ -20,4 +20,7 @@ const (
 	CableStatusUrl          = "/api/ob/status"
 	CableReadinessUrl       = "/api/ob/readiness"
 	CableReadinessUpdateUrl = "/api/ob/readinessUpdate"
+
+	MonagentReadinessUrl = "/metrics/stat"
+	MonagentUpdateUrl    = "/api/v1/module/config/update"
 )

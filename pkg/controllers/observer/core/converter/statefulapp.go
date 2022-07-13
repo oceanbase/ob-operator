@@ -14,7 +14,6 @@ package converter
 
 import (
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -39,7 +38,7 @@ func GenerateStatefulAppBootStrapZoneSpec(zone []cloudv1.Subset) []cloudv1.Subse
 	return res
 }
 
-func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
+func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	port := make([]corev1.ContainerPort, 0)
 	cablePort := corev1.ContainerPort{}
 	cablePort.Name = observerconst.CablePortName
@@ -88,7 +87,6 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	readinessProbe := corev1.Probe{}
 	readinessProbe.Handler.HTTPGet = &readinessProbeHTTP
 	readinessProbe.PeriodSeconds = observerconst.CableReadinessPeriod
-
 	container := corev1.Container{
 		Name:            observerconst.ImgOb,
 		Image:           fmt.Sprintf("%s:%s", obClusterSpec.ImageRepo, obClusterSpec.Tag),
@@ -98,7 +96,48 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 		VolumeMounts:    volumeMounts,
 		ReadinessProbe:  &readinessProbe,
 	}
+	return container
+}
+
+func GenerateObagentContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
+
+	ports := make([]corev1.ContainerPort, 0)
+	monagentPort := corev1.ContainerPort{}
+	monagentPort.Name = observerconst.MonagentPortName
+	monagentPort.ContainerPort = observerconst.MonagentPort
+	monagentPort.Protocol = corev1.ProtocolTCP
+	ports = append(ports, monagentPort)
+
+	volumeMountConfFile := corev1.VolumeMount{}
+	volumeMountConfFile.Name = observerconst.ConfFileStorageName
+	volumeMountConfFile.MountPath = observerconst.ConfFileStoragePath
+	volumeMounts := make([]corev1.VolumeMount, 0)
+	volumeMounts = append(volumeMounts, volumeMountConfFile)
+
+	readinessProbeHTTP := corev1.HTTPGetAction{}
+	readinessProbeHTTP.Port = intstr.FromInt(observerconst.MonagentPort)
+	readinessProbeHTTP.Path = observerconst.MonagentReadinessUrl
+	readinessProbe := corev1.Probe{}
+	readinessProbe.Handler.HTTPGet = &readinessProbeHTTP
+	readinessProbe.PeriodSeconds = observerconst.MonagentConfigPeriod
+	container := corev1.Container{
+		Name:            observerconst.ImgObagent,
+		Image:           obClusterSpec.ImageObagent,
+		ImagePullPolicy: observerconst.ImgPullPolicy,
+		Ports:           ports,
+		VolumeMounts:    volumeMounts,
+		ReadinessProbe:  &readinessProbe,
+	}
+	return container
+}
+
+func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
+
+	container := GenerateObContainer(obClusterSpec)
 	containers := make([]corev1.Container, 0)
+	containers = append(containers, container)
+
+	container = GenerateObagentContainer(obClusterSpec)
 	containers = append(containers, container)
 
 	volumeDataFile := corev1.Volume{}
@@ -119,10 +158,17 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 		ClaimName: observerconst.LogStorageName,
 	}
 	volumeLog.VolumeSource.PersistentVolumeClaim = volumeLogSource
+	volumeObagentConfFile := corev1.Volume{}
+	volumeObagentConfFile.Name = observerconst.ConfFileStorageName
+	volumeObagentConfFileSource := &corev1.PersistentVolumeClaimVolumeSource{
+		ClaimName: observerconst.ConfFileStorageName,
+	}
+	volumeObagentConfFile.VolumeSource.PersistentVolumeClaim = volumeObagentConfFileSource
 	volumes := make([]corev1.Volume, 0)
 	volumes = append(volumes, volumeDataFile)
 	volumes = append(volumes, volumeDataLog)
 	volumes = append(volumes, volumeLog)
+	volumes = append(volumes, volumeObagentConfFile)
 
 	podSpec := corev1.PodSpec{
 		Containers: containers,
