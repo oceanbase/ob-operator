@@ -22,14 +22,21 @@ type OBClusterSpec struct {
 	ImageRepo string `json:"imageRepo"`
 	Tag       string `json:"tag"`
 	// +kubebuilder:validation:Minimum=1
-	ClusterID int           `json:"clusterID"`
-	Topology  []Cluster     `json:"topology"`
-	Resources ResourcesSpec `json:"resources"`
+	ClusterID    int           `json:"clusterID"`
+	ImageObagent string        `json:"imageObagent"`
+	Topology     []Cluster     `json:"topology"`
+	Resources    ResourcesSpec `json:"resources"`
 }
 
 type Cluster struct {
-	Cluster string   `json:"cluster"`
-	Zone    []Subset `json:"zone"`
+	Cluster    string      `json:"cluster"`
+	Zone       []Subset    `json:"zone"`
+	Parameters []Parameter `json:"parameters"`
+}
+
+type Parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type ResourcesSpec struct {
@@ -61,8 +68,8 @@ type ZoneStatus struct {
 	Name              string `json:"name"`
 	Region            string `json:"region"`
 	ZoneStatus        string `json:"zoneStatus"`
-	ExpectedReplicas  int32  `json:"expectedReplicas"`
-	AvailableReplicas int32  `json:"availableReplicas"`
+	ExpectedReplicas  int    `json:"expectedReplicas"`
+	AvailableReplicas int    `json:"availableReplicas"`
 }
 
 // +genclient

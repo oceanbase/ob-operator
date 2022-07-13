@@ -15,9 +15,12 @@ package observerconst
 const (
 	CableUrlProfix          = "http://"
 	CablePort               = 19001
-	CableInfoUrl            = "/api/system/info"
+	CableNicInfoUrl         = "/api/system/info"
 	CableStartUrl           = "/api/ob/start"
 	CableStatusUrl          = "/api/ob/status"
 	CableReadinessUrl       = "/api/ob/readiness"
 	CableReadinessUpdateUrl = "/api/ob/readinessUpdate"
+
+	MonagentReadinessUrl = "/metrics/stat"
+	MonagentUpdateUrl    = "/api/v1/module/config/update"
 )

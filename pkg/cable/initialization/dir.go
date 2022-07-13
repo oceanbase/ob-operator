@@ -10,13 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package provider
+package initialization
 
 import (
 	"os/exec"
 )
 
-func DirInit() {
+func InitDir() {
 	cmd := exec.Command("rm", "-rf", "/home/admin/oceanbase/log")
 	cmd.Run()
 	cmd = exec.Command("mkdir", "-p", "/home/admin/log")

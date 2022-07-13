@@ -14,11 +14,11 @@ package core
 
 import (
 	"context"
+	"k8s.io/klog/v2"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -131,6 +131,7 @@ func (ctrl *OBClusterCtrl) OBClusterEffector(statefulApp cloudv1.StatefulApp) er
 
 func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.StatefulApp) error {
 	var err error
+
 	for _, clusterStatus := range ctrl.OBCluster.Status.Topology {
 		if clusterStatus.Cluster == myconfig.ClusterName {
 			switch clusterStatus.ClusterStatus {
@@ -156,7 +157,10 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 				// OBCluster bootstrap succeeded
 				err = ctrl.OBClusterReadyForStep(observerconst.StepBootstrap, statefulApp)
 				if err == nil {
-					err = ctrl.CreateUserForObproxy()
+					err = ctrl.CreateUserForObproxy(statefulApp)
+					klog.Infoln("preparation for obagent")
+					err = ctrl.CreateUserForObagent(statefulApp)
+					err = ctrl.ReviseAllOBAgentConfig(statefulApp)
 				}
 			}
 		}
@@ -182,6 +186,9 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 }
 
 func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp) error {
+	// check parameter and version in obcluster, set parameter when modified
+	ctrl.CheckAndSetParameters()
+
 	// check version update
 	versionIsModified, err := judge.VersionIsModified(ctrl.OBCluster.Spec.Tag, statefulApp)
 	if err != nil {

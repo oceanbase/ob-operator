@@ -13,19 +13,19 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
-func (ctrl *OBClusterCtrl) CreateUserForObproxy() error {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+func (ctrl *OBClusterCtrl) CreateUserForObproxy(statefulApp cloudv1.StatefulApp) error {
+	subsets := statefulApp.Status.Subsets
+	podIp := subsets[0].Pods[0].PodIP
+
+	err := sql.CreateUser(podIp, "proxyro", "")
 	if err != nil {
 		return err
 	}
-	err = sql.CreateUser(clusterIP, "proxyro", "")
-	if err != nil {
-		return err
-	}
-	err = sql.GrantPrivilege(clusterIP, "select", "*.*", "proxyro")
+	err = sql.GrantPrivilege(podIp, "select", "*.*", "proxyro")
 	if err != nil {
 		return err
 	}

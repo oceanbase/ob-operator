@@ -14,13 +14,13 @@ package cable
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/ob"
 )
@@ -33,9 +33,9 @@ func GenerateRSListFromSubset(subsets []cloudv1.SubsetStatus) string {
 			podIP := podList[0].PodIP
 			if podIP != "" {
 				if rsList == "" {
-					rsList = fmt.Sprintf("%s:%s:%s", podIP, ob.OBSERVER_RPC_PORT, ob.OBSERVER_MYSQL_PORT)
+					rsList = fmt.Sprintf("%s:%d:%d", podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				} else {
-					rsList = fmt.Sprintf("%s,%s:%s:%s", rsList, podIP, ob.OBSERVER_RPC_PORT, ob.OBSERVER_MYSQL_PORT)
+					rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				}
 			} else {
 				klog.Errorln("pod ip is empty", subsets)
@@ -52,9 +52,9 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 			for _, zone := range cluster.Zone {
 				if zone.ServerIP != "" && zone.Status == observerconst.OBServerActive {
 					if rsList == "" {
-						rsList = fmt.Sprintf("%s:%s:%s", zone.ServerIP, ob.OBSERVER_RPC_PORT, ob.OBSERVER_MYSQL_PORT)
+						rsList = fmt.Sprintf("%s:%d:%d", zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					} else {
-						rsList = fmt.Sprintf("%s,%s:%s:%s", rsList, zone.ServerIP, ob.OBSERVER_RPC_PORT, ob.OBSERVER_MYSQL_PORT)
+						rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					}
 				}
 			}
@@ -74,6 +74,7 @@ func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList str
 	obServerStartArgs["cpuLimit"] = cpu
 	memory, _ := obCluster.Spec.Resources.Memory.AsInt64()
 	obServerStartArgs["memoryLimit"] = memory / 1024 / 1024 / 1024
+	obServerStartArgs["customParameters"] = obCluster.Spec.Topology[0].Parameters
 	return obServerStartArgs
 }
 
@@ -83,16 +84,11 @@ func GenerateOBClusterBootstrapArgs(subsets []cloudv1.SubsetStatus) (string, err
 		podList := subset.Pods
 		if len(podList) > 0 {
 			podIP := podList[0].PodIP
-			port, err := strconv.Atoi(ob.OBSERVER_RPC_PORT)
-			if err != nil {
-				klog.Errorln("the zone don't have first server", subset)
-				return "", errors.New("the zone don't have first server")
-			}
 			var rsInfo ob.RSInfo
 			rsInfo.Region = subset.Region
 			rsInfo.Zone = subset.Name
 			rsInfo.Server.Ip = podIP
-			rsInfo.Server.Port = port
+			rsInfo.Server.Port = constant.OBSERVER_RPC_PORT
 			rsList = append(rsList, rsInfo)
 		} else {
 			klog.Errorln("the zone don't have first server", subset)

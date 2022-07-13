@@ -31,6 +31,16 @@ func (ctrl *OBClusterCtrl) CreateService(statefulAppName string) error {
 	return nil
 }
 
+func (ctrl *OBClusterCtrl) CreateServiceForPrometheus(statefulAppName string) error {
+	service := converter.GenerateServiceObjectForPrometheus(ctrl.OBCluster, statefulAppName)
+	serviceExecuter := resource.NewServiceResource(ctrl.Resource)
+	err := serviceExecuter.Create(context.TODO(), service)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ctrl *OBClusterCtrl) GetServiceByName(namespace, name string) (corev1.Service, error) {
 	svcName := converter.GenerateServiceName(name)
 	serviceExecuter := resource.NewServiceResource(ctrl.Resource)

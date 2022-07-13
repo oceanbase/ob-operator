@@ -51,10 +51,18 @@ func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv
 		if err != nil {
 			return err
 		}
+		err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
+		if err != nil {
+			return err
+		}
 	case observerconst.StepMaintain:
 		_, err = ctrl.GetServiceByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 		if err != nil {
 			err = ctrl.CreateService(statefulApp.Name)
+			if err != nil {
+				return err
+			}
+			err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
 			if err != nil {
 				return err
 			}
@@ -184,7 +192,7 @@ func buildZoneStatus(statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string]
 	zoneStatus.ExpectedReplicas = zone.Replicas
 	// real AvailableReplicas from OB
 	nodeList := nodeMap[zone.Name]
-	zoneStatus.AvailableReplicas = int32(len(nodeList))
+	zoneStatus.AvailableReplicas = len(nodeList)
 	// StatefulApp is not ready
 	if subsetStatus.ExpectedReplicas != subsetStatus.AvailableReplicas {
 		zoneStatus.ZoneStatus = observerconst.OBZonePrepareing

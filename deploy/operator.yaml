@@ -396,7 +396,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: hongxinsun/ob-operator:1.0.1
+        image: oceanbasedev/ob-operator:1.0.19
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

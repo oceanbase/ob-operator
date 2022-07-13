@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -37,8 +38,8 @@ func DelServerSQLReplacer(serverIP string) *strings.Replacer {
 	return strings.NewReplacer("${SERVER_IP}", serverIP)
 }
 
-func GetRSJobStatusSQLReplacer(serverIP, port string) *strings.Replacer {
-	return strings.NewReplacer("${DELETE_SERVER_IP}", serverIP, "${DELETE_SERVER_PORT}", port)
+func GetRSJobStatusSQLReplacer(serverIP string, port int) *strings.Replacer {
+	return strings.NewReplacer("${DELETE_SERVER_IP}", serverIP, "${DELETE_SERVER_PORT}", fmt.Sprintf("%d", port))
 }
 
 func CreateUserSQLReplacer(user, password string) *strings.Replacer {
@@ -47,4 +48,12 @@ func CreateUserSQLReplacer(user, password string) *strings.Replacer {
 
 func GrantPrivilegeSQLReplacer(privilege, object, user string) *strings.Replacer {
 	return strings.NewReplacer("${PRIVILEGE}", privilege, "${OBJECT}", object, "${USER}", user)
+}
+
+func SetParameterSQLReplacer(name, value string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
+}
+
+func GetParameterSQLReplacer(name string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name)
 }

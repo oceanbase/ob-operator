@@ -23,7 +23,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
-	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
@@ -153,11 +154,7 @@ func (ctrl *PodCtrl) GetPodsStatusBySubset(namespace, name, subsetName string) [
 
 func (ctrl *PodCtrl) DeletePod(subset cloudv1.Subset) error {
 	var err error
-	var podIndex int
-	var podName string
 
-	podIndex = converter.GetDeleteIndex(ctrl.StatefulApp, subset)
-	podName = converter.GeneratePodName(ctrl.StatefulApp.Name, myconfig.ClusterName, subset.Name, podIndex)
 	pods := ctrl.GetPodsBySubset(ctrl.StatefulApp.Namespace, ctrl.StatefulApp.Name, subset.Name)
 
 	// zero
@@ -165,17 +162,56 @@ func (ctrl *PodCtrl) DeletePod(subset cloudv1.Subset) error {
 		return errors.New("can't scale pods to zero")
 	}
 
-	// delete pod
-	podExecuter := resource.NewPodResource(ctrl.Resource)
-	pvcCtrl := NewPVCCtrl(ctrl.Resource.Client, ctrl.Resource.Recorder, ctrl.StatefulApp)
-	for _, pod := range pods {
-		if pod.Name == podName {
-			// TODO: support PVReclaimPolicy
-			err = podExecuter.Delete(context.TODO(), pod)
-			if err == nil {
-				err = pvcCtrl.DeletePVCs(pod)
+	// TODO: wait observer deleted in obcluster
+	var sbsCurrent cloudv1.SubsetStatus
+	for _, sb := range ctrl.StatefulApp.Status.Subsets {
+		if sb.Name == subset.Name {
+			sbsCurrent = sb
+		}
+	}
+
+	podsToDelete := make([]cloudv1.PodStatus, 0, 0)
+	var obServers []model.AllServer
+	for _, pod := range sbsCurrent.Pods {
+		if len(obServers) == 0 {
+			obServers = sql.GetOBServer(pod.PodIP)
+		}
+		if pod.Index >= subset.Replicas {
+			podsToDelete = append(podsToDelete, pod)
+		}
+	}
+
+	allDeleted := true
+	for _, pd := range podsToDelete {
+		deleted := true
+		for _, obs := range obServers {
+			if pd.PodIP == obs.SvrIP {
+				klog.Infof("observer %s is still in cluster", pd.PodIP)
+				deleted = false
 			}
-			break
+		}
+		if !deleted {
+			allDeleted = false
+		}
+	}
+
+	if allDeleted {
+		klog.Infof("all observers are deleted in cluster, begin to delete pod")
+		// delete pod
+		podExecuter := resource.NewPodResource(ctrl.Resource)
+		pvcCtrl := NewPVCCtrl(ctrl.Resource.Client, ctrl.Resource.Recorder, ctrl.StatefulApp)
+		for _, pod := range pods {
+			for _, pd := range podsToDelete {
+				if pod.Name == pd.Name {
+					klog.Infof("begin to delete pod: %s", pod.Name)
+					// TODO: support PVReclaimPolicy
+					err = podExecuter.Delete(context.TODO(), pod)
+					if err == nil {
+						err = pvcCtrl.DeletePVCs(pod)
+					}
+					break
+				}
+			}
 		}
 	}
 
