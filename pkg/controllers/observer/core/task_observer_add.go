@@ -25,6 +25,62 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
+func (ctrl *OBClusterCtrl) AsyncStartOBServer(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
+	go func() {
+		ctrl.StartOBServer(clusterIP, zoneName, podIP, statefulApp)
+		ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
+	}()
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) StartOBServer(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
+	klog.Infoln("begin start OBServer", zoneName, podIP)
+
+	// check cable status
+	err := cable.CableStatusCheckExecuter(podIP)
+	if err != nil {
+		// kill pod
+		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+	}
+
+	// get rs
+	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
+	rsCtrl := NewRootServiceCtrl(ctrl)
+	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
+	if err != nil {
+		// kill pod
+		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+	}
+
+	// update rsList first
+	ctrl.UpdateRootServiceStatus(statefulApp)
+	// generate rsList
+	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
+	if len(rsList) == 0 {
+		klog.Info("rs list is empty")
+		return errors.New("rs list is empty")
+	}
+
+	// generate start args
+	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList)
+	// check OBServer is already running, for OBServer Scale UP
+	err = cable.OBServerStatusCheckExecuter(ctrl.OBCluster.Name, podIP)
+	// nil is OBServer is already running
+	if err != nil {
+		cable.OBServerStartExecuter(podIP, obServerStartArgs)
+		err = TickerOBServerStatusCheck(ctrl.OBCluster.Name, podIP)
+		if err != nil {
+			// kill pod
+			_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+			_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+		}
+	}
+
+	return err
+}
+
 func (ctrl *OBClusterCtrl) AddOBServer(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	for _, zone := range clusterStatus.Zone {
@@ -62,70 +118,42 @@ func (ctrl *OBClusterCtrl) AddOBServer(clusterIP, zoneName, podIP string, statef
 func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) {
 	klog.Infoln("begin add OBServer", zoneName, podIP)
 
-	// check cable status
-	err := cable.CableStatusCheckExecuter(podIP)
-	if err != nil {
-		// kill pod
-		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
-		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
-	}
-
-	// get rs
-	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
-	rsCtrl := NewRootServiceCtrl(ctrl)
-	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
-	if err != nil {
-		// kill pod
-		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
-		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
-	}
-
-	// generate rsList
-	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
-
-	// generate start args
-	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList)
-
-	// check OBServer is already running, for OBServer Scale UP
-	err = cable.OBServerStatusCheckExecuter(ctrl.OBCluster.Name, podIP)
-	// nil is OBServer is already running
-	if err != nil {
-		cable.OBServerStartExecuter(podIP, obServerStartArgs)
-		err = TickerOBServerStatusCheck(ctrl.OBCluster.Name, podIP)
-		if err != nil {
-			// kill pod
-			_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
-			_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
-		}
-	}
-
+	ctrl.StartOBServer(clusterIP, zoneName, podIP, statefulApp)
 	// add server
-	err = sql.AddServer(clusterIP, zoneName, podIP)
+	err := sql.AddServer(clusterIP, zoneName, podIP)
 	if err != nil {
 		// kill pod
 		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+	} else {
+		klog.Infoln("add OBServer finish", zoneName, podIP)
+		ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
 	}
 
-	err = TickerOBServerStatusCheckFromDB(clusterIP, podIP)
+	// update status
+	_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+}
+
+func (ctrl *OBClusterCtrl) WaitOBServerActive(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
+	klog.Infof("wait observer %s ready", podIP)
+	err := TickerOBServerStatusCheckFromDB(clusterIP, podIP)
 	if err != nil {
 		// kill pod
+		klog.Infof("observer %s still not ready", podIP)
 		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
 	}
 
+	klog.Infof("observer %s is ready, update pod status", podIP)
 	// update OBServer Pod Readiness
 	err = cable.CableReadinessUpdateExecuter(podIP)
 	if err != nil {
 		// kill pod
+		klog.Infof("update pod %s status failed", podIP)
 		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
 	}
-
-	klog.Infoln("add OBServer finish", zoneName, podIP)
-
-	// update status
-	_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+	return err
 }
 
 func TickerOBServerStatusCheck(clusterName, podIP string) error {
