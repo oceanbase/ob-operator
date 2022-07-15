@@ -56,6 +56,7 @@ func IsOBServerDeleted(clusterIP, podIP string) bool {
 
 func IsPodNotInOBServerList(zoneName, ip string, nodeMap map[string][]cloudv1.OBNode) bool {
 	zoneIPList := nodeMap[zoneName]
+
 	if len(zoneIPList) > 0 {
 		for _, tmpIP := range zoneIPList {
 			if tmpIP.ServerIP == ip {
@@ -117,7 +118,7 @@ func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, st
 		podListToDelete := getPodListToDeleteFromSubsetStatus(subset)
 		zoneSpec := GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
 		// number of observer in db > replica
-		if len(nodeMap[subset.Name]) > int(zoneSpec.Replicas) {
+		if len(nodeMap[subset.Name]) > zoneSpec.Replicas {
 			for _, pod := range nodeMap[subset.Name] {
 				for _, podToDelete := range podListToDelete {
 					if pod.ServerIP == podToDelete {

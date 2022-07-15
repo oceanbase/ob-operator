@@ -13,10 +13,9 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
-
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
 func ExecSQL(ip string, port int, db string, SQL string, timeout int) error {

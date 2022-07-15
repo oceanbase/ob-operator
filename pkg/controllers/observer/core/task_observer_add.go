@@ -47,8 +47,11 @@ func (ctrl *OBClusterCtrl) AddOBServer(clusterIP, zoneName, podIP string, statef
 		// an IP is already in the process of being added
 		// execute serially, one IP at a time
 		if zone.Name == zoneName && zone.ZoneStatus != observerconst.OBServerAdd {
-			// add server
-			go ctrl.AddOBServerExecuter(clusterIP, zoneName, podIP, statefulApp)
+			// add server and update obagent config
+			go func() {
+				ctrl.AddOBServerExecuter(clusterIP, zoneName, podIP, statefulApp)
+				ctrl.ReviseConfig(podIP, zoneName)
+			}()
 			// update status
 			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ScaleUP, zoneName, observerconst.OBServerAdd)
 		}
@@ -104,6 +107,13 @@ func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
 	}
 
+	err = TickerOBServerStatusCheckFromDB(clusterIP, podIP)
+	if err != nil {
+		// kill pod
+		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+	}
+
 	// update OBServer Pod Readiness
 	err = cable.CableReadinessUpdateExecuter(podIP)
 	if err != nil {
@@ -135,4 +145,28 @@ func TickerOBServerStatusCheck(clusterName, podIP string) error {
 			}
 		}
 	}
+
+}
+
+func TickerOBServerStatusCheckFromDB(clusterIP string, podIP string) error {
+	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForOBServerStatusCheck {
+				return errors.New("observer starting timeout")
+			}
+			num = num + 1
+			obServerList := sql.GetOBServer(clusterIP)
+			for _, obServer := range obServerList {
+				if obServer.SvrIP == podIP {
+					if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
+						return nil
+					}
+				}
+			}
+		}
+	}
+
 }

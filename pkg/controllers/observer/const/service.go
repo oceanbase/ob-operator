@@ -14,9 +14,11 @@ package observerconst
 
 // Service
 const (
-	CablePortName = "cable"
-	MysqlPortName = "mysql"
-	MysqlPort     = 2881
-	RpcPortName   = "rpc"
-	RpcPort       = 2882
+	CablePortName    = "cable"
+	MysqlPortName    = "mysql"
+	MysqlPort        = 2881
+	RpcPortName      = "rpc"
+	RpcPort          = 2882
+	MonagentPortName = "monagent"
+	MonagentPort     = 8088
 )
