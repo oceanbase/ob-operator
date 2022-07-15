@@ -80,6 +80,31 @@ func IsOBServerInactiveOrDeletingAndNotInPodList(server cloudv1.OBNode, podRunni
 	return false
 }
 
+// TODO refactor the following 3 function
+func GetInfoForRecoverServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
+	obServerList := sql.GetOBServer(clusterIP)
+	if len(obServerList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+
+	nodeMap := GenerateNodeMapByOBServerList(obServerList)
+
+	// judge witch ip need recover
+	for _, subset := range statefulApp.Status.Subsets {
+		for _, pod := range subset.Pods {
+			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
+				for _, server := range nodeMap[subset.Name] {
+					if pod.PodIP == server.ServerIP && server.Status == observerconst.OBServerInactive {
+						return nil, subset.Name, pod.PodIP
+					}
+				}
+			}
+		}
+	}
+
+	return errors.New("none server need recover"), "", ""
+}
+
 func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
 	obServerList := sql.GetOBServer(clusterIP)
 	if len(obServerList) == 0 {

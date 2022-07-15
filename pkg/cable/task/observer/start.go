@@ -38,6 +38,14 @@ type Parameter struct {
 	Value string `json:"value"`
 }
 
+func ValidateStartParam(param StartObServerProcessArguments) bool {
+    if len(param.RsList) == 0 {
+        log.Error("RsList is empty")
+        return false
+    }
+    return true
+}
+
 func StartObserverProcess(param StartObServerProcessArguments) {
 	cpu := getCPU(param.CpuLimit)
 	memory := getMemoryLimit(param.MemoryLimit)
