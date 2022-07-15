@@ -51,7 +51,7 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 		if cluster.Cluster == myconfig.ClusterName {
 			for _, zone := range cluster.Zone {
 				if zone.ServerIP != "" && zone.Status == observerconst.OBServerActive {
-                    klog.Infof("found rs: %s", zone.ServerIP)
+					klog.Infof("found rs: %s", zone.ServerIP)
 					if rsList == "" {
 						rsList = fmt.Sprintf("%s:%d:%d", zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					} else {

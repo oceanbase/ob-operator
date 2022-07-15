@@ -39,11 +39,11 @@ type Parameter struct {
 }
 
 func ValidateStartParam(param StartObServerProcessArguments) bool {
-    if len(param.RsList) == 0 {
-        log.Error("RsList is empty")
-        return false
-    }
-    return true
+	if len(param.RsList) == 0 {
+		log.Error("RsList is empty")
+		return false
+	}
+	return true
 }
 
 func StartObserverProcess(param StartObServerProcessArguments) {

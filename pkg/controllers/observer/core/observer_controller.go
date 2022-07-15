@@ -135,8 +135,8 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	if err == nil {
 		// add server
 		klog.Info("need to recover server")
-        err := ctrl.AsyncStartOBServer(clusterIP, zoneName, podIP, statefulApp)
-        return err
+		err := ctrl.AsyncStartOBServer(clusterIP, zoneName, podIP, statefulApp)
+		return err
 	}
 
 	// get info for add server

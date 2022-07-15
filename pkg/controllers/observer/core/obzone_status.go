@@ -19,9 +19,9 @@ import (
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
 func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) error {
@@ -33,25 +33,25 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 	if err != nil {
 		return err
 	}
-    // TODO: add a common method to execute sql iterating servers
-    obServerList := make([]model.AllServer, 0, 0)
-    for _, sb := range subsets{
-        success := false
-        for _, pod := range sb.Pods{
-	        obServerList = sql.GetOBServer(pod.PodIP)
-            if len(obServerList) > 0 {
-                success = true
-                break
-            }
-        }
-        if success {
-            break
-        }
-    }
+	// TODO: add a common method to execute sql iterating servers
+	obServerList := make([]model.AllServer, 0, 0)
+	for _, sb := range subsets {
+		success := false
+		for _, pod := range sb.Pods {
+			obServerList = sql.GetOBServer(pod.PodIP)
+			if len(obServerList) > 0 {
+				success = true
+				break
+			}
+		}
+		if success {
+			break
+		}
+	}
 
-    if len(obServerList) == 0 {
-        klog.Error("observer list is empty")
-    }
+	if len(obServerList) == 0 {
+		klog.Error("observer list is empty")
+	}
 
 	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	obZoneStatus := converter.OBServerListToOBZoneStatus(cluster, obZoneCurrent, obServerList)
