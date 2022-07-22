@@ -21,6 +21,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
+    "k8s.io/klog/v2"
 )
 
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
@@ -82,7 +83,7 @@ func IsOBServerInactiveOrDeletingAndNotInPodList(server cloudv1.OBNode, podRunni
 
 func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
 	obServerList := sql.GetOBServer(clusterIP)
-	if len(obServerList) == 0 {
+    if len(obServerList) == 0 {
 		return errors.New(observerconst.DataBaseError), "", ""
 	}
 
@@ -91,8 +92,11 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 	// judge witch ip need add
 	for _, subset := range statefulApp.Status.Subsets {
 		for _, pod := range subset.Pods {
+            klog.Infoln("GetInfoForAddServerByZone: subset ", subset.ExpectedReplicas)
+            klog.Infoln("GetInfoForAddServerByZone: pod ", pod.Index)
 			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
 				status := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
+                klog.Infoln("GetInfoForAddServerByZone: ", status, subset.Name, pod.PodIP)
 				// Pod IP not in OBServerList, need to add server
 				// do one thing at a time
 				if status {

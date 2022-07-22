@@ -14,8 +14,9 @@ package converter
 
 import (
 	"fmt"
-	corev1 "k8s.io/api/core/v1"
+    corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -243,6 +244,7 @@ func UpdateSubsetReplicaForStatefulApp(subset cloudv1.Subset, statefulApp cloudv
 		}
 		zoneList = append(zoneList, zone)
 	}
+    klog.Infoln("UpdateSubsetReplicaForStatefulApp: zoneList ", zoneList)
 	statefulApp.Spec.Subsets = zoneList
 	return statefulApp
 }
@@ -252,4 +254,12 @@ func CheckStatefulAppStatus(statefulApp cloudv1.StatefulApp) bool {
 		return false
 	}
 	return true
+}
+
+func UpdateZoneForStatefulApp(clusterList []cloudv1.Cluster, statefulApp cloudv1.StatefulApp) cloudv1.StatefulApp {
+    cluster := GetClusterSpecFromOBTopology(clusterList)
+    zoneList := cluster.Zone
+	statefulApp.Spec.Subsets = zoneList
+	klog.Infoln("UpdateZoneForStatefulApp: newStatefulApp.Spec.Subsets ", statefulApp.Spec.Subsets)
+    return statefulApp
 }

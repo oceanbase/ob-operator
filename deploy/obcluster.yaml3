@@ -16,6 +16,16 @@ spec:
         nodeSelector:
           topology.kubernetes.io/zone: zone1
         replicas: 1
+      - name: zone2
+        region: region1
+        nodeSelector:
+          topology.kubernetes.io/zone: zone1
+        replicas: 1
+      - name: zone3
+        region: region1
+        nodeSelector:
+          topology.kubernetes.io/zone: zone1
+        replicas: 1
       parameters:
         - name: freeze_trigger_percentage
           value: "30"

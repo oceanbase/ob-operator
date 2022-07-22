@@ -50,7 +50,7 @@ func ResourcesIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBClus
 
 func ZoneNumberIsModified(clusterList []cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (string, error) {
 	cluster := converter.GetClusterSpecFromOBTopology(clusterList)
-	zoneNumberNew := len(cluster.Zone)
+    zoneNumberNew := len(cluster.Zone)
 	if zoneNumberNew == 0 {
 		return observerconst.Maintain, kubeerrors.NewServiceUnavailable("can't scale Zone to zero")
 	}

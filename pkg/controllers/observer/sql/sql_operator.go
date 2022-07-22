@@ -82,3 +82,14 @@ func GetRSJobStatus(clusterIP, podIP string) []model.RSJobStatus {
 	sql := ReplaceAll(GetRSJobStatusSQL, GetRSJobStatusSQLReplacer(podIP, constant.OBSERVER_RPC_PORT))
 	return GetRSJobStatusFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
 }
+
+
+func AddZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(AddZoneSQLTemplate, AddZoneSQLReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}
+
+func StartZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(StartZoneSQLTemplate, StartZoneSQLReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}

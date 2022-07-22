@@ -218,9 +218,8 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 	switch zoneScaleStatus {
 	case observerconst.ScaleUP:
-		// TODO: support Zone Scale UP
-		klog.Errorln("Zone scale up is not supported yet")
-	case observerconst.ScaleDown:
+	    err = ctrl.OBZoneScaleUP(statefulApp, observerconst.ScaleUP)
+    case observerconst.ScaleDown:
 		// TODO: support Zone Scale Down
 		klog.Errorln("Zone scale down is not supported yet")
 	case observerconst.Maintain:
