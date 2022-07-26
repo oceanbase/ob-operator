@@ -62,70 +62,6 @@ func (ctrl *OBClusterCtrl) UpdateOBServerReplica(subset cloudv1.Subset, stateful
 	return ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
 }
 
-func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp, status string) error {
-	//generate new StatefulApp for new Zone
-	klog.Infoln("----------------------------UpdateOBZoneTopology----------------------------")
-	// create StatefulApp
-    klog.Infoln("OBZoneScaleUP:ctrl.OBCluster.Spec.Topology ", ctrl.OBCluster.Spec.Topology)
-	newStatefulApp := converter.UpdateZoneForStatefulApp(ctrl.OBCluster.Spec.Topology, statefulApp)
-
-	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
-	err := statefulAppCtrl.UpdateStatefulApp()
-	if err != nil {
-		return err
-	}
-    klog.Infoln("OBZoneScaleUP: ctrl.OBCluster.spec ", ctrl.OBCluster.Spec)
-
-	// generate new OBZone for new ObZone
-	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
-    klog.Infoln("OBZoneScaleUP: obZoneName ", obZoneName)
-	obZoneCtrl := NewOBZoneCtrl(ctrl)
-    klog.Infoln("OBZoneScaleUP: obZoneCtrl ", obZoneCtrl)
-	obZoneCurrent, err := obZoneCtrl.GetOBZoneByName(ctrl.OBCluster.Namespace, obZoneName)
-    klog.Infoln("OBZoneScaleUP: obZoneCurrent ", obZoneCurrent)
-	if err != nil {
-		return err
-	}
-	newOBZone := converter.UpdateOBZoneSpec(obZoneCurrent, ctrl.OBCluster.Spec.Topology)
-	klog.Infoln("OBZoneScaleUP: newOBZone ", newOBZone)
-
-
-	// update OBZone replica
-	err = obZoneCtrl.UpdateOBZone(newOBZone)
-    klog.Infoln("OBZoneScaleUP: newOBZone.Spec ", newOBZone.Spec)
-    klog.Infoln("OBZoneScaleUP: newOBZone.Status ", newOBZone.Status)
-	if err != nil {
-        klog.Infoln("OBZoneScaleUP: UpdateOBZone err ", err)
-        return err
-	}
-
-	err = ctrl.UpdateOBZoneStatus(statefulApp)
-    if err != nil {
-        klog.Infoln("OBZoneScaleUP: UpdateOBZone err ", err)
-        return err
-    }
-
-    err = ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
-    if err != nil {
-        klog.Infoln("OBZoneScaleUP: UpdateOBZone err ", err)
-        return err
-    }
-
-    clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-    klog.Infoln("OBZoneScaleUP: clusterIP ", clusterIP)
-    klog.Infoln("OBZoneScaleUP: statefulApp ", statefulApp)
-    err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
-    klog.Infoln("OBZoneScaleUP: err ", err)
-    klog.Infoln("OBZoneScaleUP: zoneName, podIP ", zoneName, podIP)
-
-    err = ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
-    klog.Infoln("OBZoneScaleUP: err ", err)
-	if err != nil {
-		return err
-	}
-    return err
-}
-
 func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp) error {
 	var clusterStatus string
 	var zoneStatus string
@@ -135,14 +71,13 @@ func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp
 	if err != nil {
 		return err
 	}
-
+	klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 	// get info for add server
 	err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
 	// nil need to add server
 	if err == nil {
 		clusterStatus = observerconst.ScaleUP
 		// add server
-		klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 		err = ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
 		if err != nil {
 			return err

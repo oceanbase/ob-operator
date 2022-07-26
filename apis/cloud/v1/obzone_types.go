@@ -41,6 +41,11 @@ type OBNode struct {
 	Status   string `json:"status"`
 }
 
+type OBZoneNode struct {
+	Name   string `json:"name"`
+	Status string `json:"status"`
+}
+
 // +genclient
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status

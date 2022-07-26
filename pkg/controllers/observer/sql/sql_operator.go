@@ -62,6 +62,10 @@ func GetOBServer(IP string) []model.AllServer {
 	return GetOBServerFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBServerSQL)
 }
 
+func GetOBZone(IP string) []model.AllZone {
+	return GetOBZoneFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBZoneSQL)
+}
+
 func AddServer(clusterIP, zoneName, podIP string) error {
 	serverIP := fmt.Sprintf("%s:%d", podIP, constant.OBSERVER_RPC_PORT)
 	sql := ReplaceAll(AddServerSQLTemplate, AddServerSQLReplacer(zoneName, serverIP))
@@ -82,7 +86,6 @@ func GetRSJobStatus(clusterIP, podIP string) []model.RSJobStatus {
 	sql := ReplaceAll(GetRSJobStatusSQL, GetRSJobStatusSQLReplacer(podIP, constant.OBSERVER_RPC_PORT))
 	return GetRSJobStatusFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
 }
-
 
 func AddZone(clusterIP, zoneName string) error {
 	sql := ReplaceAll(AddZoneSQLTemplate, AddZoneSQLReplacer(zoneName))

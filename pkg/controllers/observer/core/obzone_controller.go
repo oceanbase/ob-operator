@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
@@ -79,6 +80,71 @@ func (ctrl *OBZoneCtrl) DeleteOBZone(zone cloudv1.OBZone) error {
 	obZoneExecuter := resource.NewOBZoneResource(ctrl.OBClusterCtrl.Resource)
 	err := obZoneExecuter.Delete(context.TODO(), zone)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp, status string) error {
+	//generate new StatefulApp for new Zone
+	klog.Infoln("----------------------------UpdateOBZoneTopology----------------------------")
+	// create StatefulApp
+	newStatefulApp := converter.UpdateZoneForStatefulApp(ctrl.OBCluster.Spec.Topology, statefulApp)
+
+	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
+	err := statefulAppCtrl.UpdateStatefulApp()
+	if err != nil {
+		return err
+	}
+
+	// generate new OBZone for new ObZone
+	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
+	obZoneCtrl := NewOBZoneCtrl(ctrl)
+	obZoneCurrent, err := obZoneCtrl.GetOBZoneByName(ctrl.OBCluster.Namespace, obZoneName)
+	if err != nil {
+		return err
+	}
+	newOBZone := converter.UpdateOBZoneSpec(obZoneCurrent, ctrl.OBCluster.Spec.Topology)
+
+	// update OBZone replica
+	err = obZoneCtrl.UpdateOBZone(newOBZone)
+	if err != nil {
+		return err
+	}
+
+	err = ctrl.UpdateOBZoneStatus(statefulApp)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: UpdateOBZoneStatus err ", err)
+	}
+
+	err = ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: UpdateOBClusterAndZoneStatus err ", err)
+		return err
+	}
+
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: GetServiceClusterIPByName err ", err)
+		return err
+	}
+
+	// add and start ob zone
+	err = ctrl.AddAndStartOBZone(clusterIP)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: AddAndStartOBZone err ", err)
+		return err
+	}
+
+	err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: GetInfoForAddServerByZone err ", err)
+		return err
+	}
+
+	err = ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: AddOBServer err ", err)
 		return err
 	}
 	return nil

@@ -2,20 +2,35 @@ package core
 
 import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"k8s.io/klog/v2"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
-func (ctrl *OBClusterCtrl) AddOBZone(clusterIP, obZoneName string) error {
+func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	expectedOBZoneList := ctrl.OBCluster.Spec.Topology[0].Zone
 
-	klog.Infoln("AddOBZone: clusterStatus", clusterStatus)
-	expectedOBZoneList := ctrl.OBCluster.Spec.Topology
-	klog.Infoln("AddOBZone: expectedOBZoneList ", expectedOBZoneList)
-
+	isExistFlag := false
 	for _, zone := range expectedOBZoneList {
-		klog.Infoln("AddOBZone: item ", zone)
-	}
+		for _, readyZone := range clusterStatus.Zone {
+			// 说明该zone已经ready
+			if zone.Name == readyZone.Name {
+				isExistFlag = true
+			}
+		}
+		if isExistFlag == false {
+			// add zone
+			err := sql.AddZone(clusterIP, zone.Name)
+			if err != nil {
+				return nil
+			}
 
+			//start zone
+			err = sql.StartZone(clusterIP, zone.Name)
+			if err != nil {
+				return err
+			}
+		}
+		isExistFlag = false
+	}
 	return nil
 }
-

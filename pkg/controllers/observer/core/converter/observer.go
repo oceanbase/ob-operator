@@ -13,15 +13,13 @@ See the Mulan PSL v2 for more details.
 package converter
 
 import (
-	"github.com/pkg/errors"
-
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
-    "k8s.io/klog/v2"
+	"github.com/pkg/errors"
 )
 
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
@@ -69,6 +67,15 @@ func IsPodNotInOBServerList(zoneName, ip string, nodeMap map[string][]cloudv1.OB
 	return false
 }
 
+func IsPodInOBZoneListNotInOBServerList(zoneName string, nodeMap map[string][]cloudv1.OBNode, zoneNodeMap map[string][]cloudv1.OBZoneNode) bool {
+	if len(nodeMap) > 0 {
+		if nodeMap[zoneName] == nil && zoneNodeMap[zoneName] != nil {
+			return true
+		}
+	}
+	return false
+}
+
 func IsOBServerInactiveOrDeletingAndNotInPodList(server cloudv1.OBNode, podRunningList []string) bool {
 	if server.Status == observerconst.OBServerInactive || server.Status == observerconst.OBServerDeleting {
 		for _, podIP := range podRunningList {
@@ -83,23 +90,25 @@ func IsOBServerInactiveOrDeletingAndNotInPodList(server cloudv1.OBNode, podRunni
 
 func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
 	obServerList := sql.GetOBServer(clusterIP)
-    if len(obServerList) == 0 {
+	obZoneList := sql.GetOBZone(clusterIP)
+	if len(obServerList) == 0 {
 		return errors.New(observerconst.DataBaseError), "", ""
 	}
-
+	if len(obZoneList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
 	nodeMap := GenerateNodeMapByOBServerList(obServerList)
+	zoneNodeMap := GenerateZoneNodeMapByOBZoneList(obZoneList)
 
-	// judge witch ip need add
+	// judge which ip need add
 	for _, subset := range statefulApp.Status.Subsets {
 		for _, pod := range subset.Pods {
-            klog.Infoln("GetInfoForAddServerByZone: subset ", subset.ExpectedReplicas)
-            klog.Infoln("GetInfoForAddServerByZone: pod ", pod.Index)
 			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
-				status := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
-                klog.Infoln("GetInfoForAddServerByZone: ", status, subset.Name, pod.PodIP)
+				status1 := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
+				status2 := IsPodInOBZoneListNotInOBServerList(subset.Name, nodeMap, zoneNodeMap)
 				// Pod IP not in OBServerList, need to add server
 				// do one thing at a time
-				if status {
+				if status1 || status2 {
 					return nil, subset.Name, pod.PodIP
 				}
 			}

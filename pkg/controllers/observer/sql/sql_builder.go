@@ -31,7 +31,7 @@ func SetServerOfflineTimeSQLReplacer(offlineTime int) *strings.Replacer {
 }
 
 func AddServerSQLReplacer(zoneName, serverIP string) *strings.Replacer {
-	return strings.NewReplacer("${SERVER_IP}", serverIP, "${ZONE_NAME}", zoneNamye)
+	return strings.NewReplacer("${SERVER_IP}", serverIP, "${ZONE_NAME}", zoneName)
 }
 
 func DelServerSQLReplacer(serverIP string) *strings.Replacer {
@@ -58,10 +58,10 @@ func GetParameterSQLReplacer(name string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name)
 }
 
-func AddZoneSQLReplacer(zoneName) *strings.Replacer {
-    return strings.NewReplacer("${ZONE_NAME}", zoneName)
+func AddZoneSQLReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
 
-func StartZoneSQLReplacer(zoneName) *strings.Replacer {
-    return strings.NewReplacer("${ZONE_NAME}", zoneName)
+func StartZoneSQLReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }

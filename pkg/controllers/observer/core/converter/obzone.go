@@ -84,6 +84,19 @@ func GenerateNodeMapByOBServerList(obServerList []model.AllServer) map[string][]
 	return nodeMap
 }
 
+func GenerateZoneNodeMapByOBZoneList(obZoneList []model.AllZone) map[string][]cloudv1.OBZoneNode {
+	nodeMap := make(map[string][]cloudv1.OBZoneNode, 0)
+	for _, zone := range obZoneList {
+		nodes := nodeMap[zone.Zone]
+		var node cloudv1.OBZoneNode
+		node.Name = zone.Name
+		node.Status = zone.Info
+		nodes = append(nodes, node)
+		nodeMap[zone.Zone] = nodes
+	}
+	return nodeMap
+}
+
 func UpdateOBZoneSpec(obzone cloudv1.OBZone, topology []cloudv1.Cluster) cloudv1.OBZone {
 	obzone.Spec.Topology = topology
 	return obzone

@@ -24,6 +24,13 @@ type AllServer struct {
 	StartServiceTime int64
 }
 
+type AllZone struct {
+	Zone  string
+	Name  string
+	Value string
+	Info  string
+}
+
 type AllVirtualCoreMeta struct {
 	Zone         string
 	SvrIP        string

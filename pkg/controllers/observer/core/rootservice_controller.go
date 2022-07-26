@@ -18,7 +18,7 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
-    "k8s.io/klog/v2"
+	"k8s.io/klog/v2"
 )
 
 type RootServiceCtrl struct {
@@ -58,14 +58,13 @@ func (ctrl *RootServiceCtrl) GetRootServiceByName(namespace, name string) (cloud
 }
 
 func (ctrl *RootServiceCtrl) UpdateRootServiceStatus(rs cloudv1.RootService) error {
-    klog.Infoln("UpdateRootServiceStatus: ctrl.OBClusterCtrl.Resource ", ctrl.OBClusterCtrl.Resource)
-    klog.Infoln("UpdateRootServiceStatus: rs ", rs)
-    rootServiceExecuter := resource.NewRootServiceResource(ctrl.OBClusterCtrl.Resource)
+	klog.Infoln("UpdateRootServiceStatus: rs ", rs)
+	rootServiceExecuter := resource.NewRootServiceResource(ctrl.OBClusterCtrl.Resource)
 	err := rootServiceExecuter.UpdateStatus(context.TODO(), rs)
 	if err != nil {
 		return err
 	}
-    klog.Infoln("UpdateRootServiceStatus: rs2 ", rs)
+	klog.Infoln("UpdateRootServiceStatus: rs2 ", rs)
 	return nil
 }
 
