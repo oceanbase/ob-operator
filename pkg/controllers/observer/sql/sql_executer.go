@@ -132,3 +132,23 @@ func GetSysParameterFromDB(ip string, port int, db string, SQL string) []model.S
 	}
 	return res
 }
+
+func GetAllUnitFromDB(ip string, port int, db string, SQL string) []model.AllUnit {
+	client := ConnOB(ip, port, db, 5)
+	res := make([]model.AllUnit, 0)
+	if client != nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllUnit{}).Raw(SQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllUnit
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}

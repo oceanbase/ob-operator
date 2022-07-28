@@ -17,4 +17,6 @@ const (
 	OBZonePrepareing = "Prepareing"
 	OBZoneReady      = "Ready"
 	OBZoneOffline    = "Offline"
+
+	OBZoneActive = "ACTIVE"
 )

@@ -20,6 +20,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
 )
 
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
@@ -118,6 +119,25 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 	return errors.New("none ip need add"), "", ""
 }
 
+func GetInfoForDelZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
+	obZoneList := sql.GetOBZone(clusterIP)
+	if len(obZoneList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+
+	zoneNodeMap := GenerateZoneNodeMapByOBZoneList(obZoneList)
+
+	for _, subset := range statefulApp.Status.Subsets {
+		klog.Infoln("GetInfoForDelZone: subset ", subset)
+		zoneSpec := GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
+		klog.Infoln("GetInfoForDelZone: zoneSpec ", zoneSpec)
+		klog.Infoln("GetInfoForDelZone: zoneNodeMap[subset.Name] ", zoneNodeMap[subset.Name])
+
+	}
+
+	return errors.New("none ip need del"), "", ""
+}
+
 func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
 	obServerList := sql.GetOBServer(clusterIP)
 	if len(obServerList) == 0 {
@@ -147,7 +167,9 @@ func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, st
 
 func getPodListToDeleteFromSubsetStatus(subset cloudv1.SubsetStatus) []string {
 	podList := make([]string, 0)
+	klog.Infoln("getPodListToDeleteFromSubsetStatus: subset.Pods", subset.Pods)
 	for _, pod := range subset.Pods {
+		klog.Infoln("getPodListToDeleteFromSubsetStatus: pod.Index, subset.ExpectedReplicas ", pod.Index, subset.ExpectedReplicas)
 		if pod.Index >= subset.ExpectedReplicas {
 			podList = append(podList, pod.PodIP)
 		}

@@ -28,6 +28,8 @@ const (
 	AddZoneSQLTemplate   = "ALTER SYSTEM ADD ZONE '${ZONE_NAME}';"
 	StartZoneSQLTemplate = "ALTER SYSTEM START ZONE '${ZONE_NAME}';"
 
+	GetAllUnitSql = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
+
 	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role, partition_id, partition_cnt FROM __all_virtual_core_meta_table;"
 
 	GetRSJobStatusSQL = "SELECT job_status, return_code, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"

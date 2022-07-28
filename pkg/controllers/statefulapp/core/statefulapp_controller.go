@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"k8s.io/klog/v2"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -82,7 +83,8 @@ func (r *StatefulAppReconciler) StatefulAppCoordinator(statefulApp cloudv1.State
 		err = subsetCtrl.CreateSubset(subsetSpecName, subsetsSpec)
 	case statefulappconst.ScaleDown:
 		// delete subset
-		err = subsetCtrl.DeleteSubset(subsetSpecName, subsetsCurrentNameList)
+		klog.Infoln("statefulappconst.ScaleDown")
+		// err = subsetCtrl.DeleteSubset(subsetSpecName, subsetsCurrentNameList)
 	case statefulappconst.Maintain:
 		err = r.SubsetsCoordinator(statefulApp, subsetsSpec)
 	}

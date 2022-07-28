@@ -55,3 +55,17 @@ type SysParameterStat struct {
 	Scope     string
 	EditLevel string
 }
+
+type AllUnit struct {
+	UnitIp             string
+	ResourcePoolIp     string
+	GroupId            string
+	Zone               string
+	SvrIP              string
+	SvrPort            int64
+	MigrateFromSvrIp   string
+	MigrateFromSvrPort int64
+	ManualMigrate      int64
+	Status             string
+	ReplicaType        int64
+}

@@ -96,3 +96,7 @@ func StartZone(clusterIP, zoneName string) error {
 	sql := ReplaceAll(StartZoneSQLTemplate, StartZoneSQLReplacer(zoneName))
 	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
 }
+
+func GetAllUnit(clusterIP string) []model.AllUnit {
+	return GetAllUnitFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetAllUnitSql)
+}
