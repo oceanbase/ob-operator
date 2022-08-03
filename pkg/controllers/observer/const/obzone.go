@@ -20,3 +20,8 @@ const (
 
 	OBZoneActive = "ACTIVE"
 )
+
+const (
+	OBZoneAdd = "Add OBZone"
+	OBZoneDel = "Delete OBZone"
+)

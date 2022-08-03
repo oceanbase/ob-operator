@@ -21,6 +21,8 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
+	"github.com/pkg/errors"
 )
 
 func VersionIsModified(version string, statefulApp cloudv1.StatefulApp) (bool, error) {
@@ -48,17 +50,24 @@ func ResourcesIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBClus
 	return true, nil
 }
 
-func ZoneNumberIsModified(clusterList []cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (string, error) {
+func ZoneNumberIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBCluster, statefulApp cloudv1.StatefulApp) (string, error) {
 	cluster := converter.GetClusterSpecFromOBTopology(clusterList)
-    zoneNumberNew := len(cluster.Zone)
+	zoneNumberNew := len(cluster.Zone)
 	if zoneNumberNew == 0 {
 		return observerconst.Maintain, kubeerrors.NewServiceUnavailable("can't scale Zone to zero")
 	}
-	zoneNumberCurrent := len(statefulApp.Spec.Subsets)
+
+	// zoneNumberCurrent := len(statefulApp.Spec.Subsets)
+	podIP := statefulApp.Status.Subsets[0].Pods[0].PodIP
+	obZoneList := sql.GetOBZone(podIP)
+	zoneNumberCurrent := len(obZoneList)
+	if zoneNumberCurrent == 0 {
+		return "", errors.New(observerconst.DataBaseError)
+	}
 	if zoneNumberNew > zoneNumberCurrent {
 		return observerconst.ScaleUP, nil
 	} else if zoneNumberNew < zoneNumberCurrent {
-		return observerconst.ScaleDown, nil
+		return observerconst.ZoneScaleDown, nil
 	} else {
 		return observerconst.Maintain, nil
 	}

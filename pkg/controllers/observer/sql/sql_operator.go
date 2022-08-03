@@ -15,8 +15,8 @@ package sql
 import (
 	"fmt"
 
-	"k8s.io/klog/v2"
-
+    "k8s.io/klog/v2"
+	
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
@@ -99,4 +99,14 @@ func StartZone(clusterIP, zoneName string) error {
 
 func GetAllUnit(clusterIP string) []model.AllUnit {
 	return GetAllUnitFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetAllUnitSql)
+}
+
+func StopZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(StopOBZoneTemplate, StopZoneSQLReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}
+
+func DeleteZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(DeleteOBZoneTemplate, DeleteZoneSQLReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
 }

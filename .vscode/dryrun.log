@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory `/root/alv/ob-operator'
+make: Leaving directory `/root/alv/ob-operator'
+ 
+make: *** No rule to make target `build', needed by `all'.
+

@@ -28,6 +28,9 @@ const (
 	AddZoneSQLTemplate   = "ALTER SYSTEM ADD ZONE '${ZONE_NAME}';"
 	StartZoneSQLTemplate = "ALTER SYSTEM START ZONE '${ZONE_NAME}';"
 
+	StopOBZoneTemplate   = "ALTER SYSTEM STOP ZONE '${ZONE_NAME}';"
+	DeleteOBZoneTemplate = "ALTER SYSTEM DELETE ZONE '${ZONE_NAME}';"
+
 	GetAllUnitSql = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
 
 	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role, partition_id, partition_cnt FROM __all_virtual_core_meta_table;"

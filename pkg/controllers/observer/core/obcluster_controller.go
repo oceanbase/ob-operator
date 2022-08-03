@@ -162,6 +162,8 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 					err = ctrl.CreateUserForObagent(statefulApp)
 					err = ctrl.ReviseAllOBAgentConfig(statefulApp)
 				}
+			case observerconst.ZoneScaleDown:
+				err = ctrl.OBZoneScaleDown(statefulApp, observerconst.ZoneScaleDown)
 			}
 		}
 	}
@@ -212,15 +214,15 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 
 	// check zone number modified
-	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, statefulApp)
+	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, ctrl.OBCluster, statefulApp)
 	if err != nil {
 		return err
 	}
 	switch zoneScaleStatus {
 	case observerconst.ScaleUP:
 		err = ctrl.OBZoneScaleUP(statefulApp, observerconst.ScaleUP)
-	case observerconst.ScaleDown:
-		err = ctrl.OBZoneScaleDown(statefulApp, observerconst.ScaleDown)
+	case observerconst.ZoneScaleDown:
+		err = ctrl.OBZoneScaleDown(statefulApp, observerconst.ZoneScaleDown)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
 		if err != nil {

@@ -20,7 +20,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
 )
 
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
@@ -119,23 +118,21 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 	return errors.New("none ip need add"), "", ""
 }
 
-func GetInfoForDelZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
+func GetInfoForDelZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string) {
 	obZoneList := sql.GetOBZone(clusterIP)
 	if len(obZoneList) == 0 {
-		return errors.New(observerconst.DataBaseError), "", ""
+		return errors.New(observerconst.DataBaseError), ""
 	}
-
 	zoneNodeMap := GenerateZoneNodeMapByOBZoneList(obZoneList)
 
-	for _, subset := range statefulApp.Status.Subsets {
-		klog.Infoln("GetInfoForDelZone: subset ", subset)
-		zoneSpec := GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
-		klog.Infoln("GetInfoForDelZone: zoneSpec ", zoneSpec)
-		klog.Infoln("GetInfoForDelZone: zoneNodeMap[subset.Name] ", zoneNodeMap[subset.Name])
-
+	for _, obZone := range obZoneList {
+		zoneSpec := GetZoneSpecFromClusterSpec(obZone.Zone, clusterSpec)
+		if zoneNodeMap[obZone.Zone] != nil && zoneSpec.Name == "" {
+			return nil, obZone.Zone
+		}
 	}
 
-	return errors.New("none ip need del"), "", ""
+	return errors.New("none zone need del"), ""
 }
 
 func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
@@ -167,9 +164,7 @@ func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, st
 
 func getPodListToDeleteFromSubsetStatus(subset cloudv1.SubsetStatus) []string {
 	podList := make([]string, 0)
-	klog.Infoln("getPodListToDeleteFromSubsetStatus: subset.Pods", subset.Pods)
 	for _, pod := range subset.Pods {
-		klog.Infoln("getPodListToDeleteFromSubsetStatus: pod.Index, subset.ExpectedReplicas ", pod.Index, subset.ExpectedReplicas)
 		if pod.Index >= subset.ExpectedReplicas {
 			podList = append(podList, pod.PodIP)
 		}

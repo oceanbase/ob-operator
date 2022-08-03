@@ -23,6 +23,13 @@ const (
 	Maintain  = "Maintain"
 )
 
+// zone scale state machine
+const (
+	ZoneScaleUP   = "Zone Scale UP"
+	ZoneScaleDown = "Zone Scale Down"
+	ZoneMaintain  = "Zone Maintain"
+)
+
 // Step
 const (
 	StepBootstrap = "Bootstrap"

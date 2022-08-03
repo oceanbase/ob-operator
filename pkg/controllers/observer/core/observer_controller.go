@@ -103,6 +103,8 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 
 	// get info for del server
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	klog.Infoln("---------------------OBServerScaleDownByZone-------------------------")
+
 	err, zoneName, podIP := converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
 	// nil need to del server
 	if err == nil {

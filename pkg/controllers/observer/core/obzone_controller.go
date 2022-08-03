@@ -14,11 +14,10 @@ package core
 
 import (
 	"context"
-	"k8s.io/klog/v2"
-
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"k8s.io/klog/v2"
 )
 
 type OBZoneCtrl struct {
@@ -153,7 +152,6 @@ func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp, status
 func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp, status string) error {
 	klog.Infoln("----------------------------OBZoneScaleDown----------------------------")
 
-	klog.Infoln("OBZoneScaleDown: statefulApp ", statefulApp)
 	//update StatefulApp
 	newStatefulApp := converter.UpdateZoneForStatefulApp(ctrl.OBCluster.Spec.Topology, statefulApp)
 	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
@@ -161,7 +159,6 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp, stat
 	if err != nil {
 		return err
 	}
-	klog.Infoln("OBZoneScaleDown: newStatefulApp ", newStatefulApp)
 
 	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
 	obZoneCtrl := NewOBZoneCtrl(ctrl)
@@ -170,10 +167,8 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp, stat
 	if err != nil {
 		return err
 	}
-	klog.Infoln("OBZoneScaleDown: obZoneCurrent ", obZoneCurrent)
 	newOBZone := converter.UpdateOBZoneSpec(obZoneCurrent, ctrl.OBCluster.Spec.Topology)
 
-	klog.Infoln("OBZoneScaleDown: newOBZone ", newOBZone)
 	// update OBZone replica
 	err = obZoneCtrl.UpdateOBZone(newOBZone)
 	if err != nil {
@@ -182,48 +177,36 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp, stat
 
 	err = ctrl.UpdateOBZoneStatus(statefulApp)
 	if err != nil {
-		klog.Infoln("OBZoneScaleUP: UpdateOBZoneStatus err ", err)
+		klog.Infoln("OBZoneScaleDown: UpdateOBZoneStatus err ", err)
 	}
-	klog.Infoln("OBZoneScaleDown: newStatefulApp3 ", statefulApp)
 
-	//update zone spec ？
-	err = ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
-	if err != nil {
-		klog.Infoln("OBZoneScaleDown: UpdateOBClusterAndZoneStatus err ", err)
-		return err
-	}
-	klog.Infoln("OBZoneScaleDown: ctrl.OBCluster.Spec.Topology", ctrl.OBCluster.Spec.Topology)
+	// err = ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
+	// if err != nil {
+	// 	klog.Infoln("OBZoneScaleDown: UpdateOBClusterAndZoneStatus err ", err)
+	// 	return err
+	// }
 
 	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 	if err != nil {
 		klog.Infoln("OBZoneScaleDown: GetServiceClusterIPByName err ", err)
 		return err
 	}
-	klog.Infoln("OBZoneScaleDown: clusterIP ", clusterIP)
 
-	// get zoneName
+	// get info for delete obzone
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
-	klog.Infoln("OBZoneScaleDown: clusterSpec ", clusterSpec)
-	// {cn [{zone1 region1 map[topology.kubernetes.io/zone:zone1] 1}] [{freeze_trigger_percentage 30}]}
+	err, zoneName := converter.GetInfoForDelZone(clusterIP, clusterSpec, statefulApp)
+	// nil : need to delete zone
+	if err == nil {
+		// del obzone
+		klog.Infoln("need to delete obzone ")
+		err = ctrl.DeleteOBZone(clusterIP, zoneName)
+		if err != nil {
+			klog.Infoln("OBZoneScaleDown: Delete OBZone err ", err)
+			return err
+		}
 
-	err, zoneName, podIP := converter.GetInfoForDelZone(clusterIP, clusterSpec, statefulApp)
-
-	//err, zoneName, podIP := converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
-	klog.Infoln("OBZoneScaleDown: GetInfoForDelZone zoneName, podIP", zoneName, podIP)
-	if err != nil {
-		klog.Infoln("OBZoneScaleDown: GetInfoForDelServerByZone err ", err)
+		return ctrl.UpdateOBClusterAndZoneStatus(status, "", "")
 	}
 
-	// check unitList is empty
-	AllUnitList := ctrl.GetAllUnit(clusterIP)
-	klog.Infoln("OBZoneScaleDown: AllUnitList ", AllUnitList)
-
-	//
-	klog.Errorln("When unitList is not empty, delete OBZone is not supported yet")
-
-	// get observerList
-
-	// stop and delete ob zone
-
-	return nil
+	return ctrl.FixStatus()
 }

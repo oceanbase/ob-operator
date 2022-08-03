@@ -1,0 +1,384 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 3.82
+# Built for x86_64-koji-linux-gnu
+# Copyright (C) 2010  Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+ 
+make: *** No rule to make target `build', needed by `all'.  Stop.
+
+
+# Make data base, printed on Wed Aug  3 10:34:34 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# makefile (from `Makefile', line 18)
+.SHELLFLAGS = -ec
+# environment
+VSCODE_AGENT_FOLDER = /root/.vscode-server
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# makefile (from `Makefile', line 21)
+PROJECT_DIR := /root/alv/ob-operator
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# makefile
+CURDIR := /root/alv/ob-operator
+# makefile (from `Makefile', line 17)
+SHELL = /usr/bin/env bash -o pipefail
+# environment
+VSCODE_NLS_CONFIG = {"locale":"zh-cn","availableLanguages":{}}
+# environment
+_ = /usr/bin/make
+# makefile (from `Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+HISTCONTROL = ignoredups
+# environment
+GO111MODULE = on
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# makefile (from `Makefile', line 1)
+VERSION := 02cda29
+# environment
+LESSOPEN = ||/usr/bin/lesspipe.sh %s
+# environment
+VSCODE_CWD = /root
+# environment
+GOPROXY = https://goproxy.cn,direct
+# makefile (from `Makefile', line 22)
+go-get-tool = @[ -f $(1) ] || { set -e ; TMP_DIR=$$(mktemp -d) ; cd $$TMP_DIR ; go mod init tmp ; echo "Downloading $(2)" ; GOBIN=$(PROJECT_DIR)/bin go get $(2) ; rm -rf $$TMP_DIR ; }
+# environment
+SSH_CONNECTION = 30.50.16.176 61810 11.162.217.31 22
+# environment
+PATH = /usr/local/go/bin:/root/.vscode-server/bin/3b889b090b5ad5793f524b5d1d39fda662b96a2a/bin/remote-cli:/opt/docker/bin/:/opt/docker/bin/:/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/X11R6/bin:/root/alv/bin:/opt/satools:/root/bin:/root/alv/bin:/opt/satools:/root/bin
+# environment
+GOPATH = /root/alv
+# environment
+ELECTRON_RUN_AS_NODE = 1
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver check-symlink
+# makefile (from `Makefile', line 52)
+CONTROLLER_GEN = $(shell pwd)/bin/controller-gen
+# environment
+LS_COLORS = 
+# automatic
+%F = $(notdir $%)
+# makefile (from `Makefile', line 9)
+GOBIN = $(shell go env GOPATH)/bin
+# environment
+PWD = /root/alv/ob-operator
+# environment
+VSCODE_IPC_HOOK_CLI = /tmp/vscode-ipc-d691ffe8-0679-45cf-b397-1ca00cbc2c45.sock
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+GOMODCACHE = /root/alv/pkg/mod
+# environment
+HOME = /root
+# environment
+LOGNAME = root
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# automatic
++F = $(notdir $+)
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+HOSTNAME = sqaappecsv62s2011162217031.sa128
+# environment
+MAKELEVEL := 0
+# makefile (from `Makefile', line 5)
+CRD_OPTIONS = "crd:trivialVersions=true,preserveUnknownFields=false"
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 5
+# environment
+JAVA_HOME = /opt/taobao/java
+# default
+MAKE_VERSION := 3.82
+# environment
+USER = root
+# makefile
+.DEFAULT_GOAL := all
+# environment
+GOROOT = /usr/local/go
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# environment
+STARAGENT_HOME = /home/staragent
+# default
+MAKE_COMMAND := make
+# makefile (from `Makefile', line 60)
+KUSTOMIZE = $(shell pwd)/bin/kustomize
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# makefile (from `Makefile', line 3)
+IMG = oceanbasedev/ob-operator:1.0.3-snapshot-alv
+# makefile
+MAKEFLAGS = Rrqp
+# environment
+STARAGENT_PLUGINS = /home/staragent/plugins
+# environment
+MFLAGS = -Rrqp
+# environment
+SSH_CLIENT = 30.50.16.176 61810 22
+# environment
+MAIL = /var/spool/mail/root
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+BROWSER = /root/.vscode-server/bin/3b889b090b5ad5793f524b5d1d39fda662b96a2a/bin/helpers/browser.sh
+# environment
+VSCODE_HANDLES_SIGPIPE = true
+# default
+MAKEFILES := 
+# environment
+PROMPT_COMMAND = /etc/sysconfig/bash-prompt-history
+# automatic
+<F = $(notdir $<)
+# environment
+GOPRIVATE = gitlab-team.smzdm.com
+# environment
+EDITOR = vim
+# environment
+LC_ALL = C
+# environment
+TMOUT = 1800
+# environment
+STARAGENT_BIN = /home/staragent/bin
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# environment
+HISTSIZE = 1000
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# default
+.RECIPEPREFIX := 
+# environment
+LANG = C
+# variable set hash-table stats:
+# Load=80/1024=8%, Rehash=0, Collisions=7/116=6%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 64769, inode 1708244): 30 files, no impossibilities.
+
+# 30 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+# No implicit rules.
+
+# Files
+
+all: build
+#  Command line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+
+docker-build:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 84):
+	docker build -t ${IMG} .
+
+export-crd: manifests kustomize
+ 
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 107):
+	$(KUSTOMIZE) build config/crd > deploy/crd.yaml
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+uninstall: manifests kustomize
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 95):
+	$(KUSTOMIZE) build config/crd | kubectl delete -f -
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-07-28 22:04:02.560945279
+#  File has been updated.
+#  Successfully updated.
+
+# Not a target:
+build:
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+
+vet:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 74):
+	go vet ./...
+
+help:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 48):
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+kustomize:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 62):
+	$(call go-get-tool,$(KUSTOMIZE),sigs.k8s.io/kustomize/kustomize/v3@v3.8.7)
+
+generate: controller-gen
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 65):
+	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
+
+undeploy:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 102):
+	$(KUSTOMIZE) build config/default | kubectl delete -f -
+
+manifests: controller-gen
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 57):
+	go mod tidy
+	$(CONTROLLER_GEN) $(CRD_OPTIONS) rbac:roleName=manager-role webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+
+local-build: generate fmt vet
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 81):
+	go build -o bin/manager main.go
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+generate-all: manifests kustomize generate fmt vet
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+run-local: install
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 116):
+	go run ./main.go
+
+run-remote: docker-build docker-push deploy
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+fmt:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 71):
+	go fmt ./...
+
+deploy: manifests kustomize
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 98):
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default | kubectl apply -f -
+
+export-operator: manifests kustomize
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 110):
+	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
+	$(KUSTOMIZE) build config/default > deploy/operator.yaml
+
+generate-client:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 68):
+	sh hack/update-codegen.sh
+
+controller-gen:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 54):
+	$(call go-get-tool,$(CONTROLLER_GEN),sigs.k8s.io/controller-tools/cmd/controller-gen@v0.4.1)
+
+docker-push:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 87):
+	docker push ${IMG}
+
+install: manifests kustomize
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 92):
+	$(KUSTOMIZE) build config/crd | kubectl apply -f -
+
+# files hash-table stats:
+# Load=25/1024=2%, Rehash=0, Collisions=1/61=2%
+# VPATH Search Paths
+
+# No `vpath' search paths.
+
+# No general (`VPATH' variable) search path.
+
+# # of strings in strcache: 0 / lookups = 106 / hits = 106
+# # of strcache buffers: 1 (* 8176 B/buffer = 8176 B)
+# strcache used: total = 0 (493) / max = 0 / min = 8176 / avg = 0
+# strcache free: total = 0 (7683) / max = 0 / min = 8176 / avg = 0
+
+# strcache hash-table stats:
+ 
+# Load=55/8192=1%, Rehash=0, Collisions=1/106=1%
+# Finished Make data base on Wed Aug  3 10:34:34 2022
+
+ 

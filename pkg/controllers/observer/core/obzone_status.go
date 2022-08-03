@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-	"k8s.io/klog/v2"
 	"reflect"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -34,8 +33,6 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 	obServerList := sql.GetOBServer(subsets[0].Pods[0].PodIP)
 	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	obZoneStatus := converter.OBServerListToOBZoneStatus(cluster, obZoneCurrent, obServerList)
-	klog.Infoln("UpdateOBZoneStatus: obZoneCurrent.Status ", obZoneCurrent.Status)
-	klog.Infoln("UpdateOBZoneStatus: obZoneStatus.Status ", obZoneStatus.Status)
 	status := reflect.DeepEqual(obZoneCurrent.Status, obZoneStatus.Status)
 	if !status {
 		err = obZoneCtrl.UpdateOBZoneStatus(obZoneStatus)
