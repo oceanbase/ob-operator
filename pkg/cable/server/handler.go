@@ -55,10 +55,14 @@ func OBStart(c *gin.Context) {
 	log.Infof("start observer with param %s", util.CovertToJSON(param))
 
 	if !status.ObserverStarted {
-		go observer.StartObserverProcess(*param)
-		go observer.CheckObserverLoop()
-		status.ObserverStarted = true
-		SendResponse(c, NewSuccessResponse(status.ObserverStarted))
+		if observer.ValidateStartParam(*param) {
+			go observer.StartObserverProcess(*param)
+			go observer.CheckObserverLoop()
+			status.ObserverStarted = true
+			SendResponse(c, NewSuccessResponse(status.ObserverStarted))
+		} else {
+			SendResponse(c, NewErrorResponse(errors.New("param is invalid")))
+		}
 	} else {
 		SendResponse(c, NewErrorResponse(errors.New("observer already started")))
 	}
