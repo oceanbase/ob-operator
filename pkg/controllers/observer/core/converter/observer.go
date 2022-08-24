@@ -104,11 +104,11 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 	for _, subset := range statefulApp.Status.Subsets {
 		for _, pod := range subset.Pods {
 			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
-				status1 := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
-				status2 := IsPodInOBZoneListNotInOBServerList(subset.Name, nodeMap, zoneNodeMap)
+				isPodNotInOBServerList := IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
+				isPodInOBZoneListNotInOBServerList := IsPodInOBZoneListNotInOBServerList(subset.Name, nodeMap, zoneNodeMap)
 				// Pod IP not in OBServerList, need to add server
 				// do one thing at a time
-				if status1 || status2 {
+				if isPodNotInOBServerList || isPodInOBZoneListNotInOBServerList {
 					return nil, subset.Name, pod.PodIP
 				}
 			}

@@ -15,8 +15,8 @@ package sql
 import (
 	"fmt"
 
-    "k8s.io/klog/v2"
-	
+	"k8s.io/klog/v2"
+
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )

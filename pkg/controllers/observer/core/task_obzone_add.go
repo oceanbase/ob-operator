@@ -9,15 +9,15 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	expectedOBZoneList := ctrl.OBCluster.Spec.Topology[0].Zone
 
-	isExistFlag := false
+	isExist := false
 	for _, zone := range expectedOBZoneList {
 		for _, readyZone := range clusterStatus.Zone {
 			// 说明该zone已经ready
 			if zone.Name == readyZone.Name {
-				isExistFlag = true
+				isExist = true
 			}
 		}
-		if isExistFlag == false {
+		if !isExist {
 			// add zone
 			err := sql.AddZone(clusterIP, zone.Name)
 			if err != nil {
@@ -30,7 +30,7 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 				return err
 			}
 		}
-		isExistFlag = false
+		isExist = false
 	}
 	return nil
 }
