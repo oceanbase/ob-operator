@@ -22,6 +22,24 @@ func OBServerScale(clusterList []cloudv1.Cluster, statefulApp cloudv1.StatefulAp
 	var res cloudv1.Subset
 	var scaleState string
 	cluster := converter.GetClusterSpecFromOBTopology(clusterList)
+
+	isExist := false
+	for _, subset := range statefulApp.Status.Subsets {
+		isExist = false
+		for _, zone := range cluster.Zone {
+			if subset.Name == zone.Name {
+				isExist = true
+				break
+			}
+		}
+		if !isExist {
+			scaleState = observerconst.ScaleDown
+			res.Name = subset.Name
+			res.Replicas = 0
+			return scaleState, res
+		}
+	}
+
 	for _, zone := range cluster.Zone {
 		subsetStatus := converter.GetSubsetStatusFromStatefulApp(zone.Name, statefulApp)
 		if zone.Replicas > subsetStatus.ExpectedReplicas {

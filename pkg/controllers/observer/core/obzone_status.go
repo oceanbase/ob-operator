@@ -13,12 +13,16 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"context"
 	"reflect"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"k8s.io/klog/v2"
 )
 
 func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) error {
@@ -32,7 +36,10 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 	}
 	obServerList := sql.GetOBServer(subsets[0].Pods[0].PodIP)
 	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	klog.Infoln("UpdateOBZoneStatus: cluster", cluster)
 	obZoneStatus := converter.OBServerListToOBZoneStatus(cluster, obZoneCurrent, obServerList)
+	klog.Infoln("UpdateOBZoneStatus: obZoneStatus", obZoneStatus)
+	klog.Infoln("UpdateOBZoneStatus: obZoneCurrent.Status, obZoneStatus.Status", obZoneCurrent.Status, obZoneStatus.Status)
 	status := reflect.DeepEqual(obZoneCurrent.Status, obZoneStatus.Status)
 	if !status {
 		err = obZoneCtrl.UpdateOBZoneStatus(obZoneStatus)
@@ -41,5 +48,50 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 		}
 		kube.LogForAppActionStatus(obZoneStatus.Kind, obZoneName, "update status", obZoneStatus)
 	}
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) buildOBZoneStatusFromDB(obCluster cloudv1.OBCluster, clusterIP string) (cloudv1.OBCluster, error) {
+	expectedOBZoneList := ctrl.OBCluster.Spec.Topology[0].Zone
+	obZoneListFromDB := sql.GetOBZone(clusterIP)
+
+	// 期望的 zone 比实际的 少
+	if len(expectedOBZoneList) < len(obZoneListFromDB) {
+		obCluster.Status.Status = observerconst.TopologyNotReady
+		return obCluster, nil
+	}
+	isOK := true
+	for _, zone := range expectedOBZoneList {
+		for _, obZoneByDB := range obZoneListFromDB {
+			// 查询ob 看该zone 是否 active
+			if zone.Name == obZoneByDB.Zone && obZoneByDB.Info != observerconst.OBZoneActive {
+				isOK = false
+			}
+		}
+	}
+	klog.Infoln("buildOBZoneStatusFromDB:isOK", isOK)
+	klog.Infoln("buildOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
+	if isOK {
+		obCluster.Status.Status = observerconst.TopologyReady
+	}
+	klog.Infoln("buildOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
+	return obCluster, nil
+
+}
+
+func (ctrl *OBClusterCtrl) UpdateOBZoneStatusFromDB(clusterIP string) error {
+	obClusterNew, err := ctrl.buildOBZoneStatusFromDB(ctrl.OBCluster, clusterIP)
+	obClusterExecuter := resource.NewOBClusterResource(ctrl.Resource)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("UpdateOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
+
+	err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("UpdateOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
+
 	return nil
 }

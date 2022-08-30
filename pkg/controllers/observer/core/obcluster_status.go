@@ -92,12 +92,14 @@ func (ctrl *OBClusterCtrl) UpdateOBClusterAndZoneStatus(clusterStatus, zoneName,
 			// assign a value
 			ctrl.OBCluster = *obClusterCurrentDeepCopy
 			// build status
+			klog.Infoln("UpdateOBClusterAndZoneStatus: clusterStatus ", clusterStatus)
 			obClusterNew, err := ctrl.buildOBClusterStatus(*obClusterCurrentDeepCopy, clusterStatus, zoneName, zoneStatus)
 			if err != nil {
 				return err
 			}
 			// compare status, if Equal don't need update
 			compareStatus = reflect.DeepEqual(obClusterCurrent.Status, obClusterNew.Status)
+			klog.Infoln("UpdateOBClusterAndZoneStatus: ", obClusterCurrent.Status, obClusterNew.Status)
 			if !compareStatus {
 				// update status
 				err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
@@ -132,7 +134,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 		return obCluster, err
 	}
 
-	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 
 	nodeMap := make(map[string][]cloudv1.OBNode)
 	// get ClusterIP
@@ -142,7 +144,8 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 		nodeMap = getNodeMapFromDB(clusterIP)
 	}
 
-	zoneList := buildZoneStatusList(cluster, statefulAppCurrent, nodeMap, zoneName, zoneStatus)
+	// zoneList := buildZoneStatusList(cluster, statefulAppCurrent, nodeMap, zoneName, zoneStatus)
+	zoneListFromDB := buildZoneStatusListFromDB(clusterSpec, clusterIP, statefulAppCurrent, nodeMap, zoneName, zoneStatus)
 
 	// old cluster status
 	var lastTransitionTime metav1.Time
@@ -159,14 +162,15 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	clusterCurrentStatus.Cluster = myconfig.ClusterName
 	clusterCurrentStatus.ClusterStatus = clusterStatus
 	clusterCurrentStatus.LastTransitionTime = lastTransitionTime
-	clusterCurrentStatus.Zone = zoneList
+	clusterCurrentStatus.Zone = zoneListFromDB
 
 	// topology status, multi cluster
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
 
 	if clusterStatus == observerconst.ClusterReady {
 		obCluster.Status.Status = observerconst.TopologyReady
-	} else if clusterStatus == observerconst.ScaleUP || clusterStatus == observerconst.ScaleDown {
+	} else if clusterStatus == observerconst.ScaleUP || clusterStatus == observerconst.ScaleDown ||
+		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown {
 		obCluster.Status.Status = observerconst.TopologyNotReady
 	} else {
 		obCluster.Status.Status = observerconst.TopologyPrepareing
@@ -175,23 +179,35 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	return obCluster, nil
 }
 
-func buildZoneStatusList(cluster cloudv1.Cluster, statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string) []cloudv1.ZoneStatus {
+func buildZoneStatusListFromDB(clusterSpec cloudv1.Cluster, clusterIP string, statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string) []cloudv1.ZoneStatus {
 	zoneList := make([]cloudv1.ZoneStatus, 0)
-	for _, zone := range cluster.Zone {
-		zoneStatus := buildZoneStatus(statefulAppCurrent, nodeMap, name, status, zone)
+	obZoneList := sql.GetOBZone(clusterIP)
+
+	for _, zone := range obZoneList {
+		zoneSpec := converter.GetZoneSpecFromClusterSpec(zone.Zone, clusterSpec)
+		zoneStatus := buildZoneStatus(zoneSpec, statefulAppCurrent, nodeMap, name, status, zone.Zone)
 		zoneList = append(zoneList, zoneStatus)
 	}
 	return zoneList
 }
 
-func buildZoneStatus(statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string, zone cloudv1.Subset) cloudv1.ZoneStatus {
-	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zone.Name, statefulAppCurrent)
+func buildZoneStatus(zoneSpec cloudv1.Subset, statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string, zoneName string) cloudv1.ZoneStatus {
+	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zoneName, statefulAppCurrent)
+	klog.Infoln("buildZoneStatus: subsetStatus ", subsetStatus)
 	var zoneStatus cloudv1.ZoneStatus
-	zoneStatus.Name = zone.Name
-	zoneStatus.Region = zone.Region
-	zoneStatus.ExpectedReplicas = zone.Replicas
+
+	/*
+		zoneStatus.Name = zone.Name
+		zoneStatus.Region = zone.Region
+		zoneStatus.ExpectedReplicas = zone.Replicas
+	*/
+
+	zoneStatus.Name = subsetStatus.Name
+	zoneStatus.Region = subsetStatus.Region
+	zoneStatus.ExpectedReplicas = zoneSpec.Replicas
+
 	// real AvailableReplicas from OB
-	nodeList := nodeMap[zone.Name]
+	nodeList := nodeMap[subsetStatus.Name]
 	zoneStatus.AvailableReplicas = len(nodeList)
 	// StatefulApp is not ready
 	if subsetStatus.ExpectedReplicas != subsetStatus.AvailableReplicas {
@@ -206,7 +222,7 @@ func buildZoneStatus(statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string]
 		}
 	}
 	// use custom status
-	if name == zone.Name && status != "" {
+	if name == subsetStatus.Name && status != "" {
 		zoneStatus.ZoneStatus = status
 	}
 	return zoneStatus

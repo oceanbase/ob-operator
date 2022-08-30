@@ -23,6 +23,8 @@ import (
 func (ctrl *OBClusterCtrl) OBServerCoordinator(statefulApp cloudv1.StatefulApp) error {
 	var err error
 	scaleState, subset := judge.OBServerScale(ctrl.OBCluster.Spec.Topology, statefulApp)
+	klog.Infoln("OBServerCoordinator: subset ", subset)
+	klog.Infoln("OBServerCoordinator: scaleState ", scaleState)
 	switch scaleState {
 	case observerconst.ScaleUP:
 		err = ctrl.UpdateOBServerReplica(subset, statefulApp, observerconst.ScaleUP)
@@ -71,6 +73,7 @@ func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp
 	if err != nil {
 		return err
 	}
+	klog.Infoln("OBServerScaleUPByZone : clusterIP ", clusterIP)
 	klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 	// get info for add server
 	err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
@@ -105,7 +108,9 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	klog.Infoln("---------------------OBServerScaleDownByZone-------------------------")
 
+	klog.Infoln("OBServerScaleDownByZone: clusterSpec ", clusterSpec)
 	err, zoneName, podIP := converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
+	klog.Infoln("OBServerScaleDownByZone: zoneName, podIP ", zoneName, podIP)
 	// nil need to del server
 	if err == nil {
 		clusterStatus = observerconst.ScaleDown

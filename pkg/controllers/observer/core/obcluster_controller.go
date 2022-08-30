@@ -79,6 +79,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	// custom logic
 	obClusterCtrl := NewOBServerCtrl(r.CRClient, r.Recorder, *instance)
+	klog.Infoln("Reconcile: ")
 	return obClusterCtrl.OBClusterCoordinator()
 }
 
@@ -94,7 +95,8 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 	var newClusterStatus bool
 	statefulApp := &cloudv1.StatefulApp{}
 	statefulApp, newClusterStatus = ctrl.IsNewCluster(*statefulApp)
-
+	klog.Infoln("OBClusterCoordinator :newClusterStatus ", newClusterStatus)
+	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 	// is new cluster
 	if newClusterStatus {
 		err := ctrl.NewCluster(*statefulApp)
@@ -102,12 +104,13 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 			return reconcile.Result{}, err
 		}
 	}
-
+	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 	// OBCluster control-plan
 	err := ctrl.OBClusterEffector(*statefulApp)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 
 	return reconcile.Result{}, nil
 }
@@ -115,6 +118,7 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 func (ctrl *OBClusterCtrl) OBClusterEffector(statefulApp cloudv1.StatefulApp) error {
 	var err error
 	obClusterStatus := ctrl.OBCluster.Status.Status
+	klog.Infoln("OBClusterEffector: obClusterStatus ", obClusterStatus)
 	switch obClusterStatus {
 	case observerconst.TopologyPrepareing:
 		// OBCluster is not ready
@@ -134,6 +138,7 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 
 	for _, clusterStatus := range ctrl.OBCluster.Status.Topology {
 		if clusterStatus.Cluster == myconfig.ClusterName {
+			klog.Infoln("TopologyPrepareingEffector: clusterStatus.ClusterStatus ", clusterStatus.ClusterStatus)
 			switch clusterStatus.ClusterStatus {
 			case observerconst.ResourcePrepareing:
 				// StatefulApp is creating
@@ -162,8 +167,6 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 					err = ctrl.CreateUserForObagent(statefulApp)
 					err = ctrl.ReviseAllOBAgentConfig(statefulApp)
 				}
-			case observerconst.ZoneScaleDown:
-				err = ctrl.OBZoneScaleDown(statefulApp, observerconst.ZoneScaleDown)
 			}
 		}
 	}
@@ -174,6 +177,7 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 	var err error
 	for _, clusterStatus := range ctrl.OBCluster.Status.Topology {
 		if clusterStatus.Cluster == myconfig.ClusterName {
+			klog.Infoln("TopologyNotReadyEffector: clusterStatus.ClusterStatus", clusterStatus.ClusterStatus)
 			switch clusterStatus.ClusterStatus {
 			case observerconst.ScaleUP:
 				// OBServer Scale UP
@@ -181,6 +185,12 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 			case observerconst.ScaleDown:
 				// OBServer Scale Down
 				err = ctrl.OBServerScaleDownByZone(statefulApp)
+				// OBZone Scale Up
+			case observerconst.ZoneScaleUP:
+				err = ctrl.OBZoneScaleUP(statefulApp)
+				// OBZone Scale Down
+			case observerconst.ZoneScaleDown:
+				err = ctrl.OBZoneScaleDown(statefulApp)
 			}
 		}
 	}
@@ -212,17 +222,23 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		klog.Errorln("resource changes is not supported yet")
 		return nil
 	}
+	// get ClusterIP
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		return nil
+	}
 
 	// check zone number modified
-	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, ctrl.OBCluster, statefulApp)
+	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, ctrl.OBCluster, clusterIP)
 	if err != nil {
 		return err
 	}
+	klog.Infoln("TopologyReadyEffector: zoneScaleStatus ", zoneScaleStatus)
 	switch zoneScaleStatus {
-	case observerconst.ScaleUP:
-		err = ctrl.OBZoneScaleUP(statefulApp, observerconst.ScaleUP)
+	case observerconst.ZoneScaleUP:
+		err = ctrl.OBZoneScaleUP(statefulApp)
 	case observerconst.ZoneScaleDown:
-		err = ctrl.OBZoneScaleDown(statefulApp, observerconst.ZoneScaleDown)
+		err = ctrl.OBZoneScaleDown(statefulApp)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
 		if err != nil {

@@ -58,18 +58,6 @@ func GetParameterSQLReplacer(name string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name)
 }
 
-func AddZoneSQLReplacer(zoneName string) *strings.Replacer {
-	return strings.NewReplacer("${ZONE_NAME}", zoneName)
-}
-
-func StartZoneSQLReplacer(zoneName string) *strings.Replacer {
-	return strings.NewReplacer("${ZONE_NAME}", zoneName)
-}
-
-func StopZoneSQLReplacer(zoneName string) *strings.Replacer {
-	return strings.NewReplacer("${ZONE_NAME}", zoneName)
-}
-
-func DeleteZoneSQLReplacer(zoneName string) *strings.Replacer {
+func ZoneNameReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }

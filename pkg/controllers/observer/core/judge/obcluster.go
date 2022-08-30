@@ -50,22 +50,20 @@ func ResourcesIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBClus
 	return true, nil
 }
 
-func ZoneNumberIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBCluster, statefulApp cloudv1.StatefulApp) (string, error) {
+func ZoneNumberIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBCluster, clusterIP string) (string, error) {
 	cluster := converter.GetClusterSpecFromOBTopology(clusterList)
 	zoneNumberNew := len(cluster.Zone)
 	if zoneNumberNew == 0 {
 		return observerconst.Maintain, kubeerrors.NewServiceUnavailable("can't scale Zone to zero")
 	}
 
-	// zoneNumberCurrent := len(statefulApp.Spec.Subsets)
-	podIP := statefulApp.Status.Subsets[0].Pods[0].PodIP
-	obZoneList := sql.GetOBZone(podIP)
+	obZoneList := sql.GetOBZone(clusterIP)
 	zoneNumberCurrent := len(obZoneList)
 	if zoneNumberCurrent == 0 {
 		return "", errors.New(observerconst.DataBaseError)
 	}
 	if zoneNumberNew > zoneNumberCurrent {
-		return observerconst.ScaleUP, nil
+		return observerconst.ZoneScaleUP, nil
 	} else if zoneNumberNew < zoneNumberCurrent {
 		return observerconst.ZoneScaleDown, nil
 	} else {

@@ -1,6 +1,7 @@
 package core
 
 import (
+	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
@@ -36,7 +37,7 @@ func (ctrl *OBClusterCtrl) DeleteZone(clusterIP, zoneName string) error {
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) DeleteOBZone(clusterIP, zoneName string) error {
+func (ctrl *OBClusterCtrl) DeleteOBZone(clusterIP, zoneName string, statefulApp v1.StatefulApp) error {
 	// check unitList is empty
 	AllUnitList := ctrl.GetAllUnit(clusterIP)
 	for _, unit := range AllUnitList {
@@ -44,16 +45,16 @@ func (ctrl *OBClusterCtrl) DeleteOBZone(clusterIP, zoneName string) error {
 			return errors.New("When unitList is not empty, delete OBZone is not supported yet")
 		}
 	}
-	ctrl.DeleteOBZoneExecuter(clusterIP, zoneName)
-	return nil
+	return ctrl.DeleteOBZoneExecuter(clusterIP, zoneName, statefulApp)
 }
 
-func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string) {
+func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string, statefulApp v1.StatefulApp) error {
 	klog.Infoln("Execute Delete OB Zone... ")
 
 	err := ctrl.StopZone(clusterIP, zoneName)
 	if err != nil {
 		klog.Infoln("StopOBZone err: ", err)
+		return err
 	}
 
 	// get observerList
@@ -61,7 +62,9 @@ func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string) {
 	for _, observer := range obServerList {
 		if observer.Zone == zoneName && observer.Status != observerconst.OBServerDeleting {
 			klog.Infoln("observerList is not nil, begin delete observer...")
-			ctrl.DelOBServerExecuter(clusterIP, zoneName, observer.SvrIP)
+			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ScaleDown, "", observerconst.OBServerDel)
+			// return ctrl.OBServerCoordinator(statefulApp)
+			// return errors.New("observerList is not nil, begin delete observer...")
 		}
 	}
 
@@ -69,6 +72,9 @@ func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string) {
 	err = ctrl.DeleteZone(clusterIP, zoneName)
 	if err != nil {
 		klog.Infoln("DeleteOBZone err: ", err)
+		return err
 	}
+
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 
 }

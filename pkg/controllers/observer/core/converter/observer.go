@@ -20,6 +20,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
 )
 
 func IsAllOBServerActive(obServerList []model.AllServer, obClusters []cloudv1.Cluster) bool {
@@ -108,6 +109,9 @@ func GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp
 				isPodInOBZoneListNotInOBServerList := IsPodInOBZoneListNotInOBServerList(subset.Name, nodeMap, zoneNodeMap)
 				// Pod IP not in OBServerList, need to add server
 				// do one thing at a time
+				if nodeMap == nil {
+					return nil, subset.Name, ""
+				}
 				if isPodNotInOBServerList || isPodInOBZoneListNotInOBServerList {
 					return nil, subset.Name, pod.PodIP
 				}
@@ -147,6 +151,9 @@ func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, st
 	for _, subset := range statefulApp.Status.Subsets {
 		podListToDelete := getPodListToDeleteFromSubsetStatus(subset)
 		zoneSpec := GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
+		klog.Info("GetInfoForDelServerByZone : zoneSpec ", zoneSpec)
+		klog.Info("GetInfoForDelServerByZone : podListToDelete ", podListToDelete)
+
 		// number of observer in db > replica
 		if len(nodeMap[subset.Name]) > zoneSpec.Replicas {
 			for _, pod := range nodeMap[subset.Name] {
