@@ -163,6 +163,23 @@ func GetInfoForDelZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulAp
 	return errors.New("none zone need del"), ""
 }
 
+func GetInfoForAddZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string) {
+	obZoneList := sql.GetOBZone(clusterIP)
+	if len(obZoneList) == 0 {
+		return errors.New(observerconst.DataBaseError), ""
+	}
+	zoneNodeMap := GenerateZoneNodeMapByOBZoneList(obZoneList)
+
+	for _, obZone := range obZoneList {
+		zoneSpec := GetZoneSpecFromClusterSpec(obZone.Zone, clusterSpec)
+		if zoneNodeMap[obZone.Zone] != nil && zoneSpec.Name == "" {
+			return nil, obZone.Zone
+		}
+	}
+
+	return errors.New("none zone need del"), ""
+}
+
 func GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
 	obServerList := sql.GetOBServer(clusterIP)
 	if len(obServerList) == 0 {

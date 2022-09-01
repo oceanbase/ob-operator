@@ -1,19 +1,24 @@
 package core
 
 import (
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
 func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
-	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	expectedOBZoneList := ctrl.OBCluster.Spec.Topology[0].Zone
+	// clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+
+	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	expectedOBZoneList := clusterSpec.Zone
+
+	obZoneList := sql.GetOBZone(clusterIP)
 
 	isExist := false
 	for _, zone := range expectedOBZoneList {
-		for _, readyZone := range clusterStatus.Zone {
-			// 说明该zone已经ready
-			if zone.Name == readyZone.Name {
+		for _, existZone := range obZoneList {
+			// 说明该zone已经存在
+			if zone.Name == existZone.Zone {
 				isExist = true
 			}
 		}
@@ -21,16 +26,28 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 			// add zone
 			err := sql.AddZone(clusterIP, zone.Name)
 			if err != nil {
-				return nil
-			}
-
-			//start zone
-			err = sql.StartZone(clusterIP, zone.Name)
-			if err != nil {
 				return err
 			}
 		}
 		isExist = false
+	}
+
+	isReady := false
+	for _, zone := range expectedOBZoneList {
+		for _, existZone := range obZoneList {
+			// 说明该zone已经ready
+			if zone.Name == existZone.Zone && existZone.Info == observerconst.OBZoneActive {
+				isReady = true
+			}
+		}
+		if !isReady {
+			// start zone
+			err := sql.StartZone(clusterIP, zone.Name)
+			if err != nil {
+				return err
+			}
+		}
+		isReady = false
 	}
 	return nil
 }

@@ -130,6 +130,7 @@ func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp) error 
 	}
 
 	return ctrl.UpdateOBZoneStatusFromDB(clusterIP)
+
 }
 
 func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) error {

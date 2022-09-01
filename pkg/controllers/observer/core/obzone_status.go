@@ -70,7 +70,8 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 }
 
 func (ctrl *OBClusterCtrl) buildOBZoneStatusFromDB(obCluster cloudv1.OBCluster, clusterIP string) (cloudv1.OBCluster, error) {
-	expectedOBZoneList := ctrl.OBCluster.Spec.Topology[0].Zone
+	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	expectedOBZoneList := clusterSpec.Zone
 	obZoneListFromDB := sql.GetOBZone(clusterIP)
 
 	// 期望的 zone 比实际的 少
