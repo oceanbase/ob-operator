@@ -43,7 +43,11 @@ spec:
   selector:
     app: obproxy
   ports:
-    - name: "tcp"
+    - name: "sql"
       port: 2883
       targetPort: 2883
       nodePort: 30083
+    - name: "prometheus"
+      port: 2884
+      targetPort: 2884
+      nodePort: 30084
