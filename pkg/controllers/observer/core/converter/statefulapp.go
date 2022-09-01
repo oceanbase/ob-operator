@@ -16,7 +16,6 @@ import (
 	"fmt"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -221,10 +220,7 @@ func GenerateStatefulAppObject(cluster cloudv1.Cluster, obCluster cloudv1.OBClus
 
 func GetSubsetStatusFromStatefulApp(zoneName string, statefulApp cloudv1.StatefulApp) cloudv1.SubsetStatus {
 	var res cloudv1.SubsetStatus
-	klog.Infoln("GetSubsetStatusFromStatefulApp: zoneName", zoneName)
-	klog.Infoln("GetSubsetStatusFromStatefulApp: statefulApp.Status.Subsets", statefulApp.Status.Subsets)
 	for _, subset := range statefulApp.Status.Subsets {
-		klog.Infoln("GetSubsetStatusFromStatefulApp: subset", subset)
 		if subset.Name == zoneName {
 			res = subset
 			break
@@ -235,12 +231,10 @@ func GetSubsetStatusFromStatefulApp(zoneName string, statefulApp cloudv1.Statefu
 
 func UpdateSubsetReplicaForStatefulApp(subset cloudv1.Subset, statefulApp cloudv1.StatefulApp) cloudv1.StatefulApp {
 	zoneList := make([]cloudv1.Subset, 0)
-	klog.Infoln("UpdateSubsetReplicaForStatefulApp: statefulApp.Spec.Subsets ", statefulApp.Spec.Subsets)
-	klog.Infoln("UpdateSubsetReplicaForStatefulApp: subset ", subset)
 
 	isExist := false
 	for _, zone := range statefulApp.Spec.Subsets {
-		if zone.Name == subset.Name {
+		if zone.Name == subset.Name && zone.Replicas != 0 {
 			isExist = true
 		}
 	}
@@ -261,9 +255,11 @@ func UpdateSubsetReplicaForStatefulApp(subset cloudv1.Subset, statefulApp cloudv
 				zone.Replicas = zone.Replicas - 1
 			}
 		}
-		zoneList = append(zoneList, zone)
+		if zone.Replicas > 0 {
+			zoneList = append(zoneList, zone)
+		}
+
 	}
-	klog.Infoln("UpdateSubsetReplicaForStatefulApp: zoneList ", zoneList)
 	statefulApp.Spec.Subsets = zoneList
 	return statefulApp
 }

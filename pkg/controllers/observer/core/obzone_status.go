@@ -22,7 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
-	"k8s.io/klog/v2"
 )
 
 func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) error {
@@ -36,10 +35,7 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 	}
 	obServerList := sql.GetOBServer(subsets[0].Pods[0].PodIP)
 	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
-	klog.Infoln("UpdateOBZoneStatus: cluster", cluster)
 	obZoneStatus := converter.OBServerListToOBZoneStatus(cluster, obZoneCurrent, obServerList)
-	klog.Infoln("UpdateOBZoneStatus: obZoneStatus", obZoneStatus)
-	klog.Infoln("UpdateOBZoneStatus: obZoneCurrent.Status, obZoneStatus.Status", obZoneCurrent.Status, obZoneStatus.Status)
 	status := reflect.DeepEqual(obZoneCurrent.Status, obZoneStatus.Status)
 	if !status {
 		err = obZoneCtrl.UpdateOBZoneStatus(obZoneStatus)
@@ -69,12 +65,9 @@ func (ctrl *OBClusterCtrl) buildOBZoneStatusFromDB(obCluster cloudv1.OBCluster, 
 			}
 		}
 	}
-	klog.Infoln("buildOBZoneStatusFromDB:isOK", isOK)
-	klog.Infoln("buildOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
 	if isOK {
 		obCluster.Status.Status = observerconst.TopologyReady
 	}
-	klog.Infoln("buildOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
 	return obCluster, nil
 
 }
@@ -85,13 +78,11 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatusFromDB(clusterIP string) error {
 	if err != nil {
 		return err
 	}
-	klog.Infoln("UpdateOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
 
 	err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
 	if err != nil {
 		return err
 	}
-	klog.Infoln("UpdateOBZoneStatusFromDB: obCluster.Status.Status ", ctrl.OBCluster.Status.Status)
 
 	return nil
 }

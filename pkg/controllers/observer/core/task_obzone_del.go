@@ -62,9 +62,11 @@ func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string, stat
 	for _, observer := range obServerList {
 		if observer.Zone == zoneName && observer.Status != observerconst.OBServerDeleting {
 			klog.Infoln("observerList is not nil, begin delete observer...")
-			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ScaleDown, "", observerconst.OBServerDel)
-			// return ctrl.OBServerCoordinator(statefulApp)
-			// return errors.New("observerList is not nil, begin delete observer...")
+			err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ScaleDown, "", observerconst.OBServerDel)
+			if err != nil {
+				return err
+			}
+			return errors.New("observerList is not nil, begin delete observer...")
 		}
 	}
 
@@ -75,6 +77,6 @@ func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string, stat
 		return err
 	}
 
-	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+	return nil
 
 }

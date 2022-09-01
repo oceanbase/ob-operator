@@ -79,7 +79,6 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 	// custom logic
 	obClusterCtrl := NewOBServerCtrl(r.CRClient, r.Recorder, *instance)
-	klog.Infoln("Reconcile: ")
 	return obClusterCtrl.OBClusterCoordinator()
 }
 
@@ -95,8 +94,6 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 	var newClusterStatus bool
 	statefulApp := &cloudv1.StatefulApp{}
 	statefulApp, newClusterStatus = ctrl.IsNewCluster(*statefulApp)
-	klog.Infoln("OBClusterCoordinator :newClusterStatus ", newClusterStatus)
-	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 	// is new cluster
 	if newClusterStatus {
 		err := ctrl.NewCluster(*statefulApp)
@@ -104,13 +101,11 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 			return reconcile.Result{}, err
 		}
 	}
-	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 	// OBCluster control-plan
 	err := ctrl.OBClusterEffector(*statefulApp)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	klog.Infoln("OBClusterCoordinator : ctrl.OBCluster.Status.Status", ctrl.OBCluster.Status.Status)
 
 	return reconcile.Result{}, nil
 }
@@ -118,7 +113,6 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 func (ctrl *OBClusterCtrl) OBClusterEffector(statefulApp cloudv1.StatefulApp) error {
 	var err error
 	obClusterStatus := ctrl.OBCluster.Status.Status
-	klog.Infoln("OBClusterEffector: obClusterStatus ", obClusterStatus)
 	switch obClusterStatus {
 	case observerconst.TopologyPrepareing:
 		// OBCluster is not ready
@@ -138,7 +132,6 @@ func (ctrl *OBClusterCtrl) TopologyPrepareingEffector(statefulApp cloudv1.Statef
 
 	for _, clusterStatus := range ctrl.OBCluster.Status.Topology {
 		if clusterStatus.Cluster == myconfig.ClusterName {
-			klog.Infoln("TopologyPrepareingEffector: clusterStatus.ClusterStatus ", clusterStatus.ClusterStatus)
 			switch clusterStatus.ClusterStatus {
 			case observerconst.ResourcePrepareing:
 				// StatefulApp is creating
@@ -177,7 +170,6 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 	var err error
 	for _, clusterStatus := range ctrl.OBCluster.Status.Topology {
 		if clusterStatus.Cluster == myconfig.ClusterName {
-			klog.Infoln("TopologyNotReadyEffector: clusterStatus.ClusterStatus", clusterStatus.ClusterStatus)
 			switch clusterStatus.ClusterStatus {
 			case observerconst.ScaleUP:
 				// OBServer Scale UP
@@ -233,7 +225,6 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	if err != nil {
 		return err
 	}
-	klog.Infoln("TopologyReadyEffector: zoneScaleStatus ", zoneScaleStatus)
 	switch zoneScaleStatus {
 	case observerconst.ZoneScaleUP:
 		err = ctrl.OBZoneScaleUP(statefulApp)

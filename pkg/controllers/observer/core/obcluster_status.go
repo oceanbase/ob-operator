@@ -92,14 +92,12 @@ func (ctrl *OBClusterCtrl) UpdateOBClusterAndZoneStatus(clusterStatus, zoneName,
 			// assign a value
 			ctrl.OBCluster = *obClusterCurrentDeepCopy
 			// build status
-			klog.Infoln("UpdateOBClusterAndZoneStatus: clusterStatus ", clusterStatus)
 			obClusterNew, err := ctrl.buildOBClusterStatus(*obClusterCurrentDeepCopy, clusterStatus, zoneName, zoneStatus)
 			if err != nil {
 				return err
 			}
 			// compare status, if Equal don't need update
 			compareStatus = reflect.DeepEqual(obClusterCurrent.Status, obClusterNew.Status)
-			klog.Infoln("UpdateOBClusterAndZoneStatus: ", obClusterCurrent.Status, obClusterNew.Status)
 			if !compareStatus {
 				// update status
 				err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
@@ -193,7 +191,6 @@ func buildZoneStatusListFromDB(clusterSpec cloudv1.Cluster, clusterIP string, st
 
 func buildZoneStatus(zoneSpec cloudv1.Subset, statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string, zoneName string) cloudv1.ZoneStatus {
 	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zoneName, statefulAppCurrent)
-	klog.Infoln("buildZoneStatus: subsetStatus ", subsetStatus)
 	var zoneStatus cloudv1.ZoneStatus
 
 	/*

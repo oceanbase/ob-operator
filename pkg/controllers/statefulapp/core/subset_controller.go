@@ -105,7 +105,6 @@ func (ctrl *SubsetCtrl) DeleteSubset(subsetSpecName string, subsetsCurrent []str
 	for _, subsetName := range subsetsCurrent {
 		if subsetName == subsetSpecName {
 			pods := podCtrl.GetPodsBySubset(ctrl.StatefulApp.Namespace, ctrl.StatefulApp.Name, subsetName)
-			klog.Infoln("DeleteSubset: pods ", pods)
 			err = podCtrl.DeletePodList(pods)
 		}
 	}
