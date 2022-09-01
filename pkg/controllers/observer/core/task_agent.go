@@ -58,7 +58,8 @@ func (ctrl *OBClusterCtrl) ReviseConfig(podIP string, zoneName string) error {
 			{Key: "monagent.host.ip", Value: podIP},
 			{Key: "monagent.ob.cluster.name", Value: clusterName},
 			{Key: "monagent.ob.cluster.id", Value: clusterID},
-			{Key: "monagent.ob.zone.name", Value: zoneName}}}
+			{Key: "monagent.ob.zone.name", Value: zoneName},
+			{Key: "monagent.pipeline.node.status", Value: "active"}}}
 	updateUrl := fmt.Sprintf("http://%s:%d%s", podIP, observerconst.MonagentPort, observerconst.MonagentUpdateUrl)
 	body, _ := json.Marshal(config)
 	resp, err := http.Post(updateUrl, "application/json", bytes.NewBuffer(body))

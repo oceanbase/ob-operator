@@ -15,6 +15,7 @@ package core
 import (
 	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -95,6 +96,7 @@ func (ctrl *SubsetCtrl) GetSubsetsNameList() []string {
 
 func (ctrl *SubsetCtrl) DeleteSubset(subsetSpecName string, subsetsCurrent []string) error {
 	var err error
+	klog.Infoln("DeleteSubset")
 	podCtrl := NewPodCtrl(ctrl.Resource.Client, ctrl.Resource.Recorder, ctrl.StatefulApp)
 	// zero
 	if len(subsetsCurrent) == 1 {

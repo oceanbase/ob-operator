@@ -13,15 +13,18 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"context"
 	"reflect"
 
 	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
 func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) error {
@@ -63,5 +66,46 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 		}
 		kube.LogForAppActionStatus(obZoneStatus.Kind, obZoneName, "update status", obZoneStatus)
 	}
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) buildOBZoneStatusFromDB(obCluster cloudv1.OBCluster, clusterIP string) (cloudv1.OBCluster, error) {
+	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	expectedOBZoneList := clusterSpec.Zone
+	obZoneListFromDB := sql.GetOBZone(clusterIP)
+
+	// 期望的 zone 比实际的 少
+	if len(expectedOBZoneList) < len(obZoneListFromDB) {
+		obCluster.Status.Status = observerconst.TopologyNotReady
+		return obCluster, nil
+	}
+	isOK := true
+	for _, zone := range expectedOBZoneList {
+		for _, obZoneByDB := range obZoneListFromDB {
+			// 查询ob 看该zone 是否 active
+			if zone.Name == obZoneByDB.Zone && obZoneByDB.Info != observerconst.OBZoneActive {
+				isOK = false
+			}
+		}
+	}
+	if isOK {
+		obCluster.Status.Status = observerconst.TopologyReady
+	}
+	return obCluster, nil
+
+}
+
+func (ctrl *OBClusterCtrl) UpdateOBZoneStatusFromDB(clusterIP string) error {
+	obClusterNew, err := ctrl.buildOBZoneStatusFromDB(ctrl.OBCluster, clusterIP)
+	obClusterExecuter := resource.NewOBClusterResource(ctrl.Resource)
+	if err != nil {
+		return err
+	}
+
+	err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

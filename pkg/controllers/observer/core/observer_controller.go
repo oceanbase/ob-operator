@@ -71,14 +71,13 @@ func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp
 	if err != nil {
 		return err
 	}
-
+	klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 	// get info for add server
 	err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
 	// nil need to add server
 	if err == nil {
 		clusterStatus = observerconst.ScaleUP
 		// add server
-		klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 		err = ctrl.AddOBServer(clusterIP, zoneName, podIP, statefulApp)
 		if err != nil {
 			return err
@@ -104,6 +103,8 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 
 	// get info for del server
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	klog.Infoln("---------------------OBServerScaleDownByZone-------------------------")
+
 	err, zoneName, podIP := converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
 	// nil need to del server
 	if err == nil {
@@ -164,15 +165,16 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 func (ctrl *OBClusterCtrl) FixStatus() error {
 	var zoneName string
 	var zoneStatus string
-	var clusterStatus string
+	// var clusterStatus string
 	oldClusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	for _, oldZoneStatus := range oldClusterStatus.Zone {
 		if oldZoneStatus.ZoneStatus != observerconst.OBZoneReady {
 			zoneName = oldZoneStatus.Name
 			zoneStatus = observerconst.OBZoneReady
-			clusterStatus = observerconst.ClusterReady
+			// clusterStatus = observerconst.ClusterReady
 			break
 		}
 	}
-	return ctrl.UpdateOBClusterAndZoneStatus(clusterStatus, zoneName, zoneStatus)
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, zoneStatus)
+	// return ctrl.UpdateOBClusterAndZoneStatus(clusterStatus, zoneName, zoneStatus)
 }

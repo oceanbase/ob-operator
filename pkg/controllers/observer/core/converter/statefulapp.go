@@ -231,6 +231,20 @@ func GetSubsetStatusFromStatefulApp(zoneName string, statefulApp cloudv1.Statefu
 
 func UpdateSubsetReplicaForStatefulApp(subset cloudv1.Subset, statefulApp cloudv1.StatefulApp) cloudv1.StatefulApp {
 	zoneList := make([]cloudv1.Subset, 0)
+
+	isExist := false
+	for _, zone := range statefulApp.Spec.Subsets {
+		if zone.Name == subset.Name && zone.Replicas != 0 {
+			isExist = true
+		}
+	}
+
+	if !isExist {
+		newZone := subset
+		newZone.Replicas = 1
+		zoneList = append(zoneList, newZone)
+	}
+
 	for _, zone := range statefulApp.Spec.Subsets {
 		if zone.Name == subset.Name {
 			// one by one
@@ -241,7 +255,10 @@ func UpdateSubsetReplicaForStatefulApp(subset cloudv1.Subset, statefulApp cloudv
 				zone.Replicas = zone.Replicas - 1
 			}
 		}
-		zoneList = append(zoneList, zone)
+		if zone.Replicas > 0 {
+			zoneList = append(zoneList, zone)
+		}
+
 	}
 	statefulApp.Spec.Subsets = zoneList
 	return statefulApp
@@ -252,4 +269,11 @@ func CheckStatefulAppStatus(statefulApp cloudv1.StatefulApp) bool {
 		return false
 	}
 	return true
+}
+
+func UpdateZoneForStatefulApp(clusterList []cloudv1.Cluster, statefulApp cloudv1.StatefulApp) cloudv1.StatefulApp {
+	cluster := GetClusterSpecFromOBTopology(clusterList)
+	zoneList := cluster.Zone
+	statefulApp.Spec.Subsets = zoneList
+	return statefulApp
 }

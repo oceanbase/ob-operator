@@ -1,6 +1,6 @@
 VERSION := $(shell git rev-parse --short HEAD)
 # Image URL to use all building/pushing image targets
-IMG ?= oceanbasedev/ob-operator:1.0.19
+IMG ?= oceanbasedev/ob-operator:1.0.4-snapshot-alv
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
