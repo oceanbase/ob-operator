@@ -57,3 +57,7 @@ func SetParameterSQLReplacer(name, value string) *strings.Replacer {
 func GetParameterSQLReplacer(name string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name)
 }
+
+func ZoneNameReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
+}

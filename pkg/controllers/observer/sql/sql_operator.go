@@ -62,6 +62,10 @@ func GetOBServer(IP string) []model.AllServer {
 	return GetOBServerFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBServerSQL)
 }
 
+func GetOBZone(IP string) []model.AllZone {
+	return GetOBZoneFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBZoneSQL)
+}
+
 func AddServer(clusterIP, zoneName, podIP string) error {
 	serverIP := fmt.Sprintf("%s:%d", podIP, constant.OBSERVER_RPC_PORT)
 	sql := ReplaceAll(AddServerSQLTemplate, AddServerSQLReplacer(zoneName, serverIP))
@@ -81,4 +85,28 @@ func GetRootService(IP string) []model.AllVirtualCoreMeta {
 func GetRSJobStatus(clusterIP, podIP string) []model.RSJobStatus {
 	sql := ReplaceAll(GetRSJobStatusSQL, GetRSJobStatusSQLReplacer(podIP, constant.OBSERVER_RPC_PORT))
 	return GetRSJobStatusFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
+}
+
+func AddZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(AddZoneSQLTemplate, ZoneNameReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}
+
+func StartZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(StartZoneSQLTemplate, ZoneNameReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}
+
+func GetAllUnit(clusterIP string) []model.AllUnit {
+	return GetAllUnitFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetAllUnitSql)
+}
+
+func StopZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(StopOBZoneTemplate, ZoneNameReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+}
+
+func DeleteZone(clusterIP, zoneName string) error {
+	sql := ReplaceAll(DeleteOBZoneTemplate, ZoneNameReplacer(zoneName))
+	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
 }

@@ -16,8 +16,10 @@ import (
 	"context"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"k8s.io/klog/v2"
 )
 
 type OBZoneCtrl struct {
@@ -82,4 +84,104 @@ func (ctrl *OBZoneCtrl) DeleteOBZone(zone cloudv1.OBZone) error {
 		return err
 	}
 	return nil
+}
+
+func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp) error {
+	//generate new StatefulApp for new Zone
+	klog.Infoln("----------------------------OBZoneScaleUP----------------------------")
+
+	// generate new OBZone for new ObZone
+	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
+	obZoneCtrl := NewOBZoneCtrl(ctrl)
+	obZoneCurrent, err := obZoneCtrl.GetOBZoneByName(ctrl.OBCluster.Namespace, obZoneName)
+	if err != nil {
+		return err
+	}
+	newOBZone := converter.UpdateOBZoneSpec(obZoneCurrent, ctrl.OBCluster.Spec.Topology)
+
+	// update OBZone replica
+	err = obZoneCtrl.UpdateOBZone(newOBZone)
+	if err != nil {
+		return err
+	}
+
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: GetServiceClusterIPByName err ", err)
+		return err
+	}
+
+	// add and start ob zone
+	err = ctrl.AddAndStartOBZone(clusterIP)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: AddAndStartOBZone err ", err)
+		return err
+	}
+
+	err = ctrl.UpdateOBZoneStatus(statefulApp)
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: UpdateOBZoneStatus err ", err)
+	}
+
+	err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ZoneScaleUP, "", "")
+	if err != nil {
+		klog.Infoln("OBZoneScaleUP: UpdateOBClusterAndZoneStatus err ", err)
+		return err
+	}
+
+	return ctrl.UpdateOBZoneStatusFromDB(clusterIP)
+
+}
+
+func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) error {
+	klog.Infoln("----------------------------OBZoneScaleDown----------------------------")
+
+	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
+	obZoneCtrl := NewOBZoneCtrl(ctrl)
+
+	obZoneCurrent, err := obZoneCtrl.GetOBZoneByName(ctrl.OBCluster.Namespace, obZoneName)
+	if err != nil {
+		return err
+	}
+	newOBZone := converter.UpdateOBZoneSpec(obZoneCurrent, ctrl.OBCluster.Spec.Topology)
+
+	// update OBZone replica
+	err = obZoneCtrl.UpdateOBZone(newOBZone)
+	if err != nil {
+		return err
+	}
+
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		klog.Infoln("OBZoneScaleDown: GetServiceClusterIPByName err ", err)
+		return err
+	}
+
+	// get info for delete obzone
+	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
+	err, zoneName := converter.GetInfoForDelZone(clusterIP, clusterSpec, statefulApp)
+	// nil : need to delete zone
+	if err == nil {
+		// del obzone
+		klog.Infoln("need to delete obzone ")
+		err = ctrl.DeleteOBZone(clusterIP, zoneName, statefulApp)
+		if err != nil {
+			klog.Infoln("OBZoneScaleDown: Delete OBZone err ", err)
+			return err
+		}
+
+		err = ctrl.UpdateOBZoneStatus(statefulApp)
+		if err != nil {
+			klog.Infoln("OBZoneScaleDown: UpdateOBZoneStatus err ", err)
+		}
+
+		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ZoneScaleDown, "", "")
+		if err != nil {
+			klog.Infoln("OBZoneScaleDown: UpdateOBClusterAndZoneStatus err ", err)
+			return err
+		}
+	}
+
+	return ctrl.UpdateOBZoneStatusFromDB(clusterIP)
+
 }

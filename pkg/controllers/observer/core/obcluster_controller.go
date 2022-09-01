@@ -94,7 +94,6 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 	var newClusterStatus bool
 	statefulApp := &cloudv1.StatefulApp{}
 	statefulApp, newClusterStatus = ctrl.IsNewCluster(*statefulApp)
-
 	// is new cluster
 	if newClusterStatus {
 		err := ctrl.NewCluster(*statefulApp)
@@ -102,7 +101,6 @@ func (ctrl *OBClusterCtrl) OBClusterCoordinator() (ctrl.Result, error) {
 			return reconcile.Result{}, err
 		}
 	}
-
 	// OBCluster control-plan
 	err := ctrl.OBClusterEffector(*statefulApp)
 	if err != nil {
@@ -179,6 +177,12 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 			case observerconst.ScaleDown:
 				// OBServer Scale Down
 				err = ctrl.OBServerScaleDownByZone(statefulApp)
+				// OBZone Scale Up
+			case observerconst.ZoneScaleUP:
+				err = ctrl.OBZoneScaleUP(statefulApp)
+				// OBZone Scale Down
+			case observerconst.ZoneScaleDown:
+				err = ctrl.OBZoneScaleDown(statefulApp)
 			}
 		}
 	}
@@ -210,19 +214,22 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		klog.Errorln("resource changes is not supported yet")
 		return nil
 	}
+	// get ClusterIP
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+	if err != nil {
+		return nil
+	}
 
 	// check zone number modified
-	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, statefulApp)
+	zoneScaleStatus, err := judge.ZoneNumberIsModified(ctrl.OBCluster.Spec.Topology, ctrl.OBCluster, clusterIP)
 	if err != nil {
 		return err
 	}
 	switch zoneScaleStatus {
-	case observerconst.ScaleUP:
-		// TODO: support Zone Scale UP
-		klog.Errorln("Zone scale up is not supported yet")
-	case observerconst.ScaleDown:
-		// TODO: support Zone Scale Down
-		klog.Errorln("Zone scale down is not supported yet")
+	case observerconst.ZoneScaleUP:
+		err = ctrl.OBZoneScaleUP(statefulApp)
+	case observerconst.ZoneScaleDown:
+		err = ctrl.OBZoneScaleDown(statefulApp)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
 		if err != nil {

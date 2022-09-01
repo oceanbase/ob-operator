@@ -24,6 +24,13 @@ type AllServer struct {
 	StartServiceTime int64
 }
 
+type AllZone struct {
+	Zone  string
+	Name  string
+	Value string
+	Info  string
+}
+
 type AllVirtualCoreMeta struct {
 	Zone         string
 	SvrIP        string
@@ -47,4 +54,18 @@ type SysParameterStat struct {
 	Value     string
 	Scope     string
 	EditLevel string
+}
+
+type AllUnit struct {
+	UnitIp             string
+	ResourcePoolIp     string
+	GroupId            string
+	Zone               string
+	SvrIP              string
+	SvrPort            int64
+	MigrateFromSvrIp   string
+	MigrateFromSvrPort int64
+	ManualMigrate      int64
+	Status             string
+	ReplicaType        int64
 }

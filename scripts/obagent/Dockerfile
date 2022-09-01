@@ -35,4 +35,4 @@ ADD ./replace_yaml.sh /home/admin/obagent
 
 
 ENTRYPOINT ["/tini", "--"]
-CMD ["bash", "-c", " cd /home/admin/obagent && cp -r etc/* conf/ && ./replace_yaml.sh  && ./bin/monagent -c conf/monagent.yaml"]
+CMD ["bash", "-c", " cd /home/admin/obagent && if [ \"`ls -A conf`\" == \"\" ]; then cp -r etc/* conf/ && ./replace_yaml.sh; fi && ./bin/monagent -c conf/monagent.yaml"]

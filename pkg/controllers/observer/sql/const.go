@@ -24,6 +24,15 @@ const (
 	AddServerSQLTemplate = "ALTER SYSTEM ADD SERVER '${SERVER_IP}' ZONE '${ZONE_NAME}';"
 	DelServerSQLTemplate = "ALTER SYSTEM DELETE SERVER '${SERVER_IP}';"
 
+	GetOBZoneSQL         = "SELECT zone, name, value, info FROM __all_zone WHERE name = 'status';"
+	AddZoneSQLTemplate   = "ALTER SYSTEM ADD ZONE '${ZONE_NAME}';"
+	StartZoneSQLTemplate = "ALTER SYSTEM START ZONE '${ZONE_NAME}';"
+
+	StopOBZoneTemplate   = "ALTER SYSTEM STOP ZONE '${ZONE_NAME}';"
+	DeleteOBZoneTemplate = "ALTER SYSTEM DELETE ZONE '${ZONE_NAME}';"
+
+	GetAllUnitSql = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
+
 	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role, partition_id, partition_cnt FROM __all_virtual_core_meta_table;"
 
 	GetRSJobStatusSQL = "SELECT job_status, return_code, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"

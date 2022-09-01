@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
@@ -21,6 +22,7 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) DelPodFromStatefulAppByIP(zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
+	klog.Infoln("DelPodFromStatefulAppByIP: zoneName, podIP ", zoneName, podIP)
 	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zoneName, statefulApp)
 	for _, pod := range subsetStatus.Pods {
 		if pod.PodIP == podIP {

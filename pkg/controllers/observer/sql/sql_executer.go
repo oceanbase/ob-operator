@@ -53,6 +53,26 @@ func GetOBServerFromDB(ip string, port int, db string, SQL string) []model.AllSe
 	return res
 }
 
+func GetOBZoneFromDB(ip string, port int, db string, SQL string) []model.AllZone {
+	client := ConnOB(ip, port, db, 5)
+	res := make([]model.AllZone, 0)
+	if client != nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(SQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func GetRootServiceFromDB(ip string, port int, db string, SQL string) []model.AllVirtualCoreMeta {
 	client := ConnOB(ip, port, db, 5)
 	res := make([]model.AllVirtualCoreMeta, 0)
@@ -102,6 +122,26 @@ func GetSysParameterFromDB(ip string, port int, db string, SQL string) []model.S
 		if err == nil {
 			defer rows.Close()
 			var rowData model.SysParameterStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func GetAllUnitFromDB(ip string, port int, db string, SQL string) []model.AllUnit {
+	client := ConnOB(ip, port, db, 5)
+	res := make([]model.AllUnit, 0)
+	if client != nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllUnit{}).Raw(SQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllUnit
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
