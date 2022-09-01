@@ -16,7 +16,7 @@ package observerconst
 const (
 	ImgOb         = "observer"
 	ImgObagent    = "obagent"
-	ImgPullPolicy = "IfNotPresent"
+	ImgPullPolicy = "Always"
 
 	DatafileStorageName = "data-file"
 	DatafileStoragePath = "/home/admin/data_file"

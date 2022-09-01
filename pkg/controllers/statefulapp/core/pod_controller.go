@@ -174,6 +174,7 @@ func (ctrl *PodCtrl) DeletePod(subset cloudv1.Subset) error {
 	var obServers []model.AllServer
 	for _, pod := range sbsCurrent.Pods {
 		if len(obServers) == 0 {
+			// TODO pod maybe not connectable
 			obServers = sql.GetOBServer(pod.PodIP)
 		}
 		if pod.Index >= subset.Replicas {

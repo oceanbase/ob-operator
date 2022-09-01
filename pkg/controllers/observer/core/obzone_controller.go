@@ -182,4 +182,5 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) erro
 	}
 
 	return ctrl.UpdateOBZoneStatusFromDB(clusterIP)
+
 }
