@@ -10,6 +10,7 @@
   http://www.apache.org/licenses/
   http://www.apache.org/licenses/LICENSE-2.0
   http://license.coscl.org.cn/MulanPSL2
+  http://license.coscl.org.cn/MulanPubL-2.0
   https://goproxy.cn
   https://bixense.com/clicolors/
   https://open.oceanbase.com/
@@ -40,10 +41,12 @@
 /LICENSE
 /README.md
 /README-CN.md
+/.git/**
 /.github/**
 /scripts/obagent/Dockerfile
 /scripts/obproxy/Dockerfile
 /scripts/observer/Dockerfile
 /hack/tools.go
+/config/rbac/kustomization.yaml
 --------------------------------------------------------
 # Config the ignored fold to escape the Chinese scan by GLOB wildcard
