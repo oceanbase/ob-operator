@@ -34,7 +34,7 @@ var textFormatter = &TextFormatter{
 	CallerPrettyfier: func(frame *runtime.Frame) (string, string) {
 		n := 0
 		filename := frame.File
-		// 获取包名
+		// get package name
 		for i := len(filename) - 1; i > 0; i-- {
 			if filename[i] == '/' {
 				n++

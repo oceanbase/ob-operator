@@ -72,7 +72,7 @@ func (c *command) ExecuteAllowFailure() (*ExecuteResult, error) {
 	return c.execute(info)
 }
 
-// 正常日志用 debug 打印
+// normal log Execute With with debug
 func (c *command) ExecuteWithDebug() (*ExecuteResult, error) {
 	executeResult, err := c.execute(debug)
 	if err != nil {

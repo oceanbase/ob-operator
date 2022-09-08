@@ -1,0 +1,52 @@
+##########################################################
+#            OBFlow Secret Scan Ignore List              #
+##########################################################
+# Above the segmentation lines there are suspected privacy information #
+# Please use the file name as the first line and the igored information #
+# should be started with tab. #
+# Under the segmentation lines there are the folders which you need to ignore #
+##########################################################
+**
+  http://www.apache.org/licenses/
+  http://www.apache.org/licenses/LICENSE-2.0
+  http://license.coscl.org.cn/MulanPSL2
+  http://license.coscl.org.cn/MulanPubL-2.0
+  https://goproxy.cn
+  https://bixense.com/clicolors/
+  https://open.oceanbase.com/
+  https://github.com/oceanbase/obagent.git
+  https://github.com/brancz/kube-rbac-proxy
+  https://github.com/oceanbase/ob-operator/issues
+  https://github.com/GoogleContainerTools/distroless
+  https://github.com/krallin/tini/releases/download/
+  https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/events/event.go
+  https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+  https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+  https://kubernetes.io/docs/concepts/containers/images
+  https://kubernetes.io/docs/concepts/containers/images#updating-images
+  https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+  https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
+  https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+  https://docs.docker.com/engine/reference/builder/#dockerignore-file
+  https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
+  http://linuxcommand.org/lc3_adv_awk.php
+  http://127.0.0.1:8080/
+  http://svc-prometheus.obcluster.svc:8080
+--------------------------------------------------------
+# Should use GLOB wildcard to config and analysis the ignored folder
+# The root patch shold start with '/'
+/docs/**
+/LICENSE
+/README.md
+/README-CN.md
+/.git/**
+/.github/**
+/scripts/obagent/Dockerfile
+/scripts/obproxy/Dockerfile
+/scripts/observer/Dockerfile
+/hack/tools.go
+/config/rbac/kustomization.yaml
+--------------------------------------------------------
+# Config the ignored fold to escape the Chinese scan by GLOB wildcard

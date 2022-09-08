@@ -85,7 +85,7 @@ func (ctrl *OBClusterCtrl) ReviseConfig(podIP string, zoneName string) error {
 
 func (ctrl *OBClusterCtrl) ReviseAllOBAgentConfig(statefulApp cloudv1.StatefulApp) error {
 	subsets := statefulApp.Status.Subsets
-	// 获得所有的 obagent
+	// get all obagent
 	for subsetsIdx, _ := range subsets {
 		zoneName := subsets[subsetsIdx].Name
 		for _, pod := range subsets[subsetsIdx].Pods {
