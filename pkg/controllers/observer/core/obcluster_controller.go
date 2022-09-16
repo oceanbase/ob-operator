@@ -14,7 +14,6 @@ package core
 
 import (
 	"context"
-    "encoding/json"
 	"k8s.io/klog/v2"
     "github.com/pkg/errors"
     corev1 "k8s.io/api/core/v1"
@@ -122,10 +121,7 @@ func (ctrl *OBClusterCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
     password := ""
     if err == nil {
         user = "admin"
-        secretBytes, _ := json.Marshal(secret.(corev1.Secret))
-        klog.Infof("get secret object %s", string(secretBytes))
         password = string(secret.(corev1.Secret).Data["password"])
-        klog.Infof("get password %s", password)
     }
 
     p := &sql.DBConnectProperties {

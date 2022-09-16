@@ -14,7 +14,6 @@ package core
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -59,18 +58,13 @@ func NewPodCtrl(client client.Client, recorder record.EventRecorder, statefulApp
 
 func (ctrl *PodCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
     secretName := obConverter.GenerateSecretNameForDBUser(obConverter.GetObClusterName(ctrl.StatefulApp.Name), "sys", "admin")
-	klog.Infof("get secret %s", secretName)
     secretExecutor := resource.NewSecretResource(ctrl.Resource)
     secret, err := secretExecutor.Get(context.TODO(), ctrl.StatefulApp.Namespace, secretName)
-	klog.Infof("get secret got result %v, %v", secret, err)
     user := "root"
     password := ""
     if err == nil {
         user = "admin"
-        secretBytes, _ := json.Marshal(secret.(corev1.Secret))
-        klog.Infof("get secret object %s", string(secretBytes))
 		password = string(secret.(corev1.Secret).Data["password"])
-	    klog.Infof("get password %s", password)
     }
 
     for _, subset := range ctrl.StatefulApp.Status.Subsets {
