@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: oceanbasedev/ob-operator
-  newTag: dev-user-snapshot-09152055
+  newTag: 1.1.1
