@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +26,9 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/core/converter"
+	obConverter "github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
@@ -43,6 +46,7 @@ type PodCtrlOperator interface {
 	GetPodsStatusBySubset(namespace, name, subsetName string) []cloudv1.PodStatus
 	DeletePod(subset cloudv1.Subset) error
 	DeletePodList(pods []corev1.Pod) error
+    GetSqlOperator() (*sql.SqlOperator, error)
 }
 
 func NewPodCtrl(client client.Client, recorder record.EventRecorder, statefulApp cloudv1.StatefulApp) PodCtrlOperator {
@@ -51,6 +55,48 @@ func NewPodCtrl(client client.Client, recorder record.EventRecorder, statefulApp
 		Resource:    ctrlResource,
 		StatefulApp: statefulApp,
 	}
+}
+
+func (ctrl *PodCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
+    secretName := obConverter.GenerateSecretNameForDBUser(obConverter.GetObClusterName(ctrl.StatefulApp.Name), "sys", "admin")
+	klog.Infof("get secret %s", secretName)
+    secretExecutor := resource.NewSecretResource(ctrl.Resource)
+    secret, err := secretExecutor.Get(context.TODO(), ctrl.StatefulApp.Namespace, secretName)
+	klog.Infof("get secret got result %v, %v", secret, err)
+    user := "root"
+    password := ""
+    if err == nil {
+        user = "admin"
+        secretBytes, _ := json.Marshal(secret.(corev1.Secret))
+        klog.Infof("get secret object %s", string(secretBytes))
+		password = string(secret.(corev1.Secret).Data["password"])
+	    klog.Infof("get password %s", password)
+    }
+
+    for _, subset := range ctrl.StatefulApp.Status.Subsets {
+		for _, pod := range subset.Pods{
+			p := &sql.DBConnectProperties {
+				IP: pod.PodIP,
+				Port: observerconst.MysqlPort,
+				User: user,
+				Password: password,
+				Database: "oceanbase",
+				Timeout: 10,
+			}
+			so := sql.NewSqlOperator(p)
+			if so.TestOK() {
+				return so, nil
+			} else {
+			    klog.Infoln("try empty database")
+				p.Database = ""
+			    so = sql.NewSqlOperator(p)
+				if so.TestOK() {
+					return so, nil
+				}
+			}
+		}
+    }
+    return nil, errors.New("failed to get sql operator")
 }
 
 func (ctrl *PodCtrl) PodsCoordinator(subset cloudv1.Subset, subsetPodsCurrent []corev1.Pod) (bool, error) {
@@ -68,6 +114,39 @@ func (ctrl *PodCtrl) PodsCoordinator(subset cloudv1.Subset, subsetPodsCurrent []
 	}
 
 	return UpdateStatusWithEqual(ctrl.Resource, ctrl.StatefulApp)
+}
+
+func (ctrl *PodCtrl) GetPodsByLables(namespace string, listOption client.ListOption) []corev1.Pod {
+	podExecuter := resource.NewPodResource(ctrl.Resource)
+	podList := podExecuter.List(context.TODO(), namespace, listOption)
+	return converter.PodListToPods(podList.(corev1.PodList))
+}
+
+func (ctrl *PodCtrl) GetPodsByApp(namespace, name string) []corev1.Pod {
+	listOption := client.MatchingLabels{
+		"app": name,
+	}
+	return ctrl.GetPodsByLables(namespace, listOption)
+}
+
+func (ctrl *PodCtrl) GetPodsBySubset(namespace, name, subsetName string) []corev1.Pod {
+	listOption := client.MatchingLabels{
+		"app":    name,
+		"subset": subsetName,
+	}
+	return ctrl.GetPodsByLables(namespace, listOption)
+}
+
+func (ctrl *PodCtrl) GetPodsStatusBySubset(namespace, name, subsetName string) []cloudv1.PodStatus {
+	res := make([]cloudv1.PodStatus, 0)
+	podList := ctrl.GetPodsBySubset(namespace, name, subsetName)
+	if len(podList) > 0 {
+		for _, pod := range podList {
+			podStatus := converter.PodCurrentStatusToPodStatus(pod)
+			res = append(res, podStatus)
+		}
+	}
+	return res
 }
 
 func (ctrl *PodCtrl) CreatePod(subset cloudv1.Subset) error {
@@ -119,39 +198,6 @@ func (ctrl *PodCtrl) CreatePod(subset cloudv1.Subset) error {
 	return nil
 }
 
-func (ctrl *PodCtrl) GetPodsByLables(namespace string, listOption client.ListOption) []corev1.Pod {
-	podExecuter := resource.NewPodResource(ctrl.Resource)
-	podList := podExecuter.List(context.TODO(), namespace, listOption)
-	return converter.PodListToPods(podList.(corev1.PodList))
-}
-
-func (ctrl *PodCtrl) GetPodsByApp(namespace, name string) []corev1.Pod {
-	listOption := client.MatchingLabels{
-		"app": name,
-	}
-	return ctrl.GetPodsByLables(namespace, listOption)
-}
-
-func (ctrl *PodCtrl) GetPodsBySubset(namespace, name, subsetName string) []corev1.Pod {
-	listOption := client.MatchingLabels{
-		"app":    name,
-		"subset": subsetName,
-	}
-	return ctrl.GetPodsByLables(namespace, listOption)
-}
-
-func (ctrl *PodCtrl) GetPodsStatusBySubset(namespace, name, subsetName string) []cloudv1.PodStatus {
-	res := make([]cloudv1.PodStatus, 0)
-	podList := ctrl.GetPodsBySubset(namespace, name, subsetName)
-	if len(podList) > 0 {
-		for _, pod := range podList {
-			podStatus := converter.PodCurrentStatusToPodStatus(pod)
-			res = append(res, podStatus)
-		}
-	}
-	return res
-}
-
 func (ctrl *PodCtrl) DeletePod(subset cloudv1.Subset) error {
 	var err error
 
@@ -175,7 +221,10 @@ func (ctrl *PodCtrl) DeletePod(subset cloudv1.Subset) error {
 	for _, pod := range sbsCurrent.Pods {
 		if len(obServers) == 0 {
 			// TODO pod maybe not connectable
-			obServers = sql.GetOBServer(pod.PodIP)
+			sqlOperator, err := ctrl.GetSqlOperator()
+			if err == nil {
+			    obServers = sqlOperator.GetOBServer()
+			}
 		}
 		if pod.Index >= subset.Replicas {
 			podsToDelete = append(podsToDelete, pod)

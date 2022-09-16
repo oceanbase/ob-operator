@@ -19,17 +19,16 @@ COPY --from=builder /workspace/cable .
 RUN chmod +x /app/cable
 
 RUN useradd -m admin
-ENV OB_VERSION 3.1.3-10100042022051821
-RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-libs-${OB_VERSION}.el8.x86_64.rpm
-RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-${OB_VERSION}.el8.x86_64.rpm
-RUN mkdir -p /home/admin/oceanbase/run
-RUN mkdir -p /home/admin/oceanbase/store/sort_dir
-RUN mkdir -p /home/admin/oceanbase/store/sstable
-RUN mkdir -p /home/admin/oceanbase/store/clog
-RUN mkdir -p /home/admin/oceanbase/store/ilog
-RUN mkdir -p /home/admin/oceanbase/store/slog
-RUN mkdir -p /home/admin/oceanbase/log
-RUN chown -R admin:admin /home/admin/oceanbase/
+ENV OB_VERSION 4.0.0.0-100000112022082910
+RUN yum install -y python2
+RUN ln -s /usr/bin/python2 /usr/bin/python
+RUN rpm -ivh http://yum.tbsite.net/alios/7/os/x86_64/Packages/libaio-0.3.109-13.1.alios7.x86_64.rpm
+RUN rpm -ivh --nodeps http://yum.tbsite.net/taobao/7/x86_64/test/oceanbase/oceanbase-${OB_VERSION}.el7.x86_64.rpm
+
+## 增加了这3行，替换observer的binary文件, ./custom/bin/observer 是自定义的 binary 文件, 替换 admin 目录下的文件
+RUN rm -rf /home/admin/oceanbase/admin
+ADD ./custom/bin/observer /home/admin/oceanbase/bin/
+ADD ./custom/admin /home/admin/oceanbase/
 
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini

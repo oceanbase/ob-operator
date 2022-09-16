@@ -13,22 +13,16 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-	"github.com/pkg/errors"
-	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	"context"
+
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
-func (ctrl *OBClusterCtrl) CreateUserForObproxy(statefulApp cloudv1.StatefulApp) error {
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when create user for obproxy")
-    }
-
-	err = sqlOperator.CreateUser("proxyro", "")
-	if err != nil {
-		return err
-	}
-
-	err = sqlOperator.GrantPrivilege("select", "*.*", "proxyro")
+func (ctrl *OBClusterCtrl) CreateDBUserSecret(tenantName, userName, password string) error {
+	secret := converter.GenerateDBUserSecret(ctrl.OBCluster, tenantName, userName, password)
+	secretExecutor := resource.NewSecretResource(ctrl.Resource)
+	err := secretExecutor.Create(context.TODO(), secret)
 	if err != nil {
 		return err
 	}

@@ -31,6 +31,7 @@ func NewOBClusterResource(resource *Resource) ResourceOperator {
 	return &OBClusterResource{resource}
 }
 
+// TODO: implement operations
 func (r *OBClusterResource) Create(ctx context.Context, obj interface{}) error {
 	return nil
 }

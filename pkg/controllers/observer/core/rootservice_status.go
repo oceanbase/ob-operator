@@ -14,16 +14,20 @@ package core
 
 import (
 	"reflect"
+    "github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
 )
 
 func (ctrl *OBClusterCtrl) UpdateRootServiceStatus(statefulApp cloudv1.StatefulApp) error {
-	subsets := statefulApp.Status.Subsets
+    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when update rootservice status")
+    }
+
 	// TODO: check owner
 	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
 	rsCtrl := NewRootServiceCtrl(ctrl)
@@ -34,20 +38,9 @@ func (ctrl *OBClusterCtrl) UpdateRootServiceStatus(statefulApp cloudv1.StatefulA
 
 	rsList := make([]model.AllVirtualCoreMeta, 0)
 	observerList := make([]model.AllServer, 0)
-	queryOk := false
-	for _, subset := range subsets {
-		if queryOk {
-			break
-		}
-		for _, pod := range subset.Pods {
-			rsList = sql.GetRootService(pod.PodIP)
-			observerList = sql.GetOBServer(pod.PodIP)
-			if len(rsList) > 0 && len(observerList) > 0 {
-				queryOk = true
-				break
-			}
-		}
-	}
+	rsList = sqlOperator.GetRootService()
+	observerList = sqlOperator.GetOBServer()
+
 	cluster := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	rsStatus := converter.RSListToRSStatus(cluster, rsCurrent, rsList, observerList)
 	status := reflect.DeepEqual(rsCurrent.Status, rsStatus.Status)

@@ -13,8 +13,11 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+    "github.com/pkg/errors"
+
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
+    statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/judge"
 	"k8s.io/klog/v2"
@@ -73,7 +76,7 @@ func (ctrl *OBClusterCtrl) OBServerScaleUPByZone(statefulApp cloudv1.StatefulApp
 	}
 	klog.Infoln("-----------------------OBServerScaleUPByZone-----------------------")
 	// get info for add server
-	err, zoneName, podIP := converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
+	err, zoneName, podIP := ctrl.GetInfoForAddServerByZone(clusterIP, statefulApp)
 	// nil need to add server
 	if err == nil {
 		clusterStatus = observerconst.ScaleUP
@@ -105,7 +108,7 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	klog.Infoln("---------------------OBServerScaleDownByZone-------------------------")
 
-	err, zoneName, podIP := converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
+	err, zoneName, podIP := ctrl.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
 	// nil need to del server
 	if err == nil {
 		clusterStatus = observerconst.ScaleDown
@@ -123,6 +126,73 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 	return ctrl.FixStatus()
 }
 
+func (ctrl *OBClusterCtrl) GetInfoForRecoverServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
+    sqlOperator, err := ctrl.GetSqlOperator()
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when recover server"), "", ""
+    }
+
+	obServerList := sqlOperator.GetOBServer()
+	if len(obServerList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+
+	nodeMap := converter.GenerateNodeMapByOBServerList(obServerList)
+
+	// judge witch ip need recover
+	for _, subset := range statefulApp.Status.Subsets {
+		for _, pod := range subset.Pods {
+			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
+				for _, server := range nodeMap[subset.Name] {
+					if pod.PodIP == server.ServerIP && server.Status == observerconst.OBServerInactive {
+						return nil, subset.Name, pod.PodIP
+					}
+				}
+			}
+		}
+	}
+
+	return errors.New("none server need recover"), "", ""
+}
+
+func (ctrl *OBClusterCtrl) GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
+    sqlOperator, err := ctrl.GetSqlOperator()
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when get info add server by zone"), "", ""
+    }
+
+	obServerList := sqlOperator.GetOBServer()
+	obZoneList := sqlOperator.GetOBZone()
+	if len(obServerList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+	if len(obZoneList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+	nodeMap := converter.GenerateNodeMapByOBServerList(obServerList)
+	zoneNodeMap := converter.GenerateZoneNodeMapByOBZoneList(obZoneList)
+
+	// judge which ip need add
+	for _, subset := range statefulApp.Status.Subsets {
+		for _, pod := range subset.Pods {
+			if pod.PodPhase == statefulappCore.PodStatusRunning && pod.Index < subset.ExpectedReplicas {
+				isPodNotInOBServerList := converter.IsPodNotInOBServerList(subset.Name, pod.PodIP, nodeMap)
+				isPodInOBZoneListNotInOBServerList := converter.IsPodInOBZoneListNotInOBServerList(subset.Name, nodeMap, zoneNodeMap)
+				// Pod IP not in OBServerList, need to add server
+				// do one thing at a time
+				if nodeMap == nil {
+					return nil, subset.Name, ""
+				}
+				if isPodNotInOBServerList || isPodInOBZoneListNotInOBServerList {
+					return nil, subset.Name, pod.PodIP
+				}
+			}
+		}
+	}
+
+	return errors.New("none ip need add"), "", ""
+}
+
 func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) error {
 	// get ClusterIP
 	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
@@ -131,7 +201,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	}
 
 	// get info for recover server
-	err, zoneName, podIP := converter.GetInfoForRecoverServerByZone(clusterIP, statefulApp)
+	err, zoneName, podIP := ctrl.GetInfoForRecoverServerByZone(clusterIP, statefulApp)
 	// nil is need to recover server
 	if err == nil {
 		// add server
@@ -141,7 +211,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 	}
 
 	// get info for add server
-	err, zoneName, podIP = converter.GetInfoForAddServerByZone(clusterIP, statefulApp)
+	err, zoneName, podIP = ctrl.GetInfoForAddServerByZone(clusterIP, statefulApp)
 	// nil is need to add server
 	if err == nil {
 		// add server
@@ -151,7 +221,7 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 
 	// get info for del server
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
-	err, zoneName, podIP = converter.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
+	err, zoneName, podIP = ctrl.GetInfoForDelServerByZone(clusterIP, clusterSpec, statefulApp)
 	// nil need to del server
 	if err == nil {
 		// del server
@@ -161,6 +231,45 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 
 	return ctrl.OBClusterReadyForStep(observerconst.StepMaintain, statefulApp)
 }
+
+func (ctrl *OBClusterCtrl) GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
+    sqlOperator, err := ctrl.GetSqlOperator()
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when del server by zone"), "", ""
+    }
+
+	obServerList := sqlOperator.GetOBServer()
+	if len(obServerList) == 0 {
+		return errors.New(observerconst.DataBaseError), "", ""
+	}
+
+	nodeMap := converter.GenerateNodeMapByOBServerList(obServerList)
+
+	// judge witch ip need del
+	for _, subset := range statefulApp.Status.Subsets {
+		podListToDelete := converter.GetPodListToDeleteFromSubsetStatus(subset)
+		zoneSpec := converter.GetZoneSpecFromClusterSpec(subset.Name, clusterSpec)
+
+		// number of observer in db > replica
+		if len(nodeMap[subset.Name]) > zoneSpec.Replicas {
+			for _, pod := range nodeMap[subset.Name] {
+
+				if zoneSpec.Replicas == 0 {
+					return nil, subset.Name, pod.ServerIP
+				}
+
+				for _, podToDelete := range podListToDelete {
+					if pod.ServerIP == podToDelete {
+						return nil, subset.Name, pod.ServerIP
+					}
+				}
+			}
+		}
+	}
+
+	return errors.New("none ip need del"), "", ""
+}
+
 
 func (ctrl *OBClusterCtrl) FixStatus() error {
 	var zoneName string

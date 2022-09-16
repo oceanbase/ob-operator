@@ -14,6 +14,7 @@ package core
 
 import (
 	"time"
+    "github.com/pkg/errors"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
@@ -23,7 +24,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/oceanbase/ob-operator/pkg/util"
 )
@@ -189,16 +189,27 @@ func (ctrl *OBClusterCtrl) OBServerReadyEffectorForBootstrap(statefulApp cloudv1
 		}
 
 		// run bootstrap SQL
-		go ctrl.BootstrapForOB(subsets[0].Pods[0].PodIP, obclusterBootstrapArgs)
+		go ctrl.BootstrapForOB(statefulApp, obclusterBootstrapArgs)
 	}
 
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) BootstrapForOB(IP, SQL string) {
-	sql.BootstrapForOB(IP, SQL)
+func (ctrl *OBClusterCtrl) BootstrapForOB(statefulApp cloudv1.StatefulApp, SQL string) error{
+    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when bootstrap")
+    }
+    // TODO: return error when got sql error
+    // set timeout 10 min
+    sqlOperator.ConnectProperties.Timeout = 600
+    err = sqlOperator.BootstrapForOB(SQL)
+    if err != nil {
+        return errors.Wrap(err, "bootstrap ob")
+    }
 	klog.Infoln("OBCluster", ctrl.OBCluster.Name, "run bootstrap sql finish")
 	_ = ctrl.UpdateOBClusterStatusBootstrapReady()
+    return nil
 }
 
 func (ctrl *OBClusterCtrl) UpdateOBClusterStatusBootstrapReady() error {
@@ -213,6 +224,10 @@ func (ctrl *OBClusterCtrl) OBClusterBootstraping(statefulApp cloudv1.StatefulApp
 }
 
 func (ctrl *OBClusterCtrl) OBClusterBootstrapReady(statefulApp cloudv1.StatefulApp) error {
+    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when bootstrap")
+    }
 	// time out, delete StatefulApp
 	status, err := ctrl.CheckTimeoutAndKillForBootstrap(statefulApp)
 	if err != nil {
@@ -221,7 +236,7 @@ func (ctrl *OBClusterCtrl) OBClusterBootstrapReady(statefulApp cloudv1.StatefulA
 
 	if !status {
 		subsets := statefulApp.Status.Subsets
-		obServerList := sql.GetOBServer(subsets[0].Pods[0].PodIP)
+		obServerList := sqlOperator.GetOBServer()
 
 		obServerBootstrapSucceed := converter.IsAllOBServerActive(obServerList, ctrl.OBCluster.Spec.Topology)
 		if obServerBootstrapSucceed {

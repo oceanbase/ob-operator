@@ -13,19 +13,19 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
+	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 )
 
 func (ctrl *OBClusterCtrl) CheckAndSetParameters() error {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-	if err != nil {
-		return err
-	}
+    sqlOperator, err := ctrl.GetSqlOperator()
+    if err != nil {
+        return errors.Wrap(err, "get sql operator when check and set parameter")
+    }
 	for _, cluster := range ctrl.OBCluster.Spec.Topology {
 		for _, parameter := range cluster.Parameters {
 
-			currentParameters := sql.GetParameter(clusterIP, parameter.Name)
+			currentParameters := sqlOperator.GetParameter(parameter.Name)
 			match := true
 			for _, currentParameter := range currentParameters {
 				if currentParameter.EditLevel == "READONLY" {
@@ -43,7 +43,7 @@ func (ctrl *OBClusterCtrl) CheckAndSetParameters() error {
 
 			if !match {
 				klog.Infof("set parameter %s = %s", parameter.Name, parameter.Value)
-				err = sql.SetParameter(clusterIP, parameter.Name, parameter.Value)
+				err = sqlOperator.SetParameter(parameter.Name, parameter.Value)
 				if err != nil {
 					return err
 				}

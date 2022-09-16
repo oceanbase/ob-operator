@@ -16,97 +16,228 @@ import (
 	"fmt"
 
 	"k8s.io/klog/v2"
+    "github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 )
 
-func SetServerOfflineTime(clusterIP string, offlineTime int) error {
+type SqlOperator struct {
+    ConnectProperties *DBConnectProperties
+}
+
+func NewSqlOperator(c *DBConnectProperties) *SqlOperator {
+    return &SqlOperator {
+        ConnectProperties: c,
+    }
+}
+
+func (op *SqlOperator) TestOK() bool {
+    err := op.ExecSQL("select 1")
+    return err == nil
+}
+
+func (op *SqlOperator) ExecSQL(SQL string) error {
+	klog.Infoln(SQL)
+	client, err := GetDBClient(op.ConnectProperties)
+    if err != nil {
+        return errors.Wrap(err, "Get DB Connection")
+    } else {
+		defer client.Close()
+		res := client.Exec(SQL)
+		if res.Error != nil {
+			errNum, errMsg := covertErrToMySQLError(res.Error)
+			klog.Errorln(errNum, errMsg)
+			return errors.New(errMsg)
+		}
+    }
+	return nil
+}
+
+func (op *SqlOperator) SetServerOfflineTime(offlineTime int) error {
 	sql := ReplaceAll(SetServerOfflineTimeSQLTemplate, SetServerOfflineTimeSQLReplacer(offlineTime))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+	return op.ExecSQL(sql)
 }
 
-func CreateUser(clusterIP, user, password string) error {
+func (op *SqlOperator) CreateUser(user, password string) error {
 	sql := ReplaceAll(CreateUserSQLTemplate, CreateUserSQLReplacer(user, password))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+	return op.ExecSQL(sql)
 }
 
-func GrantPrivilege(clusterIP, privilege, object, user string) error {
+func (op *SqlOperator) GrantPrivilege(privilege, object, user string) error {
 	sql := ReplaceAll(GrantPrivilegeSQLTemplate, GrantPrivilegeSQLReplacer(privilege, object, user))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+	return op.ExecSQL(sql)
 }
 
-func GetParameter(clusterIP, name string) []model.SysParameterStat {
-	sql := ReplaceAll(GetParameterTemplate, GetParameterSQLReplacer(name))
-	return GetSysParameterFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
-}
-
-// TODO: maybe need to set with scope
-func SetParameter(clusterIP, name, value string) error {
+func (op *SqlOperator) SetParameter(name, value string) error {
 	sql := ReplaceAll(SetParameterTemplate, SetParameterSQLReplacer(name, value))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 5)
+	return op.ExecSQL(sql)
 }
 
-func BootstrapForOB(IP, SQL string) {
-	setTimeOutRes := ExecSQL(IP, constant.OBSERVER_MYSQL_PORT, "", SetTimeoutSQL, 5)
+func (op *SqlOperator) BootstrapForOB(SQL string) error {
+    // TODO: set timeout with variables
+	setTimeOutRes := op.ExecSQL(SetTimeoutSQL)
 	if setTimeOutRes != nil {
 		klog.Errorln("set ob_query_timeout error", setTimeOutRes)
 	}
-	bootstrapRes := ExecSQL(IP, constant.OBSERVER_MYSQL_PORT, "", SQL, 300)
+	bootstrapRes := op.ExecSQL(SQL)
 	if bootstrapRes != nil {
-		klog.Errorln("run bootstrap sql error", bootstrapRes)
+		return errors.New(fmt.Sprintf("run bootstrap sql got error %v", bootstrapRes))
 	}
+    return nil
 }
 
-func GetOBServer(IP string) []model.AllServer {
-	return GetOBServerFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBServerSQL)
-}
-
-func GetOBZone(IP string) []model.AllZone {
-	return GetOBZoneFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetOBZoneSQL)
-}
-
-func AddServer(clusterIP, zoneName, podIP string) error {
+func (op *SqlOperator) AddServer(zoneName, podIP string) error {
 	serverIP := fmt.Sprintf("%s:%d", podIP, constant.OBSERVER_RPC_PORT)
 	sql := ReplaceAll(AddServerSQLTemplate, AddServerSQLReplacer(zoneName, serverIP))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
 
-func DelServer(clusterIP, podIP string) error {
+func (op *SqlOperator) DelServer(podIP string) error {
 	serverIP := fmt.Sprintf("%s:%d", podIP, constant.OBSERVER_RPC_PORT)
 	sql := ReplaceAll(DelServerSQLTemplate, DelServerSQLReplacer(serverIP))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
 
-func GetRootService(IP string) []model.AllVirtualCoreMeta {
-	return GetRootServiceFromDB(IP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetRootServiceSQL)
-}
-
-func GetRSJobStatus(clusterIP, podIP string) []model.RSJobStatus {
-	sql := ReplaceAll(GetRSJobStatusSQL, GetRSJobStatusSQLReplacer(podIP, constant.OBSERVER_RPC_PORT))
-	return GetRSJobStatusFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql)
-}
-
-func AddZone(clusterIP, zoneName string) error {
+func (op *SqlOperator) AddZone(zoneName string) error {
 	sql := ReplaceAll(AddZoneSQLTemplate, ZoneNameReplacer(zoneName))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
 
-func StartZone(clusterIP, zoneName string) error {
+func (op *SqlOperator) StartZone(zoneName string) error {
 	sql := ReplaceAll(StartZoneSQLTemplate, ZoneNameReplacer(zoneName))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
 
-func GetAllUnit(clusterIP string) []model.AllUnit {
-	return GetAllUnitFromDB(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, GetAllUnitSql)
-}
-
-func StopZone(clusterIP, zoneName string) error {
+func (op *SqlOperator) StopZone(zoneName string) error {
 	sql := ReplaceAll(StopOBZoneTemplate, ZoneNameReplacer(zoneName))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
 
-func DeleteZone(clusterIP, zoneName string) error {
+func (op *SqlOperator) DeleteZone(zoneName string) error {
 	sql := ReplaceAll(DeleteOBZoneTemplate, ZoneNameReplacer(zoneName))
-	return ExecSQL(clusterIP, constant.OBSERVER_MYSQL_PORT, DatabaseOb, sql, 60)
+	return op.ExecSQL(sql)
 }
+
+func (op *SqlOperator) GetParameter(name string) []model.SysParameterStat {
+    res := make([]model.SysParameterStat, 0)
+	sql := ReplaceAll(GetParameterTemplate, GetParameterSQLReplacer(name))
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+        defer client.Close()
+        rows, err := client.Model(&model.SysParameterStat{}).Raw(sql).Rows()
+        if err == nil {
+                defer rows.Close()
+                var rowData model.SysParameterStat
+                for rows.Next() {
+                        err = client.ScanRows(rows, &rowData)
+                        if err == nil {
+                                res = append(res, rowData)
+                        }
+                }
+        }
+    }
+    return res
+}
+
+func (op *SqlOperator) GetOBServer() []model.AllServer {
+	res := make([]model.AllServer, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllServer{}).Raw(GetOBServerSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllServer
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetOBZone() []model.AllZone {
+	res := make([]model.AllZone, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(GetOBZoneSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetRootService() []model.AllVirtualCoreMeta {
+	res := make([]model.AllVirtualCoreMeta, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllVirtualCoreMeta{}).Raw(GetRootServiceSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllVirtualCoreMeta
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetRSJobStatus(podIP string) []model.RSJobStatus {
+    res := make([]model.RSJobStatus, 0)
+	sql := ReplaceAll(GetRSJobStatusSQL, GetRSJobStatusSQLReplacer(podIP, constant.OBSERVER_RPC_PORT))
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+        defer client.Close()
+        rows, err := client.Model(&model.RSJobStatus{}).Raw(sql).Rows()
+        if err == nil {
+                defer rows.Close()
+                var rowData model.RSJobStatus
+                for rows.Next() {
+                        err = client.ScanRows(rows, &rowData)
+                        if err == nil {
+                                res = append(res, rowData)
+                        }
+                }
+        }
+    }
+    return res
+}
+
+func (op *SqlOperator) GetAllUnit() []model.AllUnit {
+    res := make([]model.AllUnit, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+    if err == nil {
+        defer client.Close()
+        rows, err := client.Model(&model.AllUnit{}).Raw(GetAllUnitSql).Rows()
+        if err == nil {
+                defer rows.Close()
+                var rowData model.AllUnit
+                for rows.Next() {
+                        err = client.ScanRows(rows, &rowData)
+                        if err == nil {
+                                res = append(res, rowData)
+                        }
+                }
+        }
+    }
+    return res
+}
+

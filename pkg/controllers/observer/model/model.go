@@ -36,13 +36,10 @@ type AllVirtualCoreMeta struct {
 	SvrIP        string
 	SvrPort      int64
 	Role         int64
-	PartitionIP  int64
-	PartitionCnt int64
 }
 
 type RSJobStatus struct {
 	JobStatus  string
-	ReturnCode int64
 	Progress   int64
 }
 

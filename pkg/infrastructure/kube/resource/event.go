@@ -39,6 +39,14 @@ const (
 	FailedToDeletePVC = "FailedDeletePVC"
 )
 
+// Secret event reason list
+const (
+	CreatedSecret        = "CreatedSecret"
+	FailedToCreateSecret = "FailedCreateSecret"
+	DeletedSecret        = "DeletedSecret"
+	FailedToDeleteSecret = "FailedDeleteSecret"
+)
+
 // Service event reason list
 const (
 	CreatedService        = "CreatedService"
