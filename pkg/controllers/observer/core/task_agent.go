@@ -14,11 +14,11 @@ package core
 
 import (
 	"bytes"
-    "github.com/pkg/errors"
 	"encoding/json"
 	"fmt"
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"k8s.io/klog/v2"
 	"net/http"
@@ -34,10 +34,10 @@ type Configs struct {
 
 // TODO generate random passwd
 func (ctrl *OBClusterCtrl) CreateUserForObagent(statefulApp cloudv1.StatefulApp) error {
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when create user for agent")
-    }
+	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when create user for agent")
+	}
 	err = sqlOperator.CreateUser("ocp_monitor", "root")
 	if err != nil {
 		return err

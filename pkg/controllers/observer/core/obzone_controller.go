@@ -14,7 +14,7 @@ package core
 
 import (
 	"context"
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -135,10 +135,10 @@ func (ctrl *OBClusterCtrl) OBZoneScaleUP(statefulApp cloudv1.StatefulApp) error 
 }
 
 func (ctrl *OBClusterCtrl) GetInfoForDelZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when get info for del zone"), ""
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when get info for del zone"), ""
+	}
 
 	obZoneList := sqlOperator.GetOBZone()
 	if len(obZoneList) == 0 {
@@ -155,7 +155,6 @@ func (ctrl *OBClusterCtrl) GetInfoForDelZone(clusterIP string, clusterSpec cloud
 
 	return errors.New("none zone need del"), ""
 }
-
 
 func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) error {
 	klog.Infoln("----------------------------OBZoneScaleDown----------------------------")

@@ -119,19 +119,19 @@ func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string
 
 	ctrl.StartOBServer(clusterIP, zoneName, podIP, statefulApp)
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        // add server
-        err = sqlOperator.AddServer(zoneName, podIP)
-        if err != nil {
-            // kill pod
-            _ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
-            _ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
-        } else {
-            klog.Infoln("add OBServer finish", zoneName, podIP)
-            ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
-        }
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		// add server
+		err = sqlOperator.AddServer(zoneName, podIP)
+		if err != nil {
+			// kill pod
+			_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+			_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+		} else {
+			klog.Infoln("add OBServer finish", zoneName, podIP)
+			ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
+		}
+	}
 
 	// update status
 	_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
@@ -189,17 +189,17 @@ func (ctrl *OBClusterCtrl) TickerOBServerStatusCheckFromDB(clusterIP string, pod
 				return errors.New("observer starting timeout")
 			}
 			num = num + 1
-            sqlOperator, err := ctrl.GetSqlOperator()
-            if err == nil {
-			    obServerList := sqlOperator.GetOBServer()
-                for _, obServer := range obServerList {
-                    if obServer.SvrIP == podIP {
-                        if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
-                            return nil
-                        }
-                    }
-                }
-            }
+			sqlOperator, err := ctrl.GetSqlOperator()
+			if err == nil {
+				obServerList := sqlOperator.GetOBServer()
+				for _, obServer := range obServerList {
+					if obServer.SvrIP == podIP {
+						if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
+							return nil
+						}
+					}
+				}
+			}
 		}
 	}
 }

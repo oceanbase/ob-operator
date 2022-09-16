@@ -29,7 +29,7 @@ func GenerateStatefulAppName(name string) string {
 }
 
 func GetObClusterName(name string) string {
-    return name[5:]
+	return name[5:]
 }
 
 func GenerateStatefulAppBootStrapZoneSpec(zone []cloudv1.Subset) []cloudv1.Subset {

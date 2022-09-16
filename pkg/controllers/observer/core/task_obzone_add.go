@@ -13,10 +13,10 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	expectedOBZoneList := clusterSpec.Zone
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when add and start obzone")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when add and start obzone")
+	}
 
 	obZoneList := sqlOperator.GetOBZone()
 

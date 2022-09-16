@@ -18,10 +18,10 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) CheckAndSetParameters() error {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when check and set parameter")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when check and set parameter")
+	}
 	for _, cluster := range ctrl.OBCluster.Spec.Topology {
 		for _, parameter := range cluster.Parameters {
 

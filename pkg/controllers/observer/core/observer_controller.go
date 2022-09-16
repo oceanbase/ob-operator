@@ -13,13 +13,13 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-    "github.com/pkg/errors"
+	"github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
-    statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/judge"
+	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"k8s.io/klog/v2"
 )
 
@@ -127,10 +127,10 @@ func (ctrl *OBClusterCtrl) OBServerScaleDownByZone(statefulApp cloudv1.StatefulA
 }
 
 func (ctrl *OBClusterCtrl) GetInfoForRecoverServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when recover server"), "", ""
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when recover server"), "", ""
+	}
 
 	obServerList := sqlOperator.GetOBServer()
 	if len(obServerList) == 0 {
@@ -156,10 +156,10 @@ func (ctrl *OBClusterCtrl) GetInfoForRecoverServerByZone(clusterIP string, state
 }
 
 func (ctrl *OBClusterCtrl) GetInfoForAddServerByZone(clusterIP string, statefulApp cloudv1.StatefulApp) (error, string, string) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when get info add server by zone"), "", ""
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when get info add server by zone"), "", ""
+	}
 
 	obServerList := sqlOperator.GetOBServer()
 	obZoneList := sqlOperator.GetOBZone()
@@ -233,10 +233,10 @@ func (ctrl *OBClusterCtrl) OBServerMaintain(statefulApp cloudv1.StatefulApp) err
 }
 
 func (ctrl *OBClusterCtrl) GetInfoForDelServerByZone(clusterIP string, clusterSpec cloudv1.Cluster, statefulApp cloudv1.StatefulApp) (error, string, string) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when del server by zone"), "", ""
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when del server by zone"), "", ""
+	}
 
 	obServerList := sqlOperator.GetOBServer()
 	if len(obServerList) == 0 {
@@ -269,7 +269,6 @@ func (ctrl *OBClusterCtrl) GetInfoForDelServerByZone(clusterIP string, clusterSp
 
 	return errors.New("none ip need del"), "", ""
 }
-
 
 func (ctrl *OBClusterCtrl) FixStatus() error {
 	var zoneName string

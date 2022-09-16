@@ -53,10 +53,10 @@ func (ctrl *OBClusterCtrl) DelOBServer(clusterIP, zoneName, podIP string) error 
 func (ctrl *OBClusterCtrl) DelOBServerExecuter(clusterIP, zoneName, podIP string) error {
 	klog.Infoln("begin delete OBServer", zoneName, podIP)
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when create user for operation")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when create user for operation")
+	}
 
 	// update server server_permanent_offline_time
 	err = sqlOperator.SetServerOfflineTime(20)
@@ -87,14 +87,14 @@ func (ctrl *OBClusterCtrl) DelOBServerExecuter(clusterIP, zoneName, podIP string
 		// update status
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
 	}
-    return nil
+	return nil
 }
 
 func (ctrl *OBClusterCtrl) IsRSJobSuccess(podIP string) (bool, error) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return false, errors.Wrap(err, "get sql operator when check rs job")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when check rs job")
+	}
 
 	rsJobStatusList := sqlOperator.GetRSJobStatus(podIP)
 	if len(rsJobStatusList) == 0 {
@@ -109,10 +109,10 @@ func (ctrl *OBClusterCtrl) IsRSJobSuccess(podIP string) (bool, error) {
 }
 
 func (ctrl *OBClusterCtrl) TickerRSJobStatusCheck(clusterIP, podIP string) error {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when create user for operation")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when create user for operation")
+	}
 
 	tick := time.Tick(observerconst.TickPeriodForRSJobStatusCheck)
 	var num int
@@ -139,10 +139,10 @@ func (ctrl *OBClusterCtrl) TickerRSJobStatusCheck(clusterIP, podIP string) error
 }
 
 func (ctrl *OBClusterCtrl) OBServerDeletedCheck(podIP string) bool {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return false
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false
+	}
 	obServerList := sqlOperator.GetOBServer()
 	for _, obServer := range obServerList {
 		if obServer.SvrIP == podIP {

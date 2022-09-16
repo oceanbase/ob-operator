@@ -13,8 +13,8 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"github.com/pkg/errors"
 	"time"
-    "github.com/pkg/errors"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
@@ -195,21 +195,21 @@ func (ctrl *OBClusterCtrl) OBServerReadyEffectorForBootstrap(statefulApp cloudv1
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) BootstrapForOB(statefulApp cloudv1.StatefulApp, SQL string) error{
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when bootstrap")
-    }
-    // TODO: return error when got sql error
-    // set timeout 10 min
-    sqlOperator.ConnectProperties.Timeout = 600
-    err = sqlOperator.BootstrapForOB(SQL)
-    if err != nil {
-        return errors.Wrap(err, "bootstrap ob")
-    }
+func (ctrl *OBClusterCtrl) BootstrapForOB(statefulApp cloudv1.StatefulApp, SQL string) error {
+	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when bootstrap")
+	}
+	// TODO: return error when got sql error
+	// set timeout 10 min
+	sqlOperator.ConnectProperties.Timeout = 600
+	err = sqlOperator.BootstrapForOB(SQL)
+	if err != nil {
+		return errors.Wrap(err, "bootstrap ob")
+	}
 	klog.Infoln("OBCluster", ctrl.OBCluster.Name, "run bootstrap sql finish")
 	_ = ctrl.UpdateOBClusterStatusBootstrapReady()
-    return nil
+	return nil
 }
 
 func (ctrl *OBClusterCtrl) UpdateOBClusterStatusBootstrapReady() error {
@@ -224,10 +224,10 @@ func (ctrl *OBClusterCtrl) OBClusterBootstraping(statefulApp cloudv1.StatefulApp
 }
 
 func (ctrl *OBClusterCtrl) OBClusterBootstrapReady(statefulApp cloudv1.StatefulApp) error {
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when bootstrap")
-    }
+	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when bootstrap")
+	}
 	// time out, delete StatefulApp
 	status, err := ctrl.CheckTimeoutAndKillForBootstrap(statefulApp)
 	if err != nil {

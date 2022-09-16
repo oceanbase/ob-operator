@@ -9,21 +9,21 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) GetAllUnit(clusterIP string) []model.AllUnit {
-    res := make([]model.AllUnit, 0)
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-	    res = sqlOperator.GetAllUnit()
-    }
-    return res
+	res := make([]model.AllUnit, 0)
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		res = sqlOperator.GetAllUnit()
+	}
+	return res
 }
 
 func (ctrl *OBClusterCtrl) StopZone(clusterIP, zoneName string) error {
 	klog.Infoln("begin stop OBZone", zoneName)
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        return errors.Wrap(err, "get sql operator when stop zone")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		return errors.Wrap(err, "get sql operator when stop zone")
+	}
 
 	// stop zone
 	err = sqlOperator.StopZone(zoneName)
@@ -37,10 +37,10 @@ func (ctrl *OBClusterCtrl) StopZone(clusterIP, zoneName string) error {
 func (ctrl *OBClusterCtrl) DeleteZone(clusterIP, zoneName string) error {
 	klog.Infoln("begin delete OBZone", zoneName)
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        return errors.Wrap(err, "get sql operator when delete zone")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		return errors.Wrap(err, "get sql operator when delete zone")
+	}
 
 	// delete zone
 	err = sqlOperator.DeleteZone(zoneName)
@@ -71,11 +71,10 @@ func (ctrl *OBClusterCtrl) DeleteOBZoneExecuter(clusterIP, zoneName string, stat
 		return err
 	}
 
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        return errors.Wrap(err, "get sql operator in delete zone executer")
-    }
-
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		return errors.Wrap(err, "get sql operator in delete zone executer")
+	}
 
 	// get observerList
 	obServerList := sqlOperator.GetOBServer()

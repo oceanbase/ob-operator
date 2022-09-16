@@ -48,52 +48,52 @@ func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv
 	// create service
 	switch step {
 	case observerconst.StepBootstrap:
-	    klog.Infoln("create ob service")
+		klog.Infoln("create ob service")
 		err = ctrl.CreateService(statefulApp.Name)
 		if err != nil {
-	        klog.Infoln("create ob service failed %v", err)
+			klog.Infoln("create ob service failed %v", err)
 			return err
 		}
-	    klog.Infoln("create prometheus service")
+		klog.Infoln("create prometheus service")
 		err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
 		if err != nil {
-	        klog.Infoln("create prometheus service failed %v", err)
+			klog.Infoln("create prometheus service failed %v", err)
 			return err
 		}
-	    klog.Infoln("preparation for obproxy")
-	    err = ctrl.CreateUserForObproxy(statefulApp)
-        if err != nil {
-            klog.Infoln("preparation for obproxy failed: %v", err)
-            return err
-        }
+		klog.Infoln("preparation for obproxy")
+		err = ctrl.CreateUserForObproxy(statefulApp)
+		if err != nil {
+			klog.Infoln("preparation for obproxy failed: %v", err)
+			return err
+		}
 
-	    klog.Infoln("preparation for obagent")
-	    err = ctrl.CreateUserForObagent(statefulApp)
-        if err != nil {
-            klog.Infoln("preparation for obagent failed: %v", err)
-            return err
-        }
-	    err = ctrl.ReviseAllOBAgentConfig(statefulApp)
-        if err != nil {
-            klog.Infoln("preparation for obagent config failed: %v", err)
-            return err
-        }
-	    klog.Infoln("preparation for admin")
-        err = ctrl.CreateAdminUser(statefulApp)
-        if err != nil {
-            klog.Infoln("preparation for admin failed: %v", err)
-            return err
-        }
+		klog.Infoln("preparation for obagent")
+		err = ctrl.CreateUserForObagent(statefulApp)
+		if err != nil {
+			klog.Infoln("preparation for obagent failed: %v", err)
+			return err
+		}
+		err = ctrl.ReviseAllOBAgentConfig(statefulApp)
+		if err != nil {
+			klog.Infoln("preparation for obagent config failed: %v", err)
+			return err
+		}
+		klog.Infoln("preparation for admin")
+		err = ctrl.CreateAdminUser(statefulApp)
+		if err != nil {
+			klog.Infoln("preparation for admin failed: %v", err)
+			return err
+		}
 
 	case observerconst.StepMaintain:
 		_, err = ctrl.GetServiceByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 		if err != nil {
-	        klog.Infoln("create ob service")
+			klog.Infoln("create ob service")
 			err = ctrl.CreateService(statefulApp.Name)
 			if err != nil {
 				return err
 			}
-	        klog.Infoln("create prometheus service")
+			klog.Infoln("create prometheus service")
 			err = ctrl.CreateServiceForPrometheus(statefulApp.Name)
 			if err != nil {
 				return err
@@ -101,14 +101,13 @@ func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv
 		}
 	}
 
-
 	// update status
 	klog.Infoln("update cluster and zone status")
 	err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
-    if err != nil {
-	    klog.Infoln("update cluster and zone status failed")
-    }
-    return err
+	if err != nil {
+		klog.Infoln("update cluster and zone status failed")
+	}
+	return err
 }
 
 func (ctrl *OBClusterCtrl) UpdateOBClusterAndZoneStatus(clusterStatus, zoneName, zoneStatus string) error {
@@ -217,15 +216,15 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 
 func (ctrl *OBClusterCtrl) buildZoneStatusListFromDB(clusterSpec cloudv1.Cluster, clusterIP string, statefulAppCurrent cloudv1.StatefulApp, nodeMap map[string][]cloudv1.OBNode, name, status string) []cloudv1.ZoneStatus {
 	zoneList := make([]cloudv1.ZoneStatus, 0)
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        obZoneList := sqlOperator.GetOBZone()
-        for _, zone := range obZoneList {
-            zoneSpec := converter.GetZoneSpecFromClusterSpec(zone.Zone, clusterSpec)
-            zoneStatus := buildZoneStatus(zoneSpec, statefulAppCurrent, nodeMap, name, status, zone.Zone)
-            zoneList = append(zoneList, zoneStatus)
-        }
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		obZoneList := sqlOperator.GetOBZone()
+		for _, zone := range obZoneList {
+			zoneSpec := converter.GetZoneSpecFromClusterSpec(zone.Zone, clusterSpec)
+			zoneStatus := buildZoneStatus(zoneSpec, statefulAppCurrent, nodeMap, name, status, zone.Zone)
+			zoneList = append(zoneList, zoneStatus)
+		}
+	}
 	return zoneList
 }
 
@@ -280,12 +279,12 @@ func buildMultiClusterStatus(obCluster cloudv1.OBCluster, clusterCurrentStatus c
 
 func (ctrl *OBClusterCtrl) getNodeMapFromDB(clusterIP string) map[string][]cloudv1.OBNode {
 	nodeMap := make(map[string][]cloudv1.OBNode)
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err == nil {
-        obServerList := sqlOperator.GetOBServer()
-        if len(obServerList) > 0 {
-            nodeMap = converter.GenerateNodeMapByOBServerList(obServerList)
-        }
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		obServerList := sqlOperator.GetOBServer()
+		if len(obServerList) > 0 {
+			nodeMap = converter.GenerateNodeMapByOBServerList(obServerList)
+		}
+	}
 	return nodeMap
 }

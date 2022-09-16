@@ -13,8 +13,8 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"github.com/pkg/errors"
 	"reflect"
-    "github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
@@ -23,10 +23,10 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) UpdateRootServiceStatus(statefulApp cloudv1.StatefulApp) error {
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when update rootservice status")
-    }
+	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when update rootservice status")
+	}
 
 	// TODO: check owner
 	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)

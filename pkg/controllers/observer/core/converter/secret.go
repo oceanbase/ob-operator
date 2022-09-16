@@ -24,17 +24,16 @@ import (
 func GenerateDBUserSecret(obCluster cloudv1.OBCluster, tenantName, userName, password string) corev1.Secret {
 
 	objectMeta := observerutil.GenerateObjectMeta(obCluster, GenerateSecretNameForDBUser(obCluster.Name, tenantName, userName))
-    stringData := make(map[string]string)
-    stringData["password"] = password
-    secret := corev1.Secret {
-        ObjectMeta: objectMeta,
-        Type: "Opaque",
-        StringData: stringData,
-    }
+	stringData := make(map[string]string)
+	stringData["password"] = password
+	secret := corev1.Secret{
+		ObjectMeta: objectMeta,
+		Type:       "Opaque",
+		StringData: stringData,
+	}
 	return secret
 }
 
 func GenerateSecretNameForDBUser(clusterName, tenantName, userName string) string {
 	return fmt.Sprintf("secret-%s-%s-%s", clusterName, tenantName, userName)
 }
-

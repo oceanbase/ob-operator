@@ -22,12 +22,12 @@ import (
 )
 
 type DBConnectProperties struct {
-    IP string
-    Port int
-    User string
-    Password string
-    Database string
-    Timeout int
+	IP       string
+	Port     int
+	User     string
+	Password string
+	Database string
+	Timeout  int
 }
 
 func GetDBClient(p *DBConnectProperties) (*gorm.DB, error) {

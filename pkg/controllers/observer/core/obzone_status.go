@@ -14,8 +14,8 @@ package core
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"reflect"
-    "github.com/pkg/errors"
 
 	"k8s.io/klog/v2"
 
@@ -28,10 +28,10 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) error {
-    sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-    if err != nil {
-        return errors.Wrap(err, "get sql operator when update ob zone status")
-    }
+	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when update ob zone status")
+	}
 	// TODO: check owner
 	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
 	obZoneCtrl := NewOBZoneCtrl(ctrl)
@@ -61,10 +61,10 @@ func (ctrl *OBClusterCtrl) UpdateOBZoneStatus(statefulApp cloudv1.StatefulApp) e
 }
 
 func (ctrl *OBClusterCtrl) buildOBZoneStatusFromDB(obCluster cloudv1.OBCluster, clusterIP string) (cloudv1.OBCluster, error) {
-    sqlOperator, err := ctrl.GetSqlOperator()
-    if err != nil {
-        return obCluster, errors.Wrap(err, "get sql operator when build obzone status")
-    }
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return obCluster, errors.Wrap(err, "get sql operator when build obzone status")
+	}
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	expectedOBZoneList := clusterSpec.Zone
 	obZoneListFromDB := sqlOperator.GetOBZone()

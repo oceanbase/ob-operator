@@ -45,4 +45,3 @@ func ResourcesIsModified(clusterList []cloudv1.Cluster, obCluster cloudv1.OBClus
 	}
 	return true, nil
 }
-
