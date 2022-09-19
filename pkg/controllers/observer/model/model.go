@@ -32,18 +32,15 @@ type AllZone struct {
 }
 
 type AllVirtualCoreMeta struct {
-	Zone         string
-	SvrIP        string
-	SvrPort      int64
-	Role         int64
-	PartitionIP  int64
-	PartitionCnt int64
+	Zone    string
+	SvrIP   string
+	SvrPort int64
+	Role    int64
 }
 
 type RSJobStatus struct {
-	JobStatus  string
-	ReturnCode int64
-	Progress   int64
+	JobStatus string
+	Progress  int64
 }
 
 type SysParameterStat struct {

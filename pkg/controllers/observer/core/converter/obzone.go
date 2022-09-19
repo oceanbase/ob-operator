@@ -48,7 +48,11 @@ func GenerateOBZoneObject(obCluster cloudv1.OBCluster) cloudv1.OBZone {
 func GenerateOBZoneInfoListByCluster(cluster cloudv1.Cluster, nodeMap map[string][]cloudv1.OBNode) []cloudv1.OBZoneInfo {
 	zoneList := make([]cloudv1.OBZoneInfo, 0)
 	for _, zone := range cluster.Zone {
-		v := nodeMap[zone.Name]
+		v := make([]cloudv1.OBNode, 0, 0)
+		vFromNodeMap := nodeMap[zone.Name]
+		if nil != vFromNodeMap {
+			v = vFromNodeMap
+		}
 		var zoneTemp cloudv1.OBZoneInfo
 		zoneTemp.Name = zone.Name
 		zoneTemp.Nodes = v

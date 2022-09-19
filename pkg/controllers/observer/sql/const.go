@@ -20,7 +20,7 @@ const (
 	SetTimeoutSQL                   = "SET ob_query_timeout = 600000000"
 	SetServerOfflineTimeSQLTemplate = "ALTER SYSTEM SET server_permanent_offline_time=${OFFLINE_TIME};"
 
-	GetOBServerSQL       = "SELECT id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, status, start_service_time FROM __all_server;"
+	GetOBServerSQL       = "SELECT id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, lower(status) as status, start_service_time FROM __all_server;"
 	AddServerSQLTemplate = "ALTER SYSTEM ADD SERVER '${SERVER_IP}' ZONE '${ZONE_NAME}';"
 	DelServerSQLTemplate = "ALTER SYSTEM DELETE SERVER '${SERVER_IP}';"
 
@@ -33,9 +33,9 @@ const (
 
 	GetAllUnitSql = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
 
-	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role, partition_id, partition_cnt FROM __all_virtual_core_meta_table;"
+	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role FROM __all_virtual_core_meta_table;"
 
-	GetRSJobStatusSQL = "SELECT job_status, return_code, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"
+	GetRSJobStatusSQL = "SELECT job_status, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"
 
 	CreateUserSQLTemplate = "CREATE USER ${USER} identified by '${PASSWORD}';"
 

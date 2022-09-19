@@ -1,9 +1,10 @@
 package core
 
 import (
+	"github.com/pkg/errors"
+
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
 func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
@@ -12,7 +13,12 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 	clusterSpec := converter.GetClusterSpecFromOBTopology(ctrl.OBCluster.Spec.Topology)
 	expectedOBZoneList := clusterSpec.Zone
 
-	obZoneList := sql.GetOBZone(clusterIP)
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when add and start obzone")
+	}
+
+	obZoneList := sqlOperator.GetOBZone()
 
 	isExist := false
 	for _, zone := range expectedOBZoneList {
@@ -24,7 +30,7 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 		}
 		if !isExist {
 			// add zone
-			err := sql.AddZone(clusterIP, zone.Name)
+			err := sqlOperator.AddZone(zone.Name)
 			if err != nil {
 				return err
 			}
@@ -42,7 +48,7 @@ func (ctrl *OBClusterCtrl) AddAndStartOBZone(clusterIP string) error {
 		}
 		if !isReady {
 			// start zone
-			err := sql.StartZone(clusterIP, zone.Name)
+			err := sqlOperator.StartZone(zone.Name)
 			if err != nil {
 				return err
 			}

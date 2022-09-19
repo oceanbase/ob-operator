@@ -21,7 +21,6 @@ import (
 
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
 func (ctrl *OBClusterCtrl) DelOBServer(clusterIP, zoneName, podIP string) error {
@@ -51,41 +50,70 @@ func (ctrl *OBClusterCtrl) DelOBServer(clusterIP, zoneName, podIP string) error 
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) DelOBServerExecuter(clusterIP, zoneName, podIP string) {
+func (ctrl *OBClusterCtrl) DelOBServerExecuter(clusterIP, zoneName, podIP string) error {
 	klog.Infoln("begin delete OBServer", zoneName, podIP)
 
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when create user for operation")
+	}
+
 	// update server server_permanent_offline_time
-	err := sql.SetServerOfflineTime(clusterIP, 20)
+	err = sqlOperator.SetServerOfflineTime(20)
 	if err != nil {
 		klog.Errorln("set server_permanent_offline_time error", zoneName, podIP)
 		runtime.Goexit()
 	}
 
 	// delete server
-	err = sql.DelServer(clusterIP, podIP)
+	err = sqlOperator.DelServer(podIP)
 	if err != nil {
 		klog.Errorln("delete server error", zoneName, podIP)
 		runtime.Goexit()
 	}
 
 	// check delete finish
-	err = TickerRSJobStatusCheck(clusterIP, podIP)
+	err = ctrl.TickerRSJobStatusCheck(clusterIP, podIP)
 	if err != nil {
 		klog.Errorln("check rs job status error", zoneName, podIP)
 		runtime.Goexit()
 	}
 
 	// check server is not in db
-	status := OBServerDeletedCheck(clusterIP, podIP)
+	status := ctrl.OBServerDeletedCheck(podIP)
 	if status {
 		klog.Infoln("delete OBServer finish", zoneName, podIP)
 
 		// update status
 		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
 	}
+	return nil
 }
 
-func TickerRSJobStatusCheck(clusterIP, podIP string) error {
+func (ctrl *OBClusterCtrl) IsRSJobSuccess(podIP string) (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when check rs job")
+	}
+
+	rsJobStatusList := sqlOperator.GetRSJobStatus(podIP)
+	if len(rsJobStatusList) == 0 {
+		return false, errors.New("get rs job status faild")
+	}
+	lastJob := rsJobStatusList[len(rsJobStatusList)-1]
+	// job status is not SUCCESS
+	if lastJob.JobStatus != observerconst.RSJobStatusSuccess {
+		return false, nil
+	}
+	return true, nil
+}
+
+func (ctrl *OBClusterCtrl) TickerRSJobStatusCheck(clusterIP, podIP string) error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when create user for operation")
+	}
+
 	tick := time.Tick(observerconst.TickPeriodForRSJobStatusCheck)
 	var num int
 	for {
@@ -95,12 +123,12 @@ func TickerRSJobStatusCheck(clusterIP, podIP string) error {
 				return errors.New("observer starting timeout")
 			}
 			num = num + 1
-			status, err := converter.IsRSJobSuccess(clusterIP, podIP)
+			status, err := ctrl.IsRSJobSuccess(podIP)
 			if err == nil {
 				return err
 			}
 			if status {
-				err = sql.SetServerOfflineTime(clusterIP, 3600)
+				err = sqlOperator.SetServerOfflineTime(3600)
 				if err != nil {
 					return err
 				}
@@ -110,10 +138,16 @@ func TickerRSJobStatusCheck(clusterIP, podIP string) error {
 	}
 }
 
-func OBServerDeletedCheck(clusterIP, podIP string) bool {
-	status := converter.IsOBServerDeleted(clusterIP, podIP)
-	if status {
-		return true
+func (ctrl *OBClusterCtrl) OBServerDeletedCheck(podIP string) bool {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false
 	}
-	return false
+	obServerList := sqlOperator.GetOBServer()
+	for _, obServer := range obServerList {
+		if obServer.SvrIP == podIP {
+			return false
+		}
+	}
+	return true
 }

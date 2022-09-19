@@ -22,7 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
 func (ctrl *OBClusterCtrl) AsyncStartOBServer(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
@@ -119,15 +118,19 @@ func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string
 	klog.Infoln("begin add OBServer", zoneName, podIP)
 
 	ctrl.StartOBServer(clusterIP, zoneName, podIP, statefulApp)
-	// add server
-	err := sql.AddServer(clusterIP, zoneName, podIP)
-	if err != nil {
-		// kill pod
-		_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
-		_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
-	} else {
-		klog.Infoln("add OBServer finish", zoneName, podIP)
-		ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
+
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err == nil {
+		// add server
+		err = sqlOperator.AddServer(zoneName, podIP)
+		if err != nil {
+			// kill pod
+			_ = ctrl.DelPodFromStatefulAppByIP(zoneName, podIP, statefulApp)
+			_ = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, zoneName, observerconst.OBZoneReady)
+		} else {
+			klog.Infoln("add OBServer finish", zoneName, podIP)
+			ctrl.WaitOBServerActive(clusterIP, zoneName, podIP, statefulApp)
+		}
 	}
 
 	// update status
@@ -136,7 +139,7 @@ func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string
 
 func (ctrl *OBClusterCtrl) WaitOBServerActive(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
 	klog.Infof("wait observer %s ready", podIP)
-	err := TickerOBServerStatusCheckFromDB(clusterIP, podIP)
+	err := ctrl.TickerOBServerStatusCheckFromDB(clusterIP, podIP)
 	if err != nil {
 		// kill pod
 		klog.Infof("observer %s still not ready", podIP)
@@ -176,7 +179,7 @@ func TickerOBServerStatusCheck(clusterName, podIP string) error {
 
 }
 
-func TickerOBServerStatusCheckFromDB(clusterIP string, podIP string) error {
+func (ctrl *OBClusterCtrl) TickerOBServerStatusCheckFromDB(clusterIP string, podIP string) error {
 	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
 	var num int
 	for {
@@ -186,15 +189,17 @@ func TickerOBServerStatusCheckFromDB(clusterIP string, podIP string) error {
 				return errors.New("observer starting timeout")
 			}
 			num = num + 1
-			obServerList := sql.GetOBServer(clusterIP)
-			for _, obServer := range obServerList {
-				if obServer.SvrIP == podIP {
-					if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
-						return nil
+			sqlOperator, err := ctrl.GetSqlOperator()
+			if err == nil {
+				obServerList := sqlOperator.GetOBServer()
+				for _, obServer := range obServerList {
+					if obServer.SvrIP == podIP {
+						if obServer.Status == observerconst.OBServerActive && obServer.StartServiceTime > 0 {
+							return nil
+						}
 					}
 				}
 			}
 		}
 	}
-
 }

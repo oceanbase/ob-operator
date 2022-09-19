@@ -66,7 +66,7 @@ func StartObserverProcess(param StartObServerProcessArguments) {
 	}
 	if memory <= constant.MEMORY_SIMPLE {
 		// 2C, 10G
-		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=268435456,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
+		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
 	} else {
 		// 16C, 64G
 		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
