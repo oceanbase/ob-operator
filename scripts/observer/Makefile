@@ -4,7 +4,7 @@ SHELL:=/usr/bin/env bash
 .DEFAULT_GOAL := help
 
 # Code
-VERSION := v4.0.0.0-snapshot-09071657
+VERSION := v3.1.4-10000092022071511
 
 # Define Docker related variables. Releases should modify and double check these vars.
 REGISTRY := oceanbasedev
