@@ -20,7 +20,7 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) CreateAdminUser(statefulApp cloudv1.StatefulApp) error {
-	pwd, err := password.Generate(16, 4, 4, false, false)
+	pwd, err := password.Generate(16, 4, 0, false, false)
 	if err != nil {
 		return err
 	}
