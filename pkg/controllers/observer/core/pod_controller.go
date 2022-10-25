@@ -22,10 +22,18 @@ import (
 )
 
 func (ctrl *OBClusterCtrl) DelPodFromStatefulAppByIP(zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
+	statefulAppNew := cloudv1.StatefulApp{}
+    statefulAppCtrl := NewStatefulAppCtrl(ctrl, statefulAppNew)
+	statefulAppCurrent, err := statefulAppCtrl.GetStatefulAppByName(statefulApp.Name)
+	if err != nil {
+		return err
+	}
+
 	klog.Infoln("DelPodFromStatefulAppByIP: zoneName, podIP ", zoneName, podIP)
-	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zoneName, statefulApp)
+	subsetStatus := converter.GetSubsetStatusFromStatefulApp(zoneName, statefulAppCurrent)
 	for _, pod := range subsetStatus.Pods {
 		if pod.PodIP == podIP {
+            klog.Infoln("Found pod to delete:", pod.Name, pod.PodIP)
 			podExecuter := resource.NewPodResource(ctrl.Resource)
 			podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, pod.Name)
 			if err != nil {
