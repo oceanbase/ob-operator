@@ -32,14 +32,12 @@ import (
 
 func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv1.StatefulApp) error {
 	// update RootService
-	klog.Infoln("update rootservice status")
 	err := ctrl.UpdateRootServiceStatus(statefulApp)
 	if err != nil {
 		return err
 	}
 
 	// update OBZone
-	klog.Infoln("update zone status")
 	err = ctrl.UpdateOBZoneStatus(statefulApp)
 	if err != nil {
 		return err
@@ -102,7 +100,6 @@ func (ctrl *OBClusterCtrl) OBClusterReadyForStep(step string, statefulApp cloudv
 	}
 
 	// update status
-	klog.Infoln("update cluster and zone status")
 	err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	if err != nil {
 		klog.Infoln("update cluster and zone status failed")

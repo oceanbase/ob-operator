@@ -38,7 +38,6 @@ func (op *SqlOperator) TestOK() bool {
 }
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
-	klog.Infoln(SQL)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err != nil {
 		return errors.Wrap(err, "Get DB Connection")
@@ -47,6 +46,7 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 		res := client.Exec(SQL)
 		if res.Error != nil {
 			errNum, errMsg := covertErrToMySQLError(res.Error)
+			klog.Errorln(fmt.Sprintf("execute sql: %s failed", SQL))
 			klog.Errorln(errNum, errMsg)
 			return errors.New(errMsg)
 		}
