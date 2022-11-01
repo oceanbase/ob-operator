@@ -18,7 +18,6 @@ import (
 
 // OBClusterSpec defines the desired state of OBCluster
 type BackupSpec struct {
-	// +kubebuilder:validation:Minimum=1
 	SourceCluster []SourceClusterSpec `json:"source"`
 	DestPath      string              `json:"dest_path"`
 	Schedule      []ScheduleSpec      `json:"schedule"`
@@ -35,6 +34,13 @@ type SourceClusterSpec struct {
 type ScheduleSpec struct {
 	BackupType string `json:"backupType"`
 	Schedule   string `json:"schedule"`
+	// type = time?
+	NextTime string `json:"nextTime"`
+}
+
+// ScheduleSpec defines the schedule strategy
+type ScheduleStatus struct {
+	Schedule []ScheduleSpec `json:"schedule"`
 }
 
 // BackupStatus defines the observed state of backup
@@ -64,9 +70,9 @@ type IntervalSpec struct {
 // Backup is the Schema for the backups API
 type Backup struct {
 	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BackupSpec   `json:"spec"`
+	Spec   BackupSpec   `json:"spec,omitempty"`
 	Status BackupStatus `json:"status,omitempty"`
 }
 

@@ -18,4 +18,13 @@ const (
 
 const (
 	GetBackupSetSQL = "SELECT TENANT_ID, BS_KEY, BACKUP_TYPE, STATUS FROM oceanbase.CDB_OB_BACKUP_SET_FILES;"
+
+	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
+	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
+
+	StartArchieveLogSql     = "ALTER SYSTEM ARCHIVELOG"
+	GetArchieveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
+
+	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
+	StartBackupIncrementalSql = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
 )
