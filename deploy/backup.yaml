@@ -1,0 +1,20 @@
+apiVersion: cloud.oceanbase.com/v1
+kind: Backup
+metadata:
+  name: ob-backup
+spec:
+  template:
+    metadata:
+      name: ob-backup
+    spec:
+        dest_path: /ob-backup
+        backup_cluster_name: ob-test
+        backup_cluster_id: 1
+        backup_cluster_nameSpace: obcluster
+        schedule:
+          - backupType: F
+            schedule: once
+          - backupType: I
+            schedule: 
+
+        parameters:
