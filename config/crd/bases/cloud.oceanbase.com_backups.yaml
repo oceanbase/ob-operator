@@ -34,15 +34,111 @@ spec:
           metadata:
             type: object
           spec:
-            description: BackupSpec defines the desired state of Backup
+            description: OBClusterSpec defines the desired state of OBCluster
             properties:
-              foo:
-                description: Foo is an example field of Backup. Edit backup_types.go
-                  to remove/update
+              destPath:
                 type: string
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              schedule:
+                items:
+                  description: ScheduleSpec defines the schedule strategy
+                  properties:
+                    name:
+                      type: string
+                    nextTime:
+                      description: type = time?
+                      type: string
+                    schedule:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              source:
+                description: SourceCluster defines the source cluster
+                properties:
+                  clusterID:
+                    type: integer
+                  clusterName:
+                    type: string
+                  clusterNamespace:
+                    type: string
+                required:
+                - clusterID
+                - clusterName
+                - clusterNamespace
+                type: object
+            required:
+            - destPath
+            - schedule
+            - source
             type: object
           status:
-            description: BackupStatus defines the observed state of Backup
+            description: BackupStatus defines the observed state of backup
+            properties:
+              backup set:
+                items:
+                  properties:
+                    backupType:
+                      type: string
+                    bsKey:
+                      type: integer
+                    clusterName:
+                      type: string
+                    status:
+                      type: string
+                    tenantID:
+                      type: integer
+                  required:
+                  - backupType
+                  - bsKey
+                  - clusterName
+                  - status
+                  - tenantID
+                  type: object
+                type: array
+              interval:
+                items:
+                  properties:
+                    endTime:
+                      type: string
+                    startTime:
+                      type: string
+                  required:
+                  - endTime
+                  - startTime
+                  type: object
+                type: array
+              schedule:
+                items:
+                  description: ScheduleSpec defines the schedule strategy
+                  properties:
+                    name:
+                      type: string
+                    nextTime:
+                      description: type = time?
+                      type: string
+                    schedule:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            required:
+            - backup set
+            - interval
+            - schedule
             type: object
         type: object
     served: true

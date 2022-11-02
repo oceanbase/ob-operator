@@ -51,17 +51,6 @@ type BackupCtrlOperator interface {
 	BackupCoordinator() (ctrl.Result, error)
 }
 
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudv1.Backup{}).
-		Complete(r)
-}
-
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update
@@ -241,12 +230,12 @@ func (ctrl *BackupCtrl) BuildBackupTask() error {
 }
 
 func (ctrl *BackupCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.Backup.Namespace, ctrl.Backup.Spec.SourceCluster[0].ClusterName)
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.Backup.Namespace, ctrl.Backup.Spec.SourceCluster.ClusterName)
 	// get svc failed
 	if err != nil {
 		return nil, errors.New("failed to get service address")
 	}
-	secretName := converter.GenerateSecretNameForDBUser(ctrl.Backup.Spec.SourceCluster[0].ClusterName, "sys", "admin")
+	secretName := converter.GenerateSecretNameForDBUser(ctrl.Backup.Spec.SourceCluster.ClusterName, "sys", "admin")
 	secretExecutor := resource.NewSecretResource(ctrl.Resource)
 	secret, err := secretExecutor.Get(context.TODO(), ctrl.Backup.Namespace, secretName)
 	user := "root"

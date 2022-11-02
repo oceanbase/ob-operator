@@ -18,24 +18,25 @@ import (
 
 // OBClusterSpec defines the desired state of OBCluster
 type BackupSpec struct {
-	SourceCluster []SourceClusterSpec `json:"source"`
-	DestPath      string              `json:"dest_path"`
-	Schedule      []ScheduleSpec      `json:"schedule"`
-	Parameters    []Parameter         `json:"parameters"`
+	SourceCluster SourceClusterSpec `json:"source"`
+	DestPath      string            `json:"destPath"`
+	Schedule      []ScheduleSpec    `json:"schedule"`
+	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
 // SourceCluster defines the source cluster
 type SourceClusterSpec struct {
-	ClusterID   int    `json:"clusterID"`
-	ClusterName string `json:"clusterName"`
+	ClusterID        int    `json:"clusterID"`
+	ClusterName      string `json:"clusterName"`
+	ClusterNamespace string `json:"clusterNamespace"`
 }
 
 // ScheduleSpec defines the schedule strategy
 type ScheduleSpec struct {
-	BackupType string `json:"backupType"`
-	Schedule   string `json:"schedule"`
+	BackupType string `json:"name"`
+	Schedule   string `json:"schedule,omitempty"`
 	// type = time?
-	NextTime string `json:"nextTime"`
+	NextTime string `json:"nextTime,omitempty"`
 }
 
 // ScheduleSpec defines the schedule strategy

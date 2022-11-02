@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: obproxy
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
