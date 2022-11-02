@@ -7,7 +7,7 @@ spec:
   selector:
     matchLabels:
       app: obproxy
-  replicas: 3
+  replicas: 2
   template:
     metadata:
       labels:
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: obproxy
-          image: oceanbase/obproxy-ce:3.2.3
+          image: oceanbase/obproxy-ce:4.0.0-5
           ports:
             - containerPort: 2883
               name: "sql"
