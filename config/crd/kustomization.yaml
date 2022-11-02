@@ -6,6 +6,7 @@ resources:
 - bases/cloud.oceanbase.com_obclusters.yaml
 - bases/cloud.oceanbase.com_rootservices.yaml
 - bases/cloud.oceanbase.com_obzones.yaml
+- bases/cloud.oceanbase.com_backups.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -15,6 +16,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_obclusters.yaml
 #- patches/webhook_in_rootservices.yaml
 #- patches/webhook_in_obzones.yaml
+#- patches/webhook_in_backups.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable webhook, uncomment all the sections with [CERTMANAGER] prefix.
@@ -23,6 +25,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_obclusters.yaml
 #- patches/cainjection_in_rootservices.yaml
 #- patches/cainjection_in_obzones.yaml
+#- patches/cainjection_in_backups.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

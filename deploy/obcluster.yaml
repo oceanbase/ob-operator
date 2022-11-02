@@ -6,7 +6,7 @@ metadata:
 spec:
   imageRepo: oceanbasedev/oceanbase-cn
   tag: v3.1.3-10100042022051821
-  imageObagent: oceanbasedev/obagent:0.2
+  imageObagent: oceanbasedev/obagent:1.2.0
   clusterID: 1
   topology:
     - cluster: cn

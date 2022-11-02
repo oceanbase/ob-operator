@@ -63,9 +63,9 @@ type IntervalSpec struct {
 	EndTime   string `json:"endTime"`
 }
 
-// +genclient
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+//+genclient
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
 
 // Backup is the Schema for the backups API
 type Backup struct {
@@ -76,9 +76,9 @@ type Backup struct {
 	Status BackupStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
+//+kubebuilder:object:root=true
 
-// BackupList contains a list of backup
+// BackupList contains a list of Backup
 type BackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
