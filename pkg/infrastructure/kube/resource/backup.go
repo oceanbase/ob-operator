@@ -62,8 +62,8 @@ func (r *BackupResource) Update(ctx context.Context, obj interface{}) error {
 }
 
 func (r *BackupResource) UpdateStatus(ctx context.Context, obj interface{}) error {
-	rootService := obj.(cloudv1.RootService)
-	err := r.Client.Status().Update(ctx, &rootService)
+	backup := obj.(cloudv1.Backup)
+	err := r.Client.Status().Update(ctx, &backup)
 	if err != nil {
 		klog.Errorln(err)
 	}

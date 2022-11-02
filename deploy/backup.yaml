@@ -2,6 +2,7 @@ apiVersion: cloud.oceanbase.com/v1
 kind: Backup
 metadata:
   name: ob-backup
+  namespace: obcluster
 spec:
   destPath: /ob-backup
   source:

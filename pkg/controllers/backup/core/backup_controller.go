@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
@@ -57,9 +58,6 @@ type BackupCtrlOperator interface {
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
-// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups="",resources=secrets/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=secrets/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -101,6 +99,7 @@ func (ctrl *BackupCtrl) BackupCoordinator() (ctrl.Result, error) {
 func (ctrl *BackupCtrl) BackupEffector() error {
 	var err error
 	backupSets := ctrl.Backup.Status.BackupSet
+	klog.Infoln("BackupEffector: backupSets", backupSets)
 	isExist := false
 	for _, backupSet := range backupSets {
 		if backupSet.ClusterName == myconfig.ClusterName {
@@ -108,6 +107,7 @@ func (ctrl *BackupCtrl) BackupEffector() error {
 			err = ctrl.UpdateBackupSetStatus()
 		}
 	}
+	klog.Infoln("BackupEffector: isExist", isExist)
 	if !isExist {
 		err = ctrl.BuildBackupTask()
 	}

@@ -30,7 +30,7 @@ spec:
           spec:
             description: OBClusterSpec defines the desired state of OBCluster
             properties:
-              dest_path:
+              destPath:
                 type: string
               parameters:
                 items:
@@ -48,7 +48,7 @@ spec:
                 items:
                   description: ScheduleSpec defines the schedule strategy
                   properties:
-                    backupType:
+                    name:
                       type: string
                     nextTime:
                       description: type = time?
@@ -56,27 +56,25 @@ spec:
                     schedule:
                       type: string
                   required:
-                  - backupType
-                  - nextTime
-                  - schedule
+                  - name
                   type: object
                 type: array
               source:
-                items:
-                  description: SourceCluster defines the source cluster
-                  properties:
-                    clusterID:
-                      type: integer
-                    clusterName:
-                      type: string
-                  required:
-                  - clusterID
-                  - clusterName
-                  type: object
-                type: array
+                description: SourceCluster defines the source cluster
+                properties:
+                  clusterID:
+                    type: integer
+                  clusterName:
+                    type: string
+                  clusterNamespace:
+                    type: string
+                required:
+                - clusterID
+                - clusterName
+                - clusterNamespace
+                type: object
             required:
-            - dest_path
-            - parameters
+            - destPath
             - schedule
             - source
             type: object
@@ -120,7 +118,7 @@ spec:
                 items:
                   description: ScheduleSpec defines the schedule strategy
                   properties:
-                    backupType:
+                    name:
                       type: string
                     nextTime:
                       description: type = time?
@@ -128,9 +126,7 @@ spec:
                     schedule:
                       type: string
                   required:
-                  - backupType
-                  - nextTime
-                  - schedule
+                  - name
                   type: object
                 type: array
             required:

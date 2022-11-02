@@ -64,6 +64,9 @@ type OBClusterCtrlOperator interface {
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=statefulapps/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
@@ -75,6 +78,7 @@ type OBClusterCtrlOperator interface {
 func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// Fetch the CR instance
 	instance := &cloudv1.OBCluster{}
+	klog.Infoln("OBCluster Reconcile req", req)
 	err := r.CRClient.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {

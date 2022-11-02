@@ -26,6 +26,7 @@ func (ctrl *BackupCtrl) SetBackupDest(dest string) error {
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup_dest = "+dest)
 	}
+	dest = "file://" + dest
 	return sqlOperator.SetParameter("backup_dest", dest)
 }
 
