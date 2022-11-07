@@ -1,21 +1,14 @@
 apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    control-plane: controller-manager
-  name: oceanbase-system
----
-apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ob-operator-controller-manager
-  namespace: oceanbase-system
+  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ob-operator-leader-election-role
-  namespace: oceanbase-system
+  
 rules:
 - apiGroups:
   - ""
@@ -317,7 +310,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ob-operator-leader-election-rolebinding
-  namespace: oceanbase-system
+  
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -325,7 +318,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
-  namespace: oceanbase-system
+  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -338,7 +331,8 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
+  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -351,7 +345,8 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
+  
 ---
 apiVersion: v1
 data:
@@ -370,7 +365,7 @@ data:
 kind: ConfigMap
 metadata:
   name: ob-operator-manager-config
-  namespace: oceanbase-system
+  
 ---
 apiVersion: v1
 kind: Service
@@ -378,7 +373,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: ob-operator-controller-manager-metrics-service
-  namespace: oceanbase-system
+  
 spec:
   ports:
   - name: https
@@ -393,7 +388,7 @@ metadata:
   labels:
     control-plane: controller-manager
   name: ob-operator-controller-manager
-  namespace: oceanbase-system
+  
 spec:
   replicas: 1
   selector:
@@ -419,10 +414,11 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        - --cluster-name=cn
+        - --cluster-name={{.Values.clusterName}}
+        - --manager-namespace={{.Release.Namespace}}
         command:
         - /manager
-        image: oceanbasedev/ob-operator:1.2.0-snapshot
+        image: {{.Values.image}}
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
