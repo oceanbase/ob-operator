@@ -22,9 +22,9 @@ import (
 
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	testconverter "github.com/oceanbase/ob-operator/test/e2e/converter"
 	testresource "github.com/oceanbase/ob-operator/test/e2e/resource"
+	testutils "github.com/oceanbase/ob-operator/test/e2e/utils"
 )
 
 var _ = ginkgo.Describe("observer test pipeline", func() {
@@ -96,7 +96,9 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		})
 
 		ginkgo.It("step: check observer status", func() {
-			obServerList = sql.GetOBServer(service.Spec.ClusterIP)
+
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			obServerList = sqlOperator.GetOBServer()
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, defaultOBcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -110,7 +112,8 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 				gomega.BeNil(),
 				"get rootservice %s succeed", rootserviceName,
 			)
-			rsList := sql.GetRootService(service.Spec.ClusterIP)
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			rsList := sqlOperator.GetRootService()
 			status := testconverter.JudgeRootserviceStatusByObj(rsList, rootservice)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -185,7 +188,8 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		})
 
 		ginkgo.It("step: check observer status", func() {
-			obServerList = sql.GetOBServer(service.Spec.ClusterIP)
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			obServerList = sqlOperator.GetOBServer()
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, addOBcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -199,7 +203,8 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 				gomega.BeNil(),
 				"get rootservice %s succeed", rootserviceName,
 			)
-			rsList := sql.GetRootService(service.Spec.ClusterIP)
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			rsList := sqlOperator.GetRootService()
 			status := testconverter.JudgeRootserviceStatusByObj(rsList, rootservice)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -274,7 +279,8 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		})
 
 		ginkgo.It("step: check observer status", func() {
-			obServerList = sql.GetOBServer(service.Spec.ClusterIP)
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			obServerList = sqlOperator.GetOBServer()
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, delOBcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -288,7 +294,8 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 				gomega.BeNil(),
 				"get rootservice %s succeed", rootserviceName,
 			)
-			rsList := sql.GetRootService(service.Spec.ClusterIP)
+			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			rsList := sqlOperator.GetRootService()
 			status := testconverter.JudgeRootserviceStatusByObj(rsList, rootservice)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
@@ -308,7 +315,5 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 				"obzone %s status is ok", obzoneName,
 			)
 		})
-
 	})
-
 })
