@@ -9,7 +9,7 @@ spec:
   imageObagent: oceanbase/obagent:1.2.0
   clusterID: 1
   topology:
-    - cluster: cn
+    - cluster: test
       zone:
       - name: zone1
         region: region1
