@@ -1,8 +1,8 @@
 apiVersion: cloud.oceanbase.com/v1
 kind: OBCluster
 metadata:
-  name: ob-test
-  namespace: obtest
+  namespace: ob
+  name: test-ob
 spec:
   imageRepo: oceanbase/oceanbase-cloud-native
   tag: 4.0.0.0-100000272022110114
@@ -12,17 +12,17 @@ spec:
     - cluster: test
       zone:
       - name: zone1
-        region: region1
+        region: region-test
         nodeSelector:
           topology.kubernetes.io/zone: zone1
         replicas: 1
       - name: zone2
-        region: region1
+        region: region-test
         nodeSelector:
           topology.kubernetes.io/zone: zone2
         replicas: 1
       - name: zone3
-        region: region1
+        region: region-test
         nodeSelector:
           topology.kubernetes.io/zone: zone3
         replicas: 1
