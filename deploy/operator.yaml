@@ -422,7 +422,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: oceanbase/ob-operator:1.1.0
+        image: oceanbasedev/ob-operator:1.2.0-snapshot
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
