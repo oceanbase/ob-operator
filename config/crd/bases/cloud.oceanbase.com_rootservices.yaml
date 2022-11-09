@@ -96,6 +96,7 @@ spec:
                           name:
                             type: string
                           role:
+                            format: int64
                             type: integer
                           serverIP:
                             type: string

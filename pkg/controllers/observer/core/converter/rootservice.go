@@ -59,7 +59,7 @@ func GenerateZoneRootServiceStatusByRSList(zoneName string, rsList []model.AllVi
 		if rs.Zone == zoneName {
 			zrs.Name = rs.Zone
 			zrs.ServerIP = rs.SvrIP
-			zrs.Role = int(rs.Role)
+			zrs.Role = rs.Role
 			for _, server := range obServerList {
 				if rs.SvrIP == server.SvrIP {
 					zrs.Status = server.Status
