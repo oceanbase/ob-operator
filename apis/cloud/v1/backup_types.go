@@ -19,10 +19,23 @@ import (
 // OBClusterSpec defines the desired state of OBCluster
 type BackupSpec struct {
 	SourceCluster SourceClusterSpec `json:"source"`
-	DestPath      string            `json:"destPath"`
-	Schedule      []ScheduleSpec    `json:"schedule"`
-	Parameters    []Parameter       `json:"parameters,omitempty"`
+	//DestPath      string            `json:"destPath"`
+	Schedule   []ScheduleSpec `json:"schedule"`
+	Parameters []Parameter    `json:"parameters,omitempty"`
+	Volume     []VolumeSpec   `json:"vloume,omitempty"`
 }
+
+// // SourceCluster defines the source cluster
+// type VolumeSpec struct {
+// 	Name    string    `json:"name"`
+// 	NfsSpec []NfsSpec `json:"nfs,omitempty"`
+// }
+
+// // SourceCluster defines the source cluster
+// type NfsSpec struct {
+// 	NfsServer string `json:"server"`
+// 	NfsPath   string `json:"path"`
+// }
 
 // SourceCluster defines the source cluster
 type SourceClusterSpec struct {
@@ -47,7 +60,7 @@ type ScheduleStatus struct {
 // BackupStatus defines the observed state of backup
 type BackupStatus struct {
 	BackupSet []BackupSetStatus `json:"backup set"`
-	Interval  []IntervalSpec    `json:"interval"`
+	Interval  []IntervalSpec    `json:"interval,omitempty"`
 	Schedule  []ScheduleSpec    `json:"schedule"`
 }
 
@@ -84,8 +97,4 @@ type BackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Backup `json:"items"`
-}
-
-func init() {
-	SchemeBuilder.Register(&Backup{}, &BackupList{})
 }

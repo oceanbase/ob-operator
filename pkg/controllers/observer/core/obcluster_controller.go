@@ -78,7 +78,6 @@ type OBClusterCtrlOperator interface {
 func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	// Fetch the CR instance
 	instance := &cloudv1.OBCluster{}
-	klog.Infoln("OBCluster Reconcile req", req)
 	err := r.CRClient.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {

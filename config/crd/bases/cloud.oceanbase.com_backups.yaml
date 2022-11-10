@@ -36,8 +36,6 @@ spec:
           spec:
             description: OBClusterSpec defines the desired state of OBCluster
             properties:
-              destPath:
-                type: string
               parameters:
                 items:
                   properties:
@@ -51,6 +49,7 @@ spec:
                   type: object
                 type: array
               schedule:
+                description: DestPath      string            `json:"destPath"`
                 items:
                   description: ScheduleSpec defines the schedule strategy
                   properties:
@@ -79,8 +78,19 @@ spec:
                 - clusterName
                 - clusterNamespace
                 type: object
+              vloume:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    path:
+                      type: string
+                  required:
+                  - name
+                  - path
+                  type: object
+                type: array
             required:
-            - destPath
             - schedule
             - source
             type: object
@@ -137,7 +147,6 @@ spec:
                 type: array
             required:
             - backup set
-            - interval
             - schedule
             type: object
         type: object

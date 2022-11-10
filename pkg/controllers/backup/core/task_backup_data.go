@@ -15,7 +15,9 @@ package core
 import (
 	"time"
 
+	"github.com/gorhill/cronexpr"
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
 )
@@ -26,7 +28,6 @@ func (ctrl *BackupCtrl) SetBackupDest(dest string) error {
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup_dest = "+dest)
 	}
-	dest = "file://" + dest
 	return sqlOperator.SetParameter("backup_dest", dest)
 }
 
@@ -81,7 +82,7 @@ func (ctrl *BackupCtrl) setBackupLogArchiveOption() error {
 	if backupCompressAlgorithm == "" {
 		backupCompressAlgorithm = "lz4_1.0"
 	}
-	option := backupMode + " compress= " + backupCompress + " compress= " + backupCompressAlgorithm
+	option := backupMode + " compression= " + backupCompress + " compression= " + backupCompressAlgorithm
 	return sqlOperator.SetParameter("backup_log_archive_option", option)
 }
 
@@ -153,27 +154,76 @@ func (ctrl *BackupCtrl) StartBackupIncremental() error {
 	return sqlOperator.StartBackupIncremental()
 }
 
-// TODO
-func (ctrl *BackupCtrl) isBackupRunning() bool {
-	return false
-}
-
-// TODO
-func (ctrl *BackupCtrl) getBackupSchedule(backupType string) (cloudv1.ScheduleSpec, error) {
-	scheduleSpec := cloudv1.ScheduleSpec{
-		BackupType: backupType,
-		Schedule:   "",
-		NextTime:   "",
+func (ctrl *BackupCtrl) isBackupDestSet() (error, bool) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when checking whether backup_dest is set"), false
 	}
-	return scheduleSpec, nil
+	valueList := sqlOperator.GetBackupDest()
+	for _, value := range valueList {
+		if value.Value != backupconst.BackupDest {
+			return nil, false
+		}
+	}
+	return nil, true
 }
 
-// TODO
-func (ctrl *BackupCtrl) getNextCron(schedule string) time.Time {
-	return time.Time{}
+func (ctrl *BackupCtrl) isArchivelogDoing() (error, bool) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when checking whether archive log is doing"), false
+	}
+	statusList := sqlOperator.GetArchieveLogStatus()
+	for _, status := range statusList {
+		if status.Status != backupconst.ArchiveLogDoing {
+			return nil, false
+		}
+	}
+	return nil, true
 }
 
-// to do
-func (ctrl *BackupCtrl) UpdateBackupScheduleStatus(next time.Time, backuoType string) error {
-	return nil
+func (ctrl *BackupCtrl) isBackupDoing() (error, bool) {
+	klog.Infoln("Check whether backup is doing")
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when checking whether backup is doing"), false
+	}
+	backupList := sqlOperator.GetAllBackupSet()
+	for _, backup := range backupList {
+		if backup.Status == backupconst.BackupDoing {
+			return nil, true
+		}
+	}
+	return nil, false
+}
+
+func (ctrl *BackupCtrl) getBackupSchedule(backupType string) cloudv1.ScheduleSpec {
+	scheduleSpec := ctrl.Backup.Spec.Schedule
+	var res cloudv1.ScheduleSpec
+	for _, schedule := range scheduleSpec {
+		if schedule.BackupType == backupType {
+			res = schedule
+		}
+	}
+	return res
+}
+
+func (ctrl *BackupCtrl) getBackupScheduleStatus(backupType string) cloudv1.ScheduleSpec {
+	scheduleSpec := ctrl.Backup.Status.Schedule
+	var res cloudv1.ScheduleSpec
+	for _, schedule := range scheduleSpec {
+		if schedule.BackupType == backupType {
+			res = schedule
+		}
+	}
+	return res
+}
+
+func (ctrl *BackupCtrl) getNextCron(schedule string) (time.Time, error) {
+	expr, err := cronexpr.Parse(schedule)
+	if err != nil {
+		return time.Time{}, err
+	}
+	nextTime := expr.Next(time.Now())
+	return nextTime, nil
 }

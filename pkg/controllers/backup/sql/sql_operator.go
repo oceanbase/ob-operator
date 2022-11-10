@@ -34,7 +34,9 @@ func (op *SqlOperator) TestOK() bool {
 }
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
-	klog.Infoln(SQL)
+	if SQL != "select 1" {
+		klog.Infoln(SQL)
+	}
 	client, err := GetDBClient(op.ConnectProperties)
 	if err != nil {
 		return errors.Wrap(err, "Get DB Connection")
@@ -89,6 +91,26 @@ func (op *SqlOperator) GetArchieveLogStatus() []model.BackupArchiveLogStatus {
 		if err == nil {
 			defer rows.Close()
 			var rowData model.BackupArchiveLogStatus
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupDest() []model.BackupDestValue {
+	res := make([]model.BackupDestValue, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.BackupDestValue{}).Raw(GetBackupDestSql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.BackupDestValue
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {

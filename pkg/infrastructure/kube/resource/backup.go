@@ -31,7 +31,6 @@ func NewBackupResource(resource *Resource) ResourceOperator {
 
 func (r *BackupResource) Create(ctx context.Context, obj interface{}) error {
 	backup := obj.(cloudv1.Backup)
-	// kube.LogForAppActionStatus(backup.Kind, backup.Name, "create", backup)
 	err := r.Client.Create(ctx, &backup)
 	if err != nil {
 		r.Recorder.Eventf(&backup, corev1.EventTypeWarning, FailedToCreateBackup, "create Backup"+backup.Name)

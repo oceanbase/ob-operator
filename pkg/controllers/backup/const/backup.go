@@ -15,18 +15,28 @@ package backupconst
 // backup job status
 
 const (
-	BackupJobRUNNING   = "RUNNING"
-	BackupJobCOMPLETED = "COMPLETED"
-	BackupJobFAILED    = "FAILED"
+	BackupDoing     = "DOING"
+	BackupCompleted = "COMPLETED"
+	BackupFailed    = "FAILED"
 )
 
 const (
 	// full
-	FullBackup = "D"
+	FullBackup         = "f"
+	FullBackupType     = "FULL"
+	DatabaseBackupType = "D"
 	// incremental
-	IncrementalBackup = "I"
+	IncrementalBackup     = "i"
+	IncrementalBackupType = "INCREMENTAL"
+	IncDatabaseBackupType = "I"
 )
 
 const (
 	BackupOnce = "once"
+	BackupDest = "file:///ob-backup"
+)
+
+const (
+	ArchiveLogBeginning = "BEGINNING"
+	ArchiveLogDoing     = "DOING"
 )

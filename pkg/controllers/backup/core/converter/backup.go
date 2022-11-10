@@ -17,9 +17,7 @@ import (
 )
 
 func GenerateBackupSpec(obBackup cloudv1.Backup) cloudv1.BackupSpec {
-	// 好像直接 return obBackup.Spec 就行了呃
 	spec := cloudv1.BackupSpec{
-		DestPath:      obBackup.Spec.DestPath,
 		SourceCluster: obBackup.Spec.SourceCluster,
 		Schedule:      obBackup.Spec.Schedule,
 		Parameters:    obBackup.Spec.Parameters,

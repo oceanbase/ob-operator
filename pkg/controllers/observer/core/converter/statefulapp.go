@@ -14,6 +14,7 @@ package converter
 
 import (
 	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -80,10 +81,15 @@ func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	volumeMountLog := corev1.VolumeMount{}
 	volumeMountLog.Name = observerconst.LogStorageName
 	volumeMountLog.MountPath = observerconst.LogStoragePath
+	volumeMountBackup := corev1.VolumeMount{}
+	volumeMountBackup.Name = observerconst.BackupName
+	volumeMountBackup.MountPath = observerconst.BackupPath
+
 	volumeMounts := make([]corev1.VolumeMount, 0)
 	volumeMounts = append(volumeMounts, volumeMountDataFile)
 	volumeMounts = append(volumeMounts, volumeMountDataLog)
 	volumeMounts = append(volumeMounts, volumeMountLog)
+	volumeMounts = append(volumeMounts, volumeMountBackup)
 
 	readinessProbeHTTP := corev1.HTTPGetAction{}
 	readinessProbeHTTP.Port = intstr.FromInt(observerconst.CablePort)
@@ -174,9 +180,21 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	volumes = append(volumes, volumeLog)
 	volumes = append(volumes, volumeObagentConfFile)
 
+	backupVolumeSpec := obClusterSpec.Resources.Volume
+	backupHostPathType := corev1.HostPathType(corev1.HostPathDirectory)
+	backupHostPath := corev1.HostPathVolumeSource{
+		Path: backupVolumeSpec.Path,
+		Type: &backupHostPathType,
+	}
+	backupVolume := corev1.Volume{
+		Name: backupVolumeSpec.Name,
+	}
+	backupVolume.HostPath = &backupHostPath
+	volumes = append(volumes, backupVolume)
+
 	podSpec := corev1.PodSpec{
-		Containers: containers,
 		Volumes:    volumes,
+		Containers: containers,
 	}
 	return podSpec
 }

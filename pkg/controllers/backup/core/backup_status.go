@@ -13,59 +13,129 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-	// "context"
-	// "reflect"
+	"context"
+	"reflect"
+	"time"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
-	//"github.com/oceanbase/ob-operator/pkg/controllers/backup/core/converter"
+
+	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/backup/model"
-	//"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
-func (ctrl *BackupCtrl) UpdateBackupSetStatus() error {
-	// backup := ctrl.Backup
-	// backupExecuter := resource.NewBackupResource(ctrl.Resource)
-	// backupCurrent, err := backupExecuter.Get(context.TODO(), backup.Namespace, backup.Spec.SourceCluster[0].ClusterName)
-	// if err != nil {
-	// 	return err
-	// }
-	// sqlOperator, err := ctrl.GetSqlOperator()
-	// if err != nil {
-	// 	return err
-	// }
-	// backupSetList := make([]model.AllBackupSet, 0, 0)
-	// backupSetList = sqlOperator.GetAllBackupSet()
-	// //
-	// //backupSetStatus := converter.BackupSetListToStatus(backupCurrent, backupSetList)
-	// backupSetStatus := ctrl.BackupSetListToStatus(backupCurrent, backupSetList)
-
-	// status := reflect.DeepEqual(backupSetStatus, backupCurrent.Status)
-
-	return nil
-
-}
-
-// to do
-func (ctrl *BackupCtrl) BackupSetListToStatus(backupCurrent interface{}, backupSetList []model.AllBackupSet) cloudv1.BackupSetStatus {
-	//backupList := ctrl.buildBackupSetListFromDB()
-	bakupSetStatus := cloudv1.BackupSetStatus{}
-	return bakupSetStatus
-
-}
-
-// to do
-func (ctrl *BackupCtrl) buildBackupSetStatus(backupCurrent interface{}, backupSetList []model.AllBackupSet) cloudv1.BackupSetStatus {
-	//backupList := ctrl.buildBackupSetListFromDB()
-	bakupSetStatus := cloudv1.BackupSetStatus{}
-	return bakupSetStatus
-
-}
-
-func (ctrl *BackupCtrl) buildBackupSetListFromDB() []model.AllBackupSet {
-	AllBackupSetList := make([]model.AllBackupSet, 0)
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err == nil {
-		AllBackupSetList = sqlOperator.GetAllBackupSet()
+func (ctrl *BackupCtrl) UpdateBackupStatus(backupType string) error {
+	backup := ctrl.Backup
+	backupExecuter := resource.NewBackupResource(ctrl.Resource)
+	backupTmp, err := backupExecuter.Get(context.TODO(), backup.Namespace, backup.Name)
+	if err != nil {
+		return err
 	}
-	return AllBackupSetList
+	backupCurrent := backupTmp.(cloudv1.Backup)
+	backupCurrentDeepCopy := backupCurrent.DeepCopy()
+
+	ctrl.Backup = *backupCurrentDeepCopy
+	backupNew, err := ctrl.buildBackupStatus(*backupCurrentDeepCopy, backupType)
+	if err != nil {
+		return err
+	}
+	compareStatus := reflect.DeepEqual(backupCurrent.Status, backupNew.Status)
+	if !compareStatus {
+		err = backupExecuter.UpdateStatus(context.TODO(), backupNew)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (ctrl *BackupCtrl) buildBackupStatus(backup cloudv1.Backup, backupType string) (cloudv1.Backup, error) {
+	var backupCurrentStatus cloudv1.BackupStatus
+	backupSetList, err := ctrl.buildBackupSetListFromDB()
+	if err != nil {
+		return backup, err
+	}
+	backupSetStatus := ctrl.BackupSetListToStatusList(backupSetList)
+	backupScheduleList, err := ctrl.buildScheduleList(backupType)
+	if err != nil {
+		return backup, err
+	}
+	backupCurrentStatus.BackupSet = backupSetStatus
+	backupCurrentStatus.Schedule = backupScheduleList
+	backup.Status = backupCurrentStatus
+	return backup, nil
+}
+
+func (ctrl *BackupCtrl) buildScheduleList(backupType string) ([]cloudv1.ScheduleSpec, error) {
+	scheduleSpec := ctrl.Backup.Spec.Schedule
+	backupScheduleList := make([]cloudv1.ScheduleSpec, 0)
+	for _, schedule := range scheduleSpec {
+		var backupSchedule cloudv1.ScheduleSpec
+		if schedule.BackupType == backupconst.FullBackup {
+			backupSchedule.BackupType = backupconst.FullBackupType
+			backupSchedule.Schedule = schedule.Schedule
+			if schedule.Schedule != backupconst.BackupOnce && backupSchedule.Schedule != "" {
+				if backupType == backupconst.FullBackupType || backupType == "" {
+					nextTime, err := ctrl.getNextCron(schedule.Schedule)
+					if err != nil {
+						return scheduleSpec, err
+					}
+					backupSchedule.NextTime = nextTime.String()
+				}
+			} else {
+				backupSchedule.NextTime = ""
+			}
+		}
+		if schedule.BackupType == backupconst.IncrementalBackup {
+			backupSchedule.BackupType = backupconst.IncrementalBackupType
+			backupSchedule.Schedule = schedule.Schedule
+			if schedule.Schedule != backupconst.BackupOnce && backupSchedule.Schedule != "" {
+				if backupType == backupconst.IncDatabaseBackupType || backupType == "" {
+					nextTime, err := ctrl.getNextCron(schedule.Schedule)
+					if err != nil {
+						return scheduleSpec, err
+					}
+					backupSchedule.NextTime = nextTime.String()
+				}
+			} else {
+				backupSchedule.NextTime = ""
+			}
+		}
+		backupScheduleList = append(backupScheduleList, backupSchedule)
+	}
+	return backupScheduleList, nil
+
+}
+
+func (ctrl *BackupCtrl) BackupSetListToStatusList(backupSetList []model.AllBackupSet) []cloudv1.BackupSetStatus {
+	backupSetStatusList := make([]cloudv1.BackupSetStatus, 0)
+	for _, backupSet := range backupSetList {
+		backupSetStatus := cloudv1.BackupSetStatus{}
+		backupSetStatus.ClusterName = ctrl.Backup.Spec.SourceCluster.ClusterName
+		backupSetStatus.BackupType = backupSet.BackupType
+		backupSetStatus.BSKey = int(backupSet.BSKey)
+		backupSetStatus.TenantID = int(backupSet.TenantID)
+		backupSetStatus.Status = backupSet.Status
+		backupSetStatusList = append(backupSetStatusList, backupSetStatus)
+	}
+	return backupSetStatusList
+}
+
+func (ctrl *BackupCtrl) buildBackupSetListFromDB() ([]model.AllBackupSet, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return nil, err
+	}
+	return sqlOperator.GetAllBackupSet(), nil
+}
+
+func (ctrl *BackupCtrl) UpdateBackupScheduleStatus(next time.Time, backupType string) error {
+
+	schedule := ctrl.Backup.Status.Schedule
+	for _, scheduleSpec := range schedule {
+		if scheduleSpec.BackupType == backupType {
+			scheduleSpec.NextTime = next.String()
+		}
+	}
+	return nil
 }

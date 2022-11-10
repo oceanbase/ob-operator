@@ -17,10 +17,8 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
-	myconfig "github.com/oceanbase/ob-operator/pkg/config"
 	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/backup/sql"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -92,47 +90,58 @@ func (ctrl *BackupCtrl) BackupCoordinator() (ctrl.Result, error) {
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-
 	return reconcile.Result{}, nil
 }
 
 func (ctrl *BackupCtrl) BackupEffector() error {
-	var err error
 	backupSets := ctrl.Backup.Status.BackupSet
-	klog.Infoln("BackupEffector: backupSets", backupSets)
+	err := ctrl.UpdateBackupStatus("")
+	if err != nil {
+		return err
+	}
 	isExist := false
+	var existBackupType string
 	for _, backupSet := range backupSets {
-		if backupSet.ClusterName == myconfig.ClusterName {
+		if backupSet.ClusterName == ctrl.Backup.Spec.SourceCluster.ClusterName {
 			isExist = true
-			err = ctrl.UpdateBackupSetStatus()
+			if backupSet.BackupType == backupconst.DatabaseBackupType {
+				existBackupType = backupconst.FullBackup
+			}
+			if backupSet.BackupType == backupconst.IncDatabaseBackupType {
+				existBackupType = backupconst.IncrementalBackup
+			}
+			break
 		}
 	}
-	klog.Infoln("BackupEffector: isExist", isExist)
-	if !isExist {
-		err = ctrl.BuildBackupTask()
+	if isExist {
+		for _, schedule := range ctrl.Backup.Spec.Schedule {
+			if schedule.Schedule == backupconst.BackupOnce && schedule.BackupType == existBackupType {
+				return nil
+			}
+		}
 	}
-	return err
+	return ctrl.BuildBackupTask()
 }
 
 func (ctrl *BackupCtrl) BuildBackupTask() error {
-	// set dest path
-	dest_path := ctrl.Backup.Spec.DestPath
-	err := ctrl.SetBackupDest(dest_path)
+	err, isBackupDestSet := ctrl.isBackupDestSet()
 	if err != nil {
-		return err
+		return nil
+	}
+	if !isBackupDestSet {
+		dest_path := backupconst.BackupDest
+		return ctrl.SetBackupDest(dest_path)
+	}
+
+	err, isArchivelogDoing := ctrl.isArchivelogDoing()
+	if err != nil {
+		return nil
+	}
+	if !isArchivelogDoing {
+		return ctrl.setBackupLogArchive()
 	}
 
 	err = ctrl.setBackupLogArchiveOption()
-	if err != nil {
-		return err
-	}
-
-	err = ctrl.setBackupLogArchive()
-	if err != nil {
-		return err
-	}
-
-	err = ctrl.setBackupLogArchive()
 	if err != nil {
 		return err
 	}
@@ -142,41 +151,36 @@ func (ctrl *BackupCtrl) BuildBackupTask() error {
 		if schedule.BackupType == backupconst.FullBackup {
 			// full backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				isBackupRunning := ctrl.isBackupRunning()
+				err, isBackupRunning := ctrl.isBackupDoing()
+				if err != nil {
+					return nil
+				}
 				if !isBackupRunning {
 					err = ctrl.StartBackupDatabase()
 					if err != nil {
 						return err
 					}
 				}
+				time.Sleep(10 * time.Second)
+				return ctrl.UpdateBackupStatus("")
 				//full backup, periodic
 			} else {
-				schedule, err := ctrl.getBackupSchedule(backupconst.FullBackup)
+				scheduleStatus := ctrl.getBackupScheduleStatus(backupconst.FullBackupType)
+
+				// first time
+				if scheduleStatus.NextTime == "" {
+					return ctrl.UpdateBackupStatus("")
+				}
+				nextTime, err := time.ParseInLocation("2006-01-02 15:04:05 +0800 CST", scheduleStatus.NextTime, time.Local)
 				if err != nil {
 					return err
 				}
-
-				// first time to backup
-				// TODO
-				nextTime, err := time.Parse("2006-01-02 15:04:05", schedule.NextTime)
-				if schedule.Schedule == "" || nextTime != time.Now() {
-					nextTime := ctrl.getNextCron(schedule.Schedule)
-					err = ctrl.UpdateBackupScheduleStatus(nextTime, backupconst.FullBackup)
+				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
+					err = ctrl.StartBackupDatabase()
 					if err != nil {
 						return err
 					}
-				} else {
-					if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
-						err = ctrl.StartBackupDatabase()
-						if err != nil {
-							return err
-						}
-						nextTime := ctrl.getNextCron(schedule.Schedule)
-						err = ctrl.UpdateBackupScheduleStatus(nextTime, backupconst.FullBackup)
-						if err != nil {
-							return err
-						}
-					}
+					return ctrl.UpdateBackupStatus(backupconst.FullBackupType)
 				}
 			}
 
@@ -185,8 +189,11 @@ func (ctrl *BackupCtrl) BuildBackupTask() error {
 		if schedule.BackupType == backupconst.IncrementalBackup {
 			// incremental backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				isBackupRunning := ctrl.isBackupRunning()
-				if !isBackupRunning {
+				err, isBackupDoing := ctrl.isBackupDoing()
+				if err != nil {
+					return err
+				}
+				if !isBackupDoing {
 					err = ctrl.StartBackupIncremental()
 					if err != nil {
 						return err
@@ -194,39 +201,26 @@ func (ctrl *BackupCtrl) BuildBackupTask() error {
 				}
 				// incremental backup, periodic
 			} else {
-				schedule, err := ctrl.getBackupSchedule(backupconst.IncrementalBackup)
+				scheduleStatus := ctrl.getBackupScheduleStatus(backupconst.IncrementalBackupType)
+				// first time
+				if scheduleStatus.NextTime == "" {
+					return ctrl.UpdateBackupStatus("")
+				}
+				nextTime, err := time.ParseInLocation("2006-01-02 15:04:05 +0800 CST", scheduleStatus.NextTime, time.Local)
 				if err != nil {
 					return err
 				}
-
-				// first time to backup
-				nextTime, err := time.Parse("2006-01-02 15:04:05", schedule.NextTime)
-				if schedule.Schedule == "" || nextTime == time.Now() {
-					nextTime := ctrl.getNextCron(schedule.Schedule)
-					err = ctrl.UpdateBackupScheduleStatus(nextTime, backupconst.IncrementalBackup)
+				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
+					err = ctrl.StartBackupIncremental()
 					if err != nil {
 						return err
 					}
-				} else {
-					if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
-						err = ctrl.StartBackupIncremental()
-						if err != nil {
-							return err
-						}
-						nextTime := ctrl.getNextCron(schedule.Schedule)
-						err = ctrl.UpdateBackupScheduleStatus(nextTime, backupconst.IncrementalBackup)
-					}
-				}
-
-				nextTime = ctrl.getNextCron(schedule.Schedule)
-				err = ctrl.UpdateBackupScheduleStatus(nextTime, backupconst.IncrementalBackup)
-				if err != nil {
-					return err
+					return ctrl.UpdateBackupStatus(backupconst.IncrementalBackupType)
 				}
 			}
 		}
 	}
-	return err
+	return ctrl.UpdateBackupStatus("")
 }
 
 func (ctrl *BackupCtrl) GetSqlOperator() (*sql.SqlOperator, error) {

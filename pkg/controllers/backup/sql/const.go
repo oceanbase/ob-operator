@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	GetBackupSetSQL = "SELECT TENANT_ID, BS_KEY, BACKUP_TYPE, STATUS FROM oceanbase.CDB_OB_BACKUP_SET_FILES;"
+	GetBackupSetSQL = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_SET_FILES;"
 
 	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
@@ -27,4 +27,6 @@ const (
 
 	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
 	StartBackupIncrementalSql = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
+
+	GetBackupDestSql = "select zone, svr_ip, svr_port, value from __all_virtual_sys_parameter_stat where name like 'backup_dest';"
 )

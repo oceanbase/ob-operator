@@ -76,10 +76,21 @@ spec:
                       - storageClassName
                       type: object
                     type: array
+                  volume:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                    required:
+                    - name
+                    - path
+                    type: object
                 required:
                 - cpu
                 - memory
                 - storage
+                - volume
                 type: object
               tag:
                 type: string

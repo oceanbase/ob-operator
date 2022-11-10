@@ -8,6 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.2.0 // indirect
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/jinzhu/gorm v1.9.16
 	github.com/mattn/go-isatty v0.0.12
 	github.com/onsi/ginkgo v1.16.4

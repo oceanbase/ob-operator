@@ -12,10 +12,6 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-import (
-	"time"
-)
-
 type AllBackupSet struct {
 	TenantID   int64
 	BSKey      int64
@@ -28,8 +24,15 @@ type BackupArchiveLogStatus struct {
 	Status   string
 }
 
+type BackupDestValue struct {
+	ZoneName string
+	SvrIP    string
+	SvrPort  int64
+	Value    string
+}
+
 type BackupSchedule struct {
 	BackupType string
 	Schedule   string
-	NextTime   time.Time
+	NextTime   string
 }
