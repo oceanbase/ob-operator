@@ -146,6 +146,32 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
   - rootservices
   verbs:
   - create

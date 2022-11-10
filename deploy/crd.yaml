@@ -492,6 +492,195 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
+  name: restores.cloud.oceanbase.com
+spec:
+  group: cloud.oceanbase.com
+  names:
+    kind: Restore
+    listKind: RestoreList
+    plural: restores
+    singular: restore
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Restore is the Schema for the restores API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: RestoreSpec defines the desired state of Restore
+            properties:
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              resourcePool:
+                items:
+                  description: ResourcePoolSpec defines the resources pool config
+                  properties:
+                    name:
+                      type: string
+                    unitName:
+                      type: string
+                    unitNum:
+                      type: string
+                    zoneList:
+                      type: string
+                  required:
+                  - name
+                  - unitName
+                  - unitNum
+                  - zoneList
+                  type: object
+                type: array
+              resourceUnit:
+                items:
+                  description: ResourceUnitSpec defines the resource unit config
+                  properties:
+                    maxCPU:
+                      type: integer
+                    maxDiskSize:
+                      type: string
+                    maxIops:
+                      type: integer
+                    maxMemory:
+                      type: string
+                    maxSessionNum:
+                      type: integer
+                    minCPU:
+                      type: integer
+                    minIops:
+                      type: integer
+                    minMemory:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - maxCPU
+                  - maxDiskSize
+                  - maxIops
+                  - maxMemory
+                  - maxSessionNum
+                  - minCPU
+                  - minIops
+                  - minMemory
+                  - name
+                  type: object
+                type: array
+              restorePassword:
+                items:
+                  description: ResourcePoolSpec defines the restore password config
+                  properties:
+                    databasePassword:
+                      type: string
+                    databasePasswordInfo:
+                      type: string
+                    incrementalPassword:
+                      type: string
+                    incrementalPasswordInfo:
+                      type: string
+                  required:
+                  - databasePassword
+                  - databasePasswordInfo
+                  - incrementalPassword
+                  - incrementalPasswordInfo
+                  type: object
+                type: array
+              source:
+                description: SourceCluster defines the source cluster
+                properties:
+                  clusterID:
+                    type: integer
+                  clusterName:
+                    type: string
+                  clusterNamespace:
+                    type: string
+                required:
+                - clusterID
+                - clusterName
+                - clusterNamespace
+                type: object
+              vloume:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    path:
+                      type: string
+                  required:
+                  - name
+                  - path
+                  type: object
+                type: array
+            required:
+            - resourcePool
+            - resourceUnit
+            - source
+            type: object
+          status:
+            description: RestoreStatus defines the observed state of Restore
+            properties:
+              restoreSet:
+                items:
+                  properties:
+                    backupTenantID:
+                      type: integer
+                    clusterID:
+                      type: integer
+                    clusterName:
+                      type: string
+                    jobID:
+                      type: integer
+                    status:
+                      type: string
+                    tenantID:
+                      type: integer
+                  required:
+                  - backupTenantID
+                  - clusterID
+                  - clusterName
+                  - jobID
+                  - status
+                  - tenantID
+                  type: object
+                type: array
+            required:
+            - restoreSet
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: rootservices.cloud.oceanbase.com
 spec:
   group: cloud.oceanbase.com
