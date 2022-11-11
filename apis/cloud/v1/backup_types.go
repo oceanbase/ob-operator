@@ -25,18 +25,6 @@ type BackupSpec struct {
 	Volume     []VolumeSpec   `json:"vloume,omitempty"`
 }
 
-// // SourceCluster defines the source cluster
-// type VolumeSpec struct {
-// 	Name    string    `json:"name"`
-// 	NfsSpec []NfsSpec `json:"nfs,omitempty"`
-// }
-
-// // SourceCluster defines the source cluster
-// type NfsSpec struct {
-// 	NfsServer string `json:"server"`
-// 	NfsPath   string `json:"path"`
-// }
-
 // SourceCluster defines the source cluster
 type SourceClusterSpec struct {
 	ClusterID        int    `json:"clusterID"`
