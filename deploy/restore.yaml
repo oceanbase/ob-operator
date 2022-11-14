@@ -1,0 +1,43 @@
+apiVersion: cloud.oceanbase.com/v1
+kind: Restore
+metadata:
+  name: ob-restore
+  namespace: obcluster
+spec:
+  destTenant: 
+  
+  source:
+    clusterName: ob-test
+    clusterID: 1
+    clusterNamespace: obcluster
+
+  Resource Unit:
+    Name:
+    Max CPU:
+    Max Memory:
+    Max Iops:
+    Max Disk Size:
+    Max Session Num:
+    Min CPU:
+    Min Memory:
+    Min Iops:
+
+  Resource Pool:
+    Name:
+    Unit Name:
+    Unit Num: 1
+    Zone List:
+
+  Destnation:
+  Nfs:
+    Server IP:
+    Path:
+  Tenant: 
+
+  Restore Password:
+    Database Password: false
+		Database Password Info:
+    Incremental Password: false
+    Incremental Password Info:
+
+  parameters: 

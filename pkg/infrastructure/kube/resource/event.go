@@ -87,6 +87,14 @@ const (
 	FailedToDeleteBackup = "FailedDeleteBackup"
 )
 
+// Restore event reason list
+const (
+	CreatedRestore        = "CreatedRestore"
+	FailedToCreateRestore = "FailedCreateRestore"
+	DeletedRestore        = "DeletedRestore"
+	FailedToDeleteRestore = "FailedDeleteRestore"
+)
+
 // Storage event reason list
 const (
 	CreatedOBZone        = "CreatedOBZone"

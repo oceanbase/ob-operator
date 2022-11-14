@@ -21,9 +21,15 @@ import (
 
 // RestoreSpec defines the desired state of Restore
 type RestoreSpec struct {
+	DestTenant      string                `json:"destTenant"`
+	SourceTenant    string                `json:"sourceTenant"`
+	Timestamp       string                `json:"timestamp"`
+	Path            string                `json:"path"`
+	PoolList        string                `json:"poolList"`
+	Locality        string                `json:"locality,omitempty"`
 	SourceCluster   SourceClusterSpec     `json:"source"`
-	ResourceUnit    []ResourceUnitSpec    `json:"resourceUnit"`
-	ResourcePool    []ResourcePoolSpec    `json:"resourcePool"`
+	ResourceUnit    ResourceUnitSpec      `json:"resourceUnit"`
+	ResourcePool    ResourcePoolSpec      `json:"resourcePool"`
 	Volume          []VolumeSpec          `json:"vloume,omitempty"`
 	RestorePassword []RestorePasswordSpec `json:"restorePassword,omitempty"`
 	Parameters      []Parameter           `json:"parameters,omitempty"`
@@ -64,12 +70,14 @@ type RestoreStatus struct {
 }
 
 type RestoreSetSpec struct {
-	JodID          int    `json:"jobID"`
-	ClusterID      int    `json:"clusterID"`
-	ClusterName    string `json:"clusterName"`
-	TenantID       int    `json:"tenantID"`
-	BackupTenantID int    `json:"backupTenantID"`
-	Status         string `json:"status"`
+	JodID            int    `json:"jobID"`
+	ClusterID        int    `json:"clusterID"`
+	ClusterName      string `json:"clusterName"`
+	TenantName       string `json:"tenantName"`
+	BackupTenantName string `json:"backupTenantName"`
+	Status           string `json:"status"`
+	Timestamp        string `json:"restoreTimestamp"`
+	BackupSetPath    string `json:"backupSetPath"`
 }
 
 //+kubebuilder:object:root=true

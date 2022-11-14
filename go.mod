@@ -11,8 +11,6 @@ require (
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/jinzhu/gorm v1.9.16
 	github.com/mattn/go-isatty v0.0.12
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.15.0
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/common v0.30.0 // indirect
 	github.com/prometheus/procfs v0.7.2 // indirect

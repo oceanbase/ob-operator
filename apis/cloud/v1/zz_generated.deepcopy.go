@@ -716,16 +716,8 @@ func (in *RestoreSetSpec) DeepCopy() *RestoreSetSpec {
 func (in *RestoreSpec) DeepCopyInto(out *RestoreSpec) {
 	*out = *in
 	out.SourceCluster = in.SourceCluster
-	if in.ResourceUnit != nil {
-		in, out := &in.ResourceUnit, &out.ResourceUnit
-		*out = make([]ResourceUnitSpec, len(*in))
-		copy(*out, *in)
-	}
-	if in.ResourcePool != nil {
-		in, out := &in.ResourcePool, &out.ResourcePool
-		*out = make([]ResourcePoolSpec, len(*in))
-		copy(*out, *in)
-	}
+	out.ResourceUnit = in.ResourceUnit
+	out.ResourcePool = in.ResourcePool
 	if in.Volume != nil {
 		in, out := &in.Volume, &out.Volume
 		*out = make([]VolumeSpec, len(*in))
