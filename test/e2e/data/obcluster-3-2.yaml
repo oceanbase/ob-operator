@@ -14,17 +14,17 @@ spec:
       - name: zone1
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone1
+          topology.kubernetes.io/zone: zone-test
         replicas: 2
       - name: zone2
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone2
+          topology.kubernetes.io/zone: zone-test
         replicas: 2
       - name: zone3
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone3
+          topology.kubernetes.io/zone: zone-test
         replicas: 2
       parameters:
         - name: log_disk_size

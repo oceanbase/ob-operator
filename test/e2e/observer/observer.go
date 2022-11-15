@@ -35,7 +35,7 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 		var obServerList []model.AllServer
 		var service corev1.Service
-		defaultOBcluster := testconverter.GetObjFromYaml("./data/obcluster-01.yaml")
+		defaultOBcluster := testconverter.GetObjFromYaml("./data/obcluster-1-1.yaml")
 		obclusterNamespace := defaultOBcluster.GetNamespace()
 		obclusterName := defaultOBcluster.GetName()
 		statefulappName := fmt.Sprintf("sapp-%s", defaultOBcluster.GetName())
