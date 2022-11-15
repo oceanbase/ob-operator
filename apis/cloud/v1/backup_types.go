@@ -16,13 +16,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// OBClusterSpec defines the desired state of OBCluster
+// BackupSpec defines the desired state of Backup
 type BackupSpec struct {
 	SourceCluster SourceClusterSpec `json:"source"`
-	//DestPath      string            `json:"destPath"`
-	Schedule   []ScheduleSpec `json:"schedule"`
-	Parameters []Parameter    `json:"parameters,omitempty"`
-	Volume     []VolumeSpec   `json:"vloume,omitempty"`
+	DestPath      string            `json:"destPath"`
+	Schedule      []ScheduleSpec    `json:"schedule"`
+	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
 // SourceCluster defines the source cluster
