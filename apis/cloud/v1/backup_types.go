@@ -85,7 +85,3 @@ type BackupList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Backup `json:"items"`
 }
-
-func init() {
-	SchemeBuilder.Register(&Backup{}, &BackupList{})
-}
