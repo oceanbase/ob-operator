@@ -46,6 +46,7 @@ func (ctrl *BackupCtrl) UpdateBackupStatus(backupType string) error {
 			return err
 		}
 	}
+	ctrl.Backup = backupNew
 	return nil
 }
 

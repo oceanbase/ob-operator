@@ -18,7 +18,6 @@ import (
 	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
@@ -105,7 +104,6 @@ func PVCRewrite(podName string, volumes []corev1.Volume) []corev1.Volume {
 			newVolumes = append(newVolumes, volume)
 			continue
 		}
-		klog.Infoln("PVCRewrite volume: ", volume)
 		name := volume.PersistentVolumeClaim.ClaimName
 		newName := GeneratePVCName(podName, name)
 		volume.PersistentVolumeClaim.ClaimName = newName

@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gorhill/cronexpr"
@@ -28,62 +29,84 @@ func (ctrl *BackupCtrl) SetBackupDest(dest string) error {
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup_dest = "+dest)
 	}
-	return sqlOperator.SetParameter("backup_dest", dest)
+	return sqlOperator.SetParameter(backupconst.DestPathName, dest)
 }
 
 func (ctrl *BackupCtrl) setBackupDestOption() error {
-	klog.Infoln("begin set backup dest option")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup dest option")
 	}
+	var logArchiveCheckpointInterval = cloudv1.Parameter{Name: backupconst.LogArchiveCheckpointIntervalName, Value: backupconst.LogArchiveCheckpointIntervalDefault}
+	var recoveryWindow = cloudv1.Parameter{Name: backupconst.RecoveryWindowName, Value: backupconst.RecoveryWindowDefault}
+	var autoDeleteObsoleteBackup = cloudv1.Parameter{Name: backupconst.AutoDeleteObsoleteBackupName, Value: backupconst.AutoDeleteObsoleteBackupDefault}
+	var logArchivePieceSwitchInterval = cloudv1.Parameter{Name: backupconst.LogArchivePieceSwitchIntervalName, Value: backupconst.LogArchivePieceSwitchIntervalDefault}
+	paramList := [4]cloudv1.Parameter{logArchiveCheckpointInterval, recoveryWindow, autoDeleteObsoleteBackup, logArchivePieceSwitchInterval}
 	params := ctrl.Backup.Spec.Parameters
-	optionList := []string{"log_archive_checkpoint_interval", "recovery_window", "auto_delete_obsolete_backup", "log_archive_piece_switch_interval"}
-	for _, parameter := range params {
-		for _, option := range optionList {
-			if parameter.Name == option {
-				err = sqlOperator.SetParameter(parameter.Name, parameter.Value)
-				if err != nil {
-					return err
-				}
+	var isSet bool
+	var option string
+	for _, p := range paramList {
+		for _, param := range params {
+			if param.Name == p.Name {
+				isSet = true
+				break
 			}
 		}
 	}
-	return nil
+	if !isSet {
+		return nil
+	}
+	for _, p := range paramList {
+		if ctrl.getParameter(p.Name) != "" {
+			p.Value = ctrl.getParameter(p.Name)
+		}
+		option += p.Name + "=" + p.Value + "&"
+	}
+	option = strings.TrimRight(option, "&")
+	return sqlOperator.SetParameter(backupconst.BackupDestOptionName, option)
 }
 
 func (ctrl *BackupCtrl) setBackupLogArchiveOption() error {
-	params := ctrl.Backup.Spec.Parameters
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup log archieve option")
 	}
 
-	var backupMode string
-	var backupCompress string
-	var backupCompressAlgorithm string
+	var backupMode = cloudv1.Parameter{Name: backupconst.BackupModeName, Value: backupconst.BackupModeDefault}
+	var backupCompress = cloudv1.Parameter{Name: backupconst.BackupCompressName, Value: backupconst.BackupCompressDefault}
+	var backupCompressAlgorithm = cloudv1.Parameter{Name: backupconst.BackupCompressAlgorithmName, Value: backupconst.BackupCompressAlgorithmDefault}
+	paramList := [3]cloudv1.Parameter{backupMode, backupCompress, backupCompressAlgorithm}
+	params := ctrl.Backup.Spec.Parameters
+	var isSet bool
+	var option string
+	for _, p := range paramList {
+		for _, param := range params {
+			if param.Name == p.Name {
+				isSet = true
+				break
+			}
+		}
+	}
+	if !isSet {
+		return nil
+	}
+	for _, p := range paramList {
+		if ctrl.getParameter(p.Name) != "" {
+			p.Value = ctrl.getParameter(p.Name)
+		}
+		option += p.Name + "=" + p.Value + " "
+	}
+	return sqlOperator.SetParameter(backupconst.BackupLogArchiveOptionName, option)
+}
+
+func (ctrl *BackupCtrl) getParameter(name string) string {
+	params := ctrl.Backup.Spec.Parameters
 	for _, parameter := range params {
-		if parameter.Name == "backup_mode" {
-			backupMode = parameter.Value
-		}
-		if parameter.Name == "backup_compress" {
-			backupCompress = parameter.Value
-		}
-		if parameter.Name == "backup_compress_algorithm" {
-			backupCompressAlgorithm = parameter.Value
+		if parameter.Name == name {
+			return parameter.Value
 		}
 	}
-	if backupMode == "" {
-		backupMode = "optional"
-	}
-	if backupCompress == "" {
-		backupCompress = "disable"
-	}
-	if backupCompressAlgorithm == "" {
-		backupCompressAlgorithm = "lz4_1.0"
-	}
-	option := backupMode + " compression= " + backupCompress + " compression= " + backupCompressAlgorithm
-	return sqlOperator.SetParameter("backup_log_archive_option", option)
+	return ""
 }
 
 func (ctrl *BackupCtrl) setBackupLogArchive() error {
@@ -93,47 +116,35 @@ func (ctrl *BackupCtrl) setBackupLogArchive() error {
 		return errors.Wrap(err, "get sql operator when trying to set backup log archieve")
 	}
 	return sqlOperator.StartArchieveLog()
-
 }
 
 func (ctrl *BackupCtrl) setBackupDatabasePassword() error {
-	klog.Infoln("begin set backup database password ")
-	params := ctrl.Backup.Spec.Parameters
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup database password")
 	}
+	backupDatabasePassword := ctrl.getParameter(backupconst.BackupDatabasePasswordName)
 
-	var backupDatabasePassword string
-	for _, parameter := range params {
-		if parameter.Name == "backup_database_password" {
-			backupDatabasePassword = parameter.Value
-		}
-	}
 	if backupDatabasePassword != "" {
+		klog.Infoln("begin set backup database password ")
 		return sqlOperator.SetBackupPassword(backupDatabasePassword)
+	} else {
+		return nil
 	}
-	return nil
 }
 
 func (ctrl *BackupCtrl) setBackupIncrementalPassword() error {
-	klog.Infoln("begin set backup incremental password ")
-	params := ctrl.Backup.Spec.Parameters
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup incremental password")
 	}
-
-	var backupIncrementalPassword string
-	for _, parameter := range params {
-		if parameter.Name == "backup_incremental_password" {
-			backupIncrementalPassword = parameter.Value
-		}
-	}
+	backupIncrementalPassword := ctrl.getParameter(backupconst.BackupIncrementalPasswordName)
 	if backupIncrementalPassword != "" {
+		klog.Infoln("begin set backup incremental password ")
 		return sqlOperator.SetBackupPassword(backupIncrementalPassword)
+	} else {
+		return nil
 	}
-	return nil
 }
 
 func (ctrl *BackupCtrl) StartBackupDatabase() error {
@@ -157,11 +168,11 @@ func (ctrl *BackupCtrl) StartBackupIncremental() error {
 func (ctrl *BackupCtrl) isBackupDestSet() (error, bool) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when checking whether backup_dest is set"), false
+		return errors.Wrap(err, "get sql operator when checking whether backup_dest is set or changed"), false
 	}
 	valueList := sqlOperator.GetBackupDest()
 	for _, value := range valueList {
-		if value.Value != backupconst.BackupDest {
+		if value.Value == "" || value.Value != ctrl.Backup.Spec.DestPath {
 			return nil, false
 		}
 	}
@@ -195,17 +206,6 @@ func (ctrl *BackupCtrl) isBackupDoing() (error, bool) {
 		}
 	}
 	return nil, false
-}
-
-func (ctrl *BackupCtrl) getBackupSchedule(backupType string) cloudv1.ScheduleSpec {
-	scheduleSpec := ctrl.Backup.Spec.Schedule
-	var res cloudv1.ScheduleSpec
-	for _, schedule := range scheduleSpec {
-		if schedule.BackupType == backupType {
-			res = schedule
-		}
-	}
-	return res
 }
 
 func (ctrl *BackupCtrl) getBackupScheduleStatus(backupType string) cloudv1.ScheduleSpec {
