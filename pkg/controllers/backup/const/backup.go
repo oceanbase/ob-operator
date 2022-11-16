@@ -51,7 +51,7 @@ const (
 	LogArchivePieceSwitchIntervalName    = "log_archive_piece_switch_interval"
 	LogArchivePieceSwitchIntervalDefault = "0"
 
-	DestPathName = "dest_path"
+	DestPathName = "backup_dest"
 
 	BackupModeName                 = "backup_mode"
 	BackupModeDefault              = "optional"
