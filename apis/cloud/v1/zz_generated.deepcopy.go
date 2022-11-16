@@ -99,6 +99,7 @@ func (in *BackupSetStatus) DeepCopy() *BackupSetStatus {
 func (in *BackupSpec) DeepCopyInto(out *BackupSpec) {
 	*out = *in
 	out.SourceCluster = in.SourceCluster
+
 	if in.Schedule != nil {
 		in, out := &in.Schedule, &out.Schedule
 		*out = make([]ScheduleSpec, len(*in))
