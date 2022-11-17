@@ -20,8 +20,10 @@ import (
 func JudgeRootserviceStatusByObj(rsList []model.AllVirtualCoreMeta, rs cloudv1.RootService) bool {
 	for _, cluster := range rs.Status.Topology {
 		for _, zone := range cluster.Zone {
-			var nodeIsExists bool
-			nodeIsExists = false
+			nodeIsExists := false
+			if zone.ServerIP == "" {
+				continue
+			}
 			for _, node := range rsList {
 				if node.SvrIP == zone.ServerIP && node.Role == zone.Role {
 					nodeIsExists = true

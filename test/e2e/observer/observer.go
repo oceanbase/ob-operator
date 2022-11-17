@@ -33,7 +33,7 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 	myconfig.ClusterName = "cn"
 
-	var _ = ginkgo.Describe("create minimal obcluster pipeline", func() {
+	var _ = ginkgo.Describe("create obcluster pipeline", func() {
 
 		var obServerList []model.AllServer
 		var service corev1.Service
@@ -45,19 +45,15 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		rootserviceName := fmt.Sprintf("rs-%s", obcluster.GetName())
 		obzoneName := fmt.Sprintf("obzone-%s", obcluster.GetName())
 
-		ginkgo.It("step: create minimal obcluster", func() {
+		ginkgo.It("step: create obcluster", func() {
 			err := testresource.TestClient.CreateObj(obcluster)
 			gomega.Expect(err).To(
 				gomega.BeNil(),
-				"create minimal obcluster succeed",
+				"create obcluster succeed",
 			)
 		})
 
-		ginkgo.It("step: wait for obcluster created", func() {
-			time.Sleep(OBClusterCreateTimeout)
-		})
-
-		ginkgo.It("step: check minimal obcluster bootstrap status", func() {
+		ginkgo.It("step: check obcluster bootstrap status", func() {
 			gomega.Eventually(func() string {
 				return testresource.TestClient.GetOBClusterStatus(obclusterNamespace, obclusterName)
 			}, OBClusterBootstrapTimeout, TryInterval).Should(
@@ -75,7 +71,7 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 			)
 		})
 
-		ginkgo.It("step: check minimal obcluster status", func() {
+		ginkgo.It("step: check obcluster status", func() {
 			gomega.Eventually(func() bool {
 				return testresource.TestClient.JudgeOBClusterInstanceIsReadyByObj(obclusterNamespace, obclusterName)
 			}, OBClusterReadyTimeout, TryInterval).Should(
@@ -100,13 +96,26 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		})
 
 		ginkgo.It("step: check observer status", func() {
-
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
-			obServerList = sqlOperator.GetOBServer()
+			gomega.Eventually(func() bool {
+				obServerList = sqlOperator.GetOBServer()
+				if len(obServerList) == 0 {
+					return false
+				}
+				for _, observer := range obServerList {
+					if observer.Status != observerconst.OBServerActive || observer.StartServiceTime <= 0 {
+						return false
+					}
+				}
+				return true
+			}, OBClusterReadyTimeout, TryInterval).Should(
+				gomega.Equal(true),
+				"all observer is active",
+			)
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, obcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
-				"all observer is active",
+				"check observer and obcluster matched",
 			)
 		})
 
@@ -158,16 +167,16 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		rootserviceName := fmt.Sprintf("rs-%s", obcluster.GetName())
 		obzoneName := fmt.Sprintf("obzone-%s", obcluster.GetName())
 
-		ginkgo.It("step: scale zone from 1 to 3", func() {
+		ginkgo.It("step: wait before add obzone", func() {
+			time.Sleep(ApplyWaitTime)
+		})
+
+		ginkgo.It("step: add obzone from 1 to 3", func() {
 			err := testresource.TestClient.UpdateOBClusterInstance(obcluster)
 			gomega.Expect(err).To(
 				gomega.BeNil(),
-				"scale obzone update obcluster succeed",
+				"add obzone update obcluster succeed",
 			)
-		})
-
-		ginkgo.It("step: wait for obcluster updated", func() {
-			time.Sleep(OBClusterCreateTimeout)
 		})
 
 		ginkgo.It("step: check statefulapp status for obcluster", func() {
@@ -199,11 +208,25 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 		ginkgo.It("step: check observer status", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
-			obServerList = sqlOperator.GetOBServer()
+			gomega.Eventually(func() bool {
+				obServerList = sqlOperator.GetOBServer()
+				if len(obServerList) != 3 {
+					return false
+				}
+				for _, observer := range obServerList {
+					if observer.Status != observerconst.OBServerActive || observer.StartServiceTime <= 0 {
+						return false
+					}
+				}
+				return true
+			}, OBClusterUpdateTReadyimeout, TryInterval).Should(
+				gomega.Equal(true),
+				"all observer is active",
+			)
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, obcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
-				"all observer is active",
+				"check observer and obcluster",
 			)
 		})
 
@@ -254,16 +277,16 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		rootserviceName := fmt.Sprintf("rs-%s", obcluster.GetName())
 		obzoneName := fmt.Sprintf("obzone-%s", obcluster.GetName())
 
-		ginkgo.It("step: update obcluster for add observer by zone", func() {
+		ginkgo.It("step: wait before apply add observer", func() {
+			time.Sleep(ApplyWaitTime)
+		})
+
+		ginkgo.It("step: add observer to 2 per zone", func() {
 			err := testresource.TestClient.UpdateOBClusterInstance(obcluster)
 			gomega.Expect(err).To(
 				gomega.BeNil(),
 				"update obcluster succeed",
 			)
-		})
-
-		ginkgo.It("step: wait for obcluster updated", func() {
-			time.Sleep(OBClusterCreateTimeout)
 		})
 
 		ginkgo.It("step: check statefulapp status for obcluster", func() {
@@ -295,11 +318,25 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 		ginkgo.It("step: check observer status", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
-			obServerList = sqlOperator.GetOBServer()
+			gomega.Eventually(func() bool {
+				obServerList = sqlOperator.GetOBServer()
+				if len(obServerList) != 6 {
+					return false
+				}
+				for _, observer := range obServerList {
+					if observer.Status != observerconst.OBServerActive || observer.StartServiceTime <= 0 {
+						return false
+					}
+				}
+				return true
+			}, OBClusterUpdateTReadyimeout, TryInterval).Should(
+				gomega.Equal(true),
+				"all observer is active",
+			)
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, obcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
-				"all observer is active",
+				"check observer and obcluster",
 			)
 		})
 
@@ -350,16 +387,16 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		rootserviceName := fmt.Sprintf("rs-%s", obcluster.GetName())
 		obzoneName := fmt.Sprintf("obzone-%s", obcluster.GetName())
 
-		ginkgo.It("step: update obcluster for del observer by zone", func() {
+		ginkgo.It("step: wait before apply add observer", func() {
+			time.Sleep(ApplyWaitTime)
+		})
+
+		ginkgo.It("step: delete observer to 1 per zone", func() {
 			err := testresource.TestClient.UpdateOBClusterInstance(obcluster)
 			gomega.Expect(err).To(
 				gomega.BeNil(),
 				"update obcluster succeed",
 			)
-		})
-
-		ginkgo.It("step: wait for obcluster updated", func() {
-			time.Sleep(OBClusterCreateTimeout)
 		})
 
 		ginkgo.It("step: check statefulapp status for obcluster", func() {
@@ -391,11 +428,25 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 		ginkgo.It("step: check observer status", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
-			obServerList = sqlOperator.GetOBServer()
+			gomega.Eventually(func() bool {
+				obServerList = sqlOperator.GetOBServer()
+				if len(obServerList) != 3 {
+					return false
+				}
+				for _, observer := range obServerList {
+					if observer.Status != observerconst.OBServerActive || observer.StartServiceTime <= 0 {
+						return false
+					}
+				}
+				return true
+			}, OBClusterUpdateTReadyimeout, TryInterval).Should(
+				gomega.Equal(true),
+				"all observer is active",
+			)
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, obcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
-				"all observer is active",
+				"check observer and obcluster",
 			)
 		})
 
@@ -441,16 +492,16 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		rootserviceName := fmt.Sprintf("rs-%s", obcluster.GetName())
 		obzoneName := fmt.Sprintf("obzone-%s", obcluster.GetName())
 
-		ginkgo.It("step: update obcluster for delete obzone", func() {
+		ginkgo.It("step: wait before apply delete obzone", func() {
+			time.Sleep(ApplyWaitTime)
+		})
+
+		ginkgo.It("step: delete obzone from 3 to 1", func() {
 			err := testresource.TestClient.UpdateOBClusterInstance(obcluster)
 			gomega.Expect(err).To(
 				gomega.BeNil(),
 				"update obcluster succeed",
 			)
-		})
-
-		ginkgo.It("step: wait for obcluster updated", func() {
-			time.Sleep(OBClusterCreateTimeout)
 		})
 
 		ginkgo.It("step: check statefulapp status for obcluster", func() {
@@ -482,11 +533,25 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 
 		ginkgo.It("step: check observer status", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
-			obServerList = sqlOperator.GetOBServer()
+			gomega.Eventually(func() bool {
+				obServerList = sqlOperator.GetOBServer()
+				if len(obServerList) != 1 {
+					return false
+				}
+				for _, observer := range obServerList {
+					if observer.Status != observerconst.OBServerActive || observer.StartServiceTime <= 0 {
+						return false
+					}
+				}
+				return true
+			}, OBClusterUpdateTReadyimeout, TryInterval).Should(
+				gomega.Equal(true),
+				"all observer is active",
+			)
 			status := testconverter.JudgeAllOBServerStatusByObj(obServerList, obcluster)
 			gomega.Expect(status).To(
 				gomega.Equal(true),
-				"all observer is active",
+				"check observer and obcluster",
 			)
 		})
 
@@ -519,13 +584,4 @@ var _ = ginkgo.Describe("observer test pipeline", func() {
 		})
 
 	})
-
-	var _ = ginkgo.Describe("delete observer pipeline", func() {
-
-		obcluster := testconverter.GetObjFromYaml("./data/obcluster-1-1.yaml")
-
-		ginkgo.It("step: delete obcluster", func() {
-			testresource.TestClient.DeleteObj(obcluster)
-		})
-    })
 })
