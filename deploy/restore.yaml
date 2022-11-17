@@ -4,40 +4,29 @@ metadata:
   name: ob-restore
   namespace: obcluster
 spec:
-  destTenant: 
-  
-  source:
+  destTenant: ob_restore  
+  sourceTenant: tenant0
+  timestamp: '2022-11-16 22:25:00.000000'
+  sourcePath: file:///ob-backup
+  sourceCluster:
     clusterName: ob-test
     clusterID: 1
-    clusterNamespace: obcluster
+  resourceUnit:
+    maxCPU: 1
+    maxMemory: "1G"
+    maxIops: 128
+    maxDiskSize: 10G
+    maxSessionNum: 64
+    minCPU: 1
+    minMemory: "1G"
+    minIops: 128
 
-  Resource Unit:
-    Name:
-    Max CPU:
-    Max Memory:
-    Max Iops:
-    Max Disk Size:
-    Max Session Num:
-    Min CPU:
-    Min Memory:
-    Min Iops:
-
-  Resource Pool:
-    Name:
-    Unit Name:
-    Unit Num: 1
-    Zone List:
-
-  Destnation:
-  Nfs:
-    Server IP:
-    Path:
-  Tenant: 
-
-  Restore Password:
-    Database Password: false
-		Database Password Info:
-    Incremental Password: false
-    Incremental Password Info:
+  resourcePool:
+    unitNum: 1
+    zoneList: 
+      - zone1
+      - zone2
+      - zone3
 
   parameters: 
+    

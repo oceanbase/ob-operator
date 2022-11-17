@@ -77,8 +77,8 @@ func (op *SqlOperator) SetParameter(name, value string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) DoResotre(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list string) error {
-	sql := ReplaceAll(DoResotreSql, DoResotreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list))
+func (op *SqlOperator) DoResotre(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string) error {
+	sql := ReplaceAll(DoResotreSql, DoResotreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
 	return op.ExecSQL(sql)
 }
 

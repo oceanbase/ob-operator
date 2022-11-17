@@ -13,8 +13,19 @@ See the Mulan PSL v2 for more details.
 package restoreconst
 
 const (
-	RestoreConcurrencyZero    = 0
 	RestoreConcurrencyDefault = 10
+	RestoreConcurrencyZero    = 0
+	RestoreConcurrency        = "restore_concurrency"
 
-	RestoreConcurrency = "restore_concurrency"
+	LocalityName    = "locality"
+	PrimaryZoneName = "primary_zone"
+	KmsEncryptName  = "kms_encrypt"
+
+	ResourceUnitName = "unit_restore"
+	ResourcePoolName = "pool_restore"
+)
+
+const (
+	RestoreFail    = "RESTORE_FAIL"
+	RestoreSuccess = "RESTORE_SUCCESS"
 )

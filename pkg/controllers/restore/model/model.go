@@ -13,14 +13,13 @@ See the Mulan PSL v2 for more details.
 package model
 
 type AllRestoreSet struct {
-	JodID            int64
-	ClusterID        int64
-	ClusterName      string
-	TenantName       string
-	BackupTenantName string
-	Status           string
-	BackupSetPath    string
-	RestoreTimestamp string
+	JobId                  int64
+	BackupClusterId        int64
+	BackupClusterName      string
+	TenantName             string
+	BackupTenantName       string
+	Status                 string
+	RestoreFinishTimestamp string
 }
 
 type RestoreConcurrency struct {

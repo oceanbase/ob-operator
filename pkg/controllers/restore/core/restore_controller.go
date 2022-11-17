@@ -14,8 +14,9 @@ package core
 
 import (
 	"context"
-	"k8s.io/apimachinery/pkg/runtime"
 	"strconv"
+
+	"k8s.io/apimachinery/pkg/runtime"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -93,19 +94,18 @@ func (ctrl *RestoreCtrl) RestoreCoordinator() (ctrl.Result, error) {
 }
 
 func (ctrl *RestoreCtrl) RestoreEffector() error {
-	restoreSets := ctrl.Restore.Status.RestoreSet
-	restoreSpec := ctrl.Restore.Spec
 	err := ctrl.UpdateRestoreStatus()
 	if err != nil {
 		return err
 	}
+	restoreSets := ctrl.Restore.Status.RestoreSet
+	restoreSpec := ctrl.Restore.Spec
 	for _, restoreSet := range restoreSets {
 		if restoreSet.ClusterName == restoreSpec.SourceCluster.ClusterName &&
 			restoreSet.ClusterID == restoreSpec.SourceCluster.ClusterID &&
 			restoreSet.TenantName == restoreSpec.DestTenant &&
 			restoreSet.BackupTenantName == restoreSpec.SourceTenant &&
-			restoreSet.Timestamp == restoreSpec.Timestamp &&
-			restoreSet.BackupSetPath == restoreSpec.Path {
+			restoreSet.Status != restoreconst.RestoreFail {
 			return nil
 		}
 	}
@@ -128,6 +128,14 @@ func (ctrl *RestoreCtrl) BuildRestoreTask() error {
 	if isConcurrencyZero {
 		err = ctrl.SetParameter(cloudv1.Parameter{Name: restoreconst.RestoreConcurrency, Value: strconv.Itoa(restoreconst.RestoreConcurrencyDefault)})
 	}
+	if err != nil {
+		return err
+	}
+	err = ctrl.CreateResourceUnit()
+	if err != nil {
+		return err
+	}
+	err = ctrl.CreateResourcePool()
 	if err != nil {
 		return err
 	}

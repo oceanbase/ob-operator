@@ -44,6 +44,7 @@ func (ctrl *RestoreCtrl) UpdateRestoreStatus() error {
 			return err
 		}
 	}
+	ctrl.Restore = restoreNew
 	return nil
 }
 
@@ -58,6 +59,7 @@ func (ctrl *RestoreCtrl) buildRestoreStatus(restore cloudv1.Restore) (cloudv1.Re
 		return restore, err
 	}
 	restoreCurrentStatus.RestoreSet = restoreSetStatus
+	restore.Status = restoreCurrentStatus
 	return restore, nil
 }
 
@@ -73,14 +75,13 @@ func (ctrl *RestoreCtrl) RestoreSetListToStatusList(restoreSetList []model.AllRe
 	restoreSetStatusList := make([]cloudv1.RestoreSetSpec, 0)
 	for _, restoreSet := range restoreSetList {
 		restoreSetStatus := cloudv1.RestoreSetSpec{}
-		restoreSetStatus.JodID = int(restoreSet.JodID)
-		restoreSetStatus.ClusterID = int(restoreSet.ClusterID)
+		restoreSetStatus.JodID = int(restoreSet.JobId)
+		restoreSetStatus.ClusterID = int(restoreSet.BackupClusterId)
 		restoreSetStatus.ClusterName = ctrl.Restore.Spec.SourceCluster.ClusterName
 		restoreSetStatus.TenantName = restoreSet.TenantName
 		restoreSetStatus.BackupTenantName = restoreSet.BackupTenantName
 		restoreSetStatus.Status = restoreSet.Status
-		restoreSetStatus.BackupSetPath = restoreSet.BackupSetPath
-		restoreSetStatus.Timestamp = restoreSet.RestoreTimestamp
+		restoreSetStatus.Timestamp = restoreSet.RestoreFinishTimestamp
 		restoreSetStatusList = append(restoreSetStatusList, restoreSetStatus)
 	}
 	return restoreSetStatusList

@@ -472,7 +472,6 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --cluster-name=cn
-        - --manager-namespace=oceanbase-system
         command:
         - /manager
         image: reg.docker.alibaba-inc.com/obce/ob-operator:1.1.3-alv

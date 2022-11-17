@@ -524,24 +524,18 @@ spec:
                   - value
                   type: object
                 type: array
-              path:
-                type: string
-              poolList:
-                type: string
               resourcePool:
                 description: ResourcePoolSpec defines the resources pool config
                 properties:
                   name:
                     type: string
-                  unitName:
-                    type: string
                   unitNum:
-                    type: string
+                    type: integer
                   zoneList:
-                    type: string
+                    items:
+                      type: string
+                    type: array
                 required:
-                - name
-                - unitName
                 - unitNum
                 - zoneList
                 type: object
@@ -575,7 +569,6 @@ spec:
                 - minCPU
                 - minIops
                 - minMemory
-                - name
                 type: object
               restorePassword:
                 items:
@@ -596,20 +589,19 @@ spec:
                   - incrementalPasswordInfo
                   type: object
                 type: array
-              source:
-                description: SourceCluster defines the source cluster
+              sourceCluster:
+                description: RestoreCluster defines the restore cluster
                 properties:
                   clusterID:
                     type: integer
                   clusterName:
                     type: string
-                  clusterNamespace:
-                    type: string
                 required:
                 - clusterID
                 - clusterName
-                - clusterNamespace
                 type: object
+              sourcePath:
+                type: string
               sourceTenant:
                 type: string
               timestamp:
@@ -628,11 +620,10 @@ spec:
                 type: array
             required:
             - destTenant
-            - path
-            - poolList
             - resourcePool
             - resourceUnit
-            - source
+            - sourceCluster
+            - sourcePath
             - sourceTenant
             - timestamp
             type: object
@@ -642,8 +633,6 @@ spec:
               restoreSet:
                 items:
                   properties:
-                    backupSetPath:
-                      type: string
                     backupTenantName:
                       type: string
                     clusterID:
@@ -659,7 +648,6 @@ spec:
                     tenantName:
                       type: string
                   required:
-                  - backupSetPath
                   - backupTenantName
                   - clusterID
                   - clusterName

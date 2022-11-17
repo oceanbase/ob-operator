@@ -19,11 +19,11 @@ const (
 const (
 	SetParameterTemplate = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 
-	GetRestoreSetSql         = "SELECT job_id, backup_cluster_id, backup_cluster_name, tenant_name, backup_tenant_name, status, backup_set_list, restore_start_timestamp FROM oceanbase.CDB_OB_RESTORE_HISTORY;"
+	GetRestoreSetSql         = "SELECT job_id, backup_cluster_id, backup_cluster_name, tenant_name, backup_tenant_name, status, restore_finish_timestamp FROM oceanbase.CDB_OB_RESTORE_HISTORY;"
 	GetRestoreConcurrencySql = "select value  from __all_virtual_sys_parameter_stat where name like 'restore_concurrency';"
 
-	CreateResourceUnitSql = "CREATE RESOURCE UNIT '${unit_name}' max_cpu '${max_cpu}', max_memory '${max_memory}', max_iops '${max_iops}',max_disk_size '${max_disk_size}', max_session_num '${max_session_num}', MIN_CPU='${min_cpu}', MIN_MEMORY= '${min_memory}', MIN_IOPS='${min_iops}';"
-	CreateResourcePoolSql = "CREATE RESOURCE POOL '${pool_name}' UNIT='${unit_name}', UNIT_NUM='${unit_num}', ZONE_LIST=('${zone_list}');"
+	CreateResourceUnitSql = "CREATE RESOURCE UNIT ${unit_name} max_cpu ${max_cpu}, max_memory '${max_memory}', max_iops ${max_iops},max_disk_size '${max_disk_size}', max_session_num ${max_session_num}, MIN_CPU=${min_cpu}, MIN_MEMORY= '${min_memory}', MIN_IOPS=${min_iops};"
+	CreateResourcePoolSql = "CREATE RESOURCE POOL ${pool_name} UNIT='${unit_name}', UNIT_NUM=${unit_num}, ZONE_LIST=(${zone_list});"
 
-	DoResotreSql = "ALTER SYSTEM RESTORE '${dest_tenant}' FROM '${source_tenant}' at '${dest_path}' UNTIL '${time}' WITH 'backup_cluster_name='${backup_cluster_name}'&backup_cluster_id='${backup_cluster_id}'&pool_list='${pool_list}'';"
+	DoResotreSql = "ALTER SYSTEM RESTORE ${dest_tenant} FROM ${source_tenant} at '${dest_path}' UNTIL '${time}' WITH 'backup_cluster_name=${backup_cluster_name}&backup_cluster_id=${backup_cluster_id}&pool_list=${pool_list}${restore_option}';"
 )

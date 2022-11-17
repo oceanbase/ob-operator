@@ -14,6 +14,7 @@ package core
 
 import (
 	"strconv"
+	"strings"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	restoreconst "github.com/oceanbase/ob-operator/pkg/controllers/restore/const"
@@ -28,7 +29,20 @@ func (ctrl *RestoreCtrl) CreateResourcePool() error {
 		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
 	}
 	resourcePoolSpec := ctrl.Restore.Spec.ResourcePool
-	return sqlOperator.CreateResourcePool(resourcePoolSpec.Name, resourcePoolSpec.UnitName, resourcePoolSpec.UnitNum, resourcePoolSpec.ZoneList)
+	var resourcePoolName = restoreconst.ResourcePoolName
+	if ctrl.Restore.Spec.ResourcePool.Name != "" {
+		resourcePoolName = ctrl.Restore.Spec.ResourcePool.Name
+	}
+	var resourceUnitName = restoreconst.ResourceUnitName
+	if ctrl.Restore.Spec.ResourceUnit.Name != "" {
+		resourceUnitName = ctrl.Restore.Spec.ResourceUnit.Name
+	}
+	var zoneList string
+	for _, zone := range resourcePoolSpec.ZoneList {
+		zoneList += "'" + zone + "',"
+	}
+	zoneList = strings.TrimRight(zoneList, ",")
+	return sqlOperator.CreateResourcePool(resourcePoolName, resourceUnitName, strconv.Itoa(resourcePoolSpec.UnitNum), zoneList)
 
 }
 
@@ -38,8 +52,11 @@ func (ctrl *RestoreCtrl) CreateResourceUnit() error {
 		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
 	}
 	resourceUnitSpec := ctrl.Restore.Spec.ResourceUnit
-
-	return sqlOperator.CreateResourceUnit(resourceUnitSpec.Name, strconv.Itoa(resourceUnitSpec.MaxCPU), resourceUnitSpec.MaxMemory, strconv.Itoa(resourceUnitSpec.MaxIops), resourceUnitSpec.MaxDiskSize, strconv.Itoa(resourceUnitSpec.MaxSessionNum), strconv.Itoa(resourceUnitSpec.MinCPU), resourceUnitSpec.MinMemory, strconv.Itoa(resourceUnitSpec.MinIops))
+	var resourceUnitName = restoreconst.ResourceUnitName
+	if ctrl.Restore.Spec.ResourceUnit.Name != "" {
+		resourceUnitName = ctrl.Restore.Spec.ResourceUnit.Name
+	}
+	return sqlOperator.CreateResourceUnit(resourceUnitName, strconv.Itoa(resourceUnitSpec.MaxCPU), resourceUnitSpec.MaxMemory, strconv.Itoa(resourceUnitSpec.MaxIops), resourceUnitSpec.MaxDiskSize, strconv.Itoa(resourceUnitSpec.MaxSessionNum), strconv.Itoa(resourceUnitSpec.MinCPU), resourceUnitSpec.MinMemory, strconv.Itoa(resourceUnitSpec.MinIops))
 }
 
 func (ctrl *RestoreCtrl) DoResotre() error {
@@ -48,8 +65,40 @@ func (ctrl *RestoreCtrl) DoResotre() error {
 		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
 	}
 	spec := ctrl.Restore.Spec
+	restoreOption := ctrl.GetRestoreOption()
+	var resourcePoolName = restoreconst.ResourcePoolName
+	if ctrl.Restore.Spec.ResourcePool.Name != "" {
+		resourcePoolName = ctrl.Restore.Spec.ResourcePool.Name
+	}
+	return sqlOperator.DoResotre(spec.DestTenant, spec.SourceTenant, spec.Path, spec.Timestamp, spec.SourceCluster.ClusterName, strconv.Itoa(spec.SourceCluster.ClusterID), resourcePoolName, restoreOption)
+}
 
-	return sqlOperator.DoResotre(spec.DestTenant, spec.SourceTenant, spec.Path, spec.Timestamp, spec.SourceCluster.ClusterName, strconv.Itoa(spec.SourceCluster.ClusterID), spec.PoolList)
+func (ctrl *RestoreCtrl) GetRestoreOption() string {
+	var locality = cloudv1.Parameter{Name: restoreconst.LocalityName, Value: ""}
+	var primaryZone = cloudv1.Parameter{Name: restoreconst.PrimaryZoneName, Value: ""}
+	var kmsEncrypt = cloudv1.Parameter{Name: restoreconst.KmsEncryptName, Value: ""}
+	paramList := [3]cloudv1.Parameter{locality, primaryZone, kmsEncrypt}
+	allParams := ctrl.Restore.Spec.Parameters
+	var isSet bool
+	for _, p := range paramList {
+		for _, param := range allParams {
+			if p.Name == param.Name {
+				isSet = true
+			}
+		}
+	}
+	if !isSet {
+		return ""
+	}
+	var restoreOption = "&"
+	for _, p := range paramList {
+		if ctrl.getParameter(p.Name) != "" {
+			p.Value = ctrl.getParameter(p.Name)
+		}
+		restoreOption += p.Name + "=" + p.Value + "&"
+	}
+	restoreOption = strings.TrimRight(restoreOption, "&")
+	return restoreOption
 }
 
 func (ctrl *RestoreCtrl) GetRestoreSetFromDB() ([]model.AllRestoreSet, error) {
@@ -59,6 +108,16 @@ func (ctrl *RestoreCtrl) GetRestoreSetFromDB() ([]model.AllRestoreSet, error) {
 		return nil, errors.Wrap(err, "get sql operator when checking whether backup is doing")
 	}
 	return sqlOperator.GetAllRestoreSet(), nil
+}
+
+func (ctrl *RestoreCtrl) getParameter(name string) string {
+	params := ctrl.Restore.Spec.Parameters
+	for _, parameter := range params {
+		if parameter.Name == name {
+			return parameter.Value
+		}
+	}
+	return ""
 }
 
 func (ctrl *RestoreCtrl) isConcurrencyZero() (error, bool) {

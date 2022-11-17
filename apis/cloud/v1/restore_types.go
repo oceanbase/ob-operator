@@ -16,18 +16,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // RestoreSpec defines the desired state of Restore
 type RestoreSpec struct {
 	DestTenant      string                `json:"destTenant"`
 	SourceTenant    string                `json:"sourceTenant"`
 	Timestamp       string                `json:"timestamp"`
-	Path            string                `json:"path"`
-	PoolList        string                `json:"poolList"`
+	Path            string                `json:"sourcePath"`
 	Locality        string                `json:"locality,omitempty"`
-	SourceCluster   SourceClusterSpec     `json:"source"`
+	SourceCluster   RestoreClusterSpec    `json:"sourceCluster"`
 	ResourceUnit    ResourceUnitSpec      `json:"resourceUnit"`
 	ResourcePool    ResourcePoolSpec      `json:"resourcePool"`
 	Volume          []VolumeSpec          `json:"vloume,omitempty"`
@@ -35,9 +31,15 @@ type RestoreSpec struct {
 	Parameters      []Parameter           `json:"parameters,omitempty"`
 }
 
+// RestoreCluster defines the restore cluster
+type RestoreClusterSpec struct {
+	ClusterID   int    `json:"clusterID"`
+	ClusterName string `json:"clusterName"`
+}
+
 // ResourceUnitSpec defines the resource unit config
 type ResourceUnitSpec struct {
-	Name          string `json:"name"`
+	Name          string `json:"name,omitempty"`
 	MaxCPU        int    `json:"maxCPU"`
 	MaxMemory     string `json:"maxMemory"`
 	MaxIops       int    `json:"maxIops"`
@@ -50,10 +52,9 @@ type ResourceUnitSpec struct {
 
 // ResourcePoolSpec defines the resources pool config
 type ResourcePoolSpec struct {
-	Name     string `json:"name"`
-	UnitName string `json:"unitName"`
-	UnitNum  string `json:"unitNum"`
-	ZoneList string `json:"zoneList"`
+	Name     string   `json:"name,omitempty"`
+	UnitNum  int      `json:"unitNum"`
+	ZoneList []string `json:"zoneList"`
 }
 
 // ResourcePoolSpec defines the restore password config
@@ -77,9 +78,9 @@ type RestoreSetSpec struct {
 	BackupTenantName string `json:"backupTenantName"`
 	Status           string `json:"status"`
 	Timestamp        string `json:"restoreTimestamp"`
-	BackupSetPath    string `json:"backupSetPath"`
 }
 
+//+genclient
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
