@@ -589,7 +589,7 @@ spec:
                   - incrementalPasswordInfo
                   type: object
                 type: array
-              sourceCluster:
+              source:
                 description: RestoreCluster defines the restore cluster
                 properties:
                   clusterID:
@@ -622,7 +622,7 @@ spec:
             - destTenant
             - resourcePool
             - resourceUnit
-            - sourceCluster
+            - source
             - sourcePath
             - sourceTenant
             - timestamp

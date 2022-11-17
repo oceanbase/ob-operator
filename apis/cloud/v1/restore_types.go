@@ -23,7 +23,7 @@ type RestoreSpec struct {
 	Timestamp       string                `json:"timestamp"`
 	Path            string                `json:"sourcePath"`
 	Locality        string                `json:"locality,omitempty"`
-	SourceCluster   RestoreClusterSpec    `json:"sourceCluster"`
+	SourceCluster   RestoreClusterSpec    `json:"source"`
 	ResourceUnit    ResourceUnitSpec      `json:"resourceUnit"`
 	ResourcePool    ResourcePoolSpec      `json:"resourcePool"`
 	Volume          []VolumeSpec          `json:"vloume,omitempty"`
