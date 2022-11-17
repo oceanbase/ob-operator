@@ -1,9 +1,9 @@
-name: Release Charts
+name: Release
 
 on:
   push:
     branches:
-      - master
+      - gh-pages
 
 jobs:
   release:
