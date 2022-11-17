@@ -1,0 +1,12 @@
+# Default values for ob-operator.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image: oceanbasedev/ob-operator:1.2.0-snapshot
+clusterName: cn
+
+service:
+  type: ClusterIP
+  port: 80
