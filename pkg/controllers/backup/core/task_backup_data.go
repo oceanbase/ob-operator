@@ -186,9 +186,10 @@ func (ctrl *BackupCtrl) isArchivelogDoing() (error, bool) {
 	}
 	statusList := sqlOperator.GetArchieveLogStatus()
 	for _, status := range statusList {
-		if status.Status != backupconst.ArchiveLogDoing {
+		if status.Status != backupconst.ArchiveLogDoing && status.Status != backupconst.ArchiveLogBeginning {
 			return nil, false
 		}
+
 	}
 	return nil, true
 }

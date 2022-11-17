@@ -4,7 +4,7 @@ metadata:
   name: ob-backup		
   namespace: obcluster		
 spec:		
-  destPath: file:///ob-backup		
+  destPath: file:///ob-backup	
   source:		
     clusterName: ob-test		
     clusterID: 1		
