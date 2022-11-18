@@ -34,7 +34,7 @@ type ClusterRootServiceStatus struct {
 type ZoneRootServiceStatus struct {
 	Name     string `json:"name"`
 	ServerIP string `json:"serverIP"`
-	Role     int    `json:"role"`
+	Role     int64  `json:"role"`
 	Status   string `json:"status"`
 }
 

@@ -14,3 +14,4 @@ images:
 - name: controller
   newName: oceanbasedev/ob-operator
   newTag: 1.2.1-snapshot
+
