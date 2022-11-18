@@ -10,19 +10,29 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package model
 
-import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
-)
-
-// SchemeGroupVersion is group version used to register these objects.
-var SchemeGroupVersion = GroupVersion
-
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
+type AllBackupSet struct {
+	TenantID   int64
+	BSKey      int64
+	BackupType string
+	Status     string
 }
 
-func init() {
-	SchemeBuilder.Register(&StatefulApp{}, &StatefulAppList{}, &OBCluster{}, &OBClusterList{}, &RootService{}, &RootServiceList{}, &OBZone{}, &OBZoneList{}, &Backup{}, &BackupList{})
+type BackupArchiveLogStatus struct {
+	TenantID int64
+	Status   string
+}
+
+type BackupDestValue struct {
+	ZoneName string
+	SvrIP    string
+	SvrPort  int64
+	Value    string
+}
+
+type BackupSchedule struct {
+	BackupType string
+	Schedule   string
+	NextTime   string
 }

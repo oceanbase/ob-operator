@@ -10,19 +10,22 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package sql
 
-import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
-)
+import "strings"
 
-// SchemeGroupVersion is group version used to register these objects.
-var SchemeGroupVersion = GroupVersion
-
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
+func ReplaceAll(template string, replacers ...*strings.Replacer) string {
+	s := template
+	for _, replacer := range replacers {
+		s = replacer.Replace(s)
+	}
+	return s
 }
 
-func init() {
-	SchemeBuilder.Register(&StatefulApp{}, &StatefulAppList{}, &OBCluster{}, &OBClusterList{}, &RootService{}, &RootServiceList{}, &OBZone{}, &OBZoneList{}, &Backup{}, &BackupList{})
+func SetParameterSQLReplacer(name, value string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
+}
+
+func SetBackupPasswordReplacer(pwd string) *strings.Replacer {
+	return strings.NewReplacer("${pwd}", pwd)
 }

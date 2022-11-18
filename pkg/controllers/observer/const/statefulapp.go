@@ -25,6 +25,9 @@ const (
 	LogStorageName      = "log"
 	LogStoragePath      = "/home/admin/log"
 
+	BackupName = "backup"
+	BackupPath = "/ob-backup"
+
 	CableReadinessPeriod = 2
 
 	// monagent

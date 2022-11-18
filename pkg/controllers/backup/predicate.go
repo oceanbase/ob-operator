@@ -10,19 +10,27 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package backup
 
 import (
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
-// SchemeGroupVersion is group version used to register these objects.
-var SchemeGroupVersion = GroupVersion
-
-func Resource(resource string) schema.GroupResource {
-	return SchemeGroupVersion.WithResource(resource).GroupResource()
+type backupPredicate struct {
 }
 
-func init() {
-	SchemeBuilder.Register(&StatefulApp{}, &StatefulAppList{}, &OBCluster{}, &OBClusterList{}, &RootService{}, &RootServiceList{}, &OBZone{}, &OBZoneList{}, &Backup{}, &BackupList{})
+func (p backupPredicate) Create(e event.CreateEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Update(e event.UpdateEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Generic(e event.GenericEvent) bool {
+	return true
 }

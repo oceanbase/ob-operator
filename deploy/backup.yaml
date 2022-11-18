@@ -1,0 +1,17 @@
+apiVersion: cloud.oceanbase.com/v1		
+kind: Backup		
+metadata:		
+  name: ob-backup		
+  namespace: obcluster		
+spec:		
+  destPath: file:///ob-backup	
+  source:		
+    clusterName: ob-test		
+    clusterID: 1		
+    clusterNamespace: obcluster		
+  schedule:		
+  - name: f # f/i
+    schedule: '*/10 * * * *'
+  - name: i 		
+    schedule: '*/5 * * * *'
+  parameters: 
