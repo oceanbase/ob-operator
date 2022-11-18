@@ -15,8 +15,10 @@ package core
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
@@ -118,29 +120,36 @@ func (ctrl *RestoreCtrl) BuildRestoreTask() error {
 	for _, param := range parameters {
 		err := ctrl.SetParameter(param)
 		if err != nil {
+			klog.Errorln(err, "fail to set parameter ", param.Name, param.Value)
 			return err
 		}
 	}
 	err, isConcurrencyZero := ctrl.isConcurrencyZero()
 	if err != nil {
+		klog.Errorln(err, "fail to check restore concurrency")
 		return err
 	}
 	if isConcurrencyZero {
 		err = ctrl.SetParameter(cloudv1.Parameter{Name: restoreconst.RestoreConcurrency, Value: strconv.Itoa(restoreconst.RestoreConcurrencyDefault)})
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			klog.Errorln(err, "fail to set default ", restoreconst.RestoreConcurrency)
+			return err
+		}
 	}
 	err = ctrl.CreateResourceUnit()
 	if err != nil {
+		klog.Errorln(err, "fail to create resource unit")
 		return err
 	}
 	err = ctrl.CreateResourcePool()
 	if err != nil {
+		klog.Errorln(err, "fail to create resource pool")
 		return err
 	}
 	err = ctrl.DoResotre()
+	time.Sleep(3 * time.Second)
 	if err != nil {
+		klog.Errorln(err, "fail to  restore")
 		return err
 	}
 	return ctrl.UpdateRestoreStatus()

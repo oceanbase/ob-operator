@@ -68,7 +68,12 @@ func (ctrl *RestoreCtrl) buildRestoreSetListFromDB() ([]model.AllRestoreSet, err
 	if err != nil {
 		return nil, err
 	}
-	return sqlOperator.GetAllRestoreSet(), nil
+	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
+	restoreSetCurrent := sqlOperator.GetAllRestoreCurrentSet()
+	allRestoreSet := make([]model.AllRestoreSet, 0)
+	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
+	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
+	return allRestoreSet, nil
 }
 
 func (ctrl *RestoreCtrl) RestoreSetListToStatusList(restoreSetList []model.AllRestoreSet) []cloudv1.RestoreSetSpec {

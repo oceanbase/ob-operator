@@ -4,11 +4,11 @@ metadata:
   name: ob-restore
   namespace: obcluster
 spec:
-  destTenant: ob_restore  
+  destTenant: ob_restore5
   sourceTenant: tenant0
-  timestamp: '2022-11-16 22:25:00.000000'
+  timestamp: '2022-11-17 21:25:00.000000'
   sourcePath: file:///ob-backup
-  sourceCluster:
+  source:
     clusterName: ob-test
     clusterID: 1
   resourceUnit:

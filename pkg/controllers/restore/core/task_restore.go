@@ -20,13 +20,12 @@ import (
 	restoreconst "github.com/oceanbase/ob-operator/pkg/controllers/restore/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	"github.com/pkg/errors"
-	"k8s.io/klog"
 )
 
 func (ctrl *RestoreCtrl) CreateResourcePool() error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
+		return errors.Wrap(err, "get sql operator when trying to create resource pool ")
 	}
 	resourcePoolSpec := ctrl.Restore.Spec.ResourcePool
 	var resourcePoolName = restoreconst.ResourcePoolName
@@ -49,7 +48,7 @@ func (ctrl *RestoreCtrl) CreateResourcePool() error {
 func (ctrl *RestoreCtrl) CreateResourceUnit() error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
+		return errors.Wrap(err, "get sql operator when trying to create resource unit ")
 	}
 	resourceUnitSpec := ctrl.Restore.Spec.ResourceUnit
 	var resourceUnitName = restoreconst.ResourceUnitName
@@ -62,7 +61,7 @@ func (ctrl *RestoreCtrl) CreateResourceUnit() error {
 func (ctrl *RestoreCtrl) DoResotre() error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when checking whether restore_concurrency is 0 ")
+		return errors.Wrap(err, "get sql operator when trying to do restore ")
 	}
 	spec := ctrl.Restore.Spec
 	restoreOption := ctrl.GetRestoreOption()
@@ -101,13 +100,30 @@ func (ctrl *RestoreCtrl) GetRestoreOption() string {
 	return restoreOption
 }
 
-func (ctrl *RestoreCtrl) GetRestoreSetFromDB() ([]model.AllRestoreSet, error) {
-	klog.Infoln("Check whether backup is doing")
+func (ctrl *RestoreCtrl) GetRestoreSetCurrentFromDB() ([]model.AllRestoreSet, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return nil, errors.Wrap(err, "get sql operator when checking whether backup is doing")
+		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetCurrent From DB")
 	}
-	return sqlOperator.GetAllRestoreSet(), nil
+	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
+	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
+	allRestoreSet := make([]model.AllRestoreSet, 0)
+	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
+	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
+	return allRestoreSet, nil
+}
+
+func (ctrl *RestoreCtrl) GetRestoreSetHistoryFromDB() ([]model.AllRestoreSet, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetHistory From DB")
+	}
+	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
+	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
+	allRestoreSet := make([]model.AllRestoreSet, 0)
+	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
+	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
+	return allRestoreSet, nil
 }
 
 func (ctrl *RestoreCtrl) getParameter(name string) string {
@@ -135,10 +151,9 @@ func (ctrl *RestoreCtrl) isConcurrencyZero() (error, bool) {
 }
 
 func (ctrl *RestoreCtrl) SetParameter(param cloudv1.Parameter) error {
-	klog.Infoln("begin set parameter ", param.Name)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when trying to set backup dest option")
+		return errors.Wrap(err, "get sql operator when trying to set parameter "+param.Name)
 	}
 	return sqlOperator.SetParameter(param.Name, param.Value)
 }

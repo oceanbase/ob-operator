@@ -52,12 +52,32 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 	return nil
 }
 
-func (op *SqlOperator) GetAllRestoreSet() []model.AllRestoreSet {
+func (op *SqlOperator) GetAllRestoreHistorySet() []model.AllRestoreSet {
 	res := make([]model.AllRestoreSet, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllRestoreSet{}).Raw(GetRestoreSetSql).Rows()
+		rows, err := client.Model(&model.AllRestoreSet{}).Raw(GetRestoreSetHistorySql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllRestoreSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetAllRestoreCurrentSet() []model.AllRestoreSet {
+	res := make([]model.AllRestoreSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllRestoreSet{}).Raw(GetRestoreSetCurrentSql).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllRestoreSet
