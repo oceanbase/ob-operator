@@ -40,7 +40,7 @@ var (
 
 func (client *Client) GetOBZone(namespace, name string) (cloudv1.OBZone, error) {
 	var instance cloudv1.OBZone
-	obj, err := client.DynamicClient.Resource(RootServiceRes).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
+	obj, err := client.DynamicClient.Resource(OBZoneRes).Namespace(namespace).Get(context.TODO(), name, metav1.GetOptions{})
 	if err != nil {
 		log.Println(err)
 		return instance, err

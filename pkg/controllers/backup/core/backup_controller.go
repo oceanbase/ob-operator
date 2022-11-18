@@ -123,7 +123,7 @@ func (ctrl *BackupCtrl) BackupEffector() error {
 func (ctrl *BackupCtrl) DoBackup() error {
 	err, isBackupDestSet := ctrl.isBackupDestSet()
 	if err != nil {
-		klog.Infoln("DoBackup: check whether Backup Dest is Set err ", err)
+		klog.Errorln("DoBackup: check whether Backup Dest is Set err ", err)
 		return err
 	}
 
@@ -134,13 +134,13 @@ func (ctrl *BackupCtrl) DoBackup() error {
 
 	err = ctrl.setBackupDestOption()
 	if err != nil {
-		klog.Infoln("DoBackup: set BackupDest Option err ", err)
+		klog.Errorln("DoBackup: set BackupDest Option err ", err)
 		return err
 	}
 
 	err, isArchivelogDoing := ctrl.isArchivelogDoing()
 	if err != nil {
-		klog.Infoln("DoBackup: check whether Archivelog is doing err ", err)
+		klog.Errorln("DoBackup: check whether Archivelog is doing err ", err)
 		return err
 	}
 	if !isArchivelogDoing {
@@ -149,19 +149,19 @@ func (ctrl *BackupCtrl) DoBackup() error {
 
 	err = ctrl.setBackupLogArchiveOption()
 	if err != nil {
-		klog.Infoln("DoBackup: set Backup LogArchive Option err ", err)
+		klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
 		return err
 	}
 
 	err = ctrl.setBackupDatabasePassword()
 	if err != nil {
-		klog.Infoln("DoBackup: set Backup Database Password err ", err)
+		klog.Errorln("DoBackup: set Backup Database Password err ", err)
 		return err
 	}
 
 	err = ctrl.setBackupIncrementalPassword()
 	if err != nil {
-		klog.Infoln("DoBackup: set Backup Incremental Password err ", err)
+		klog.Errorln("DoBackup: set Backup Incremental Password err ", err)
 		return err
 	}
 
@@ -172,13 +172,13 @@ func (ctrl *BackupCtrl) DoBackup() error {
 			if schedule.Schedule == backupconst.BackupOnce {
 				err, isBackupRunning := ctrl.isBackupDoing()
 				if err != nil {
-					klog.Infoln("DoBackup:full backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup:full backup check whether backup is doing err ", err)
 					return err
 				}
 				if !isBackupRunning {
 					err = ctrl.StartBackupDatabase()
 					if err != nil {
-						klog.Infoln("DoBackup: Start Backup Database err ", err)
+						klog.Errorln("DoBackup: Start Backup Database err ", err)
 						return err
 					}
 				}
@@ -192,13 +192,13 @@ func (ctrl *BackupCtrl) DoBackup() error {
 				}
 				nextTime, err := time.ParseInLocation("2006-01-02 15:04:05 +0800 CST", scheduleStatus.NextTime, time.Local)
 				if err != nil {
-					klog.Infoln("DoBackup: full backup time Parse err ", err)
+					klog.Errorln("DoBackup: full backup time Parse err ", err)
 					return err
 				}
 				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
 					err = ctrl.StartBackupDatabase()
 					if err != nil {
-						klog.Infoln("DoBackup: full backup Start Backup Database err ", err)
+						klog.Errorln("DoBackup: full backup Start Backup Database err ", err)
 						return err
 					}
 					return ctrl.UpdateBackupStatus(backupconst.FullBackupType)
@@ -212,13 +212,13 @@ func (ctrl *BackupCtrl) DoBackup() error {
 			if schedule.Schedule == backupconst.BackupOnce {
 				err, isBackupDoing := ctrl.isBackupDoing()
 				if err != nil {
-					klog.Infoln("DoBackup: incremental backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup: incremental backup check whether backup is doing err ", err)
 					return err
 				}
 				if !isBackupDoing {
 					err = ctrl.StartBackupIncremental()
 					if err != nil {
-						klog.Infoln("DoBackup: Start Backup Incremental err ", err)
+						klog.Errorln("DoBackup: Start Backup Incremental err ", err)
 						return err
 					}
 				}
@@ -231,13 +231,13 @@ func (ctrl *BackupCtrl) DoBackup() error {
 				}
 				nextTime, err := time.ParseInLocation("2006-01-02 15:04:05 +0800 CST", scheduleStatus.NextTime, time.Local)
 				if err != nil {
-					klog.Infoln("DoBackup: Incremental backup time Parse err ", err)
+					klog.Errorln("DoBackup: Incremental backup time Parse err ", err)
 					return err
 				}
 				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
 					err = ctrl.StartBackupIncremental()
 					if err != nil {
-						klog.Infoln("DoBackup: Incremental Backup Start Backup Incremental err ", err)
+						klog.Errorln("DoBackup: Incremental Backup Start Backup Incremental err ", err)
 						return err
 					}
 					return ctrl.UpdateBackupStatus(backupconst.IncrementalBackupType)
