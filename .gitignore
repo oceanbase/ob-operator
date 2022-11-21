@@ -32,3 +32,4 @@ testbin/*
 # !vendor/**/zz_generated.*
 
 .vscode/*
+index.yaml
