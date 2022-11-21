@@ -9,22 +9,22 @@ spec:
   imageObagent: oceanbase/obagent:1.2.0
   clusterID: 1
   topology:
-    - cluster: test
+    - cluster: cn
       zone:
       - name: zone1
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone1
+          topology.kubernetes.io/zone: zone-test
         replicas: 1
       - name: zone2
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone2
+          topology.kubernetes.io/zone: zone-test
         replicas: 1
       - name: zone3
         region: region-test
         nodeSelector:
-          topology.kubernetes.io/zone: zone3
+          topology.kubernetes.io/zone: zone-test
         replicas: 1
       parameters:
         - name: log_disk_size
