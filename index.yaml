@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  ob-operator:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2022-11-21T09:08:16.812507846Z"
+    description: A Helm chart for OB-Operator
+    digest: e72ce63f0339d315841ca3c413a316c8c899e662b20ca4dae1f73a45b98bb181
+    name: ob-operator
+    type: application
+    urls:
+    - https://github.com/alv00/ob-operator/releases/download/ob-operator-1.1.0/ob-operator-1.1.0.tgz
+    version: 1.1.0
+generated: "2022-11-21T09:08:16.528974361Z"
