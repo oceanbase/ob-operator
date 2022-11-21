@@ -10,17 +10,22 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package sql
 
-import (
-	"time"
-)
+import "strings"
 
-const (
-	TryInterval                   = 1 * time.Second
-	ApplyWaitTime                 = 5 * time.Second
-	OBClusterBootstrapTimeout     = 600 * time.Second
-	OBClusterReadyTimeout         = 30 * time.Second
-	StatefulappUpdateReadyTimeout = 60 * time.Second
-	OBClusterUpdateTReadyimeout   = 300 * time.Second
-)
+func ReplaceAll(template string, replacers ...*strings.Replacer) string {
+	s := template
+	for _, replacer := range replacers {
+		s = replacer.Replace(s)
+	}
+	return s
+}
+
+func SetParameterSQLReplacer(name, value string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
+}
+
+func SetBackupPasswordReplacer(pwd string) *strings.Replacer {
+	return strings.NewReplacer("${pwd}", pwd)
+}

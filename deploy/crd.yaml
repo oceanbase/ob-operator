@@ -4,6 +4,153 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.4.1
   creationTimestamp: null
+  name: backups.cloud.oceanbase.com
+spec:
+  group: cloud.oceanbase.com
+  names:
+    kind: Backup
+    listKind: BackupList
+    plural: backups
+    singular: backup
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Backup is the Schema for the backups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackupSpec defines the desired state of Backup
+            properties:
+              destPath:
+                type: string
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
+              schedule:
+                items:
+                  description: ScheduleSpec defines the schedule strategy
+                  properties:
+                    name:
+                      type: string
+                    nextTime:
+                      description: type = time?
+                      type: string
+                    schedule:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+              source:
+                description: SourceCluster defines the source cluster
+                properties:
+                  clusterID:
+                    type: integer
+                  clusterName:
+                    type: string
+                  clusterNamespace:
+                    type: string
+                required:
+                - clusterID
+                - clusterName
+                - clusterNamespace
+                type: object
+            required:
+            - destPath
+            - schedule
+            - source
+            type: object
+          status:
+            description: BackupStatus defines the observed state of backup
+            properties:
+              backup set:
+                items:
+                  properties:
+                    backupType:
+                      type: string
+                    bsKey:
+                      type: integer
+                    clusterName:
+                      type: string
+                    status:
+                      type: string
+                    tenantID:
+                      type: integer
+                  required:
+                  - backupType
+                  - bsKey
+                  - clusterName
+                  - status
+                  - tenantID
+                  type: object
+                type: array
+              interval:
+                items:
+                  properties:
+                    endTime:
+                      type: string
+                    startTime:
+                      type: string
+                  required:
+                  - endTime
+                  - startTime
+                  type: object
+                type: array
+              schedule:
+                items:
+                  description: ScheduleSpec defines the schedule strategy
+                  properties:
+                    name:
+                      type: string
+                    nextTime:
+                      description: type = time?
+                      type: string
+                    schedule:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            required:
+            - backup set
+            - schedule
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
   name: obclusters.cloud.oceanbase.com
 spec:
   group: cloud.oceanbase.com
@@ -70,10 +217,21 @@ spec:
                       - storageClassName
                       type: object
                     type: array
+                  volume:
+                    properties:
+                      name:
+                        type: string
+                      path:
+                        type: string
+                    required:
+                    - name
+                    - path
+                    type: object
                 required:
                 - cpu
                 - memory
                 - storage
+                - volume
                 type: object
               tag:
                 type: string

@@ -9,18 +9,4 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-
-package observer
-
-import (
-	"time"
-)
-
-const (
-	TryInterval                   = 1 * time.Second
-	ApplyWaitTime                 = 5 * time.Second
-	OBClusterBootstrapTimeout     = 600 * time.Second
-	OBClusterReadyTimeout         = 30 * time.Second
-	StatefulappUpdateReadyTimeout = 60 * time.Second
-	OBClusterUpdateTReadyimeout   = 300 * time.Second
-)
+package v1
