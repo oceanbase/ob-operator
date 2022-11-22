@@ -272,8 +272,8 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 	if versionIsModified {
 		// TODO: support version update
-		klog.Errorln("version update is not supported yet")
-		return nil
+		err = ctrl.OBClusterUpdate()
+		return err
 	}
 
 	// check resource modified

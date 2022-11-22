@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -207,4 +208,25 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) erro
 
 	return ctrl.UpdateOBZoneStatusFromDB(clusterIP)
 
+}
+
+func (ctrl *OBClusterCtrl) OBClusterUpdate() error {
+	targetVer := ctrl.OBCluster.Status.Topology[0].TargetVersion
+	upgradeRoute := ctrl.OBCluster.Status.Topology[0].UpgradeRoute
+	var err error
+	if targetVer == "" {
+		targetVer, err = ctrl.GetTargetVer()
+	}
+	klog.Infoln("OBClusterUpdate: targetVer, err ", targetVer, err)
+	targetVer = "observer (OceanBase CE 3.1.4)"
+	if upgradeRoute == nil {
+		upgradeRoute = append(upgradeRoute, "3.1.3", "3.1.4")
+	}
+	klog.Infoln("upgradeRoute: ", upgradeRoute)
+
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) GetTargetVer() (string, error) {
+	return ctrl.GetTargetVerJob()
 }

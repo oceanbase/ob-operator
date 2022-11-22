@@ -157,9 +157,19 @@ spec:
                       type: string
                     clusterStatus:
                       type: string
+                    currentImage:
+                      type: string
                     lastTransitionTime:
                       format: date-time
                       type: string
+                    scriptPassedVersion:
+                      type: string
+                    targetVersion:
+                      type: string
+                    upgradeRoute:
+                      items:
+                        type: string
+                      type: array
                     zone:
                       items:
                         properties:

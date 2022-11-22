@@ -95,6 +95,14 @@ const (
 	FailedToDeleteOBZone = "FailedDeleteOBZone"
 )
 
+// Job event reason list
+const (
+	CreatedJob        = "CreatedJob"
+	FailedToCreateJob = "FailedCreateJob"
+	DeletedJob        = "DeletedJob"
+	FailedToKillJob   = "FailedKillJob"
+)
+
 // Probe event reason list
 const (
 	ContainerUnhealthy = "Unhealthy"

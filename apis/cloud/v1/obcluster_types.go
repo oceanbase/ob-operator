@@ -64,10 +64,14 @@ type OBClusterStatus struct {
 }
 
 type ClusterStatus struct {
-	Cluster            string       `json:"cluster"`
-	ClusterStatus      string       `json:"clusterStatus"`
-	LastTransitionTime metav1.Time  `json:"lastTransitionTime"`
-	Zone               []ZoneStatus `json:"zone"`
+	Cluster             string       `json:"cluster"`
+	CurrentImage        string       `json:"currentImage,omitempty"`
+	ScriptPassedVersion string       `json:"scriptPassedVersion,omitempty"`
+	TargetVersion       string       `json:"targetVersion,omitempty"`
+	UpgradeRoute        []string     `json:"upgradeRoute,omitempty"`
+	ClusterStatus       string       `json:"clusterStatus"`
+	LastTransitionTime  metav1.Time  `json:"lastTransitionTime"`
+	Zone                []ZoneStatus `json:"zone"`
 }
 
 type ZoneStatus struct {
