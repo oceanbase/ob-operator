@@ -43,7 +43,7 @@ type ResourcesSpec struct {
 	CPU     resource.Quantity `json:"cpu"`
 	Memory  resource.Quantity `json:"memory"`
 	Storage []StorageSpec     `json:"storage"`
-	Volume  VolumeSpec        `json:"volume"`
+	Volume  VolumeSpec        `json:"volume,omitempty"`
 }
 
 type VolumeSpec struct {
