@@ -228,5 +228,5 @@ func (ctrl *OBClusterCtrl) OBClusterUpdate() error {
 }
 
 func (ctrl *OBClusterCtrl) GetTargetVer() (string, error) {
-	return ctrl.GetTargetVerJob()
+	return "", nil
 }

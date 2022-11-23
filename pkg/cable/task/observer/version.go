@@ -10,18 +10,20 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observerconst
+package observer
 
-const (
-	CableUrlProfix          = "http://"
-	CablePort               = 19001
-	CableNicInfoUrl         = "/api/system/info"
-	CableStartUrl           = "/api/ob/start"
-	CableStatusUrl          = "/api/ob/status"
-	CableReadinessUrl       = "/api/ob/readiness"
-	CableReadinessUpdateUrl = "/api/ob/readinessUpdate"
-	CableVersionUrl         = "/api/ob/version"
+import (
+	"context"
 
-	MonagentReadinessUrl = "/metrics/stat"
-	MonagentUpdateUrl    = "/api/v1/module/config/update"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/util/shell"
+	log "github.com/sirupsen/logrus"
 )
+
+func GetObVersionProcess() (*shell.ExecuteResult, error) {
+	res, err := shell.NewCommand(constant.OBSERVER_VERSION_COMMAND).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+	if err != nil {
+		log.WithError(err).Errorf("start observer command exec error %v", err)
+	}
+	return res, err
+}

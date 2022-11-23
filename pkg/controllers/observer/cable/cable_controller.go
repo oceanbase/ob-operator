@@ -46,6 +46,11 @@ func OBServerStart(obCluster cloudv1.OBCluster, subsets []cloudv1.SubsetStatus, 
 	}
 }
 
+func OBServerGetVersion(podIP string) error {
+	err := OBServerGetVersionExecuter(podIP)
+	return err
+}
+
 func OBServerStatusCheck(clusterName string, subsets []cloudv1.SubsetStatus) error {
 	for _, subset := range subsets {
 		podList := subset.Pods

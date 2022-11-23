@@ -81,6 +81,10 @@ func OBStatus(c *gin.Context) {
 	}
 }
 
+func OBVersion(c *gin.Context) {
+
+}
+
 func OBReadiness(c *gin.Context) {
 	if status.Readiness {
 		SendResponse(c, NewSuccessResponse(status.Readiness))
