@@ -18,9 +18,9 @@ import (
 
 const (
 	TryInterval                   = 1 * time.Second
-	OBClusterCreateTimeout        = 5 * time.Second
+	ApplyWaitTime                 = 5 * time.Second
 	OBClusterBootstrapTimeout     = 600 * time.Second
 	OBClusterReadyTimeout         = 30 * time.Second
 	StatefulappUpdateReadyTimeout = 60 * time.Second
-	OBClusterUpdateTReadyimeout   = 120 * time.Second
+	OBClusterUpdateTReadyimeout   = 300 * time.Second
 )
