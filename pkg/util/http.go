@@ -37,13 +37,13 @@ func HTTPGET(reqURL string) (int, map[string]interface{}) {
 		log.Println(berr)
 		return 0, nil
 	}
-	responeDate := make(map[string]interface{})
-	jerr := json.Unmarshal(resBody, &responeDate)
+	responseData := make(map[string]interface{})
+	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
 		log.Println(jerr)
 		return res.StatusCode, nil
 	}
-	return res.StatusCode, responeDate
+	return res.StatusCode, responseData
 }
 
 func HTTPPOST(reqURL, reqData string) (int, map[string]interface{}) {
@@ -63,13 +63,13 @@ func HTTPPOST(reqURL, reqData string) (int, map[string]interface{}) {
 		log.Println(berr)
 		return 0, nil
 	}
-	responeDate := make(map[string]interface{})
-	jerr := json.Unmarshal(resBody, &responeDate)
+	responseData := make(map[string]interface{})
+	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
 		log.Println(jerr)
 		return res.StatusCode, nil
 	}
-	return res.StatusCode, responeDate
+	return res.StatusCode, responseData
 }
 
 func HTTPPUT(reqURL, reqData string) map[string]interface{} {
@@ -89,13 +89,13 @@ func HTTPPUT(reqURL, reqData string) map[string]interface{} {
 		log.Println(berr)
 		return nil
 	}
-	responeDate := make(map[string]interface{})
-	jerr := json.Unmarshal(resBody, &responeDate)
+	responseData := make(map[string]interface{})
+	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
 		log.Println(jerr)
 		return nil
 	}
-	return responeDate
+	return responseData
 }
 
 func HTTPDELETE(reqURL, reqData string) map[string]interface{} {
@@ -114,11 +114,11 @@ func HTTPDELETE(reqURL, reqData string) map[string]interface{} {
 		log.Println(berr)
 		return nil
 	}
-	responeDate := make(map[string]interface{})
-	jerr := json.Unmarshal(resBody, &responeDate)
+	responseData := make(map[string]interface{})
+	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
 		log.Println(jerr)
 		return nil
 	}
-	return responeDate
+	return responseData
 }

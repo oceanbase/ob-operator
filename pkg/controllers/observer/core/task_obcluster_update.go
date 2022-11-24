@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
@@ -92,7 +93,7 @@ func GeneratePodName(clusterName, name string) string {
 	return fmt.Sprintf("%s-%s", clusterName, name)
 }
 
-func (ctrl *OBClusterCtrl) CreatePodForVersion() error {
+func (ctrl *OBClusterCtrl) CreatePodForVersion() (string, error) {
 	podName := GeneratePodName(myconfig.ClusterName, "help")
 	containerImage := ctrl.OBCluster.Spec.ImageRepo + ":" + ctrl.OBCluster.Spec.Tag
 	podObject := corev1.Pod{
@@ -105,8 +106,15 @@ func (ctrl *OBClusterCtrl) CreatePodForVersion() error {
 				{
 					Name:  podName,
 					Image: containerImage,
+					Env: []corev1.EnvVar{
+						{
+							Name:  "LD_LIBRARY_PATH",
+							Value: "/home/admin/oceanbase/lib",
+						},
+					},
 				},
 			},
+
 			RestartPolicy: corev1.RestartPolicyNever,
 		},
 	}
@@ -117,9 +125,34 @@ func (ctrl *OBClusterCtrl) CreatePodForVersion() error {
 	if err != nil {
 		klog.Errorln("create pod to get version failed, error: ", err)
 		if kubeerrors.IsAlreadyExists(err) {
-			return nil
+			return podName, nil
 		}
-		return err
+		return "", err
 	}
-	return nil
+	return podName, nil
+}
+
+func (ctrl *OBClusterCtrl) GetPodIpByName(podName string) (string, error) {
+	podExecuter := resource.NewPodResource(ctrl.Resource)
+	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
+	if err != nil {
+		klog.Errorln("Get PodIp By PodName failed, err: ", err)
+		return "", err
+	}
+	pod := podObject.(corev1.Pod)
+	return pod.Status.PodIP, nil
+}
+
+func (ctrl *OBClusterCtrl) GetTargetVer() (string, error) {
+	podName, err := ctrl.CreatePodForVersion()
+	if err != nil {
+		return "", err
+	}
+	podIp, err := ctrl.GetPodIpByName(podName)
+	if err != nil {
+		return "", err
+	}
+	ver, err := cable.OBServerGetVersion(podIp)
+	klog.Infoln("GetTargetVer: ", ver)
+	return "", nil
 }

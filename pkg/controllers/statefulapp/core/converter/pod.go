@@ -100,6 +100,9 @@ func GeneratePodObjectPcress(subsetName, podName string, podIndex int, statefulA
 func PVCRewrite(podName string, volumes []corev1.Volume) []corev1.Volume {
 	newVolumes := make([]corev1.Volume, 0)
 	for _, volume := range volumes {
+		if volume.Name == "" {
+			continue
+		}
 		if volume.Name == "backup" {
 			newVolumes = append(newVolumes, volume)
 			continue

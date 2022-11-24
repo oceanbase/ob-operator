@@ -52,14 +52,16 @@ func OBServerStatusCheckExecuter(clusterName, podIP string) error {
 	return nil
 }
 
-func OBServerGetVersionExecuter(podIP string) error {
+func OBServerGetVersionExecuter(podIP string) (map[string]interface{}, error) {
+	klog.Infoln("OBServerGetVersionExecuter")
+	responseData := make(map[string]interface{})
 	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableVersionUrl)
-	code, _ := util.HTTPGET(url)
+	code, responseData := util.HTTPGET(url)
 	if code != 200 {
 		klog.Errorln(podIP, " get observer version failed")
-		return errors.New("get observer version failed")
+		return responseData, errors.New("get observer version failed")
 	}
-	return nil
+	return responseData, nil
 }
 
 func CableReadinessUpdateExecuter(podIP string) error {

@@ -226,7 +226,3 @@ func (ctrl *OBClusterCtrl) OBClusterUpdate() error {
 
 	return nil
 }
-
-func (ctrl *OBClusterCtrl) GetTargetVer() (string, error) {
-	return "", nil
-}

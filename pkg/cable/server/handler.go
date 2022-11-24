@@ -18,6 +18,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/klog"
 
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/cable/task/observer"
@@ -82,7 +83,13 @@ func OBStatus(c *gin.Context) {
 }
 
 func OBVersion(c *gin.Context) {
-
+	klog.Infoln("OBVersion")
+	res, err := observer.GetObVersionProcess()
+	if err != nil {
+		SendResponse(c, NewErrorResponse(err))
+	} else {
+		SendResponse(c, NewSuccessResponse(res))
+	}
 }
 
 func OBReadiness(c *gin.Context) {

@@ -231,7 +231,6 @@ spec:
                 - cpu
                 - memory
                 - storage
-                - volume
                 type: object
               tag:
                 type: string
