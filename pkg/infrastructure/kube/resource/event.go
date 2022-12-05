@@ -26,6 +26,7 @@ const (
 // Pod event reason list
 const (
 	CreatedPod        = "CreatedPod"
+	UpatedPod         = "UpatedPod"
 	FailedToCreatePod = "FailedCreatePod"
 	DeletedPod        = "DeletedPod"
 	FailedToKillPod   = "FailedKillPod"

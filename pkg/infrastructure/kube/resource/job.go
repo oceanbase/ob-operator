@@ -85,3 +85,7 @@ func (r *JobResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&Job, corev1.EventTypeNormal, DeletedJob, "delete Job"+Job.Name)
 	return nil
 }
+
+func (r *JobResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

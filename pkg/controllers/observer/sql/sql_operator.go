@@ -119,6 +119,50 @@ func (op *SqlOperator) DeleteZone(zoneName string) error {
 	return op.ExecSQL(sql)
 }
 
+func (op *SqlOperator) BeginUpgrade() error {
+	return op.ExecSQL(BeginUpgradeSQL)
+}
+
+func (op *SqlOperator) GetUpgradeMode() []model.ZoneUpGradeMode {
+	res := make([]model.ZoneUpGradeMode, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ZoneUpGradeMode{}).Raw(GetUpgradeModeSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ZoneUpGradeMode
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetLeaderCount() []model.ZoneLeaderCount {
+	res := make([]model.ZoneLeaderCount, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ZoneLeaderCount{}).Raw(GetLeaderCountSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ZoneLeaderCount
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) GetParameter(name string) []model.SysParameterStat {
 	res := make([]model.SysParameterStat, 0)
 	sql := ReplaceAll(GetParameterTemplate, GetParameterSQLReplacer(name))
@@ -226,7 +270,7 @@ func (op *SqlOperator) GetAllUnit() []model.AllUnit {
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllUnit{}).Raw(GetAllUnitSql).Rows()
+		rows, err := client.Model(&model.AllUnit{}).Raw(GetAllUnitSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllUnit

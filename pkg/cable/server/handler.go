@@ -18,7 +18,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"k8s.io/klog"
 
 	"github.com/oceanbase/ob-operator/pkg/cable/status"
 	"github.com/oceanbase/ob-operator/pkg/cable/task/observer"
@@ -69,6 +68,19 @@ func OBStart(c *gin.Context) {
 	}
 }
 
+func OBUpgradeRoute(c *gin.Context) {
+	param := new(observer.OBUpgradeRouteProcessParam)
+	if err := c.ShouldBind(&param); err != nil {
+		panic(err)
+	}
+	res, err := observer.GetOBUpgradeRouteProcess(*param)
+	if err != nil {
+		SendResponse(c, NewErrorResponse(err))
+	} else {
+		SendResponse(c, NewSuccessResponse(res))
+	}
+}
+
 func OBStop(c *gin.Context) {
 	go observer.StopProcess()
 	SendResponse(c, NewSuccessResponse("successful"))
@@ -83,12 +95,11 @@ func OBStatus(c *gin.Context) {
 }
 
 func OBVersion(c *gin.Context) {
-	klog.Infoln("OBVersion")
 	res, err := observer.GetObVersionProcess()
 	if err != nil {
 		SendResponse(c, NewErrorResponse(err))
 	} else {
-		SendResponse(c, NewSuccessResponse(res))
+		SendResponse(c, NewSuccessResponse(res.Output))
 	}
 }
 

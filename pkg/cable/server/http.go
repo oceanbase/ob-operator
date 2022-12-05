@@ -55,7 +55,9 @@ func (S *Server) Init() {
 		// readiness update
 		obGroup.POST("/readinessUpdate", OBReadinessUpdate)
 		// get version
-		obGroup.GET("/veriosn", OBVersion)
+		obGroup.GET("/version", OBVersion)
+		// get upgrade route
+		obGroup.POST("/upgradeRoute", OBUpgradeRoute)
 	}
 	S.Router = router
 	S.HttpServer = &http.Server{

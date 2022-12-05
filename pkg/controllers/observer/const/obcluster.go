@@ -30,19 +30,18 @@ const (
 )
 
 const (
-	NeedUpgradeCheck   = "Need Upgrade Check"
-	UpgradeChecking    = "Upgrade Checking"
-	UpgradeCheckPassed = "Upgrade Check Passed"
-
-	NeedExecutingPreScripts = "Need Executing Pre Scripts"
-	ExecutingPreScripts     = "Executing Pre Scripts"
-	ExecutePreScriptsPassed = "Execute Pre Scripts Passed"
-
-	NeedUpgrading   = "Need Upgrading"
-	Upgrading       = "Upgrading"
 	UpgradingPassed = "Upgrading Passed"
 
 	NeedExecutingPostScripts = "Need Executing Post Scripts"
 	ExecutingPostScripts     = "Executing Post Scripts"
 	ExecutePostScriptsPassed = "Execute Post Scripts Passed"
+)
+
+const (
+	UpgradeDepFilePath     = "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml"
+	UpgradePreCheckerPath  = "/home/admin/oceanbase/etc/upgrade_checker.py"
+	UpgradeScriptsPath     = "/home/admin/oceanbase/scripts/"
+	PreScriptFile          = "/upgrade_pre.py"
+	PostScriptFile         = "/upgrade_post.py"
+	UpgradePostCheckerPath = "/home/admin/oceanbase/etc/upgrade_post_checker.py"
 )

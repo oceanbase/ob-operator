@@ -232,6 +232,19 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				// OBZone Scale Down
 			case observerconst.ZoneScaleDown:
 				err = ctrl.OBZoneScaleDown(statefulApp)
+			case observerconst.NeedUpgradeCheck:
+				err = ctrl.ExecUpgradePreChecker(statefulApp)
+			case observerconst.UpgradeChecking:
+				err = ctrl.GetPreCheckJobStatus(statefulApp)
+			case observerconst.NeedExecutingPreScripts:
+				err = ctrl.CheckUpgradeMode(statefulApp)
+			case observerconst.ExecutingPreScripts:
+				err = ctrl.ExecPreScripts(statefulApp)
+			case observerconst.NeedUpgrading:
+				err = ctrl.PreparingForUpgrade(statefulApp)
+			case observerconst.Upgrading:
+				err = ctrl.ExecUpgrading(statefulApp)
+
 			}
 		}
 	}
@@ -275,7 +288,7 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 	if versionIsModified {
 		// TODO: support version update
-		err = ctrl.OBClusterUpdate()
+		err = ctrl.OBClusterUpgrade(statefulApp)
 		return err
 	}
 

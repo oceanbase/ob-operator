@@ -28,19 +28,16 @@ func HTTPGET(reqURL string) (int, map[string]interface{}) {
 	}
 	res, perr := c.Do(req)
 	if perr != nil {
-		log.Println(perr)
 		return 0, nil
 	}
 	resBody, berr := ioutil.ReadAll(res.Body)
 	_ = res.Body.Close()
 	if berr != nil {
-		log.Println(berr)
 		return 0, nil
 	}
 	responseData := make(map[string]interface{})
 	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
-		log.Println(jerr)
 		return res.StatusCode, nil
 	}
 	return res.StatusCode, responseData

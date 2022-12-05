@@ -84,3 +84,7 @@ func (r *SecretResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&secret, corev1.EventTypeNormal, DeletedSecret, "delete secret"+secret.Name)
 	return nil
 }
+
+func (r *SecretResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

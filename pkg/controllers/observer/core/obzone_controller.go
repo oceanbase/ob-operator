@@ -210,19 +210,21 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) erro
 
 }
 
-func (ctrl *OBClusterCtrl) OBClusterUpdate() error {
-	targetVer := ctrl.OBCluster.Status.Topology[0].TargetVersion
-	upgradeRoute := ctrl.OBCluster.Status.Topology[0].UpgradeRoute
+func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) error {
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	targetVer := clusterStatus.TargetVersion
+	upgradeRoute := clusterStatus.UpgradeRoute
 	var err error
 	if targetVer == "" {
-		targetVer, err = ctrl.GetTargetVer()
+		err = ctrl.CheckTargetVersion(targetVer)
+		if err != nil {
+			return err
+		}
+		targetVer = clusterStatus.TargetVersion
 	}
-	klog.Infoln("OBClusterUpdate: targetVer, err ", targetVer, err)
-	targetVer = "observer (OceanBase CE 3.1.4)"
-	if upgradeRoute == nil {
-		upgradeRoute = append(upgradeRoute, "3.1.3", "3.1.4")
+	err = ctrl.CheckUpgradeRoute(statefulApp, upgradeRoute, targetVer)
+	if err != nil {
+		return err
 	}
-	klog.Infoln("upgradeRoute: ", upgradeRoute)
-
-	return nil
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradeCheck, "", "")
 }

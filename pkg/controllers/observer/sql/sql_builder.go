@@ -61,3 +61,11 @@ func GetParameterSQLReplacer(name string) *strings.Replacer {
 func ZoneNameReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
+
+func UpgradeReplacer(filename, clusterIP, port string) *strings.Replacer {
+	return strings.NewReplacer("${FILE_NAME}", filename, "${IP}", clusterIP, "${PORT}", port)
+}
+
+func GetLeaderCountSQLReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
+}

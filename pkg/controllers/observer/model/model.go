@@ -53,6 +53,26 @@ type SysParameterStat struct {
 	EditLevel string
 }
 
+type ZoneUpGradeMode struct {
+	Zone    string
+	SvrIP   string
+	SvrPort int64
+	Value   string
+}
+
+type ZoneLeaderCount struct {
+	Zone        string
+	LeaderCount int64
+}
+
+type UpgradeInfo struct {
+	ScriptPassedVersion string
+	TargetVersion       string
+	UpgradeRoute        []string
+	ZoneStatus          string
+	ClusterStatus       string
+}
+
 type AllUnit struct {
 	UnitIp             string
 	ResourcePoolIp     string

@@ -14,7 +14,6 @@ package cable
 
 import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
-	"k8s.io/klog/v2"
 )
 
 func CableStatusCheck(subsets []cloudv1.SubsetStatus) error {
@@ -48,15 +47,24 @@ func OBServerStart(obCluster cloudv1.OBCluster, subsets []cloudv1.SubsetStatus, 
 }
 
 func OBServerGetVersion(podIP string) (string, error) {
-	klog.Infoln("OBServerGetVersion")
 	responseData, err := OBServerGetVersionExecuter(podIP)
 	if err != nil {
 		return "", err
 	}
-	klog.Infoln("responseData: ", responseData)
-	response := responseData["Data"]
-	klog.Infoln("response: ", response)
-	return "", nil
+	response := responseData["data"]
+	targetVer := GetObVersionFromResponse(response.(string))
+	return targetVer, nil
+}
+
+func OBServerGetUpgradeRoute(podIP, currentVer, targetVer string) ([]string, error) {
+	obUpgradeRouteArgs := GenerateOBUpgradeRouteArgs(currentVer, targetVer)
+	responseData, err := OBServerGetUpgradeRouteExecuter(podIP, obUpgradeRouteArgs)
+	if err != nil {
+		return nil, err
+	}
+	response := responseData["data"]
+	upgradeRoute := GetObUpgradeRouteFromResponse(response)
+	return upgradeRoute, nil
 }
 
 func OBServerStatusCheck(clusterName string, subsets []cloudv1.SubsetStatus) error {

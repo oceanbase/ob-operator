@@ -27,6 +27,7 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	observerutil "github.com/oceanbase/ob-operator/pkg/controllers/observer/core/util"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
@@ -156,6 +157,48 @@ func (ctrl *OBClusterCtrl) UpdateOBClusterAndZoneStatus(clusterStatus, zoneName,
 	return nil
 }
 
+func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInfo) error {
+	obCluster := ctrl.OBCluster
+	obClusterExecuter := resource.NewOBClusterResource(ctrl.Resource)
+	obClusterTemp, err := obClusterExecuter.Get(context.TODO(), obCluster.Namespace, obCluster.Name)
+	if err != nil {
+		klog.Errorln("Get OB Cluster Failed. Err: ", err)
+		return err
+	}
+	obClusterCurrent := obClusterTemp.(cloudv1.OBCluster)
+	obClusterCurrentDeepCopy := obClusterCurrent.DeepCopy()
+	clusters := obClusterCurrentDeepCopy.Status.Topology
+	for index, cluster := range clusters {
+		if cluster.Cluster == myconfig.ClusterName {
+			if upgradeInfo.TargetVersion != "" {
+				cluster.TargetVersion = upgradeInfo.TargetVersion
+			}
+			if upgradeInfo.UpgradeRoute != nil {
+				cluster.UpgradeRoute = upgradeInfo.UpgradeRoute
+			}
+			if upgradeInfo.ScriptPassedVersion != "" {
+				cluster.ScriptPassedVersion = upgradeInfo.ScriptPassedVersion
+			}
+			if upgradeInfo.ZoneStatus != "" {
+				for idx, _ := range cluster.Zone {
+					cluster.Zone[idx].ZoneStatus = upgradeInfo.ZoneStatus
+				}
+			}
+			if upgradeInfo.ClusterStatus != "" {
+				cluster.ClusterStatus = upgradeInfo.ClusterStatus
+			}
+			cluster.LastTransitionTime = metav1.Now()
+			obClusterCurrentDeepCopy.Status.Topology[index] = cluster
+		}
+	}
+	err = obClusterExecuter.UpdateStatus(context.TODO(), *obClusterCurrentDeepCopy)
+	if err != nil {
+		return err
+	}
+	ctrl.OBCluster = *obClusterCurrentDeepCopy
+	return nil
+}
+
 func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clusterStatus, zoneName, zoneStatus string) (cloudv1.OBCluster, error) {
 	statefulAppName := converter.GenerateStatefulAppName(obCluster.Name)
 	statefulApp := &cloudv1.StatefulApp{}
@@ -195,6 +238,9 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	clusterCurrentStatus.ClusterStatus = clusterStatus
 	clusterCurrentStatus.LastTransitionTime = lastTransitionTime
 	clusterCurrentStatus.Zone = zoneListFromDB
+	clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
+	clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
+	clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
 
 	// topology status, multi cluster
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
@@ -202,7 +248,10 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	if clusterStatus == observerconst.ClusterReady {
 		obCluster.Status.Status = observerconst.TopologyReady
 	} else if clusterStatus == observerconst.ScaleUP || clusterStatus == observerconst.ScaleDown ||
-		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown {
+		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown ||
+		clusterStatus == observerconst.NeedUpgradeCheck || clusterStatus == observerconst.UpgradeChecking ||
+		clusterStatus == observerconst.NeedExecutingPreScripts || clusterStatus == observerconst.ExecutingPreScripts ||
+		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading {
 		obCluster.Status.Status = observerconst.TopologyNotReady
 	} else {
 		obCluster.Status.Status = observerconst.TopologyPrepareing

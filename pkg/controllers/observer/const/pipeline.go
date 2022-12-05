@@ -30,6 +30,19 @@ const (
 	ZoneMaintain  = "Zone Maintain"
 )
 
+// obcluster uopgrade machine
+const (
+	NeedUpgradeCheck = "Need Upgrade Check"
+	UpgradeChecking  = "Upgrade Checking"
+
+	NeedExecutingPreScripts = "Need Executing Pre Scripts"
+	ExecutingPreScripts     = "Executing Pre Scripts"
+	ExecutePreScriptsPassed = "Execute Pre Scripts Passed"
+
+	NeedUpgrading = "Need Upgrading"
+	Upgrading     = "Upgrading"
+)
+
 // Step
 const (
 	StepBootstrap = "Bootstrap"

@@ -85,3 +85,7 @@ func (r *RootServiceResource) Delete(ctx context.Context, obj interface{}) error
 	r.Recorder.Event(&rootService, corev1.EventTypeNormal, DeletedRootService, "delete RootService CR"+rootService.Name)
 	return nil
 }
+
+func (r *RootServiceResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
