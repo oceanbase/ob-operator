@@ -131,7 +131,6 @@ spec:
                 type: array
             required:
             - backup set
-            - interval
             - schedule
             type: object
         type: object
