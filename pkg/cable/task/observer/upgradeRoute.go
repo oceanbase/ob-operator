@@ -56,12 +56,10 @@ func GetOBUpgradeRouteProcess(param OBUpgradeRouteProcessParam) ([]string, error
 	}
 	var versionDep []VersionDep
 	err = yaml.Unmarshal(content, &versionDep)
-	log.Infof("versionDep: ", versionDep)
 	if err != nil {
 		log.Infof("Failed to parse file ", err)
 	}
 	graph := Build(versionDep)
-	log.Infof("graph: ", graph)
 	res := FindShortestUpgradePath(graph, currentVersion, targetVersion)
 	var upgradeRoute []string
 	for _, v := range res {

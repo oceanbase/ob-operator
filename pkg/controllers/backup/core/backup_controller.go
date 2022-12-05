@@ -51,13 +51,6 @@ type BackupCtrlOperator interface {
 	BackupCoordinator() (ctrl.Result, error)
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *BackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudv1.Backup{}).
-		Complete(r)
-}
-
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update

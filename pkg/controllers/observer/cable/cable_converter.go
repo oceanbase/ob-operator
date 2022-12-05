@@ -117,7 +117,7 @@ func GetObVersionFromResponse(responseData string) string {
 	res := strings.Split(responseData, "\n")
 	res = strings.Split(res[1], " ")
 	version := res[len(res)-1]
-	return version[0:len(version)-1]
+	return version[0 : len(version)-1]
 }
 
 func GetObUpgradeRouteFromResponse(responseData interface{}) []string {
