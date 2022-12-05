@@ -57,7 +57,6 @@ spec:
                     name:
                       type: string
                     nextTime:
-                      description: type = time?
                       type: string
                     schedule:
                       type: string
@@ -127,7 +126,6 @@ spec:
                     name:
                       type: string
                     nextTime:
-                      description: type = time?
                       type: string
                     schedule:
                       type: string

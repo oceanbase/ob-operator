@@ -56,7 +56,6 @@ spec:
                     schedule:
                       type: string
                   required:
-<<<<<<< Updated upstream
                   - name
                   type: object
                 type: array
@@ -119,11 +118,7 @@ spec:
                 items:
                   description: ScheduleSpec defines the schedule strategy
                   properties:
-<<<<<<< Updated upstream
                     name:
-=======
-                    backupType:
->>>>>>> Stashed changes
                       type: string
                     nextTime:
                       description: type = time?
@@ -131,21 +126,12 @@ spec:
                     schedule:
                       type: string
                   required:
-<<<<<<< Updated upstream
                   - name
-=======
-                  - backupType
-                  - nextTime
-                  - schedule
->>>>>>> Stashed changes
                   type: object
                 type: array
             required:
             - backup set
-<<<<<<< Updated upstream
-=======
             - interval
->>>>>>> Stashed changes
             - schedule
             type: object
         type: object

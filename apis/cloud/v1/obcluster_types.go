@@ -42,7 +42,7 @@ type Parameter struct {
 type ResourcesSpec struct {
 	CPU     resource.Quantity `json:"cpu"`
 	Memory  resource.Quantity `json:"memory"`
-	Storage []StorageSpec     `json:"storage"`
+	Storage []StorageSpec     `json :"storage"`
 	Volume  VolumeSpec        `json:"volume,omitempty"`
 }
 
