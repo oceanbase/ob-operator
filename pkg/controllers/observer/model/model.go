@@ -71,6 +71,7 @@ type UpgradeInfo struct {
 	UpgradeRoute        []string
 	ZoneStatus          string
 	ClusterStatus       string
+	SingleZoneStatus    map[string]string
 }
 
 type AllUnit struct {
@@ -85,4 +86,11 @@ type AllUnit struct {
 	ManualMigrate      int64
 	Status             string
 	ReplicaType        int64
+}
+
+type ClogStat struct {
+	SvrIP     string
+	SvrPort   int64
+	IsOffline int8
+	IsInSync  int8
 }

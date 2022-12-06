@@ -37,10 +37,14 @@ const (
 
 	NeedExecutingPreScripts = "Need Executing Pre Scripts"
 	ExecutingPreScripts     = "Executing Pre Scripts"
-	ExecutePreScriptsPassed = "Execute Pre Scripts Passed"
 
 	NeedUpgrading = "Need Upgrading"
 	Upgrading     = "Upgrading"
+
+	NeedExecutingPostScripts = "Need Executing Post Scripts"
+
+	NeedUpgradePostCheck = "Need Upgrade Post Check"
+	UpgradePostChecking  = "Upgrade Post Checking"
 )
 
 // Step

@@ -112,12 +112,17 @@ func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.Sta
 	return podCtrl.GetSqlOperator()
 }
 
-func (ctrl *OBClusterCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-
-	// get svc failed
-	if err != nil {
-		return nil, errors.New("failed to get service address")
+func (ctrl *OBClusterCtrl) GetSqlOperator(args ...string) (*sql.SqlOperator, error) {
+	var clusterIP string
+	var err error
+	if args != nil {
+		clusterIP = args[0]
+	} else {
+		clusterIP, err = ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+		// get svc failed
+		if err != nil {
+			return nil, errors.New("failed to get service address")
+		}
 	}
 
 	secretName := converter.GenerateSecretNameForDBUser(ctrl.OBCluster.Name, "sys", "admin")
@@ -244,7 +249,8 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				err = ctrl.PreparingForUpgrade(statefulApp)
 			case observerconst.Upgrading:
 				err = ctrl.ExecUpgrading(statefulApp)
-
+			case observerconst.NeedExecutingPostScripts:
+				err = ctrl.ExecPostScripts(statefulApp)
 			}
 		}
 	}

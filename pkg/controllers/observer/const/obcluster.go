@@ -32,7 +32,6 @@ const (
 const (
 	UpgradingPassed = "Upgrading Passed"
 
-	NeedExecutingPostScripts = "Need Executing Post Scripts"
 	ExecutingPostScripts     = "Executing Post Scripts"
 	ExecutePostScriptsPassed = "Execute Post Scripts Passed"
 )

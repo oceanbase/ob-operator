@@ -44,20 +44,20 @@ func GetOBUpgradeRouteProcess(param OBUpgradeRouteProcessParam) ([]string, error
 	currentVersion := param.CurrentVersion
 	targetVersion := param.TargetVersion
 	filePath := param.FilePath
-	log.Infof("Upgrade Route Process Params: ", currentVersion, targetVersion, filePath)
+	log.Info("Upgrade Route Process Params: ", currentVersion, targetVersion, filePath)
 
 	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, errors.New(fmt.Sprint("cannot find file: ", filePath))
 		}
-		log.Infof("cat not read file: ", filePath, err)
+		log.Info("cat not read file: ", filePath, err)
 		return nil, err
 	}
 	var versionDep []VersionDep
 	err = yaml.Unmarshal(content, &versionDep)
 	if err != nil {
-		log.Infof("Failed to parse file ", err)
+		log.Info("Failed to parse file ", err)
 	}
 	graph := Build(versionDep)
 	res := FindShortestUpgradePath(graph, currentVersion, targetVersion)

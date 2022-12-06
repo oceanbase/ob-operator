@@ -187,6 +187,15 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInf
 			if upgradeInfo.ClusterStatus != "" {
 				cluster.ClusterStatus = upgradeInfo.ClusterStatus
 			}
+			if upgradeInfo.SingleZoneStatus != nil {
+				for zoneName, status := range upgradeInfo.SingleZoneStatus {
+					for idx, zone := range cluster.Zone {
+						if zone.Name == zoneName {
+							cluster.Zone[idx].ZoneStatus = status
+						}
+					}
+				}
+			}
 			cluster.LastTransitionTime = metav1.Now()
 			obClusterCurrentDeepCopy.Status.Topology[index] = cluster
 		}
@@ -251,7 +260,8 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown ||
 		clusterStatus == observerconst.NeedUpgradeCheck || clusterStatus == observerconst.UpgradeChecking ||
 		clusterStatus == observerconst.NeedExecutingPreScripts || clusterStatus == observerconst.ExecutingPreScripts ||
-		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading {
+		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading ||
+		clusterStatus == observerconst.NeedExecutingPostScripts {
 		obCluster.Status.Status = observerconst.TopologyNotReady
 	} else {
 		obCluster.Status.Status = observerconst.TopologyPrepareing

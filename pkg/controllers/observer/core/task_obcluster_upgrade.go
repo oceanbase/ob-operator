@@ -211,7 +211,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 	jobName := GenerateJobName(myconfig.ClusterName, name)
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
 
-	rsIP, err := ctrl.GetRsIP(statefulApp)
+	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
 	if err != nil {
 		return err
 	}
@@ -260,6 +260,67 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 
 }
 
+func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	upgradeRoute := clusterStatus.UpgradeRoute
+	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgrading, "", "")
+	}
+	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
+	if err != nil {
+		return err
+	}
+	var version string
+	var index int
+	if clusterStatus.ScriptPassedVersion == "" {
+		version = upgradeRoute[1]
+		index = 1
+	} else {
+		for i, ver := range upgradeRoute {
+			if ver == clusterStatus.ScriptPassedVersion {
+				version = upgradeRoute[i+1]
+				index = i + 1
+			}
+		}
+	}
+	jobName := GenerateJobName(myconfig.ClusterName, fmt.Sprint("exec-post-scripts-", index))
+	jobExecuter := resource.NewJobResource(ctrl.Resource)
+	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PostScriptFile)
+			cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+			var cmdList []string
+			cmdList = append(cmdList, "bash", "-c", cmd)
+			jobObject = ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+			err = jobExecuter.Create(context.TODO(), jobObject)
+			if err != nil {
+				klog.Errorln("Create ", jobName, " job failed, err: ", err)
+				return err
+			}
+			return nil
+		} else {
+			klog.Errorln("Get ", jobName, " job failed, err: ", err)
+			return err
+		}
+	}
+	job := jobObject.(batchv1.Job)
+	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
+		return nil
+	}
+	if job.Status.Succeeded == 1 {
+		upgradeInfo := model.UpgradeInfo{
+			ScriptPassedVersion: version,
+		}
+		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
+		if err != nil {
+			return err
+		}
+	}
+	return jobExecuter.Delete(context.TODO(), jobObject)
+}
+
 func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
@@ -268,7 +329,7 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 	}
 
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-	rsIP, err := ctrl.GetRsIP(statefulApp)
+	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
 	if err != nil {
 		return err
 	}
@@ -333,75 +394,180 @@ func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) 
 }
 
 func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error {
-
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-	// get svc failed
-	if err != nil {
-		return errors.New("failed to get service address")
-	}
 	zoneInfoMap := ctrl.GetInfoForUpgradeByZone()
 	if zoneInfoMap[observerconst.NeedUpgrading] != nil {
 		zoneName := zoneInfoMap[observerconst.NeedUpgrading][0]
-		isZoneStop, err := ctrl.isOBZoneStop(zoneName)
+		rsIP, err := ctrl.GetRsIP(statefulApp, zoneName)
 		if err != nil {
+			return err
+		}
+		isZoneStop, err := ctrl.isOBZoneStop(rsIP, zoneName)
+		if err != nil {
+			klog.Errorln("Check OB Zone Status err : ", zoneName, err)
 			return err
 		}
 		if !isZoneStop {
-			err = ctrl.StopZone(clusterIP, zoneName)
+			err = ctrl.StopZone(rsIP, zoneName)
 			if err != nil {
-				klog.Infoln("StopOBZone err: ", err)
+				klog.Errorln("Stop Zone err : ", zoneName, err)
 				return err
 			}
 		}
 
-		isLeaderCountZero, err := ctrl.isLeaderCountZero(zoneName)
+		_, err = ctrl.isLeaderCountZero(rsIP, zoneName)
+		if err != nil {
+			klog.Errorln("Check Zone Leader Count Zero err : ", zoneName, err)
+			return err
+		}
+		err = ctrl.PatchPods(rsIP, zoneName, statefulApp)
+		if err != nil {
+			klog.Errorln("Patch Pods err : ", zoneName, err)
+			return err
+		}
+
+		_, err = ctrl.isOBSeverActive(rsIP, zoneName)
+		if err != nil {
+			klog.Errorln("Check OB Sever Status err : ", zoneName, err)
+			return err
+		}
+		err = ctrl.StartOBZone(rsIP, zoneName)
+		if err != nil {
+			klog.Errorln("Start OB Zone err : ", zoneName, err)
+			return err
+		}
+		_, err = ctrl.isAllOBSeverAvailable(rsIP)
+		if err != nil {
+			klog.Errorln("Check Whether All OB Severs Are Available err : ", err)
+			return err
+		}
+		singleZoneStatus := make(map[string]string)
+		singleZoneStatus[zoneName] = observerconst.UpgradingPassed
+		upgradeInfo := model.UpgradeInfo{
+			SingleZoneStatus: singleZoneStatus,
+		}
+		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 		if err != nil {
 			return err
 		}
-		if isLeaderCountZero {
-			return ctrl.PatchPods(zoneName, statefulApp)
-		} else {
-			return nil
-		}
 	}
 
-	return nil
+	err := ctrl.UpgradeSchema()
+	if err != nil {
+		return err
+	}
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedExecutingPostScripts, "", "")
 }
 
-func (ctrl *OBClusterCtrl) PatchPods(zoneName string, statefulApp cloudv1.StatefulApp) error {
+func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.StatefulApp) error {
 	subsets := statefulApp.Status.Subsets
 	podExecuter := resource.NewPodResource(ctrl.Resource)
+	var startSubset []cloudv1.SubsetStatus
 	for _, subset := range subsets {
 		podList := subset.Pods
-		for _, pod := range podList {
-			podName := pod.Name
-			podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
-			if err != nil {
-				klog.Errorln("Get PodObject By PodName failed, err: ", err)
-				return err
-			}
-			podObjectReal := podObject.(corev1.Pod)
-			newPodObject := podObjectReal.DeepCopy()
-			for idx, container := range newPodObject.Spec.Containers {
-				klog.Infoln("idx, container ", idx, container)
-				if container.Name == observerconst.ImgOb {
-					newPodObject.Spec.Containers[idx].Image = fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-					err = podExecuter.Patch(context.TODO(), *newPodObject, client.MergeFrom(podObjectReal.DeepCopyObject().(client.Object)))
-					if err != nil {
-						return err
+		if subset.Name == zoneName {
+			startSubset = append(startSubset, subset)
+			for _, pod := range podList {
+				podName := pod.Name
+				podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
+				if err != nil {
+					klog.Errorln("Get PodObject By PodName failed, err: ", err)
+					return err
+				}
+				podObjectReal := podObject.(corev1.Pod)
+				newPodObject := podObjectReal.DeepCopy()
+				for idx, container := range newPodObject.Spec.Containers {
+					if container.Name == observerconst.ImgOb {
+						newPodObject.Spec.Containers[idx].Image = fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+						err = podExecuter.Patch(context.TODO(), *newPodObject, client.MergeFrom(podObjectReal.DeepCopyObject().(client.Object)))
+						if err != nil {
+							return err
+						}
 					}
 				}
 			}
-			return nil
+		}
+	}
+
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	for _, subset := range subsets {
+		podList := subset.Pods
+		if subset.Name == zoneName {
+			for _, pod := range podList {
+				currentVersion, err := cable.OBServerGetVersion(pod.PodIP)
+				if err != nil {
+					return err
+				}
+				if currentVersion != clusterStatus.TargetVersion {
+					return errors.New(fmt.Sprint("Ob Server version Is Not Target Version", zoneName, pod))
+				}
+			}
+		}
+	}
+
+	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
+	rsCtrl := NewRootServiceCtrl(ctrl)
+	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
+	if err != nil {
+		return err
+	}
+	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
+	cable.OBServerStart(ctrl.OBCluster, startSubset, rsList)
+	for _, subset := range subsets {
+		podList := subset.Pods
+		if subset.Name == zoneName {
+			for _, pod := range podList {
+				err = ctrl.WaitOBServerActive(rsIP, zoneName, pod.PodIP, statefulApp)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) isLeaderCountZero(zoneName string) (bool, error) {
+func (ctrl *OBClusterCtrl) isAllOBSeverAvailable(rsIP string) (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when recover server")
+	}
+	clogStatList := sqlOperator.GetClogStat()
+	if len(clogStatList) == 0 {
+		return true, nil
+	} else {
+		return false, errors.New(fmt.Sprint("Not All Server Available", clogStatList))
+	}
+}
+
+func (ctrl *OBClusterCtrl) isOBSeverActive(rsIP, zoneName string) (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when recover server")
+	}
+	obServerList := sqlOperator.GetOBServer()
+	if len(obServerList) == 0 {
+		return false, errors.New(observerconst.DataBaseError)
+	}
+	for _, obServer := range obServerList {
+		if obServer.Zone == zoneName && obServer.Status != observerconst.OBServerActive {
+			return false, errors.New(fmt.Sprint("OBServers Are Not Active In Zone: ", zoneName))
+		}
+	}
+	return true, nil
+}
+
+func (ctrl *OBClusterCtrl) UpgradeSchema() error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return false, errors.Wrap(err, "get sql operator when get info add server by zone")
+		return errors.Wrap(err, "get sql operator when upgrade schema")
+	}
+	return sqlOperator.UpgradeSchema()
+}
+
+func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when check info leader count")
 	}
 	zoneLeaderCount := sqlOperator.GetLeaderCount()
 	for _, zone := range zoneLeaderCount {
@@ -409,18 +575,17 @@ func (ctrl *OBClusterCtrl) isLeaderCountZero(zoneName string) (bool, error) {
 			if zone.LeaderCount == 0 {
 				return true, nil
 			} else {
-				return false, nil
+				return false, errors.New(fmt.Sprint("Leader Count Is Not Zero: ", zoneName))
 			}
 		}
 	}
 	return false, errors.New(fmt.Sprint("Can Not Get Zone Leader Count : ", zoneName))
-
 }
 
-func (ctrl *OBClusterCtrl) isOBZoneStop(zoneName string) (bool, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
+func (ctrl *OBClusterCtrl) isOBZoneStop(rsIP, zoneName string) (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
 	if err != nil {
-		return false, errors.Wrap(err, "get sql operator when get info add server by zone")
+		return false, errors.Wrap(err, "Get Sql Operator When Check OB Zone Stop")
 	}
 	obZoneList := sqlOperator.GetOBZone()
 	if len(obZoneList) == 0 {
@@ -440,21 +605,12 @@ func (ctrl *OBClusterCtrl) isOBZoneStop(zoneName string) (bool, error) {
 
 func (ctrl *OBClusterCtrl) GetInfoForUpgradeByZone() map[string][]string {
 	infoMap := make(map[string][]string)
-	//var current []string
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	for _, zone := range clusterStatus.Zone {
 		if zone.ZoneStatus == observerconst.NeedUpgrading {
 			infoMap[observerconst.NeedUpgrading] = append(infoMap[observerconst.NeedUpgrading], zone.Name)
-			// if infoMap[observerconst.NeedUpgrading] != nil {
-			// 	current = infoMap[observerconst.NeedUpgrading]
-			// }
-			// infoMap[observerconst.NeedUpgrading] = append(current, zone.Name)
 		} else if zone.ZoneStatus == observerconst.Upgrading {
 			infoMap[observerconst.Upgrading] = append(infoMap[observerconst.Upgrading], zone.Name)
-			// if infoMap[observerconst.Upgrading] != nil {
-			// 	current = infoMap[observerconst.Upgrading]
-			// }
-			// infoMap[observerconst.Upgrading] = append(current, zone.Name)
 		}
 
 	}
@@ -481,7 +637,7 @@ func (ctrl *OBClusterCtrl) CheckUpgradeMode(statefulApp cloudv1.StatefulApp) err
 	}
 }
 
-func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp) (string, error) {
+func (ctrl *OBClusterCtrl) GetRsIPFromDB(statefulApp cloudv1.StatefulApp) (string, error) {
 	var rsIP string
 	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
 	if err != nil {
@@ -496,4 +652,25 @@ func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp) (string, err
 		}
 	}
 	return rsIP, errors.New("Get RS IP Failed. Cannot Find RS")
+}
+
+func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp, zoneName string) (string, error) {
+	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
+	rsCtrl := NewRootServiceCtrl(ctrl)
+	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
+	if err != nil {
+		return "", err
+	}
+	for _, cluster := range rsCurrent.Status.Topology {
+		if cluster.Cluster == myconfig.ClusterName {
+			for _, zone := range cluster.Zone {
+				if zone.ServerIP != "" && zone.Name != zoneName {
+					klog.Infoln("zone.Name != zoneName: ", zone.Name, zoneName)
+					klog.Infof("found rs: %s", zone.ServerIP)
+					return zone.ServerIP, nil
+				}
+			}
+		}
+	}
+	return "", errors.New("Get RS IP Failed. Cannot Find RS")
 }

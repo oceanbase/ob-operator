@@ -123,6 +123,10 @@ func (op *SqlOperator) BeginUpgrade() error {
 	return op.ExecSQL(BeginUpgradeSQL)
 }
 
+func (op *SqlOperator) UpgradeSchema() error {
+	return op.ExecSQL(UpgradeSchemaSQL)
+}
+
 func (op *SqlOperator) GetUpgradeMode() []model.ZoneUpGradeMode {
 	res := make([]model.ZoneUpGradeMode, 0)
 	client, err := GetDBClient(op.ConnectProperties)
@@ -193,6 +197,26 @@ func (op *SqlOperator) GetOBServer() []model.AllServer {
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllServer
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetClogStat() []model.ClogStat {
+	res := make([]model.ClogStat, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ClogStat{}).Raw(GetClogStatSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ClogStat
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
