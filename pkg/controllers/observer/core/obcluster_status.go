@@ -204,7 +204,9 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInf
 	if err != nil {
 		return err
 	}
+	klog.Infoln("ctrl.OBCluster 11", ctrl.OBCluster.Status)
 	ctrl.OBCluster = *obClusterCurrentDeepCopy
+	klog.Infoln("ctrl.OBCluster 22", ctrl.OBCluster.Status)
 	return nil
 }
 
@@ -261,7 +263,8 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 		clusterStatus == observerconst.NeedUpgradeCheck || clusterStatus == observerconst.UpgradeChecking ||
 		clusterStatus == observerconst.NeedExecutingPreScripts || clusterStatus == observerconst.ExecutingPreScripts ||
 		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading ||
-		clusterStatus == observerconst.NeedExecutingPostScripts {
+		clusterStatus == observerconst.ExecutingPostScripts || clusterStatus == observerconst.NeedUpgradePostCheck ||
+		clusterStatus == observerconst.UpgradePostChecking {
 		obCluster.Status.Status = observerconst.TopologyNotReady
 	} else {
 		obCluster.Status.Status = observerconst.TopologyPrepareing

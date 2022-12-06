@@ -123,28 +123,16 @@ func (op *SqlOperator) BeginUpgrade() error {
 	return op.ExecSQL(BeginUpgradeSQL)
 }
 
+func (op *SqlOperator) EndUpgrade() error {
+	return op.ExecSQL(EndUpgradeSQL)
+}
+
 func (op *SqlOperator) UpgradeSchema() error {
 	return op.ExecSQL(UpgradeSchemaSQL)
 }
 
-func (op *SqlOperator) GetUpgradeMode() []model.ZoneUpGradeMode {
-	res := make([]model.ZoneUpGradeMode, 0)
-	client, err := GetDBClient(op.ConnectProperties)
-	if err == nil {
-		defer client.Close()
-		rows, err := client.Model(&model.ZoneUpGradeMode{}).Raw(GetUpgradeModeSQL).Rows()
-		if err == nil {
-			defer rows.Close()
-			var rowData model.ZoneUpGradeMode
-			for rows.Next() {
-				err = client.ScanRows(rows, &rowData)
-				if err == nil {
-					res = append(res, rowData)
-				}
-			}
-		}
-	}
-	return res
+func (op *SqlOperator) RunRootInspection() error {
+	return op.ExecSQL(RunRootInspectionJobSQL)
 }
 
 func (op *SqlOperator) GetLeaderCount() []model.ZoneLeaderCount {

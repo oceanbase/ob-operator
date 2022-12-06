@@ -31,9 +31,6 @@ const (
 
 const (
 	UpgradingPassed = "Upgrading Passed"
-
-	ExecutingPostScripts     = "Executing Post Scripts"
-	ExecutePostScriptsPassed = "Execute Post Scripts Passed"
 )
 
 const (
@@ -43,4 +40,9 @@ const (
 	PreScriptFile          = "/upgrade_pre.py"
 	PostScriptFile         = "/upgrade_post.py"
 	UpgradePostCheckerPath = "/home/admin/oceanbase/etc/upgrade_post_checker.py"
+)
+
+const (
+	MinObserverVersion = "min_observer_version"
+	EnableUpgradeMode  = "enable_upgrade_mode"
 )

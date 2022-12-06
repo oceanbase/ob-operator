@@ -39,7 +39,6 @@ const (
 	RunRootInspectionJobSQL    = "ALTER SYSTEM RUN JOB 'root_inspection'"
 
 	GetClogStatSQL    = "select svr_ip, svr_port, is_offline, is_in_sync from __all_virtual_clog_stat where is_in_sync=0 and is_offline =0;"
-	GetUpgradeModeSQL = "SELECT zone, svr_ip, svr_port, value FROM oceanbase.__all_virtual_sys_parameter_stat WHERE name = 'enable_upgrade_mode';"
 	GetLeaderCountSQL = "SELECT zone, leader_count FROM oceanbase.__all_virtual_server_stat"
 	GetAllUnitSQL     = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
 

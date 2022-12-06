@@ -41,7 +41,7 @@ const (
 	NeedUpgrading = "Need Upgrading"
 	Upgrading     = "Upgrading"
 
-	NeedExecutingPostScripts = "Need Executing Post Scripts"
+	ExecutingPostScripts = "Executing Post Scripts"
 
 	NeedUpgradePostCheck = "Need Upgrade Post Check"
 	UpgradePostChecking  = "Upgrade Post Checking"

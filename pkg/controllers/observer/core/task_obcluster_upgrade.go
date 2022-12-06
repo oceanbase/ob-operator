@@ -184,12 +184,10 @@ func (ctrl *OBClusterCtrl) CheckUpgradeRoute(statefulApp cloudv1.StatefulApp, up
 		if err != nil {
 			return err
 		}
-		klog.Infoln("currentVer: ", currentVer)
 		upgradeRoute, err = ctrl.GetUpgradeRoute(currentVer, targetVer)
 		if err != nil {
 			return err
 		}
-		klog.Infoln("OBCluster Upgrade Route is ", upgradeRoute)
 		upgradeInfo := model.UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
 		}
@@ -218,9 +216,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 	var cmdList []string
 	cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(observerconst.UpgradePreCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 	cmdList = append(cmdList, "bash", "-c", cmd)
-	klog.Infoln("cmd: ", cmdList)
 	jobObject := ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
-	klog.Infoln("jobObject.(batchv1.Job) 2: ", jobObject)
 	jobExecuter := resource.NewJobResource(ctrl.Resource)
 	err = jobExecuter.Create(context.TODO(), jobObject)
 	if err != nil {
@@ -228,6 +224,28 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 		return err
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.UpgradeChecking, "", "")
+}
+
+func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulApp) error {
+	name := "post-checker"
+	jobName := GenerateJobName(myconfig.ClusterName, name)
+	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+
+	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
+	if err != nil {
+		return err
+	}
+	var cmdList []string
+	cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(observerconst.UpgradePostCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+	cmdList = append(cmdList, "bash", "-c", cmd)
+	jobObject := ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+	jobExecuter := resource.NewJobResource(ctrl.Resource)
+	err = jobExecuter.Create(context.TODO(), jobObject)
+	if err != nil {
+		klog.Errorln("Create ", jobName, " job failed, err: ", err)
+		return err
+	}
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 }
 
 func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp) error {
@@ -260,11 +278,80 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 
 }
 
+func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) error {
+	err := ctrl.SetMinVersion()
+	if err != nil {
+		klog.Errorln(fmt.Sprint("Set Min OB Server Version Error : ", err))
+		return err
+	}
+	err = ctrl.EndUpgrade()
+	if err != nil {
+		klog.Errorln(fmt.Sprint("End Upgrade Error : ", err))
+		return err
+	}
+	err = ctrl.CheckUpgradeModeAfter()
+	if err != nil {
+		klog.Errorln(fmt.Sprint("Check Upgrade Mode (End) Error :", err))
+		return err
+	}
+
+	err = ctrl.RunRootInspection()
+	if err != nil {
+		klog.Infoln(fmt.Sprint("Run Root Inspection Job Error: ", err))
+		return err
+	}
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.UpgradePostChecking, "", "")
+}
+
+func (ctrl *OBClusterCtrl) RunRootInspection() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator When Running Root Inspection Job")
+	}
+	return sqlOperator.RunRootInspection()
+}
+
+func (ctrl *OBClusterCtrl) CheckUpgradeModeAfter() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
+	}
+	zoneUpGradeMode := sqlOperator.GetParameter(observerconst.EnableUpgradeMode)
+	isFalse := true
+	for _, v := range zoneUpGradeMode {
+		if v.Value == "True" {
+			isFalse = false
+		}
+	}
+	if isFalse {
+		return errors.New("Upgrade Mode Wrong")
+	}
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) EndUpgrade() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
+	}
+	return sqlOperator.EndUpgrade()
+}
+
+func (ctrl *OBClusterCtrl) SetMinVersion() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator When Setting Min OB Server Veriosn")
+	}
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	version := clusterStatus.TargetVersion
+	return sqlOperator.SetParameter(observerconst.MinObserverVersion, version)
+}
+
 func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
 	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
-		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgrading, "", "")
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
 	}
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
 	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
@@ -325,7 +412,12 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
 	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
-		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgrading, "", "")
+		upgradeInfo := model.UpgradeInfo{
+			ScriptPassedVersion: upgradeRoute[0],
+			ClusterStatus:       observerconst.NeedUpgrading,
+		}
+
+		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
 
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
@@ -385,7 +477,6 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 }
 
 func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) error {
-
 	upgradeInfo := model.UpgradeInfo{
 		ZoneStatus:    observerconst.NeedUpgrading,
 		ClusterStatus: observerconst.Upgrading,
@@ -395,6 +486,7 @@ func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) 
 
 func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error {
 	zoneInfoMap := ctrl.GetInfoForUpgradeByZone()
+	klog.Infoln("zoneInfoMap: ", zoneInfoMap)
 	if zoneInfoMap[observerconst.NeedUpgrading] != nil {
 		zoneName := zoneInfoMap[observerconst.NeedUpgrading][0]
 		rsIP, err := ctrl.GetRsIP(statefulApp, zoneName)
@@ -414,7 +506,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 			}
 		}
 
-		_, err = ctrl.isLeaderCountZero(rsIP, zoneName)
+		err = ctrl.WaitLeaderCountZero(rsIP, zoneName)
 		if err != nil {
 			klog.Errorln("Check Zone Leader Count Zero err : ", zoneName, err)
 			return err
@@ -435,7 +527,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 			klog.Errorln("Start OB Zone err : ", zoneName, err)
 			return err
 		}
-		_, err = ctrl.isAllOBSeverAvailable(rsIP)
+		err = ctrl.waitAllOBSeverAvailable(rsIP)
 		if err != nil {
 			klog.Errorln("Check Whether All OB Severs Are Available err : ", err)
 			return err
@@ -445,17 +537,71 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 		upgradeInfo := model.UpgradeInfo{
 			SingleZoneStatus: singleZoneStatus,
 		}
-		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-		if err != nil {
-			return err
-		}
+		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
 
 	err := ctrl.UpgradeSchema()
 	if err != nil {
 		return err
 	}
-	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedExecutingPostScripts, "", "")
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPostScripts, "", "")
+}
+
+func (ctrl *OBClusterCtrl) WaitLeaderCountZero(rsIP, zoneName string) error {
+	klog.Infoln("Wait Leader Count Clear")
+	err := ctrl.TickerLeaderCountFromDB(rsIP, zoneName)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Leader Count Is Zero")
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error {
+	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForOBServerStatusCheck {
+				return errors.New("Wait For Leader Count Clear Timeout")
+			}
+			num = num + 1
+			res, err := ctrl.isLeaderCountZero(rsIP, zoneName)
+			if res {
+				return err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) waitAllOBSeverAvailable(rsIP string) error {
+	klog.Infoln("Wait All OB Server Available")
+	err := ctrl.TickerOBServerAvailableFromDB(rsIP)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("All OB Server Available")
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
+	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForOBServerStatusCheck {
+				return errors.New("Wait For OB Server Available Timeout")
+			}
+			num = num + 1
+			res, err := ctrl.isAllOBSeverAvailable(rsIP)
+			if res {
+				return err
+			}
+		}
+	}
+
 }
 
 func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.StatefulApp) error {
@@ -498,7 +644,7 @@ func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.
 					return err
 				}
 				if currentVersion != clusterStatus.TargetVersion {
-					return errors.New(fmt.Sprint("Ob Server version Is Not Target Version", zoneName, pod))
+					return errors.New(fmt.Sprint("Ob Server version Is Not Target Version : ", zoneName))
 				}
 			}
 		}
@@ -535,7 +681,7 @@ func (ctrl *OBClusterCtrl) isAllOBSeverAvailable(rsIP string) (bool, error) {
 	if len(clogStatList) == 0 {
 		return true, nil
 	} else {
-		return false, errors.New(fmt.Sprint("Not All Server Available", clogStatList))
+		return false, errors.New("Not All Server Available")
 	}
 }
 
@@ -624,7 +770,7 @@ func (ctrl *OBClusterCtrl) CheckUpgradeMode(statefulApp cloudv1.StatefulApp) err
 		return err
 	}
 	isOK := true
-	zoneUpGradeMode := sqlOperator.GetUpgradeMode()
+	zoneUpGradeMode := sqlOperator.GetParameter(observerconst.EnableUpgradeMode)
 	for _, v := range zoneUpGradeMode {
 		if v.Value == "False" {
 			isOK = false
@@ -665,8 +811,6 @@ func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp, zoneName str
 		if cluster.Cluster == myconfig.ClusterName {
 			for _, zone := range cluster.Zone {
 				if zone.ServerIP != "" && zone.Name != zoneName {
-					klog.Infoln("zone.Name != zoneName: ", zone.Name, zoneName)
-					klog.Infof("found rs: %s", zone.ServerIP)
 					return zone.ServerIP, nil
 				}
 			}
