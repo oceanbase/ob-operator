@@ -4,12 +4,9 @@
 
 replicaCount: 1
 
-image: oceanbasedev/ob-operator:1.2.0-snapshot
+image: oceanbasedev/ob-operator:1.1.0
 clusterName: cn
 
 service:
   type: ClusterIP
   port: 80
-
-
-

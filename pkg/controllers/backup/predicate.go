@@ -10,17 +10,27 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package backup
 
 import (
-	"time"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
-const (
-	TryInterval                   = 1 * time.Second
-	ApplyWaitTime                 = 5 * time.Second
-	OBClusterBootstrapTimeout     = 600 * time.Second
-	OBClusterReadyTimeout         = 30 * time.Second
-	StatefulappUpdateReadyTimeout = 60 * time.Second
-	OBClusterUpdateTReadyimeout   = 300 * time.Second
-)
+type backupPredicate struct {
+}
+
+func (p backupPredicate) Create(e event.CreateEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Update(e event.UpdateEvent) bool {
+	return true
+}
+
+func (p backupPredicate) Generic(e event.GenericEvent) bool {
+	return true
+}

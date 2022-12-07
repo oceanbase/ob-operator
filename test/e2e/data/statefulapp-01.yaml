@@ -4,7 +4,7 @@ metadata:
   namespace: ob
   name: test-sapp-01
 spec:
-  cluster: test
+  cluster: cn
   subsets:
   - name: zone1
     nodeSelector:

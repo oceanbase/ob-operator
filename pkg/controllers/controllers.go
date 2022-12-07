@@ -20,6 +20,7 @@ import (
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	"github.com/oceanbase/ob-operator/pkg/controllers/backup"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer"
 	"github.com/oceanbase/ob-operator/pkg/controllers/statefulapp"
 )
@@ -29,6 +30,7 @@ var controllerAddFuncs []func(manager.Manager) error
 func init() {
 	controllerAddFuncs = append(controllerAddFuncs, statefulapp.Add)
 	controllerAddFuncs = append(controllerAddFuncs, observer.Add)
+	controllerAddFuncs = append(controllerAddFuncs, backup.Add)
 }
 
 // SetupWithManager load controller

@@ -79,6 +79,14 @@ const (
 	FailedToDeleteRootService = "FailedDeleteRootService"
 )
 
+// Backup event reason list
+const (
+	CreatedBackup        = "CreatedBackup"
+	FailedToCreateBackup = "FailedCreateBackup"
+	DeletedBackup        = "DeletedBackup"
+	FailedToDeleteBackup = "FailedDeleteBackup"
+)
+
 // Storage event reason list
 const (
 	CreatedOBZone        = "CreatedOBZone"

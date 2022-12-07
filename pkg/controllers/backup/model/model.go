@@ -10,17 +10,29 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package model
 
-import (
-	"time"
-)
+type AllBackupSet struct {
+	TenantID   int64
+	BSKey      int64
+	BackupType string
+	Status     string
+}
 
-const (
-	TryInterval                   = 1 * time.Second
-	ApplyWaitTime                 = 5 * time.Second
-	OBClusterBootstrapTimeout     = 600 * time.Second
-	OBClusterReadyTimeout         = 30 * time.Second
-	StatefulappUpdateReadyTimeout = 60 * time.Second
-	OBClusterUpdateTReadyimeout   = 300 * time.Second
-)
+type BackupArchiveLogStatus struct {
+	TenantID int64
+	Status   string
+}
+
+type BackupDestValue struct {
+	ZoneName string
+	SvrIP    string
+	SvrPort  int64
+	Value    string
+}
+
+type BackupSchedule struct {
+	BackupType string
+	Schedule   string
+	NextTime   string
+}
