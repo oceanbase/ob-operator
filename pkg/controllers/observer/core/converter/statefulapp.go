@@ -304,3 +304,12 @@ func UpdateZoneForStatefulApp(clusterList []cloudv1.Cluster, statefulApp cloudv1
 	statefulApp.Spec.Subsets = zoneList
 	return statefulApp
 }
+
+func UpdateStatefulAppSpec(statefulApp cloudv1.StatefulApp, image string) cloudv1.StatefulApp {
+	for index, container := range statefulApp.Spec.PodTemplate.Containers {
+		if container.Name == observerconst.ImgOb {
+			statefulApp.Spec.PodTemplate.Containers[index].Image = image
+		}
+	}
+	return statefulApp
+}

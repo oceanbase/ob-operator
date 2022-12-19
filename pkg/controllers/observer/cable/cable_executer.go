@@ -56,7 +56,6 @@ func OBServerGetVersionExecuter(podIP string) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableVersionUrl)
 	code, responseData := util.HTTPGET(url)
 	if code != 200 {
-		klog.Errorln(podIP, " get observer version failed")
 		return responseData, errors.New("get observer version failed")
 	}
 	return responseData, nil

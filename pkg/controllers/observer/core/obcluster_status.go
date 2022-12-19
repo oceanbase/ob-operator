@@ -167,47 +167,87 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInf
 	}
 	obClusterCurrent := obClusterTemp.(cloudv1.OBCluster)
 	obClusterCurrentDeepCopy := obClusterCurrent.DeepCopy()
-	clusters := obClusterCurrentDeepCopy.Status.Topology
-	for index, cluster := range clusters {
-		if cluster.Cluster == myconfig.ClusterName {
-			if upgradeInfo.TargetVersion != "" {
-				cluster.TargetVersion = upgradeInfo.TargetVersion
-			}
-			if upgradeInfo.UpgradeRoute != nil {
-				cluster.UpgradeRoute = upgradeInfo.UpgradeRoute
-			}
-			if upgradeInfo.ScriptPassedVersion != "" {
-				cluster.ScriptPassedVersion = upgradeInfo.ScriptPassedVersion
-			}
-			if upgradeInfo.ZoneStatus != "" {
-				for idx, _ := range cluster.Zone {
-					cluster.Zone[idx].ZoneStatus = upgradeInfo.ZoneStatus
-				}
-			}
-			if upgradeInfo.ClusterStatus != "" {
-				cluster.ClusterStatus = upgradeInfo.ClusterStatus
-			}
-			if upgradeInfo.SingleZoneStatus != nil {
-				for zoneName, status := range upgradeInfo.SingleZoneStatus {
-					for idx, zone := range cluster.Zone {
-						if zone.Name == zoneName {
-							cluster.Zone[idx].ZoneStatus = status
-						}
-					}
-				}
-			}
-			cluster.LastTransitionTime = metav1.Now()
-			obClusterCurrentDeepCopy.Status.Topology[index] = cluster
-		}
-	}
-	err = obClusterExecuter.UpdateStatus(context.TODO(), *obClusterCurrentDeepCopy)
+
+	ctrl.OBCluster = *obClusterCurrentDeepCopy
+	obClusterNew, err := ctrl.buildOBClusterStatusForUpgrade(*obClusterCurrentDeepCopy, upgradeInfo)
 	if err != nil {
 		return err
 	}
-	klog.Infoln("ctrl.OBCluster 11", ctrl.OBCluster.Status)
-	ctrl.OBCluster = *obClusterCurrentDeepCopy
-	klog.Infoln("ctrl.OBCluster 22", ctrl.OBCluster.Status)
+	compareStatus := reflect.DeepEqual(obClusterCurrent.Status, obClusterNew.Status)
+	if !compareStatus {
+		err = obClusterExecuter.UpdateStatus(context.TODO(), obClusterNew)
+		if err != nil {
+			return err
+		}
+	}
+	// ctrl.OBCluster.Status.Topology = obClusterNew.Status.Topology
+	// ctrl.OBCluster.Status.Status = obCluster.Status.Status
+	ctrl.OBCluster = obClusterNew
 	return nil
+}
+
+func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCluster, upgradeInfo model.UpgradeInfo) (cloudv1.OBCluster, error) {
+	var obclusterCurrentStatus cloudv1.OBClusterStatus
+	obclusterCurrentStatus.Status = obCluster.Status.Status
+
+	oldClusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	// new cluster status
+	var clusterCurrentStatus cloudv1.ClusterStatus
+	if upgradeInfo.ClusterStatus != "" {
+		clusterCurrentStatus.ClusterStatus = upgradeInfo.ClusterStatus
+	} else {
+		clusterCurrentStatus.ClusterStatus = oldClusterStatus.ClusterStatus
+	}
+	clusterCurrentStatus.Zone = oldClusterStatus.Zone
+	if upgradeInfo.ZoneStatus != "" {
+		var zoneStatusList []cloudv1.ZoneStatus
+		for _, zone := range clusterCurrentStatus.Zone {
+			zoneStatus := zone.DeepCopy()
+			zoneStatus.ZoneStatus = upgradeInfo.ZoneStatus
+			zoneStatusList = append(zoneStatusList, *zoneStatus)
+		}
+		clusterCurrentStatus.Zone = zoneStatusList
+	}
+	if upgradeInfo.SingleZoneStatus != nil {
+		var zoneStatusList []cloudv1.ZoneStatus
+		for zoneName, status := range upgradeInfo.SingleZoneStatus {
+			for _, zone := range clusterCurrentStatus.Zone {
+				if zone.Name == zoneName {
+					var newZone cloudv1.ZoneStatus
+					newZone.AvailableReplicas = zone.AvailableReplicas
+					newZone.ExpectedReplicas = zone.ExpectedReplicas
+					newZone.Name = zone.Name
+					newZone.Region = zone.Region
+					newZone.ZoneStatus = status
+					zoneStatusList = append(zoneStatusList, newZone)
+				} else {
+					zoneStatusList = append(zoneStatusList, zone)
+				}
+			}
+		}
+		clusterCurrentStatus.Zone = zoneStatusList
+	}
+	if upgradeInfo.TargetVersion != "" {
+		clusterCurrentStatus.TargetVersion = upgradeInfo.TargetVersion
+	} else {
+		clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
+	}
+	if upgradeInfo.UpgradeRoute != nil {
+		clusterCurrentStatus.UpgradeRoute = upgradeInfo.UpgradeRoute
+	} else {
+		clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
+	}
+	if upgradeInfo.ScriptPassedVersion != "" {
+		clusterCurrentStatus.ScriptPassedVersion = upgradeInfo.ScriptPassedVersion
+	} else {
+		clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
+	}
+	clusterCurrentStatus.Cluster = myconfig.ClusterName
+	clusterCurrentStatus.LastTransitionTime = metav1.Now()
+	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
+	obCluster.Status.Topology = topologyStatus
+	return obCluster, nil
+
 }
 
 func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clusterStatus, zoneName, zoneStatus string) (cloudv1.OBCluster, error) {
