@@ -1,0 +1,110 @@
+apiVersion: cloud.oceanbase.com/v1		
+kind: Tenant		
+metadata:		
+  name: tenant1		
+  namespace: obcluster		
+spec:	
+  # 必填
+  clusterName: ob-test		
+  clusterID: 1		# 主备库
+  
+  charset:  # 租户的字符集
+  collate:  # 租户校对规则
+  tablegroup:  # 租户默认表组信息   
+  mode:
+  comment: 
+  logonlyReplicaNum:
+
+  variables: 
+    - name: ob_tcp_invited_nodes
+      value: '%'
+
+  topology:
+    - zone: zone1
+      unitNum: 1 # 指定要创建的单个 ZONE 下的单元个数，取值要小于单个 ZONE 中的 OBServer 个数。
+      type: f # FULL READONLY LOG # locality: "" # 描述副本在 Zone 间的分布情况，如：F@z1,F@z2,F@z3,R@z4 表示 z1, z2, z3 为全功能副本，z4 为只读副本
+      priority: 3 # 可选，表示当前zone的优先级，没有填写的放在最后面
+      resource:
+        maxCPU: 2500m # 租户可用最大 CPU 数。
+        minCPU: 2 # 租户可用最小 CPU 数。
+        maxMemory: 1Gi # 租户可用最大内存。string 类型，需要写单位
+        minMemory: 1Gi # 租户可用最小内存。string 类型，需要写单位
+        # 非必填
+        maxDiskSize: 1Gi # 租户可用最大磁盘空间。默认？？。string 类型，需要写单位
+        maxSessionNum: 64 # 租户最大 SESSION 数，取值范围为 [64,+∞)
+    - zone: zone2
+      unitNum: 1
+      type: f 
+      priority: 3  
+      resource:
+        maxCPU: 1500m 
+        minCPU: 1 
+        maxMemory: 1Gi # 租户可用最大内存。string 类型，需要写单位
+        minMemory: 1Gi # 租户可用最小内存。string 类型，需要写单位
+
+    - zone: zone3
+      unitNum: 2 # 指定要创建的单个 ZONE 下的单元个数，取值要小于单个 ZONE 中的 OBServer 个数。
+      type: f # FULL READONLY LOGONLY # locality: "" # 描述副本在 Zone 间的分布情况，如：F@z1,F@z2,F@z3,R@z4 表示 z1, z2, z3 为全功能副本，z4 为只读副本
+      priority: 3 # 可选，表示当前zone的优先级，没有填写的放在最后面
+      resource:
+        maxCPU: 1500m # 租户可用最大 CPU 数。
+        minCPU: 1 # 租户可用最小 CPU 数。
+        maxMemory: 1Gi # 租户可用最大内存。string 类型，需要写单位
+        minMemory: 1Gi # 租户可用最小内存。string 类型，需要写单位
+        # 非必填
+        maxDiskSize: 1Gi # 租户可用最大磁盘空间。默认？？。string 类型，需要写单位
+        maxIops: 256 # 租户 IOPS 最多数量，取值范围为 [128,+∞)
+        minIops: 256 # 租户 IOPS 最少数量。取值范围为 [128,+∞)。
+        maxSessionNum: 64 # 租户最大 SESSION 数，取值范围为 [64,+∞)
+    
+# Status:
+#   status:  running #running, creating, modifying ... 包含具体操作的状态
+#   topology: 
+#     - zone: zone1
+#       units: 
+#         - unitId: 1
+#           server IP: 127.0.0.1
+#           server Port: 2882
+#           status: active # active inactive
+#           migrateFrom:
+#             server IP: 127.0.0.2
+#             server Port: 2882 
+#       type: FULL
+#       priority: 1 # 顺序的index，和spec比较的话，需要把spec的转换成所有zone内的顺序       
+#         maxCPU: 1
+#         minCPU: 1 
+#         maxMemory: 0 
+#         minMemory: 0
+#         maxDiskSize: 0 
+#         maxIops: 128 
+#         minIops: 128 
+#         maxSessionNum: 64 
+#      - zone: zone2
+#       units:
+#         - unit_id: 2
+#           server: "1.1.1.1:2882" # 可以看是否拆分开ip和port
+#           status: "active" # active inactive
+#           migrateFrom: "1.1.1.2:2882" # 可以看是否拆分开ip和port
+#         - unit_id: 4
+#           server: "1.1.1.1:2882" # 可以看是否拆分开ip和port
+#           status: "active" # active inactive
+#           migrateFrom: "" # 可以看是否拆分开ip和port
+#       type: FULL # FULL READONLY LOG
+#       priority: 1 # 顺序的index，和spec比较的话，需要把spec的转换成所有zone内的顺序
+#       resource:
+#         # 必填,用于创建 resource unit
+#         maxCPU: 1 # 租户可用最大 CPU 数。
+#         minCPU: 1 # 租户可用最小 CPU 数。
+#         maxMemory: 0 # 租户可用最大内存。string 类型，需要写单位
+#         minMemory: 0 # 租户可用最小内存。string 类型，需要写单位
+#         # 非必填
+#         maxDiskSize: 0 # 租户可用最大磁盘空间。默认？？。string 类型，需要写单位
+#         maxIops: 128 # 租户 IOPS 最多数量，取值范围为 [128,+∞)
+#         minIops: 128 # 租户 IOPS 最少数量。取值范围为 [128,+∞)。
+#         maxSessionNum: 64 # 租户最大 SESSION 数，取值范围为 [64,+∞)
+#     charset: "" 
+#     collate: "" 
+#     tablegroup: ""
+#     mode:
+#     replicaNum: 0 
+#     logonlyReplicaNum: 0 

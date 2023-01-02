@@ -10,9 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package tenant
 
 import (
+	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -20,15 +21,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
-	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core"
+	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
+	"github.com/oceanbase/ob-operator/pkg/controllers/tenant/core"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube"
 	"github.com/oceanbase/ob-operator/pkg/kubeclient"
 )
 
 var (
-	controllerKind = cloudv1.SchemeGroupVersion.WithKind("OBCluster")
+	controllerKind = cloudv1.SchemeGroupVersion.WithKind("Tenant")
 )
 
 // Add creates a new Controller and adds it to the Manager with default RBAC.
@@ -41,10 +41,10 @@ func Add(mgr manager.Manager) error {
 }
 
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &core.OBClusterReconciler{
+	return &core.TenantReconciler{
 		CRClient: kubeclient.NewClientFromManager(mgr),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(observerconst.ControllerName),
+		Recorder: mgr.GetEventRecorderFor(tenantconst.ControllerName),
 	}
 }
 
@@ -52,11 +52,11 @@ func newReconciler(mgr manager.Manager) reconcile.Reconciler {
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New(
-		observerconst.ControllerName,
+		tenantconst.ControllerName,
 		mgr,
 		controller.Options{
 			Reconciler:              r,
-			MaxConcurrentReconciles: observerconst.ConcurrentReconciles,
+			MaxConcurrentReconciles: tenantconst.ConcurrentReconciles,
 		},
 	)
 	if err != nil {
@@ -64,42 +64,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to OBCluster
-	err = c.Watch(
-		&source.Kind{Type: &cloudv1.OBCluster{}},
-		&handler.EnqueueRequestForObject{},
-	)
-	if err != nil {
-		klog.Errorln(err)
-		return err
-	}
-
-	// Watch for changes to StatefulApp
-	err = c.Watch(
-		&source.Kind{Type: &cloudv1.StatefulApp{}},
-		&statefulAppEventHandler{
-			enqueueHandler: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &cloudv1.OBCluster{},
-			},
-		},
-		&statefulAppPredicate{},
-	)
-	if err != nil {
-		klog.Errorln(err)
-		return err
-	}
-
-	// Watch for changes to tenant
+	// Watch for changes to Tenant
 	err = c.Watch(
 		&source.Kind{Type: &cloudv1.Tenant{}},
-		&tenantEventHandler{
-			enqueueHandler: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &cloudv1.OBCluster{},
-			},
-		},
-		&tenantPredicate{},
+		&handler.EnqueueRequestForObject{},
 	)
 	if err != nil {
 		klog.Errorln(err)
