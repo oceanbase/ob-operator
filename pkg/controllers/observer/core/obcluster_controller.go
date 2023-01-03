@@ -112,11 +112,11 @@ func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.Sta
 	return podCtrl.GetSqlOperator()
 }
 
-func (ctrl *OBClusterCtrl) GetSqlOperator(args ...string) (*sql.SqlOperator, error) {
+func (ctrl *OBClusterCtrl) GetSqlOperator(server ...string) (*sql.SqlOperator, error) {
 	var clusterIP string
 	var err error
-	if args != nil {
-		clusterIP = args[0]
+	if server != nil {
+		clusterIP = server[0]
 	} else {
 		clusterIP, err = ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
 		// get svc failed
@@ -324,10 +324,6 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		err = ctrl.OBZoneScaleDown(statefulApp)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
-		if err != nil {
-			return err
-		}
 	}
-
-	return nil
+	return err
 }

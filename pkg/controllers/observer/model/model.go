@@ -65,15 +65,6 @@ type ZoneLeaderCount struct {
 	LeaderCount int64
 }
 
-type UpgradeInfo struct {
-	ScriptPassedVersion string
-	TargetVersion       string
-	UpgradeRoute        []string
-	ZoneStatus          string
-	ClusterStatus       string
-	SingleZoneStatus    map[string]string
-}
-
 type AllUnit struct {
 	UnitIp             string
 	ResourcePoolIp     string

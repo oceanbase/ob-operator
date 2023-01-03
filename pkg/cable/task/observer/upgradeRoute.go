@@ -23,10 +23,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type OBUpgradeRouteProcessParam struct {
+const (
+	FilePath = "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml"
+)
+
+type OBUpgradeRouteParam struct {
 	CurrentVersion string `json:"currentVersion" binding:"required"`
 	TargetVersion  string `json:"targetVersion" binding:"required"`
-	FilePath       string `json:"filePath" binding:"required"`
 }
 
 type VersionDep struct {
@@ -40,10 +43,10 @@ type VersionDep struct {
 	DirectUpgrade     bool          `yaml:"directUpgrade,omitempty"`
 }
 
-func GetOBUpgradeRouteProcess(param OBUpgradeRouteProcessParam) ([]string, error) {
+func GetOBUpgradeRoute(param OBUpgradeRouteParam) ([]string, error) {
 	currentVersion := param.CurrentVersion
 	targetVersion := param.TargetVersion
-	filePath := param.FilePath
+	filePath := FilePath
 	log.Info("Upgrade Route Process Params: ", currentVersion, targetVersion, filePath)
 
 	content, err := ioutil.ReadFile(filePath)

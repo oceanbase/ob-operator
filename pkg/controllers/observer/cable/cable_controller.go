@@ -51,9 +51,8 @@ func OBServerGetVersion(podIP string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	response := responseData["data"]
-	targetVer := GetObVersionFromResponse(response.(string))
-	return targetVer, nil
+	version := responseData["data"].(string)
+	return version, nil
 }
 
 func OBServerGetUpgradeRoute(podIP, currentVer, targetVer string) ([]string, error) {

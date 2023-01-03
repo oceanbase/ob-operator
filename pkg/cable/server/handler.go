@@ -69,11 +69,11 @@ func OBStart(c *gin.Context) {
 }
 
 func OBUpgradeRoute(c *gin.Context) {
-	param := new(observer.OBUpgradeRouteProcessParam)
+	param := new(observer.OBUpgradeRouteParam)
 	if err := c.ShouldBind(&param); err != nil {
 		panic(err)
 	}
-	res, err := observer.GetOBUpgradeRouteProcess(*param)
+	res, err := observer.GetOBUpgradeRoute(*param)
 	if err != nil {
 		SendResponse(c, NewErrorResponse(err))
 	} else {
@@ -95,7 +95,7 @@ func OBStatus(c *gin.Context) {
 }
 
 func OBVersion(c *gin.Context) {
-	res, err := observer.GetObVersionProcess()
+	res, err := observer.GetObVersion()
 	if err != nil {
 		SendResponse(c, NewErrorResponse(err))
 	} else {

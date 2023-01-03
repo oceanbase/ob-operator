@@ -12,19 +12,19 @@ See the Mulan PSL v2 for more details.
 
 package observerconst
 
-// OBCluster Status
 const (
-	ClusterReady = "Ready"
+	UpgradingPassed = "Upgrading Passed"
+)
 
-	TopologyPrepareing = "Prepareing"
-	TopologyNotReady   = "Not Ready"
-	TopologyReady      = "Ready"
+const (
+	UpgradePreCheckerPath  = "/home/admin/oceanbase/etc/upgrade_checker.py"
+	UpgradeScriptsPath     = "/home/admin/oceanbase/scripts/"
+	PreScriptFile          = "/upgrade_pre.py"
+	PostScriptFile         = "/upgrade_post.py"
+	UpgradePostCheckerPath = "/home/admin/oceanbase/etc/upgrade_post_checker.py"
+)
 
-	ResourcePrepareing      = "Resource Prepareing"
-	ResourceReady           = "Resource Ready"
-	OBServerPrepareing      = "OBServer Prepareing"
-	OBServerReady           = "OBServer Ready"
-	OBClusterBootstraping   = "OBCluster Bootstraping"
-	OBClusterBootstrapReady = "OBCluster Bootstrap Ready"
-	OBClusterReady          = "OBCluster Ready"
+const (
+	MinObserverVersion = "min_observer_version"
+	EnableUpgradeMode  = "enable_upgrade_mode"
 )

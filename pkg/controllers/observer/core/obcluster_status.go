@@ -27,7 +27,6 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	observerutil "github.com/oceanbase/ob-operator/pkg/controllers/observer/core/util"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
@@ -157,7 +156,7 @@ func (ctrl *OBClusterCtrl) UpdateOBClusterAndZoneStatus(clusterStatus, zoneName,
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInfo) error {
+func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo UpgradeInfo) error {
 	obCluster := ctrl.OBCluster
 	obClusterExecuter := resource.NewOBClusterResource(ctrl.Resource)
 	obClusterTemp, err := obClusterExecuter.Get(context.TODO(), obCluster.Namespace, obCluster.Name)
@@ -186,7 +185,7 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo model.UpgradeInf
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCluster, upgradeInfo model.UpgradeInfo) (cloudv1.OBCluster, error) {
+func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCluster, upgradeInfo UpgradeInfo) (cloudv1.OBCluster, error) {
 	var obclusterCurrentStatus cloudv1.OBClusterStatus
 	obclusterCurrentStatus.Status = obCluster.Status.Status
 

@@ -46,10 +46,10 @@ func (ctrl *OBClusterCtrl) StopZone(rsIP, zoneName string) error {
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) StartOBZone(clusterIP, zoneName string) error {
+func (ctrl *OBClusterCtrl) StartOBZone(rsIP, zoneName string) error {
 	klog.Infoln("begin start OBZone", zoneName)
 
-	sqlOperator, err := ctrl.GetSqlOperator(clusterIP)
+	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when start zone")
 	}
@@ -57,7 +57,7 @@ func (ctrl *OBClusterCtrl) StartOBZone(clusterIP, zoneName string) error {
 	// start zone
 	err = sqlOperator.StartZone(zoneName)
 	if err != nil {
-		klog.Errorln("start zone error", zoneName, clusterIP)
+		klog.Errorln("start zone error", zoneName, rsIP)
 		return err
 	}
 	return nil

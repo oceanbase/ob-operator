@@ -14,7 +14,6 @@ package cable
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
@@ -109,15 +108,7 @@ func GenerateOBUpgradeRouteArgs(currentVersion, targetVersion string) map[string
 	obUpgradeRouteArgs := make(map[string]interface{})
 	obUpgradeRouteArgs["currentVersion"] = currentVersion
 	obUpgradeRouteArgs["targetVersion"] = targetVersion
-	obUpgradeRouteArgs["filePath"] = observerconst.UpgradeDepFilePath
 	return obUpgradeRouteArgs
-}
-
-func GetObVersionFromResponse(responseData string) string {
-	res := strings.Split(responseData, "\n")
-	res = strings.Split(res[1], " ")
-	version := res[len(res)-1]
-	return version[0 : len(version)-1]
 }
 
 func GetObUpgradeRouteFromResponse(responseData interface{}) []string {

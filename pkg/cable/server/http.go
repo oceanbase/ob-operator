@@ -57,7 +57,7 @@ func (S *Server) Init() {
 		// get version
 		obGroup.GET("/version", OBVersion)
 		// get upgrade route
-		obGroup.POST("/upgradeRoute", OBUpgradeRoute)
+		obGroup.GET("/upgradeRoute", OBUpgradeRoute)
 	}
 	S.Router = router
 	S.HttpServer = &http.Server{

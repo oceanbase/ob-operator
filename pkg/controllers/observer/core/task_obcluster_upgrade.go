@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -26,7 +27,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,11 +37,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type UpgradeInfo struct {
+	ScriptPassedVersion string
+	TargetVersion       string
+	UpgradeRoute        []string
+	ZoneStatus          string
+	ClusterStatus       string
+	SingleZoneStatus    map[string]string
+}
+
+const (
+	ExecCheckScriptsCMDTemplate = "python2 ${FILE_NAME} -h${IP} -P${PORT} -uroot"
+)
+
+func UpgradeReplacer(filename, clusterIP, port string) *strings.Replacer {
+	return strings.NewReplacer("${FILE_NAME}", filename, "${IP}", clusterIP, "${PORT}", port)
+}
+
 func GenerateJobName(clusterName, name string) string {
 	return fmt.Sprintf("%s-%s", clusterName, name)
 }
 
-func (ctrl *OBClusterCtrl) GenerateJobObjectPcress(jobName, image string, cmd []string) batchv1.Job {
+func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmd []string) batchv1.Job {
 	var backOffLimit int32
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -167,7 +184,7 @@ func (ctrl *OBClusterCtrl) CheckTargetVersion(currentTargetVersion string) error
 			return err
 		}
 		klog.Infoln("OBCluster Upgrade Target Verson is ", targetVersion)
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			TargetVersion: targetVersion,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
@@ -188,7 +205,7 @@ func (ctrl *OBClusterCtrl) CheckUpgradeRoute(statefulApp cloudv1.StatefulApp, up
 		if err != nil {
 			return err
 		}
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
@@ -214,9 +231,9 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 		return err
 	}
 	var cmdList []string
-	cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(observerconst.UpgradePreCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+	cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePreCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 	cmdList = append(cmdList, "bash", "-c", cmd)
-	jobObject := ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+	jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList)
 	jobExecuter := resource.NewJobResource(ctrl.Resource)
 	err = jobExecuter.Create(context.TODO(), jobObject)
 	if err != nil {
@@ -241,9 +258,9 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 				return err
 			}
 			var cmdList []string
-			cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(observerconst.UpgradePostCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePostCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject := ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+			jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList)
 			return jobExecuter.Create(context.TODO(), jobObject)
 		} else {
 			klog.Errorln("Get ", jobName, " job failed, err: ", err)
@@ -267,7 +284,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 	if err != nil {
 		return err
 	}
-	newStatefulApp := converter.UpdateStatefulAppSpec(statefulApp, containerImage)
+	newStatefulApp := converter.UpdateStatefulAppImage(statefulApp, containerImage)
 	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
 	err = statefulAppCtrl.UpdateStatefulApp()
 	if err != nil {
@@ -405,10 +422,10 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PostScriptFile)
-			cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			var cmdList []string
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject = ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList)
 			err = jobExecuter.Create(context.TODO(), jobObject)
 			if err != nil {
 				klog.Errorln("Create ", jobName, " job failed, err: ", err)
@@ -425,7 +442,7 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 		return nil
 	}
 	if job.Status.Succeeded == 1 {
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			ScriptPassedVersion: version,
 		}
 		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
@@ -440,7 +457,7 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
 	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			ScriptPassedVersion: upgradeRoute[0],
 			ClusterStatus:       observerconst.NeedUpgrading,
 		}
@@ -473,10 +490,10 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PreScriptFile)
-			cmd := sql.ReplaceAll(sql.ExecCheckScriptsCMDTemplate, sql.UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
+			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			var cmdList []string
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject = ctrl.GenerateJobObjectPcress(jobName, containerImage, cmdList)
+			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList)
 			err = jobExecuter.Create(context.TODO(), jobObject)
 			if err != nil {
 				klog.Errorln("Create ", jobName, " job failed, err: ", err)
@@ -493,7 +510,7 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 		return nil
 	}
 	if job.Status.Succeeded == 1 {
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			ScriptPassedVersion: version,
 		}
 		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
@@ -505,7 +522,7 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 }
 
 func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) error {
-	upgradeInfo := model.UpgradeInfo{
+	upgradeInfo := UpgradeInfo{
 		ZoneStatus:    observerconst.NeedUpgrading,
 		ClusterStatus: observerconst.Upgrading,
 	}
@@ -578,7 +595,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 		}
 		singleZoneStatus := make(map[string]string)
 		singleZoneStatus[zoneName] = observerconst.UpgradingPassed
-		upgradeInfo := model.UpgradeInfo{
+		upgradeInfo := UpgradeInfo{
 			SingleZoneStatus: singleZoneStatus,
 		}
 		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)

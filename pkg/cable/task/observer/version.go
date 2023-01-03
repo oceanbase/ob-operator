@@ -14,16 +14,24 @@ package observer
 
 import (
 	"context"
+	"strings"
 
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
 	"github.com/oceanbase/ob-operator/pkg/util/shell"
 	log "github.com/sirupsen/logrus"
 )
 
-func GetObVersionProcess() (*shell.ExecuteResult, error) {
+func GetObVersion() (*shell.ExecuteResult, error) {
 	res, err := shell.NewCommand(constant.OBSERVER_VERSION_COMMAND).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
 	if err != nil {
 		log.WithError(err).Errorf("start observer command exec error %v", err)
+	}
+	lines := strings.Split(res.Output, "\n")
+	log.Info("lines: ", len(lines), lines)
+	if len(lines) > 2 {
+		output := strings.Split(lines[1], " ")
+		ver := output[len(output)-1]
+		res.Output = ver[0 : len(ver)-1]
 	}
 	return res, err
 }
