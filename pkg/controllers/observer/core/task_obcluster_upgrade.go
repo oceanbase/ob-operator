@@ -58,7 +58,7 @@ func GenerateJobName(clusterName, name string) string {
 	return fmt.Sprintf("%s-%s", clusterName, name)
 }
 
-func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmd []string) batchv1.Job {
+func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmdList []string, envList []corev1.EnvVar) batchv1.Job {
 	var backOffLimit int32
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -72,13 +72,8 @@ func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmd []string
 						{
 							Name:    jobName,
 							Image:   image,
-							Command: cmd,
-							Env: []corev1.EnvVar{
-								{
-									Name:  "LD_LIBRARY_PATH",
-									Value: "/home/admin/oceanbase/lib",
-								},
-							},
+							Command: cmdList,
+							Env:     envList,
 						},
 					},
 					RestartPolicy: corev1.RestartPolicyNever,
@@ -87,16 +82,20 @@ func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmd []string
 			BackoffLimit: &backOffLimit,
 		},
 	}
-
 	return job
 }
 
-func GeneratePodName(clusterName, name string) string {
-	return fmt.Sprintf("%s-%s", clusterName, name)
+func GeneratePodName(obclusterName, clusterName, name string) string {
+	return fmt.Sprintf("%s-%s-%s", obclusterName, clusterName, name)
 }
 
-func (ctrl *OBClusterCtrl) CreatePodForVersion(podName string) error {
+func (ctrl *OBClusterCtrl) CreateHelperPod(podName string) error {
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+	var envList []corev1.EnvVar
+	envList = append(envList, corev1.EnvVar{
+		Name:  "LD_LIBRARY_PATH",
+		Value: "/home/admin/oceanbase/lib",
+	})
 	podObject := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
@@ -107,12 +106,7 @@ func (ctrl *OBClusterCtrl) CreatePodForVersion(podName string) error {
 				{
 					Name:  podName,
 					Image: containerImage,
-					Env: []corev1.EnvVar{
-						{
-							Name:  "LD_LIBRARY_PATH",
-							Value: "/home/admin/oceanbase/lib",
-						},
-					},
+					Env:   envList,
 				},
 			},
 			RestartPolicy: corev1.RestartPolicyNever,
@@ -126,50 +120,56 @@ func (ctrl *OBClusterCtrl) CreatePodForVersion(podName string) error {
 		if kubeerrors.IsAlreadyExists(err) {
 			return nil
 		}
-		klog.Errorln("create pod to get version failed, error: ", err)
+		klog.Errorln("create helper error, error: ", err)
 		return err
 	}
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) GetPodIpByName(podName string) (string, error) {
+func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
+	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help")
 	podExecuter := resource.NewPodResource(ctrl.Resource)
 	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
 	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			klog.Errorln("Cannot Find Helper Pod. Creating Helper Pod %s Now", podName)
+			err_ := ctrl.CreateHelperPod(podName)
+			if err_ != nil {
+				return "", err_
+			}
+			return "", err
+		}
 		klog.Errorln("Get PodIp By PodName failed, err: ", err)
 		return "", err
 	}
 	pod := podObject.(corev1.Pod)
+	if pod.Status.Message != observerconst.PodRunning {
+		klog.Errorln("Helper Pod is Not Running")
+		return "", errors.New("Helper Pod is Not Running")
+	}
 	return pod.Status.PodIP, nil
 }
 
-func (ctrl *OBClusterCtrl) GetTargetVer() (string, error) {
-	podName := GeneratePodName(myconfig.ClusterName, "help")
-	err := ctrl.CreatePodForVersion(podName)
+func (ctrl *OBClusterCtrl) GetTargetVersion() (string, error) {
+	podIp, err := ctrl.GetHelperPodIP()
 	if err != nil {
 		return "", err
 	}
-	podIp, err := ctrl.GetPodIpByName(podName)
-	if err != nil {
-		return "", err
-	}
-	time.Sleep(1 * time.Second)
 	return cable.OBServerGetVersion(podIp)
 }
 
 func (ctrl *OBClusterCtrl) GetUpgradeRoute(currentVer, targetVer string) ([]string, error) {
 	var upgradeRoute []string
-	podName := GeneratePodName(myconfig.ClusterName, "help")
-	podIp, err := ctrl.GetPodIpByName(podName)
+	podIp, err := ctrl.GetHelperPodIP()
 	if err != nil {
 		return upgradeRoute, err
 	}
 	return cable.OBServerGetUpgradeRoute(podIp, currentVer, targetVer)
 }
 
-func (ctrl *OBClusterCtrl) getCurrentVersion(statefulApp cloudv1.StatefulApp) (string, error) {
+func (ctrl *OBClusterCtrl) GetCurrentVersion(statefulApp cloudv1.StatefulApp) (string, error) {
 	subsets := statefulApp.Status.Subsets
-	for subsetsIdx, _ := range subsets {
+	for subsetsIdx := range subsets {
 		for _, pod := range subsets[subsetsIdx].Pods {
 			return cable.OBServerGetVersion(pod.PodIP)
 		}
@@ -179,7 +179,7 @@ func (ctrl *OBClusterCtrl) getCurrentVersion(statefulApp cloudv1.StatefulApp) (s
 
 func (ctrl *OBClusterCtrl) CheckTargetVersion(currentTargetVersion string) error {
 	if currentTargetVersion == "" {
-		targetVersion, err := ctrl.GetTargetVer()
+		targetVersion, err := ctrl.GetTargetVersion()
 		if err != nil {
 			return err
 		}
@@ -197,7 +197,7 @@ func (ctrl *OBClusterCtrl) CheckTargetVersion(currentTargetVersion string) error
 
 func (ctrl *OBClusterCtrl) CheckUpgradeRoute(statefulApp cloudv1.StatefulApp, upgradeRoute []string, targetVer string) error {
 	if upgradeRoute == nil {
-		currentVer, err := ctrl.getCurrentVersion(statefulApp)
+		currentVer, err := ctrl.GetCurrentVersion(statefulApp)
 		if err != nil {
 			return err
 		}
@@ -233,7 +233,12 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 	var cmdList []string
 	cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePreCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 	cmdList = append(cmdList, "bash", "-c", cmd)
-	jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList)
+	var envList []corev1.EnvVar
+	envList = append(envList, corev1.EnvVar{
+		Name:  "LD_LIBRARY_PATH",
+		Value: "/home/admin/oceanbase/lib",
+	})
+	jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
 	jobExecuter := resource.NewJobResource(ctrl.Resource)
 	err = jobExecuter.Create(context.TODO(), jobObject)
 	if err != nil {
@@ -260,7 +265,12 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 			var cmdList []string
 			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePostCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList)
+			var envList []corev1.EnvVar
+			envList = append(envList, corev1.EnvVar{
+				Name:  "LD_LIBRARY_PATH",
+				Value: "/home/admin/oceanbase/lib",
+			})
+			jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
 			return jobExecuter.Create(context.TODO(), jobObject)
 		} else {
 			klog.Errorln("Get ", jobName, " job failed, err: ", err)
@@ -425,7 +435,12 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			var cmdList []string
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList)
+			var envList []corev1.EnvVar
+			envList = append(envList, corev1.EnvVar{
+				Name:  "LD_LIBRARY_PATH",
+				Value: "/home/admin/oceanbase/lib",
+			})
+			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
 			err = jobExecuter.Create(context.TODO(), jobObject)
 			if err != nil {
 				klog.Errorln("Create ", jobName, " job failed, err: ", err)
@@ -493,7 +508,12 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
 			var cmdList []string
 			cmdList = append(cmdList, "bash", "-c", cmd)
-			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList)
+			var envList []corev1.EnvVar
+			envList = append(envList, corev1.EnvVar{
+				Name:  "LD_LIBRARY_PATH",
+				Value: "/home/admin/oceanbase/lib",
+			})
+			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
 			err = jobExecuter.Create(context.TODO(), jobObject)
 			if err != nil {
 				klog.Errorln("Create ", jobName, " job failed, err: ", err)
@@ -946,10 +966,12 @@ func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp, zoneName str
 	if err != nil {
 		return "", err
 	}
+	var rsIPList []string
 	for _, cluster := range rsCurrent.Status.Topology {
 		if cluster.Cluster == myconfig.ClusterName {
 			for _, zone := range cluster.Zone {
-				if zone.ServerIP != "" && zone.Name != zoneName {
+				if zone.ServerIP != "" && zone.Name != zoneName && zone.Role == 1 {
+					rsIPList = append(rsIPList, zone.ServerIP)
 					return zone.ServerIP, nil
 				}
 			}

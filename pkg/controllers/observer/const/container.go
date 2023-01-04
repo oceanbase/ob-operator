@@ -16,3 +16,8 @@ package observerconst
 const (
 	ContainerRunning = "Running"
 )
+
+// pod
+const (
+	PodRunning = "Running"
+)
