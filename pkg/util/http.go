@@ -21,23 +21,35 @@ import (
 	"time"
 )
 
-func HTTPGET(reqURL string) (int, map[string]interface{}) {
+func HTTPGET(reqURL string, reqDatas ...map[string]interface{}) (int, map[string]interface{}) {
 	req, _ := http.NewRequest("GET", reqURL, nil)
+	if reqDatas != nil {
+		q := req.URL.Query()
+		for _, reqData := range reqDatas {
+			for k, v := range reqData {
+				q.Add(k, v.(string))
+			}
+		}
+		req.URL.RawQuery = q.Encode()
+	}
 	c := &http.Client{
 		Timeout: 1 * time.Second,
 	}
 	res, perr := c.Do(req)
 	if perr != nil {
+		log.Println(perr)
 		return 0, nil
 	}
 	resBody, berr := ioutil.ReadAll(res.Body)
 	_ = res.Body.Close()
 	if berr != nil {
+		log.Println(perr)
 		return 0, nil
 	}
 	responseData := make(map[string]interface{})
 	jerr := json.Unmarshal(resBody, &responseData)
 	if jerr != nil {
+		log.Println(jerr)
 		return res.StatusCode, nil
 	}
 	return res.StatusCode, responseData

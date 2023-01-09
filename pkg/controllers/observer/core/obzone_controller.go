@@ -212,17 +212,15 @@ func (ctrl *OBClusterCtrl) OBZoneScaleDown(statefulApp cloudv1.StatefulApp) erro
 
 func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	targetVer := clusterStatus.TargetVersion
 	upgradeRoute := clusterStatus.UpgradeRoute
 	var err error
-	if targetVer == "" {
-		err = ctrl.CheckTargetVersion(targetVer)
-		if err != nil {
-			return err
-		}
-		targetVer = clusterStatus.TargetVersion
+	err = ctrl.CheckAndSetTargetVersion(clusterStatus.TargetVersion)
+	if err != nil {
+		return err
 	}
-	err = ctrl.CheckUpgradeRoute(statefulApp, upgradeRoute, targetVer)
+	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	targetVer := cluster.TargetVersion
+	err = ctrl.CheckAndSetUpgradeRoute(statefulApp, upgradeRoute, targetVer)
 	if err != nil {
 		return err
 	}

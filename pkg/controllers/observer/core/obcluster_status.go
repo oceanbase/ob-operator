@@ -179,8 +179,6 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo UpgradeInfo) err
 			return err
 		}
 	}
-	// ctrl.OBCluster.Status.Topology = obClusterNew.Status.Topology
-	// ctrl.OBCluster.Status.Status = obCluster.Status.Status
 	ctrl.OBCluster = obClusterNew
 	return nil
 }
@@ -342,7 +340,13 @@ func buildZoneStatus(zoneSpec cloudv1.Subset, statefulAppCurrent cloudv1.Statefu
 
 	// real AvailableReplicas from OB
 	nodeList := nodeMap[subsetStatus.Name]
-	zoneStatus.AvailableReplicas = len(nodeList)
+	count := 0
+	for _, server := range nodeList {
+		if server.Status == observerconst.OBServerActive {
+			count += 1
+		}
+	}
+	zoneStatus.AvailableReplicas = count
 	// StatefulApp is not ready
 	if subsetStatus.ExpectedReplicas != subsetStatus.AvailableReplicas {
 		zoneStatus.ZoneStatus = observerconst.OBZonePrepareing

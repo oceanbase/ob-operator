@@ -176,6 +176,27 @@ func (op *SqlOperator) GetParameter(name string) []model.SysParameterStat {
 	return res
 }
 
+func (op *SqlOperator) ShowParameter(name string) []model.SysParameterStat {
+	res := make([]model.SysParameterStat, 0)
+	sql := ReplaceAll(ShowParameterTemplate, GetParameterSQLReplacer(name))
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.SysParameterStat{}).Raw(sql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.SysParameterStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) GetOBServer() []model.AllServer {
 	res := make([]model.AllServer, 0)
 	client, err := GetDBClient(op.ConnectProperties)

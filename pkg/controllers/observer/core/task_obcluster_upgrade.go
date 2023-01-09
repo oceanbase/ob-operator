@@ -15,7 +15,7 @@ package core
 import (
 	"context"
 	"fmt"
-	"strconv"
+	"reflect"
 	"strings"
 	"time"
 
@@ -27,14 +27,11 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
-	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
 
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type UpgradeInfo struct {
@@ -52,102 +49,6 @@ const (
 
 func UpgradeReplacer(filename, clusterIP, port string) *strings.Replacer {
 	return strings.NewReplacer("${FILE_NAME}", filename, "${IP}", clusterIP, "${PORT}", port)
-}
-
-func GenerateJobName(clusterName, name string) string {
-	return fmt.Sprintf("%s-%s", clusterName, name)
-}
-
-func (ctrl *OBClusterCtrl) GenerateJobObject(jobName, image string, cmdList []string, envList []corev1.EnvVar) batchv1.Job {
-	var backOffLimit int32
-	job := batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: ctrl.OBCluster.Namespace,
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:    jobName,
-							Image:   image,
-							Command: cmdList,
-							Env:     envList,
-						},
-					},
-					RestartPolicy: corev1.RestartPolicyNever,
-				},
-			},
-			BackoffLimit: &backOffLimit,
-		},
-	}
-	return job
-}
-
-func GeneratePodName(obclusterName, clusterName, name string) string {
-	return fmt.Sprintf("%s-%s-%s", obclusterName, clusterName, name)
-}
-
-func (ctrl *OBClusterCtrl) CreateHelperPod(podName string) error {
-	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-	var envList []corev1.EnvVar
-	envList = append(envList, corev1.EnvVar{
-		Name:  "LD_LIBRARY_PATH",
-		Value: "/home/admin/oceanbase/lib",
-	})
-	podObject := corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: ctrl.OBCluster.Namespace,
-		},
-		Spec: corev1.PodSpec{
-			Containers: []corev1.Container{
-				{
-					Name:  podName,
-					Image: containerImage,
-					Env:   envList,
-				},
-			},
-			RestartPolicy: corev1.RestartPolicyNever,
-		},
-	}
-
-	// create pod
-	podExecuter := resource.NewPodResource(ctrl.Resource)
-	err := podExecuter.Create(context.TODO(), podObject)
-	if err != nil {
-		if kubeerrors.IsAlreadyExists(err) {
-			return nil
-		}
-		klog.Errorln("create helper error, error: ", err)
-		return err
-	}
-	return nil
-}
-
-func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
-	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help")
-	podExecuter := resource.NewPodResource(ctrl.Resource)
-	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			klog.Errorln("Cannot Find Helper Pod. Creating Helper Pod %s Now", podName)
-			err_ := ctrl.CreateHelperPod(podName)
-			if err_ != nil {
-				return "", err_
-			}
-			return "", err
-		}
-		klog.Errorln("Get PodIp By PodName failed, err: ", err)
-		return "", err
-	}
-	pod := podObject.(corev1.Pod)
-	if pod.Status.Message != observerconst.PodRunning {
-		klog.Errorln("Helper Pod is Not Running")
-		return "", errors.New("Helper Pod is Not Running")
-	}
-	return pod.Status.PodIP, nil
 }
 
 func (ctrl *OBClusterCtrl) GetTargetVersion() (string, error) {
@@ -177,159 +78,202 @@ func (ctrl *OBClusterCtrl) GetCurrentVersion(statefulApp cloudv1.StatefulApp) (s
 	return "", nil
 }
 
-func (ctrl *OBClusterCtrl) CheckTargetVersion(currentTargetVersion string) error {
+func (ctrl *OBClusterCtrl) CheckAndSetTargetVersion(currentTargetVersion string) error {
+	targetVersion, err := ctrl.GetTargetVersion()
+	if err != nil {
+		return err
+	}
 	if currentTargetVersion == "" {
-		targetVersion, err := ctrl.GetTargetVersion()
-		if err != nil {
-			return err
-		}
 		klog.Infoln("OBCluster Upgrade Target Verson is ", targetVersion)
 		upgradeInfo := UpgradeInfo{
 			TargetVersion: targetVersion,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-	} // else if currentTargetVersion != targetVersion {
-	// 	klog.Errorln("Can not upgrade OB to another version when current upgrading is not finished")
-	// 	return errors.New("Can not upgrade OB to another version when current upgrading is not finished")
-	// }
+	} else if currentTargetVersion != targetVersion {
+		klog.Errorln("Can not upgrade OB to another version when current upgrading is not finished")
+		return errors.New("Can not upgrade OB to another version when current upgrading is not finished")
+	}
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) CheckUpgradeRoute(statefulApp cloudv1.StatefulApp, upgradeRoute []string, targetVer string) error {
-	if upgradeRoute == nil {
-		currentVer, err := ctrl.GetCurrentVersion(statefulApp)
-		if err != nil {
-			return err
-		}
-		upgradeRoute, err = ctrl.GetUpgradeRoute(currentVer, targetVer)
-		if err != nil {
-			return err
-		}
+func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulApp, currUpgradeRoute []string, targetVer string) error {
+	currentVer, err := ctrl.GetCurrentVersion(statefulApp)
+	if err != nil {
+		return err
+	}
+	upgradeRoute, err := ctrl.GetUpgradeRoute(currentVer, targetVer)
+	if err != nil {
+		return err
+	}
+	if currUpgradeRoute == nil {
 		upgradeInfo := UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
-	// podName := GeneratePodName(myconfig.ClusterName, "help")
-	// podExecuter := resource.NewPodResource(ctrl.Resource)
-	// podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
-	// if err != nil {
-	// 	klog.Errorln("Get PodIp By PodName failed, err: ", err)
-	// 	return err
-	// }
-	// return podExecuter.Delete(context.TODO(), podObject)
+	if !reflect.DeepEqual(upgradeRoute, currUpgradeRoute) {
+		klog.Errorln("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
+		return errors.New("Upgrade Route Does Not Match")
+	}
 	return nil
 }
 
 func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp) error {
-	name := "pre-checker"
-	jobName := GenerateJobName(myconfig.ClusterName, name)
-	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-
-	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
+	err := ctrl.CreatePreCheckerJob(statefulApp)
 	if err != nil {
-		return err
-	}
-	var cmdList []string
-	cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePreCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
-	cmdList = append(cmdList, "bash", "-c", cmd)
-	var envList []corev1.EnvVar
-	envList = append(envList, corev1.EnvVar{
-		Name:  "LD_LIBRARY_PATH",
-		Value: "/home/admin/oceanbase/lib",
-	})
-	jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
-	jobExecuter := resource.NewJobResource(ctrl.Resource)
-	err = jobExecuter.Create(context.TODO(), jobObject)
-	if err != nil {
-		klog.Errorln("Create ", jobName, " job failed, err: ", err)
 		return err
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.UpgradeChecking, "", "")
 }
 
-func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulApp) error {
-	name := "post-checker"
-	jobName := GenerateJobName(myconfig.ClusterName, name)
-	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-
-	jobExecuter := resource.NewJobResource(ctrl.Resource)
-	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
-
+func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp) error {
+	// Get Job
+	name := observerconst.UpgradePreChecker
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
-			if err != nil {
-				return err
-			}
-			var cmdList []string
-			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(observerconst.UpgradePostCheckerPath, rsIP, strconv.Itoa(observerconst.MysqlPort)))
-			cmdList = append(cmdList, "bash", "-c", cmd)
-			var envList []corev1.EnvVar
-			envList = append(envList, corev1.EnvVar{
-				Name:  "LD_LIBRARY_PATH",
-				Value: "/home/admin/oceanbase/lib",
-			})
-			jobObject := ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
-			return jobExecuter.Create(context.TODO(), jobObject)
+			return ctrl.CreatePreCheckerJob(statefulApp)
 		} else {
 			klog.Errorln("Get ", jobName, " job failed, err: ", err)
 			return err
 		}
 	}
-	job := jobObject.(batchv1.Job)
-	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
+	// Get Job Status
+	jobStatus := ctrl.GetJobStatus(jobObject)
+	switch jobStatus {
+	case observerconst.JobRunning:
 		return nil
-	}
-	if job.Status.Succeeded == 1 {
+	case observerconst.JobSucceeded:
 		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedExecutingPreScripts, "", "")
-	}
-	if job.Status.Failed == 1 {
+	case observerconst.JobFailed:
 		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
 	if err != nil {
 		return err
 	}
-	err = jobExecuter.Delete(context.TODO(), jobObject)
+	// Delete Job
+	err = ctrl.DeleteJobObject(jobObject)
 	if err != nil {
+		klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
 		return err
 	}
-	newStatefulApp := converter.UpdateStatefulAppImage(statefulApp, containerImage)
-	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
-	err = statefulAppCtrl.UpdateStatefulApp()
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
+	// All Scripts Finish
+	if ctrl.AllScriptsFinish() {
+		clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+		upgradeRoute := clusterStatus.UpgradeRoute
+		upgradeInfo := UpgradeInfo{
+			ScriptPassedVersion: upgradeRoute[0],
+			ClusterStatus:       observerconst.NeedUpgrading,
+		}
+		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
+	}
+	// Get Next Version Job
+	version, index := ctrl.GetNextVersion()
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePre, "-", index))
+	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return ctrl.CreateUpgradePreJob(statefulApp, version, index)
+		} else {
+			klog.Errorln("Get Job %s Failed, Err: %s", jobName, err)
+			return err
+		}
+	}
+	// Get Job status
+	jobStatus := ctrl.GetJobStatus(jobObject)
+	switch jobStatus {
+	case observerconst.JobRunning:
+		return nil
+	case observerconst.JobSucceeded:
+		upgradeInfo := UpgradeInfo{
+			ScriptPassedVersion: version,
+		}
+		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
+		if err != nil {
+			return err
+		}
+	}
+	return ctrl.DeleteJobObject(jobObject)
+}
+
+func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
+	// All Scripts Finish
+	if ctrl.AllScriptsFinish() {
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
+	}
+	// Get Next Version Job
+	version, index := ctrl.GetNextVersion()
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index))
+	jobObject, err := ctrl.GetJobObject(jobName)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return ctrl.CreateUpgradePostJob(statefulApp, version, index)
+		} else {
+			klog.Errorln("Get Job %s Failed, Err: %s", jobName, err)
+			return err
+		}
+	}
+	// Get Job status
+	jobStatus := ctrl.GetJobStatus(jobObject)
+	switch jobStatus {
+	case observerconst.JobRunning:
+		return nil
+	case observerconst.JobSucceeded:
+		upgradeInfo := UpgradeInfo{
+			ScriptPassedVersion: version,
+		}
+		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
+		if err != nil {
+			return err
+		}
+	}
+	return ctrl.DeleteJobObject(jobObject)
+}
+
+func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulApp) error {
+	// Get Job
+	name := observerconst.UpgradePostChecker
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobObject, err := ctrl.GetJobObject(jobName)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return ctrl.CreatePostCheckerJob(statefulApp)
+		} else {
+			klog.Errorln("Get Job %s Failed, Err: %s", jobName, err)
+			return err
+		}
+	}
+	// Get Job Status
+	jobStatus := ctrl.GetJobStatus(jobObject)
+	switch jobStatus {
+	case observerconst.JobRunning:
+		return nil
+	case observerconst.JobSucceeded:
+		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+		if err != nil {
+			return err
+		}
+	case observerconst.JobFailed:
+		return ctrl.DeleteJobObject(jobObject)
+	}
+	// Delete Job
+	err = ctrl.DeleteJobObject(jobObject)
+	if err != nil {
+		klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+		return err
+	}
+
+	err = ctrl.UpdateStatefulAppImage(statefulApp)
+	if err != nil {
+		klog.Errorln("Update StatefulApp Failed, Err: ", err)
 		return err
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
-}
-
-func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp) error {
-	name := "pre-checker"
-	jobName := GenerateJobName(myconfig.ClusterName, name)
-	jobExecuter := resource.NewJobResource(ctrl.Resource)
-	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			// 是否需要跳转回去新建 job
-		} else {
-			klog.Errorln("Get ", jobName, " job failed, err: ", err)
-			return err
-		}
-	}
-	job := jobObject.(batchv1.Job)
-	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
-		return nil
-	}
-	if job.Status.Succeeded == 1 {
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedExecutingPreScripts, "", "")
-	}
-	if job.Status.Failed == 1 {
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
-	}
-	if err != nil {
-		return err
-	}
-	return jobExecuter.Delete(context.TODO(), jobObject)
 }
 
 func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) error {
@@ -343,202 +287,17 @@ func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) 
 		klog.Errorln(fmt.Sprint("End Upgrade Error : ", err))
 		return err
 	}
-	err = ctrl.CheckUpgradeModeAfter()
+	err = ctrl.CheckUpgradeModeEnd()
 	if err != nil {
 		klog.Errorln(fmt.Sprint("Check Upgrade Mode (End) Error :", err))
 		return err
 	}
-
 	err = ctrl.RunRootInspection()
 	if err != nil {
 		klog.Infoln(fmt.Sprint("Run Root Inspection Job Error: ", err))
 		return err
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.UpgradePostChecking, "", "")
-}
-
-func (ctrl *OBClusterCtrl) RunRootInspection() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator When Running Root Inspection Job")
-	}
-	return sqlOperator.RunRootInspection()
-}
-
-func (ctrl *OBClusterCtrl) CheckUpgradeModeAfter() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
-	}
-	zoneUpGradeMode := sqlOperator.GetParameter(observerconst.EnableUpgradeMode)
-	isFalse := true
-	for _, v := range zoneUpGradeMode {
-		if v.Value == "True" {
-			isFalse = false
-		}
-	}
-	if !isFalse {
-		return errors.New("Upgrade Mode Wrong")
-	}
-	return nil
-}
-
-func (ctrl *OBClusterCtrl) EndUpgrade() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
-	}
-	return sqlOperator.EndUpgrade()
-}
-
-func (ctrl *OBClusterCtrl) SetMinVersion() error {
-	klog.Infoln("SetMinVersion: ")
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator When Setting Min OB Server Veriosn")
-	}
-	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	version := clusterStatus.TargetVersion
-	return sqlOperator.SetParameter(observerconst.MinObserverVersion, version)
-}
-
-func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
-	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	upgradeRoute := clusterStatus.UpgradeRoute
-	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
-		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
-	}
-	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
-	if err != nil {
-		return err
-	}
-	var version string
-	var index int
-	if clusterStatus.ScriptPassedVersion == "" {
-		version = upgradeRoute[1]
-		index = 1
-	} else {
-		for i, ver := range upgradeRoute {
-			if ver == clusterStatus.ScriptPassedVersion {
-				version = upgradeRoute[i+1]
-				index = i + 1
-			}
-		}
-	}
-	jobName := GenerateJobName(myconfig.ClusterName, fmt.Sprint("exec-post-scripts-", index))
-	jobExecuter := resource.NewJobResource(ctrl.Resource)
-	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PostScriptFile)
-			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
-			var cmdList []string
-			cmdList = append(cmdList, "bash", "-c", cmd)
-			var envList []corev1.EnvVar
-			envList = append(envList, corev1.EnvVar{
-				Name:  "LD_LIBRARY_PATH",
-				Value: "/home/admin/oceanbase/lib",
-			})
-			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
-			err = jobExecuter.Create(context.TODO(), jobObject)
-			if err != nil {
-				klog.Errorln("Create ", jobName, " job failed, err: ", err)
-				return err
-			}
-			return nil
-		} else {
-			klog.Errorln("Get ", jobName, " job failed, err: ", err)
-			return err
-		}
-	}
-	job := jobObject.(batchv1.Job)
-	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
-		return nil
-	}
-	if job.Status.Succeeded == 1 {
-		upgradeInfo := UpgradeInfo{
-			ScriptPassedVersion: version,
-		}
-		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-		if err != nil {
-			return err
-		}
-	}
-	return jobExecuter.Delete(context.TODO(), jobObject)
-}
-
-func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
-	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	upgradeRoute := clusterStatus.UpgradeRoute
-	if upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion {
-		upgradeInfo := UpgradeInfo{
-			ScriptPassedVersion: upgradeRoute[0],
-			ClusterStatus:       observerconst.NeedUpgrading,
-		}
-
-		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-	}
-
-	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
-	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
-	if err != nil {
-		return err
-	}
-
-	var version string
-	var index int
-	if clusterStatus.ScriptPassedVersion == "" {
-		version = upgradeRoute[1]
-		index = 1
-	} else {
-		for i, ver := range upgradeRoute {
-			if ver == clusterStatus.ScriptPassedVersion {
-				version = upgradeRoute[i+1]
-				index = i + 1
-			}
-		}
-	}
-	jobName := GenerateJobName(myconfig.ClusterName, fmt.Sprint("exec-pre-scripts-", index))
-	jobExecuter := resource.NewJobResource(ctrl.Resource)
-	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PreScriptFile)
-			cmd := sql.ReplaceAll(ExecCheckScriptsCMDTemplate, UpgradeReplacer(filename, rsIP, strconv.Itoa(observerconst.MysqlPort)))
-			var cmdList []string
-			cmdList = append(cmdList, "bash", "-c", cmd)
-			var envList []corev1.EnvVar
-			envList = append(envList, corev1.EnvVar{
-				Name:  "LD_LIBRARY_PATH",
-				Value: "/home/admin/oceanbase/lib",
-			})
-			jobObject = ctrl.GenerateJobObject(jobName, containerImage, cmdList, envList)
-			err = jobExecuter.Create(context.TODO(), jobObject)
-			if err != nil {
-				klog.Errorln("Create ", jobName, " job failed, err: ", err)
-				return err
-			}
-			return nil
-		} else {
-			klog.Errorln("Get ", jobName, " job failed, err: ", err)
-			return err
-		}
-	}
-	job := jobObject.(batchv1.Job)
-	if job.Status.Succeeded == 0 && job.Status.Failed == 0 {
-		return nil
-	}
-	if job.Status.Succeeded == 1 {
-		upgradeInfo := UpgradeInfo{
-			ScriptPassedVersion: version,
-		}
-		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-		if err != nil {
-			return err
-		}
-	}
-	return jobExecuter.Delete(context.TODO(), jobObject)
 }
 
 func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) error {
@@ -559,7 +318,8 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 	if zoneInfoMap[observerconst.NeedUpgrading] != nil {
 		zoneName := zoneInfoMap[observerconst.NeedUpgrading][0]
 		var ip string
-		if len(obZoneList) > 2 {
+		rollingUpgrade := len(obZoneList) > 2
+		if rollingUpgrade {
 			ip, err = ctrl.GetRsIP(statefulApp, zoneName)
 			if err != nil {
 				return err
@@ -570,7 +330,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 				return err
 			}
 		}
-		if len(obZoneList) > 2 {
+		if rollingUpgrade {
 			isZoneStop, err := ctrl.isOBZoneStop(ip, zoneName)
 			if err != nil {
 				klog.Errorln("Check OB Zone Status err : ", zoneName, err)
@@ -583,32 +343,30 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 					return err
 				}
 			}
-
 			err = ctrl.WaitLeaderCountZero(ip, zoneName)
 			if err != nil {
 				klog.Errorln("Check Zone Leader Count Zero err : ", zoneName, err)
 				return err
 			}
 		}
-		err = ctrl.PatchPods(ip, zoneName, statefulApp)
+		err = ctrl.PatchAndStartContainer(ip, zoneName, statefulApp)
 		if err != nil {
 			klog.Errorln("Patch Pods err : ", zoneName, err)
 			return err
 		}
-
-		_, err = ctrl.isOBSeverActive(ip, zoneName, len(obZoneList) > 2)
+		_, err = ctrl.isOBSeverActive(ip, zoneName)
 		if err != nil {
 			klog.Errorln("Check OB Sever Status err : ", zoneName, err)
 			return err
 		}
-		if len(obZoneList) > 2 {
+		if rollingUpgrade {
 			err = ctrl.StartOBZone(ip, zoneName)
 			if err != nil {
 				klog.Errorln("Start OB Zone err : ", zoneName, err)
 				return err
 			}
 		}
-		err = ctrl.waitAllOBSeverAvailable(ip, len(obZoneList) > 2)
+		err = ctrl.WaitAllOBSeverAvailable(ip)
 		if err != nil {
 			klog.Errorln("Check Whether All OB Severs Are Available err : ", err)
 			return err
@@ -622,7 +380,6 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 		time.Sleep(2 * time.Second)
 		return nil
 	}
-
 	err = ctrl.UpgradeSchema()
 	if err != nil {
 		return err
@@ -630,104 +387,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPostScripts, "", "")
 }
 
-func (ctrl *OBClusterCtrl) WaitLeaderCountZero(rsIP, zoneName string) error {
-	klog.Infoln("Wait Leader Count Clear")
-	err := ctrl.TickerLeaderCountFromDB(rsIP, zoneName)
-	if err != nil {
-		return err
-	}
-	klog.Infoln("Leader Count Is Zero")
-	return nil
-}
-
-func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error {
-	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
-	var num int
-	for {
-		select {
-		case <-tick:
-			if num > observerconst.TickNumForOBServerStatusCheck {
-				return errors.New("Wait For Leader Count Clear Timeout")
-			}
-			num = num + 1
-			res, err := ctrl.isLeaderCountZero(rsIP, zoneName)
-			if res {
-				return err
-			}
-		}
-	}
-}
-
-func (ctrl *OBClusterCtrl) waitAllOBSeverAvailable(rsIP string, rolling_upgrade bool) error {
-	klog.Infoln("Wait All OB Server Available")
-	err := ctrl.TickerOBServerAvailableFromDB(rsIP, rolling_upgrade)
-	if err != nil {
-		return err
-	}
-	klog.Infoln("All OB Server Available")
-	return nil
-}
-
-func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string, rolling_upgrade bool) error {
-	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
-	var num int
-	for {
-		select {
-		case <-tick:
-			if num > observerconst.TickNumForOBServerStatusCheck {
-				return errors.New("Wait For OB Server Available Timeout")
-			}
-			num = num + 1
-			res, err := ctrl.isAllOBSeverAvailable(rsIP, rolling_upgrade)
-			if res {
-				return err
-			}
-		}
-	}
-}
-
-func (ctrl *OBClusterCtrl) WaitAllContainerRunning(pod corev1.Pod) error {
-	klog.Infoln("Wait All OB Server Container Running")
-	err := ctrl.TickerOBServerContainerRunning(pod)
-	if err != nil {
-		return err
-	}
-	klog.Infoln("All OB Server Container Running")
-	return nil
-}
-
-func (ctrl *OBClusterCtrl) TickerOBServerContainerRunning(pod corev1.Pod) error {
-	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
-	var num int
-	for {
-		select {
-		case <-tick:
-			if num > observerconst.TickNumForOBServerStatusCheck {
-				return errors.New("Wait For OB Server Container Running Timeout")
-			}
-			num = num + 1
-			res, err := ctrl.isAllOBSeverContainerRunning(pod)
-			if res {
-				return err
-			}
-		}
-	}
-}
-
-func (ctrl *OBClusterCtrl) isAllOBSeverContainerRunning(pod corev1.Pod) (bool, error) {
-	for _, container := range pod.Status.ContainerStatuses {
-		if container.Name == observerconst.ImgOb {
-			klog.Infoln("container.State.Running == nil ", container.State.Running == nil)
-			if container.State.Running == nil {
-				klog.Errorln(pod.Status.PodIP, " Observer Container Not Running")
-				return false, errors.New("Container Not Running")
-			}
-		}
-	}
-	return true, nil
-}
-
-func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.StatefulApp) error {
+func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefulApp cloudv1.StatefulApp) error {
 	// patch all pods in a zone
 	subsets := statefulApp.Status.Subsets
 	podExecuter := resource.NewPodResource(ctrl.Resource)
@@ -787,20 +447,32 @@ func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.
 					klog.Errorln(pod.PodIP, "OB Server Get Version Failed, Error: ", err)
 					return err
 				}
-				klog.Infoln("currentVersion: ", currentVersion)
 				if currentVersion != clusterStatus.TargetVersion {
-					return errors.New(fmt.Sprint("Ob Server version Is Not Target Version : ", zoneName))
+					return errors.New(fmt.Sprint("OB Server version Is Not Target Version : ", zoneName))
 				}
 			}
 		}
 	}
-	klog.Infoln("get versiob finish")
-
+	klog.Infoln("Check OB Servers Version Finish")
 	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
 	rsCtrl := NewRootServiceCtrl(ctrl)
 	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
 	if err != nil {
 		return err
+	}
+
+	// Recovery Etc From Additional dir
+	for _, subset := range subsets {
+		podList := subset.Pods
+		if subset.Name == zoneName {
+			for _, pod := range podList {
+				err = cable.OBRecoverConfig(pod.PodIP)
+				if err != nil {
+					klog.Errorln("Recover OBServer Config Failed, Err: ", err)
+					return err
+				}
+			}
+		}
 	}
 	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
 	cable.OBServerStart(ctrl.OBCluster, startSubset, rsList)
@@ -818,96 +490,6 @@ func (ctrl *OBClusterCtrl) PatchPods(rsIP, zoneName string, statefulApp cloudv1.
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) isAllOBSeverAvailable(rsIP string, rolling_upgrade bool) (bool, error) {
-	var sqlOperator *sql.SqlOperator
-	var err error
-	if rolling_upgrade {
-		sqlOperator, err = ctrl.GetSqlOperator(rsIP)
-	} else {
-		sqlOperator, err = ctrl.GetSqlOperator()
-
-	}
-	if err != nil {
-		return false, errors.Wrap(err, "get sql operator when recover server")
-	}
-	clogStatList := sqlOperator.GetClogStat()
-	if len(clogStatList) == 0 {
-		return true, nil
-	} else {
-		return false, errors.New("Not All Server Available")
-	}
-}
-
-func (ctrl *OBClusterCtrl) isOBSeverActive(rsIP, zoneName string, rolling_upgrade bool) (bool, error) {
-	var sqlOperator *sql.SqlOperator
-	var err error
-	if rolling_upgrade {
-		sqlOperator, err = ctrl.GetSqlOperator(rsIP)
-	} else {
-		sqlOperator, err = ctrl.GetSqlOperator()
-	}
-	if err != nil {
-		return false, errors.New("Get Sql Operator When Check OBSever Status")
-	}
-	obServerList := sqlOperator.GetOBServer()
-	if len(obServerList) == 0 {
-		return false, errors.New(observerconst.DataBaseError)
-	}
-	for _, obServer := range obServerList {
-		if obServer.Zone == zoneName && obServer.Status != observerconst.OBServerActive {
-			return false, errors.New(fmt.Sprint("OBServers Are Not Active In Zone: ", zoneName))
-		}
-	}
-	return true, nil
-}
-
-func (ctrl *OBClusterCtrl) UpgradeSchema() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when upgrade schema")
-	}
-	return sqlOperator.UpgradeSchema()
-}
-
-func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
-	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
-	if err != nil {
-		return false, errors.Wrap(err, "get sql operator when check info leader count")
-	}
-	zoneLeaderCount := sqlOperator.GetLeaderCount()
-	for _, zone := range zoneLeaderCount {
-		if zone.Zone == zoneName {
-			if zone.LeaderCount == 0 {
-				return true, nil
-			} else {
-				return false, errors.New(fmt.Sprint("Leader Count Is Not Zero: ", zoneName))
-			}
-		}
-	}
-	return false, errors.New(fmt.Sprint("Can Not Get Zone Leader Count : ", zoneName))
-}
-
-func (ctrl *OBClusterCtrl) isOBZoneStop(rsIP, zoneName string) (bool, error) {
-	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
-	if err != nil {
-		return false, errors.Wrap(err, "Get Sql Operator When Check OB Zone Stop")
-	}
-	obZoneList := sqlOperator.GetOBZone()
-	if len(obZoneList) == 0 {
-		return false, errors.New(observerconst.DataBaseError)
-	}
-
-	for _, zone := range obZoneList {
-		if zone.Zone == zoneName {
-			if zone.Info == observerconst.OBZoneInactive {
-				return true, nil
-			}
-			return false, nil
-		}
-	}
-	return false, errors.New("Can Not Get Zone ")
-}
-
 func (ctrl *OBClusterCtrl) GetInfoForUpgradeByZone() map[string][]string {
 	infoMap := make(map[string][]string)
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
@@ -922,7 +504,7 @@ func (ctrl *OBClusterCtrl) GetInfoForUpgradeByZone() map[string][]string {
 	return infoMap
 }
 
-func (ctrl *OBClusterCtrl) CheckUpgradeMode(statefulApp cloudv1.StatefulApp) error {
+func (ctrl *OBClusterCtrl) CheckUpgradeModeBegin(statefulApp cloudv1.StatefulApp) error {
 	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
 	if err != nil {
 		klog.Errorln("Get Sql Operator From StatefulApp Failed, Err: ", err)
@@ -942,40 +524,9 @@ func (ctrl *OBClusterCtrl) CheckUpgradeMode(statefulApp cloudv1.StatefulApp) err
 	}
 }
 
-func (ctrl *OBClusterCtrl) GetRsIPFromDB(statefulApp cloudv1.StatefulApp) (string, error) {
-	var rsIP string
-	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-	if err != nil {
-		klog.Errorln("Get Sql Operator From StatefulApp Failed, Err: ", err)
-		return rsIP, err
-	}
-	rsList := sqlOperator.GetRootService()
-	for _, zone := range rsList {
-		if zone.Role == 1 {
-			rsIP = zone.SvrIP
-			return rsIP, nil
-		}
-	}
-	return rsIP, errors.New("Get RS IP Failed. Cannot Find RS")
-}
-
-func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp, zoneName string) (string, error) {
-	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
-	rsCtrl := NewRootServiceCtrl(ctrl)
-	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
-	if err != nil {
-		return "", err
-	}
-	var rsIPList []string
-	for _, cluster := range rsCurrent.Status.Topology {
-		if cluster.Cluster == myconfig.ClusterName {
-			for _, zone := range cluster.Zone {
-				if zone.ServerIP != "" && zone.Name != zoneName && zone.Role == 1 {
-					rsIPList = append(rsIPList, zone.ServerIP)
-					return zone.ServerIP, nil
-				}
-			}
-		}
-	}
-	return "", errors.New("Get RS IP Failed. Cannot Find RS")
+func (ctrl *OBClusterCtrl) UpdateStatefulAppImage(statefulApp cloudv1.StatefulApp) error {
+	image := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+	newStatefulApp := converter.UpdateStatefulAppImage(statefulApp, image)
+	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
+	return statefulAppCtrl.UpdateStatefulApp()
 }

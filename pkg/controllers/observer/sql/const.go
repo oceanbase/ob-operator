@@ -52,5 +52,6 @@ const (
 
 	SetParameterTemplate = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 
-	GetParameterTemplate = "SELECT zone, svr_ip, svr_port, name, value, scope, edit_level FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = '${NAME}'"
+	GetParameterTemplate  = "SELECT zone, svr_ip, svr_port, name, value, scope, edit_level FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = '${NAME}'"
+	ShowParameterTemplate = "SHOW PARAMETERS LIKE '${NAME}'"
 )

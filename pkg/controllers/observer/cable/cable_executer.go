@@ -63,12 +63,22 @@ func OBServerGetVersionExecuter(podIP string) (map[string]interface{}, error) {
 
 func OBServerGetUpgradeRouteExecuter(podIP string, obUpgradeRouteArgs map[string]interface{}) (map[string]interface{}, error) {
 	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableUpgradeRouteUrl)
-	code, responseData := util.HTTPPOST(url, util.CovertToJSON(obUpgradeRouteArgs))
+	code, responseData := util.HTTPGET(url, obUpgradeRouteArgs)
 	if code != 200 {
 		klog.Errorln(podIP, " get observer update route failed: ", responseData)
 		return responseData, errors.New("get observer update route failed")
 	}
 	return responseData, nil
+}
+
+func OBRecoverConfigExecuter(podIP string) error {
+	url := fmt.Sprintf("%s%s:%d%s", observerconst.CableUrlProfix, podIP, observerconst.CablePort, observerconst.CableRecoverConfigUrl)
+	code, responseData := util.HTTPGET(url)
+	if code != 200 {
+		klog.Errorln("recover observer config", podIP, "failed")
+		return errors.Errorf("recover observer config failed", responseData)
+	}
+	return nil
 }
 
 func CableReadinessUpdateExecuter(podIP string) error {

@@ -90,3 +90,7 @@ func CableReadinessUpdate(subsets []cloudv1.SubsetStatus) error {
 	}
 	return nil
 }
+
+func OBRecoverConfig(podIP string) error {
+	return OBRecoverConfigExecuter(podIP)
+}

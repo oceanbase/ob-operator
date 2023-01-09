@@ -111,6 +111,12 @@ func GenerateOBUpgradeRouteArgs(currentVersion, targetVersion string) map[string
 	return obUpgradeRouteArgs
 }
 
+func GenerateOBRecoverConfigArgs(path string) map[string]interface{} {
+	obUpgradeRouteArgs := make(map[string]interface{})
+	obUpgradeRouteArgs["configAdditionalDir"] = path
+	return obUpgradeRouteArgs
+}
+
 func GetObUpgradeRouteFromResponse(responseData interface{}) []string {
 	var res []string
 	for _, v := range responseData.([]interface{}) {

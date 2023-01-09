@@ -53,6 +53,21 @@ type SysParameterStat struct {
 	EditLevel string
 }
 
+type ParameterStat struct {
+	Zone      string
+	SvrType   string
+	SvrIP     string
+	SvrPort   int64
+	Name      string
+	DataType  string
+	Value     string
+	Info      string
+	Section   string
+	Scope     string
+	Source    string
+	EditLevel string
+}
+
 type ZoneUpGradeMode struct {
 	Zone    string
 	SvrIP   string

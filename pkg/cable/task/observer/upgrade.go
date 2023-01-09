@@ -13,18 +13,52 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	mapset "github.com/deckarep/golang-set"
+	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	"github.com/oceanbase/ob-operator/pkg/util/shell"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
+// OB Recover Config
+func RecoverConfig() error {
+	_, err := shell.NewCommand(constant.CP_CONFIG_COMMAND).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+	if err != nil {
+		log.WithError(err).Errorf("CP Observer Config error %v", err)
+	}
+	shell.NewCommand(constant.MV_CONFIG_COMMAND).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+	return err
+}
+
+// OB Version
+func GetObVersion() (*shell.ExecuteResult, error) {
+	res, err := shell.NewCommand(constant.OBSERVER_VERSION_COMMAND).WithContext(context.TODO()).WithUser(shell.AdminUser).Execute()
+	if err != nil {
+		log.WithError(err).Errorf("start observer command exec error %v", err)
+	}
+	lines := strings.Split(res.Output, "\n")
+	if len(lines) > 2 {
+		output := strings.Split(lines[1], " ")
+		ver := output[len(output)-1]
+		res.Output = ver[0 : len(ver)-1]
+	} else {
+		return res, errors.New("OB Version Formattion is Wrong")
+	}
+	return res, err
+}
+
+// OB Upgrade Route
 const (
-	FilePath = "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml"
+	TargetVersion  = "targetVersion"
+	CurrentVersion = "currentVersion"
+	FilePath       = "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml"
 )
 
 type OBUpgradeRouteParam struct {

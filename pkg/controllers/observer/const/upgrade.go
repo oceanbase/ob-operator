@@ -17,6 +17,10 @@ const (
 )
 
 const (
+	UpgradePreChecker      = "pre-checker"
+	UpgradePostChecker     = "post-checker"
+	UpgradePre             = "pre"
+	UpgradePost            = "post"
 	UpgradePreCheckerPath  = "/home/admin/oceanbase/etc/upgrade_checker.py"
 	UpgradeScriptsPath     = "/home/admin/oceanbase/scripts/"
 	PreScriptFile          = "/upgrade_pre.py"
@@ -25,6 +29,13 @@ const (
 )
 
 const (
-	MinObserverVersion = "min_observer_version"
-	EnableUpgradeMode  = "enable_upgrade_mode"
+	MinObserverVersion  = "min_observer_version"
+	EnableUpgradeMode   = "enable_upgrade_mode"
+	ConfigAdditionalDir = "config_additional_dir"
+)
+
+const (
+	JobRunning   = "Running"
+	JobSucceeded = "Succeeded"
+	JobFailed    = "Failed"
 )
