@@ -35,8 +35,7 @@ type SourceClusterSpec struct {
 type ScheduleSpec struct {
 	BackupType string `json:"name"`
 	Schedule   string `json:"schedule,omitempty"`
-	// type = time?
-	NextTime string `json:"nextTime,omitempty"`
+	NextTime   string `json:"nextTime,omitempty"`
 }
 
 // ScheduleSpec defines the schedule strategy
@@ -84,4 +83,8 @@ type BackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Backup `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&Backup{}, &BackupList{})
 }

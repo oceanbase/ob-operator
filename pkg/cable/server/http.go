@@ -54,6 +54,12 @@ func (S *Server) Init() {
 		obGroup.GET("/readiness", OBReadiness)
 		// readiness update
 		obGroup.POST("/readinessUpdate", OBReadinessUpdate)
+		// get version
+		obGroup.GET("/version", OBVersion)
+		// get upgrade route
+		obGroup.GET("/upgradeRoute", OBUpgradeRoute)
+		// recover config
+		obGroup.GET("/recoverConfig", OBRecoverConfig)
 	}
 	S.Router = router
 	S.HttpServer = &http.Server{

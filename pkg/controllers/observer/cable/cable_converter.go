@@ -103,3 +103,24 @@ func GenerateOBClusterBootstrapArgs(subsets []cloudv1.SubsetStatus) (string, err
 	klog.Infoln("OBCluster bootstrap args", obclusterBootstrapArgs)
 	return obclusterBootstrapArgs, nil
 }
+
+func GenerateOBUpgradeRouteArgs(currentVersion, targetVersion string) map[string]interface{} {
+	obUpgradeRouteArgs := make(map[string]interface{})
+	obUpgradeRouteArgs["currentVersion"] = currentVersion
+	obUpgradeRouteArgs["targetVersion"] = targetVersion
+	return obUpgradeRouteArgs
+}
+
+func GenerateOBRecoverConfigArgs(path string) map[string]interface{} {
+	obUpgradeRouteArgs := make(map[string]interface{})
+	obUpgradeRouteArgs["configAdditionalDir"] = path
+	return obUpgradeRouteArgs
+}
+
+func GetObUpgradeRouteFromResponse(responseData interface{}) []string {
+	var res []string
+	for _, v := range responseData.([]interface{}) {
+		res = append(res, v.(string))
+	}
+	return res
+}

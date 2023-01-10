@@ -26,6 +26,7 @@ const (
 // Pod event reason list
 const (
 	CreatedPod        = "CreatedPod"
+	UpatedPod         = "UpatedPod"
 	FailedToCreatePod = "FailedCreatePod"
 	DeletedPod        = "DeletedPod"
 	FailedToKillPod   = "FailedKillPod"
@@ -93,6 +94,14 @@ const (
 	FailedToCreateOBZone = "FailedCreateOBZone"
 	DeletedOBZone        = "DeletedOBZone"
 	FailedToDeleteOBZone = "FailedDeleteOBZone"
+)
+
+// Job event reason list
+const (
+	CreatedJob        = "CreatedJob"
+	FailedToCreateJob = "FailedCreateJob"
+	DeletedJob        = "DeletedJob"
+	FailedToKillJob   = "FailedKillJob"
 )
 
 // Probe event reason list
