@@ -46,6 +46,26 @@ func OBServerStart(obCluster cloudv1.OBCluster, subsets []cloudv1.SubsetStatus, 
 	}
 }
 
+func OBServerGetVersion(podIP string) (string, error) {
+	responseData, err := OBServerGetVersionExecuter(podIP)
+	if err != nil {
+		return "", err
+	}
+	version := responseData["data"].(string)
+	return version, nil
+}
+
+func OBServerGetUpgradeRoute(podIP, currentVer, targetVer string) ([]string, error) {
+	obUpgradeRouteArgs := GenerateOBUpgradeRouteArgs(currentVer, targetVer)
+	responseData, err := OBServerGetUpgradeRouteExecuter(podIP, obUpgradeRouteArgs)
+	if err != nil {
+		return nil, err
+	}
+	response := responseData["data"]
+	upgradeRoute := GetObUpgradeRouteFromResponse(response)
+	return upgradeRoute, nil
+}
+
 func OBServerStatusCheck(clusterName string, subsets []cloudv1.SubsetStatus) error {
 	for _, subset := range subsets {
 		podList := subset.Pods
@@ -69,4 +89,8 @@ func CableReadinessUpdate(subsets []cloudv1.SubsetStatus) error {
 		}
 	}
 	return nil
+}
+
+func OBRecoverConfig(podIP string) error {
+	return OBRecoverConfigExecuter(podIP)
 }

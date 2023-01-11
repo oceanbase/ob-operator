@@ -53,6 +53,33 @@ type SysParameterStat struct {
 	EditLevel string
 }
 
+type ParameterStat struct {
+	Zone      string
+	SvrType   string
+	SvrIP     string
+	SvrPort   int64
+	Name      string
+	DataType  string
+	Value     string
+	Info      string
+	Section   string
+	Scope     string
+	Source    string
+	EditLevel string
+}
+
+type ZoneUpGradeMode struct {
+	Zone    string
+	SvrIP   string
+	SvrPort int64
+	Value   string
+}
+
+type ZoneLeaderCount struct {
+	Zone        string
+	LeaderCount int64
+}
+
 type AllUnit struct {
 	UnitIp             string
 	ResourcePoolIp     string
@@ -65,4 +92,11 @@ type AllUnit struct {
 	ManualMigrate      int64
 	Status             string
 	ReplicaType        int64
+}
+
+type ClogStat struct {
+	SvrIP     string
+	SvrPort   int64
+	IsOffline int8
+	IsInSync  int8
 }

@@ -51,7 +51,6 @@ spec:
                     name:
                       type: string
                     nextTime:
-                      description: type = time?
                       type: string
                     schedule:
                       type: string
@@ -121,7 +120,6 @@ spec:
                     name:
                       type: string
                     nextTime:
-                      description: type = time?
                       type: string
                     schedule:
                       type: string
@@ -231,7 +229,6 @@ spec:
                 - cpu
                 - memory
                 - storage
-                - volume
                 type: object
               tag:
                 type: string
@@ -298,9 +295,19 @@ spec:
                       type: string
                     clusterStatus:
                       type: string
+                    currentImage:
+                      type: string
                     lastTransitionTime:
                       format: date-time
                       type: string
+                    scriptPassedVersion:
+                      type: string
+                    targetVersion:
+                      type: string
+                    upgradeRoute:
+                      items:
+                        type: string
+                      type: array
                     zone:
                       items:
                         properties:

@@ -16,7 +16,7 @@ package observerconst
 const (
 	ImgOb         = "observer"
 	ImgObagent    = "obagent"
-	ImgPullPolicy = "Always"
+	ImgPullPolicy = "IfNotPresent"
 
 	DatafileStorageName = "data-file"
 	DatafileStoragePath = "/home/admin/data_file"
@@ -24,6 +24,8 @@ const (
 	DatalogStoragePath  = "/home/admin/data_log"
 	LogStorageName      = "log"
 	LogStoragePath      = "/home/admin/log"
+	EtcStorageName      = "etc"
+	EtcStoragePath      = "/home/admin/etc"
 
 	BackupName = "backup"
 	BackupPath = "/ob-backup"

@@ -89,8 +89,11 @@ func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	volumeMounts = append(volumeMounts, volumeMountDataFile)
 	volumeMounts = append(volumeMounts, volumeMountDataLog)
 	volumeMounts = append(volumeMounts, volumeMountLog)
-	volumeMounts = append(volumeMounts, volumeMountBackup)
 
+	backupVolumeSpec := obClusterSpec.Resources.Volume
+	if backupVolumeSpec.Name != "" {
+		volumeMounts = append(volumeMounts, volumeMountBackup)
+	}
 	readinessProbeHTTP := corev1.HTTPGetAction{}
 	readinessProbeHTTP.Port = intstr.FromInt(observerconst.CablePort)
 	readinessProbeHTTP.Path = observerconst.CableReadinessUrl
@@ -181,16 +184,18 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	volumes = append(volumes, volumeObagentConfFile)
 
 	backupVolumeSpec := obClusterSpec.Resources.Volume
-	backupHostPathType := corev1.HostPathType(corev1.HostPathDirectory)
-	backupHostPath := corev1.HostPathVolumeSource{
-		Path: backupVolumeSpec.Path,
-		Type: &backupHostPathType,
+	if backupVolumeSpec.Name != "" {
+		backupHostPathType := corev1.HostPathType(corev1.HostPathDirectory)
+		backupHostPath := corev1.HostPathVolumeSource{
+			Path: backupVolumeSpec.Path,
+			Type: &backupHostPathType,
+		}
+		backupVolume := corev1.Volume{
+			Name: backupVolumeSpec.Name,
+		}
+		backupVolume.HostPath = &backupHostPath
+		volumes = append(volumes, backupVolume)
 	}
-	backupVolume := corev1.Volume{
-		Name: backupVolumeSpec.Name,
-	}
-	backupVolume.HostPath = &backupHostPath
-	volumes = append(volumes, backupVolume)
 
 	podSpec := corev1.PodSpec{
 		Volumes:    volumes,
@@ -297,5 +302,14 @@ func UpdateZoneForStatefulApp(clusterList []cloudv1.Cluster, statefulApp cloudv1
 	cluster := GetClusterSpecFromOBTopology(clusterList)
 	zoneList := cluster.Zone
 	statefulApp.Spec.Subsets = zoneList
+	return statefulApp
+}
+
+func UpdateStatefulAppImage(statefulApp cloudv1.StatefulApp, image string) cloudv1.StatefulApp {
+	for index, container := range statefulApp.Spec.PodTemplate.Containers {
+		if container.Name == observerconst.ImgOb {
+			statefulApp.Spec.PodTemplate.Containers[index].Image = image
+		}
+	}
 	return statefulApp
 }

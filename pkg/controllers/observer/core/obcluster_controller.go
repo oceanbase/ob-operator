@@ -70,6 +70,9 @@ type OBClusterCtrlOperator interface {
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
@@ -112,12 +115,17 @@ func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.Sta
 	return podCtrl.GetSqlOperator()
 }
 
-func (ctrl *OBClusterCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-
-	// get svc failed
-	if err != nil {
-		return nil, errors.New("failed to get service address")
+func (ctrl *OBClusterCtrl) GetSqlOperator(server ...string) (*sql.SqlOperator, error) {
+	var clusterIP string
+	var err error
+	if server != nil {
+		clusterIP = server[0]
+	} else {
+		clusterIP, err = ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+		// get svc failed
+		if err != nil {
+			return nil, errors.New("failed to get service address")
+		}
 	}
 
 	secretName := converter.GenerateSecretNameForDBUser(ctrl.OBCluster.Name, "sys", "admin")
@@ -232,6 +240,24 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				// OBZone Scale Down
 			case observerconst.ZoneScaleDown:
 				err = ctrl.OBZoneScaleDown(statefulApp)
+			case observerconst.NeedUpgradeCheck:
+				err = ctrl.ExecUpgradePreChecker(statefulApp)
+			case observerconst.UpgradeChecking:
+				err = ctrl.GetPreCheckJobStatus(statefulApp)
+			case observerconst.NeedExecutingPreScripts:
+				err = ctrl.CheckUpgradeModeBegin(statefulApp)
+			case observerconst.ExecutingPreScripts:
+				err = ctrl.ExecPreScripts(statefulApp)
+			case observerconst.NeedUpgrading:
+				err = ctrl.PreparingForUpgrade(statefulApp)
+			case observerconst.Upgrading:
+				err = ctrl.ExecUpgrading(statefulApp)
+			case observerconst.ExecutingPostScripts:
+				err = ctrl.ExecPostScripts(statefulApp)
+			case observerconst.NeedUpgradePostCheck:
+				err = ctrl.PrepareForPostCheck(statefulApp)
+			case observerconst.UpgradePostChecking:
+				err = ctrl.ExecUpgradePostChecker(statefulApp)
 			}
 		}
 	}
@@ -275,8 +301,8 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 	if versionIsModified {
 		// TODO: support version update
-		klog.Errorln("version update is not supported yet")
-		return nil
+		err = ctrl.OBClusterUpgrade(statefulApp)
+		return err
 	}
 
 	// check resource modified
@@ -301,10 +327,6 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		err = ctrl.OBZoneScaleDown(statefulApp)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
-		if err != nil {
-			return err
-		}
 	}
-
-	return nil
+	return err
 }

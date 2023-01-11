@@ -78,8 +78,7 @@ var _ = AfterSuite(func() {
 	TestClient.DeleteObj(testconverter.MakeObjectFromFile("./data/statefulapp-01.yaml").(unstructured.Unstructured))
 	TestClient.DeleteObj(testconverter.MakeObjectFromFile("./data/statefulapp-02.yaml").(unstructured.Unstructured))
 
-	// TestClient.DeleteObj(testresource.MakeObjectFromFile("./data/obcluster-01.yaml").(unstructured.Unstructured))
-	// TestClient.DeleteObj(testresource.MakeObjectFromFile("./data/obcluster-02.yaml").(unstructured.Unstructured))
+	TestClient.DeleteObj(testconverter.MakeObjectFromFile("./data/obcluster-1-1.yaml").(unstructured.Unstructured))
 
 	By("tearing down the test environment")
 	err := testEnv.Stop()
