@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -27,6 +28,7 @@ import (
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	util "github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -50,15 +52,21 @@ type TenantCtrlOperator interface {
 	TenantCoordinator() (ctrl.Result, error)
 }
 
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters/finalizers,verbs=update
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=secrets/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	// Fetch the CR instance
+	// Fetch the tenant CR instance
 	instance := &cloudv1.Tenant{}
 	err := r.CRClient.Get(ctx, req.NamespacedName, instance)
 	if err != nil {
@@ -72,22 +80,41 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	tenantCtrl := NewTenantCtrl(r.CRClient, r.Recorder, *instance)
 
+	// Fetch the OBCluster CR instance
+	obNamespace := types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name:      instance.Spec.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err = r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+	if obInstance.Status.Status != observerconst.ClusterReady {
+		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+		return reconcile.Result{}, nil
+	}
+
 	// Handle deleted tenant
 	tenantFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
 	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
-		if !containsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
 			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, tenantFinalizerName)
 			if err := r.CRClient.Update(context.Background(), instance); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 	} else {
-		if containsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
 			err := r.TenantDelete(r.CRClient, r.Recorder, instance)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
-			instance.ObjectMeta.Finalizers = removeString(instance.ObjectMeta.Finalizers, tenantFinalizerName)
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, tenantFinalizerName)
 			if err := r.CRClient.Update(context.Background(), instance); err != nil {
 				return ctrl.Result{}, err
 			}
@@ -113,25 +140,27 @@ func (r *TenantReconciler) TenantDelete(client client.Client, recorder record.Ev
 		Tenant:   *tenant,
 		Resource: ctrlResource,
 	}
+	tenantName := ctrl.Tenant.Name
+	klog.Infof("Begin Delete Tenant '%s'", tenantName)
 	err := ctrl.DeleteTenant()
 	if err != nil {
 		return err
 	}
+	klog.Infof("Begin Delete Pool, Tenant '%s'", tenantName)
 	err = ctrl.DeletePool()
 	if err != nil {
 		return err
 	}
+	klog.Infof("Begin Delete Unit, Tenant '%s'", tenantName)
 	err = ctrl.DeleteUnit()
 	if err != nil {
 		return err
 	}
+	klog.Infof("Succeed Delete Tenant '%s'", tenantName)
 	return nil
 }
 
 func (ctrl *TenantCtrl) TenantCoordinator() (ctrl.Result, error) {
-	// var newTenantStatus bool
-	// newTenantStatus = ctrl.IsNewTenant()
-	// Tenant control-plan
 	err := ctrl.TenantEffector()
 	if err != nil {
 		return reconcile.Result{}, err
@@ -156,7 +185,7 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 	tenantName := ctrl.Tenant.Name
 	tenantExist, _, err := ctrl.TenantExist(tenantName)
 	if err != nil {
-		klog.Errorln("Check Whether The Tenant Exists Error: ", err)
+		klog.Errorln("Check Whether The Tenant %s Exists Error: %s", tenantName, err)
 		return err
 	}
 	if tenantExist {
@@ -164,45 +193,17 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 	}
 
 	for _, zone := range ctrl.Tenant.Spec.Topology {
-		unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
-		poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-
-		poolExist, _, err := ctrl.PoolExist(poolName)
+		err := ctrl.CheckAndCreateUnitAndPool(zone)
 		if err != nil {
-			klog.Errorln("Check Whether The Resource Pool Exists Error: ", err)
 			return err
-		}
-
-		err, unitExist := ctrl.UnitExist(unitName)
-		if err != nil {
-			klog.Errorln("Check Whether The Resource Unit Exists Error: ", err)
-			return err
-		}
-
-		if !unitExist {
-			err := ctrl.CheckResourceEnough(zone)
-			if err != nil {
-				return err
-			}
-			err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
-			if err != nil {
-				klog.Errorln("Create Unit Error: ", err)
-				return err
-			}
-		}
-		if !poolExist {
-			err = ctrl.CreatePool(poolName, unitName, zone)
-			if err != nil {
-				klog.Errorln("Create Pool Error: ", err)
-				return err
-			}
 		}
 	}
 	err = ctrl.CreateTenant(tenantName, ctrl.Tenant.Spec.Topology)
 	if err != nil {
-		klog.Errorln("Create Tenant Error: ", err)
+		klog.Errorln("Create Tenant '%s' Error: %s", tenantName, err)
 		return err
 	}
+	klog.Infof("Create Tenant '%s' OK", tenantName)
 	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
 }
 
@@ -265,23 +266,4 @@ func (ctrl *TenantCtrl) GetServiceClusterIPByName(namespace, name string) (strin
 		return "", err
 	}
 	return svc.(corev1.Service).Spec.ClusterIP, nil
-}
-
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-func removeString(slice []string, s string) (result []string) {
-	for _, item := range slice {
-		if item == s {
-			continue
-		}
-		result = append(result, item)
-	}
-	return
 }

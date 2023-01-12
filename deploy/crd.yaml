@@ -4806,13 +4806,9 @@ spec:
                 type: string
               collate:
                 type: string
-              comment:
-                type: string
               logonlyReplicaNum:
                 type: integer
               mode:
-                type: string
-              tablegroup:
                 type: string
               topology:
                 items:
@@ -4864,7 +4860,14 @@ spec:
                       - minMemory
                       type: object
                     type:
-                      type: string
+                      properties:
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - name
+                      type: object
                     unitNum:
                       type: integer
                     zone:
@@ -4954,7 +4957,14 @@ spec:
                       - minMemory
                       type: object
                     type:
-                      type: string
+                      properties:
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - name
+                      type: object
                     unitNum:
                       type: integer
                     units:

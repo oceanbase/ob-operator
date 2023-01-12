@@ -67,39 +67,3 @@ func (p *statefulAppEventHandler) Delete(evt event.DeleteEvent, q workqueue.Rate
 
 func (p *statefulAppEventHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
 }
-
-type tenantEventHandler struct {
-	enqueueHandler handler.EnqueueRequestForOwner
-}
-
-func (p *tenantEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
-	tenant := evt.Object.(*cloudv1.Tenant)
-	if tenant.DeletionTimestamp != nil {
-		p.Delete(event.DeleteEvent{Object: evt.Object}, q)
-		return
-	}
-	controllerRef := metav1.GetControllerOf(tenant)
-	if controllerRef != nil && isRefController(controllerRef) {
-		p.enqueueHandler.Create(evt, q)
-	}
-}
-
-func (p *tenantEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
-	oldTenant := evt.ObjectOld.(*cloudv1.Tenant)
-	newTenant := evt.ObjectNew.(*cloudv1.Tenant)
-	if newTenant.ResourceVersion == oldTenant.ResourceVersion {
-		return
-	}
-	p.enqueueHandler.Update(evt, q)
-}
-
-func (p *tenantEventHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-	tenant := evt.Object.(*cloudv1.Tenant)
-	controllerRef := metav1.GetControllerOf(tenant)
-	if controllerRef != nil && isRefController(controllerRef) {
-		p.enqueueHandler.Delete(evt, q)
-	}
-}
-
-func (p *tenantEventHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
-}

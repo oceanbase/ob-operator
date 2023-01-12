@@ -14,14 +14,13 @@ package core
 
 import (
 	"fmt"
-	"reflect"
-	"strings"
-
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
+	"reflect"
+	"strings"
 )
 
 func (ctrl *TenantCtrl) CheckAndSetVariables() error {
@@ -29,13 +28,11 @@ func (ctrl *TenantCtrl) CheckAndSetVariables() error {
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Variables For Tenant ", ctrl.Tenant.Name))
 	}
-	tenantList := sqlOperator.GetGvTenantList()
-	var tenantID int
-	for _, tenant := range tenantList {
-		if tenant.TenantName == ctrl.Tenant.Name {
-			tenantID = int(tenant.TenantID)
-		}
+	tenant := sqlOperator.GetGvTenantByName(ctrl.Tenant.Name)
+	if len(tenant) == 0 {
+		return errors.New(fmt.Sprint("Cannot Get Tenant For CheckAndSetVariables: ", ctrl.Tenant.Name))
 	}
+	tenantID := int(tenant[0].TenantID)
 	for _, variable := range ctrl.Tenant.Spec.Variables {
 		currentVariables := sqlOperator.GetVariable(variable.Name, tenantID)
 		match := true
@@ -62,6 +59,7 @@ func (ctrl *TenantCtrl) CheckAndSetVariables() error {
 }
 
 func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
+	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", ctrl.Tenant.Name))
@@ -71,42 +69,44 @@ func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		match := true
 		if !ctrl.isUnitEqual(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
-			klog.Infof("found zone %s unit config with value %s did't match with config %s", zone.ZoneName, specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName])
+			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitConfig(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitConfig(statusResourceUnit[zone.ZoneName]))
 			match = false
 		}
 		if !match {
-			klog.Infof("set zone %s unit config %s", zone.ZoneName, specResourceUnit[zone.ZoneName])
-			unitName := ctrl.GenerateUnitName(ctrl.Tenant.Name, zone.ZoneName)
-			err = sqlOperator.SetUnitConfig(unitName, specResourceUnit[zone.ZoneName])
-			if err != nil {
-				return err
-			}
 			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
 			if err != nil {
 				return err
 			}
+			klog.Infof("set zone '%s' unit config '%s'", zone.ZoneName, ctrl.FormatUnitConfig(specResourceUnit[zone.ZoneName]))
+			unitName := ctrl.GenerateUnitName(ctrl.Tenant.Name, zone.ZoneName)
+			err, unitExist := ctrl.UnitExist(unitName)
+			if err != nil {
+				klog.Errorf("Check Tenant '%s' Whether The Resource Unit '%s' Exists Error: %s", tenantName, unitName, err)
+				return err
+			}
+			if !unitExist {
+				err := ctrl.CheckResourceEnough(zone)
+				if err != nil {
+					return err
+				}
+				err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
+				if err != nil {
+					klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
+					return err
+				}
+			} else {
+				err = sqlOperator.SetUnitConfig(unitName, specResourceUnit[zone.ZoneName])
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
-	return nil
-}
-
-func (ctrl *TenantCtrl) isUnitEqual(specResourceUnit v1.ResourceUnit, statusResourceUnit v1.ResourceUnit) bool {
-	if specResourceUnit.MaxCPU.Equal(statusResourceUnit.MaxCPU) &&
-		specResourceUnit.MinCPU.Equal(statusResourceUnit.MinCPU) &&
-		specResourceUnit.MaxMemory.Value() == statusResourceUnit.MaxMemory.Value() &&
-		specResourceUnit.MinMemory.Value() == statusResourceUnit.MinMemory.Value() &&
-		specResourceUnit.MaxIops == statusResourceUnit.MaxIops &&
-		specResourceUnit.MinIops == statusResourceUnit.MinIops &&
-		specResourceUnit.MaxDiskSize.Value() == statusResourceUnit.MaxDiskSize.Value() &&
-		specResourceUnit.MaxSessionNum == statusResourceUnit.MaxSessionNum {
-		return true
-	} else {
-		return false
-	}
-
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
 }
 
 func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
+	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Resource Pool For Tenant ", ctrl.Tenant.Name))
@@ -115,89 +115,210 @@ func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
 	statusUnitNumMap := GenerateStatusUnitNumMap(ctrl.Tenant.Status)
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		if specUnitNumMap[zone.ZoneName] != statusUnitNumMap[zone.ZoneName] {
-			klog.Infof("found zone %s resource pool with unit_num value %s did't match with config %s", zone.ZoneName, statusUnitNumMap[zone.ZoneName], statusUnitNumMap[zone.ZoneName])
-			klog.Infof("set zone %s resource pool unit_num %s", zone.ZoneName, specUnitNumMap[zone.ZoneName])
-			poolName := ctrl.GeneratePoolName(ctrl.Tenant.Name, zone.ZoneName)
-			err = sqlOperator.SetPoolUnitNum(poolName, specUnitNumMap[zone.ZoneName])
-			if err != nil {
-				return err
-			}
+			klog.Infof("found zone %s resource pool with unit_num value %d did't match with config %d", zone.ZoneName, statusUnitNumMap[zone.ZoneName], statusUnitNumMap[zone.ZoneName])
 			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
 			if err != nil {
 				return err
 			}
+			poolName := ctrl.GeneratePoolName(ctrl.Tenant.Name, zone.ZoneName)
+			poolExist, _, err := ctrl.PoolExist(poolName)
+			if err != nil {
+				klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)
+				return err
+			}
+			if !poolExist {
+				unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
+				err = ctrl.CreatePool(poolName, unitName, zone)
+				if err != nil {
+					klog.Errorf("Create Tenant '%s' Pool '%s' Error: %s", tenantName, poolName, err)
+					return err
+				}
+			} else {
+				klog.Infof("set zone %s resource pool unit_num %d", zone.ZoneName, specUnitNumMap[zone.ZoneName])
+				err = sqlOperator.SetPoolUnitNum(poolName, specUnitNumMap[zone.ZoneName])
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
-	return nil
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
 }
 
 func (ctrl *TenantCtrl) CheckAndSetTenant() error {
+	var err error
+	addZone := ctrl.GetZoneForAdd()
+	if addZone.ZoneName != "" {
+		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+		if err != nil {
+			return err
+		}
+		return ctrl.TenantAddZone(addZone)
+	}
+	deleteZone := ctrl.GetZoneForDelete()
+	if deleteZone.ZoneName != "" {
+		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+		if err != nil {
+			return err
+		}
+		return ctrl.TenantDeleteZone(deleteZone)
+	}
+	err = ctrl.CheckAndSetTenantParams()
+	if err != nil {
+		return err
+	}
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+}
+
+func (ctrl *TenantCtrl) GetZoneForAdd() v1.TenantReplica {
+	var zone v1.TenantReplica
+	for _, specZone := range ctrl.Tenant.Spec.Topology {
+		exist := false
+		for _, statusZone := range ctrl.Tenant.Status.Topology {
+			if statusZone.ZoneName == specZone.ZoneName {
+				exist = true
+			}
+		}
+		if !exist {
+			zone = specZone
+			break
+		}
+	}
+	return zone
+}
+
+func (ctrl *TenantCtrl) GetZoneForDelete() v1.TenantReplicaStatus {
+	var zone v1.TenantReplicaStatus
+	for _, statusZone := range ctrl.Tenant.Status.Topology {
+		exist := false
+		for _, specZone := range ctrl.Tenant.Spec.Topology {
+			if statusZone.ZoneName == specZone.ZoneName {
+				exist = true
+			}
+		}
+		if !exist {
+			zone = statusZone
+			break
+		}
+	}
+	return zone
+}
+
+func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica) error {
+	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Tenant ", ctrl.Tenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Add Zone ", ctrl.Tenant.Name))
 	}
-	if len(ctrl.Tenant.Spec.Topology) > len(ctrl.Tenant.Status.Topology) {
-		// RESOURCE_POOL_LIST
-		poolList := ctrl.GeneratePoolList()
-		err = sqlOperator.SetTenant(ctrl.Tenant.Name, "", "", poolList, "", "", "")
+	tenantStatusReplica := v1.TenantReplicaStatus{
+		ZoneName:   zone.ZoneName,
+		Type:       zone.Type,
+		UnitNumber: zone.UnitNumber,
+	}
+	tenantStatusReplicaList := ctrl.Tenant.Status.Topology
+	tenantStatusReplicaList = append(tenantStatusReplicaList, tenantStatusReplica)
+	klog.Infoln("tenantStatusReplicaList: ", tenantStatusReplicaList)
+	err = ctrl.CheckAndCreateUnitAndPool(zone)
+	if err != nil {
+		return err
+	}
+	var localityString string
+	poolList := ctrl.GenerateStatusPoolList(tenantName, tenantStatusReplicaList)
+	poolListString := fmt.Sprintf("RESOURCE_POOL_LIST = ('%s')", strings.Join(poolList, "','"))
+	statusLocalityMap := GenerateStatusLocalityMap(tenantStatusReplicaList)
+	localityList := ctrl.GenerateLocalityList(statusLocalityMap)
+	localityString = fmt.Sprintf(", LOCALITY = '%s'", strings.Join(localityList, ","))
+	err = sqlOperator.SetTenant(tenantName, "", "", poolListString, "", localityString, "")
+	if err != nil {
+		return err
+	}
+	klog.Infof("Wait For Tenant '%s' 'ALTER_TENANT_LOCALITY' Job Success", tenantName)
+	for {
+		jobList := sqlOperator.GetInprogressJob(tenantName)
+		if len(jobList) == 0 {
+			break
+		}
+	}
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+}
+
+func (ctrl *TenantCtrl) TenantDeleteZone(deleteZone v1.TenantReplicaStatus) error {
+	tenantName := ctrl.Tenant.Name
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Delete Zone ", ctrl.Tenant.Name))
+	}
+	var zoneList []v1.TenantReplicaStatus
+	for _, zone := range ctrl.Tenant.Status.Topology {
+		if zone.ZoneName != deleteZone.ZoneName {
+			zoneList = append(zoneList, zone)
+		}
+	}
+	statusLocalityMap := GenerateStatusLocalityMap(zoneList)
+	localityList := ctrl.GenerateLocalityList(statusLocalityMap)
+	localityString := fmt.Sprintf("LOCALITY = '%s'", strings.Join(localityList, ","))
+	err = sqlOperator.SetTenant(tenantName, "", "", "", "", localityString, "")
+	if err != nil {
+		klog.Errorf("Modify Tenant '%s' Locality Error : %s", tenantName, err)
+		return err
+	}
+	klog.Infof("Wait For Tenant '%s' 'ALTER_TENANT_LOCALITY' Job Success", tenantName)
+	for {
+		jobList := sqlOperator.GetInprogressJob(tenantName)
+		if len(jobList) == 0 {
+			break
+		}
+	}
+	poolList := ctrl.GenerateStatusPoolList(tenantName, zoneList)
+	poolListString := fmt.Sprintf(", RESOURCE_POOL_LIST = ('%s')", strings.Join(poolList, "','"))
+	err = sqlOperator.SetTenant(tenantName, "", "", poolListString, "", "", "")
+	if err != nil {
+		klog.Errorf("Modify Tenant '%s' Resource Pool List Error : %s", tenantName, err)
+		return err
+	}
+	poolName := ctrl.GeneratePoolName(tenantName, deleteZone.ZoneName)
+	poolExist, _, err := ctrl.PoolExist(poolName)
+	if err != nil {
+		klog.Errorln("Check Whether The Resource Pool Exists Error: ", err)
+		return err
+	}
+	if poolExist {
+		err = sqlOperator.DeletePool(poolName)
 		if err != nil {
 			return err
 		}
 	}
-	// LOCALITY
-	specLocalityMap := GenerateSpecLocalityMap(ctrl.Tenant.Spec)
-	statusLocalityMap := GenerateStatusLocalityMap(ctrl.Tenant.Status)
-	if !reflect.DeepEqual(specLocalityMap, statusLocalityMap) {
-		for zoneName, zoneType := range specLocalityMap {
-			if statusLocalityMap[zoneName] == "" || statusLocalityMap[zoneName] != specLocalityMap[zoneName] {
-				statusLocalityMap[zoneName] = zoneType
-				locality := GenerateLocality(statusLocalityMap)
-				err = sqlOperator.SetTenantLocality(ctrl.Tenant.Name, locality)
-				if err != nil {
-					return err
-				}
-				return ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
-			}
-		}
-		for zoneName := range statusLocalityMap {
-			if specLocalityMap[zoneName] == "" {
-				statusLocalityMap[zoneName] = ""
-				locality := GenerateLocality(statusLocalityMap)
-				err = sqlOperator.SetTenantLocality(ctrl.Tenant.Name, locality)
-				if err != nil {
-					return err
-				}
-				return ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
-			}
+	unitName := ctrl.GenerateUnitName(tenantName, deleteZone.ZoneName)
+	err, unitExist := ctrl.UnitExist(unitName)
+	if err != nil {
+		klog.Errorln("Check Whether The Resource Unit Exists Error: ", err)
+		return err
+	}
+	if unitExist {
+		err = sqlOperator.DeleteUnit(unitName)
+		if err != nil {
+			return err
 		}
 	}
-	// RESOURCE_POOL_LIST
-	poolList := ctrl.GeneratePoolList()
-	// PRIMARY_ZONE
-	primaryZone := ctrl.GeneratePrimaryZone()
-	// ZONE_LIST
-	zoneList := ctrl.GenerateZoneList()
-	// CHARSET
+	klog.Infoln("Succeed delete zone  ", deleteZone.ZoneName)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+}
+
+func (ctrl *TenantCtrl) CheckAndSetTenantParams() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Params ", ctrl.Tenant.Name))
+	}
 	charset := ctrl.Tenant.Spec.Charset
 	if charset != "" {
-		charset = fmt.Sprintf(", CHARSET = %s", charset)
+		charset = fmt.Sprintf("CHARSET = %s", charset)
 	}
-	// DEFAULT TABLEGROUP
-	defaultTablegroup := ctrl.Tenant.Spec.DefaultTablegroup
-	if defaultTablegroup != "" {
-		defaultTablegroup = fmt.Sprintf(", DEFAULT TABLEGROUP = {%s}", defaultTablegroup)
-	}
-	// LOGONLY_REPLICA_NUM
-	var logonlyReplicaNum string
+	var logonlyReplicaNumString string
 	if ctrl.Tenant.Spec.LogonlyReplicaNum != ctrl.Tenant.Status.LogonlyReplicaNum {
-		logonlyReplicaNum = fmt.Sprintf(", LOGONLY_REPLICA_NUM = %d", ctrl.Tenant.Spec.LogonlyReplicaNum)
+		logonlyReplicaNumString = fmt.Sprintf(", LOGONLY_REPLICA_NUM = %d", ctrl.Tenant.Spec.LogonlyReplicaNum)
 	}
-	if zoneList != "" || primaryZone != "" || poolList != "" || charset != "" || defaultTablegroup != "" || logonlyReplicaNum != "" {
-		err = sqlOperator.SetTenant(ctrl.Tenant.Name, zoneList, primaryZone, poolList, charset, defaultTablegroup, logonlyReplicaNum)
-		if err != nil {
-			return err
-		}
-		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+	if charset != "" || logonlyReplicaNumString != "" {
+		err = sqlOperator.SetTenant(ctrl.Tenant.Name, "", "", "", charset, "", logonlyReplicaNumString)
 		if err != nil {
 			return err
 		}
@@ -249,20 +370,31 @@ func GenerateStatusUnitNumMap(status v1.TenantStatus) map[string]int {
 	return unitNumMap
 }
 
-func GenerateSpecLocalityMap(spec v1.TenantSpec) map[string]string {
-	localityMap := make(map[string]string, 0)
+func GenerateSpecLocalityMap(spec v1.TenantSpec) map[string]v1.TypeSpec {
+	localityMap := make(map[string]v1.TypeSpec, 0)
 	for _, zone := range spec.Topology {
-		if zone.Type != "" {
-			switch strings.ToUpper(string(zone.Type[0])) {
-			case tenantconst.TypeF:
-				localityMap[zone.ZoneName] = tenantconst.TypeFull
-			case tenantconst.TypeL:
-				localityMap[zone.ZoneName] = tenantconst.TypeLog
-			case tenantconst.TypeR:
-				if strings.Contains(zone.Type, "{") {
-					localityMap[zone.ZoneName] = tenantconst.TypeR + zone.Type[strings.Index(zone.Type, "{"):]
+		if zone.Type.Name != "" {
+			switch strings.ToUpper(zone.Type.Name) {
+			case tenantconst.TypeFull:
+				localityMap[zone.ZoneName] = v1.TypeSpec{
+					Name:    tenantconst.TypeFull,
+					Replica: 1,
+				}
+			case tenantconst.TypeLogonly:
+				localityMap[zone.ZoneName] = v1.TypeSpec{
+					Name:    tenantconst.TypeLogonly,
+					Replica: 1,
+				}
+			case tenantconst.TypeReadonly:
+				var replica int
+				if zone.Type.Replica == 0 {
+					replica = 1
 				} else {
-					localityMap[zone.ZoneName] = zone.Type + "{1}"
+					replica = zone.Type.Replica
+				}
+				localityMap[zone.ZoneName] = v1.TypeSpec{
+					Name:    tenantconst.TypeReadonly,
+					Replica: replica,
 				}
 			}
 		}
@@ -270,59 +402,35 @@ func GenerateSpecLocalityMap(spec v1.TenantSpec) map[string]string {
 	return localityMap
 }
 
-func GenerateStatusLocalityMap(status v1.TenantStatus) map[string]string {
-	localityMap := make(map[string]string, 0)
-	for _, zone := range status.Topology {
-		if zone.Type != "" {
-			tmp := strings.Split(zone.Type, "{")[0]
-			switch tmp {
-			case tenantconst.TypeFull:
-				localityMap[zone.ZoneName] = tenantconst.TypeFull
-			case tenantconst.TypeLog:
-				localityMap[zone.ZoneName] = tenantconst.TypeLog
-			case tenantconst.TypeReadonly:
-				localityMap[zone.ZoneName] = zone.Type
-			}
-		}
+func GenerateStatusLocalityMap(topology []v1.TenantReplicaStatus) map[string]v1.TypeSpec {
+	localityMap := make(map[string]v1.TypeSpec, 0)
+	for _, zone := range topology {
+		localityMap[zone.ZoneName] = zone.Type
 	}
 	return localityMap
 }
 
-func GenerateLocality(localityMap map[string]string) string {
-	var locality string
+func (ctrl *TenantCtrl) GenerateLocalityList(localityMap map[string]v1.TypeSpec) []string {
+	var locality []string
 	for zoneName, zoneType := range localityMap {
-		if zoneType == "" {
-			continue
+		if zoneType.Name != "" {
+			locality = append(locality, fmt.Sprint(zoneType.Name, "{", zoneType.Replica, "}@", zoneName))
 		}
-		switch strings.ToUpper(string(zoneType[0])) {
-		case tenantconst.TypeF:
-			zoneType = tenantconst.TypeF
-		case tenantconst.TypeL:
-			zoneType = tenantconst.TypeL
-		case tenantconst.TypeR:
-			if strings.Contains(zoneType, "{") {
-				zoneType = tenantconst.TypeR + zoneType[strings.Index(zoneType, "{"):]
-			} else {
-				zoneType = tenantconst.TypeR
-			}
-		}
-		locality = fmt.Sprint(locality, zoneType, "@", zoneName, ",")
 	}
-	locality = locality[0 : len(locality)-1]
 	return locality
 }
 
-func (ctrl *TenantCtrl) GenerateZoneList() string {
+func (ctrl *TenantCtrl) GenerateZoneListString() string {
 	var zoneList string
 	specZoneList := ctrl.GenerateSpecZoneList(ctrl.Tenant.Spec.Topology)
 	statusZoneList := ctrl.GenerateStatusZoneList(ctrl.Tenant.Status.Topology)
-	if specZoneList != statusZoneList {
-		zoneList = fmt.Sprintf(", ZONE_LIST = ('%s')", specZoneList)
+	if !reflect.DeepEqual(specZoneList, statusZoneList) {
+		zoneList = fmt.Sprintf(", ZONE_LIST = ('%s')", strings.Join(specZoneList, "','"))
 	}
 	return zoneList
 }
 
-func (ctrl *TenantCtrl) GeneratePrimaryZone() string {
+func (ctrl *TenantCtrl) GeneratePrimaryZoneString() string {
 	var primaryZone string
 	specPrimaryZone := ctrl.GenerateSpecPrimaryZone(ctrl.Tenant.Spec.Topology)
 	statusPrimaryZone := ctrl.GenerateStatusPrimaryZone(ctrl.Tenant.Status.Topology)
@@ -332,12 +440,22 @@ func (ctrl *TenantCtrl) GeneratePrimaryZone() string {
 	return primaryZone
 }
 
-func (ctrl *TenantCtrl) GeneratePoolList() string {
-	var poolList string
-	specPoolList := ctrl.GenerateSpecPoolList(ctrl.Tenant.Name, ctrl.Tenant.Spec.Topology)
-	statusPoolList := ctrl.GenerateStatusPoolList(ctrl.Tenant.Name, ctrl.Tenant.Status.Topology)
-	if specPoolList != statusPoolList {
-		poolList = fmt.Sprintf(", RESOURCE_POOL_LIST = (%s)", specPoolList)
+func (ctrl *TenantCtrl) isUnitEqual(specResourceUnit v1.ResourceUnit, statusResourceUnit v1.ResourceUnit) bool {
+	if specResourceUnit.MaxCPU.Equal(statusResourceUnit.MaxCPU) &&
+		specResourceUnit.MinCPU.Equal(statusResourceUnit.MinCPU) &&
+		specResourceUnit.MaxMemory.Value() == statusResourceUnit.MaxMemory.Value() &&
+		specResourceUnit.MinMemory.Value() == statusResourceUnit.MinMemory.Value() &&
+		specResourceUnit.MaxIops == statusResourceUnit.MaxIops &&
+		specResourceUnit.MinIops == statusResourceUnit.MinIops &&
+		specResourceUnit.MaxDiskSize.Value() == statusResourceUnit.MaxDiskSize.Value() &&
+		specResourceUnit.MaxSessionNum == statusResourceUnit.MaxSessionNum {
+		return true
+	} else {
+		return false
 	}
-	return poolList
+}
+
+func (ctrl *TenantCtrl) FormatUnitConfig(unit v1.ResourceUnit) string {
+	return fmt.Sprintf("MaxCPU: %s MinCPU:%s MaxMemory:%s MinMemory:%s MaxIops:%d MinIops:%d MaxDiskSize:%s MaxSessionNum:%d",
+		unit.MaxCPU.String(), unit.MinCPU.String(), unit.MaxMemory.String(), unit.MinMemory.String(), unit.MaxIops, unit.MinIops, unit.MaxDiskSize.String(), unit.MaxSessionNum)
 }

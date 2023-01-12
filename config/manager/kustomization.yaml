@@ -13,4 +13,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: reg.docker.alibaba-inc.com/obce/ob-operator
-  newTag: 1.1.5-alv
+  newTag: 1.1.8-alv

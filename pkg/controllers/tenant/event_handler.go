@@ -13,9 +13,13 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
+	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 )
 
 func isRefController(controllerRef *metav1.OwnerReference) bool {
@@ -27,38 +31,38 @@ func isRefController(controllerRef *metav1.OwnerReference) bool {
 	return controllerRef.Kind == controllerKind.Kind && refGV.Group == controllerKind.Group
 }
 
-// type tenantEventHandler struct {
-// 	enqueueHandler handler.EnqueueRequestForOwner
-// }
+type tenantEventHandler struct {
+	enqueueHandler handler.EnqueueRequestForOwner
+}
 
-// func (p *tenantEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
-// 	tenant := evt.Object.(*cloudv1.Tenant)
-// 	if tenant.DeletionTimestamp != nil {
-// 		p.Delete(event.DeleteEvent{Object: evt.Object}, q)
-// 		return
-// 	}
-// 	controllerRef := metav1.GetControllerOf(tenant)
-// 	if controllerRef != nil && isRefController(controllerRef) {
-// 		p.enqueueHandler.Create(evt, q)
-// 	}
-// }
+func (p *tenantEventHandler) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+	tenant := evt.Object.(*cloudv1.Tenant)
+	if tenant.DeletionTimestamp != nil {
+		p.Delete(event.DeleteEvent{Object: evt.Object}, q)
+		return
+	}
+	controllerRef := metav1.GetControllerOf(tenant)
+	if controllerRef != nil && isRefController(controllerRef) {
+		p.enqueueHandler.Create(evt, q)
+	}
+}
 
-// func (p *tenantEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
-// 	oldTenant := evt.ObjectOld.(*cloudv1.Tenant)
-// 	newTenant := evt.ObjectNew.(*cloudv1.Tenant)
-// 	if newTenant.ResourceVersion == oldTenant.ResourceVersion {
-// 		return
-// 	}
-// 	p.enqueueHandler.Update(evt, q)
-// }
+func (p *tenantEventHandler) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+	oldTenant := evt.ObjectOld.(*cloudv1.Tenant)
+	newTenant := evt.ObjectNew.(*cloudv1.Tenant)
+	if newTenant.ResourceVersion == oldTenant.ResourceVersion {
+		return
+	}
+	p.enqueueHandler.Update(evt, q)
+}
 
-// func (p *tenantEventHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
-// 	tenant := evt.Object.(*cloudv1.Tenant)
-// 	controllerRef := metav1.GetControllerOf(tenant)
-// 	if controllerRef != nil && isRefController(controllerRef) {
-// 		p.enqueueHandler.Delete(evt, q)
-// 	}
-// }
+func (p *tenantEventHandler) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+	tenant := evt.Object.(*cloudv1.Tenant)
+	controllerRef := metav1.GetControllerOf(tenant)
+	if controllerRef != nil && isRefController(controllerRef) {
+		p.enqueueHandler.Delete(evt, q)
+	}
+}
 
-// func (p *tenantEventHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
-// }
+func (p *tenantEventHandler) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+}

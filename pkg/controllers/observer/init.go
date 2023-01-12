@@ -90,21 +90,5 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to tenant
-	err = c.Watch(
-		&source.Kind{Type: &cloudv1.Tenant{}},
-		&tenantEventHandler{
-			enqueueHandler: handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &cloudv1.OBCluster{},
-			},
-		},
-		&tenantPredicate{},
-	)
-	if err != nil {
-		klog.Errorln(err)
-		return err
-	}
-
 	return nil
 }

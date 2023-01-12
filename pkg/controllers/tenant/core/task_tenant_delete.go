@@ -20,18 +20,19 @@ import (
 )
 
 func (ctrl *TenantCtrl) DeleteTenant() error {
+	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Tenant ", ctrl.Tenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Tenant ", tenantName))
 	}
 
 	tenantExist, _, err := ctrl.TenantExist(ctrl.Tenant.Name)
 	if err != nil {
-		klog.Errorln("Check Whether The Tenant Exists Error: ", err)
+		klog.Errorf("Check Whether The Tenant '%s' Exists Error: %s", tenantName, err)
 		return err
 	}
 	if tenantExist {
-		return sqlOperator.DeleteTenant(ctrl.Tenant.Name)
+		return sqlOperator.DeleteTenant(tenantName)
 	}
 	return nil
 }

@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
@@ -68,33 +69,33 @@ func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus st
 	return tenant, nil
 }
 
-func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.TenantTopologyStatus, error) {
-	var tenantTopologyStatusList []cloudv1.TenantTopologyStatus
+func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.TenantReplicaStatus, error) {
+	var tenantTopologyStatusList []cloudv1.TenantReplicaStatus
 	var err error
 	var locality string
 	var primaryZone string
-	var zoneList string
-	tenantList, err := ctrl.GetGvTenantList()
+	gvTenant, err := ctrl.GetGvTenantByName()
 	if err != nil {
 		return tenantTopologyStatusList, err
 	}
-	for _, gvTenant := range tenantList {
-		if gvTenant.TenantName == tenant.Name {
-			locality = gvTenant.Locality
-			primaryZone = gvTenant.PrimaryZone
-			zoneList = gvTenant.ZoneList
-		}
+	if len(gvTenant) == 0 {
+		return tenantTopologyStatusList, errors.New(fmt.Sprint("Cannot Get Tenant For BuildTenantTopology: ", ctrl.Tenant.Name))
 	}
-
+	locality = gvTenant[0].Locality
+	primaryZone = gvTenant[0].PrimaryZone
 	typeMap := GenerateTypeMap(locality)
+	tenantID := gvTenant[0].TenantID
 	priorityMap := GeneratePriorityMap(primaryZone)
 	unitNumMap, err := ctrl.GenerateStatusUnitNumMap(tenant.Spec.Topology)
 	if err != nil {
 		return tenantTopologyStatusList, err
 	}
-
-	for _, zone := range strings.Split(zoneList, ";") {
-		var tenantCurrentStatus cloudv1.TenantTopologyStatus
+	zoneList, err := ctrl.GenerateStatusZone(tenantID)
+	if err != nil {
+		return tenantTopologyStatusList, err
+	}
+	for _, zone := range zoneList {
+		var tenantCurrentStatus cloudv1.TenantReplicaStatus
 		tenantCurrentStatus.ZoneName = zone
 		tenantCurrentStatus.Type = typeMap[zone]
 		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
@@ -112,6 +113,33 @@ func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.Te
 	return tenantTopologyStatusList, nil
 }
 
+func (ctrl *TenantCtrl) GenerateStatusZone(tenantID int64) ([]string, error) {
+	var zoneList []string
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return zoneList, errors.Wrap(err, "Get Sql Operator Error When Generating Zone For Tenant CR Status")
+	}
+	poolList := sqlOperator.GetPoolList()
+
+	poolIdMap := make(map[int64]string, 0)
+	for _, pool := range poolList {
+		if pool.TenantID == tenantID {
+			poolIdMap[pool.ResourcePoolID] = pool.Name
+		}
+	}
+	zoneMap := make(map[string]string, 0)
+	unitList := sqlOperator.GetUnitList()
+	for _, unit := range unitList {
+		if poolIdMap[unit.ResourcePoolID] != "" && zoneMap[unit.Zone] == "" {
+			zoneMap[unit.Zone] = unit.Zone
+		}
+	}
+	for k, _ := range zoneMap {
+		zoneList = append(zoneList, k)
+	}
+	return zoneList, nil
+}
+
 func (ctrl *TenantCtrl) GetCharset() (string, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -121,12 +149,18 @@ func (ctrl *TenantCtrl) GetCharset() (string, error) {
 	return charset[0].Charset, nil
 }
 
-func GenerateTypeMap(locality string) map[string]string {
-	typeMap := make(map[string]string, 0)
+func GenerateTypeMap(locality string) map[string]cloudv1.TypeSpec {
+	typeMap := make(map[string]cloudv1.TypeSpec, 0)
 	typeList := strings.Split(locality, ", ")
 	for _, type1 := range typeList {
-		tmp := strings.Split(type1, "@")
-		typeMap[tmp[1]] = tmp[0]
+		split1 := strings.Split(type1, "@")
+		typeName := strings.Split(split1[0], "{")[0]
+		typeReplica := type1[strings.Index(type1, "{")+1 : strings.Index(type1, "}")]
+		replicaInt, _ := strconv.Atoi(typeReplica)
+		typeMap[split1[1]] = cloudv1.TypeSpec{
+			Name:    typeName,
+			Replica: replicaInt,
+		}
 	}
 	return typeMap
 }
@@ -145,7 +179,7 @@ func GeneratePriorityMap(primaryZone string) map[string]int {
 	return priorityMap
 }
 
-func (ctrl *TenantCtrl) GenerateStatusUnitNumMap(zones []cloudv1.TenantTopology) (map[string]int, error) {
+func (ctrl *TenantCtrl) GenerateStatusUnitNumMap(zones []cloudv1.TenantReplica) (map[string]int, error) {
 	unitNumMap := make(map[string]int, 0)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {

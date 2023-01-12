@@ -35,7 +35,7 @@ func CreateUnitSQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strin
 	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MaxMemory.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MinMemory.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
 }
 
-func CreatePoolSQLReplacer(poolName, unitName string, zone v1.TenantTopology) *strings.Replacer {
+func CreatePoolSQLReplacer(poolName, unitName string, zone v1.TenantReplica) *strings.Replacer {
 	return strings.NewReplacer("${POOL_NAME}", poolName, "${UNIT_NAME}", unitName, "${UNIT_NUM}", strconv.Itoa(zone.UnitNumber), "${ZONE_NAME}", zone.ZoneName)
 }
 
@@ -43,8 +43,8 @@ func GetResourceSQLReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
 
-func CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, comment, defaultTablegroup, collate, logonlyReplicaNum, variableList string) *strings.Replacer {
-	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${CHARSET}", charset, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${LOCALITY}", locality, "${COMMENT}", comment, "${DEFAULT_TABLEGROUP}", defaultTablegroup, "${COLLATE}", collate, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum, "${VARIABLE_LIST}", variableList)
+func CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${CHARSET}", charset, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${LOCALITY}", locality, "${COLLATE}", collate, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum, "${VARIABLE_LIST}", variableList)
 }
 
 func GetVariableSQLReplacer(name string, tenantID int) *strings.Replacer {
@@ -67,8 +67,12 @@ func SetTenantLocalitySQLReplacer(name, locality string) *strings.Replacer {
 	return strings.NewReplacer("${TENANT_NAME}", name, "${LOCALITY}", locality)
 }
 
-func SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, defaultTablegroup, logonlyReplicaNum string) *strings.Replacer {
-	return strings.NewReplacer("${TENANT_NAME}", name, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${CHARSET}", charset, "${DEFAULT_TABLEGROUP}", defaultTablegroup, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum)
+func SetTenantPoolListSQLReplacer(name, locality string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", name, "${POOL_LIST}", locality)
+}
+
+func SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", name, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${CHARSET}", charset, "${LOCALITY}", locality, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum)
 }
 
 func SetNameReplacer(name string) *strings.Replacer {

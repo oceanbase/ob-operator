@@ -20,21 +20,22 @@ import (
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant/model"
+	util "github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
 )
 
-func (ctrl *TenantCtrl) GetGvTenantList() ([]model.GvTenantList, error) {
+func (ctrl *TenantCtrl) GetGvTenantByName() ([]model.GvTenant, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
 	}
-	tenantList := sqlOperator.GetGvTenantList()
-	return tenantList, nil
+	tenant := sqlOperator.GetGvTenantByName(ctrl.Tenant.Name)
+	return tenant, nil
 }
 
-func (ctrl *TenantCtrl) GetTenantList() ([]model.TenantList, error) {
+func (ctrl *TenantCtrl) GetTenantList() ([]model.Tenant, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
@@ -44,61 +45,59 @@ func (ctrl *TenantCtrl) GetTenantList() ([]model.TenantList, error) {
 }
 
 func (ctrl *TenantCtrl) TenantExist(tenantName string) (bool, int, error) {
-	klog.Infoln("Check Whether The Tenant Exists")
-	tenantList, err := ctrl.GetGvTenantList()
+	klog.Infof("Check Whether The Tenant '%s' Exists", tenantName)
+	tenant, err := ctrl.GetGvTenantByName()
 	if err != nil {
 		return false, 0, err
 	}
-	for _, tenant := range tenantList {
-		if tenant.TenantName == tenantName {
-			return true, int(tenant.TenantID), nil
-		}
+	if len(tenant) == 0 {
+		return false, 0, nil
+	} else {
+		return true, int(tenant[0].TenantID), nil
 	}
-	return false, 0, nil
 }
 
 func (ctrl *TenantCtrl) PoolExist(poolName string) (bool, int, error) {
-	klog.Infoln("Check Whether The Resource Pool Is Exist")
+	klog.Infof("Check Whether The Resource Pool '%s' Exists", poolName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return false, 0, errors.Wrap(err, "Get Sql Operator Error When Checking Whether The Resource Pool Exists")
 	}
-	poolList := sqlOperator.GetPoolList()
-	for _, pool := range poolList {
-		if pool.Name == poolName {
-			return true, int(pool.ResourcePoolID), nil
-		}
+	pool := sqlOperator.GetPoolByName(poolName)
+	if len(pool) == 0 {
+		return false, 0, nil
+	} else {
+		return true, int(pool[0].ResourcePoolID), nil
 	}
-	return false, 0, nil
 }
 
 func (ctrl *TenantCtrl) UnitExist(name string) (error, bool) {
-	klog.Infoln("Check Whether The Resource Unit Is Exist")
+	klog.Infof("Check Whether The Resource Unit '%s' Exists", name)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Checking Whether The Resource Unit Exists"), false
 	}
-	unitConfigList := sqlOperator.GetUnitConfigList()
-	for _, unit := range unitConfigList {
-		if unit.Name == name {
-			return nil, true
-		}
+	unitConfig := sqlOperator.GetUnitConfigByName(name)
+	if len(unitConfig) == 0 {
+		return nil, false
+	} else {
+		return nil, true
 	}
-	return nil, false
 }
 
 func (ctrl *TenantCtrl) GenerateUnitName(name, zoneName string) string {
-	unitName := fmt.Sprintf("%s_unit_%s_1", name, zoneName)
+	unitName := fmt.Sprintf("%s_unit_%s", name, zoneName)
 	return unitName
 }
 
 func (ctrl *TenantCtrl) GeneratePoolName(name, zoneName string) string {
-	poolName := fmt.Sprintf("%s_pool_%s_1", name, zoneName)
+	poolName := fmt.Sprintf("%s_pool_%s", name, zoneName)
 	return poolName
 }
 
-func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantTopology) error {
-	klog.Infoln("Check Reousrce ", zone.ZoneName)
+func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
+	tenantName := ctrl.Tenant.Name
+	klog.Infof("Check Tenant '%s' Zone '%s' Reousrce ", tenantName, zone.ZoneName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Checking Reousrce")
@@ -120,34 +119,26 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantTopology) error {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resource[0].CPUTotal -= unitConifg.MaxCPU
 						resource[0].MemTotal -= unitConifg.MaxMemory
-						// resource[0].DiskTotal -= unitConifg.MaxDiskSize
 					}
 				}
 			}
 		}
 	}
 	if zone.ResourceUnits.MaxCPU.AsApproximateFloat64() > resource[0].CPUTotal {
-		return errors.New(fmt.Sprint("CPU Is Not Enough: ", resource[0].CPUTotal))
+		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' CPU Is Not Enough: Need %f, Only %f", tenantName, zone.ZoneName, zone.ResourceUnits.MaxCPU.AsApproximateFloat64(), resource[0].CPUTotal))
 	}
 	maxMem := zone.ResourceUnits.MaxMemory.Value()
 	if err != nil {
 		return err
 	}
 	if maxMem > resource[0].MemTotal {
-		return errors.New(fmt.Sprint("Memory Is Not Enough: ", FormatSize(int(maxMem)), FormatSize(int(resource[0].MemTotal))))
+		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' Memory Is Not Enough: Need %s, Only %s", tenantName, zone.ZoneName, util.FormatSize(int(maxMem)), util.FormatSize(int(resource[0].MemTotal))))
 	}
-	// err, maxDiskSize := PraseSize(zone.ResourceUnits.MaxDiskSize)
-	// if err != nil {
-	// 	return err
-	// }
-	// if maxDiskSize > int(resource[0].DiskTotal) {
-	// 	return errors.New(fmt.Sprint("DiskSize Is Not Enough: ", int(resource[0].DiskTotal)))
-	// }
 	return nil
 }
 
 func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit) error {
-	klog.Infoln("Create Resource Unit ", unitName)
+	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
@@ -167,8 +158,8 @@ func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit
 	return sqlOperator.CreateUnit(unitName, resourceUnit)
 }
 
-func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantTopology) error {
-	klog.Infoln("Create Resource Pool ", poolName)
+func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantReplica) error {
+	klog.Infof("Create Tenant '%s' Resource Pool %s ", ctrl.Tenant.Name, poolName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
@@ -176,8 +167,46 @@ func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantTopo
 	return sqlOperator.CreatePool(poolName, unitName, zone)
 }
 
-func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantTopology) error {
-	klog.Infoln("Create Resource Tenant ", tenantName)
+func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
+	tenantName := ctrl.Tenant.Name
+	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
+	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
+
+	poolExist, _, err := ctrl.PoolExist(poolName)
+	if err != nil {
+		klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)
+		return err
+	}
+
+	err, unitExist := ctrl.UnitExist(unitName)
+	if err != nil {
+		klog.Errorf("Check Tenant '%s' Whether The Resource Unit '%s' Exists Error: %s", tenantName, unitName, err)
+		return err
+	}
+
+	if !unitExist {
+		err := ctrl.CheckResourceEnough(zone)
+		if err != nil {
+			return err
+		}
+		err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
+		if err != nil {
+			klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
+			return err
+		}
+	}
+	if !poolExist {
+		err = ctrl.CreatePool(poolName, unitName, zone)
+		if err != nil {
+			klog.Errorf("Create Tenant '%s' Pool '%s' Error: %s", tenantName, poolName, err)
+			return err
+		}
+	}
+	return nil
+}
+
+func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantReplica) error {
+	klog.Infof("Create Tenant '%s'", tenantName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
@@ -191,14 +220,6 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantTopolog
 	if locality != "" {
 		locality = fmt.Sprintf(", LOCALITY='%s'", locality)
 	}
-	comment := ctrl.Tenant.Spec.Comment
-	if comment != "" {
-		comment = fmt.Sprintf(", COMMENT ='%s'", comment)
-	}
-	defaultTablegroup := ctrl.Tenant.Spec.DefaultTablegroup
-	if defaultTablegroup != "" {
-		defaultTablegroup = fmt.Sprintf(", DEFAULT TABLEGROUP = {%s}", defaultTablegroup)
-	}
 	collate := ctrl.Tenant.Spec.Collate
 	if collate != "" {
 		collate = fmt.Sprintf(", COLLATE = %s", collate)
@@ -210,48 +231,44 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantTopolog
 	if ctrl.Tenant.Spec.Charset != "" {
 		charset = ctrl.Tenant.Spec.Charset
 	}
-	return sqlOperator.CreateTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, comment, defaultTablegroup, collate, logonlyReplicaNum, variableList)
+	return sqlOperator.CreateTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, logonlyReplicaNum, variableList)
 }
 
-func (ctrl *TenantCtrl) GenerateSpecZoneList(zones []v1.TenantTopology) string {
-	var zoneList string
+func (ctrl *TenantCtrl) GenerateSpecZoneList(zones []v1.TenantReplica) []string {
+	var zoneList []string
 	for _, zone := range zones {
-		zoneList = fmt.Sprint(zoneList, zone.ZoneName, ",")
+		zoneList = append(zoneList, zone.ZoneName)
 	}
-	zoneList = zoneList[0 : len(zoneList)-1]
 	return zoneList
 }
 
-func (ctrl *TenantCtrl) GenerateStatusZoneList(zones []v1.TenantTopologyStatus) string {
-	var zoneList string
+func (ctrl *TenantCtrl) GenerateStatusZoneList(zones []v1.TenantReplicaStatus) []string {
+	var zoneList []string
 	for _, zone := range zones {
-		zoneList = fmt.Sprint(zoneList, zone.ZoneName, ",")
+		zoneList = append(zoneList, zone.ZoneName)
 	}
-	zoneList = zoneList[0 : len(zoneList)-1]
 	return zoneList
 }
 
-func (ctrl *TenantCtrl) GenerateSpecPoolList(tenantName string, zones []v1.TenantTopology) string {
-	var poolList string
+func (ctrl *TenantCtrl) GenerateSpecPoolList(tenantName string, zones []v1.TenantReplica) []string {
+	var poolList []string
 	for _, zone := range zones {
 		poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-		poolList = fmt.Sprint(poolList, "'", poolName, "',")
+		poolList = append(poolList, poolName)
 	}
-	poolList = poolList[0 : len(poolList)-1]
 	return poolList
 }
 
-func (ctrl *TenantCtrl) GenerateStatusPoolList(tenantName string, zones []v1.TenantTopologyStatus) string {
-	var poolList string
+func (ctrl *TenantCtrl) GenerateStatusPoolList(tenantName string, zones []v1.TenantReplicaStatus) []string {
+	var poolList []string
 	for _, zone := range zones {
 		poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-		poolList = fmt.Sprint(poolList, "'", poolName, "',")
+		poolList = append(poolList, poolName)
 	}
-	poolList = poolList[0 : len(poolList)-1]
 	return poolList
 }
 
-func (ctrl *TenantCtrl) GenerateSpecPrimaryZone(zones []v1.TenantTopology) string {
+func (ctrl *TenantCtrl) GenerateSpecPrimaryZone(zones []v1.TenantReplica) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int
@@ -278,7 +295,7 @@ func (ctrl *TenantCtrl) GenerateSpecPrimaryZone(zones []v1.TenantTopology) strin
 	return primaryZone
 }
 
-func (ctrl *TenantCtrl) GenerateStatusPrimaryZone(zones []v1.TenantTopologyStatus) string {
+func (ctrl *TenantCtrl) GenerateStatusPrimaryZone(zones []v1.TenantReplicaStatus) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int
@@ -304,28 +321,10 @@ func (ctrl *TenantCtrl) GenerateStatusPrimaryZone(zones []v1.TenantTopologyStatu
 	return primaryZone
 }
 
-func (ctrl *TenantCtrl) GenerateLocality(zones []v1.TenantTopology) string {
-	var locality string
-	for _, zone := range zones {
-		if zone.Type != "" {
-			zoneType := strings.ToUpper(string(zone.Type[0]))
-			switch zoneType {
-			case tenantconst.TypeF:
-				zoneType = tenantconst.TypeFull
-			case tenantconst.TypeL:
-				zoneType = tenantconst.TypeLog
-			case tenantconst.TypeR:
-				if strings.Contains(zone.Type, "{") {
-					zoneType = tenantconst.TypeR + zoneType[strings.Index(zoneType, "{"):]
-				} else {
-					zoneType = tenantconst.TypeR
-				}
-			}
-			locality = fmt.Sprint(locality, zoneType, "@", zone.ZoneName, ",")
-		}
-	}
-	locality = locality[0 : len(locality)-1]
-	return locality
+func (ctrl *TenantCtrl) GenerateLocality(zones []v1.TenantReplica) string {
+	specLocalityMap := GenerateSpecLocalityMap(ctrl.Tenant.Spec)
+	localityList := ctrl.GenerateLocalityList(specLocalityMap)
+	return strings.Join(localityList, ",")
 }
 
 func (ctrl *TenantCtrl) GenerateVariableList(variables []v1.Parameter) string {
@@ -339,16 +338,4 @@ func (ctrl *TenantCtrl) GenerateVariableList(variables []v1.Parameter) string {
 	}
 	variableList = variableList[0 : len(variableList)-1]
 	return variableList
-}
-
-func FormatSize(size int) string {
-	units := [...]string{"B", "K", "M", "G", "T", "P"}
-	idx := 0
-	size1 := float64(size)
-	for idx < 5 && size1 >= 1024 {
-		size1 /= 1024.0
-		idx += 1
-	}
-	res := fmt.Sprintf("%.1f%s", size1, units[idx])
-	return res
 }

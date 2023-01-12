@@ -19,25 +19,28 @@ import (
 
 // TenantSpec defines the desired state of Tenant
 type TenantSpec struct {
-	ClusterID   int              `json:"clusterID"`
-	ClusterName string           `json:"clusterName"`
-	Topology    []TenantTopology `json:"topology"`
+	ClusterID   int             `json:"clusterID"`
+	ClusterName string          `json:"clusterName"`
+	Topology    []TenantReplica `json:"topology"`
 
 	Charset           string      `json:"charset,omitempty"`
 	Collate           string      `json:"collate,omitempty"`
 	Mode              string      `json:"mode,omitempty"`
-	DefaultTablegroup string      `json:"tablegroup,omitempty"`
-	Comment           string      `json:"comment,omitempty"`
 	LogonlyReplicaNum int         `json:"logonlyReplicaNum,omitempty"`
 	Variables         []Parameter `json:"variables,omitempty"`
 }
 
-type TenantTopology struct {
+type TenantReplica struct {
 	ZoneName      string       `json:"zone"`
 	UnitNumber    int          `json:"unitNum"`
 	Priority      int          `json:"priority,omitempty"`
-	Type          string       `json:"type"`
+	Type          TypeSpec     `json:"type"`
 	ResourceUnits ResourceUnit `json:"resource"`
+}
+
+type TypeSpec struct {
+	Name    string `json:"name"`
+	Replica int    `json:"replica,omitempty"`
 }
 
 type ResourceUnit struct {
@@ -53,18 +56,18 @@ type ResourceUnit struct {
 
 // TenantStatus defines the observed state of Tenant
 type TenantStatus struct {
-	Status            string                 `json:"status"`
-	Topology          []TenantTopologyStatus `json:"topology"`
-	Charset           string                 `json:"charset,omitempty"`
-	ReplicaNum        int                    `json:"replicaNum"`
-	LogonlyReplicaNum int                    `json:"logonlyReplicaNum"`
+	Status            string                `json:"status"`
+	Topology          []TenantReplicaStatus `json:"topology"`
+	Charset           string                `json:"charset,omitempty"`
+	ReplicaNum        int                   `json:"replicaNum"`
+	LogonlyReplicaNum int                   `json:"logonlyReplicaNum"`
 }
 
-type TenantTopologyStatus struct {
+type TenantReplicaStatus struct {
 	ZoneName      string       `json:"zone"`
 	UnitConfigs   []Unit       `json:"units"`
 	Priority      int          `json:"priority,omitempty"`
-	Type          string       `json:"type"`
+	Type          TypeSpec     `json:"type"`
 	ResourceUnits ResourceUnit `json:"resource"`
 	UnitNumber    int          `json:"unitNum"`
 }

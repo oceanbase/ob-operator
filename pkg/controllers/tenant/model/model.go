@@ -12,7 +12,7 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-type GvTenantList struct {
+type GvTenant struct {
 	TenantID      int64
 	TenantName    string
 	ZoneList      string
@@ -22,7 +22,7 @@ type GvTenantList struct {
 	Locality      string
 }
 
-type TenantList struct {
+type Tenant struct {
 	TenantID          int64
 	TenantName        string
 	ZoneList          string
@@ -32,7 +32,7 @@ type TenantList struct {
 	Status            string
 }
 
-type PoolList struct {
+type Pool struct {
 	ResourcePoolID int64
 	Name           string
 	UnitCount      int64
@@ -41,7 +41,7 @@ type PoolList struct {
 	TenantID       int64
 }
 
-type UnitList struct {
+type Unit struct {
 	UnitID             int64
 	ResourcePoolID     int64
 	Zone               string
@@ -52,7 +52,7 @@ type UnitList struct {
 	Status             string
 }
 
-type UnitConfigList struct {
+type UnitConfig struct {
 	UnitConfigID  int64
 	Name          string
 	MaxCPU        float64
@@ -80,4 +80,12 @@ type SysVariableStat struct {
 	Zone     string
 	Name     string
 	Value    string
+}
+
+type RsJob struct {
+	JobID      int64
+	JobType    string
+	JobStatus  string
+	TenantID   int64
+	TenantName string
 }

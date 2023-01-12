@@ -27,10 +27,10 @@ const (
 const (
 	TypeFull     = "FULL"
 	TypeReadonly = "READONLY"
-	TypeLog      = "LOGONLY"
-	TypeF        = "F"
-	TypeR        = "R"
-	TypeL        = "L"
+	TypeLogonly  = "LOGONLY"
+	// TypeF        = "F"
+	// TypeR        = "R"
+	// TypeL        = "L"
 )
 
 const (

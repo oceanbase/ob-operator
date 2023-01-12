@@ -54,15 +54,16 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 	return nil
 }
 
-func (op *SqlOperator) GetGvTenantList() []model.GvTenantList {
-	res := make([]model.GvTenantList, 0)
+func (op *SqlOperator) GetGvTenantByName(name string) []model.GvTenant {
+	sql := ReplaceAll(GetGvTenantSQL, SetNameReplacer(name))
+	res := make([]model.GvTenant, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.GvTenantList{}).Raw(GetGvTenantListSQL).Rows()
+		rows, err := client.Model(&model.GvTenant{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.GvTenantList
+			var rowData model.GvTenant
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -74,15 +75,15 @@ func (op *SqlOperator) GetGvTenantList() []model.GvTenantList {
 	return res
 }
 
-func (op *SqlOperator) GetTenantList() []model.TenantList {
-	res := make([]model.TenantList, 0)
+func (op *SqlOperator) GetTenantList() []model.Tenant {
+	res := make([]model.Tenant, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.TenantList{}).Raw(GetTenantListSQL).Rows()
+		rows, err := client.Model(&model.Tenant{}).Raw(GetTenantListSQL).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.TenantList
+			var rowData model.Tenant
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -94,15 +95,16 @@ func (op *SqlOperator) GetTenantList() []model.TenantList {
 	return res
 }
 
-func (op *SqlOperator) GetPoolList() []model.PoolList {
-	res := make([]model.PoolList, 0)
+func (op *SqlOperator) GetPoolByName(name string) []model.Pool {
+	sql := ReplaceAll(GetPoolSQL, SetNameReplacer(name))
+	res := make([]model.Pool, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.PoolList{}).Raw(GetPoolListSQL).Rows()
+		rows, err := client.Model(&model.Pool{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.PoolList
+			var rowData model.Pool
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -114,15 +116,15 @@ func (op *SqlOperator) GetPoolList() []model.PoolList {
 	return res
 }
 
-func (op *SqlOperator) GetUnitList() []model.UnitList {
-	res := make([]model.UnitList, 0)
+func (op *SqlOperator) GetPoolList() []model.Pool {
+	res := make([]model.Pool, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.UnitList{}).Raw(GetUnitListSQL).Rows()
+		rows, err := client.Model(&model.Pool{}).Raw(GetPoolListSQL).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.UnitList
+			var rowData model.Pool
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -134,15 +136,15 @@ func (op *SqlOperator) GetUnitList() []model.UnitList {
 	return res
 }
 
-func (op *SqlOperator) GetUnitConfigList() []model.UnitConfigList {
-	res := make([]model.UnitConfigList, 0)
+func (op *SqlOperator) GetUnitList() []model.Unit {
+	res := make([]model.Unit, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.UnitConfigList{}).Raw(GetUnitConfigListSQL).Rows()
+		rows, err := client.Model(&model.Unit{}).Raw(GetUnitListSQL).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.UnitConfigList
+			var rowData model.Unit
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -154,7 +156,48 @@ func (op *SqlOperator) GetUnitConfigList() []model.UnitConfigList {
 	return res
 }
 
-func (op *SqlOperator) GetResource(zone v1.TenantTopology) []model.Resource {
+func (op *SqlOperator) GetUnitConfigList() []model.UnitConfig {
+	res := make([]model.UnitConfig, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.UnitConfig{}).Raw(GetUnitConfigListSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.UnitConfig
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetUnitConfigByName(name string) []model.UnitConfig {
+	sql := ReplaceAll(GetUnitConfigSQL, SetNameReplacer(name))
+	res := make([]model.UnitConfig, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.UnitConfig{}).Raw(sql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.UnitConfig
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetResource(zone v1.TenantReplica) []model.Resource {
 	sql := ReplaceAll(GetResourceSQLTemplate, GetResourceSQLReplacer(zone.ZoneName))
 	res := make([]model.Resource, 0)
 	client, err := GetDBClient(op.ConnectProperties)
@@ -216,18 +259,39 @@ func (op *SqlOperator) GetVariable(name string, tenantID int) []model.SysVariabl
 	return res
 }
 
+func (op *SqlOperator) GetInprogressJob(name string) []model.RsJob {
+	sql := ReplaceAll(GetInprogressJobSQLTemplate, SetNameReplacer(name))
+	res := make([]model.RsJob, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.RsJob{}).Raw(sql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.RsJob
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) CreateUnit(name string, resourceUnit v1.ResourceUnit) error {
 	sql := ReplaceAll(CreateUnitSQLTemplate, CreateUnitSQLReplacer(name, resourceUnit))
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) CreatePool(poolName, unitName string, zone v1.TenantTopology) error {
+func (op *SqlOperator) CreatePool(poolName, unitName string, zone v1.TenantReplica) error {
 	sql := ReplaceAll(CreatePoolSQLTemplate, CreatePoolSQLReplacer(poolName, unitName, zone))
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) CreateTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, comment, defaultTablegroup, collate, logonlyReplicaNum, variableList string) error {
-	sql := ReplaceAll(CreateTenantSQLTemplate, CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, comment, defaultTablegroup, collate, logonlyReplicaNum, variableList))
+func (op *SqlOperator) CreateTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList string) error {
+	sql := ReplaceAll(CreateTenantSQLTemplate, CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList))
 	return op.ExecSQL(sql)
 }
 
@@ -251,8 +315,8 @@ func (op *SqlOperator) SetTenantLocality(name, locality string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) SetTenant(name, zoneList, primaryZone, poolList, charset, defaultTablegroup, logonlyReplicaNum string) error {
-	sql := ReplaceAll(SetTenantSQLTemplate, SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, defaultTablegroup, logonlyReplicaNum))
+func (op *SqlOperator) SetTenant(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum string) error {
+	sql := ReplaceAll(SetTenantSQLTemplate, SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum))
 	return op.ExecSQL(sql)
 }
 
