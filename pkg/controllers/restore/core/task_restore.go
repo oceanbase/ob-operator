@@ -73,9 +73,9 @@ func (ctrl *RestoreCtrl) DoResotre() error {
 }
 
 func (ctrl *RestoreCtrl) GetRestoreOption() string {
-	var locality = cloudv1.Parameter{Name: restoreconst.LocalityName, Value: ""}
-	var primaryZone = cloudv1.Parameter{Name: restoreconst.PrimaryZoneName, Value: ""}
-	var kmsEncrypt = cloudv1.Parameter{Name: restoreconst.KmsEncryptName, Value: ""}
+	var locality = cloudv1.Parameter{Name: restoreconst.Locality, Value: ""}
+	var primaryZone = cloudv1.Parameter{Name: restoreconst.PrimaryZone, Value: ""}
+	var kmsEncrypt = cloudv1.Parameter{Name: restoreconst.KmsEncrypt, Value: ""}
 	paramList := [3]cloudv1.Parameter{locality, primaryZone, kmsEncrypt}
 	allParams := ctrl.Restore.Spec.Parameters
 	var isSet bool

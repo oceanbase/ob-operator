@@ -17,9 +17,9 @@ const (
 	RestoreConcurrencyZero    = 0
 	RestoreConcurrency        = "restore_concurrency"
 
-	LocalityName    = "locality"
-	PrimaryZoneName = "primary_zone"
-	KmsEncryptName  = "kms_encrypt"
+	Locality    = "locality"
+	PrimaryZone = "primary_zone"
+	KmsEncrypt  = "kms_encrypt"
 
 	ResourceUnitName = "unit_restore"
 	ResourcePoolName = "pool_restore"
