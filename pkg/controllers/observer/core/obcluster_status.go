@@ -229,7 +229,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	} else {
 		clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	}
-	if upgradeInfo.UpgradeRoute != nil {
+	if len(upgradeInfo.UpgradeRoute) != 0 {
 		clusterCurrentStatus.UpgradeRoute = upgradeInfo.UpgradeRoute
 	} else {
 		clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute

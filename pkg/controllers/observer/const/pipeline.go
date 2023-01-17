@@ -63,5 +63,8 @@ const (
 	TickPeriodForRSJobStatusCheck = 5 * time.Second
 	TickNumForRSJobStatusCheck    = 12
 
+	TickPeriodForPodStatusCheck = 1 * time.Second
+	TickNumForPodStatusCheck    = 60
+
 	DelServerTimeout = 30
 )

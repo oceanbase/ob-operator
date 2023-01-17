@@ -101,10 +101,10 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			klog.Errorln("Cannot Find Helper Pod. Creating Helper Pod %s Now", podName)
-			err_ := ctrl.CreateHelperPod(podName)
-			if err_ != nil {
-				return "", err_
+			klog.Errorf("Cannot Find Helper Pod. Creating Helper Pod '%s' Now", podName)
+			err = ctrl.CreateHelperPod(podName)
+			if err != nil {
+				return "", err
 			}
 			return "", err
 		}
@@ -112,9 +112,9 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 		return "", err
 	}
 	pod := podObject.(corev1.Pod)
-	if pod.Status.Phase != observerconst.PodRunning {
-		klog.Errorln("Helper Pod is Not Running")
-		return "", errors.New("Helper Pod is Not Running")
+	err = ctrl.WaitHelperPodReady(pod)
+	if err != nil {
+		return "", err
 	}
 	return pod.Status.PodIP, nil
 }
@@ -265,17 +265,23 @@ func (ctrl *OBClusterCtrl) CreateUpgradePostJob(statefulApp cloudv1.StatefulApp,
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) AllScriptsFinish() bool {
+func (ctrl *OBClusterCtrl) AllScriptsFinish() (bool, error) {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
-	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion
+	if len(upgradeRoute) < 2 {
+		return false, errors.New("OBCluster Upgrade Route is Wrong")
+	}
+	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion, nil
 }
 
-func (ctrl *OBClusterCtrl) GetNextVersion() (string, int) {
+func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	var version string
 	var index int
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
+	if len(upgradeRoute) < 2 {
+		return "", 0, errors.New("OBCluster Upgrade Route is Wrong")
+	}
 	if clusterStatus.ScriptPassedVersion == "" {
 		version = upgradeRoute[1]
 		index = 1
@@ -287,7 +293,7 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int) {
 			}
 		}
 	}
-	return version, index
+	return version, index, nil
 }
 
 func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
@@ -359,6 +365,36 @@ func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
 			res, err := ctrl.isAllOBSeverAvailable(rsIP)
 			if res {
 				return err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) WaitHelperPodReady(pod corev1.Pod) error {
+	if pod.Status.Phase == observerconst.PodRunning {
+		return nil
+	}
+	klog.Infoln("Wait Helper Pod Running")
+	err := ctrl.TickerHelperPodRunning(pod)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Helper Pod Running")
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) TickerHelperPodRunning(pod corev1.Pod) error {
+	tick := time.Tick(observerconst.TickPeriodForPodStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForPodStatusCheck {
+				return errors.New("Wait For Helper Pod Running Timeout")
+			}
+			num = num + 1
+			if pod.Status.Phase == observerconst.PodRunning {
+				return nil
 			}
 		}
 	}
