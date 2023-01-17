@@ -47,6 +47,23 @@ const (
 	ExecCheckScriptsCMDTemplate = "python2 ${FILE_NAME} -h${IP} -P${PORT} -uroot"
 )
 
+func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) error {
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	upgradeRoute := clusterStatus.UpgradeRoute
+	var err error
+	err = ctrl.CheckAndSetTargetVersion(clusterStatus.TargetVersion)
+	if err != nil {
+		return err
+	}
+	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	targetVer := cluster.TargetVersion
+	err = ctrl.CheckAndSetUpgradeRoute(statefulApp, upgradeRoute, targetVer)
+	if err != nil {
+		return err
+	}
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradeCheck, "", "")
+}
+
 func UpgradeReplacer(filename, clusterIP, port string) *strings.Replacer {
 	return strings.NewReplacer("${FILE_NAME}", filename, "${IP}", clusterIP, "${PORT}", port)
 }
@@ -109,13 +126,9 @@ func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulA
 		upgradeInfo := UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
 		}
-		err = ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-		if err != nil {
-			klog.Errorln("UpdateOBStatusForUpgrade: ", err)
-			return err
-		}
+		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
-	klog.Infoln("CheckAndSetUpgradeRoute: ", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
+	klog.Infoln("CheckAndSetUpgradeRoute: ctrl.OBCluster.Status.Topology[0].UpgradeRoute", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
 	if !reflect.DeepEqual(upgradeRoute, currUpgradeRoute) {
 		klog.Errorf("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
 		return errors.New("Upgrade Route Does Not Match")
@@ -168,6 +181,7 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 
 func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
 	// All Scripts Finish
+	klog.Infoln("ExecPreScripts: ", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
 	finish, err := ctrl.AllScriptsFinish()
 	if err != nil {
 		return err

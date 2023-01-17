@@ -297,7 +297,6 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		return err
 	}
 	if versionIsModified {
-		// TODO: support version update
 		err = ctrl.OBClusterUpgrade(statefulApp)
 		return err
 	}

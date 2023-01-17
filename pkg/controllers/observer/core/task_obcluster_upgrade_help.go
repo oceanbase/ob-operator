@@ -112,9 +112,11 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 		return "", err
 	}
 	pod := podObject.(corev1.Pod)
-	err = ctrl.WaitHelperPodReady(pod)
-	if err != nil {
-		return "", err
+	if pod.Status.Phase != observerconst.PodRunning {
+		err = ctrl.WaitHelperPodReady(podName)
+		if err != nil {
+			return "", err
+		}
 	}
 	return pod.Status.PodIP, nil
 }
@@ -269,7 +271,7 @@ func (ctrl *OBClusterCtrl) AllScriptsFinish() (bool, error) {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
 	if len(upgradeRoute) < 2 {
-		return false, errors.New("OBCluster Upgrade Route is Wrong")
+		return false, errors.New("OBCluster Upgrade Route is Wrong When Check All Scripts Finish ")
 	}
 	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion, nil
 }
@@ -280,7 +282,7 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
 	if len(upgradeRoute) < 2 {
-		return "", 0, errors.New("OBCluster Upgrade Route is Wrong")
+		return "", 0, errors.New("OBCluster Upgrade Route is Wrong When Get Next Version")
 	}
 	if clusterStatus.ScriptPassedVersion == "" {
 		version = upgradeRoute[1]
@@ -370,12 +372,9 @@ func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
 	}
 }
 
-func (ctrl *OBClusterCtrl) WaitHelperPodReady(pod corev1.Pod) error {
-	if pod.Status.Phase == observerconst.PodRunning {
-		return nil
-	}
+func (ctrl *OBClusterCtrl) WaitHelperPodReady(podName string) error {
 	klog.Infoln("Wait Helper Pod Running")
-	err := ctrl.TickerHelperPodRunning(pod)
+	err := ctrl.TickerHelperPodRunning(podName)
 	if err != nil {
 		return err
 	}
@@ -383,7 +382,7 @@ func (ctrl *OBClusterCtrl) WaitHelperPodReady(pod corev1.Pod) error {
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) TickerHelperPodRunning(pod corev1.Pod) error {
+func (ctrl *OBClusterCtrl) TickerHelperPodRunning(podName string) error {
 	tick := time.Tick(observerconst.TickPeriodForPodStatusCheck)
 	var num int
 	for {
@@ -393,11 +392,26 @@ func (ctrl *OBClusterCtrl) TickerHelperPodRunning(pod corev1.Pod) error {
 				return errors.New("Wait For Helper Pod Running Timeout")
 			}
 			num = num + 1
-			if pod.Status.Phase == observerconst.PodRunning {
-				return nil
+			res, err := ctrl.isHeplerPodRunning(podName)
+			if res {
+				return err
 			}
 		}
 	}
+}
+
+func (ctrl *OBClusterCtrl) isHeplerPodRunning(podName string) (bool, error) {
+	podExecuter := resource.NewPodResource(ctrl.Resource)
+	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
+	if err != nil {
+		return false, err
+	}
+	pod := podObject.(corev1.Pod)
+	if pod.Status.Phase == observerconst.PodRunning {
+		return true, nil
+	}
+	return false, nil
+
 }
 
 func (ctrl *OBClusterCtrl) WaitAllContainerRunning(pod corev1.Pod) error {
