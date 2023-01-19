@@ -122,6 +122,10 @@ func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulA
 	if err != nil {
 		return err
 	}
+	err = ctrl.DeleteHelperPod()
+	if err != nil {
+		return err
+	}
 	if len(currUpgradeRoute) == 0 {
 		upgradeInfo := UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
@@ -307,7 +311,10 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 		klog.Errorln("Update StatefulApp Failed, Err: ", err)
 		return err
 	}
-	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+	upgradeInfo := UpgradeInfo{
+		ClusterStatus: observerconst.ClusterReady,
+	}
+	return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 }
 
 func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) error {
