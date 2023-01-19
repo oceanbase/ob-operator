@@ -1,0 +1,47 @@
+apiVersion: cloud.oceanbase.com/v1
+kind: OBCluster
+metadata:
+  namespace: ob
+  name: test-ob
+spec:
+  imageRepo: oceanbasedev/oceanbase-cn
+  tag: v3.1.1-4-0116
+  imageObagent: oceanbase/obagent:1.2.0
+  clusterID: 1
+  topology:
+    - cluster: cn
+      zone:
+      - name: zone1
+        region: region-test
+        nodeSelector:
+          topology.kubernetes.io/zone: zone-test
+        replicas: 1
+      - name: zone2
+        region: region-test
+        nodeSelector:
+          topology.kubernetes.io/zone: zone-test
+        replicas: 1
+      - name: zone3
+        region: region-test
+        nodeSelector:
+          topology.kubernetes.io/zone: zone-test
+        replicas: 1
+      parameters:
+        - name: log_disk_size
+          value: "40G"
+  resources:
+    cpu: 2
+    memory: 10Gi
+    storage:
+      - name: data-file
+        storageClassName: "local-path"
+        size: 50Gi
+      - name: data-log
+        storageClassName: "local-path"
+        size: 50Gi
+      - name: log
+        storageClassName: "local-path"
+        size: 30Gi
+      - name: obagent-conf-file
+        storageClassName: "local-path"
+        size: 1Gi
