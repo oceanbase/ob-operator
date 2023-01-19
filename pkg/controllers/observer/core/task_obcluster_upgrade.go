@@ -151,7 +151,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp) error {
 	// Get Job
 	name := observerconst.UpgradePreChecker
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name, ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -202,10 +202,9 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 	// Get Next Version Job
 	version, index, err := ctrl.GetNextVersion()
 	if err != nil {
-		klog.Errorln("ctrl.GetNextVersion(): ", err)
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePre, "-", index))
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePre, "-", index), ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -246,7 +245,7 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 	if err != nil {
 		return nil
 	}
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index))
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index), ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -276,7 +275,7 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulApp) error {
 	// Get Job
 	name := observerconst.UpgradePostChecker
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name, ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -328,7 +327,7 @@ func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) 
 		klog.Errorln(fmt.Sprint("End Upgrade Error : ", err))
 		return err
 	}
-	err = ctrl.CheckUpgradeModeEnd()
+	err = ctrl.CheckAneWaitUpgradeModeEnd()
 	if err != nil {
 		klog.Errorln(fmt.Sprint("Check Upgrade Mode (End) Error :", err))
 		return err
