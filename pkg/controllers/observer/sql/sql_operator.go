@@ -135,6 +135,30 @@ func (op *SqlOperator) RunRootInspection() error {
 	return op.ExecSQL(RunRootInspectionJobSQL)
 }
 
+func (op *SqlOperator) MajorFreeze() error {
+	return op.ExecSQL(MajorFreezeSQL)
+}
+
+func (op *SqlOperator) GetVersion() []model.OBVersion {
+	res := make([]model.OBVersion, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.OBVersion{}).Raw(GetLeaderCountSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.OBVersion
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) GetLeaderCount() []model.ZoneLeaderCount {
 	res := make([]model.ZoneLeaderCount, 0)
 	client, err := GetDBClient(op.ConnectProperties)
@@ -243,6 +267,46 @@ func (op *SqlOperator) GetOBZone() []model.AllZone {
 	if err == nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllZone{}).Raw(GetOBZoneSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetFrozenVersion() []model.AllZone {
+	res := make([]model.AllZone, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(GetFrozeVersionSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetLastMergedVersion() []model.AllZone {
+	res := make([]model.AllZone, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(GetLastMergedVersionSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllZone

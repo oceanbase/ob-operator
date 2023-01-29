@@ -37,12 +37,14 @@ const (
 	SetMinOBVersionSQLTemplate = "ALTER SYSTEM SET min_observer_version = '${VERSION}'"
 	EndUpgradeSQL              = "ALTER SYSTEM END UPGRADE;"
 	RunRootInspectionJobSQL    = "ALTER SYSTEM RUN JOB 'root_inspection'"
+	GetRootServiceSQL          = "SELECT zone, svr_ip, svr_port, role FROM __all_virtual_core_meta_table;"
+	GetClogStatSQL             = "select svr_ip, svr_port, is_offline, is_in_sync from __all_virtual_clog_stat where is_in_sync=0 and is_offline =0;"
+	GetLeaderCountSQL          = "SELECT zone, leader_count FROM oceanbase.__all_virtual_server_stat"
+	GetAllUnitSQL              = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
 
-	GetClogStatSQL    = "select svr_ip, svr_port, is_offline, is_in_sync from __all_virtual_clog_stat where is_in_sync=0 and is_offline =0;"
-	GetLeaderCountSQL = "SELECT zone, leader_count FROM oceanbase.__all_virtual_server_stat"
-	GetAllUnitSQL     = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
-
-	GetRootServiceSQL = "SELECT zone, svr_ip, svr_port, role FROM __all_virtual_core_meta_table;"
+	MajorFreezeSQL          = "ALTER SYSTEM MAJOR FREEZE;"
+	GetFrozeVersionSQL      = "select zone, name, value, info from oceanbase.__all_zone where name='frozen_version'"
+	GetLastMergedVersionSQL = "select zone, name, value, info from  oceanbase.__all_zone where name='last_merged_version' and value != (select value from oceanbase.__all_zone where name='frozen_version')"
 
 	GetRSJobStatusSQL = "SELECT job_status, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"
 
