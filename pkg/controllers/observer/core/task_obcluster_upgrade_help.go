@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -32,12 +33,22 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func GeneratePodName(obclusterName, clusterName, name string) string {
-	return fmt.Sprintf("%s-%s-%s", obclusterName, clusterName, name)
+func GeneratePodName(obclusterName, clusterName, name, version string) string {
+	return fmt.Sprintf("%s-%s-%s-%s", obclusterName, clusterName, version, name)
 }
 
-func GenerateJobName(obclusterName, clusterName, name string) string {
-	return fmt.Sprintf("%s-%s-%s", obclusterName, clusterName, name)
+func GenerateJobName(obclusterName, clusterName, name, version string) string {
+	return fmt.Sprintf("%s-%s-%s-%s", obclusterName, clusterName, version, name)
+}
+
+func (ctrl *OBClusterCtrl) GenerateSpecVersion() string {
+	specVersion := strings.Split(ctrl.OBCluster.Spec.Tag, "-")
+	split := strings.Split(specVersion[0], ".")
+	var res string
+	for _, x := range split {
+		res += x
+	}
+	return res
 }
 
 func (ctrl *OBClusterCtrl) GeneratePodObject(podName string, containerList []corev1.Container) interface{} {
@@ -61,7 +72,7 @@ func (ctrl *OBClusterCtrl) CreatePod(podObject interface{}) error {
 		if kubeerrors.IsAlreadyExists(err) {
 			return nil
 		}
-		klog.Errorln("Create Pod Failed %s: %S ", err)
+		klog.Errorf("Create Pod Failed %s: %s ", podObject, err)
 		return err
 	}
 	return nil
@@ -96,15 +107,15 @@ func (ctrl *OBClusterCtrl) CreateHelperPod(podName string) error {
 }
 
 func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
-	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help")
+	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help", ctrl.GenerateSpecVersion())
 	podExecuter := resource.NewPodResource(ctrl.Resource)
 	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			klog.Errorln("Cannot Find Helper Pod. Creating Helper Pod %s Now", podName)
-			err_ := ctrl.CreateHelperPod(podName)
-			if err_ != nil {
-				return "", err_
+			klog.Errorf("Cannot Find Helper Pod. Creating Helper Pod '%s' Now", podName)
+			err = ctrl.CreateHelperPod(podName)
+			if err != nil {
+				return "", err
 			}
 			return "", err
 		}
@@ -113,14 +124,16 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 	}
 	pod := podObject.(corev1.Pod)
 	if pod.Status.Phase != observerconst.PodRunning {
-		klog.Errorln("Helper Pod is Not Running")
-		return "", errors.New("Helper Pod is Not Running")
+		err = ctrl.WaitHelperPodReady(podName)
+		if err != nil {
+			return "", err
+		}
 	}
 	return pod.Status.PodIP, nil
 }
 
 func (ctrl *OBClusterCtrl) DeleteHelperPod() error {
-	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help")
+	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help", ctrl.GenerateSpecVersion())
 	return ctrl.DeletePod(podName)
 }
 
@@ -158,7 +171,7 @@ func (ctrl *OBClusterCtrl) GetJobObject(jobName string) (interface{}, error) {
 	jobExecuter := resource.NewJobResource(ctrl.Resource)
 	jobObject, err := jobExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, jobName)
 	if err != nil {
-		klog.Errorln("Get JobObject By JobName %s Failed, Err: ", jobName, err)
+		klog.Errorf("Get JobObject By JobName %s Failed, Err: ", jobName, err)
 		return jobObject, err
 	}
 	return jobObject, nil
@@ -189,8 +202,8 @@ func (ctrl *OBClusterCtrl) DeleteJobObject(jobObject interface{}) error {
 }
 
 func (ctrl *OBClusterCtrl) CreateExecScriptJob(name, fileName string, statefulApp cloudv1.StatefulApp) error {
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
-	klog.Infoln("Create Job ", jobName)
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name, ctrl.GenerateSpecVersion())
+	klog.Infoln("Create Job", jobName)
 	containerImage := fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
 	rsIP, err := ctrl.GetRsIPFromDB(statefulApp)
 	if err != nil {
@@ -215,7 +228,7 @@ func (ctrl *OBClusterCtrl) CreateExecScriptJob(name, fileName string, statefulAp
 	jobObject := ctrl.GenerateJobObject(jobName, containerList)
 	err = ctrl.CreateJob(jobObject)
 	if err != nil {
-		klog.Errorln("Create Job %s Failed, Err: %s", jobName, err)
+		klog.Errorf("Create Job '%s' Failed, Err: %s", jobName, err)
 		return err
 	}
 	return nil
@@ -265,17 +278,23 @@ func (ctrl *OBClusterCtrl) CreateUpgradePostJob(statefulApp cloudv1.StatefulApp,
 	return nil
 }
 
-func (ctrl *OBClusterCtrl) AllScriptsFinish() bool {
+func (ctrl *OBClusterCtrl) AllScriptsFinish() (bool, error) {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
-	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion
+	if len(upgradeRoute) < 2 {
+		return false, errors.New("OBCluster Upgrade Route is Wrong When Check All Scripts Finish ")
+	}
+	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion, nil
 }
 
-func (ctrl *OBClusterCtrl) GetNextVersion() (string, int) {
+func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	var version string
 	var index int
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
+	if len(upgradeRoute) < 2 {
+		return "", 0, errors.New("OBCluster Upgrade Route is Wrong When Get Next Version")
+	}
 	if clusterStatus.ScriptPassedVersion == "" {
 		version = upgradeRoute[1]
 		index = 1
@@ -287,10 +306,10 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int) {
 			}
 		}
 	}
-	return version, index
+	return version, index, nil
 }
 
-func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
+func (ctrl *OBClusterCtrl) IsLeaderCountZero(rsIP, zoneName string) (bool, error) {
 	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
 	if err != nil {
 		return false, errors.Wrap(err, "get sql operator when check info leader count")
@@ -308,16 +327,6 @@ func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error
 	return false, errors.New(fmt.Sprint("Can Not Get Zone Leader Count : ", zoneName))
 }
 
-func (ctrl *OBClusterCtrl) WaitLeaderCountZero(rsIP, zoneName string) error {
-	klog.Infoln("Wait Leader Count Clear")
-	err := ctrl.TickerLeaderCountFromDB(rsIP, zoneName)
-	if err != nil {
-		return err
-	}
-	klog.Infoln("Leader Count Is Zero")
-	return nil
-}
-
 func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error {
 	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
 	var num int
@@ -328,12 +337,22 @@ func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error 
 				return errors.New("Wait For Leader Count Clear Timeout")
 			}
 			num = num + 1
-			res, err := ctrl.isLeaderCountZero(rsIP, zoneName)
+			res, err := ctrl.IsLeaderCountZero(rsIP, zoneName)
 			if res {
 				return err
 			}
 		}
 	}
+}
+
+func (ctrl *OBClusterCtrl) WaitLeaderCountZero(rsIP, zoneName string) error {
+	klog.Infoln("Wait Leader Count Clear")
+	err := ctrl.TickerLeaderCountFromDB(rsIP, zoneName)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Leader Count Is Zero")
+	return nil
 }
 
 func (ctrl *OBClusterCtrl) WaitAllOBSeverAvailable(rsIP string) error {
@@ -362,6 +381,48 @@ func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
 			}
 		}
 	}
+}
+
+func (ctrl *OBClusterCtrl) WaitHelperPodReady(podName string) error {
+	klog.Infoln("Wait Helper Pod Running")
+	err := ctrl.TickerHelperPodRunning(podName)
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Helper Pod Running")
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) TickerHelperPodRunning(podName string) error {
+	tick := time.Tick(observerconst.TickPeriodForPodStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForPodStatusCheck {
+				return errors.New("Wait For Helper Pod Running Timeout")
+			}
+			num = num + 1
+			res, err := ctrl.isHeplerPodRunning(podName)
+			if res {
+				return err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) isHeplerPodRunning(podName string) (bool, error) {
+	podExecuter := resource.NewPodResource(ctrl.Resource)
+	podObject, err := podExecuter.Get(context.TODO(), ctrl.OBCluster.Namespace, podName)
+	if err != nil {
+		return false, err
+	}
+	pod := podObject.(corev1.Pod)
+	if pod.Status.Phase == observerconst.PodRunning {
+		return true, nil
+	}
+	return false, nil
+
 }
 
 func (ctrl *OBClusterCtrl) WaitAllContainerRunning(pod corev1.Pod) error {
@@ -489,10 +550,10 @@ func (ctrl *OBClusterCtrl) EndUpgrade() error {
 	return sqlOperator.EndUpgrade()
 }
 
-func (ctrl *OBClusterCtrl) CheckUpgradeModeEnd() error {
+func (ctrl *OBClusterCtrl) IsUpgradeModeEnd() (bool, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
+		return false, errors.Wrap(err, "Get Sql Operator When End Upgrade")
 	}
 	zoneUpGradeMode := sqlOperator.GetParameter(observerconst.EnableUpgradeMode)
 	isFalse := true
@@ -502,8 +563,36 @@ func (ctrl *OBClusterCtrl) CheckUpgradeModeEnd() error {
 		}
 	}
 	if !isFalse {
-		return errors.New("Upgrade Mode Wrong")
+		return false, errors.New("Upgrade Mode Wrong")
 	}
+	return true, nil
+}
+
+func (ctrl *OBClusterCtrl) TickerUpgradeModeEndFromDB() error {
+	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForOBServerStatusCheck {
+				return errors.New("Wait For Leader Count Clear Timeout")
+			}
+			num = num + 1
+			res, err := ctrl.IsUpgradeModeEnd()
+			if res {
+				return err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) CheckAneWaitUpgradeModeEnd() error {
+	klog.Infoln("Wait Upgrade Mode End")
+	err := ctrl.TickerUpgradeModeEndFromDB()
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Check Upgrade Mode OK")
 	return nil
 }
 

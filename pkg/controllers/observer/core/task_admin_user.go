@@ -16,7 +16,6 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/pkg/errors"
 	"github.com/sethvargo/go-password/password"
-	"k8s.io/klog/v2"
 )
 
 func (ctrl *OBClusterCtrl) CreateAdminUser(statefulApp cloudv1.StatefulApp) error {
@@ -24,9 +23,6 @@ func (ctrl *OBClusterCtrl) CreateAdminUser(statefulApp cloudv1.StatefulApp) erro
 	if err != nil {
 		return err
 	}
-
-	klog.Info("generated password: %s", pwd)
-
 	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when create user for operation")

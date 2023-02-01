@@ -47,6 +47,23 @@ const (
 	ExecCheckScriptsCMDTemplate = "python2 ${FILE_NAME} -h${IP} -P${PORT} -uroot"
 )
 
+func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) error {
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	upgradeRoute := clusterStatus.UpgradeRoute
+	var err error
+	err = ctrl.CheckAndSetTargetVersion(clusterStatus.TargetVersion)
+	if err != nil {
+		return err
+	}
+	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	targetVer := cluster.TargetVersion
+	err = ctrl.CheckAndSetUpgradeRoute(statefulApp, upgradeRoute, targetVer)
+	if err != nil {
+		return err
+	}
+	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradeCheck, "", "")
+}
+
 func UpgradeReplacer(filename, clusterIP, port string) *strings.Replacer {
 	return strings.NewReplacer("${FILE_NAME}", filename, "${IP}", clusterIP, "${PORT}", port)
 }
@@ -105,14 +122,19 @@ func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulA
 	if err != nil {
 		return err
 	}
-	if currUpgradeRoute == nil {
+	err = ctrl.DeleteHelperPod()
+	if err != nil {
+		return err
+	}
+	if len(currUpgradeRoute) == 0 {
 		upgradeInfo := UpgradeInfo{
 			UpgradeRoute: upgradeRoute,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
+	klog.Infoln("CheckAndSetUpgradeRoute: ctrl.OBCluster.Status.Topology[0].UpgradeRoute", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
 	if !reflect.DeepEqual(upgradeRoute, currUpgradeRoute) {
-		klog.Errorln("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
+		klog.Errorf("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
 		return errors.New("Upgrade Route Does Not Match")
 	}
 	return nil
@@ -129,7 +151,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp
 func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp) error {
 	// Get Job
 	name := observerconst.UpgradePreChecker
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name, ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -163,7 +185,12 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 
 func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
 	// All Scripts Finish
-	if ctrl.AllScriptsFinish() {
+	klog.Infoln("ExecPreScripts: ", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
+	finish, err := ctrl.AllScriptsFinish()
+	if err != nil {
+		return err
+	}
+	if finish {
 		clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 		upgradeRoute := clusterStatus.UpgradeRoute
 		upgradeInfo := UpgradeInfo{
@@ -173,8 +200,11 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
 	// Get Next Version Job
-	version, index := ctrl.GetNextVersion()
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePre, "-", index))
+	version, index, err := ctrl.GetNextVersion()
+	if err != nil {
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+	}
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePre, "-", index), ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -203,12 +233,19 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 
 func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
 	// All Scripts Finish
-	if ctrl.AllScriptsFinish() {
+	finish, err := ctrl.AllScriptsFinish()
+	if err != nil {
+		return err
+	}
+	if finish {
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
 	}
 	// Get Next Version Job
-	version, index := ctrl.GetNextVersion()
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index))
+	version, index, err := ctrl.GetNextVersion()
+	if err != nil {
+		return nil
+	}
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index), ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -238,7 +275,7 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulApp) error {
 	// Get Job
 	name := observerconst.UpgradePostChecker
-	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name)
+	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, name, ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -273,7 +310,10 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 		klog.Errorln("Update StatefulApp Failed, Err: ", err)
 		return err
 	}
-	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+	upgradeInfo := UpgradeInfo{
+		ClusterStatus: observerconst.ClusterReady,
+	}
+	return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 }
 
 func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) error {
@@ -287,7 +327,7 @@ func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) 
 		klog.Errorln(fmt.Sprint("End Upgrade Error : ", err))
 		return err
 	}
-	err = ctrl.CheckUpgradeModeEnd()
+	err = ctrl.CheckAneWaitUpgradeModeEnd()
 	if err != nil {
 		klog.Errorln(fmt.Sprint("Check Upgrade Mode (End) Error :", err))
 		return err
