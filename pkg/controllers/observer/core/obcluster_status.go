@@ -243,6 +243,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	clusterCurrentStatus.LastTransitionTime = metav1.Now()
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
 	obCluster.Status.Topology = topologyStatus
+	obCluster.Status.Status = observerconst.TopologyNotReady
 	return obCluster, nil
 
 }
