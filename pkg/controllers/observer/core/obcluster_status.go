@@ -224,17 +224,17 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 		}
 		clusterCurrentStatus.Zone = zoneStatusList
 	}
-	if upgradeInfo.TargetVersion != "" {
+	if upgradeInfo.TargetVersion != "" || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
 		clusterCurrentStatus.TargetVersion = upgradeInfo.TargetVersion
 	} else {
 		clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	}
-	if upgradeInfo.UpgradeRoute != nil {
+	if len(upgradeInfo.UpgradeRoute) != 0 || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
 		clusterCurrentStatus.UpgradeRoute = upgradeInfo.UpgradeRoute
 	} else {
 		clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
 	}
-	if upgradeInfo.ScriptPassedVersion != "" {
+	if upgradeInfo.ScriptPassedVersion != "" || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
 		clusterCurrentStatus.ScriptPassedVersion = upgradeInfo.ScriptPassedVersion
 	} else {
 		clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
@@ -243,6 +243,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	clusterCurrentStatus.LastTransitionTime = metav1.Now()
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
 	obCluster.Status.Topology = topologyStatus
+	obCluster.Status.Status = observerconst.TopologyNotReady
 	return obCluster, nil
 
 }

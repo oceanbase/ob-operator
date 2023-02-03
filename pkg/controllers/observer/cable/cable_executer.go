@@ -76,7 +76,7 @@ func OBRecoverConfigExecuter(podIP string) error {
 	code, responseData := util.HTTPGET(url)
 	if code != 200 {
 		klog.Errorln("recover observer config", podIP, "failed")
-		return errors.Errorf("recover observer config failed", responseData)
+		return errors.Errorf("recover observer config failed: %v", responseData)
 	}
 	return nil
 }

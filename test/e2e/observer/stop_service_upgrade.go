@@ -160,17 +160,26 @@ var _ = ginkgo.Describe("obcluster upgrade test pipeline", func() {
 		obcluster := testconverter.GetObjFromYaml("./data/obcluster-1-v314.yaml")
 		obclusterNamespace := obcluster.GetNamespace()
 		obclusterName := obcluster.GetName()
+		serviceName := fmt.Sprintf("svc-%s", obcluster.GetName())
+		ginkgo.It("step: get service for obcluster", func() {
+			var err error
+			service, err = testresource.TestClient.GetService(obclusterNamespace, serviceName)
+			gomega.Expect(err).To(
+				gomega.BeNil(),
+				"get service %s succeed", serviceName,
+			)
+		})
 
 		ginkgo.It("step: check major freeze start", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
+			frozenVersion := sqlOperator.GetFrozenVersion()
+			formerFrozenVersion := frozenVersion[0].Value
+			err := sqlOperator.MajorFreeze()
+			gomega.Expect(err).To(
+				gomega.BeNil(),
+				"Major freeze start",
+			)
 			gomega.Eventually(func() bool {
-				frozenVersion := sqlOperator.GetFrozenVersion()
-				formerFrozenVersion := frozenVersion[0].Value
-				err := sqlOperator.MajorFreeze()
-				gomega.Expect(err).To(
-					gomega.BeNil(),
-					"Major freeze start",
-				)
 				frozenVersion = sqlOperator.GetFrozenVersion()
 				latterFrozenVersion := frozenVersion[0].Value
 				return formerFrozenVersion != latterFrozenVersion
@@ -195,12 +204,20 @@ var _ = ginkgo.Describe("obcluster upgrade test pipeline", func() {
 			time.Sleep(ApplyWaitTime)
 		})
 
+		ginkgo.It("step: upgrade obcluster to 3.1.4", func() {
+			err := testresource.TestClient.UpdateOBClusterInstance(obcluster)
+			gomega.Expect(err).To(
+				gomega.BeNil(),
+				"update obcluster succeed",
+			)
+		})
+
 		ginkgo.It("step: check obcluster upgrade succeed", func() {
 			sqlOperator := testutils.NewDefaultSqlOperator(service.Spec.ClusterIP)
 			targetVersion := "3.1.4"
 			gomega.Eventually(func() bool {
-				currentVersion := sqlOperator.GetVersion()[0].Version
-				return currentVersion == targetVersion
+				version := sqlOperator.GetVersion()
+				return len(version) != 0 && version[0].Version == targetVersion
 			}, OBClusterUpdateTReadyimeout, TryInterval).Should(
 				gomega.Equal(true),
 				"obcluster upgrade succeed",

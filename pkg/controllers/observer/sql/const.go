@@ -43,10 +43,10 @@ const (
 	GetAllUnitSQL              = "SELECT unit_id, resource_pool_id, group_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, manual_migrate, status, replica_type FROM __all_unit;"
 
 	MajorFreezeSQL          = "ALTER SYSTEM MAJOR FREEZE;"
-	GetFrozeVersionSQL      = "select zone, name, value, info from oceanbase.__all_zone where name='frozen_version'"
-	GetLastMergedVersionSQL = "select zone, name, value, info from  oceanbase.__all_zone where name='last_merged_version' and value != (select value from oceanbase.__all_zone where name='frozen_version')"
-
-	GetRSJobStatusSQL = "SELECT job_status, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"
+	GetFrozeVersionSQL      = "SELECT zone, name, value, info from oceanbase.__all_zone where name='frozen_version'"
+	GetLastMergedVersionSQL = "SELECT zone, name, value, info from oceanbase.__all_zone where name='last_merged_version' and value != (select value from oceanbase.__all_zone where name='frozen_version')"
+	GetObVersionSQL         = "SELECT ob_version() as version;"
+	GetRSJobStatusSQL       = "SELECT job_status, progress FROM __all_rootservice_job WHERE job_type = 'DELETE_SERVER' AND svr_ip = '${DELETE_SERVER_IP}' AND svr_port = '${DELETE_SERVER_PORT}';"
 
 	CreateUserSQLTemplate = "CREATE USER ${USER} identified by '${PASSWORD}';"
 

@@ -144,7 +144,7 @@ func (op *SqlOperator) GetVersion() []model.OBVersion {
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.OBVersion{}).Raw(GetLeaderCountSQL).Rows()
+		rows, err := client.Model(&model.OBVersion{}).Raw(GetObVersionSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.OBVersion
