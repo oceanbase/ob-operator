@@ -299,7 +299,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	} else if clusterStatus == observerconst.ScaleUP || clusterStatus == observerconst.ScaleDown ||
 		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown ||
 		clusterStatus == observerconst.NeedUpgradeCheck || clusterStatus == observerconst.UpgradeChecking ||
-		clusterStatus == observerconst.NeedExecutingPreScripts || clusterStatus == observerconst.ExecutingPreScripts ||
+		clusterStatus == observerconst.CheckUpgradeMode || clusterStatus == observerconst.ExecutingPreScripts ||
 		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading ||
 		clusterStatus == observerconst.ExecutingPostScripts || clusterStatus == observerconst.NeedUpgradePostCheck ||
 		clusterStatus == observerconst.UpgradePostChecking {

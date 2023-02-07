@@ -103,7 +103,7 @@ func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	container := corev1.Container{
 		Name:            observerconst.ImgOb,
 		Image:           fmt.Sprintf("%s:%s", obClusterSpec.ImageRepo, obClusterSpec.Tag),
-		ImagePullPolicy: observerconst.ImgPullPolicy,
+		ImagePullPolicy: observerconst.ImgPullPolicyAlways,
 		Ports:           port,
 		Resources:       resources,
 		VolumeMounts:    volumeMounts,

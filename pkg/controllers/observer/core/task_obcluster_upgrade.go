@@ -80,9 +80,12 @@ func (ctrl *OBClusterCtrl) OBClusterUpgradeBP(statefulApp cloudv1.StatefulApp, v
 	upgradeRoute := []string{version, version}
 	upgradeInfo := UpgradeInfo{
 		UpgradeRoute:  upgradeRoute,
-		ClusterStatus: observerconst.NeedUpgrading,
+		ClusterStatus: observerconst.NeedUpgradeCheck,
 	}
-
+	err := ctrl.DeleteHelperPod()
+	if err != nil {
+		return err
+	}
 	return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 }
 
@@ -166,7 +169,6 @@ func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulA
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
-	klog.Infoln("CheckAndSetUpgradeRoute: ctrl.OBCluster.Status.Topology[0].UpgradeRoute", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
 	if !reflect.DeepEqual(upgradeRoute, currUpgradeRoute) {
 		klog.Errorf("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
 		return errors.New("Upgrade Route Does Not Match")
@@ -201,7 +203,7 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 	case observerconst.JobRunning:
 		return nil
 	case observerconst.JobSucceeded:
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedExecutingPreScripts, "", "")
+		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.CheckUpgradeMode, "", "")
 	case observerconst.JobFailed:
 		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
@@ -322,6 +324,7 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 	jobStatus := ctrl.GetJobStatus(jobObject)
 	switch jobStatus {
 	case observerconst.JobRunning:
+		time.Sleep(5 * time.Second)
 		return nil
 	case observerconst.JobSucceeded:
 		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
@@ -458,27 +461,14 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 		time.Sleep(2 * time.Second)
 		return nil
 	}
-	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
-	upgradeRoute := clusterStatus.UpgradeRoute
-	if upgradeRoute[0] == upgradeRoute[1] {
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
-		if err != nil {
-			return err
-		}
-		err = ctrl.UpdateStatefulAppImage(statefulApp)
-		if err != nil {
-			klog.Errorln("Update StatefulApp Failed, Err: ", err)
-			return err
-		}
-		upgradeInfo := UpgradeInfo{
-			ClusterStatus: observerconst.ClusterReady,
-			ZoneStatus:    observerconst.OBZoneReady,
-		}
-		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
-	}
 	err = ctrl.UpgradeSchema()
 	if err != nil {
 		return err
+	}
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	upgradeRoute := clusterStatus.UpgradeRoute
+	if upgradeRoute[0] == upgradeRoute[1] {
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPostScripts, "", "")
 }
@@ -619,8 +609,15 @@ func (ctrl *OBClusterCtrl) CheckUpgradeModeBegin(statefulApp cloudv1.StatefulApp
 		}
 	}
 	if isOK {
-		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPreScripts, "", "")
+		clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+		upgradeRoute := clusterStatus.UpgradeRoute
+		if upgradeRoute[0] == upgradeRoute[1] {
+			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgrading, "", "")
+		} else {
+			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPreScripts, "", "")
+		}
 	} else {
+		klog.Infoln("Begin upgrade")
 		return sqlOperator.BeginUpgrade()
 	}
 }

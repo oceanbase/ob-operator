@@ -35,8 +35,8 @@ const (
 	NeedUpgradeCheck = "Need Upgrade Check"
 	UpgradeChecking  = "Upgrade Checking"
 
-	NeedExecutingPreScripts = "Need Executing Pre Scripts"
-	ExecutingPreScripts     = "Executing Pre Scripts"
+	CheckUpgradeMode    = "Check Upgrade Mode"
+	ExecutingPreScripts = "Executing Pre Scripts"
 
 	NeedUpgrading = "Need Upgrading"
 	Upgrading     = "Upgrading"

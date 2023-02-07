@@ -89,6 +89,7 @@ func (ctrl *OBClusterCtrl) DeletePod(podName string) error {
 }
 
 func (ctrl *OBClusterCtrl) CreateHelperPod(podName string) error {
+	klog.Infoln("Create Helper Pod")
 	var envList []corev1.EnvVar
 	envList = append(envList, corev1.EnvVar{
 		Name:  "LD_LIBRARY_PATH",
@@ -133,6 +134,7 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 }
 
 func (ctrl *OBClusterCtrl) DeleteHelperPod() error {
+	klog.Infoln("Delete Helper Pod")
 	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help", ctrl.GenerateSpecVersion())
 	return ctrl.DeletePod(podName)
 }
@@ -532,7 +534,7 @@ func (ctrl *OBClusterCtrl) GetConfigAdditionalDir(rsIP, svrIP string) (string, e
 }
 
 func (ctrl *OBClusterCtrl) SetMinVersion() error {
-	klog.Infoln("SetMinVersion: ")
+	klog.Infoln("Set OB Min Version")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When Setting Min OB Server Veriosn")
@@ -543,6 +545,7 @@ func (ctrl *OBClusterCtrl) SetMinVersion() error {
 }
 
 func (ctrl *OBClusterCtrl) EndUpgrade() error {
+	klog.Infoln("End upgrade")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
@@ -597,6 +600,7 @@ func (ctrl *OBClusterCtrl) CheckAneWaitUpgradeModeEnd() error {
 }
 
 func (ctrl *OBClusterCtrl) RunRootInspection() error {
+	klog.Infoln("Run job 'root_inspection'")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When Running Root Inspection Job")
@@ -605,6 +609,7 @@ func (ctrl *OBClusterCtrl) RunRootInspection() error {
 }
 
 func (ctrl *OBClusterCtrl) UpgradeSchema() error {
+	klog.Infoln("Upgrade virtual schema")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when upgrade schema")

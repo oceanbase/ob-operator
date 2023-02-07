@@ -32,11 +32,10 @@ const (
 	StopOBZoneTemplate   = "ALTER SYSTEM STOP ZONE '${ZONE_NAME}';"
 	DeleteOBZoneTemplate = "ALTER SYSTEM DELETE ZONE '${ZONE_NAME}';"
 
-	BeginUpgradeSQL            = "ALTER SYSTEM BEGIN UPGRADE;"
-	UpgradeSchemaSQL           = "ALTER SYSTEM UPGRADE VIRTUAL SCHEMA;"
-	SetMinOBVersionSQLTemplate = "ALTER SYSTEM SET min_observer_version = '${VERSION}'"
-	EndUpgradeSQL              = "ALTER SYSTEM END UPGRADE;"
-	RunRootInspectionJobSQL    = "ALTER SYSTEM RUN JOB 'root_inspection'"
+	BeginUpgradeSQL         = "ALTER SYSTEM BEGIN UPGRADE;"
+	UpgradeSchemaSQL        = "ALTER SYSTEM UPGRADE VIRTUAL SCHEMA;"
+	EndUpgradeSQL           = "ALTER SYSTEM END UPGRADE;"
+	RunRootInspectionJobSQL = "ALTER SYSTEM RUN JOB 'root_inspection';"
 
 	GetClogStatSQL    = "select svr_ip, svr_port, is_offline, is_in_sync from __all_virtual_clog_stat where is_in_sync=0 and is_offline =0;"
 	GetLeaderCountSQL = "SELECT zone, leader_count FROM oceanbase.__all_virtual_server_stat"
