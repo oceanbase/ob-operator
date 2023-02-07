@@ -32,7 +32,6 @@ const (
 
 // obcluster upgrade state machine
 const (
-	UpgradeModeBP    = "BP"
 	NeedUpgradeCheck = "Need Upgrade Check"
 	UpgradeChecking  = "Upgrade Checking"
 
