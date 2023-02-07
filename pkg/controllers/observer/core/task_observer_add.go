@@ -62,9 +62,13 @@ func (ctrl *OBClusterCtrl) StartOBServer(clusterIP, zoneName, podIP string, stat
 		klog.Info("rs list is empty")
 		return errors.New("rs list is empty")
 	}
-
 	// generate start args
-	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList)
+	version, err := ctrl.GetCurrentVersion(statefulApp)
+	if err != nil {
+		klog.Errorln("add server get Version failed")
+		version = observerconst.OBClusterV3
+	}
+	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList, version)
 	// check OBServer is already running, for OBServer Scale UP
 	err = cable.OBServerStatusCheckExecuter(ctrl.OBCluster.Name, podIP)
 	// nil is OBServer is already running

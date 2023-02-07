@@ -75,7 +75,7 @@ func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) err
 func (ctrl *OBClusterCtrl) IsUpgradeV3(statefulApp cloudv1.StatefulApp) bool {
 	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	targetVer := cluster.TargetVersion
-	return targetVer[0:1] == "3"
+	return targetVer[0:1] == observerconst.OBClusterV3
 }
 
 func (ctrl *OBClusterCtrl) OBClusterUpgradeBP(statefulApp cloudv1.StatefulApp) error {
@@ -573,7 +573,12 @@ func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefu
 		}
 	}
 	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
-	cable.OBServerStart(ctrl.OBCluster, startSubset, rsList)
+	version, err := ctrl.GetCurrentVersion(statefulApp)
+	if err != nil {
+		klog.Errorln("bootstrap server get Version failed")
+		version = observerconst.OBClusterV3
+	}
+	cable.OBServerStart(ctrl.OBCluster, startSubset, rsList, version)
 	for _, subset := range subsets {
 		podList := subset.Pods
 		if subset.Name == zoneName {

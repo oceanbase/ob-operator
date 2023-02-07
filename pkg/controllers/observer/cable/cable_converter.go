@@ -65,7 +65,7 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 	return rsList
 }
 
-func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList string) map[string]interface{} {
+func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList, version string) map[string]interface{} {
 	obServerStartArgs := make(map[string]interface{})
 	obServerStartArgs["clusterName"] = obCluster.Name
 	obServerStartArgs["clusterId"] = obCluster.Spec.ClusterID
@@ -76,6 +76,7 @@ func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList str
 	memory, _ := obCluster.Spec.Resources.Memory.AsInt64()
 	obServerStartArgs["memoryLimit"] = memory / 1024 / 1024 / 1024
 	obServerStartArgs["customParameters"] = obCluster.Spec.Topology[0].Parameters
+	obServerStartArgs["version"] = version
 	return obServerStartArgs
 }
 
