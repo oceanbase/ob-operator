@@ -66,5 +66,8 @@ const (
 	TickPeriodForPodStatusCheck = 1 * time.Second
 	TickNumForPodStatusCheck    = 60
 
+	TickPeriodForPodGetObVersion = 5 * time.Second
+	TickNumForPodGetObVersion    = 20
+
 	DelServerTimeout = 30
 )

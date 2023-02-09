@@ -494,10 +494,17 @@ func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefu
 				for idx, container := range newPodObject.Spec.Containers {
 					if container.Name == observerconst.ImgOb {
 						newPodObject.Spec.Containers[idx].Image = fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+						klog.Infof("Patch Zone '%s' Pod Image: ", zoneName, newPodObject.Spec.Containers[idx].Image)
 						err = podExecuter.Patch(context.TODO(), *newPodObject, client.MergeFrom(podObjectReal.DeepCopyObject().(client.Object)))
 						if err != nil {
 							return err
 						}
+					}
+				}
+				for idx, container := range newPodObject.Status.ContainerStatuses {
+					if container.Name == observerconst.ImgOb {
+						newPodObject.Status.ContainerStatuses[idx].Image = fmt.Sprint(ctrl.OBCluster.Spec.ImageRepo, ":", ctrl.OBCluster.Spec.Tag)
+						klog.Infof("Zone '%s' Pod Status Image: ", zoneName, newPodObject.Status.ContainerStatuses[idx].Image)
 					}
 				}
 			}
@@ -522,13 +529,12 @@ func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefu
 			}
 		}
 	}
-	// wait observer available
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	for _, subset := range subsets {
 		podList := subset.Pods
 		if subset.Name == zoneName {
 			for _, pod := range podList {
-				currentVersion, err := cable.OBServerGetVersion(pod.PodIP)
+				currentVersion, err := ctrl.WaitAndGetVersion(pod.PodIP)
 				if err != nil {
 					klog.Errorln(pod.PodIP, "OB Server Get Version Failed, Error: ", err)
 					return err
@@ -539,14 +545,12 @@ func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefu
 			}
 		}
 	}
-	klog.Infoln("Check OB Servers Version Finish")
 	rsName := converter.GenerateRootServiceName(ctrl.OBCluster.Name)
 	rsCtrl := NewRootServiceCtrl(ctrl)
 	rsCurrent, err := rsCtrl.GetRootServiceByName(ctrl.OBCluster.Namespace, rsName)
 	if err != nil {
 		return err
 	}
-
 	// Recovery Etc From Additional dir
 	for _, subset := range subsets {
 		podList := subset.Pods
@@ -560,6 +564,7 @@ func (ctrl *OBClusterCtrl) PatchAndStartContainer(rsIP, zoneName string, statefu
 			}
 		}
 	}
+	// wait observer available
 	rsList := cable.GenerateRSListFromRootServiceStatus(rsCurrent.Status.Topology)
 	version, err := ctrl.GetCurrentVersion(statefulApp)
 	if err != nil {

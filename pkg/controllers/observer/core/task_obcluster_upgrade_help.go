@@ -21,6 +21,7 @@ import (
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
@@ -383,6 +384,42 @@ func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
 			}
 		}
 	}
+}
+
+func (ctrl *OBClusterCtrl) WaitAndGetVersion(podIP string) (string, error) {
+	klog.Infof("Wait and Check Pod '%s' OB Version ", podIP)
+	version, err := ctrl.TickerGetPodVersion(podIP)
+	if err != nil {
+		return "", err
+	}
+	klog.Infoln("Check OB Servers Version Finish")
+	return version, nil
+}
+
+func (ctrl *OBClusterCtrl) TickerGetPodVersion(podIP string) (string, error) {
+	tick := time.Tick(observerconst.TickPeriodForPodGetObVersion)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForPodGetObVersion {
+				return "", errors.New("Get OB Version Timeout")
+			}
+			num = num + 1
+			res, version, err := ctrl.GetOBVersion(podIP)
+			if res {
+				return version, err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) GetOBVersion(podIP string) (bool, string, error) {
+	currentVersion, err := cable.OBServerGetVersion(podIP)
+	if err != nil {
+		return false, "", err
+	}
+	return true, currentVersion, nil
 }
 
 func (ctrl *OBClusterCtrl) WaitHelperPodReady(podName string) error {
