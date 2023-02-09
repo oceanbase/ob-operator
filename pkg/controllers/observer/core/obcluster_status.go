@@ -184,8 +184,6 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo UpgradeInfo) err
 }
 
 func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCluster, upgradeInfo UpgradeInfo) (cloudv1.OBCluster, error) {
-	var obclusterCurrentStatus cloudv1.OBClusterStatus
-	obclusterCurrentStatus.Status = obCluster.Status.Status
 
 	oldClusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	// new cluster status
@@ -224,17 +222,17 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 		}
 		clusterCurrentStatus.Zone = zoneStatusList
 	}
-	if upgradeInfo.TargetVersion != "" || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
+	if upgradeInfo.TargetVersion != "" {
 		clusterCurrentStatus.TargetVersion = upgradeInfo.TargetVersion
 	} else {
 		clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	}
-	if len(upgradeInfo.UpgradeRoute) != 0 || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
+	if len(upgradeInfo.UpgradeRoute) != 0 {
 		clusterCurrentStatus.UpgradeRoute = upgradeInfo.UpgradeRoute
 	} else {
 		clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
 	}
-	if upgradeInfo.ScriptPassedVersion != "" || upgradeInfo.ClusterStatus == observerconst.ClusterReady {
+	if upgradeInfo.ScriptPassedVersion != "" {
 		clusterCurrentStatus.ScriptPassedVersion = upgradeInfo.ScriptPassedVersion
 	} else {
 		clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
@@ -245,7 +243,6 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	obCluster.Status.Topology = topologyStatus
 	obCluster.Status.Status = observerconst.TopologyNotReady
 	return obCluster, nil
-
 }
 
 func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clusterStatus, zoneName, zoneStatus string) (cloudv1.OBCluster, error) {
@@ -290,6 +287,12 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
 	clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
+	if clusterStatus == observerconst.ClusterReady {
+		clusterCurrentStatus.TargetVersion = ""
+		var upgradeRoute []string
+		clusterCurrentStatus.UpgradeRoute = upgradeRoute
+		clusterCurrentStatus.ScriptPassedVersion = ""
+	}
 
 	// topology status, multi cluster
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)

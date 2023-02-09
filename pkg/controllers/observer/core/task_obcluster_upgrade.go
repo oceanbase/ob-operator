@@ -326,30 +326,24 @@ func (ctrl *OBClusterCtrl) ExecUpgradePostChecker(statefulApp cloudv1.StatefulAp
 	case observerconst.JobRunning:
 		time.Sleep(5 * time.Second)
 		return nil
-	case observerconst.JobSucceeded:
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
-		if err != nil {
-			return err
-		}
 	case observerconst.JobFailed:
 		return ctrl.DeleteJobObject(jobObject)
+	case observerconst.JobSucceeded:
+		// Delete Job
+		err = ctrl.DeleteJobObject(jobObject)
+		if err != nil {
+			klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+			return err
+		}
+		err = ctrl.UpdateStatefulAppImage(statefulApp)
+		if err != nil {
+			klog.Errorln("Update StatefulApp Failed, Err: ", err)
+			return err
+		}
+		klog.Infoln("Upgrade Finished~")
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
-	// Delete Job
-	err = ctrl.DeleteJobObject(jobObject)
-	if err != nil {
-		klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
-		return err
-	}
-
-	err = ctrl.UpdateStatefulAppImage(statefulApp)
-	if err != nil {
-		klog.Errorln("Update StatefulApp Failed, Err: ", err)
-		return err
-	}
-	upgradeInfo := UpgradeInfo{
-		ClusterStatus: observerconst.ClusterReady,
-	}
-	return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
+	return nil
 }
 
 func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) error {
