@@ -61,3 +61,7 @@ func GetParameterSQLReplacer(name string) *strings.Replacer {
 func ZoneNameReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
+
+func GetLeaderCountSQLReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
+}

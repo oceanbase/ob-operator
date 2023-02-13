@@ -103,7 +103,7 @@ func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	container := corev1.Container{
 		Name:            observerconst.ImgOb,
 		Image:           fmt.Sprintf("%s:%s", obClusterSpec.ImageRepo, obClusterSpec.Tag),
-		ImagePullPolicy: observerconst.ImgPullPolicy,
+		ImagePullPolicy: observerconst.ImgPullPolicyAlways,
 		Ports:           port,
 		Resources:       resources,
 		VolumeMounts:    volumeMounts,
@@ -302,5 +302,14 @@ func UpdateZoneForStatefulApp(clusterList []cloudv1.Cluster, statefulApp cloudv1
 	cluster := GetClusterSpecFromOBTopology(clusterList)
 	zoneList := cluster.Zone
 	statefulApp.Spec.Subsets = zoneList
+	return statefulApp
+}
+
+func UpdateStatefulAppImage(statefulApp cloudv1.StatefulApp, image string) cloudv1.StatefulApp {
+	for index, container := range statefulApp.Spec.PodTemplate.Containers {
+		if container.Name == observerconst.ImgOb {
+			statefulApp.Spec.PodTemplate.Containers[index].Image = image
+		}
+	}
 	return statefulApp
 }

@@ -84,3 +84,7 @@ func (r *ServiceResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&service, corev1.EventTypeNormal, DeletedService, "delete Service"+service.Name)
 	return nil
 }
+
+func (r *ServiceResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

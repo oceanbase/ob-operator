@@ -12,17 +12,12 @@ See the Mulan PSL v2 for more details.
 
 package observerconst
 
-// OBZone Status
+// container
 const (
-	OBZonePrepareing = "Prepareing"
-	OBZoneReady      = "Ready"
-	OBZoneOffline    = "Offline"
-
-	OBZoneActive   = "ACTIVE"
-	OBZoneInactive = "INACTIVE"
+	ContainerRunning = "Running"
 )
 
+// pod
 const (
-	OBZoneAdd = "Add OBZone"
-	OBZoneDel = "Delete OBZone"
+	PodRunning = "Running"
 )

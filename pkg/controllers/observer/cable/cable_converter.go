@@ -35,7 +35,7 @@ func GenerateRSListFromSubset(subsets []cloudv1.SubsetStatus) string {
 				if rsList == "" {
 					rsList = fmt.Sprintf("%s:%d:%d", podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				} else {
-					rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
+					rsList = fmt.Sprintf("%s;%s:%d:%d", rsList, podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				}
 			} else {
 				klog.Errorln("pod ip is empty", subsets)
@@ -55,7 +55,7 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 					if rsList == "" {
 						rsList = fmt.Sprintf("%s:%d:%d", zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					} else {
-						rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
+						rsList = fmt.Sprintf("%s;%s:%d:%d", rsList, zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					}
 				}
 			}
@@ -65,7 +65,7 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 	return rsList
 }
 
-func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList string) map[string]interface{} {
+func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList, version string) map[string]interface{} {
 	obServerStartArgs := make(map[string]interface{})
 	obServerStartArgs["clusterName"] = obCluster.Name
 	obServerStartArgs["clusterId"] = obCluster.Spec.ClusterID
@@ -76,6 +76,7 @@ func GenerateOBServerStartArgs(obCluster cloudv1.OBCluster, zoneName, rsList str
 	memory, _ := obCluster.Spec.Resources.Memory.AsInt64()
 	obServerStartArgs["memoryLimit"] = memory / 1024 / 1024 / 1024
 	obServerStartArgs["customParameters"] = obCluster.Spec.Topology[0].Parameters
+	obServerStartArgs["version"] = version
 	return obServerStartArgs
 }
 
@@ -102,4 +103,25 @@ func GenerateOBClusterBootstrapArgs(subsets []cloudv1.SubsetStatus) (string, err
 	obclusterBootstrapArgs := ob.GenerateBootstrapSQL(bootstrapParam)
 	klog.Infoln("OBCluster bootstrap args", obclusterBootstrapArgs)
 	return obclusterBootstrapArgs, nil
+}
+
+func GenerateOBUpgradeRouteArgs(currentVersion, targetVersion string) map[string]interface{} {
+	obUpgradeRouteArgs := make(map[string]interface{})
+	obUpgradeRouteArgs["currentVersion"] = currentVersion
+	obUpgradeRouteArgs["targetVersion"] = targetVersion
+	return obUpgradeRouteArgs
+}
+
+func GenerateOBRecoverConfigArgs(path string) map[string]interface{} {
+	obUpgradeRouteArgs := make(map[string]interface{})
+	obUpgradeRouteArgs["configAdditionalDir"] = path
+	return obUpgradeRouteArgs
+}
+
+func GetObUpgradeRouteFromResponse(responseData interface{}) []string {
+	var res []string
+	for _, v := range responseData.([]interface{}) {
+		res = append(res, v.(string))
+	}
+	return res
 }

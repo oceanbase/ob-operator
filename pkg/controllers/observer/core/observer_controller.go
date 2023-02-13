@@ -46,7 +46,6 @@ func (ctrl *OBClusterCtrl) UpdateOBServerReplica(subset cloudv1.Subset, stateful
 	if err != nil {
 		return err
 	}
-
 	// generate new OBZone for new replica
 	obZoneName := converter.GenerateOBZoneName(ctrl.OBCluster.Name)
 	obZoneCtrl := NewOBZoneCtrl(ctrl)

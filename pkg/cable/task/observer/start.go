@@ -19,6 +19,7 @@ import (
 	"strings"
 
 	"github.com/oceanbase/ob-operator/pkg/config/constant"
+	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/util/shell"
 	log "github.com/sirupsen/logrus"
 )
@@ -31,6 +32,7 @@ type StartObServerProcessArguments struct {
 	CpuLimit         int         `json:"cpuLimit" binding:"required"`
 	MemoryLimit      int         `json:"memoryLimit" binding:"required"`
 	CustomParameters []Parameter `json:"customParameters"`
+	Version          string      `json:"Version" `
 }
 
 type Parameter struct {
@@ -57,6 +59,7 @@ func StartObserverProcess(param StartObServerProcessArguments) {
 	obClusterId := param.ClusterId
 	zoneName := param.ZoneName
 	rsList := param.RsList
+	version := param.Version
 	deviceName := constant.NIC
 	customOption := ""
 	if param.CustomParameters != nil && len(param.CustomParameters) > 0 {
@@ -66,7 +69,11 @@ func StartObserverProcess(param StartObServerProcessArguments) {
 	}
 	if memory <= constant.MEMORY_SIMPLE {
 		// 2C, 10G
-		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
+		if version != "" && version[0:1] == observerconst.OBClusterV3 {
+			option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
+		} else {
+			option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
+		}
 	} else {
 		// 16C, 64G
 		option = fmt.Sprintf("cpu_count=%d,memory_limit=%dG,system_memory=%dG,__min_full_resource_pool_memory=1073741824,datafile_size=%dG,net_thread_count=%d%s", cpu, memory, systemMemory, datafileSize, param.CpuLimit, customOption)
