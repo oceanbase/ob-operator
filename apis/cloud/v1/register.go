@@ -24,5 +24,5 @@ func Resource(resource string) schema.GroupResource {
 }
 
 func init() {
-	SchemeBuilder.Register(&StatefulApp{}, &StatefulAppList{}, &OBCluster{}, &OBClusterList{}, &RootService{}, &RootServiceList{}, &OBZone{}, &OBZoneList{}, &Backup{}, &BackupList{})
+	SchemeBuilder.Register(&StatefulApp{}, &StatefulAppList{}, &OBCluster{}, &OBClusterList{}, &RootService{}, &RootServiceList{}, &OBZone{}, &OBZoneList{}, &Backup{}, &BackupList{}, &Tenant{}, &TenantList{})
 }

@@ -10,30 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package observer
+package tenant
 
 import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 )
-
-type statefulAppPredicate struct {
-}
-
-func (p statefulAppPredicate) Create(e event.CreateEvent) bool {
-	return true
-}
-
-func (p statefulAppPredicate) Delete(e event.DeleteEvent) bool {
-	return true
-}
-
-func (p statefulAppPredicate) Update(e event.UpdateEvent) bool {
-	return true
-}
-
-func (p statefulAppPredicate) Generic(e event.GenericEvent) bool {
-	return true
-}
 
 type tenantPredicate struct {
 }

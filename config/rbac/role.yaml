@@ -222,6 +222,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - ""
   resources:
   - persistentvolumeclaims
