@@ -30,11 +30,11 @@ func CableStatusCheck(subsets []cloudv1.SubsetStatus) error {
 	return nil
 }
 
-func OBServerStart(obCluster cloudv1.OBCluster, subsets []cloudv1.SubsetStatus, rsList string) {
+func OBServerStart(obCluster cloudv1.OBCluster, subsets []cloudv1.SubsetStatus, rsList, version string) {
 	for _, subset := range subsets {
 		podList := subset.Pods
 		for _, pod := range podList {
-			obServerStartArgs := GenerateOBServerStartArgs(obCluster, subset.Name, rsList)
+			obServerStartArgs := GenerateOBServerStartArgs(obCluster, subset.Name, rsList, version)
 			podIP := pod.PodIP
 			// check OBServer is already running, for OBServer Scale UP
 			err := OBServerStatusCheckExecuter(obCluster.ClusterName, podIP)
