@@ -186,11 +186,11 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error {
 	// All Scripts Finish
 	klog.Infoln("ExecPreScripts: ", ctrl.OBCluster.Status.Topology[0].UpgradeRoute)
-	finish, err := ctrl.AllScriptsFinish()
+	finished, err := ctrl.AllScriptsFinish()
 	if err != nil {
 		return err
 	}
-	if finish {
+	if finished {
 		clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 		upgradeRoute := clusterStatus.UpgradeRoute
 		upgradeInfo := UpgradeInfo{
@@ -233,17 +233,17 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 
 func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) error {
 	// All Scripts Finish
-	finish, err := ctrl.AllScriptsFinish()
+	finished, err := ctrl.AllScriptsFinish()
 	if err != nil {
 		return err
 	}
-	if finish {
+	if finished {
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
 	}
 	// Get Next Version Job
 	version, index, err := ctrl.GetNextVersion()
 	if err != nil {
-		return nil
+		return err
 	}
 	jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, fmt.Sprint(observerconst.UpgradePost, "-", index), ctrl.GenerateSpecVersion())
 	jobObject, err := ctrl.GetJobObject(jobName)
@@ -327,7 +327,7 @@ func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) 
 		klog.Errorln(fmt.Sprint("End Upgrade Error : ", err))
 		return err
 	}
-	err = ctrl.CheckAneWaitUpgradeModeEnd()
+	err = ctrl.CheckAndWaitUpgradeModeEnd()
 	if err != nil {
 		klog.Errorln(fmt.Sprint("Check Upgrade Mode (End) Error :", err))
 		return err

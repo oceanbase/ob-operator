@@ -309,7 +309,7 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	return version, index, nil
 }
 
-func (ctrl *OBClusterCtrl) IsLeaderCountZero(rsIP, zoneName string) (bool, error) {
+func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
 	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
 	if err != nil {
 		return false, errors.Wrap(err, "get sql operator when check info leader count")
@@ -337,7 +337,7 @@ func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error 
 				return errors.New("Wait For Leader Count Clear Timeout")
 			}
 			num = num + 1
-			res, err := ctrl.IsLeaderCountZero(rsIP, zoneName)
+			res, err := ctrl.isLeaderCountZero(rsIP, zoneName)
 			if res {
 				return err
 			}
@@ -586,7 +586,7 @@ func (ctrl *OBClusterCtrl) TickerUpgradeModeEndFromDB() error {
 	}
 }
 
-func (ctrl *OBClusterCtrl) CheckAneWaitUpgradeModeEnd() error {
+func (ctrl *OBClusterCtrl) CheckAndWaitUpgradeModeEnd() error {
 	klog.Infoln("Wait Upgrade Mode End")
 	err := ctrl.TickerUpgradeModeEndFromDB()
 	if err != nil {
