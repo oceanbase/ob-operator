@@ -241,7 +241,7 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				err = ctrl.ExecUpgradePreChecker(statefulApp)
 			case observerconst.UpgradeChecking:
 				err = ctrl.GetPreCheckJobStatus(statefulApp)
-			case observerconst.NeedExecutingPreScripts:
+			case observerconst.CheckUpgradeMode:
 				err = ctrl.CheckUpgradeModeBegin(statefulApp)
 			case observerconst.ExecutingPreScripts:
 				err = ctrl.ExecPreScripts(statefulApp)

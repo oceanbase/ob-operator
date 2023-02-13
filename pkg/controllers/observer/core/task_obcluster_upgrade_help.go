@@ -21,6 +21,7 @@ import (
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	myconfig "github.com/oceanbase/ob-operator/pkg/config"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
@@ -89,6 +90,7 @@ func (ctrl *OBClusterCtrl) DeletePod(podName string) error {
 }
 
 func (ctrl *OBClusterCtrl) CreateHelperPod(podName string) error {
+	klog.Infoln("Create Helper Pod")
 	var envList []corev1.EnvVar
 	envList = append(envList, corev1.EnvVar{
 		Name:  "LD_LIBRARY_PATH",
@@ -133,6 +135,7 @@ func (ctrl *OBClusterCtrl) GetHelperPodIP() (string, error) {
 }
 
 func (ctrl *OBClusterCtrl) DeleteHelperPod() error {
+	klog.Infoln("Delete Helper Pod")
 	podName := GeneratePodName(ctrl.OBCluster.Name, myconfig.ClusterName, "help", ctrl.GenerateSpecVersion())
 	return ctrl.DeletePod(podName)
 }
@@ -309,7 +312,7 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	return version, index, nil
 }
 
-func (ctrl *OBClusterCtrl) IsLeaderCountZero(rsIP, zoneName string) (bool, error) {
+func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
 	sqlOperator, err := ctrl.GetSqlOperator(rsIP)
 	if err != nil {
 		return false, errors.Wrap(err, "get sql operator when check info leader count")
@@ -337,7 +340,7 @@ func (ctrl *OBClusterCtrl) TickerLeaderCountFromDB(rsIP, zoneName string) error 
 				return errors.New("Wait For Leader Count Clear Timeout")
 			}
 			num = num + 1
-			res, err := ctrl.IsLeaderCountZero(rsIP, zoneName)
+			res, err := ctrl.isLeaderCountZero(rsIP, zoneName)
 			if res {
 				return err
 			}
@@ -381,6 +384,42 @@ func (ctrl *OBClusterCtrl) TickerOBServerAvailableFromDB(rsIP string) error {
 			}
 		}
 	}
+}
+
+func (ctrl *OBClusterCtrl) WaitAndGetVersion(podIP string) (string, error) {
+	klog.Infof("Wait and Check Pod '%s' OB Version ", podIP)
+	version, err := ctrl.TickerGetPodVersion(podIP)
+	if err != nil {
+		return "", err
+	}
+	klog.Infoln("Check OB Servers Version Finish")
+	return version, nil
+}
+
+func (ctrl *OBClusterCtrl) TickerGetPodVersion(podIP string) (string, error) {
+	tick := time.Tick(observerconst.TickPeriodForPodGetObVersion)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > observerconst.TickNumForPodGetObVersion {
+				return "", errors.New("Get OB Version Timeout")
+			}
+			num = num + 1
+			res, version, err := ctrl.GetOBVersion(podIP)
+			if res {
+				return version, err
+			}
+		}
+	}
+}
+
+func (ctrl *OBClusterCtrl) GetOBVersion(podIP string) (bool, string, error) {
+	currentVersion, err := cable.OBServerGetVersion(podIP)
+	if err != nil {
+		return false, "", err
+	}
+	return true, currentVersion, nil
 }
 
 func (ctrl *OBClusterCtrl) WaitHelperPodReady(podName string) error {
@@ -532,7 +571,7 @@ func (ctrl *OBClusterCtrl) GetConfigAdditionalDir(rsIP, svrIP string) (string, e
 }
 
 func (ctrl *OBClusterCtrl) SetMinVersion() error {
-	klog.Infoln("SetMinVersion: ")
+	klog.Infoln("Set OB Min Version")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When Setting Min OB Server Veriosn")
@@ -543,6 +582,7 @@ func (ctrl *OBClusterCtrl) SetMinVersion() error {
 }
 
 func (ctrl *OBClusterCtrl) EndUpgrade() error {
+	klog.Infoln("End upgrade")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When End Upgrade")
@@ -586,7 +626,7 @@ func (ctrl *OBClusterCtrl) TickerUpgradeModeEndFromDB() error {
 	}
 }
 
-func (ctrl *OBClusterCtrl) CheckAneWaitUpgradeModeEnd() error {
+func (ctrl *OBClusterCtrl) CheckAndWaitUpgradeModeEnd() error {
 	klog.Infoln("Wait Upgrade Mode End")
 	err := ctrl.TickerUpgradeModeEndFromDB()
 	if err != nil {
@@ -597,6 +637,7 @@ func (ctrl *OBClusterCtrl) CheckAneWaitUpgradeModeEnd() error {
 }
 
 func (ctrl *OBClusterCtrl) RunRootInspection() error {
+	klog.Infoln("Run job 'root_inspection'")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator When Running Root Inspection Job")
@@ -605,6 +646,7 @@ func (ctrl *OBClusterCtrl) RunRootInspection() error {
 }
 
 func (ctrl *OBClusterCtrl) UpgradeSchema() error {
+	klog.Infoln("Upgrade virtual schema")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when upgrade schema")
