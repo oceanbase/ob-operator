@@ -35,7 +35,7 @@ func GenerateRSListFromSubset(subsets []cloudv1.SubsetStatus) string {
 				if rsList == "" {
 					rsList = fmt.Sprintf("%s:%d:%d", podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				} else {
-					rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
+					rsList = fmt.Sprintf("%s;%s:%d:%d", rsList, podIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 				}
 			} else {
 				klog.Errorln("pod ip is empty", subsets)
@@ -55,7 +55,7 @@ func GenerateRSListFromRootServiceStatus(topology []cloudv1.ClusterRootServiceSt
 					if rsList == "" {
 						rsList = fmt.Sprintf("%s:%d:%d", zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					} else {
-						rsList = fmt.Sprintf("%s,%s:%d:%d", rsList, zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
+						rsList = fmt.Sprintf("%s;%s:%d:%d", rsList, zone.ServerIP, constant.OBSERVER_RPC_PORT, constant.OBSERVER_MYSQL_PORT)
 					}
 				}
 			}
