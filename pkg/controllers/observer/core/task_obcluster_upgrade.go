@@ -461,7 +461,7 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 	}
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	upgradeRoute := clusterStatus.UpgradeRoute
-	if upgradeRoute[0] == upgradeRoute[1] {
+	if len(upgradeRoute) == 2 && upgradeRoute[0] == upgradeRoute[1] {
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
 	}
 	return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPostScripts, "", "")
@@ -610,7 +610,7 @@ func (ctrl *OBClusterCtrl) CheckUpgradeModeBegin(statefulApp cloudv1.StatefulApp
 	if isOK {
 		clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 		upgradeRoute := clusterStatus.UpgradeRoute
-		if upgradeRoute[0] == upgradeRoute[1] {
+		if len(upgradeRoute) == 2 && upgradeRoute[0] == upgradeRoute[1] {
 			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgrading, "", "")
 		} else {
 			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPreScripts, "", "")
