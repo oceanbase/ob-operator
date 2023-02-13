@@ -116,20 +116,17 @@ func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantSpec, logA
 	if len(logArchiveDestList) == 0 {
 		return true
 	}
-
 	for _, logArchiveDest := range logArchiveDestList {
-		if logArchiveDest.Name == tenantBackupconst.Path && logArchiveDest.Value != tenant.LogArchiveDest {
-			klog.Infoln("debug: tenantBackupconst.Path ", logArchiveDest.Name, tenantBackupconst.Path, logArchiveDest.Value, tenant.LogArchiveDest)
-			return true
-		}
-		if logArchiveDest.Name == tenantBackupconst.Binding && !strings.EqualFold(strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.Binding)) {
-			klog.Infoln("debug: tenantBackupconst.Binding ", logArchiveDest.Name, tenantBackupconst.Binding, strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.Binding))
-			return true
-		}
-		if logArchiveDest.Name == tenantBackupconst.PieceSwitchInterval && !strings.EqualFold(strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.PieceSwitchInterval)) {
-			klog.Infoln("debug: tenantBackupconst.PieceSwitchInterval ", logArchiveDest.Name, tenantBackupconst.PieceSwitchInterval, strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.PieceSwitchInterval))
+		if (logArchiveDest.Name == tenantBackupconst.Path && logArchiveDest.Value != tenant.LogArchiveDest) ||
+			(logArchiveDest.Name == tenantBackupconst.Binding && !strings.EqualFold(strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.Binding))) ||
+			(logArchiveDest.Name == tenantBackupconst.PieceSwitchInterval && !strings.EqualFold(strings.ToLower(logArchiveDest.Value), strings.ToLower(tenant.PieceSwitchInterval))) {
 			return true
 		}
 	}
 	return false
+}
+
+func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantSpec) (bool, error) {
+	backupSets := ctrl.TenantBackup.Status.TenantBackupSet
+	isExist := false
 }
