@@ -4773,3 +4773,177 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: tenantbackups.cloud.oceanbase.com
+spec:
+  group: cloud.oceanbase.com
+  names:
+    kind: TenantBackup
+    listKind: TenantBackupList
+    plural: tenantbackups
+    singular: tenantbackup
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: TenantBackup is the Schema for the tenantbackups API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: TenantBackupSpec defines the desired state of TenantBackup
+            properties:
+              deleteBackupPolicy:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    recoveryWindow:
+                      type: string
+                    tenants:
+                      items:
+                        type: string
+                      type: array
+                    type:
+                      type: string
+                  required:
+                  - name
+                  - recoveryWindow
+                  - tenants
+                  - type
+                  type: object
+                type: array
+              source:
+                description: SourceCluster defines the source cluster
+                properties:
+                  clusterID:
+                    type: integer
+                  clusterName:
+                    type: string
+                  clusterNamespace:
+                    type: string
+                required:
+                - clusterID
+                - clusterName
+                - clusterNamespace
+                type: object
+              tenant:
+                items:
+                  properties:
+                    backupSecret:
+                      type: string
+                    binding:
+                      type: string
+                    dataBackupDest:
+                      type: string
+                    logArchiveDest:
+                      type: string
+                    name:
+                      type: string
+                    pieceSwitchInterval:
+                      type: string
+                    schedule:
+                      items:
+                        description: ScheduleSpec defines the schedule strategy
+                        properties:
+                          name:
+                            type: string
+                          nextTime:
+                            type: string
+                          schedule:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    userSecret:
+                      type: string
+                  required:
+                  - logArchiveDest
+                  - name
+                  - schedule
+                  - userSecret
+                  type: object
+                type: array
+            required:
+            - source
+            - tenant
+            type: object
+          status:
+            description: TenantBackupStatus defines the observed state of TenantBackup
+            properties:
+              backup set:
+                items:
+                  properties:
+                    backupSetId:
+                      type: integer
+                    backupType:
+                      type: string
+                    clusterName:
+                      type: string
+                    status:
+                      type: string
+                    tenantID:
+                      type: integer
+                  required:
+                  - backupSetId
+                  - backupType
+                  - clusterName
+                  - status
+                  - tenantID
+                  type: object
+                type: array
+              interval:
+                items:
+                  properties:
+                    endTime:
+                      type: string
+                    startTime:
+                      type: string
+                  required:
+                  - endTime
+                  - startTime
+                  type: object
+                type: array
+              schedule:
+                items:
+                  description: ScheduleSpec defines the schedule strategy
+                  properties:
+                    name:
+                      type: string
+                    nextTime:
+                      type: string
+                    schedule:
+                      type: string
+                  required:
+                  - name
+                  type: object
+                type: array
+            required:
+            - backup set
+            - schedule
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

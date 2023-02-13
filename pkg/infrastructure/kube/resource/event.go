@@ -88,6 +88,14 @@ const (
 	FailedToDeleteBackup = "FailedDeleteBackup"
 )
 
+// TenantBackup event reason list
+const (
+	CreatedTenantBackup        = "CreatedTenantBackup"
+	FailedToCreateTenantBackup = "FailedCreateTenantBackup"
+	DeletedTenantBackup        = "DeletedTenantBackup"
+	FailedToDeleteTenantBackup = "FailedDeleteTenantBackup"
+)
+
 // Storage event reason list
 const (
 	CreatedOBZone        = "CreatedOBZone"

@@ -1,0 +1,43 @@
+apiVersion: cloud.oceanbase.com/v1      
+kind: TenantBackup        
+metadata:       
+  name: ob-backup       
+  namespace: obcluster      
+spec:       
+  source:       
+    clusterName: ob-test        
+    clusterID: 1        
+    clusterNamespace: obcluster 
+
+  tenant:
+    - name: tenant1  
+      userSecret: tenant1-root-password
+      backupSecret: tenant1-backup
+      logArchiveDest: file:///ob-backup/tenant1/log
+      binding: Optional 
+      pieceSwitchInterval: 1d
+      dataBackupDest: file:///ob-backup/tenant1/data
+      schedule:     
+      - name: f # f/i
+        schedule: '*/10 * * * *'
+      - name: i
+        schedule: '*/5 * * * *'
+
+    - name: tenant2
+      userSecret: tenant2-root-password
+      backupSecret: tenant2-backup
+      logArchiveDest: file:///ob-backup/tenant2/log
+      binding: Optional 
+      pieceSwitchInterval: 1d
+      dataBackupDest: file:///ob-backup/tenant2/data
+      schedule:     
+      - name: f # f/i
+        schedule: '*/10 * * * *'
+      - name: i         
+        schedule: '*/5 * * * *'
+
+  deleteBackupPolicy:
+    - type: default
+      name: default
+      tenants: [tenant1, tenant2]
+      recoveryWindow: 120s

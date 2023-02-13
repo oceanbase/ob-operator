@@ -1,0 +1,6 @@
+apiVersion: cloud.oceanbase.com/v1
+kind: TenantBackup
+metadata:
+  name: tenantbackup-sample
+spec:
+  # TODO(user): Add fields here
