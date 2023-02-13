@@ -14,9 +14,10 @@ package observerconst
 
 // StatefulApp
 const (
-	ImgOb         = "observer"
-	ImgObagent    = "obagent"
-	ImgPullPolicy = "IfNotPresent"
+	ImgOb               = "observer"
+	ImgObagent          = "obagent"
+	ImgPullPolicy       = "IfNotPresent"
+	ImgPullPolicyAlways = "Always"
 
 	DatafileStorageName = "data-file"
 	DatafileStoragePath = "/home/admin/data_file"

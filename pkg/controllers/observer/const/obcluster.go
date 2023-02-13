@@ -27,4 +27,7 @@ const (
 	OBClusterBootstraping   = "OBCluster Bootstraping"
 	OBClusterBootstrapReady = "OBCluster Bootstrap Ready"
 	OBClusterReady          = "OBCluster Ready"
+
+	OBClusterV3 = "3"
+	OBClusterV4 = "4"
 )

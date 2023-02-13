@@ -30,13 +30,13 @@ const (
 	ZoneMaintain  = "Zone Maintain"
 )
 
-// obcluster uopgrade machine
+// obcluster upgrade state machine
 const (
 	NeedUpgradeCheck = "Need Upgrade Check"
 	UpgradeChecking  = "Upgrade Checking"
 
-	NeedExecutingPreScripts = "Need Executing Pre Scripts"
-	ExecutingPreScripts     = "Executing Pre Scripts"
+	CheckUpgradeMode    = "Check Upgrade Mode"
+	ExecutingPreScripts = "Executing Pre Scripts"
 
 	NeedUpgrading = "Need Upgrading"
 	Upgrading     = "Upgrading"
@@ -62,6 +62,12 @@ const (
 
 	TickPeriodForRSJobStatusCheck = 5 * time.Second
 	TickNumForRSJobStatusCheck    = 12
+
+	TickPeriodForPodStatusCheck = 1 * time.Second
+	TickNumForPodStatusCheck    = 60
+
+	TickPeriodForPodGetObVersion = 5 * time.Second
+	TickNumForPodGetObVersion    = 20
 
 	DelServerTimeout = 30
 )

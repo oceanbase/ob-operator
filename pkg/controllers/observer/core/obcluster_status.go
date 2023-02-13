@@ -184,8 +184,6 @@ func (ctrl *OBClusterCtrl) UpdateOBStatusForUpgrade(upgradeInfo UpgradeInfo) err
 }
 
 func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCluster, upgradeInfo UpgradeInfo) (cloudv1.OBCluster, error) {
-	var obclusterCurrentStatus cloudv1.OBClusterStatus
-	obclusterCurrentStatus.Status = obCluster.Status.Status
 
 	oldClusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	// new cluster status
@@ -229,7 +227,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	} else {
 		clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	}
-	if upgradeInfo.UpgradeRoute != nil {
+	if len(upgradeInfo.UpgradeRoute) != 0 {
 		clusterCurrentStatus.UpgradeRoute = upgradeInfo.UpgradeRoute
 	} else {
 		clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
@@ -243,8 +241,8 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	clusterCurrentStatus.LastTransitionTime = metav1.Now()
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
 	obCluster.Status.Topology = topologyStatus
+	obCluster.Status.Status = observerconst.TopologyNotReady
 	return obCluster, nil
-
 }
 
 func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clusterStatus, zoneName, zoneStatus string) (cloudv1.OBCluster, error) {
@@ -289,6 +287,12 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
 	clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
+	if clusterStatus == observerconst.ClusterReady {
+		clusterCurrentStatus.TargetVersion = ""
+		var upgradeRoute []string
+		clusterCurrentStatus.UpgradeRoute = upgradeRoute
+		clusterCurrentStatus.ScriptPassedVersion = ""
+	}
 
 	// topology status, multi cluster
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
@@ -298,7 +302,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	} else if clusterStatus == observerconst.ScaleUP || clusterStatus == observerconst.ScaleDown ||
 		clusterStatus == observerconst.ZoneScaleUP || clusterStatus == observerconst.ZoneScaleDown ||
 		clusterStatus == observerconst.NeedUpgradeCheck || clusterStatus == observerconst.UpgradeChecking ||
-		clusterStatus == observerconst.NeedExecutingPreScripts || clusterStatus == observerconst.ExecutingPreScripts ||
+		clusterStatus == observerconst.CheckUpgradeMode || clusterStatus == observerconst.ExecutingPreScripts ||
 		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading ||
 		clusterStatus == observerconst.ExecutingPostScripts || clusterStatus == observerconst.NeedUpgradePostCheck ||
 		clusterStatus == observerconst.UpgradePostChecking {
