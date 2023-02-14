@@ -323,6 +323,32 @@ rules:
   - patch
   - update
 - apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - ""
   resources:
   - persistentvolumeclaims
@@ -526,7 +552,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: oceanbase/ob-operator:1.1.0
+        image: oceanbasedev/ob-operator:1.2.1-snapshot
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
