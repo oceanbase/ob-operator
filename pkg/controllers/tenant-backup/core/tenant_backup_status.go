@@ -14,14 +14,18 @@ package core
 
 import (
 	"context"
+
+	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/model"
+	"k8s.io/klog/v2"
+
 	"reflect"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
-func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenantBackupType string) error {
+func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tenantBackupType string) error {
 	tenantBackup := ctrl.TenantBackup
 	tenantBackupExecuter := resource.NewBackupResource(ctrl.Resource)
 	tenantBackupTmp, err := tenantBackupExecuter.Get(context.TODO(), tenantBackup.Namespace, tenantBackup.Name)
@@ -32,7 +36,7 @@ func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenantBackupType string) error 
 	tenantBackupCurrentDeepCopy := tenantBackupCurrent.DeepCopy()
 
 	ctrl.TenantBackup = *tenantBackupCurrentDeepCopy
-	tenantBackupNew, err := ctrl.buildTenantBackupStatus(*tenantBackupCurrentDeepCopy, tenantBackupType)
+	tenantBackupNew, err := ctrl.buildTenantBackupStatus(*tenantBackupCurrentDeepCopy, tenant, tenantBackupType)
 	if err != nil {
 		return err
 	}
@@ -47,61 +51,79 @@ func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenantBackupType string) error 
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) buildBackupStatus(tenantBackup cloudv1.TenantBackup, tenantBackupType string) (cloudv1.TenantBackup, error) {
+func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.TenantBackup, tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackup, error) {
 	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
-	tenantBackupJobList, err := ctrl.buildBackupJobListFromDB()
-	if err != nil {
-		return tenantBackup, err
+	var tenantBackupSet []cloudv1.TenantBackupSetStatus
+	tenantList := ctrl.TenantBackup.Status.TenantBackupSet
+	for _, t := range tenantList {
+		if t.TenantName == tenant.Name {
+			tenantBackupStatus, err := ctrl.buildSingleTenantBackupStatus(tenant, tenantBackupType)
+			if err != nil {
+				klog.Errorf("Build tenant '%s' backup status error '%s'", tenant.Name, err)
+				return tenantBackup, err
+			}
+			tenantBackupSet = append(tenantBackupSet, tenantBackupStatus)
+		} else {
+			tenantBackupSet = append(tenantBackupSet, t)
+		}
 	}
-	tenantBackupJobStatus := ctrl.TenantBackupJobListToStatusList(tenantBackupJobList)
-	tenantBackupScheduleList, err := ctrl.buildScheduleList(tenantBackupType)
-	if err != nil {
-		return tenantBackup, err
-	}
-	tenantBackupCurrentStatus.TenantBackupJob = tenantBackupJobStatus
-	tenantBackupCurrentStatus.Schedule = tenantBackupScheduleList
+	tenantBackupCurrentStatus.TenantBackupSet = tenantBackupSet
 	tenantBackup.Status = tenantBackupCurrentStatus
 	return tenantBackup, nil
 }
 
-func (ctrl *TenantBackupCtrl) buildBackupJobListFromDB() ([]model.AllBackupJob, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
+func (ctrl *TenantBackupCtrl) buildSingleTenantBackupStatus(tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackupSetStatus, error) {
+	var tenantBackupSetStatus cloudv1.TenantBackupSetStatus
+	var err error
+	backupJobList, err := ctrl.buildBackupJobListFromDB(tenant.Name)
 	if err != nil {
-		return nil, err
+		return tenantBackupSetStatus, err
 	}
-	return sqlOperator.GetAllBackupJob(), nil
+	scheduleList, err := ctrl.buildScheduleList(tenant, tenantBackupType)
+	if err != nil {
+		return tenantBackupSetStatus, err
+	}
+	tenantBackupSetStatus.TenantName = tenant.Name
+	tenantBackupSetStatus.ClusterName = ctrl.TenantBackup.Spec.SourceCluster.ClusterName
+	tenantBackupSetStatus.BackupJobs = ctrl.TenantBackupJobListToStatusList(backupJobList)
+	tenantBackupSetStatus.Schedule = scheduleList
+	return tenantBackupSetStatus, nil
 }
 
-func (ctrl *TenantBackupCtrl) TenantBackupJobListToStatusList(backupJobList []model.AllBackupJob) []cloudv1.TenantBackupJobStatus {
-	backupJobStatusList := make([]cloudv1.TenantBackupJobStatus, 0)
+func (ctrl *TenantBackupCtrl) buildBackupJobListFromDB(name string) ([]model.BackupJob, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		klog.Errorf("Get tenant '%s' sql operator error '%s'", name, err)
+		return nil, err
+	}
+	return sqlOperator.GetBackupJob(name), nil
+}
+
+func (ctrl *TenantBackupCtrl) TenantBackupJobListToStatusList(backupJobList []model.BackupJob) []cloudv1.BackupJobStatus {
+	backupJobStatusList := make([]cloudv1.BackupJobStatus, 0)
 	for _, backupJob := range backupJobList {
-		backupJobStatus := cloudv1.TenantBackupJobStatus{}
-		backupJobStatus.ClusterName = ctrl.TenantBackup.Spec.SourceCluster.ClusterName
-		backupJobStatus.BackupType = backupJob.BackupType
+		backupJobStatus := cloudv1.BackupJobStatus{}
 		backupJobStatus.BackupSetId = int(backupJob.BackupSetId)
-		backupJobStatus.TenantID = int(backupJob.TenantId)
+		backupJobStatus.BackupType = backupJob.BackupType
 		backupJobStatus.Status = backupJob.Status
 		backupJobStatusList = append(backupJobStatusList, backupJobStatus)
 	}
 	return backupJobStatusList
 }
 
-func (ctrl *TenantBackupCtrl) buildScheduleList(backupType string) ([]cloudv1.ScheduleSpec, error) {
-	tenantList := ctrl.TenantBackup.Spec.Tenants
-	for _, tenant := range tenantList {
-
-	}
-	scheduleSpec := ctrl.TenantBackup.Spec.Schedule
+func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantSpec, backupType string) ([]cloudv1.ScheduleSpec, error) {
+	scheduleSpec := tenant.Schedule
 	backupScheduleList := make([]cloudv1.ScheduleSpec, 0)
 	for _, schedule := range scheduleSpec {
 		var backupSchedule cloudv1.ScheduleSpec
-		if schedule.BackupType == backupconst.FullBackup {
-			backupSchedule.BackupType = backupconst.FullBackupType
+		if schedule.BackupType == tenantBackupconst.FullBackup {
+			backupSchedule.BackupType = tenantBackupconst.FullBackupType
 			backupSchedule.Schedule = schedule.Schedule
-			if schedule.Schedule != backupconst.BackupOnce && backupSchedule.Schedule != "" {
-				if backupType == backupconst.FullBackupType || backupType == "" {
+			if schedule.Schedule != tenantBackupconst.BackupOnce && backupSchedule.Schedule != "" {
+				if backupType == tenantBackupconst.FullBackupType || backupType == "" {
 					nextTime, err := ctrl.getNextCron(schedule.Schedule)
 					if err != nil {
+						klog.Errorf("Get tenant '%s' next time of backup type full error '%s'", tenant.Name, err)
 						return scheduleSpec, err
 					}
 					backupSchedule.NextTime = nextTime.String()
@@ -110,13 +132,14 @@ func (ctrl *TenantBackupCtrl) buildScheduleList(backupType string) ([]cloudv1.Sc
 				backupSchedule.NextTime = ""
 			}
 		}
-		if schedule.BackupType == backupconst.IncrementalBackup {
-			backupSchedule.BackupType = backupconst.IncrementalBackupType
+		if schedule.BackupType == tenantBackupconst.IncrementalBackup {
+			backupSchedule.BackupType = tenantBackupconst.IncrementalBackupType
 			backupSchedule.Schedule = schedule.Schedule
-			if schedule.Schedule != backupconst.BackupOnce && backupSchedule.Schedule != "" {
-				if backupType == backupconst.IncDatabaseBackupType || backupType == "" {
+			if schedule.Schedule != tenantBackupconst.BackupOnce && backupSchedule.Schedule != "" {
+				if backupType == tenantBackupconst.IncDatabaseBackupType || backupType == "" {
 					nextTime, err := ctrl.getNextCron(schedule.Schedule)
 					if err != nil {
+						klog.Errorf("Get tenant '%s' next time of backup type incremental error '%s'", tenant.Name, err)
 						return scheduleSpec, err
 					}
 					backupSchedule.NextTime = nextTime.String()

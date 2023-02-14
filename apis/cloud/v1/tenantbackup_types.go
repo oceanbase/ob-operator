@@ -43,23 +43,19 @@ type DeleteBackupPolicySpec struct {
 
 // TenantBackupStatus defines the observed state of TenantBackup
 type TenantBackupStatus struct {
-	TenantBackupJob []TenantBackupJobStatus `json:"backup set"`
-	Interval        []IntervalSpec          `json:"interval,omitempty"`
-	Schedule        []ScheduleSpec          `json:"schedule"`
+	TenantBackupSet []TenantBackupSetStatus `json:"backup set"`
 }
 
-type TenantBackupJobStatus struct {
-	TenantID    int    `json:"tenantID"`
-	BackupSetId int    `json:"backupSetId"`
-	ClusterName string `json:"clusterName"`
-	BackupType  string `json:"backupType"`
-	Status      string `json:"status"`
+type TenantBackupSetStatus struct {
+	TenantName  string            `json:"tenantName"`
+	ClusterName string            `json:"clusterName"`
+	BackupJobs  []BackupJobStatus `json:"backupJobs"`
+	Interval    []IntervalSpec    `json:"interval,omitempty"`
+	Schedule    []ScheduleSpec    `json:"schedule"`
 }
 
 type BackupJobStatus struct {
-	TenantID    int    `json:"tenantID"`
 	BackupSetId int    `json:"backupSetId"`
-	ClusterName string `json:"clusterName"`
 	BackupType  string `json:"backupType"`
 	Status      string `json:"status"`
 }

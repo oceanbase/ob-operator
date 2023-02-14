@@ -42,3 +42,18 @@ const (
 	TickPeriodForArchiveLogrStatusCheck = 5 * time.Second
 	TickNumForArchiveLogStatusCheck     = 20
 )
+
+const (
+	// full
+	FullBackup         = "f"
+	FullBackupType     = "FULL"
+	DatabaseBackupType = "D"
+	// incremental
+	IncrementalBackup     = "i"
+	IncrementalBackupType = "INCREMENTAL"
+	IncDatabaseBackupType = "I"
+)
+
+const (
+	BackupOnce = "once"
+)

@@ -33,3 +33,7 @@ func SetBackupPasswordReplacer(pwd string) *strings.Replacer {
 func GetParameterSQLReplacer(name string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name)
 }
+
+func GetLeaderCountSQLReplacer(zoneName string) *strings.Replacer {
+	return strings.NewReplacer("${ZONE_NAME}", zoneName)
+}

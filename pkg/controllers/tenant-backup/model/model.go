@@ -42,8 +42,7 @@ type TenantArchiveLog struct {
 	UsedPieceId   int64
 }
 
-type AllBackupJob struct {
-	TenantId    int64
+type BackupJob struct {
 	BackupSetId int64
 	BackupType  string
 	Status      string

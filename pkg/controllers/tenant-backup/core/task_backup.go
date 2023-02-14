@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorhill/cronexpr"
 	"github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -187,4 +188,13 @@ func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantSpec) 
 	backupSets := ctrl.TenantBackup.Status.TenantBackupSet
 	isExist := false
 	return true, nil
+}
+
+func (ctrl *TenantBackupCtrl) getNextCron(schedule string) (time.Time, error) {
+	expr, err := cronexpr.Parse(schedule)
+	if err != nil {
+		return time.Time{}, err
+	}
+	nextTime := expr.Next(time.Now())
+	return nextTime, nil
 }

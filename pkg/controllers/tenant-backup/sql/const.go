@@ -17,7 +17,8 @@ const (
 )
 
 const (
-	GetBackupJobSQL = "SELECT tenant_id, backup_set_id, backup_type, status FROM oceanbase.CDB_OB_BACKUP_JOB_HISTORY;"
+	GetBackupFullJobSQLTemplate = "SELECT backup_set_id, backup_type, status FROM oceanbase.CDB_OB_BACKUP_JOB_HISTORY WHERE tenant_id =(SELECT tenant_id FROM __all_tenant WHERE tenant_name='${NAME}') AND backup_type='FULL' ORDER BY job_id DESC LIMIT 1;"
+	GetBackupIncJobSQLTemplate  = "SELECT backup_set_id, backup_type, status FROM oceanbase.CDB_OB_BACKUP_JOB_HISTORY WHERE tenant_id =(SELECT tenant_id FROM __all_tenant WHERE tenant_name='${NAME}') AND backup_type='INCREMENTAL' ORDER BY job_id DESC LIMIT 1;"
 
 	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 	ShowParameterTemplate     = "SHOW PARAMETERS LIKE '${NAME}'"

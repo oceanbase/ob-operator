@@ -114,15 +114,28 @@ func (op *SqlOperator) GetArchiveLog() []model.TenantArchiveLog {
 	return res
 }
 
-func (op *SqlOperator) GetAllBackupJob() []model.AllBackupJob {
-	res := make([]model.AllBackupJob, 0)
+func (op *SqlOperator) GetBackupJob(name string) []model.BackupJob {
+	getBackupFullJobSQL := ReplaceAll(GetBackupFullJobSQLTemplate, GetParameterSQLReplacer(name))
+	getBackupInncJobSQL := ReplaceAll(GetBackupIncJobSQLTemplate, GetParameterSQLReplacer(name))
+	res := make([]model.BackupJob, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllBackupJob{}).Raw(GetBackupJobSQL).Rows()
+		rows, err := client.Model(&model.BackupJob{}).Raw(getBackupFullJobSQL).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.AllBackupJob
+			var rowData model.BackupJob
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+		rows, err = client.Model(&model.BackupJob{}).Raw(getBackupInncJobSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.BackupJob
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
