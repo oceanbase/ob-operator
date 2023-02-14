@@ -16,12 +16,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
-	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/const"
+	tenantBackupconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/model"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
@@ -109,7 +110,7 @@ func (ctrl *TenantBackupCtrl) GetLogArchiveDest(tenant cloudv1.TenantSpec) ([]mo
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator error when get LogArchiveDest")
 	}
-	return sqlOperator.GetArchieveLogDest(), nil
+	return sqlOperator.GetArchiveLogDest(), nil
 }
 
 func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantSpec, logArchiveDestList []model.TenantArchiveDest) bool {
@@ -126,7 +127,64 @@ func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantSpec, logA
 	return false
 }
 
+func (ctrl *TenantBackupCtrl) CheckAndStartArchive(tenant cloudv1.TenantSpec) error {
+	archiveLogList, err := ctrl.GetTenantArchiveLog(tenant)
+	if err != nil {
+		klog.Errorf("get tenant '%s' archive summary list error '%s'", tenant.Name, err)
+		return err
+	}
+	needStartAchiveLog, err := ctrl.NeedStartAchiveLog(tenant, archiveLogList)
+	if err != nil {
+		return nil
+	}
+	if needStartAchiveLog {
+		return ctrl.StartAchiveLog(tenant)
+	}
+	return nil
+}
+
+func (ctrl *TenantBackupCtrl) GetTenantArchiveLog(tenant cloudv1.TenantSpec) ([]model.TenantArchiveLog, error) {
+	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
+	if err != nil {
+		return nil, errors.Wrap(err, "get sql operator error when get ArchiveLog")
+	}
+	return sqlOperator.GetArchiveLog(), nil
+}
+
+func (ctrl *TenantBackupCtrl) NeedStartAchiveLog(tenant cloudv1.TenantSpec, archiveLogList []model.TenantArchiveLog) (bool, error) {
+	if len(archiveLogList) == 0 {
+		return true, nil
+	}
+	for _, archiveLog := range archiveLogList {
+		if archiveLog.Status == tenantBackupconst.ArchiveLogPrepare || archiveLog.Status == tenantBackupconst.ArchiveLogBeginning || archiveLog.Status == tenantBackupconst.ArchiveLogStopping {
+			klog.Infof("Tenant '%s' archivelog status '%s'", tenant.Name, archiveLog.Status)
+			return false, errors.Errorf("Tenant '%s' archivelog status '%s'", tenant.Name, archiveLog.Status)
+		}
+		if archiveLog.Status == tenantBackupconst.ArchiveLogInterrupted {
+			klog.Errorf("Tenant '%s' archivelog status '%s'", tenant.Name, archiveLog.Status)
+			return false, errors.Errorf("Tenant '%s' archivelog status '%s'", tenant.Name, archiveLog.Status)
+		}
+		if archiveLog.Status == tenantBackupconst.ArchiveLogStop {
+			klog.Infoln("Tenant '%s' archivelog status '%s'", tenant.Name, archiveLog.Status)
+			return true, nil
+		}
+		if archiveLog.Status == tenantBackupconst.ArchiveLogDoing {
+			return false, nil
+		}
+	}
+	return false, nil
+}
+
+func (ctrl *TenantBackupCtrl) StartAchiveLog(tenant cloudv1.TenantSpec) error {
+	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator error when start ArchiveLog")
+	}
+	return sqlOperator.StartAchiveLog()
+}
+
 func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantSpec) (bool, error) {
 	backupSets := ctrl.TenantBackup.Status.TenantBackupSet
 	isExist := false
+	return true, nil
 }

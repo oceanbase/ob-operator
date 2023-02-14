@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package tenantBackupconst
 
+import "time"
+
 // tennat secret
 const (
 	User              = "user"
@@ -25,4 +27,18 @@ const (
 	Path                = "path"
 	Binding             = "binding"
 	PieceSwitchInterval = "piece_switch_interval"
+)
+
+const (
+	ArchiveLogPrepare     = "PREPARE"
+	ArchiveLogBeginning   = "BEGINNING"
+	ArchiveLogDoing       = "DOING"
+	ArchiveLogStop        = "STOP"
+	ArchiveLogStopping    = "STOPPING"
+	ArchiveLogInterrupted = "INTERRUPTED"
+)
+
+const (
+	TickPeriodForArchiveLogrStatusCheck = 5 * time.Second
+	TickNumForArchiveLogStatusCheck     = 20
 )

@@ -33,14 +33,18 @@ type TenantArchiveDest struct {
 	Value  string
 }
 
-type AllServer struct {
-	ID               int64
-	Zone             string
-	SvrIP            string
-	SvrPort          int64
-	InnerPort        int64
-	WithRootService  int64
-	WithPartition    int64
-	Status           string
-	StartServiceTime int64
+type TenantArchiveLog struct {
+	DestNo        int64
+	Status        string
+	StartScn      int64
+	CheckpointScn int64
+	BasePieceId   int64
+	UsedPieceId   int64
+}
+
+type AllBackupJob struct {
+	TenantId    int64
+	BackupSetId int64
+	BackupType  string
+	Status      string
 }

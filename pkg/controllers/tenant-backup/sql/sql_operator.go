@@ -74,12 +74,12 @@ func (op *SqlOperator) ShowParameter(name string) []model.SysParameterStat {
 	return res
 }
 
-func (op *SqlOperator) GetArchieveLogDest() []model.TenantArchiveDest {
+func (op *SqlOperator) GetArchiveLogDest() []model.TenantArchiveDest {
 	res := make([]model.TenantArchiveDest, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.TenantArchiveDest{}).Raw(GetArchieveLogDestSQL).Rows()
+		rows, err := client.Model(&model.TenantArchiveDest{}).Raw(GetArchiveLogDestSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.TenantArchiveDest
@@ -92,6 +92,50 @@ func (op *SqlOperator) GetArchieveLogDest() []model.TenantArchiveDest {
 		}
 	}
 	return res
+}
+
+func (op *SqlOperator) GetArchiveLog() []model.TenantArchiveLog {
+	res := make([]model.TenantArchiveLog, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.TenantArchiveLog{}).Raw(GetArchiveLogSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.TenantArchiveLog
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetAllBackupJob() []model.AllBackupJob {
+	res := make([]model.AllBackupJob, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupJob{}).Raw(GetBackupJobSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupJob
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) StartAchiveLog() error {
+	return op.ExecSQL(StartArchiveLogSQL)
 }
 
 func (op *SqlOperator) SetParameter(name, value string) error {

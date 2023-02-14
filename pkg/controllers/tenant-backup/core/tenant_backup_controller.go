@@ -106,6 +106,9 @@ func (ctrl *TenantBackupCtrl) TenantBackupEffector() error {
 func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSpec) error {
 	klog.Infoln("debug: SingleTenantBackupEffector: tenant ", tenant.Name)
 	exist, err := ctrl.CheckTenantBackupExist(tenant)
+	if exist {
+		klog.Infoln("debug: exist ", exist)
+	}
 	if err != nil {
 		klog.Errorf("tenant '%s' check Backup Mission exist error '%s'", tenant.Name, err)
 		return err
@@ -113,6 +116,10 @@ func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSp
 	err = ctrl.CheckAndSetLogArchiveDest(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' check and set LogArchiveDest error '%s'", tenant.Name, err)
+		return err
+	}
+	err = ctrl.CheckAndStartArchive(tenant)
+	if err != nil {
 		return err
 	}
 
