@@ -147,11 +147,36 @@ func (op *SqlOperator) GetBackupJob(name string) []model.BackupJob {
 	return res
 }
 
+func (op *SqlOperator) GetBackupDest() []model.TenantBackupDest {
+	res := make([]model.TenantBackupDest, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.TenantBackupDest{}).Raw(GetBackupDestSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.TenantBackupDest
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) StartAchiveLog() error {
 	return op.ExecSQL(StartArchiveLogSQL)
 }
 
 func (op *SqlOperator) SetParameter(name, value string) error {
 	sql := ReplaceAll(SetParameterTemplate, SetParameterSQLReplacer(name, value))
+	return op.ExecSQL(sql)
+}
+
+func (op *SqlOperator) SetBackupPassword(pwd string) error {
+	sql := ReplaceAll(SetBackupPasswordTemplate, SetBackupPasswordReplacer(pwd))
 	return op.ExecSQL(sql)
 }

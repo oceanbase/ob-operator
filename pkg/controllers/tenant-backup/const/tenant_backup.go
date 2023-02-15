@@ -27,6 +27,7 @@ const (
 	Path                = "path"
 	Binding             = "binding"
 	PieceSwitchInterval = "piece_switch_interval"
+	DataBackupDest      = "data_backup_dest"
 )
 
 const (

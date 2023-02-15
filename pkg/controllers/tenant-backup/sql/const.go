@@ -23,6 +23,7 @@ const (
 	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 	ShowParameterTemplate     = "SHOW PARAMETERS LIKE '${NAME}'"
 	GetArchiveLogDestSQL      = "SELECT dest_no, name, value FROM oceanbase.DBA_OB_ARCHIVE_DEST;"
+	GetBackupDestSQL          = "SELECT name, value FROM oceanbase.DBA_OB_BACKUP_PARAMETER WHERE name='data_backup_dest';"
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
 
 	GetArchiveLogSQL          = "SELECT dest_no, status, start_scn, checkpoint_scn, base_piece_id, used_piece_id FROM oceanbase.DBA_OB_ARCHIVELOG;"

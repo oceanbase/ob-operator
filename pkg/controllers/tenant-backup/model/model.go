@@ -33,6 +33,11 @@ type TenantArchiveDest struct {
 	Value  string
 }
 
+type TenantBackupDest struct {
+	Name  string
+	Value string
+}
+
 type TenantArchiveLog struct {
 	DestNo        int64
 	Status        string

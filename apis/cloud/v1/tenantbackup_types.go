@@ -30,7 +30,7 @@ type TenantSpec struct {
 	LogArchiveDest      string         `json:"logArchiveDest"`
 	Binding             string         `json:"binding,omitempty"`
 	PieceSwitchInterval string         `json:"pieceSwitchInterval,omitempty"`
-	DataBackupDest      string         `json:"dataBackupDest,omitempty"`
+	DataBackupDest      string         `json:"dataBackupDest"`
 	Schedule            []ScheduleSpec `json:"schedule"`
 }
 
