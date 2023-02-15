@@ -52,3 +52,9 @@ type BackupJob struct {
 	BackupType  string
 	Status      string
 }
+
+type AllBackupSet struct {
+	BackupSetId int64
+	BackupType  string
+	Status      string
+}

@@ -91,12 +91,27 @@ func (ctrl *TenantBackupCtrl) buildSingleTenantBackupStatus(tenant cloudv1.Tenan
 }
 
 func (ctrl *TenantBackupCtrl) buildBackupJobListFromDB(name string) ([]model.BackupJob, error) {
+	res := make([]model.BackupJob, 0)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		klog.Errorf("Get tenant '%s' sql operator error '%s'", name, err)
 		return nil, err
 	}
-	return sqlOperator.GetBackupJob(name), nil
+	backupDatabaseJob := sqlOperator.GetBackupDatabaseJob(name)
+	backupIncrementalJob := sqlOperator.GetBackupIncrementalJob(name)
+	backupDatabaseJobHistory := sqlOperator.GetBackupDatabaseJobHistory(name)
+	backupIncrementalJobHistory := sqlOperator.GetBackupIncrementalJobHistory(name)
+	if len(backupDatabaseJob) == 0 {
+		res = append(res, backupDatabaseJobHistory...)
+	} else {
+		res = append(res, backupDatabaseJob...)
+	}
+	if len(backupIncrementalJob) == 0 {
+		res = append(res, backupIncrementalJob...)
+	} else {
+		res = append(res, backupIncrementalJobHistory...)
+	}
+	return res, nil
 }
 
 func (ctrl *TenantBackupCtrl) TenantBackupJobListToStatusList(backupJobList []model.BackupJob) []cloudv1.BackupJobStatus {

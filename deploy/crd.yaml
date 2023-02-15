@@ -4872,6 +4872,7 @@ spec:
                     userSecret:
                       type: string
                   required:
+                  - dataBackupDest
                   - logArchiveDest
                   - name
                   - schedule
@@ -4888,53 +4889,60 @@ spec:
               backup set:
                 items:
                   properties:
-                    backupSetId:
-                      type: integer
-                    backupType:
-                      type: string
+                    backupJobs:
+                      items:
+                        properties:
+                          backupSetId:
+                            type: integer
+                          backupType:
+                            type: string
+                          status:
+                            type: string
+                        required:
+                        - backupSetId
+                        - backupType
+                        - status
+                        type: object
+                      type: array
                     clusterName:
                       type: string
-                    status:
-                      type: string
-                    tenantID:
-                      type: integer
-                  required:
-                  - backupSetId
-                  - backupType
-                  - clusterName
-                  - status
-                  - tenantID
-                  type: object
-                type: array
-              interval:
-                items:
-                  properties:
-                    endTime:
-                      type: string
-                    startTime:
-                      type: string
-                  required:
-                  - endTime
-                  - startTime
-                  type: object
-                type: array
-              schedule:
-                items:
-                  description: ScheduleSpec defines the schedule strategy
-                  properties:
-                    name:
-                      type: string
-                    nextTime:
-                      type: string
+                    interval:
+                      items:
+                        properties:
+                          endTime:
+                            type: string
+                          startTime:
+                            type: string
+                        required:
+                        - endTime
+                        - startTime
+                        type: object
+                      type: array
                     schedule:
+                      items:
+                        description: ScheduleSpec defines the schedule strategy
+                        properties:
+                          name:
+                            type: string
+                          nextTime:
+                            type: string
+                          schedule:
+                            type: string
+                        required:
+                        - name
+                        type: object
+                      type: array
+                    tenantName:
                       type: string
                   required:
-                  - name
+                  - backupJobs
+                  - clusterName
+                  - schedule
+                  - tenantName
                   type: object
                 type: array
             required:
             - backup set
-            - schedule
             type: object
         type: object
     served: true

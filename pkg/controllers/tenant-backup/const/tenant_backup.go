@@ -58,3 +58,10 @@ const (
 const (
 	BackupOnce = "once"
 )
+
+// backup job status
+const (
+	BackupDoing     = "DOING"
+	BackupCompleted = "COMPLETED"
+	BackupFailed    = "FAILED"
+)

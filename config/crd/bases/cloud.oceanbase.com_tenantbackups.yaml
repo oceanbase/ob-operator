@@ -102,6 +102,7 @@ spec:
                     userSecret:
                       type: string
                   required:
+                  - dataBackupDest
                   - logArchiveDest
                   - name
                   - schedule
@@ -118,22 +119,23 @@ spec:
               backup set:
                 items:
                   properties:
-                    backup jobs:
-                      properties:
-                        backupSetId:
-                          type: integer
-                        backupType:
-                          type: string
-                        clusterName:
-                          type: string
-                        status:
-                          type: string
-                      required:
-                      - backupSetId
-                      - backupType
-                      - clusterName
-                      - status
-                      type: object
+                    backupJobs:
+                      items:
+                        properties:
+                          backupSetId:
+                            type: integer
+                          backupType:
+                            type: string
+                          status:
+                            type: string
+                        required:
+                        - backupSetId
+                        - backupType
+                        - status
+                        type: object
+                      type: array
+                    clusterName:
+                      type: string
                     interval:
                       items:
                         properties:
@@ -160,12 +162,13 @@ spec:
                         - name
                         type: object
                       type: array
-                    tenantID:
-                      type: integer
+                    tenantName:
+                      type: string
                   required:
-                  - backup jobs
+                  - backupJobs
+                  - clusterName
                   - schedule
-                  - tenantID
+                  - tenantName
                   type: object
                 type: array
             required:

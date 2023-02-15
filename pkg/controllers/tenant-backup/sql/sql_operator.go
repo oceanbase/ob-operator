@@ -114,9 +114,29 @@ func (op *SqlOperator) GetArchiveLog() []model.TenantArchiveLog {
 	return res
 }
 
-func (op *SqlOperator) GetBackupJob(name string) []model.BackupJob {
+func (op *SqlOperator) GetBackupDatabaseJobHistory(name string) []model.BackupJob {
+	getBackupFullJobHistorySQL := ReplaceAll(GetBackupFullJobHistorySQLTemplate, GetParameterSQLReplacer(name))
+	res := make([]model.BackupJob, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.BackupJob{}).Raw(getBackupFullJobHistorySQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.BackupJob
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupDatabaseJob(name string) []model.BackupJob {
 	getBackupFullJobSQL := ReplaceAll(GetBackupFullJobSQLTemplate, GetParameterSQLReplacer(name))
-	getBackupInncJobSQL := ReplaceAll(GetBackupIncJobSQLTemplate, GetParameterSQLReplacer(name))
 	res := make([]model.BackupJob, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
@@ -132,7 +152,38 @@ func (op *SqlOperator) GetBackupJob(name string) []model.BackupJob {
 				}
 			}
 		}
-		rows, err = client.Model(&model.BackupJob{}).Raw(getBackupInncJobSQL).Rows()
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupIncrementalJobHistory(name string) []model.BackupJob {
+	getBackupIncJobHistorySQL := ReplaceAll(GetBackupIncJobHistorySQLTemplate, GetParameterSQLReplacer(name))
+	res := make([]model.BackupJob, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.BackupJob{}).Raw(getBackupIncJobHistorySQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.BackupJob
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupIncrementalJob(name string) []model.BackupJob {
+	getBackupIncJobSQL := ReplaceAll(GetBackupIncJobSQLTemplate, GetParameterSQLReplacer(name))
+	res := make([]model.BackupJob, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.BackupJob{}).Raw(getBackupIncJobSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.BackupJob
@@ -167,6 +218,26 @@ func (op *SqlOperator) GetBackupDest() []model.TenantBackupDest {
 	return res
 }
 
+func (op *SqlOperator) GetAllBackupSet() []model.AllBackupSet {
+	res := make([]model.AllBackupSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupSet{}).Raw(GetBackupSetSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) StartAchiveLog() error {
 	return op.ExecSQL(StartArchiveLogSQL)
 }
@@ -179,4 +250,12 @@ func (op *SqlOperator) SetParameter(name, value string) error {
 func (op *SqlOperator) SetBackupPassword(pwd string) error {
 	sql := ReplaceAll(SetBackupPasswordTemplate, SetBackupPasswordReplacer(pwd))
 	return op.ExecSQL(sql)
+}
+
+func (op *SqlOperator) StartBackupDatabase() error {
+	return op.ExecSQL(StartBackupDatabaseSql)
+}
+
+func (op *SqlOperator) StartBackupIncremental() error {
+	return op.ExecSQL(StartBackupIncrementalSql)
 }
