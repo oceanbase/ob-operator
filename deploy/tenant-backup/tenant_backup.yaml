@@ -18,7 +18,7 @@ spec:
       pieceSwitchInterval: 1d
       dataBackupDest: file:///ob-backup/tenant1/data
       schedule:     
-      - name: f # f/i
+      - name: f # f/i full/incremetal 大小写不敏感
         schedule: '*/10 * * * *'
       - name: i
         schedule: '*/5 * * * *'

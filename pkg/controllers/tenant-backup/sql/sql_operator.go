@@ -259,3 +259,11 @@ func (op *SqlOperator) StartBackupDatabase() error {
 func (op *SqlOperator) StartBackupIncremental() error {
 	return op.ExecSQL(StartBackupIncrementalSql)
 }
+
+func (op *SqlOperator) CancelArchiveLog() error {
+	return op.ExecSQL(CancelArchiveLogSQL)
+}
+
+func (op *SqlOperator) CancelBackup() error {
+	return op.ExecSQL(CancelBackupSQL)
+}

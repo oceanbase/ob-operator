@@ -46,13 +46,11 @@ const (
 
 const (
 	// full
-	FullBackup         = "f"
-	FullBackupType     = "FULL"
-	DatabaseBackupType = "D"
+	FullBackup     = "F"
+	FullBackupType = "FULL"
 	// incremental
-	IncrementalBackup     = "i"
+	IncrementalBackup     = "I"
 	IncrementalBackupType = "INCREMENTAL"
-	IncDatabaseBackupType = "I"
 )
 
 const (

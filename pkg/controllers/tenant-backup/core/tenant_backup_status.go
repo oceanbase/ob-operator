@@ -14,6 +14,7 @@ package core
 
 import (
 	"context"
+	"strings"
 
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/model"
@@ -27,7 +28,7 @@ import (
 
 func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tenantBackupType string) error {
 	tenantBackup := ctrl.TenantBackup
-	tenantBackupExecuter := resource.NewBackupResource(ctrl.Resource)
+	tenantBackupExecuter := resource.NewTenantBackupResource(ctrl.Resource)
 	tenantBackupTmp, err := tenantBackupExecuter.Get(context.TODO(), tenantBackup.Namespace, tenantBackup.Name)
 	if err != nil {
 		return err
@@ -54,9 +55,9 @@ func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tena
 func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.TenantBackup, tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackup, error) {
 	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
 	var tenantBackupSet []cloudv1.TenantBackupSetStatus
-	tenantList := ctrl.TenantBackup.Status.TenantBackupSet
+	tenantList := ctrl.TenantBackup.Spec.Tenants
 	for _, t := range tenantList {
-		if t.TenantName == tenant.Name {
+		if t.Name == tenant.Name {
 			tenantBackupStatus, err := ctrl.buildSingleTenantBackupStatus(tenant, tenantBackupType)
 			if err != nil {
 				klog.Errorf("Build tenant '%s' backup status error '%s'", tenant.Name, err)
@@ -64,7 +65,8 @@ func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.Tenan
 			}
 			tenantBackupSet = append(tenantBackupSet, tenantBackupStatus)
 		} else {
-			tenantBackupSet = append(tenantBackupSet, t)
+			tenantBackupStatus := ctrl.GetSingleTenantBackupStatus(t)
+			tenantBackupSet = append(tenantBackupSet, tenantBackupStatus)
 		}
 	}
 	tenantBackupCurrentStatus.TenantBackupSet = tenantBackupSet
@@ -101,12 +103,12 @@ func (ctrl *TenantBackupCtrl) buildBackupJobListFromDB(name string) ([]model.Bac
 	backupIncrementalJob := sqlOperator.GetBackupIncrementalJob(name)
 	backupDatabaseJobHistory := sqlOperator.GetBackupDatabaseJobHistory(name)
 	backupIncrementalJobHistory := sqlOperator.GetBackupIncrementalJobHistory(name)
-	if len(backupDatabaseJob) == 0 {
-		res = append(res, backupDatabaseJobHistory...)
-	} else {
+	if len(backupDatabaseJob) != 0 {
 		res = append(res, backupDatabaseJob...)
+	} else {
+		res = append(res, backupDatabaseJobHistory...)
 	}
-	if len(backupIncrementalJob) == 0 {
+	if len(backupIncrementalJob) != 0 {
 		res = append(res, backupIncrementalJob...)
 	} else {
 		res = append(res, backupIncrementalJobHistory...)
@@ -131,7 +133,7 @@ func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantSpec, backu
 	backupScheduleList := make([]cloudv1.ScheduleSpec, 0)
 	for _, schedule := range scheduleSpec {
 		var backupSchedule cloudv1.ScheduleSpec
-		if schedule.BackupType == tenantBackupconst.FullBackup {
+		if strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackup || strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackupType {
 			backupSchedule.BackupType = tenantBackupconst.FullBackupType
 			backupSchedule.Schedule = schedule.Schedule
 			if schedule.Schedule != tenantBackupconst.BackupOnce && backupSchedule.Schedule != "" {
@@ -147,11 +149,11 @@ func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantSpec, backu
 				backupSchedule.NextTime = ""
 			}
 		}
-		if schedule.BackupType == tenantBackupconst.IncrementalBackup {
+		if strings.ToUpper(schedule.BackupType) == tenantBackupconst.IncrementalBackup || strings.ToUpper(schedule.BackupType) == tenantBackupconst.IncrementalBackupType {
 			backupSchedule.BackupType = tenantBackupconst.IncrementalBackupType
 			backupSchedule.Schedule = schedule.Schedule
 			if schedule.Schedule != tenantBackupconst.BackupOnce && backupSchedule.Schedule != "" {
-				if backupType == tenantBackupconst.IncDatabaseBackupType || backupType == "" {
+				if backupType == tenantBackupconst.IncrementalBackupType || backupType == "" {
 					nextTime, err := ctrl.getNextCron(schedule.Schedule)
 					if err != nil {
 						klog.Errorf("Get tenant '%s' next time of backup type incremental error '%s'", tenant.Name, err)

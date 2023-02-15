@@ -49,9 +49,9 @@ type TenantBackupStatus struct {
 type TenantBackupSetStatus struct {
 	TenantName  string            `json:"tenantName"`
 	ClusterName string            `json:"clusterName"`
-	BackupJobs  []BackupJobStatus `json:"backupJobs"`
+	BackupJobs  []BackupJobStatus `json:"backupJobs,omitempty"`
 	Interval    []IntervalSpec    `json:"interval,omitempty"`
-	Schedule    []ScheduleSpec    `json:"schedule"`
+	Schedule    []ScheduleSpec    `json:"schedule,omitempty"`
 }
 
 type BackupJobStatus struct {

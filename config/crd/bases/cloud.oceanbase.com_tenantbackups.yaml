@@ -165,9 +165,7 @@ spec:
                     tenantName:
                       type: string
                   required:
-                  - backupJobs
                   - clusterName
-                  - schedule
                   - tenantName
                   type: object
                 type: array

@@ -103,10 +103,8 @@ func (ctrl *TenantBackupCtrl) TenantBackupEffector() error {
 }
 
 func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSpec) error {
-	klog.Infoln("debug: SingleTenantBackupEffector: tenant ", tenant.Name)
 	exist, backupTypeList := ctrl.CheckTenantBackupExist(tenant)
 	if exist {
-		klog.Infoln("debug: exist ", exist, backupTypeList)
 		backupOnce, finished := ctrl.CheckTenantBackupOnce(tenant, backupTypeList)
 		if backupOnce && finished {
 			return nil

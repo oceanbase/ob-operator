@@ -303,7 +303,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetBackupIncrementalPassword(tenant cloudv
 func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error {
 	for _, schedule := range tenant.Schedule {
 		// deal with full backup
-		if schedule.BackupType == tenantBackupconst.FullBackup {
+		if strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackup || strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackupType {
 			// full backup once
 			if schedule.Schedule == tenantBackupconst.BackupOnce {
 				isBackupRunning, err := ctrl.isBackupDoing(tenant)
@@ -348,7 +348,7 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error 
 
 		}
 		// deal with incremental backup
-		if schedule.BackupType == tenantBackupconst.IncrementalBackup {
+		if strings.ToUpper(schedule.BackupType) == tenantBackupconst.IncrementalBackup || strings.ToUpper(schedule.BackupType) == tenantBackupconst.IncrementalBackupType {
 			// incremental backup once
 			if schedule.Schedule == tenantBackupconst.BackupOnce {
 				isBackupDoing, err := ctrl.isBackupDoing(tenant)
@@ -443,7 +443,7 @@ func (ctrl *TenantBackupCtrl) GetSingleTenantBackupStatus(tenant cloudv1.TenantS
 }
 
 func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantSpec) error {
-	klog.Infof("Tenant '%s' begin backup database", tenant.Name)
+	klog.Infof("Tenant '%s' begin backup incremenrtal", tenant.Name)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when start backup incremental", tenant.Name)
