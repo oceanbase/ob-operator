@@ -267,3 +267,13 @@ func (op *SqlOperator) CancelArchiveLog() error {
 func (op *SqlOperator) CancelBackup() error {
 	return op.ExecSQL(CancelBackupSQL)
 }
+
+func (op *SqlOperator) DeleteBackup(policyName, recoveryWindow string) error {
+	sql := ReplaceAll(DeleteBackupSQLTemplate, DeleteBackupSQLReplacer(policyName, recoveryWindow))
+	return op.ExecSQL(sql)
+}
+
+func (op *SqlOperator) DropDeleteBackup(policyName string) error {
+	sql := ReplaceAll(DropDeleteBackupSQLTemplate, GetParameterSQLReplacer(policyName))
+	return op.ExecSQL(sql)
+}

@@ -15,15 +15,18 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	util "github.com/oceanbase/ob-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,7 +73,62 @@ func (r *TenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 	// custom logic
 	tenantBackupCtrl := NewTenantBackupCtrl(r.CRClient, r.Recorder, *instance)
+
+	// Fetch the OBCluster CR instance
+	obNamespace := types.NamespacedName{
+		Namespace: instance.Spec.SourceCluster.ClusterNamespace,
+		Name:      instance.Spec.SourceCluster.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err = r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+	if obInstance.Status.Status != observerconst.ClusterReady {
+		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+		return reconcile.Result{}, nil
+	}
+	// Handle deleted tenant
+	tenantBackupFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, tenantBackupFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, tenantBackupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, tenantBackupFinalizerName) {
+			err := r.TenantBackupDelete(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, tenantBackupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
 	return tenantBackupCtrl.TenantBackupCoordinator()
+}
+
+func (r *TenantBackupReconciler) TenantDelete(client client.Client, recorder record.EventRecorder, tenantBackup *cloudv1.TenantBackup) error {
+	ctrlResource := resource.NewResource(client, recorder)
+	ctrl := &TenantBackupCtrl{
+		TenantBackup: *tenantBackup,
+		Resource:     ctrlResource,
+	}
+	tenantList := ctrl.TenantBackup.Spec.Tenants
+	for _, tenant := range tenantList {
+		klog.Infof("Stop tenant '%s' backup", tenant.Name)
+	}
+	return nil
 }
 
 func NewTenantBackupCtrl(client client.Client, recorder record.EventRecorder, tenantBackup cloudv1.TenantBackup) TenantBackupCtrlOperator {
