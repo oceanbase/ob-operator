@@ -20,6 +20,7 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	tenantBackupconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	util "github.com/oceanbase/ob-operator/pkg/util"
@@ -118,15 +119,16 @@ func (r *TenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	return tenantBackupCtrl.TenantBackupCoordinator()
 }
 
-func (r *TenantBackupReconciler) TenantDelete(client client.Client, recorder record.EventRecorder, tenantBackup *cloudv1.TenantBackup) error {
+func (r *TenantBackupReconciler) TenantBackupDelete(client client.Client, recorder record.EventRecorder, tenantBackup *cloudv1.TenantBackup) error {
 	ctrlResource := resource.NewResource(client, recorder)
 	ctrl := &TenantBackupCtrl{
 		TenantBackup: *tenantBackup,
 		Resource:     ctrlResource,
 	}
-	tenantList := ctrl.TenantBackup.Spec.Tenants
-	for _, tenant := range tenantList {
-		klog.Infof("Stop tenant '%s' backup", tenant.Name)
+	err := ctrl.CancelArchiveLog(tenantBackupconst.TenantAll)
+	if err != nil {
+		klog.Errorf("tenant '%s' cancel archivelog failed, error '%s'", tenantBackupconst.TenantAll, err)
+		return err
 	}
 	return nil
 }
@@ -149,15 +151,39 @@ func (ctrl *TenantBackupCtrl) TenantBackupCoordinator() (ctrl.Result, error) {
 }
 
 func (ctrl *TenantBackupCtrl) TenantBackupEffector() error {
-	tenantList := ctrl.TenantBackup.Spec.Tenants
-	for _, tenant := range tenantList {
+	specTenantList := ctrl.TenantBackup.Spec.Tenants
+	for _, tenant := range specTenantList {
 		err := ctrl.SingleTenantBackupEffector(tenant)
 		if err != nil {
 			klog.Errorf("tenant '%s' backup failed, error '%s'", tenant.Name, err)
 			continue
 		}
 	}
+	cancelTenantList := ctrl.GetCancelTenantList()
+	for _, tenant := range cancelTenantList {
+		err := ctrl.SingleTenantCancelEffector(tenant)
+		if err != nil {
+			klog.Errorf("tenant '%s' cancel failed, error '%s'", tenant, err)
+			continue
+		}
+	}
 	return nil
+}
+
+func (ctrl *TenantBackupCtrl) GetCancelTenantList() []string {
+	tenantList := make([]string, 0)
+	for _, statusTenant := range ctrl.TenantBackup.Status.TenantBackupSet {
+		exist := false
+		for _, specTenant := range ctrl.TenantBackup.Spec.Tenants {
+			if statusTenant.TenantName == specTenant.Name {
+				exist = true
+			}
+		}
+		if !exist {
+			tenantList = append(tenantList, statusTenant.TenantName)
+		}
+	}
+	return tenantList
 }
 
 func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSpec) error {
@@ -187,6 +213,20 @@ func (ctrl *TenantBackupCtrl) SingleTenantBackup(tenant cloudv1.TenantSpec) erro
 	}
 	err = ctrl.CheckAndDoBackup(tenant)
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ctrl *TenantBackupCtrl) SingleTenantCancelEffector(tenant string) error {
+	err := ctrl.CancelArchiveLog(tenant)
+	if err != nil {
+		klog.Errorf("tenant '%s' cancel archivelog failed, error '%s'", tenant, err)
+		return err
+	}
+	err = ctrl.DeleteSingleTenantStatus(tenant)
+	if err != nil {
+		klog.Errorf("tenant '%s' delete status failed, error '%s'", tenant, err)
 		return err
 	}
 	return nil

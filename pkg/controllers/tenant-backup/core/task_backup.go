@@ -45,10 +45,10 @@ func (ctrl *TenantBackupCtrl) GetTenantSecret(tenant cloudv1.TenantSpec) (model.
 		klog.Errorf("get tenant '%s' backup secret error '%s'", tenant.Name, err)
 		return tenantSecret, err
 	}
-	tenantSecret.User = strings.Replace(string(userSecret.(corev1.Secret).Data[tenantBackupconst.User]), "\n", "", -1)
-	tenantSecret.UserSecret = strings.Replace(string(userSecret.(corev1.Secret).Data[tenantBackupconst.UserSecret]), "\n", "", -1)
-	tenantSecret.IncrementalSecret = strings.Replace(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.IncrementalSecret]), "\n", "", -1)
-	tenantSecret.DatabaseSecret = strings.Replace(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.DatabaseSecret]), "\n", "", -1)
+	tenantSecret.User = strings.TrimRight(string(userSecret.(corev1.Secret).Data[tenantBackupconst.User]), "\n")
+	tenantSecret.UserSecret = strings.TrimRight(string(userSecret.(corev1.Secret).Data[tenantBackupconst.UserSecret]), "\n")
+	tenantSecret.IncrementalSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.IncrementalSecret]), "\n")
+	tenantSecret.DatabaseSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.DatabaseSecret]), "\n")
 	return tenantSecret, nil
 }
 
@@ -450,4 +450,14 @@ func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantSpec) 
 		return errors.Wrap(err, "get sql operator error when start backup incremental")
 	}
 	return sqlOperator.StartBackupIncremental()
+}
+
+func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
+	klog.Infof("Cancel tenant '%s' archivelog", name)
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		klog.Errorf("tenant '%s' get sql operator error when cancel archivelog", name)
+		return errors.Wrap(err, "get sql operator error when cancel archivelog")
+	}
+	return sqlOperator.CancelArchiveLog(name)
 }

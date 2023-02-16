@@ -55,6 +55,17 @@ func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tena
 func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.TenantBackup, tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackup, error) {
 	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
 	var tenantBackupSet []cloudv1.TenantBackupSetStatus
+	for _, status := range ctrl.TenantBackup.Status.TenantBackupSet {
+		exist := false
+		for _, spec := range ctrl.TenantBackup.Spec.Tenants {
+			if spec.Name == status.TenantName {
+				exist = true
+			}
+		}
+		if !exist {
+			tenantBackupSet = append(tenantBackupSet, status)
+		}
+	}
 	tenantList := ctrl.TenantBackup.Spec.Tenants
 	for _, t := range tenantList {
 		if t.Name == tenant.Name {
@@ -169,4 +180,43 @@ func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantSpec, backu
 	}
 	return backupScheduleList, nil
 
+}
+
+func (ctrl *TenantBackupCtrl) DeleteSingleTenantStatus(name string) error {
+	tenantBackup := ctrl.TenantBackup
+	tenantBackupExecuter := resource.NewTenantBackupResource(ctrl.Resource)
+	tenantBackupTmp, err := tenantBackupExecuter.Get(context.TODO(), tenantBackup.Namespace, tenantBackup.Name)
+	if err != nil {
+		return err
+	}
+	tenantBackupCurrent := tenantBackupTmp.(cloudv1.TenantBackup)
+	tenantBackupCurrentDeepCopy := tenantBackupCurrent.DeepCopy()
+
+	ctrl.TenantBackup = *tenantBackupCurrentDeepCopy
+	tenantBackupNew, err := ctrl.DeleteStatus(*tenantBackupCurrentDeepCopy, name)
+	if err != nil {
+		return err
+	}
+	compareStatus := reflect.DeepEqual(tenantBackupCurrent.Status, tenantBackupNew.Status)
+	if !compareStatus {
+		err = tenantBackupExecuter.UpdateStatus(context.TODO(), tenantBackupNew)
+		if err != nil {
+			return err
+		}
+	}
+	ctrl.TenantBackup = tenantBackupNew
+	return nil
+}
+
+func (ctrl *TenantBackupCtrl) DeleteStatus(tenantBackup cloudv1.TenantBackup, name string) (cloudv1.TenantBackup, error) {
+	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
+	var tenantBackupSet []cloudv1.TenantBackupSetStatus
+	for _, status := range ctrl.TenantBackup.Status.TenantBackupSet {
+		if status.TenantName != name {
+			tenantBackupSet = append(tenantBackupSet, status)
+		}
+	}
+	tenantBackupCurrentStatus.TenantBackupSet = tenantBackupSet
+	tenantBackup.Status = tenantBackupCurrentStatus
+	return tenantBackup, nil
 }

@@ -63,3 +63,7 @@ const (
 	BackupCompleted = "COMPLETED"
 	BackupFailed    = "FAILED"
 )
+
+const (
+	TenantAll = "ALL"
+)

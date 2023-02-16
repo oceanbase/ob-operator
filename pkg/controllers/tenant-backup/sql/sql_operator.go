@@ -260,8 +260,9 @@ func (op *SqlOperator) StartBackupIncremental() error {
 	return op.ExecSQL(StartBackupIncrementalSql)
 }
 
-func (op *SqlOperator) CancelArchiveLog() error {
-	return op.ExecSQL(CancelArchiveLogSQL)
+func (op *SqlOperator) CancelArchiveLog(name string) error {
+	sql := ReplaceAll(CancelArchiveLogSQLTemplate, GetParameterSQLReplacer(name))
+	return op.ExecSQL(sql)
 }
 
 func (op *SqlOperator) CancelBackup() error {
