@@ -173,6 +173,9 @@ func (ctrl *TenantBackupCtrl) TenantBackupEffector() error {
 func (ctrl *TenantBackupCtrl) GetCancelTenantList() []string {
 	tenantList := make([]string, 0)
 	for _, statusTenant := range ctrl.TenantBackup.Status.TenantBackupSet {
+		if statusTenant.TenantName == "" {
+			continue
+		}
 		exist := false
 		for _, specTenant := range ctrl.TenantBackup.Spec.Tenants {
 			if statusTenant.TenantName == specTenant.Name {
@@ -200,7 +203,6 @@ func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSp
 func (ctrl *TenantBackupCtrl) SingleTenantBackup(tenant cloudv1.TenantSpec) error {
 	err := ctrl.CheckAndSetLogArchiveDest(tenant)
 	if err != nil {
-		klog.Errorf("tenant '%s' check and set LogArchiveDest error '%s'", tenant.Name, err)
 		return err
 	}
 	err = ctrl.CheckAndStartArchive(tenant)
@@ -208,6 +210,10 @@ func (ctrl *TenantBackupCtrl) SingleTenantBackup(tenant cloudv1.TenantSpec) erro
 		return err
 	}
 	err = ctrl.CheckAndSetBackupDest(tenant)
+	if err != nil {
+		return err
+	}
+	err = ctrl.CheckAndSetDeletePolicy(tenant)
 	if err != nil {
 		return err
 	}

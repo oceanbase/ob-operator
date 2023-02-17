@@ -56,6 +56,9 @@ func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.Tenan
 	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
 	var tenantBackupSet []cloudv1.TenantBackupSetStatus
 	for _, status := range ctrl.TenantBackup.Status.TenantBackupSet {
+		if status.TenantName == "" {
+			continue
+		}
 		exist := false
 		for _, spec := range ctrl.TenantBackup.Spec.Tenants {
 			if spec.Name == status.TenantName {

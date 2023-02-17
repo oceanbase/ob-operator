@@ -58,3 +58,8 @@ type AllBackupSet struct {
 	BackupType  string
 	Status      string
 }
+
+type DeletePolicy struct {
+	PolicyName     string
+	RecoveryWindow string
+}

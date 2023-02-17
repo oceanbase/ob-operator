@@ -51,6 +51,7 @@ const (
 	// incremental
 	IncrementalBackup     = "I"
 	IncrementalBackupType = "INCREMENTAL"
+	IncBackupType         = "INC"
 )
 
 const (

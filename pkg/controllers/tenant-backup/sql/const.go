@@ -29,9 +29,8 @@ const (
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
 	GetBackupSetSQL           = "SELECT backup_set_id, backup_type, status FROM oceanbase.DBA_OB_BACKUP_SET_FILES;"
 
-	GetArchiveLogSQL        = "SELECT dest_no, status, start_scn, checkpoint_scn, base_piece_id, used_piece_id FROM oceanbase.DBA_OB_ARCHIVELOG;"
-	GetArchieveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
-	StartArchiveLogSQL      = "ALTER SYSTEM ARCHIVELOG"
+	GetArchiveLogSQL   = "SELECT dest_no, status, start_scn, checkpoint_scn, base_piece_id, used_piece_id FROM oceanbase.DBA_OB_ARCHIVELOG;"
+	StartArchiveLogSQL = "ALTER SYSTEM ARCHIVELOG"
 
 	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
 	StartBackupIncrementalSql = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
@@ -39,6 +38,8 @@ const (
 	CancelBackupSQL             = "ALTER SYSTEM CANCEL BACKUP;"
 	CancelArchiveLogSQLTemplate = "ALTER SYSTEM NOARCHIVELOG TENANT=${NAME};"
 
-	DeleteBackupSQLTemplate     = "ALTER SYSTEM ADD DELETE BACKUP POLICY ${POLICY_NAME} RECOVERY_WINDOW ${RECOVERY_WINDOW};"
-	DropDeleteBackupSQLTemplate = "ALTER SYSTEM DROP DELETE BACKUP POLICY ${NAME};"
+	DropDeleteBackupSQLTemplate = "ALTER SYSTEM DROP DELETE BACKUP POLICY '${NAME}';"
+
+	GetDeletePolicySQL         = "SELECT policy_name, recovery_window From DBA_OB_BACKUP_DELETE_POLICY;"
+	SetDeletePolicySQLTemplate = "ALTER SYSTEM ADD DELETE BACKUP POLICY '${POLICY_NAME}' RECOVERY_WINDOW '${RECOVERY_WINDOW}';"
 )

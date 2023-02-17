@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
+	"regexp"
+
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant-backup/model"
 
 	"github.com/pkg/errors"
@@ -36,7 +38,12 @@ func (op *SqlOperator) TestOK() bool {
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
 	if SQL != "select 1" {
-		klog.Infoln(SQL)
+		match, _ := regexp.MatchString("SET ENCRYPTION ON IDENTIFIED BY '(.*)' ONLY", SQL)
+		if match {
+			klog.Infoln("SET ENCRYPTION ON IDENTIFIED BY '******' ONLY")
+		} else {
+			klog.Infoln(SQL)
+		}
 	}
 	client, err := GetDBClient(op.ConnectProperties)
 	if err != nil {
@@ -238,6 +245,26 @@ func (op *SqlOperator) GetAllBackupSet() []model.AllBackupSet {
 	return res
 }
 
+func (op *SqlOperator) GetDeletePolicy() []model.DeletePolicy {
+	res := make([]model.DeletePolicy, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.DeletePolicy{}).Raw(GetDeletePolicySQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.DeletePolicy
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) StartAchiveLog() error {
 	return op.ExecSQL(StartArchiveLogSQL)
 }
@@ -269,12 +296,12 @@ func (op *SqlOperator) CancelBackup() error {
 	return op.ExecSQL(CancelBackupSQL)
 }
 
-func (op *SqlOperator) DeleteBackup(policyName, recoveryWindow string) error {
-	sql := ReplaceAll(DeleteBackupSQLTemplate, DeleteBackupSQLReplacer(policyName, recoveryWindow))
+func (op *SqlOperator) DropDeletePolicy(policyName string) error {
+	sql := ReplaceAll(DropDeleteBackupSQLTemplate, GetParameterSQLReplacer(policyName))
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) DropDeleteBackup(policyName string) error {
-	sql := ReplaceAll(DropDeleteBackupSQLTemplate, GetParameterSQLReplacer(policyName))
+func (op *SqlOperator) SetDeletePolicy(policy model.DeletePolicy) error {
+	sql := ReplaceAll(SetDeletePolicySQLTemplate, SetDeletePolicySQLReplacer(policy.PolicyName, policy.RecoveryWindow))
 	return op.ExecSQL(sql)
 }

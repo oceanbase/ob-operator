@@ -204,8 +204,15 @@ func (ctrl *TenantBackupCtrl) CheckTenantBackupOnce(tenant cloudv1.TenantSpec, b
 	for _, schedule := range tenant.Schedule {
 		if schedule.Schedule == tenantBackupconst.BackupOnce {
 			backupOnce = true
+			var specType string
+			switch strings.ToUpper(schedule.BackupType) {
+			case tenantBackupconst.FullBackup, tenantBackupconst.FullBackupType:
+				specType = tenantBackupconst.FullBackupType
+			case tenantBackupconst.IncrementalBackup, tenantBackupconst.IncrementalBackupType, tenantBackupconst.IncBackupType:
+				specType = tenantBackupconst.IncBackupType
+			}
 			for _, t := range backupTypeList {
-				if t == schedule.BackupType {
+				if t == specType {
 					finished = true
 				}
 			}
@@ -337,6 +344,20 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error 
 					return err
 				}
 				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
+					isBackupDoing, err := ctrl.isBackupDoing(tenant)
+					if err != nil {
+						klog.Errorf("Tenant '%s' backup database check whether backup is doing err '%s'", tenant.Name, err)
+						return err
+					}
+					if isBackupDoing {
+						klog.Infof("Tenant '%s' is doing backup", tenant.Name)
+						return nil
+					}
+					err = ctrl.CheckAndSetBackupDatabasePassword(tenant)
+					if err != nil {
+						klog.Errorf("Tenant '%s' backup database check and set password err '%s'", tenant.Name, err)
+						return err
+					}
 					err = ctrl.StartBackupDatabase(tenant)
 					if err != nil {
 						klog.Errorf("Tenant '%s' backup database err '%s'", tenant.Name, err)
@@ -382,6 +403,20 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error 
 					return err
 				}
 				if nextTime.Before(time.Now()) || nextTime.Equal(time.Now()) {
+					isBackupDoing, err := ctrl.isBackupDoing(tenant)
+					if err != nil {
+						klog.Errorf("Tenant '%s' backup incremental check whether backup is doing err '%s'", tenant.Name, err)
+						return err
+					}
+					if isBackupDoing {
+						klog.Infof("Tenant '%s' is doing backup", tenant.Name)
+						return nil
+					}
+					err = ctrl.CheckAndSetBackupIncrementalPassword(tenant)
+					if err != nil {
+						klog.Errorf("Tenant '%s' backup incremental check and set password err '%s'", tenant.Name, err)
+						return err
+					}
 					err = ctrl.StartBackupIncremental(tenant)
 					if err != nil {
 						klog.Errorf("Tenant '%s' backup incremental err '%s'", tenant.Name, err)
@@ -460,4 +495,80 @@ func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
 		return errors.Wrap(err, "get sql operator error when cancel archivelog")
 	}
 	return sqlOperator.CancelArchiveLog(name)
+}
+
+func (ctrl *TenantBackupCtrl) CheckAndSetDeletePolicy(tenant cloudv1.TenantSpec) error {
+	deletePolicy, err := ctrl.GetDeletePolicy(tenant)
+	if err != nil {
+		klog.Errorf("get tenant '%s' delete policy error '%s'", tenant.Name, err)
+		return err
+	}
+	if ctrl.NeedSetDeletePolicy(tenant, deletePolicy) {
+		return ctrl.SetDeletePolicy(tenant)
+	}
+	if ctrl.NeedDropDeletePolicy(tenant, deletePolicy) {
+		return ctrl.DropDeletePolicy(tenant)
+	}
+	return nil
+}
+
+func (ctrl *TenantBackupCtrl) GetDeletePolicy(tenant cloudv1.TenantSpec) ([]model.DeletePolicy, error) {
+	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
+	if err != nil {
+		return nil, errors.Wrap(err, "get sql operator error when get delete policy")
+	}
+	return sqlOperator.GetDeletePolicy(), nil
+}
+
+func (ctrl *TenantBackupCtrl) NeedSetDeletePolicy(tenant cloudv1.TenantSpec, deletePolicyList []model.DeletePolicy) bool {
+	policy := ctrl.GetTenantDeletePolicy(tenant)
+	if policy.PolicyName == "" {
+		return false
+	}
+	if len(deletePolicyList) == 0 {
+		return true
+	}
+	for _, depdeletePolicy := range deletePolicyList {
+		if depdeletePolicy.PolicyName != policy.PolicyName || depdeletePolicy.RecoveryWindow != policy.RecoveryWindow {
+			return true
+		}
+	}
+	return false
+}
+
+func (ctrl *TenantBackupCtrl) GetTenantDeletePolicy(tenant cloudv1.TenantSpec) model.DeletePolicy {
+	var policy model.DeletePolicy
+	for _, deletePolicy := range ctrl.TenantBackup.Spec.DeleteBackupPolicy {
+		for _, tenantName := range deletePolicy.Tenants {
+			if tenantName == tenant.Name {
+				policy.PolicyName = deletePolicy.Type
+				policy.RecoveryWindow = deletePolicy.RecoveryWindow
+			}
+		}
+	}
+	return policy
+}
+
+func (ctrl *TenantBackupCtrl) SetDeletePolicy(tenant cloudv1.TenantSpec) error {
+	klog.Infof("Tenant '%s' set delete policy")
+	policy := ctrl.GetTenantDeletePolicy(tenant)
+	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator error when set delete policy")
+	}
+	return sqlOperator.SetDeletePolicy(policy)
+}
+
+func (ctrl *TenantBackupCtrl) NeedDropDeletePolicy(tenant cloudv1.TenantSpec, deletePolicyList []model.DeletePolicy) bool {
+	policy := ctrl.GetTenantDeletePolicy(tenant)
+	return policy.PolicyName == "" && policy.RecoveryWindow == ""
+}
+
+func (ctrl *TenantBackupCtrl) DropDeletePolicy(tenant cloudv1.TenantSpec) error {
+	policy := ctrl.GetTenantDeletePolicy(tenant)
+	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
+	if err != nil {
+		return errors.Wrap(err, "get sql operator error when set delete policy")
+	}
+	return sqlOperator.DropDeletePolicy(policy.PolicyName)
 }

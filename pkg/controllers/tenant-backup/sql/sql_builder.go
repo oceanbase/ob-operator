@@ -38,6 +38,6 @@ func GetLeaderCountSQLReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
 
-func DeleteBackupSQLReplacer(policyName, recoveryWindow string) *strings.Replacer {
+func SetDeletePolicySQLReplacer(policyName, recoveryWindow string) *strings.Replacer {
 	return strings.NewReplacer("${POLICY_NAME}", policyName, "${RECOVERY_WINDOW}", recoveryWindow)
 }
