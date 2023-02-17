@@ -40,4 +40,4 @@ spec:
     - type: default
       name: default
       tenants: [tenant1, tenant2]
-      recoveryWindow: 120s
+      recoveryWindow: 1d
