@@ -122,6 +122,109 @@ func (op *SqlOperator) GetBackupDest() []model.BackupDestValue {
 	return res
 }
 
+func (op *SqlOperator) GetAllTenant() []model.Tenant {
+	res := make([]model.Tenant, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.Tenant{}).Raw(GetTenantSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.Tenant
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupDatabaseJobHistory(name string) []model.AllBackupSet {
+	getBackupFullJobHistorySQL := ReplaceAll(GetBackupFullJobHistorySQLTemplate, TenantIDReplacer(name))
+	res := make([]model.AllBackupSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupSet{}).Raw(getBackupFullJobHistorySQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupDatabaseJob(name string) []model.AllBackupSet {
+	getBackupFullJobSQL := ReplaceAll(GetBackupFullJobSQLTemplate, TenantIDReplacer(name))
+	res := make([]model.AllBackupSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupSet{}).Raw(getBackupFullJobSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetBackupIncrementalJobHistory(name string) []model.AllBackupSet {
+	getBackupIncJobHistorySQL := ReplaceAll(GetBackupIncJobHistorySQLTemplate, TenantIDReplacer(name))
+	res := make([]model.AllBackupSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupSet{}).Raw(getBackupIncJobHistorySQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+func (op *SqlOperator) GetBackupIncrementalJob(name string) []model.AllBackupSet {
+	getBackupIncJobSQL := ReplaceAll(GetBackupIncJobSQLTemplate, TenantIDReplacer(name))
+	res := make([]model.AllBackupSet, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllBackupSet{}).Raw(getBackupIncJobSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllBackupSet
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) StartArchieveLog() error {
 	return op.ExecSQL(StartArchieveLogSql)
 }

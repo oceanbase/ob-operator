@@ -15,6 +15,7 @@ package core
 import (
 	"context"
 	"reflect"
+	"strconv"
 	"time"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -127,7 +128,26 @@ func (ctrl *BackupCtrl) buildBackupSetListFromDB() ([]model.AllBackupSet, error)
 	if err != nil {
 		return nil, err
 	}
-	return sqlOperator.GetAllBackupSet(), nil
+	allTenant := sqlOperator.GetAllTenant()
+	res := make([]model.AllBackupSet, 0)
+	for _, tenant := range allTenant {
+		tenantId := strconv.Itoa(int(tenant.TenantID))
+		backupDatabaseJob := sqlOperator.GetBackupDatabaseJob(tenantId)
+		backupIncrementalJob := sqlOperator.GetBackupIncrementalJob(tenantId)
+		backupDatabaseJobHistory := sqlOperator.GetBackupDatabaseJobHistory(tenantId)
+		backupIncrementalJobHistory := sqlOperator.GetBackupIncrementalJobHistory(tenantId)
+		if len(backupDatabaseJob) != 0 {
+			res = append(res, backupDatabaseJob...)
+		} else {
+			res = append(res, backupDatabaseJobHistory...)
+		}
+		if len(backupIncrementalJob) != 0 {
+			res = append(res, backupIncrementalJob...)
+		} else {
+			res = append(res, backupIncrementalJobHistory...)
+		}
+	}
+	return res, nil
 }
 
 func (ctrl *BackupCtrl) UpdateBackupScheduleStatus(next time.Time, backupType string) error {

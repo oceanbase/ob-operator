@@ -58,6 +58,8 @@ spec:
                   - name
                   type: object
                 type: array
+              secret:
+                type: string
               source:
                 description: SourceCluster defines the source cluster
                 properties:

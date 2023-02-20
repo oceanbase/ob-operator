@@ -21,6 +21,7 @@ type BackupSpec struct {
 	SourceCluster SourceClusterSpec `json:"source"`
 	DestPath      string            `json:"destPath"`
 	Schedule      []ScheduleSpec    `json:"schedule"`
+	Secret        string            `json:"secret,omitempty"`
 	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
