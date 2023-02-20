@@ -53,11 +53,11 @@ func (ctrl *BackupCtrl) UpdateBackupStatus(backupType string) error {
 
 func (ctrl *BackupCtrl) buildBackupStatus(backup cloudv1.Backup, backupType string) (cloudv1.Backup, error) {
 	var backupCurrentStatus cloudv1.BackupStatus
-	backupSetList, err := ctrl.buildBackupSetListFromDB()
+	backupSetList, allTenant, err := ctrl.buildBackupSetListFromDB()
 	if err != nil {
 		return backup, err
 	}
-	backupSetStatus := ctrl.BackupSetListToStatusList(backupSetList)
+	backupSetStatus := ctrl.BackupSetListToStatusList(backupSetList, allTenant)
 	backupScheduleList, err := ctrl.buildScheduleList(backupType)
 	if err != nil {
 		return backup, err
@@ -109,24 +109,30 @@ func (ctrl *BackupCtrl) buildScheduleList(backupType string) ([]cloudv1.Schedule
 
 }
 
-func (ctrl *BackupCtrl) BackupSetListToStatusList(backupSetList []model.AllBackupSet) []cloudv1.BackupSetStatus {
+func (ctrl *BackupCtrl) BackupSetListToStatusList(backupSetList []model.AllBackupSet, allTenant []model.Tenant) []cloudv1.BackupSetStatus {
 	backupSetStatusList := make([]cloudv1.BackupSetStatus, 0)
 	for _, backupSet := range backupSetList {
+		var tenantName string
+		for _, tenant := range allTenant {
+			if tenant.TenantID == backupSet.TenantID {
+				tenantName = tenant.TenantName
+			}
+		}
 		backupSetStatus := cloudv1.BackupSetStatus{}
 		backupSetStatus.ClusterName = ctrl.Backup.Spec.SourceCluster.ClusterName
 		backupSetStatus.BackupType = backupSet.BackupType
 		backupSetStatus.BSKey = int(backupSet.BSKey)
-		backupSetStatus.TenantID = int(backupSet.TenantID)
+		backupSetStatus.TenantName = tenantName
 		backupSetStatus.Status = backupSet.Status
 		backupSetStatusList = append(backupSetStatusList, backupSetStatus)
 	}
 	return backupSetStatusList
 }
 
-func (ctrl *BackupCtrl) buildBackupSetListFromDB() ([]model.AllBackupSet, error) {
+func (ctrl *BackupCtrl) buildBackupSetListFromDB() ([]model.AllBackupSet, []model.Tenant, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	allTenant := sqlOperator.GetAllTenant()
 	res := make([]model.AllBackupSet, 0)
@@ -147,7 +153,7 @@ func (ctrl *BackupCtrl) buildBackupSetListFromDB() ([]model.AllBackupSet, error)
 			res = append(res, backupIncrementalJobHistory...)
 		}
 	}
-	return res, nil
+	return res, allTenant, nil
 }
 
 func (ctrl *BackupCtrl) UpdateBackupScheduleStatus(next time.Time, backupType string) error {

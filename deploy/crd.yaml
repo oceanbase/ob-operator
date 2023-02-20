@@ -93,14 +93,14 @@ spec:
                       type: string
                     status:
                       type: string
-                    tenantID:
-                      type: integer
+                    tenantName:
+                      type: string
                   required:
                   - backupType
                   - bsKey
                   - clusterName
                   - status
-                  - tenantID
+                  - tenantName
                   type: object
                 type: array
               interval:

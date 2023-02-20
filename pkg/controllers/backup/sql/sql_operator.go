@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
+	"regexp"
+
 	"github.com/oceanbase/ob-operator/pkg/controllers/backup/model"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
@@ -35,7 +37,12 @@ func (op *SqlOperator) TestOK() bool {
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
 	if SQL != "select 1" {
-		klog.Infoln(SQL)
+		match, _ := regexp.MatchString("SET ENCRYPTION ON IDENTIFIED BY '(.*)' ONLY", SQL)
+		if match {
+			klog.Infoln("SET ENCRYPTION ON IDENTIFIED BY '******' ONLY")
+		} else {
+			klog.Infoln(SQL)
+		}
 	}
 	client, err := GetDBClient(op.ConnectProperties)
 	if err != nil {
