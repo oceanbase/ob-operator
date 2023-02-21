@@ -52,6 +52,7 @@ type BackupStatus struct {
 }
 
 type BackupSetStatus struct {
+	TenantID    int    `json:"tenantID"`
 	TenantName  string `json:"tenantName"`
 	BSKey       int    `json:"bsKey"`
 	ClusterName string `json:"clusterName"`

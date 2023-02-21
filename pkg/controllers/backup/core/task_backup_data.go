@@ -265,7 +265,7 @@ func (ctrl *BackupCtrl) getNextCron(schedule string) (time.Time, error) {
 
 func (ctrl *BackupCtrl) WaitArchivelogDoing() error {
 	klog.Infoln("Wait Archivelog Doing")
-	err := ctrl.TickerArchivelogDoing()
+	err := ctrl.TickerCheckArchivelogDoing()
 	if err != nil {
 		return err
 	}
@@ -273,7 +273,7 @@ func (ctrl *BackupCtrl) WaitArchivelogDoing() error {
 	return nil
 }
 
-func (ctrl *BackupCtrl) TickerArchivelogDoing() error {
+func (ctrl *BackupCtrl) TickerCheckArchivelogDoing() error {
 	tick := time.Tick(backupconst.TickerPeriodLogArchiveCheck)
 	var num int
 	for {

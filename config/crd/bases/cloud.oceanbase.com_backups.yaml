@@ -99,6 +99,8 @@ spec:
                       type: string
                     status:
                       type: string
+                    tenantID:
+                      type: integer
                     tenantName:
                       type: string
                   required:
@@ -106,6 +108,7 @@ spec:
                   - bsKey
                   - clusterName
                   - status
+                  - tenantID
                   - tenantName
                   type: object
                 type: array

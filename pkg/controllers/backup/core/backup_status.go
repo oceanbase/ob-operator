@@ -123,6 +123,7 @@ func (ctrl *BackupCtrl) BackupSetListToStatusList(backupSetList []model.AllBacku
 		backupSetStatus.BackupType = backupSet.BackupType
 		backupSetStatus.BSKey = int(backupSet.BSKey)
 		backupSetStatus.TenantName = tenantName
+		backupSetStatus.TenantID = int(backupSet.TenantID)
 		backupSetStatus.Status = backupSet.Status
 		backupSetStatusList = append(backupSetStatusList, backupSetStatus)
 	}
