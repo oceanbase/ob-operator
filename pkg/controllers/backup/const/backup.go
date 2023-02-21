@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package backupconst
 
+import "time"
+
 // backup job status
 
 const (
@@ -63,4 +65,14 @@ const (
 	BackupLogArchiveOptionName    = "backup_log_archive_option"
 	BackupDatabasePasswordName    = "backup_database_password"
 	BackupIncrementalPasswordName = "backup_incremental_password"
+)
+
+const (
+	IncrementalSecret = "incremental"
+	DatabaseSecret    = "database"
+)
+
+const (
+	TickerPeriodLogArchiveCheck = 2 * time.Second
+	TickNumForLogArchiveCheck   = 60
 )

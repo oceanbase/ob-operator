@@ -21,6 +21,7 @@ type BackupSpec struct {
 	SourceCluster SourceClusterSpec `json:"source"`
 	DestPath      string            `json:"destPath"`
 	Schedule      []ScheduleSpec    `json:"schedule"`
+	Secret        string            `json:"secret,omitempty"`
 	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
@@ -52,6 +53,7 @@ type BackupStatus struct {
 
 type BackupSetStatus struct {
 	TenantID    int    `json:"tenantID"`
+	TenantName  string `json:"tenantName"`
 	BSKey       int    `json:"bsKey"`
 	ClusterName string `json:"clusterName"`
 	BackupType  string `json:"backupType"`
