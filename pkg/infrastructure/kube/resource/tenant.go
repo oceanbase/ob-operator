@@ -62,6 +62,10 @@ func (r *TenantResource) Update(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
+func (r *TenantResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
 func (r *TenantResource) UpdateStatus(ctx context.Context, obj interface{}) error {
 	Tenant := obj.(cloudv1.Tenant)
 	err := r.Client.Status().Update(ctx, &Tenant)

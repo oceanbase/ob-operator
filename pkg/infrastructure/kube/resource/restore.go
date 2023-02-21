@@ -60,6 +60,10 @@ func (r *RestoreResource) Update(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
+func (r *RestoreResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
 func (r *RestoreResource) UpdateStatus(ctx context.Context, obj interface{}) error {
 	restore := obj.(cloudv1.Restore)
 	err := r.Client.Status().Update(ctx, &restore)
