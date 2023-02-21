@@ -126,7 +126,6 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		klog.Errorln("DoBackup: check whether Backup Dest is Set err ", err)
 		return err
 	}
-
 	if !isBackupDestSet {
 		dest_path := ctrl.Backup.Spec.DestPath
 		return ctrl.SetBackupDest(dest_path)
@@ -144,43 +143,35 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		return err
 	}
 	if !isArchivelogDoing {
-		return ctrl.setBackupLogArchive()
-	}
-
-	err = ctrl.setBackupLogArchiveOption()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
-		return err
-	}
-
-	err = ctrl.setBackupDatabasePassword()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup Database Password err ", err)
-		return err
-	}
-
-	err = ctrl.setBackupIncrementalPassword()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup Incremental Password err ", err)
-		return err
+		err = ctrl.setBackupLogArchiveOption()
+		if err != nil {
+			klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
+			return err
+		}
+		err = ctrl.WaitArchivelogDoing()
+		if err != nil {
+			klog.Errorln("wait backup logArchive doing err ", err)
+			return err
+		}
 	}
 
 	for _, schedule := range ctrl.Backup.Spec.Schedule {
+		err, isBackupDoing := ctrl.isBackupDoing()
+		if err != nil {
+			klog.Errorln("DoBackup: check whether backup is doing err ", err)
+			return err
+		}
+		if isBackupDoing {
+			continue
+		}
 		// deal with full backup
 		if schedule.BackupType == backupconst.FullBackup {
 			// full backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				err, isBackupRunning := ctrl.isBackupDoing()
+				err = ctrl.StartBackupDatabase()
 				if err != nil {
-					klog.Errorln("DoBackup:full backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup: Start Backup Database err ", err)
 					return err
-				}
-				if !isBackupRunning {
-					err = ctrl.StartBackupDatabase()
-					if err != nil {
-						klog.Errorln("DoBackup: Start Backup Database err ", err)
-						return err
-					}
 				}
 				return ctrl.UpdateBackupStatus("")
 				//full backup, periodic
@@ -210,17 +201,10 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		if schedule.BackupType == backupconst.IncrementalBackup {
 			// incremental backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				err, isBackupDoing := ctrl.isBackupDoing()
+				err = ctrl.StartBackupIncremental()
 				if err != nil {
-					klog.Errorln("DoBackup: incremental backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup: Start Backup Incremental err ", err)
 					return err
-				}
-				if !isBackupDoing {
-					err = ctrl.StartBackupIncremental()
-					if err != nil {
-						klog.Errorln("DoBackup: Start Backup Incremental err ", err)
-						return err
-					}
 				}
 				// incremental backup, periodic
 			} else {

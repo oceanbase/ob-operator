@@ -29,3 +29,7 @@ func SetParameterSQLReplacer(name, value string) *strings.Replacer {
 func SetBackupPasswordReplacer(pwd string) *strings.Replacer {
 	return strings.NewReplacer("${pwd}", pwd)
 }
+
+func TenantIDReplacer(tenantID string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_ID}", tenantID)
+}

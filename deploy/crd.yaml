@@ -58,6 +58,8 @@ spec:
                   - name
                   type: object
                 type: array
+              secret:
+                type: string
               source:
                 description: SourceCluster defines the source cluster
                 properties:
@@ -93,12 +95,15 @@ spec:
                       type: string
                     tenantID:
                       type: integer
+                    tenantName:
+                      type: string
                   required:
                   - backupType
                   - bsKey
                   - clusterName
                   - status
                   - tenantID
+                  - tenantName
                   type: object
                 type: array
               interval:

@@ -88,3 +88,7 @@ func (r *TenantResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&Tenant, corev1.EventTypeNormal, DeletedTenant, "delete Tenant"+Tenant.Name)
 	return nil
 }
+
+func (r *TenantResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

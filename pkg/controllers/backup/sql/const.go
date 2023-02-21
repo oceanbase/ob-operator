@@ -17,7 +17,14 @@ const (
 )
 
 const (
-	GetBackupSetSQL = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_SET_FILES;"
+	GetTenantSQL = "select tenant_id, tenant_name from __all_tenant;"
+
+	GetBackupSetHistorySQL             = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_SET_FILES;"
+	GetBackupSetSQL                    = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_PROGRESS;"
+	GetBackupFullJobSQLTemplate        = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_PROGRESS WHERE tenant_id=${TENANT_ID} AND backup_type='D' ORDER BY bs_key DESC LIMIT 1;"
+	GetBackupIncJobSQLTemplate         = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_PROGRESS WHERE tenant_id=${TENANT_ID} AND backup_type='I' ORDER BY bs_key DESC LIMIT 1;"
+	GetBackupFullJobHistorySQLTemplate = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_SET_FILES WHERE tenant_id=${TENANT_ID} AND backup_type='D' ORDER BY bs_key DESC LIMIT 1;"
+	GetBackupIncJobHistorySQLTemplate  = "SELECT tenant_id, bs_key, backup_type, status FROM oceanbase.CDB_OB_BACKUP_SET_FILES WHERE tenant_id=${TENANT_ID} AND backup_type='I' ORDER BY bs_key DESC LIMIT 1;"
 
 	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
