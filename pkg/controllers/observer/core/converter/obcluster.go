@@ -36,3 +36,11 @@ func GetClusterStatusFromOBTopologyStatus(clusterStatus []cloudv1.ClusterStatus)
 	}
 	return cluster
 }
+
+func TenantListToTenants(tenants cloudv1.TenantList) []cloudv1.Tenant {
+	res := make([]cloudv1.Tenant, 0)
+	if len(tenants.Items) > 0 {
+		res = tenants.Items
+	}
+	return res
+}

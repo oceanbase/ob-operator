@@ -54,8 +54,13 @@ func (r *TenantResource) Get(ctx context.Context, namespace, name string) (inter
 }
 
 func (r *TenantResource) List(ctx context.Context, namespace string, listOption client.ListOption) interface{} {
-	var res interface{}
-	return res
+	tenantList := &cloudv1.TenantList{}
+	err := r.Client.List(ctx, tenantList, client.InNamespace(namespace), listOption)
+	if err != nil {
+		// can definitely get a value, so errors are not returned
+		klog.Errorln(err)
+	}
+	return *tenantList
 }
 
 func (r *TenantResource) Update(ctx context.Context, obj interface{}) error {

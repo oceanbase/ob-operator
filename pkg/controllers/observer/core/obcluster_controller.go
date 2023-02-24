@@ -14,11 +14,14 @@ package core
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	statefulAppCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/core"
+	"github.com/oceanbase/ob-operator/pkg/util"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -94,6 +97,29 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// Error reading the object, requeue the request.
 		return reconcile.Result{}, err
 	}
+
+	// handle delete tenant cr
+	obclusterFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, obclusterFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, obclusterFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, obclusterFinalizerName) {
+			err := r.DeleteTenantCR(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, obclusterFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
 	// custom logic
 	obClusterCtrl := NewOBServerCtrl(r.CRClient, r.Recorder, *instance)
 	return obClusterCtrl.OBClusterCoordinator()
@@ -105,6 +131,30 @@ func NewOBServerCtrl(client client.Client, recorder record.EventRecorder, obClus
 		Resource:  ctrlResource,
 		OBCluster: obCluster,
 	}
+}
+
+func (r *OBClusterReconciler) DeleteTenantCR(clientClient client.Client, recorder record.EventRecorder, obCluster *cloudv1.OBCluster) error {
+	ctrlResource := resource.NewResource(clientClient, recorder)
+	ctrl := &OBClusterCtrl{
+		Resource:  ctrlResource,
+		OBCluster: *obCluster,
+	}
+	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
+	listOption := client.MatchingLabels{}
+	tenantList := tenantExecuter.List(context.TODO(), obCluster.Namespace, listOption)
+	klog.Infoln("tenantList: ", tenantList)
+	tenants := converter.TenantListToTenants(tenantList.(cloudv1.TenantList))
+	if len(tenants) == 0 {
+		return nil
+	}
+	for _, tenant := range tenants {
+		klog.Infoln("del tenant: ", tenant)
+		err := tenantExecuter.Delete(context.TODO(), tenant)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.StatefulApp) (*sql.SqlOperator, error) {

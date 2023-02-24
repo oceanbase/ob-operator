@@ -95,7 +95,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return reconcile.Result{}, err
 	}
 	if obInstance.Status.Status != observerconst.ClusterReady {
-		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+		klog.Infof("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
 		return reconcile.Result{}, nil
 	}
 
@@ -110,7 +110,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 	} else {
 		if util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
-			err := r.TenantDelete(r.CRClient, r.Recorder, instance)
+			err := r.TenantDelete(ctx, r.CRClient, r.Recorder, instance)
 			if err != nil {
 				return ctrl.Result{}, err
 			}
@@ -126,6 +126,21 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	return tenantCtrl.TenantCoordinator()
 }
 
+func (r *TenantReconciler) ObclusterNotFound(ctx context.Context, tenant *cloudv1.Tenant, client client.Client, recorder record.EventRecorder) bool {
+	obNamespace := types.NamespacedName{
+		Namespace: tenant.Namespace,
+		Name:      tenant.Spec.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err := r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return true
+		}
+	}
+	return false
+}
+
 func NewTenantCtrl(client client.Client, recorder record.EventRecorder, tenant cloudv1.Tenant) TenantCtrlOperator {
 	ctrlResource := resource.NewResource(client, recorder)
 	return &TenantCtrl{
@@ -134,7 +149,7 @@ func NewTenantCtrl(client client.Client, recorder record.EventRecorder, tenant c
 	}
 }
 
-func (r *TenantReconciler) TenantDelete(client client.Client, recorder record.EventRecorder, tenant *cloudv1.Tenant) error {
+func (r *TenantReconciler) TenantDelete(ctx context.Context, client client.Client, recorder record.EventRecorder, tenant *cloudv1.Tenant) error {
 	ctrlResource := resource.NewResource(client, recorder)
 	ctrl := &TenantCtrl{
 		Tenant:   *tenant,
@@ -144,17 +159,23 @@ func (r *TenantReconciler) TenantDelete(client client.Client, recorder record.Ev
 	klog.Infof("Begin Delete Tenant '%s'", tenantName)
 	err := ctrl.DeleteTenant()
 	if err != nil {
-		return err
+		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
+			return err
+		}
 	}
 	klog.Infof("Begin Delete Pool, Tenant '%s'", tenantName)
 	err = ctrl.DeletePool()
 	if err != nil {
-		return err
+		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
+			return err
+		}
 	}
 	klog.Infof("Begin Delete Unit, Tenant '%s'", tenantName)
 	err = ctrl.DeleteUnit()
 	if err != nil {
-		return err
+		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
+			return err
+		}
 	}
 	klog.Infof("Succeed Delete Tenant '%s'", tenantName)
 	return nil
