@@ -142,13 +142,11 @@ func (r *OBClusterReconciler) DeleteTenantCR(clientClient client.Client, recorde
 	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
 	listOption := client.MatchingLabels{}
 	tenantList := tenantExecuter.List(context.TODO(), obCluster.Namespace, listOption)
-	klog.Infoln("tenantList: ", tenantList)
 	tenants := converter.TenantListToTenants(tenantList.(cloudv1.TenantList))
 	if len(tenants) == 0 {
 		return nil
 	}
 	for _, tenant := range tenants {
-		klog.Infoln("del tenant: ", tenant)
 		err := tenantExecuter.Delete(context.TODO(), tenant)
 		if err != nil {
 			return err
