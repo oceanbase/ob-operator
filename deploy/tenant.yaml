@@ -10,7 +10,7 @@ spec:
   # 非必填
   charset:  # 租户的字符集
   collate:  # 租户校对规则
-  mode: 
+  mode:
   logonlyReplicaNum:
 
   variables: 

@@ -8,15 +8,18 @@ spec:
     type: TIMESTAMP
     value:
   source:
-    clusterDataPath: file:///ob-backup
     clusterName: ob-test
     clusterID: 1
     tenant: tenant0
-    tenantDataPath: file:///ob-backup/t1
-    tenantLogArchivePath: file:///ob-backup/t1
+    path:
+      root: file:///ob-backup
+      data: file:///ob-backup/t1/data
+      log: file:///ob-backup/t1/log
   dest:
+    clusterName: ob-test
+    clusterID: 1
     tenant: ob_restore5
-    kms_encrypt_info: ''
+    kmsEncryptInfo: ''
     topology:
       - zone: zone1
         unitNum: 1 # 指定要创建的单个 ZONE 下的单元个数，取值要小于单个 ZONE 中的 OBServer 个数。
@@ -49,7 +52,7 @@ spec:
           maxSessionNum: 64 
           maxIops: 256
           minIops: 256
-  decryption_secret: backup-secret
+  decryptionSecret: backup-secret
   parameters:
     - name: restore_concurrency
       value: 10

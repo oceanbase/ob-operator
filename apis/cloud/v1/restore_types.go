@@ -18,51 +18,41 @@ import (
 
 // RestoreSpec defines the desired state of Restore
 type RestoreSpec struct {
-	DestTenant      string                `json:"destTenant"`
-	SourceTenant    string                `json:"sourceTenant"`
-	Timestamp       string                `json:"timestamp"`
-	Path            string                `json:"sourcePath"`
-	Locality        string                `json:"locality,omitempty"`
-	SourceCluster   RestoreClusterSpec    `json:"source"`
-	ResourceUnit    ResourceUnitSpec      `json:"resourceUnit"`
-	ResourcePool    ResourcePoolSpec      `json:"resourcePool"`
-	Volume          []VolumeSpec          `json:"vloume,omitempty"`
-	RestorePassword []RestorePasswordSpec `json:"restorePassword,omitempty"`
-	Parameters      []Parameter           `json:"parameters,omitempty"`
+    Source SourceSpec `json:"source"`
+    Dest   DestSpec   `json:"dest"`
+    SavePoint SavePointSpec `json:"savePoint"`
+	Secret        string            `json:"secret,omitempty"`
+	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
-// RestoreCluster defines the restore cluster
-type RestoreClusterSpec struct {
+// SourceSpec defines the source of restore
+type SourceSpec struct {
 	ClusterID   int    `json:"clusterID"`
 	ClusterName string `json:"clusterName"`
+    Tennat string `json: "tenant"`
+    Path PathSpec `json:"path"`
 }
 
-// ResourceUnitSpec defines the resource unit config
-type ResourceUnitSpec struct {
-	Name          string `json:"name,omitempty"`
-	MaxCPU        int    `json:"maxCPU"`
-	MaxMemory     string `json:"maxMemory"`
-	MaxIops       int    `json:"maxIops"`
-	MaxDiskSize   string `json:"maxDiskSize"`
-	MaxSessionNum int    `json:"maxSessionNum"`
-	MinCPU        int    `json:"minCPU"`
-	MinMemory     string `json:"minMemory"`
-	MinIops       int    `json:"minIops"`
+// PathSpec defines the data path, for oceanbase 3.x, use root, for oceanbase 4.x, use data and log
+type PathSpec struct {
+    Root string `json:"root"`
+    Data string `json:"data"`
+    Log  string `json:"log"`
 }
 
-// ResourcePoolSpec defines the resources pool config
-type ResourcePoolSpec struct {
-	Name     string   `json:"name,omitempty"`
-	UnitNum  int      `json:"unitNum"`
-	ZoneList []string `json:"zoneList"`
+// SavePointSpec defines the savepoint to restore to
+type SavePointSpec struct {
+    Type string `json:"type"`
+    Value string `json:"value"`
 }
 
-// ResourcePoolSpec defines the restore password config
-type RestorePasswordSpec struct {
-	DatabasePassword        string `json:"databasePassword"`
-	DatabasePasswordInfo    string `json:"databasePasswordInfo"`
-	IncrementalPassword     string `json:"incrementalPassword"`
-	IncrementalPasswordInfo string `json:"incrementalPasswordInfo"`
+// DestSpec defines the dest of restore
+type DestSpec struct {
+	ClusterID   int    `json:"clusterID"`
+	ClusterName string `json:"clusterName"`
+    Tennat string `json: "tenant"`
+    KmsEncryptInfo stirng `json: "kmsEncryptInfo"`
+	Topology    []TenantReplica `json:"topology"`
 }
 
 // RestoreStatus defines the observed state of Restore
@@ -72,10 +62,12 @@ type RestoreStatus struct {
 
 type RestoreSetSpec struct {
 	JodID            int    `json:"jobID"`
-	ClusterID        int    `json:"clusterID"`
-	ClusterName      string `json:"clusterName"`
-	TenantName       string `json:"tenantName"`
-	BackupTenantName string `json:"backupTenantName"`
+	RestoreClusterID        int    `json:"clusterID"`
+	RestoreClusterName      string `json:"clusterName"`
+	RestoreTenant       string `json:"tenantName"`
+	SourceClusterID        int    `json:"clusterID"`
+	SourceClusterName      string `json:"clusterName"`
+	SourceTenantName string `json:"backupTenantName"`
 	Status           string `json:"status"`
 	Timestamp        string `json:"restoreTimestamp"`
 }
