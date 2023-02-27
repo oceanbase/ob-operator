@@ -80,6 +80,29 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	tenantCtrl := NewTenantCtrl(r.CRClient, r.Recorder, *instance)
 
+	// Handle deleted tenant
+	tenantFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, tenantFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
+			err := r.TenantDelete(ctx, r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, tenantFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
 	// Fetch the OBCluster CR instance
 	obNamespace := types.NamespacedName{
 		Namespace: instance.Namespace,
@@ -95,31 +118,8 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return reconcile.Result{}, err
 	}
 	if obInstance.Status.Status != observerconst.ClusterReady {
-		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+		klog.Infof("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
 		return reconcile.Result{}, nil
-	}
-
-	// Handle deleted tenant
-	tenantFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
-	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
-		if !util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
-			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, tenantFinalizerName)
-			if err := r.CRClient.Update(context.Background(), instance); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-	} else {
-		if util.ContainsString(instance.ObjectMeta.Finalizers, tenantFinalizerName) {
-			err := r.TenantDelete(r.CRClient, r.Recorder, instance)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, tenantFinalizerName)
-			if err := r.CRClient.Update(context.Background(), instance); err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-		return ctrl.Result{}, nil
 	}
 
 	// custom logic
@@ -134,15 +134,27 @@ func NewTenantCtrl(client client.Client, recorder record.EventRecorder, tenant c
 	}
 }
 
-func (r *TenantReconciler) TenantDelete(client client.Client, recorder record.EventRecorder, tenant *cloudv1.Tenant) error {
+func (r *TenantReconciler) TenantDelete(ctx context.Context, client client.Client, recorder record.EventRecorder, tenant *cloudv1.Tenant) error {
 	ctrlResource := resource.NewResource(client, recorder)
 	ctrl := &TenantCtrl{
 		Tenant:   *tenant,
 		Resource: ctrlResource,
 	}
+	obNamespace := types.NamespacedName{
+		Namespace: tenant.Namespace,
+		Name:      tenant.Spec.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err := r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
 	tenantName := ctrl.Tenant.Name
 	klog.Infof("Begin Delete Tenant '%s'", tenantName)
-	err := ctrl.DeleteTenant()
+	err = ctrl.DeleteTenant()
 	if err != nil {
 		return err
 	}

@@ -103,6 +103,9 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
 		return errors.Wrap(err, "Get Sql Operator Error When Checking Reousrce")
 	}
 	resource := sqlOperator.GetResource(zone)
+	if len(resource) == 0 {
+		return errors.Errorf("Tenant '%s' cannot get resource", tenantName)
+	}
 	unitList := sqlOperator.GetUnitList()
 	var resourcePoolIDList []int
 	for _, unit := range unitList {
