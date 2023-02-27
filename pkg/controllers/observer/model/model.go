@@ -100,3 +100,7 @@ type ClogStat struct {
 	IsOffline int8
 	IsInSync  int8
 }
+
+type OBVersion struct {
+	Version string
+}

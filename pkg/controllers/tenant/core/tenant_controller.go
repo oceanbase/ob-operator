@@ -80,25 +80,6 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	tenantCtrl := NewTenantCtrl(r.CRClient, r.Recorder, *instance)
 
-	// Fetch the OBCluster CR instance
-	obNamespace := types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name:      instance.Spec.ClusterName,
-	}
-	obInstance := &cloudv1.OBCluster{}
-	err = r.CRClient.Get(ctx, obNamespace, obInstance)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.ClusterName, instance.Namespace)
-			return reconcile.Result{}, nil
-		}
-		return reconcile.Result{}, err
-	}
-	if obInstance.Status.Status != observerconst.ClusterReady {
-		klog.Infof("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
-		return reconcile.Result{}, nil
-	}
-
 	// Handle deleted tenant
 	tenantFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
 	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -122,23 +103,27 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return ctrl.Result{}, nil
 	}
 
-	// custom logic
-	return tenantCtrl.TenantCoordinator()
-}
-
-func (r *TenantReconciler) ObclusterNotFound(ctx context.Context, tenant *cloudv1.Tenant, client client.Client, recorder record.EventRecorder) bool {
+	// Fetch the OBCluster CR instance
 	obNamespace := types.NamespacedName{
-		Namespace: tenant.Namespace,
-		Name:      tenant.Spec.ClusterName,
+		Namespace: instance.Namespace,
+		Name:      instance.Spec.ClusterName,
 	}
 	obInstance := &cloudv1.OBCluster{}
-	err := r.CRClient.Get(ctx, obNamespace, obInstance)
+	err = r.CRClient.Get(ctx, obNamespace, obInstance)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			return true
+			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+			return reconcile.Result{}, nil
 		}
+		return reconcile.Result{}, err
 	}
-	return false
+	if obInstance.Status.Status != observerconst.ClusterReady {
+		klog.Infof("OBCluster  %s is not ready, namespace %s", instance.Spec.ClusterName, instance.Namespace)
+		return reconcile.Result{}, nil
+	}
+
+	// custom logic
+	return tenantCtrl.TenantCoordinator()
 }
 
 func NewTenantCtrl(client client.Client, recorder record.EventRecorder, tenant cloudv1.Tenant) TenantCtrlOperator {
@@ -155,27 +140,33 @@ func (r *TenantReconciler) TenantDelete(ctx context.Context, client client.Clien
 		Tenant:   *tenant,
 		Resource: ctrlResource,
 	}
+	obNamespace := types.NamespacedName{
+		Namespace: tenant.Namespace,
+		Name:      tenant.Spec.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err := r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
 	tenantName := ctrl.Tenant.Name
 	klog.Infof("Begin Delete Tenant '%s'", tenantName)
-	err := ctrl.DeleteTenant()
+	err = ctrl.DeleteTenant()
 	if err != nil {
-		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
-			return err
-		}
+		return err
 	}
 	klog.Infof("Begin Delete Pool, Tenant '%s'", tenantName)
 	err = ctrl.DeletePool()
 	if err != nil {
-		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
-			return err
-		}
+		return err
 	}
 	klog.Infof("Begin Delete Unit, Tenant '%s'", tenantName)
 	err = ctrl.DeleteUnit()
 	if err != nil {
-		if !r.ObclusterNotFound(ctx, tenant, client, recorder) {
-			return err
-		}
+		return err
 	}
 	klog.Infof("Succeed Delete Tenant '%s'", tenantName)
 	return nil
