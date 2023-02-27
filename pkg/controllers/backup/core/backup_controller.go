@@ -14,9 +14,11 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -25,6 +27,7 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -74,7 +77,62 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	// custom logic
 	backupCtrl := NewBackupCtrl(r.CRClient, r.Recorder, *instance)
+
+	// Fetch the OBCluster CR instance
+	obNamespace := types.NamespacedName{
+		Namespace: instance.Spec.SourceCluster.ClusterNamespace,
+		Name:      instance.Spec.SourceCluster.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err = r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+	if obInstance.Status.Status != observerconst.ClusterReady {
+		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+		return reconcile.Result{}, nil
+	}
+	// Handle deleted tenant
+	backupFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, backupFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, backupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, backupFinalizerName) {
+			err := r.BackupDelete(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, backupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
 	return backupCtrl.BackupCoordinator()
+}
+
+func (r *BackupReconciler) BackupDelete(client client.Client, recorder record.EventRecorder, backup *cloudv1.Backup) error {
+	ctrlResource := resource.NewResource(client, recorder)
+	ctrl := &BackupCtrl{
+		Backup:   *backup,
+		Resource: ctrlResource,
+	}
+	err := ctrl.CancelArchiveLog(backupconst.TenantAll)
+	if err != nil {
+		klog.Errorf("tenant '%s' cancel archivelog failed, error '%s'", backupconst.TenantAll, err)
+		return err
+	}
+	return nil
 }
 
 func NewBackupCtrl(client client.Client, recorder record.EventRecorder, backup cloudv1.Backup) BackupCtrlOperator {
