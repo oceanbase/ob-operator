@@ -23,4 +23,5 @@ const (
 	OBClusterReadyTimeout         = 30 * time.Second
 	StatefulappUpdateReadyTimeout = 60 * time.Second
 	OBClusterUpdateTReadyimeout   = 300 * time.Second
+	OBClusterReadyimeout          = 1000 * time.Second
 )
