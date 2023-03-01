@@ -140,8 +140,65 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit) error {
+func (ctrl *TenantCtrl) OBVersion3() (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false, errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
+	}
+	version := sqlOperator.GetVersion()
+	if len(version) > 0 && len(version[0].Version) > 0 {
+		if string(version[0].Version[0]) == tenantconst.Version3 {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	}
+	return false, errors.Errorf("Tenant '%s' get ob version from db failed", ctrl.Tenant.Name)
+}
+
+func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit, v3 bool) error {
+	if v3 {
+		return ctrl.CreateUnitV3(unitName, resourceUnit)
+	} else {
+		return ctrl.CreateUnitV4(unitName, resourceUnit)
+	}
+}
+
+func (ctrl *TenantCtrl) CreateUnitV4(unitName string, resourceUnit v1.ResourceUnit) error {
 	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
+	if resourceUnit.MemorySize.Value() == 0 {
+		klog.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", ctrl.Tenant.Name, unitName)
+		return errors.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", ctrl.Tenant.Name, unitName)
+	}
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
+	}
+	var option string
+	if resourceUnit.MinCPU.Value() != 0 {
+		option = fmt.Sprint(option, ", min_cpu %s", resourceUnit.MinCPU.Value())
+	}
+	if resourceUnit.LogDiskSize.Value() != 0 {
+		option = fmt.Sprint(option, ", log_disk_size %s", resourceUnit.LogDiskSize.Value())
+	}
+	if resourceUnit.MaxIops != 0 {
+		option = fmt.Sprint(option, ", max_iops %s", resourceUnit.MaxIops)
+	}
+	if resourceUnit.MinIops != 0 {
+		option = fmt.Sprint(option, ", min_iops %s", resourceUnit.MinIops)
+	}
+	if resourceUnit.IopsWeight != 0 {
+		option = fmt.Sprint(option, ", iops_weight %s", resourceUnit.IopsWeight)
+	}
+	return sqlOperator.CreateUnitV4(unitName, resourceUnit, option)
+}
+
+func (ctrl *TenantCtrl) CreateUnitV3(unitName string, resourceUnit v1.ResourceUnit) error {
+	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
+	if resourceUnit.MinCPU.Value() == 0 || resourceUnit.MaxMemory.Value() == 0 || resourceUnit.MinMemory.Value() == 0 {
+		klog.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
+		return errors.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
+	}
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
@@ -158,7 +215,7 @@ func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit
 	if resourceUnit.MaxSessionNum == 0 {
 		resourceUnit.MaxSessionNum = tenantconst.MaxSessionNum
 	}
-	return sqlOperator.CreateUnit(unitName, resourceUnit)
+	return sqlOperator.CreateUnitV3(unitName, resourceUnit)
 }
 
 func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantReplica) error {
@@ -174,7 +231,10 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
 	tenantName := ctrl.Tenant.Name
 	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
 	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-
+	v3, err := ctrl.OBVersion3()
+	if err != nil {
+		return err
+	}
 	poolExist, _, err := ctrl.PoolExist(poolName)
 	if err != nil {
 		klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)
@@ -188,11 +248,13 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
 	}
 
 	if !unitExist {
-		err := ctrl.CheckResourceEnough(zone)
-		if err != nil {
-			return err
+		if v3 {
+			err := ctrl.CheckResourceEnough(zone)
+			if err != nil {
+				return err
+			}
 		}
-		err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
+		err = ctrl.CreateUnit(unitName, zone.ResourceUnits, v3)
 		if err != nil {
 			klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
 			return err

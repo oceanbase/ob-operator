@@ -66,6 +66,10 @@ func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
 	}
 	specResourceUnit := GenerateSpecResourceUnitMap(ctrl.Tenant.Spec)
 	statusResourceUnit := GenerateStatusResourceUnitMap(ctrl.Tenant.Status)
+	v3, err := ctrl.OBVersion3()
+	if err != nil {
+		return err
+	}
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		match := true
 		if !ctrl.isUnitEqual(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
@@ -85,11 +89,13 @@ func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
 				return err
 			}
 			if !unitExist {
-				err := ctrl.CheckResourceEnough(zone)
-				if err != nil {
-					return err
+				if v3 {
+					err := ctrl.CheckResourceEnough(zone)
+					if err != nil {
+						return err
+					}
 				}
-				err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
+				err = ctrl.CreateUnit(unitName, zone.ResourceUnits, v3)
 				if err != nil {
 					klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
 					return err
@@ -103,6 +109,10 @@ func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
 		}
 	}
 	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+}
+
+func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
+	return nil
 }
 
 func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {

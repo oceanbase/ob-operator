@@ -280,8 +280,33 @@ func (op *SqlOperator) GetInprogressJob(name string) []model.RsJob {
 	return res
 }
 
-func (op *SqlOperator) CreateUnit(name string, resourceUnit v1.ResourceUnit) error {
-	sql := ReplaceAll(CreateUnitSQLTemplate, CreateUnitSQLReplacer(name, resourceUnit))
+func (op *SqlOperator) GetVersion() []model.OBVersion {
+	res := make([]model.OBVersion, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.OBVersion{}).Raw(GetObVersionSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.OBVersion
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) CreateUnitV3(name string, resourceUnit v1.ResourceUnit) error {
+	sql := ReplaceAll(CreateUnitV3SQLTemplate, CreateUnitV3SQLReplacer(name, resourceUnit))
+	return op.ExecSQL(sql)
+}
+
+func (op *SqlOperator) CreateUnitV4(name string, resourceUnit v1.ResourceUnit, option string) error {
+	sql := ReplaceAll(CreateUnitV4SQLTemplate, CreateUnitV4SQLReplacer(name, resourceUnit, option))
 	return op.ExecSQL(sql)
 }
 

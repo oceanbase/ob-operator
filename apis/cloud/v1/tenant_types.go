@@ -44,14 +44,21 @@ type TypeSpec struct {
 }
 
 type ResourceUnit struct {
-	MaxCPU        resource.Quantity `json:"maxCPU"`
-	MinCPU        resource.Quantity `json:"minCPU"`
-	MaxMemory     resource.Quantity `json:"maxMemory"`
-	MinMemory     resource.Quantity `json:"minMemory"`
+	MaxCPU  resource.Quantity `json:"maxCPU"`
+	MinCPU  resource.Quantity `json:"minCPU,omitempty"`
+	MaxIops int               `json:"maxIops,omitempty"`
+	MinIops int               `json:"minIops,omitempty"`
+
+	// V3
+	MaxMemory     resource.Quantity `json:"maxMemory,omitempty"`
+	MinMemory     resource.Quantity `json:"minMemory,omitempty"`
 	MaxDiskSize   resource.Quantity `json:"maxDiskSize,omitempty"`
-	MaxIops       int               `json:"maxIops,omitempty"`
-	MinIops       int               `json:"minIops,omitempty"`
 	MaxSessionNum int               `json:"maxSessionNum,omitempty"`
+
+	// V4
+	MemorySize  resource.Quantity `json:"memorySize,omitempty"`
+	IopsWeight  int               `json:"iopsWeight,omitempty"`
+	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant

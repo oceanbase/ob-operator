@@ -22,14 +22,16 @@ const (
 	GetPoolSQL       = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.__all_resource_pool WHERE name = '${NAME}'"
 	GetPoolListSQL   = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.__all_resource_pool"
 
-	GetUnitListSQL       = "SELECT unit_id, resource_pool_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, status FROM oceanbase.__all_unit"
-	GetUnitConfigListSQL = "SELECT unit_config_id, name, max_cpu, min_cpu, max_memory, min_memory, max_iops, min_iops, max_disk_size, max_session_num FROM oceanbase.__all_unit_config"
-	GetUnitConfigSQL     = "SELECT unit_config_id, name, max_cpu, min_cpu, max_memory, min_memory, max_iops, min_iops, max_disk_size, max_session_num FROM oceanbase.__all_unit_config WHERE name = '${NAME}'"
-
-	GetResourceSQLTemplate = "SELECT cpu_total, mem_total, disk_total FROM oceanbase.__all_virtual_server_stat where zone = '${ZONE_NAME}'"
+	GetUnitListSQL           = "SELECT unit_id, resource_pool_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, status FROM oceanbase.__all_unit"
+	GetUnitConfigListSQL     = "SELECT unit_config_id, name, max_cpu, min_cpu, max_memory, min_memory, max_iops, min_iops, max_disk_size, max_session_num FROM oceanbase.__all_unit_config"
+	GetUnitConfigSQL         = "SELECT unit_config_id, name, max_cpu, min_cpu, max_memory, min_memory, max_iops, min_iops, max_disk_size, max_session_num FROM oceanbase.__all_unit_config WHERE name = '${NAME}'"
+	GetUnitConfigV4SQL       = "SELECT max_cpu, min_cpu, memory_size, log_disk_size, max_iops, min_iops, iops_weight FROM oceanbase.__all_unit_config WHERE name = '${NAME}';"
+	GetResourceSQLTemplate   = "SELECT cpu_total, mem_total, disk_total FROM oceanbase.__all_virtual_server_stat where zone = '${ZONE_NAME}'"
+	GetResourceV4SQLTemplate = "SELECT CPU_CAPACITY_MAX, CPU_ASSIGNED_MAX, MEM_CAPACITY, MEM_ASSIGNED, DATA_DISK_CAPACITY, DATA_DISK_IN_USE, LOG_DISK_CAPACITY, LOG_DISK_ASSIGNED FROM oceanbase.GV$OB_SERVERS where zone = '${NAME}';"
 
 	GetCharsetSQL           = "SELECT CHARSET('oceanbase')"
-	CreateUnitSQLTemplate   = "CREATE RESOURCE UNIT ${UNIT_NAME} max_cpu ${MAX_CPU}, max_memory '${MAX_MEMORY}', max_iops ${MAX_IOPS}, max_disk_size '${MAX_DISK_SIZE}', max_session_num ${MAX_SESSION_NUM}, MIN_CPU=${MIN_CPU}, MIN_MEMORY='${MIN_MEMORY}', MIN_IOPS=${MIN_IOPS};"
+	CreateUnitV3SQLTemplate = "CREATE RESOURCE UNIT ${UNIT_NAME} max_cpu ${MAX_CPU}, max_memory '${MAX_MEMORY}', max_iops ${MAX_IOPS}, max_disk_size '${MAX_DISK_SIZE}', max_session_num ${MAX_SESSION_NUM}, MIN_CPU=${MIN_CPU}, MIN_MEMORY='${MIN_MEMORY}', MIN_IOPS=${MIN_IOPS};"
+	CreateUnitV4SQLTemplate = "CREATE RESOURCE UNIT ${UNIT_NAME} max_cpu ${MAX_CPU}, memory_size ${MEMORY_SIZE}${OPTION};"
 	CreatePoolSQLTemplate   = "CREATE RESOURCE POOL ${POOL_NAME} UNIT=${UNIT_NAME}, UNIT_NUM=${UNIT_NUM}, ZONE_LIST=('${ZONE_NAME}');"
 	CreateTenantSQLTemplate = "CREATE TENANT IF NOT EXISTS ${TENANT_NAME} CHARSET='${CHARSET}', ZONE_LIST=('${ZONE_LIST}'), PRIMARY_ZONE='${PRIMARY_ZONE}', RESOURCE_POOL_LIST=('${RESOURCE_POOL_LIST}') ${LOCALITY}${COLLATE}${LOGONLY_REPLICA_NUM} ${VARIABLE_LIST} "
 
@@ -46,4 +48,6 @@ const (
 	DeleteUnitSQLTemplate       = "DROP RESOURCE UNIT ${NAME}"
 	DeletePoolSQLTemplate       = "DROP RESOURCE POOL ${NAME}"
 	DeleteTenantSQLTemplate     = "DROP TENANT ${NAME} FORCE"
+
+	GetObVersionSQL = "SELECT ob_version() as version;"
 )

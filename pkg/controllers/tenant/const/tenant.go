@@ -39,3 +39,8 @@ const (
 	MinIops       = 128
 	MaxSessionNum = 64
 )
+
+const (
+	Version3 = "3"
+	Version4 = "4"
+)

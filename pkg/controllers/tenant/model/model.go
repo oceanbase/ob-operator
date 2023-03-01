@@ -89,3 +89,7 @@ type RsJob struct {
 	TenantID   int64
 	TenantName string
 }
+
+type OBVersion struct {
+	Version string
+}

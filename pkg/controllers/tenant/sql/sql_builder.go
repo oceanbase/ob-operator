@@ -31,8 +31,12 @@ func SetParameterSQLReplacer(name, value string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
 }
 
-func CreateUnitSQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strings.Replacer {
+func CreateUnitV3SQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strings.Replacer {
 	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MaxMemory.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MinMemory.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
+}
+
+func CreateUnitV4SQLReplacer(unitName string, resourceUnit v1.ResourceUnit, option string) *strings.Replacer {
+	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${Memory_size}", strconv.Itoa(int(resourceUnit.MemorySize.Value()))+"B", "${OPTION}", option)
 }
 
 func CreatePoolSQLReplacer(poolName, unitName string, zone v1.TenantReplica) *strings.Replacer {
