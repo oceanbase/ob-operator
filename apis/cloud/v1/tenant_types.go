@@ -23,11 +23,10 @@ type TenantSpec struct {
 	ClusterName string          `json:"clusterName"`
 	Topology    []TenantReplica `json:"topology"`
 
-	Charset           string      `json:"charset,omitempty"`
-	Collate           string      `json:"collate,omitempty"`
-	Mode              string      `json:"mode,omitempty"`
-	LogonlyReplicaNum int         `json:"logonlyReplicaNum,omitempty"`
-	Variables         []Parameter `json:"variables,omitempty"`
+	Charset   string      `json:"charset,omitempty"`
+	Collate   string      `json:"collate,omitempty"`
+	Mode      string      `json:"mode,omitempty"`
+	Variables []Parameter `json:"variables,omitempty"`
 }
 
 type TenantReplica struct {
@@ -63,11 +62,9 @@ type ResourceUnit struct {
 
 // TenantStatus defines the observed state of Tenant
 type TenantStatus struct {
-	Status            string                `json:"status"`
-	Topology          []TenantReplicaStatus `json:"topology"`
-	Charset           string                `json:"charset,omitempty"`
-	ReplicaNum        int                   `json:"replicaNum"`
-	LogonlyReplicaNum int                   `json:"logonlyReplicaNum"`
+	Status   string                `json:"status"`
+	Topology []TenantReplicaStatus `json:"topology"`
+	Charset  string                `json:"charset,omitempty"`
 }
 
 type TenantReplicaStatus struct {

@@ -54,33 +54,13 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 	return nil
 }
 
-func (op *SqlOperator) GetGvTenantByName(name string) []model.GvTenant {
-	sql := ReplaceAll(GetGvTenantSQL, SetNameReplacer(name))
-	res := make([]model.GvTenant, 0)
-	client, err := GetDBClient(op.ConnectProperties)
-	if err == nil {
-		defer client.Close()
-		rows, err := client.Model(&model.GvTenant{}).Raw(sql).Rows()
-		if err == nil {
-			defer rows.Close()
-			var rowData model.GvTenant
-			for rows.Next() {
-				err = client.ScanRows(rows, &rowData)
-				if err == nil {
-					res = append(res, rowData)
-				}
-			}
-		}
-	}
-	return res
-}
-
-func (op *SqlOperator) GetTenantList() []model.Tenant {
+func (op *SqlOperator) GetTenantByName(name string) []model.Tenant {
+	sql := ReplaceAll(GetTenantSQL, SetNameReplacer(name))
 	res := make([]model.Tenant, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.Tenant{}).Raw(GetTenantListSQL).Rows()
+		rows, err := client.Model(&model.Tenant{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.Tenant
@@ -156,15 +136,35 @@ func (op *SqlOperator) GetUnitList() []model.Unit {
 	return res
 }
 
-func (op *SqlOperator) GetUnitConfigList() []model.UnitConfig {
-	res := make([]model.UnitConfig, 0)
+func (op *SqlOperator) GetUnitConfigV3List() []model.UnitConfigV3 {
+	res := make([]model.UnitConfigV3, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.UnitConfig{}).Raw(GetUnitConfigListSQL).Rows()
+		rows, err := client.Model(&model.UnitConfigV3{}).Raw(GetUnitConfigV3ListSQL).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.UnitConfig
+			var rowData model.UnitConfigV3
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetUnitConfigV4List() []model.UnitConfigV4 {
+	res := make([]model.UnitConfigV4, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.UnitConfigV4{}).Raw(GetUnitConfigV4ListSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.UnitConfigV4
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -315,8 +315,8 @@ func (op *SqlOperator) CreatePool(poolName, unitName string, zone v1.TenantRepli
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) CreateTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList string) error {
-	sql := ReplaceAll(CreateTenantSQLTemplate, CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList))
+func (op *SqlOperator) CreateTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, variableList string) error {
+	sql := ReplaceAll(CreateTenantSQLTemplate, CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, variableList))
 	return op.ExecSQL(sql)
 }
 
@@ -325,8 +325,13 @@ func (op *SqlOperator) SetTenantVariable(tenantName, name, value string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) SetUnitConfig(name string, resourceUnit v1.ResourceUnit) error {
-	sql := ReplaceAll(SetUnitConfigSQLTemplate, SetUnitConfigSQLReplacer(name, resourceUnit))
+func (op *SqlOperator) SetUnitConfigV3(name string, resourceUnit model.ResourceUnitV3) error {
+	sql := ReplaceAll(SetUnitConfigV3SQLTemplate, SetUnitConfigV3SQLReplacer(name, resourceUnit))
+	return op.ExecSQL(sql)
+}
+
+func (op *SqlOperator) SetUnitConfigV4(name string, resourceUnit model.ResourceUnitV4) error {
+	sql := ReplaceAll(SetUnitConfigV4SQLTemplate, SetUnitConfigV4SQLReplacer(name, resourceUnit))
 	return op.ExecSQL(sql)
 }
 
@@ -340,8 +345,8 @@ func (op *SqlOperator) SetTenantLocality(name, locality string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) SetTenant(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum string) error {
-	sql := ReplaceAll(SetTenantSQLTemplate, SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum))
+func (op *SqlOperator) SetTenant(name, zoneList, primaryZone, poolList, charset, locality string) error {
+	sql := ReplaceAll(SetTenantSQLTemplate, SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality))
 	return op.ExecSQL(sql)
 }
 

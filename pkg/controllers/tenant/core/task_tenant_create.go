@@ -26,27 +26,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (ctrl *TenantCtrl) GetGvTenantByName() ([]model.GvTenant, error) {
+func (ctrl *TenantCtrl) GetTenantByName() ([]model.Tenant, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
 	}
-	tenant := sqlOperator.GetGvTenantByName(ctrl.Tenant.Name)
+	tenant := sqlOperator.GetTenantByName(ctrl.Tenant.Name)
 	return tenant, nil
-}
-
-func (ctrl *TenantCtrl) GetTenantList() ([]model.Tenant, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
-	}
-	tenantList := sqlOperator.GetTenantList()
-	return tenantList, nil
 }
 
 func (ctrl *TenantCtrl) TenantExist(tenantName string) (bool, int, error) {
 	klog.Infof("Check Whether The Tenant '%s' Exists", tenantName)
-	tenant, err := ctrl.GetGvTenantByName()
+	tenant, err := ctrl.GetTenantByName()
 	if err != nil {
 		return false, 0, err
 	}
@@ -289,14 +280,10 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantReplica
 	if collate != "" {
 		collate = fmt.Sprintf(", COLLATE = %s", collate)
 	}
-	var logonlyReplicaNum string
-	if ctrl.Tenant.Spec.LogonlyReplicaNum != 0 {
-		logonlyReplicaNum = fmt.Sprintf(", LOGONLY_REPLICA_NUM = %d", ctrl.Tenant.Spec.LogonlyReplicaNum)
-	}
 	if ctrl.Tenant.Spec.Charset != "" {
 		charset = ctrl.Tenant.Spec.Charset
 	}
-	return sqlOperator.CreateTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, logonlyReplicaNum, variableList)
+	return sqlOperator.CreateTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, variableList)
 }
 
 func (ctrl *TenantCtrl) GenerateSpecZoneList(zones []v1.TenantReplica) []string {

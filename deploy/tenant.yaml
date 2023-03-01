@@ -11,7 +11,6 @@ spec:
   charset:  # 租户的字符集
   collate:  # 租户校对规则
   mode: 
-  logonlyReplicaNum:
 
   variables: 
     - name: ob_tcp_invited_nodes

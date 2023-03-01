@@ -12,24 +12,13 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-type GvTenant struct {
-	TenantID      int64
-	TenantName    string
-	ZoneList      string
-	PrimaryZone   string
-	CollationType int64
-	ReadOnly      int64
-	Locality      string
-}
-
 type Tenant struct {
-	TenantID          int64
-	TenantName        string
-	ZoneList          string
-	PrimaryZone       string
-	ReplicaNum        int64
-	LogonlyReplicaNum int64
-	Status            string
+	TenantID    int64
+	TenantName  string
+	ZoneList    string
+	PrimaryZone string
+	Locality    string
+	Status      string
 }
 
 type Pool struct {
@@ -53,6 +42,11 @@ type Unit struct {
 }
 
 type UnitConfig struct {
+	UnitConfigID int64
+	Name         string
+}
+
+type UnitConfigV3 struct {
 	UnitConfigID  int64
 	Name          string
 	MaxCPU        float64
@@ -63,6 +57,18 @@ type UnitConfig struct {
 	MinIops       int64
 	MaxDiskSize   int64
 	MaxSessionNum int64
+}
+
+type UnitConfigV4 struct {
+	UnitConfigID int64
+	Name         string
+	MaxCPU       float64
+	MinCPU       float64
+	MemorySize   int64
+	MaxIops      int64
+	MinIops      int64
+	LogDiskSize  int64
+	IopsWeight   int64
 }
 
 type Resource struct {

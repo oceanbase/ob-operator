@@ -24,7 +24,7 @@ import (
 	"strings"
 )
 
-func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string) error {
+func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
 	tenant := ctrl.Tenant
 	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
 	tenantTmp, err := tenantExecuter.Get(context.TODO(), tenant.Namespace, tenant.Name)
@@ -34,7 +34,7 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string) error {
 	tenantCurrent := tenantTmp.(cloudv1.Tenant)
 	tenantCurrentDeepCopy := tenantCurrent.DeepCopy()
 	ctrl.Tenant = *tenantCurrentDeepCopy
-	tenantNew, err := ctrl.BuildTenantStatus(*tenantCurrentDeepCopy, tenantStatus)
+	tenantNew, err := ctrl.BuildTenantStatus(*tenantCurrentDeepCopy, tenantStatus, v3)
 	if err != nil {
 		return err
 	}
@@ -49,15 +49,14 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string) error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus string) (cloudv1.Tenant, error) {
+func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus string, v3 bool) (cloudv1.Tenant, error) {
 	var tenantCurrentStatus cloudv1.TenantStatus
-	tenantTopology, err := ctrl.BuildTenantTopology(tenant)
+	tenantTopology, err := ctrl.BuildTenantTopology(tenant, v3)
 	if err != nil {
 		return tenant, err
 	}
 	tenantCurrentStatus.Status = tenantStatus
 	tenantCurrentStatus.Topology = tenantTopology
-	tenantCurrentStatus.ReplicaNum, tenantCurrentStatus.LogonlyReplicaNum, err = ctrl.GetReplicaNum(tenant)
 	if err != nil {
 		return tenant, err
 	}
@@ -69,12 +68,12 @@ func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus st
 	return tenant, nil
 }
 
-func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.TenantReplicaStatus, error) {
+func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant, v3 bool) ([]cloudv1.TenantReplicaStatus, error) {
 	var tenantTopologyStatusList []cloudv1.TenantReplicaStatus
 	var err error
 	var locality string
 	var primaryZone string
-	gvTenant, err := ctrl.GetGvTenantByName()
+	gvTenant, err := ctrl.GetTenantByName()
 	if err != nil {
 		return tenantTopologyStatusList, err
 	}
@@ -100,7 +99,7 @@ func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.Te
 		tenantCurrentStatus.Type = typeMap[zone]
 		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
 		tenantCurrentStatus.Priority = priorityMap[zone]
-		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone)
+		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone, v3)
 		if err != nil {
 			return tenantTopologyStatusList, err
 		}
@@ -197,7 +196,15 @@ func (ctrl *TenantCtrl) GenerateStatusUnitNumMap(zones []cloudv1.TenantReplica) 
 	return unitNumMap, nil
 }
 
-func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUnit, error) {
+func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string, v3 bool) (cloudv1.ResourceUnit, error) {
+	if v3 {
+		return ctrl.BuildResourceUnitV3FromDB(zone)
+	} else {
+		return ctrl.BuildResourceUnitV4FromDB(zone)
+	}
+}
+
+func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.ResourceUnit, error) {
 	var resourceUnit cloudv1.ResourceUnit
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -205,7 +212,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUn
 	}
 	unitList := sqlOperator.GetUnitList()
 	poolList := sqlOperator.GetPoolList()
-	unitConfigList := sqlOperator.GetUnitConfigList()
+	unitConfigList := sqlOperator.GetUnitConfigV3List()
 	var resourcePoolIDList []int
 	for _, unit := range unitList {
 		if unit.Zone == zone {
@@ -225,6 +232,41 @@ func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUn
 						resourceUnit.MaxIops = int(unitConifg.MaxIops)
 						resourceUnit.MinIops = int(unitConifg.MinIops)
 						resourceUnit.MaxSessionNum = int(unitConifg.MaxSessionNum)
+					}
+				}
+			}
+		}
+	}
+	return resourceUnit, nil
+}
+
+func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string) (cloudv1.ResourceUnit, error) {
+	var resourceUnit cloudv1.ResourceUnit
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return resourceUnit, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
+	}
+	unitList := sqlOperator.GetUnitList()
+	poolList := sqlOperator.GetPoolList()
+	unitConfigList := sqlOperator.GetUnitConfigV4List()
+	var resourcePoolIDList []int
+	for _, unit := range unitList {
+		if unit.Zone == zone {
+			resourcePoolIDList = append(resourcePoolIDList, int(unit.ResourcePoolID))
+		}
+	}
+	for _, pool := range poolList {
+		for _, resourcePoolID := range resourcePoolIDList {
+			if resourcePoolID == int(pool.ResourcePoolID) {
+				for _, unitConifg := range unitConfigList {
+					if unitConifg.UnitConfigID == pool.UnitConfigID {
+						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
+						resourceUnit.MinCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MinCPU, 'f', -1, 64))
+						resourceUnit.MemorySize = *apiresource.NewQuantity(unitConifg.MemorySize, apiresource.DecimalSI)
+						resourceUnit.LogDiskSize = *apiresource.NewQuantity(unitConifg.LogDiskSize, apiresource.DecimalSI)
+						resourceUnit.MaxIops = int(unitConifg.MaxIops)
+						resourceUnit.MinIops = int(unitConifg.MinIops)
+						resourceUnit.IopsWeight = int(unitConifg.IopsWeight)
 					}
 				}
 			}
@@ -255,18 +297,4 @@ func (ctrl *TenantCtrl) BuildUnitFromDB(zone string) ([]cloudv1.Unit, error) {
 		}
 	}
 	return unitList, nil
-}
-
-func (ctrl *TenantCtrl) GetReplicaNum(tenant cloudv1.Tenant) (int, int, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return 0, 0, errors.Wrap(err, "Get Sql Operator Error When Getting Replica Num  From DB")
-	}
-	tenantList := sqlOperator.GetTenantList()
-	for _, t := range tenantList {
-		if t.TenantName == tenant.Name {
-			return int(t.ReplicaNum), int(t.LogonlyReplicaNum), nil
-		}
-	}
-	return 0, 0, errors.New("No Tenant Found")
 }
