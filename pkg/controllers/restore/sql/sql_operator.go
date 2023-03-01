@@ -52,15 +52,15 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 	return nil
 }
 
-func (op *SqlOperator) GetAllRestoreHistorySet() []model.AllRestoreSet {
-	res := make([]model.AllRestoreSet, 0)
+func (op *SqlOperator) GetAllRestoreHistorySet() []model.RestoreStatus {
+	res := make([]model.RestoreStatus, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllRestoreSet{}).Raw(GetRestoreSetHistorySql).Rows()
+		rows, err := client.Model(&model.RestoreStatus{}).Raw(GetRestoreSetHistorySql).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.AllRestoreSet
+			var rowData model.RestoreStatus
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -72,15 +72,15 @@ func (op *SqlOperator) GetAllRestoreHistorySet() []model.AllRestoreSet {
 	return res
 }
 
-func (op *SqlOperator) GetAllRestoreCurrentSet() []model.AllRestoreSet {
-	res := make([]model.AllRestoreSet, 0)
+func (op *SqlOperator) GetAllRestoreCurrentSet() []model.RestoreStatus {
+	res := make([]model.RestoreStatus, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllRestoreSet{}).Raw(GetRestoreSetCurrentSql).Rows()
+		rows, err := client.Model(&model.RestoreStatus{}).Raw(GetRestoreSetCurrentSql).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.AllRestoreSet
+			var rowData model.RestoreStatus
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -97,8 +97,8 @@ func (op *SqlOperator) SetParameter(name, value string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) DoResotre(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string) error {
-	sql := ReplaceAll(DoResotreSql, DoResotreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
+func (op *SqlOperator) DoRestore(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string) error {
+	sql := ReplaceAll(DoRestoreSql, DoRestoreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
 	return op.ExecSQL(sql)
 }
 

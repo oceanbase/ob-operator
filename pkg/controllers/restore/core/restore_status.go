@@ -17,77 +17,56 @@ import (
 	"reflect"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
 func (ctrl *RestoreCtrl) UpdateRestoreStatus() error {
-	restore := ctrl.Restore
 	restoreExecuter := resource.NewRestoreResource(ctrl.Resource)
-	restoreTmp, err := restoreExecuter.Get(context.TODO(), restore.Namespace, restore.Name)
+	restoreTmp, err := restoreExecuter.Get(context.TODO(), ctrl.Restore.Namespace, ctrl.Restore.Name)
 	if err != nil {
 		return err
 	}
 	restoreCurrent := restoreTmp.(cloudv1.Restore)
 	restoreCurrentDeepCopy := restoreCurrent.DeepCopy()
-
-	ctrl.Restore = *restoreCurrentDeepCopy
-	restoreNew, err := ctrl.buildRestoreStatus(*restoreCurrentDeepCopy)
+	restoreCurrentStatus, err := ctrl.getRestoreStatusFromDB()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "get restore status from OB")
 	}
-	compareStatus := reflect.DeepEqual(restoreCurrent.Status, restoreNew.Status)
-	if !compareStatus {
-		err = restoreExecuter.UpdateStatus(context.TODO(), restoreNew)
+	restoreCurrentDeepCopy.Status = *restoreCurrentStatus
+	ctrl.Restore = *restoreCurrentDeepCopy
+	if !reflect.DeepEqual(restoreCurrent.Status, ctrl.Restore.Status) {
+		err = restoreExecuter.UpdateStatus(context.TODO(), ctrl.Restore)
 		if err != nil {
 			return err
 		}
 	}
-	ctrl.Restore = restoreNew
 	return nil
 }
 
-func (ctrl *RestoreCtrl) buildRestoreStatus(restore cloudv1.Restore) (cloudv1.Restore, error) {
-	var restoreCurrentStatus cloudv1.RestoreStatus
-	restoreSetList, err := ctrl.buildRestoreSetListFromDB()
-	if err != nil {
-		return restore, err
-	}
-	restoreSetStatus := ctrl.RestoreSetListToStatusList(restoreSetList)
-	if err != nil {
-		return restore, err
-	}
-	restoreCurrentStatus.RestoreSet = restoreSetStatus
-	restore.Status = restoreCurrentStatus
-	return restore, nil
-}
-
-func (ctrl *RestoreCtrl) buildRestoreSetListFromDB() ([]model.AllRestoreSet, error) {
+func (ctrl *RestoreCtrl) getRestoreStatusFromDB() (*cloudv1.RestoreStatus, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "get sql operator to get restore status")
 	}
-	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
 	restoreSetCurrent := sqlOperator.GetAllRestoreCurrentSet()
-	allRestoreSet := make([]model.AllRestoreSet, 0)
-	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
-	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
-	return allRestoreSet, nil
-}
-
-func (ctrl *RestoreCtrl) RestoreSetListToStatusList(restoreSetList []model.AllRestoreSet) []cloudv1.RestoreSetSpec {
-	restoreSetStatusList := make([]cloudv1.RestoreSetSpec, 0)
-	for _, restoreSet := range restoreSetList {
-		restoreSetStatus := cloudv1.RestoreSetSpec{}
-		restoreSetStatus.JodID = int(restoreSet.JobId)
-		restoreSetStatus.ClusterID = int(restoreSet.BackupClusterId)
-		restoreSetStatus.ClusterName = ctrl.Restore.Spec.SourceCluster.ClusterName
-		restoreSetStatus.TenantName = restoreSet.TenantName
-		restoreSetStatus.BackupTenantName = restoreSet.BackupTenantName
-		restoreSetStatus.Status = restoreSet.Status
-		restoreSetStatus.Timestamp = restoreSet.RestoreFinishTimestamp
-		restoreSetStatusList = append(restoreSetStatusList, restoreSetStatus)
+	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
+	restoreSet := make([]model.RestoreStatus, 0)
+	restoreSet = append(restoreSet, restoreSetCurrent...)
+	restoreSet = append(restoreSet, restoreSetHistory...)
+	for _, restoreRecord := range restoreSet {
+		if restoreRecord.BackupClusterId == ctrl.Restore.Spec.Source.ClusterID &&
+			restoreRecord.BackupClusterName == ctrl.Restore.Spec.Source.ClusterName &&
+			restoreRecord.BackupTenantName == ctrl.Restore.Spec.Source.Tenant &&
+			restoreRecord.TenantName == ctrl.Restore.Spec.Dest.Tenant {
+			return &cloudv1.RestoreStatus{
+				JobID:           restoreRecord.JobId,
+				Status:          restoreRecord.Status,
+				FinishTimestamp: restoreRecord.RestoreFinishTimestamp,
+			}, nil
+		}
 	}
-	return restoreSetStatusList
+	return nil, errors.New("no record found for restore")
 }

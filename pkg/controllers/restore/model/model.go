@@ -12,7 +12,7 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-type AllRestoreSet struct {
+type RestoreStatus struct {
 	JobId                  int64
 	BackupClusterId        int64
 	BackupClusterName      string

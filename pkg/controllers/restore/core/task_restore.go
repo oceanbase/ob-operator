@@ -13,114 +13,91 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	restoreconst "github.com/oceanbase/ob-operator/pkg/controllers/restore/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
+	tenantCore "github.com/oceanbase/ob-operator/pkg/controllers/tenant/core"
 	"github.com/pkg/errors"
 )
 
-func (ctrl *RestoreCtrl) CreateResourcePool() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when trying to create resource pool ")
-	}
-	resourcePoolSpec := ctrl.Restore.Spec.ResourcePool
-	var resourcePoolName = restoreconst.ResourcePoolName
-	if ctrl.Restore.Spec.ResourcePool.Name != "" {
-		resourcePoolName = ctrl.Restore.Spec.ResourcePool.Name
-	}
-	var resourceUnitName = restoreconst.ResourceUnitName
-	if ctrl.Restore.Spec.ResourceUnit.Name != "" {
-		resourceUnitName = ctrl.Restore.Spec.ResourceUnit.Name
-	}
-	var zoneList string
-	for _, zone := range resourcePoolSpec.ZoneList {
-		zoneList += "'" + zone + "',"
-	}
-	zoneList = strings.TrimRight(zoneList, ",")
-	return sqlOperator.CreateResourcePool(resourcePoolName, resourceUnitName, strconv.Itoa(resourcePoolSpec.UnitNum), zoneList)
+func (ctrl *RestoreCtrl) PrepareForRestore() ([]string, error) {
 
+	resourcePools := make([]string, 0)
+	tenantCtrl := tenantCore.TenantCtrl{
+		Resource: ctrl.Resource,
+		Tenant:   cloudv1.Tenant{},
+	}
+	for _, zone := range ctrl.Restore.Spec.Dest.Topology {
+		err := tenantCtrl.CheckAndCreateUnitAndPool(ctrl.Restore.Spec.Dest.Tenant, zone)
+		if err != nil {
+			return resourcePools, errors.Wrap(err, "failed to prepare restore")
+		}
+		poolName := tenantCtrl.GeneratePoolName(ctrl.Restore.Spec.Dest.Tenant, zone.ZoneName)
+		resourcePools = append(resourcePools, poolName)
+	}
+	return resourcePools, nil
 }
 
-func (ctrl *RestoreCtrl) CreateResourceUnit() error {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when trying to create resource unit ")
-	}
-	resourceUnitSpec := ctrl.Restore.Spec.ResourceUnit
-	var resourceUnitName = restoreconst.ResourceUnitName
-	if ctrl.Restore.Spec.ResourceUnit.Name != "" {
-		resourceUnitName = ctrl.Restore.Spec.ResourceUnit.Name
-	}
-	return sqlOperator.CreateResourceUnit(resourceUnitName, strconv.Itoa(resourceUnitSpec.MaxCPU), resourceUnitSpec.MaxMemory, strconv.Itoa(resourceUnitSpec.MaxIops), resourceUnitSpec.MaxDiskSize, strconv.Itoa(resourceUnitSpec.MaxSessionNum), strconv.Itoa(resourceUnitSpec.MinCPU), resourceUnitSpec.MinMemory, strconv.Itoa(resourceUnitSpec.MinIops))
-}
-
-func (ctrl *RestoreCtrl) DoResotre() error {
+func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to do restore ")
 	}
 	spec := ctrl.Restore.Spec
 	restoreOption := ctrl.GetRestoreOption()
-	var resourcePoolName = restoreconst.ResourcePoolName
-	if ctrl.Restore.Spec.ResourcePool.Name != "" {
-		resourcePoolName = ctrl.Restore.Spec.ResourcePool.Name
+	path := spec.Source.Path.Root
+	if path == "" {
+		path = fmt.Sprintf("%s,%s", spec.Source.Path.Data, spec.Source.Path.Log)
 	}
-	return sqlOperator.DoResotre(spec.DestTenant, spec.SourceTenant, spec.Path, spec.Timestamp, spec.SourceCluster.ClusterName, strconv.Itoa(spec.SourceCluster.ClusterID), resourcePoolName, restoreOption)
+	savePoint := spec.SavePoint.Value
+	if spec.SavePoint.Type != "" {
+		savePoint = fmt.Sprintf("%s=%s", spec.SavePoint.Type, spec.SavePoint.Value)
+	}
+	return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption)
 }
 
 func (ctrl *RestoreCtrl) GetRestoreOption() string {
-	var locality = cloudv1.Parameter{Name: restoreconst.Locality, Value: ""}
-	var primaryZone = cloudv1.Parameter{Name: restoreconst.PrimaryZone, Value: ""}
-	var kmsEncrypt = cloudv1.Parameter{Name: restoreconst.KmsEncrypt, Value: ""}
-	paramList := [3]cloudv1.Parameter{locality, primaryZone, kmsEncrypt}
-	allParams := ctrl.Restore.Spec.Parameters
-	var isSet bool
-	for _, p := range paramList {
-		for _, param := range allParams {
-			if p.Name == param.Name {
-				isSet = true
-			}
-		}
+	tenantCtrl := tenantCore.TenantCtrl{
+		Resource: ctrl.Resource,
+		Tenant:   cloudv1.Tenant{},
 	}
-	if !isSet {
-		return ""
+	localityOption := fmt.Sprintf("locality=%s", tenantCtrl.GenerateLocality(ctrl.Restore.Spec.Dest.Topology))
+	primaryZoneOption := fmt.Sprintf("primary_zone=%s", tenantCtrl.GenerateSpecPrimaryZone(ctrl.Restore.Spec.Dest.Topology))
+
+	restoreOption := fmt.Sprintf("%s&%s", localityOption, primaryZoneOption)
+
+	if ctrl.Restore.Spec.Dest.KmsEncryptInfo != "" {
+		kmsEncryptInfoOption := fmt.Sprintf("kms_encrypt=%s", ctrl.Restore.Spec.Dest.KmsEncryptInfo)
+		restoreOption = fmt.Sprintf("%s&%s", restoreOption, kmsEncryptInfoOption)
 	}
-	var restoreOption = "&"
-	for _, p := range paramList {
-		if ctrl.getParameter(p.Name) != "" {
-			p.Value = ctrl.getParameter(p.Name)
-		}
-		restoreOption += p.Name + "=" + p.Value + "&"
-	}
-	restoreOption = strings.TrimRight(restoreOption, "&")
 	return restoreOption
 }
 
-func (ctrl *RestoreCtrl) GetRestoreSetCurrentFromDB() ([]model.AllRestoreSet, error) {
+func (ctrl *RestoreCtrl) GetRestoreSetCurrentFromDB() ([]model.RestoreStatus, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetCurrent From DB")
 	}
 	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
 	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
-	allRestoreSet := make([]model.AllRestoreSet, 0)
+	allRestoreSet := make([]model.RestoreStatus, 0)
 	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
 	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
 	return allRestoreSet, nil
 }
 
-func (ctrl *RestoreCtrl) GetRestoreSetHistoryFromDB() ([]model.AllRestoreSet, error) {
+func (ctrl *RestoreCtrl) GetRestoreSetHistoryFromDB() ([]model.RestoreStatus, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetHistory From DB")
 	}
 	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
 	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
-	allRestoreSet := make([]model.AllRestoreSet, 0)
+	allRestoreSet := make([]model.RestoreStatus, 0)
 	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
 	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
 	return allRestoreSet, nil

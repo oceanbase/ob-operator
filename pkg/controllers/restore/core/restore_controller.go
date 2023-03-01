@@ -15,7 +15,6 @@ package core
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/klog/v2"
@@ -96,25 +95,15 @@ func (ctrl *RestoreCtrl) RestoreCoordinator() (ctrl.Result, error) {
 }
 
 func (ctrl *RestoreCtrl) RestoreEffector() error {
-	err := ctrl.UpdateRestoreStatus()
-	if err != nil {
-		return err
+	if "" == ctrl.Restore.Status.Status {
+		klog.Infoln("no restore task, create restore task")
+		return ctrl.CreateRestoreTask()
+	} else {
+		return ctrl.UpdateRestoreStatus()
 	}
-	restoreSets := ctrl.Restore.Status.RestoreSet
-	restoreSpec := ctrl.Restore.Spec
-	for _, restoreSet := range restoreSets {
-		if restoreSet.ClusterName == restoreSpec.SourceCluster.ClusterName &&
-			restoreSet.ClusterID == restoreSpec.SourceCluster.ClusterID &&
-			restoreSet.TenantName == restoreSpec.DestTenant &&
-			restoreSet.BackupTenantName == restoreSpec.SourceTenant &&
-			restoreSet.Status != restoreconst.RestoreFail {
-			return nil
-		}
-	}
-	return ctrl.BuildRestoreTask()
 }
 
-func (ctrl *RestoreCtrl) BuildRestoreTask() error {
+func (ctrl *RestoreCtrl) CreateRestoreTask() error {
 	restoreSpec := ctrl.Restore.Spec
 	parameters := restoreSpec.Parameters
 	for _, param := range parameters {
@@ -132,36 +121,31 @@ func (ctrl *RestoreCtrl) BuildRestoreTask() error {
 	if isConcurrencyZero {
 		err = ctrl.SetParameter(cloudv1.Parameter{Name: restoreconst.RestoreConcurrency, Value: strconv.Itoa(restoreconst.RestoreConcurrencyDefault)})
 		if err != nil {
-			klog.Errorln(err, "fail to set default ", restoreconst.RestoreConcurrency)
+			klog.Errorln(err, "fail to set default restore concurrency", restoreconst.RestoreConcurrency)
 			return err
 		}
 	}
-	err = ctrl.CreateResourceUnit()
+	pools, err := ctrl.PrepareForRestore()
 	if err != nil {
-		klog.Errorln(err, "fail to create resource unit")
-		return err
+		klog.Errorln(err, "fail to prepare resource")
+		return errors.Wrap(err, "prepare for restore")
 	}
-	err = ctrl.CreateResourcePool()
+
+	err = ctrl.DoRestore(pools)
 	if err != nil {
-		klog.Errorln(err, "fail to create resource pool")
-		return err
-	}
-	err = ctrl.DoResotre()
-	time.Sleep(3 * time.Second)
-	if err != nil {
-		klog.Errorln(err, "fail to  restore")
-		return err
+		klog.Errorln(err, "fail to trigger restore")
+		return errors.Wrap(err, "trigger restore")
 	}
 	return ctrl.UpdateRestoreStatus()
 }
 
 func (ctrl *RestoreCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.Restore.Namespace, ctrl.Restore.Spec.SourceCluster.ClusterName)
+	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.Restore.Namespace, ctrl.Restore.Spec.Source.ClusterName)
 	// get svc failed
 	if err != nil {
 		return nil, errors.New("failed to get service address")
 	}
-	secretName := converter.GenerateSecretNameForDBUser(ctrl.Restore.Spec.SourceCluster.ClusterName, "sys", "admin")
+	secretName := converter.GenerateSecretNameForDBUser(ctrl.Restore.Spec.Source.ClusterName, "sys", "admin")
 	secretExecutor := resource.NewSecretResource(ctrl.Resource)
 	secret, err := secretExecutor.Get(context.TODO(), ctrl.Restore.Namespace, secretName)
 	user := "root"
