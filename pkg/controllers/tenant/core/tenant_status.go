@@ -226,8 +226,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.Resource
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
 						resourceUnit.MinCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MinCPU, 'f', -1, 64))
-						resourceUnit.MaxMemory = *apiresource.NewQuantity(unitConifg.MaxMemory, apiresource.DecimalSI)
-						resourceUnit.MinMemory = *apiresource.NewQuantity(unitConifg.MinMemory, apiresource.DecimalSI)
+						resourceUnit.MemorySize = *apiresource.NewQuantity(unitConifg.MaxMemory, apiresource.DecimalSI)
 						resourceUnit.MaxDiskSize = *apiresource.NewQuantity(unitConifg.MaxDiskSize, apiresource.DecimalSI)
 						resourceUnit.MaxIops = int(unitConifg.MaxIops)
 						resourceUnit.MinIops = int(unitConifg.MinIops)

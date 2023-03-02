@@ -586,11 +586,9 @@ func (in *PodStatus) DeepCopy() *PodStatus {
 func (in *ResourceUnit) DeepCopyInto(out *ResourceUnit) {
 	*out = *in
 	out.MaxCPU = in.MaxCPU.DeepCopy()
-	out.MinCPU = in.MinCPU.DeepCopy()
-	out.MaxMemory = in.MaxMemory.DeepCopy()
-	out.MinMemory = in.MinMemory.DeepCopy()
-	out.MaxDiskSize = in.MaxDiskSize.DeepCopy()
 	out.MemorySize = in.MemorySize.DeepCopy()
+	out.MinCPU = in.MinCPU.DeepCopy()
+	out.MaxDiskSize = in.MaxDiskSize.DeepCopy()
 	out.LogDiskSize = in.LogDiskSize.DeepCopy()
 }
 

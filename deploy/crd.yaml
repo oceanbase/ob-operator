@@ -4829,6 +4829,7 @@ spec:
                     resource:
                       properties:
                         iopsWeight:
+                          description: V4
                           type: integer
                         logDiskSize:
                           anyOf:
@@ -4846,24 +4847,17 @@ spec:
                           anyOf:
                           - type: integer
                           - type: string
+                          description: V3
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxIops:
                           type: integer
-                        maxMemory:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          description: V3
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
                         maxSessionNum:
                           type: integer
                         memorySize:
                           anyOf:
                           - type: integer
                           - type: string
-                          description: V4
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         minCPU:
@@ -4874,14 +4868,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         minIops:
                           type: integer
-                        minMemory:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
                       required:
                       - maxCPU
+                      - memorySize
                       type: object
                     type:
                       properties:
@@ -4935,6 +4924,7 @@ spec:
                     resource:
                       properties:
                         iopsWeight:
+                          description: V4
                           type: integer
                         logDiskSize:
                           anyOf:
@@ -4952,24 +4942,17 @@ spec:
                           anyOf:
                           - type: integer
                           - type: string
+                          description: V3
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxIops:
                           type: integer
-                        maxMemory:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          description: V3
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
                         maxSessionNum:
                           type: integer
                         memorySize:
                           anyOf:
                           - type: integer
                           - type: string
-                          description: V4
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         minCPU:
@@ -4980,14 +4963,9 @@ spec:
                           x-kubernetes-int-or-string: true
                         minIops:
                           type: integer
-                        minMemory:
-                          anyOf:
-                          - type: integer
-                          - type: string
-                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                          x-kubernetes-int-or-string: true
                       required:
                       - maxCPU
+                      - memorySize
                       type: object
                     type:
                       properties:

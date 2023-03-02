@@ -26,8 +26,7 @@ spec:
       resource:
         maxCPU: 2500m # 租户可用最大 CPU 数。可以使用int，float类型需要写成 ***m
         minCPU: 2 # 租户可用最小 CPU 数。
-        maxMemory: 1Gi # 租户可用最大内存。string 类型，需要写单位
-        minMemory: 1Gi # 租户可用最小内存。string 类型，需要写单位
+        memorySize: 1Gi # 租户可用内存。string 类型，需要写单位
         # 非必填
         maxDiskSize: 1Gi # 租户可用最大磁盘空间。string 类型，需要写单位。不填默认 512Mi
         maxSessionNum: 64 # 租户最大 SESSION 数，取值范围为 [64,+∞)。不填默认 64
@@ -41,8 +40,7 @@ spec:
       resource:
         maxCPU: 2500m 
         minCPU: 2 
-        maxMemory: 1Gi 
-        minMemory: 1Gi 
+        memorySize: 1Gi 
         # 非必填
         maxDiskSize: 1Gi
         maxSessionNum: 64 
@@ -57,8 +55,7 @@ spec:
     #   resource:
     #     maxCPU: 2500m 
     #     minCPU: 2 
-    #     maxMemory: 1Gi 
-    #     minMemory: 1Gi 
+    #     memorySize: 1Gi
     #     # 非必填
     #     maxDiskSize: 1Gi
     #     maxSessionNum: 64 

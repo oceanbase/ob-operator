@@ -15,10 +15,9 @@ package model
 import "k8s.io/apimachinery/pkg/api/resource"
 
 type ResourceUnitV3 struct {
-	MaxCPU    resource.Quantity
-	MinCPU    resource.Quantity
-	MaxMemory resource.Quantity
-	MinMemory resource.Quantity
+	MaxCPU     resource.Quantity
+	MinCPU     resource.Quantity
+	MemorySize resource.Quantity
 
 	MaxIops       int
 	MinIops       int

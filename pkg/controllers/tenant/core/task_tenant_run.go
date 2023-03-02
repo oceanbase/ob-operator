@@ -381,8 +381,7 @@ func GenerateSpecResourceUnitV3Map(spec v1.TenantSpec) map[string]model.Resource
 		var resourceUnit model.ResourceUnitV3
 		resourceUnit.MaxCPU = zone.ResourceUnits.MaxCPU
 		resourceUnit.MinCPU = zone.ResourceUnits.MinCPU
-		resourceUnit.MaxMemory = zone.ResourceUnits.MaxMemory
-		resourceUnit.MinMemory = zone.ResourceUnits.MinMemory
+		resourceUnit.MemorySize = zone.ResourceUnits.MemorySize
 		if zone.ResourceUnits.MaxIops == 0 {
 			resourceUnit.MaxIops = tenantconst.MaxIops
 		}
@@ -422,8 +421,7 @@ func GenerateStatusResourceUnitV3Map(status v1.TenantStatus) map[string]model.Re
 		var resourceUnit model.ResourceUnitV3
 		resourceUnit.MaxCPU = zone.ResourceUnits.MaxCPU
 		resourceUnit.MinCPU = zone.ResourceUnits.MinCPU
-		resourceUnit.MaxMemory = zone.ResourceUnits.MaxMemory
-		resourceUnit.MinMemory = zone.ResourceUnits.MinMemory
+		resourceUnit.MemorySize = zone.ResourceUnits.MemorySize
 		resourceUnit.MaxIops = zone.ResourceUnits.MaxIops
 		resourceUnit.MinIops = zone.ResourceUnits.MinIops
 		resourceUnit.MaxSessionNum = zone.ResourceUnits.MaxSessionNum
@@ -538,8 +536,7 @@ func (ctrl *TenantCtrl) GeneratePrimaryZoneString() string {
 func (ctrl *TenantCtrl) isUnitV3Equal(specResourceUnit model.ResourceUnitV3, statusResourceUnit model.ResourceUnitV3) bool {
 	if specResourceUnit.MaxCPU.Equal(statusResourceUnit.MaxCPU) &&
 		specResourceUnit.MinCPU.Equal(statusResourceUnit.MinCPU) &&
-		specResourceUnit.MaxMemory.Value() == statusResourceUnit.MaxMemory.Value() &&
-		specResourceUnit.MinMemory.Value() == statusResourceUnit.MinMemory.Value() &&
+		specResourceUnit.MemorySize.Value() == statusResourceUnit.MemorySize.Value() &&
 		specResourceUnit.MaxIops == statusResourceUnit.MaxIops &&
 		specResourceUnit.MinIops == statusResourceUnit.MinIops &&
 		specResourceUnit.MaxDiskSize.Value() == statusResourceUnit.MaxDiskSize.Value() &&
@@ -566,8 +563,8 @@ func (ctrl *TenantCtrl) isUnitV4Equal(specResourceUnit model.ResourceUnitV4, sta
 }
 
 func (ctrl *TenantCtrl) FormatUnitV3Config(unit model.ResourceUnitV3) string {
-	return fmt.Sprintf("MaxCPU: %s MinCPU:%s MaxMemory:%s MinMemory:%s MaxIops:%d MinIops:%d MaxDiskSize:%s MaxSessionNum:%d",
-		unit.MaxCPU.String(), unit.MinCPU.String(), unit.MaxMemory.String(), unit.MinMemory.String(), unit.MaxIops, unit.MinIops, unit.MaxDiskSize.String(), unit.MaxSessionNum)
+	return fmt.Sprintf("MaxCPU: %s MinCPU:%s MemorySize:%s MaxIops:%d MinIops:%d MaxDiskSize:%s MaxSessionNum:%d",
+		unit.MaxCPU.String(), unit.MinCPU.String(), unit.MemorySize.String(), unit.MaxIops, unit.MinIops, unit.MaxDiskSize.String(), unit.MaxSessionNum)
 }
 
 func (ctrl *TenantCtrl) FormatUnitV4Config(unit model.ResourceUnitV4) string {

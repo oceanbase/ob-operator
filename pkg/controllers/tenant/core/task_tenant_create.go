@@ -121,7 +121,7 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
 	if zone.ResourceUnits.MaxCPU.AsApproximateFloat64() > resource[0].CPUTotal {
 		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' CPU Is Not Enough: Need %f, Only %f", tenantName, zone.ZoneName, zone.ResourceUnits.MaxCPU.AsApproximateFloat64(), resource[0].CPUTotal))
 	}
-	maxMem := zone.ResourceUnits.MaxMemory.Value()
+	maxMem := zone.ResourceUnits.MemorySize.Value()
 	if err != nil {
 		return err
 	}
@@ -167,26 +167,26 @@ func (ctrl *TenantCtrl) CreateUnitV4(unitName string, resourceUnit v1.ResourceUn
 	}
 	var option string
 	if resourceUnit.MinCPU.Value() != 0 {
-		option = fmt.Sprint(option, ", min_cpu %s", resourceUnit.MinCPU.Value())
+		option = fmt.Sprint(option, ", min_cpu ", resourceUnit.MinCPU.Value())
 	}
 	if resourceUnit.LogDiskSize.Value() != 0 {
-		option = fmt.Sprint(option, ", log_disk_size %s", resourceUnit.LogDiskSize.Value())
+		option = fmt.Sprint(option, ", log_disk_size ", resourceUnit.LogDiskSize.Value())
 	}
 	if resourceUnit.MaxIops != 0 {
-		option = fmt.Sprint(option, ", max_iops %s", resourceUnit.MaxIops)
+		option = fmt.Sprint(option, ", max_iops ", resourceUnit.MaxIops)
 	}
 	if resourceUnit.MinIops != 0 {
-		option = fmt.Sprint(option, ", min_iops %s", resourceUnit.MinIops)
+		option = fmt.Sprint(option, ", min_iops ", resourceUnit.MinIops)
 	}
 	if resourceUnit.IopsWeight != 0 {
-		option = fmt.Sprint(option, ", iops_weight %s", resourceUnit.IopsWeight)
+		option = fmt.Sprint(option, ", iops_weight ", resourceUnit.IopsWeight)
 	}
 	return sqlOperator.CreateUnitV4(unitName, resourceUnit, option)
 }
 
 func (ctrl *TenantCtrl) CreateUnitV3(unitName string, resourceUnit v1.ResourceUnit) error {
 	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
-	if resourceUnit.MinCPU.Value() == 0 || resourceUnit.MaxMemory.Value() == 0 || resourceUnit.MinMemory.Value() == 0 {
+	if resourceUnit.MinCPU.Value() == 0 || resourceUnit.MemorySize.Value() == 0 {
 		klog.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
 		return errors.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
 	}
