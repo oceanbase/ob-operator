@@ -13,9 +13,11 @@ See the Mulan PSL v2 for more details.
 package sql
 
 import (
+	"fmt"
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
+	"strings"
 )
 
 type SqlOperator struct {
@@ -31,6 +33,27 @@ func NewSqlOperator(c *DBConnectProperties) *SqlOperator {
 func (op *SqlOperator) TestOK() bool {
 	err := op.ExecSQL("select 1")
 	return err == nil
+}
+
+func (op *SqlOperator) ExecSQLs(SQLs []string) error {
+	client, err := GetDBClient(op.ConnectProperties)
+	if err != nil {
+		return errors.Wrap(err, "Get DB Connection")
+	} else {
+		defer client.Close()
+		for _, SQL := range SQLs {
+			if SQL != "select 1" {
+				klog.Infoln(SQL)
+			}
+			res := client.Exec(SQL)
+			if res.Error != nil {
+				errNum, errMsg := covertErrToMySQLError(res.Error)
+				klog.Errorln(errNum, errMsg)
+				return errors.New(errMsg)
+			}
+		}
+	}
+	return nil
 }
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
@@ -97,9 +120,15 @@ func (op *SqlOperator) SetParameter(name, value string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) DoRestore(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string) error {
-	sql := ReplaceAll(DoRestoreSql, DoRestoreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
-	return op.ExecSQL(sql)
+func (op *SqlOperator) DoRestore(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string, secrets []string) error {
+	sqls := make([]string, 0)
+	if len(secrets) > 0 {
+		setDecryptionSql := fmt.Sprintf(SetDecryptionTemplate, strings.Join(secrets, "', '"))
+		sqls = append(sqls, setDecryptionSql)
+	}
+	doRestoreSql := ReplaceAll(DoRestoreSql, DoRestoreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
+	sqls = append(sqls, doRestoreSql)
+	return op.ExecSQLs(sqls)
 }
 
 func (op *SqlOperator) CreateResourceUnit(unit_name, max_cpu, max_memory, max_iops, max_disk_size, max_session_num, min_cpu, min_memory, min_iops string) error {

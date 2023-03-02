@@ -14,5 +14,5 @@ package model
 
 type Secret struct {
 	IncrementalSecret string
-	DatabaseSecret    string
+	FullSecret        string
 }

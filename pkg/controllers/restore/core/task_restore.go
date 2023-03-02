@@ -13,15 +13,20 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"context"
 	"fmt"
+	"k8s.io/klog/v2"
 	"strconv"
 	"strings"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	restoreconst "github.com/oceanbase/ob-operator/pkg/controllers/restore/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	tenantCore "github.com/oceanbase/ob-operator/pkg/controllers/tenant/core"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
 func (ctrl *RestoreCtrl) PrepareForRestore() ([]string, error) {
@@ -57,7 +62,23 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 	if spec.SavePoint.Type != "" {
 		savePoint = fmt.Sprintf("%s=%s", spec.SavePoint.Type, spec.SavePoint.Value)
 	}
-	return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption)
+
+	// get secret
+	secrets := make([]string, 0)
+	secretExecutor := resource.NewSecretResource(ctrl.Resource)
+	restoreSecret, err := secretExecutor.Get(context.TODO(), ctrl.Restore.Namespace, ctrl.Restore.Spec.Secret)
+	if err != nil {
+		klog.Errorf("get secret error '%s', do not use password", err)
+	} else {
+		fullSecret := strings.TrimRight(string(restoreSecret.(corev1.Secret).Data[backupconst.FullSecret]), "\n")
+		incrementalSecret := strings.TrimRight(string(restoreSecret.(corev1.Secret).Data[backupconst.IncrementalSecret]), "\n")
+		if fullSecret != "" || incrementalSecret != "" {
+			secrets = append(secrets, fullSecret)
+			secrets = append(secrets, incrementalSecret)
+		}
+	}
+
+	return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)
 }
 
 func (ctrl *RestoreCtrl) GetRestoreOption() string {
