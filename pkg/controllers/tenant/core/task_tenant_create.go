@@ -105,7 +105,7 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
 		}
 	}
 	poolList := sqlOperator.GetPoolList()
-	unitConfigList := sqlOperator.GetUnitConfigList()
+	unitConfigList := sqlOperator.GetUnitConfigV3List()
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
 			if resourcePoolID == int(pool.ResourcePoolID) {
@@ -218,14 +218,10 @@ func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantRepl
 	return sqlOperator.CreatePool(poolName, unitName, zone)
 }
 
-func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
+func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica, v3 bool) error {
 	tenantName := ctrl.Tenant.Name
 	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
 	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-	v3, err := ctrl.OBVersion3()
-	if err != nil {
-		return err
-	}
 	poolExist, _, err := ctrl.PoolExist(poolName)
 	if err != nil {
 		klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)

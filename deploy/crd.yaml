@@ -4819,8 +4819,6 @@ spec:
                 type: string
               collate:
                 type: string
-              logonlyReplicaNum:
-                type: integer
               mode:
                 type: string
               topology:
@@ -4830,6 +4828,14 @@ spec:
                       type: integer
                     resource:
                       properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                         maxCPU:
                           anyOf:
                           - type: integer
@@ -4848,10 +4854,18 @@ spec:
                           anyOf:
                           - type: integer
                           - type: string
+                          description: V3
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxSessionNum:
                           type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: V4
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                         minCPU:
                           anyOf:
                           - type: integer
@@ -4868,9 +4882,6 @@ spec:
                           x-kubernetes-int-or-string: true
                       required:
                       - maxCPU
-                      - maxMemory
-                      - minCPU
-                      - minMemory
                       type: object
                     type:
                       properties:
@@ -4914,10 +4925,6 @@ spec:
             properties:
               charset:
                 type: string
-              logonlyReplicaNum:
-                type: integer
-              replicaNum:
-                type: integer
               status:
                 type: string
               topology:
@@ -4927,6 +4934,14 @@ spec:
                       type: integer
                     resource:
                       properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                         maxCPU:
                           anyOf:
                           - type: integer
@@ -4945,10 +4960,18 @@ spec:
                           anyOf:
                           - type: integer
                           - type: string
+                          description: V3
                           pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                           x-kubernetes-int-or-string: true
                         maxSessionNum:
                           type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          description: V4
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
                         minCPU:
                           anyOf:
                           - type: integer
@@ -4965,9 +4988,6 @@ spec:
                           x-kubernetes-int-or-string: true
                       required:
                       - maxCPU
-                      - maxMemory
-                      - minCPU
-                      - minMemory
                       type: object
                     type:
                       properties:
@@ -5020,8 +5040,6 @@ spec:
                   type: object
                 type: array
             required:
-            - logonlyReplicaNum
-            - replicaNum
             - status
             - topology
             type: object

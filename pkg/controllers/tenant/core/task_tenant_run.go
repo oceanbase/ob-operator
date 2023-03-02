@@ -25,7 +25,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (ctrl *TenantCtrl) CheckAndSetVariables() error {
+func (ctrl *TenantCtrl) CheckAndSetVariables(v3 bool) error {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Variables For Tenant ", ctrl.Tenant.Name))
@@ -51,7 +51,7 @@ func (ctrl *TenantCtrl) CheckAndSetVariables() error {
 			if err != nil {
 				return err
 			}
-			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, v3)
 			if err != nil {
 				return err
 			}
@@ -60,11 +60,7 @@ func (ctrl *TenantCtrl) CheckAndSetVariables() error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
-	v3, err := ctrl.OBVersion3()
-	if err != nil {
-		return err
-	}
+func (ctrl *TenantCtrl) CheckAndSetUnitConfig(v3 bool) error {
 	if v3 {
 		return ctrl.CheckAndSetUnitV3Config()
 	} else {
@@ -85,11 +81,11 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
 		klog.Infoln("V3: specResourceUnit[zone.ZoneName] ", specResourceUnit[zone.ZoneName])
 		klog.Infoln("V3: statusResourceUnit[zone.ZoneName] ", statusResourceUnit[zone.ZoneName])
 		if !ctrl.isUnitV3Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
-			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitConfig(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitConfig(statusResourceUnit[zone.ZoneName]))
+			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitV3Config(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitV3Config(statusResourceUnit[zone.ZoneName]))
 			match = false
 		}
 		if !match {
-			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, true)
 			if err != nil {
 				return err
 			}
@@ -114,7 +110,7 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, true)
 }
 
 func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
@@ -130,11 +126,11 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
 		klog.Infoln("V4: specResourceUnit[zone.ZoneName] ", specResourceUnit[zone.ZoneName])
 		klog.Infoln("V4: statusResourceUnit[zone.ZoneName] ", statusResourceUnit[zone.ZoneName])
 		if !ctrl.isUnitV4Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
-			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitConfig(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitConfig(statusResourceUnit[zone.ZoneName]))
+			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitV4Config(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitV4Config(statusResourceUnit[zone.ZoneName]))
 			match = false
 		}
 		if !match {
-			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, false)
 			if err != nil {
 				return err
 			}
@@ -159,10 +155,10 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, true)
 }
 
-func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
+func (ctrl *TenantCtrl) CheckAndSetResourcePool(v3 bool) error {
 	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -173,7 +169,7 @@ func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		if specUnitNumMap[zone.ZoneName] != statusUnitNumMap[zone.ZoneName] {
 			klog.Infof("found zone %s resource pool with unit_num value %d did't match with config %d", zone.ZoneName, statusUnitNumMap[zone.ZoneName], statusUnitNumMap[zone.ZoneName])
-			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, v3)
 			if err != nil {
 				return err
 			}
@@ -199,32 +195,32 @@ func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 }
 
-func (ctrl *TenantCtrl) CheckAndSetTenant() error {
+func (ctrl *TenantCtrl) CheckAndSetTenant(v3 bool) error {
 	var err error
 	addZone := ctrl.GetZoneForAdd()
 	if addZone.ZoneName != "" {
-		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, v3)
 		if err != nil {
 			return err
 		}
-		return ctrl.TenantAddZone(addZone)
+		return ctrl.TenantAddZone(addZone, v3)
 	}
 	deleteZone := ctrl.GetZoneForDelete()
 	if deleteZone.ZoneName != "" {
-		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
+		err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying, v3)
 		if err != nil {
 			return err
 		}
-		return ctrl.TenantDeleteZone(deleteZone)
+		return ctrl.TenantDeleteZone(deleteZone, v3)
 	}
 	err = ctrl.CheckAndSetTenantParams()
 	if err != nil {
 		return err
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 }
 
 func (ctrl *TenantCtrl) GetZoneForAdd() v1.TenantReplica {
@@ -261,7 +257,7 @@ func (ctrl *TenantCtrl) GetZoneForDelete() v1.TenantReplicaStatus {
 	return zone
 }
 
-func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica) error {
+func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica, v3 bool) error {
 	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -275,7 +271,7 @@ func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica) error {
 	tenantStatusReplicaList := ctrl.Tenant.Status.Topology
 	tenantStatusReplicaList = append(tenantStatusReplicaList, tenantStatusReplica)
 	klog.Infoln("tenantStatusReplicaList: ", tenantStatusReplicaList)
-	err = ctrl.CheckAndCreateUnitAndPool(zone)
+	err = ctrl.CheckAndCreateUnitAndPool(zone, v3)
 	if err != nil {
 		return err
 	}
@@ -296,10 +292,10 @@ func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica) error {
 			break
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 }
 
-func (ctrl *TenantCtrl) TenantDeleteZone(deleteZone v1.TenantReplicaStatus) error {
+func (ctrl *TenantCtrl) TenantDeleteZone(deleteZone v1.TenantReplicaStatus, v3 bool) error {
 	tenantName := ctrl.Tenant.Name
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -358,7 +354,7 @@ func (ctrl *TenantCtrl) TenantDeleteZone(deleteZone v1.TenantReplicaStatus) erro
 		}
 	}
 	klog.Infoln("Succeed delete zone  ", deleteZone.ZoneName)
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 }
 
 func (ctrl *TenantCtrl) CheckAndSetTenantParams() error {

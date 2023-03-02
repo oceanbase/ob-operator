@@ -193,7 +193,10 @@ func (ctrl *TenantCtrl) TenantEffector() error {
 }
 
 func (ctrl *TenantCtrl) TenantCreatingEffector() error {
-	var err error
+	v3, err := ctrl.OBVersion3()
+	if err != nil {
+		return err
+	}
 	tenantName := ctrl.Tenant.Name
 	tenantExist, _, err := ctrl.TenantExist(tenantName)
 	if err != nil {
@@ -201,11 +204,11 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 		return err
 	}
 	if tenantExist {
-		return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+		return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 	}
 
 	for _, zone := range ctrl.Tenant.Spec.Topology {
-		err := ctrl.CheckAndCreateUnitAndPool(zone)
+		err := ctrl.CheckAndCreateUnitAndPool(zone, v3)
 		if err != nil {
 			return err
 		}
@@ -216,23 +219,27 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 		return err
 	}
 	klog.Infof("Create Tenant '%s' OK", tenantName)
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning, v3)
 }
 
 func (ctrl *TenantCtrl) TenantRunningEffector() error {
-	err := ctrl.CheckAndSetVariables()
+	v3, err := ctrl.OBVersion3()
 	if err != nil {
 		return err
 	}
-	err = ctrl.CheckAndSetUnitConfig()
+	err = ctrl.CheckAndSetVariables(v3)
 	if err != nil {
 		return err
 	}
-	err = ctrl.CheckAndSetResourcePool()
+	err = ctrl.CheckAndSetUnitConfig(v3)
 	if err != nil {
 		return err
 	}
-	err = ctrl.CheckAndSetTenant()
+	err = ctrl.CheckAndSetResourcePool(v3)
+	if err != nil {
+		return err
+	}
+	err = ctrl.CheckAndSetTenant(v3)
 	if err != nil {
 		return err
 	}
