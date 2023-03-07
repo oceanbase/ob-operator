@@ -27,5 +27,5 @@ const (
 	CreateResourcePoolSql = "CREATE RESOURCE POOL ${pool_name} UNIT='${unit_name}', UNIT_NUM=${unit_num}, ZONE_LIST=(${zone_list});"
 
 	SetDecryptionTemplate = "SET DECRYPTION IDENTIFIED BY '%s'"
-	DoRestoreSql          = "ALTER SYSTEM RESTORE ${dest_tenant} FROM ${source_tenant} at '${dest_path}' UNTIL '${time}' WITH 'backup_cluster_name=${backup_cluster_name}&backup_cluster_id=${backup_cluster_id}&pool_list=${pool_list}${restore_option}';"
+	DoRestoreSql          = "ALTER SYSTEM RESTORE ${dest_tenant} FROM ${source_tenant} at '${dest_path}' UNTIL '${time}' WITH 'backup_cluster_name=${backup_cluster_name}&backup_cluster_id=${backup_cluster_id}&pool_list=${pool_list}&${restore_option}';"
 )

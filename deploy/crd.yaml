@@ -520,10 +520,95 @@ spec:
           spec:
             description: RestoreSpec defines the desired state of Restore
             properties:
-              destTenant:
+              decryptionSecret:
                 type: string
-              locality:
-                type: string
+              dest:
+                description: DestSpec defines the dest of restore
+                properties:
+                  clusterID:
+                    format: int64
+                    type: integer
+                  clusterName:
+                    type: string
+                  kmsEncryptInfo:
+                    type: string
+                  tenant:
+                    type: string
+                  topology:
+                    items:
+                      properties:
+                        priority:
+                          type: integer
+                        resource:
+                          properties:
+                            maxCPU:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            maxDiskSize:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            maxIops:
+                              type: integer
+                            maxMemory:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            maxSessionNum:
+                              type: integer
+                            minCPU:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                            minIops:
+                              type: integer
+                            minMemory:
+                              anyOf:
+                              - type: integer
+                              - type: string
+                              pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                              x-kubernetes-int-or-string: true
+                          required:
+                          - maxCPU
+                          - maxMemory
+                          - minCPU
+                          - minMemory
+                          type: object
+                        type:
+                          properties:
+                            name:
+                              type: string
+                            replica:
+                              type: integer
+                          required:
+                          - name
+                          type: object
+                        unitNum:
+                          type: integer
+                        zone:
+                          type: string
+                      required:
+                      - resource
+                      - type
+                      - unitNum
+                      - zone
+                      type: object
+                    type: array
+                required:
+                - clusterID
+                - clusterName
+                - tenant
+                - topology
+                type: object
               parameters:
                 items:
                   properties:
@@ -536,141 +621,61 @@ spec:
                   - value
                   type: object
                 type: array
-              resourcePool:
-                description: ResourcePoolSpec defines the resources pool config
+              savePoint:
+                description: SavePointSpec defines the savepoint to restore to
                 properties:
-                  name:
+                  type:
                     type: string
-                  unitNum:
-                    type: integer
-                  zoneList:
-                    items:
-                      type: string
-                    type: array
-                required:
-                - unitNum
-                - zoneList
-                type: object
-              resourceUnit:
-                description: ResourceUnitSpec defines the resource unit config
-                properties:
-                  maxCPU:
-                    type: integer
-                  maxDiskSize:
-                    type: string
-                  maxIops:
-                    type: integer
-                  maxMemory:
-                    type: string
-                  maxSessionNum:
-                    type: integer
-                  minCPU:
-                    type: integer
-                  minIops:
-                    type: integer
-                  minMemory:
-                    type: string
-                  name:
+                  value:
                     type: string
                 required:
-                - maxCPU
-                - maxDiskSize
-                - maxIops
-                - maxMemory
-                - maxSessionNum
-                - minCPU
-                - minIops
-                - minMemory
+                - value
                 type: object
-              restorePassword:
-                items:
-                  description: ResourcePoolSpec defines the restore password config
-                  properties:
-                    databasePassword:
-                      type: string
-                    databasePasswordInfo:
-                      type: string
-                    incrementalPassword:
-                      type: string
-                    incrementalPasswordInfo:
-                      type: string
-                  required:
-                  - databasePassword
-                  - databasePasswordInfo
-                  - incrementalPassword
-                  - incrementalPasswordInfo
-                  type: object
-                type: array
               source:
-                description: RestoreCluster defines the restore cluster
+                description: SourceSpec defines the source of restore
                 properties:
                   clusterID:
+                    format: int64
                     type: integer
                   clusterName:
+                    type: string
+                  path:
+                    description: PathSpec defines the data path, for oceanbase 3.x, use root, for oceanbase 4.x, use data and log
+                    properties:
+                      data:
+                        type: string
+                      log:
+                        type: string
+                      root:
+                        type: string
+                    type: object
+                  tenant:
                     type: string
                 required:
                 - clusterID
                 - clusterName
+                - path
+                - tenant
                 type: object
-              sourcePath:
-                type: string
-              sourceTenant:
-                type: string
-              timestamp:
-                type: string
-              vloume:
-                items:
-                  properties:
-                    name:
-                      type: string
-                    path:
-                      type: string
-                  required:
-                  - name
-                  - path
-                  type: object
-                type: array
             required:
-            - destTenant
-            - resourcePool
-            - resourceUnit
+            - dest
+            - savePoint
             - source
-            - sourcePath
-            - sourceTenant
-            - timestamp
             type: object
           status:
             description: RestoreStatus defines the observed state of Restore
             properties:
-              restoreSet:
-                items:
-                  properties:
-                    backupTenantName:
-                      type: string
-                    clusterID:
-                      type: integer
-                    clusterName:
-                      type: string
-                    jobID:
-                      type: integer
-                    restoreTimestamp:
-                      type: string
-                    status:
-                      type: string
-                    tenantName:
-                      type: string
-                  required:
-                  - backupTenantName
-                  - clusterID
-                  - clusterName
-                  - jobID
-                  - restoreTimestamp
-                  - status
-                  - tenantName
-                  type: object
-                type: array
+              finishTimestamp:
+                type: string
+              jobID:
+                format: int64
+                type: integer
+              status:
+                type: string
             required:
-            - restoreSet
+            - finishTimestamp
+            - jobID
+            - status
             type: object
         type: object
     served: true
@@ -5010,6 +5015,7 @@ spec:
               charset:
                 type: string
               clusterID:
+                format: int64
                 type: integer
               clusterName:
                 type: string

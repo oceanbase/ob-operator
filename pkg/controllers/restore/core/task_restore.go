@@ -27,14 +27,26 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func (ctrl *RestoreCtrl) PrepareForRestore() ([]string, error) {
-
+	tenantMeta := metav1.ObjectMeta{
+		Name:      ctrl.Restore.Spec.Dest.Tenant,
+		Namespace: ctrl.Restore.Namespace,
+	}
 	resourcePools := make([]string, 0)
+	tenantSpec := cloudv1.TenantSpec{
+		ClusterID:   ctrl.Restore.Spec.Dest.ClusterID,
+		ClusterName: ctrl.Restore.Spec.Dest.ClusterName,
+		Topology:    ctrl.Restore.Spec.Dest.Topology,
+	}
 	tenantCtrl := tenantCore.TenantCtrl{
 		Resource: ctrl.Resource,
-		Tenant:   cloudv1.Tenant{},
+		Tenant: cloudv1.Tenant{
+			ObjectMeta: tenantMeta,
+			Spec:       tenantSpec,
+		},
 	}
 	for _, zone := range ctrl.Restore.Spec.Dest.Topology {
 		err := tenantCtrl.CheckAndCreateUnitAndPool(ctrl.Restore.Spec.Dest.Tenant, zone)
@@ -82,9 +94,21 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 }
 
 func (ctrl *RestoreCtrl) GetRestoreOption() string {
+	tenantMeta := metav1.ObjectMeta{
+		Name:      ctrl.Restore.Spec.Dest.Tenant,
+		Namespace: ctrl.Restore.Namespace,
+	}
+	tenantSpec := cloudv1.TenantSpec{
+		ClusterID:   ctrl.Restore.Spec.Dest.ClusterID,
+		ClusterName: ctrl.Restore.Spec.Dest.ClusterName,
+		Topology:    ctrl.Restore.Spec.Dest.Topology,
+	}
 	tenantCtrl := tenantCore.TenantCtrl{
 		Resource: ctrl.Resource,
-		Tenant:   cloudv1.Tenant{},
+		Tenant: cloudv1.Tenant{
+			ObjectMeta: tenantMeta,
+			Spec:       tenantSpec,
+		},
 	}
 	localityOption := fmt.Sprintf("locality=%s", tenantCtrl.GenerateLocality(ctrl.Restore.Spec.Dest.Topology))
 	primaryZoneOption := fmt.Sprintf("primary_zone=%s", tenantCtrl.GenerateSpecPrimaryZone(ctrl.Restore.Spec.Dest.Topology))

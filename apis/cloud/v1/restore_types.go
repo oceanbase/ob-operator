@@ -21,7 +21,7 @@ type RestoreSpec struct {
 	Source     SourceSpec    `json:"source"`
 	Dest       DestSpec      `json:"dest"`
 	SavePoint  SavePointSpec `json:"savePoint"`
-	Secret     string        `json:"secret,omitempty"`
+	Secret     string        `json:"decryptionSecret,omitempty"`
 	Parameters []Parameter   `json:"parameters,omitempty"`
 }
 
@@ -35,14 +35,14 @@ type SourceSpec struct {
 
 // PathSpec defines the data path, for oceanbase 3.x, use root, for oceanbase 4.x, use data and log
 type PathSpec struct {
-	Root string `json:"root"`
-	Data string `json:"data"`
-	Log  string `json:"log"`
+	Root string `json:"root,omitempty"`
+	Data string `json:"data,omitempty"`
+	Log  string `json:"log,omitempty"`
 }
 
 // SavePointSpec defines the savepoint to restore to
 type SavePointSpec struct {
-	Type  string `json:"type"`
+	Type  string `json:"type,omitempty"`
 	Value string `json:"value"`
 }
 
@@ -51,7 +51,7 @@ type DestSpec struct {
 	ClusterID      int64           `json:"clusterID"`
 	ClusterName    string          `json:"clusterName"`
 	Tenant         string          `json:"tenant"`
-	KmsEncryptInfo string          `json:"kmsEncryptInfo"`
+	KmsEncryptInfo string          `json:"kmsEncryptInfo,omitempty"`
 	Topology       []TenantReplica `json:"topology"`
 }
 

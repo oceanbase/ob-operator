@@ -36,6 +36,8 @@ spec:
           spec:
             description: RestoreSpec defines the desired state of Restore
             properties:
+              decryptionSecret:
+                type: string
               dest:
                 description: DestSpec defines the dest of restore
                 properties:
@@ -120,7 +122,6 @@ spec:
                 required:
                 - clusterID
                 - clusterName
-                - kmsEncryptInfo
                 - tenant
                 - topology
                 type: object
@@ -144,11 +145,8 @@ spec:
                   value:
                     type: string
                 required:
-                - type
                 - value
                 type: object
-              secret:
-                type: string
               source:
                 description: SourceSpec defines the source of restore
                 properties:
@@ -167,10 +165,6 @@ spec:
                         type: string
                       root:
                         type: string
-                    required:
-                    - data
-                    - log
-                    - root
                     type: object
                   tenant:
                     type: string
