@@ -10,9 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package model
+package restoreconst
 
-type Secret struct {
-	IncrementalSecret string
-	FullSecret        string
-}
+// controller
+const (
+	ControllerName       = "restore-controller"
+	ConcurrentReconciles = 1
+)

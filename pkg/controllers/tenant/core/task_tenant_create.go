@@ -95,8 +95,7 @@ func (ctrl *TenantCtrl) GeneratePoolName(name, zoneName string) string {
 	return poolName
 }
 
-func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
-	tenantName := ctrl.Tenant.Name
+func (ctrl *TenantCtrl) CheckResourceEnough(tenantName string, zone v1.TenantReplica) error {
 	klog.Infof("Check Tenant '%s' Zone '%s' Reousrce ", tenantName, zone.ZoneName)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -170,8 +169,7 @@ func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantRepl
 	return sqlOperator.CreatePool(poolName, unitName, zone)
 }
 
-func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
-	tenantName := ctrl.Tenant.Name
+func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(tenantName string, zone v1.TenantReplica) error {
 	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
 	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
 
@@ -188,7 +186,7 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
 	}
 
 	if !unitExist {
-		err := ctrl.CheckResourceEnough(zone)
+		err := ctrl.CheckResourceEnough(tenantName, zone)
 		if err != nil {
 			return err
 		}
@@ -325,7 +323,7 @@ func (ctrl *TenantCtrl) GenerateStatusPrimaryZone(zones []v1.TenantReplicaStatus
 }
 
 func (ctrl *TenantCtrl) GenerateLocality(zones []v1.TenantReplica) string {
-	specLocalityMap := GenerateSpecLocalityMap(ctrl.Tenant.Spec)
+	specLocalityMap := GenerateSpecLocalityMap(zones)
 	localityList := ctrl.GenerateLocalityList(specLocalityMap)
 	return strings.Join(localityList, ",")
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 OceanBase
+PURPOSECopyright (c) 2021 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -12,7 +12,18 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-type Secret struct {
-	IncrementalSecret string
-	FullSecret        string
+type RestoreStatus struct {
+	JobId                  int64
+	BackupClusterId        int64
+	BackupClusterName      string
+	TenantName             string
+	BackupTenantName       string
+	Status                 string
+	RestoreFinishTimestamp string
+}
+
+type RestoreConcurrency struct {
+	ZoneName string
+	SvrIP    string
+	Value    int64
 }

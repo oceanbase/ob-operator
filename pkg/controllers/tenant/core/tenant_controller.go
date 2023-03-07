@@ -205,7 +205,7 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 	}
 
 	for _, zone := range ctrl.Tenant.Spec.Topology {
-		err := ctrl.CheckAndCreateUnitAndPool(zone)
+		err := ctrl.CheckAndCreateUnitAndPool(tenantName, zone)
 		if err != nil {
 			return err
 		}

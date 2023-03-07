@@ -169,58 +169,6 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - backups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - backups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - backups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - backups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - backups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
   - obclusters
   verbs:
   - create
@@ -266,6 +214,32 @@ rules:
   - cloud.oceanbase.com
   resources:
   - obzones/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/status
   verbs:
   - get
   - patch
@@ -552,7 +526,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: oceanbasedev/ob-operator:1.2.1-snapshot
+        image: oceanbasedev/ob-operator:1.2.0-snapshot
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

@@ -85,7 +85,7 @@ func (ctrl *TenantCtrl) CheckAndSetUnitConfig() error {
 				return err
 			}
 			if !unitExist {
-				err := ctrl.CheckResourceEnough(zone)
+				err := ctrl.CheckResourceEnough(tenantName, zone)
 				if err != nil {
 					return err
 				}
@@ -218,7 +218,7 @@ func (ctrl *TenantCtrl) TenantAddZone(zone v1.TenantReplica) error {
 	tenantStatusReplicaList := ctrl.Tenant.Status.Topology
 	tenantStatusReplicaList = append(tenantStatusReplicaList, tenantStatusReplica)
 	klog.Infoln("tenantStatusReplicaList: ", tenantStatusReplicaList)
-	err = ctrl.CheckAndCreateUnitAndPool(zone)
+	err = ctrl.CheckAndCreateUnitAndPool(tenantName, zone)
 	if err != nil {
 		return err
 	}
@@ -370,9 +370,9 @@ func GenerateStatusUnitNumMap(status v1.TenantStatus) map[string]int {
 	return unitNumMap
 }
 
-func GenerateSpecLocalityMap(spec v1.TenantSpec) map[string]v1.TypeSpec {
+func GenerateSpecLocalityMap(zones []v1.TenantReplica) map[string]v1.TypeSpec {
 	localityMap := make(map[string]v1.TypeSpec, 0)
-	for _, zone := range spec.Topology {
+	for _, zone := range zones {
 		if zone.Type.Name != "" {
 			switch strings.ToUpper(zone.Type.Name) {
 			case tenantconst.TypeFull:

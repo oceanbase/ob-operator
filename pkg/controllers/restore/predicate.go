@@ -10,9 +10,27 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package model
+package restore
 
-type Secret struct {
-	IncrementalSecret string
-	FullSecret        string
+import (
+	"sigs.k8s.io/controller-runtime/pkg/event"
+)
+
+type restorePredicate struct {
+}
+
+func (p restorePredicate) Create(e event.CreateEvent) bool {
+	return true
+}
+
+func (p restorePredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+func (p restorePredicate) Update(e event.UpdateEvent) bool {
+	return true
+}
+
+func (p restorePredicate) Generic(e event.GenericEvent) bool {
+	return true
 }
