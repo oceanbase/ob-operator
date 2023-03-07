@@ -22,7 +22,6 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	restoreconst "github.com/oceanbase/ob-operator/pkg/controllers/restore/const"
-	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	tenantCore "github.com/oceanbase/ob-operator/pkg/controllers/tenant/core"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
@@ -120,32 +119,6 @@ func (ctrl *RestoreCtrl) GetRestoreOption() string {
 		restoreOption = fmt.Sprintf("%s&%s", restoreOption, kmsEncryptInfoOption)
 	}
 	return restoreOption
-}
-
-func (ctrl *RestoreCtrl) GetRestoreSetCurrentFromDB() ([]model.RestoreStatus, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetCurrent From DB")
-	}
-	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
-	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
-	allRestoreSet := make([]model.RestoreStatus, 0)
-	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
-	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
-	return allRestoreSet, nil
-}
-
-func (ctrl *RestoreCtrl) GetRestoreSetHistoryFromDB() ([]model.RestoreStatus, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return nil, errors.Wrap(err, "get sql operator when trying to Get RestoreSetHistory From DB")
-	}
-	restoreSetHistory := sqlOperator.GetAllRestoreHistorySet()
-	restoreSetCurrent := sqlOperator.GetAllRestoreHistorySet()
-	allRestoreSet := make([]model.RestoreStatus, 0)
-	allRestoreSet = append(allRestoreSet, restoreSetCurrent...)
-	allRestoreSet = append(allRestoreSet, restoreSetHistory...)
-	return allRestoreSet, nil
 }
 
 func (ctrl *RestoreCtrl) getParameter(name string) string {
