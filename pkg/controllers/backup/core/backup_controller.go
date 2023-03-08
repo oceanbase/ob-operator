@@ -78,7 +78,6 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	// custom logic
 	backupCtrl := NewBackupCtrl(r.CRClient, r.Recorder, *instance)
 
-	// Handle deleted tenant
 	backupFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
 	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !util.ContainsString(instance.ObjectMeta.Finalizers, backupFinalizerName) {
