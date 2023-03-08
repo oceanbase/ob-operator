@@ -330,8 +330,8 @@ func (op *SqlOperator) SetUnitConfigV3(name string, resourceUnit model.ResourceU
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) SetUnitConfigV4(name string, resourceUnit model.ResourceUnitV4) error {
-	sql := ReplaceAll(SetUnitConfigV4SQLTemplate, SetUnitConfigV4SQLReplacer(name, resourceUnit))
+func (op *SqlOperator) SetUnitConfigV4(name string, resourceUnit model.ResourceUnitV4, option string) error {
+	sql := ReplaceAll(SetUnitConfigV4SQLTemplate, SetUnitConfigV4SQLReplacer(name, resourceUnit, option))
 	return op.ExecSQL(sql)
 }
 

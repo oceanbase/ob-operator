@@ -91,5 +91,26 @@ func (r *TenantResource) Delete(ctx context.Context, obj interface{}) error {
 }
 
 func (r *TenantResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	tenant := obj.(cloudv1.Tenant)
+	err := r.Client.Patch(ctx, &tenant, patch)
+	if err != nil {
+		r.Recorder.Eventf(&tenant, corev1.EventTypeWarning, FailedToCreatePod, "Patch Tenant"+tenant.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(tenant.Kind, tenant.Name, "Patch", "succeed")
+	r.Recorder.Event(&tenant, corev1.EventTypeNormal, PatchedTenant, "Patch tenant"+tenant.Name)
+	return nil
+}
+
+func (r *TenantResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	tenant := obj.(cloudv1.Tenant)
+	err := r.Client.Status().Patch(ctx, &tenant, patch)
+	if err != nil {
+		r.Recorder.Eventf(&tenant, corev1.EventTypeWarning, FailedToCreatePod, "Patch Tenant"+tenant.Name)
+		klog.Errorln(err)
+		return err
+	}
+	r.Recorder.Event(&tenant, corev1.EventTypeNormal, PatchedTenant, "Patch tenant"+tenant.Name)
 	return nil
 }

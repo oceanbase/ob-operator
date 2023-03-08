@@ -102,6 +102,7 @@ const (
 	FailedToCreateTenant = "FailedCreateTenant"
 	DeletedTenant        = "DeletedTenant"
 	FailedToDeleteTenant = "FailedDeleteTenant"
+	PatchedTenant        = "PatchedTenant"
 )
 
 // Job event reason list

@@ -15,13 +15,15 @@ package core
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
+
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	"reflect"
-	"strconv"
-	"strings"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
@@ -40,7 +42,7 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
 	}
 	compareStatus := reflect.DeepEqual(tenantCurrent.Status, tenantNew.Status)
 	if !compareStatus {
-		err = tenantExecuter.UpdateStatus(context.TODO(), tenantNew)
+		err = tenantExecuter.PatchStatus(context.TODO(), tenantNew, client.MergeFrom(tenantCurrent.DeepCopyObject().(client.Object)))
 		if err != nil {
 			return err
 		}

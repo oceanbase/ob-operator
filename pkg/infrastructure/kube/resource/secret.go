@@ -88,3 +88,7 @@ func (r *SecretResource) Delete(ctx context.Context, obj interface{}) error {
 func (r *SecretResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *SecretResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

@@ -80,3 +80,7 @@ func (r *OBClusterResource) Delete(ctx context.Context, obj interface{}) error {
 func (r *OBClusterResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *OBClusterResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

@@ -42,8 +42,7 @@ const (
 	SetPoolUnitNumSQLTemplate    = "ALTER RESOURCE POOL ${POOL_NAME} UNIT_NUM = ${UNIT_NUM} "
 	SetTenantLocalitySQLTemplate = "ALTER TENANT ${TENANT_NAME} LOCALITY = '${LOCALITY}'"
 	SetTenantPoolListSQLTemplate = "ALTER TENANT ${TENANT_NAME}  RESOURCE_POOL_LIST = '${POOL_LIST}'"
-	// SetTenantSQLTemplate         = "ALTER TENANT ${TENANT_NAME} ${ZONE_LIST} ${PRIMARY_ZONE} ${CHARSET} ${LOGONLY_REPLICA_NUM}"
-	SetTenantSQLTemplate = "ALTER TENANT ${TENANT_NAME} ${ZONE_LIST}${PRIMARY_ZONE}${RESOURCE_POOL_LIST}${CHARSET}${LOCALITY}${LOGONLY_REPLICA_NUM}"
+	SetTenantSQLTemplate         = "ALTER TENANT ${TENANT_NAME} ${ZONE_LIST}${PRIMARY_ZONE}${RESOURCE_POOL_LIST}${CHARSET}${LOCALITY}"
 
 	GetInprogressJobSQLTemplate = "select job_id, job_type, job_status, tenant_id, tenant_name from __all_rootservice_job where tenant_name='${NAME}' and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 	DeleteUnitSQLTemplate       = "DROP RESOURCE UNIT ${NAME}"

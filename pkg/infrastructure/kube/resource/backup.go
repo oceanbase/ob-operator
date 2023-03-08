@@ -76,3 +76,7 @@ func (r *BackupResource) Delete(ctx context.Context, obj interface{}) error {
 func (r *BackupResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *BackupResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
