@@ -52,8 +52,13 @@ func (r *BackupResource) Get(ctx context.Context, namespace, name string) (inter
 }
 
 func (r *BackupResource) List(ctx context.Context, namespace string, listOption client.ListOption) interface{} {
-	var res interface{}
-	return res
+	backupList := &cloudv1.BackupList{}
+	err := r.Client.List(ctx, backupList, client.InNamespace(namespace), listOption)
+	if err != nil {
+		// can definitely get a value, so errors are not returned
+		klog.Errorln(err)
+	}
+	return *backupList
 }
 
 func (r *BackupResource) Update(ctx context.Context, obj interface{}) error {

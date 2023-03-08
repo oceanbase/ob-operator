@@ -30,6 +30,7 @@ const (
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
 
 	StartArchieveLogSql     = "ALTER SYSTEM ARCHIVELOG"
+	StopArchieveLogSql      = "ALTER SYSTEM NOARCHIVELOG"
 	GetArchieveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
 
 	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
