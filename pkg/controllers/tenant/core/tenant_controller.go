@@ -193,11 +193,10 @@ func (ctrl *TenantCtrl) TenantEffector() error {
 }
 
 func (ctrl *TenantCtrl) TenantCreatingEffector() error {
-	var err error
 	tenantName := ctrl.Tenant.Name
 	tenantExist, _, err := ctrl.TenantExist(tenantName)
 	if err != nil {
-		klog.Errorln("Check Whether The Tenant %s Exists Error: %s", tenantName, err)
+		klog.Errorf("Check Whether The Tenant %s Exists Error: %s", tenantName, err)
 		return err
 	}
 	if tenantExist {
@@ -212,7 +211,7 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 	}
 	err = ctrl.CreateTenant(tenantName, ctrl.Tenant.Spec.Topology)
 	if err != nil {
-		klog.Errorln("Create Tenant '%s' Error: %s", tenantName, err)
+		klog.Errorf("Create Tenant '%s' Error: %s", tenantName, err)
 		return err
 	}
 	klog.Infof("Create Tenant '%s' OK", tenantName)

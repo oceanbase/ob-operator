@@ -26,27 +26,18 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (ctrl *TenantCtrl) GetGvTenantByName() ([]model.GvTenant, error) {
+func (ctrl *TenantCtrl) GetTenantByName() ([]model.Tenant, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
 	}
-	tenant := sqlOperator.GetGvTenantByName(ctrl.Tenant.Name)
+	tenant := sqlOperator.GetTenantByName(ctrl.Tenant.Name)
 	return tenant, nil
-}
-
-func (ctrl *TenantCtrl) GetTenantList() ([]model.Tenant, error) {
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
-	}
-	tenantList := sqlOperator.GetTenantList()
-	return tenantList, nil
 }
 
 func (ctrl *TenantCtrl) TenantExist(tenantName string) (bool, int, error) {
 	klog.Infof("Check Whether The Tenant '%s' Exists", tenantName)
-	tenant, err := ctrl.GetGvTenantByName()
+	tenant, err := ctrl.GetTenantByName()
 	if err != nil {
 		return false, 0, err
 	}
@@ -113,7 +104,7 @@ func (ctrl *TenantCtrl) CheckResourceEnough(tenantName string, zone v1.TenantRep
 		}
 	}
 	poolList := sqlOperator.GetPoolList()
-	unitConfigList := sqlOperator.GetUnitConfigList()
+	unitConfigList := sqlOperator.GetUnitConfigV3List()
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
 			if resourcePoolID == int(pool.ResourcePoolID) {
@@ -129,7 +120,7 @@ func (ctrl *TenantCtrl) CheckResourceEnough(tenantName string, zone v1.TenantRep
 	if zone.ResourceUnits.MaxCPU.AsApproximateFloat64() > resource[0].CPUTotal {
 		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' CPU Is Not Enough: Need %f, Only %f", tenantName, zone.ZoneName, zone.ResourceUnits.MaxCPU.AsApproximateFloat64(), resource[0].CPUTotal))
 	}
-	maxMem := zone.ResourceUnits.MaxMemory.Value()
+	maxMem := zone.ResourceUnits.MemorySize.Value()
 	if err != nil {
 		return err
 	}
@@ -139,8 +130,67 @@ func (ctrl *TenantCtrl) CheckResourceEnough(tenantName string, zone v1.TenantRep
 	return nil
 }
 
+func (ctrl *TenantCtrl) GetOBVersion() (string, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return "", errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
+	}
+	version := sqlOperator.GetVersion()
+	if len(version) > 0 && len(version[0].Version) > 0 {
+		return version[0].Version, nil
+	}
+	return "", errors.Errorf("Tenant '%s' get ob version from db failed", ctrl.Tenant.Name)
+}
+
 func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit) error {
+	version, err := ctrl.GetOBVersion()
+	if err != nil {
+		return err
+	}
+	switch string(version[0]) {
+	case tenantconst.Version3:
+		return ctrl.CreateUnitV3(unitName, resourceUnit)
+	case tenantconst.Version4:
+		return ctrl.CreateUnitV4(unitName, resourceUnit)
+	}
+	return errors.New("no match version for create unit")
+}
+
+func (ctrl *TenantCtrl) CreateUnitV4(unitName string, resourceUnit v1.ResourceUnit) error {
 	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
+	if resourceUnit.MemorySize.Value() == 0 {
+		klog.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", ctrl.Tenant.Name, unitName)
+		return errors.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", ctrl.Tenant.Name, unitName)
+	}
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
+	}
+	var option string
+	if resourceUnit.MinCPU.Value() != 0 {
+		option = fmt.Sprint(option, ", min_cpu ", resourceUnit.MinCPU.Value())
+	}
+	if resourceUnit.LogDiskSize.Value() != 0 {
+		option = fmt.Sprint(option, ", log_disk_size ", resourceUnit.LogDiskSize.Value())
+	}
+	if resourceUnit.MaxIops != 0 {
+		option = fmt.Sprint(option, ", max_iops ", resourceUnit.MaxIops)
+	}
+	if resourceUnit.MinIops != 0 {
+		option = fmt.Sprint(option, ", min_iops ", resourceUnit.MinIops)
+	}
+	if resourceUnit.IopsWeight != 0 {
+		option = fmt.Sprint(option, ", iops_weight ", resourceUnit.IopsWeight)
+	}
+	return sqlOperator.CreateUnitV4(unitName, resourceUnit, option)
+}
+
+func (ctrl *TenantCtrl) CreateUnitV3(unitName string, resourceUnit v1.ResourceUnit) error {
+	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", ctrl.Tenant.Name, unitName)
+	if resourceUnit.MinCPU.Value() == 0 || resourceUnit.MemorySize.Value() == 0 {
+		klog.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
+		return errors.Errorf("Tenant '%s'  resource unit '%s' minCPU & maxMemory & minMemory cannot be empty", ctrl.Tenant.Name, unitName)
+	}
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
@@ -157,7 +207,7 @@ func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit
 	if resourceUnit.MaxSessionNum == 0 {
 		resourceUnit.MaxSessionNum = tenantconst.MaxSessionNum
 	}
-	return sqlOperator.CreateUnit(unitName, resourceUnit)
+	return sqlOperator.CreateUnitV3(unitName, resourceUnit)
 }
 
 func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantReplica) error {
@@ -172,7 +222,6 @@ func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantRepl
 func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(tenantName string, zone v1.TenantReplica) error {
 	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
 	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
-
 	poolExist, _, err := ctrl.PoolExist(poolName)
 	if err != nil {
 		klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)
@@ -186,9 +235,15 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(tenantName string, zone v1.Ten
 	}
 
 	if !unitExist {
-		err := ctrl.CheckResourceEnough(tenantName, zone)
+		version, err := ctrl.GetOBVersion()
 		if err != nil {
 			return err
+		}
+		if string(version[0]) == tenantconst.Version3 {
+			err := ctrl.CheckResourceEnough(tenantName, zone)
+			if err != nil {
+				return err
+			}
 		}
 		err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
 		if err != nil {
@@ -225,14 +280,10 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantReplica
 	if collate != "" {
 		collate = fmt.Sprintf(", COLLATE = %s", collate)
 	}
-	var logonlyReplicaNum string
-	if ctrl.Tenant.Spec.LogonlyReplicaNum != 0 {
-		logonlyReplicaNum = fmt.Sprintf(", LOGONLY_REPLICA_NUM = %d", ctrl.Tenant.Spec.LogonlyReplicaNum)
-	}
 	if ctrl.Tenant.Spec.Charset != "" {
 		charset = ctrl.Tenant.Spec.Charset
 	}
-	return sqlOperator.CreateTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, logonlyReplicaNum, variableList)
+	return sqlOperator.CreateTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, variableList)
 }
 
 func (ctrl *TenantCtrl) GenerateSpecZoneList(zones []v1.TenantReplica) []string {

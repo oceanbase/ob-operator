@@ -81,6 +81,10 @@ func (r *PodResource) Patch(ctx context.Context, obj interface{}, patch client.P
 	return nil
 }
 
+func (r *PodResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
 func (r *PodResource) UpdateStatus(ctx context.Context, obj interface{}) error {
 	var res error
 	return res

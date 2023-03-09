@@ -17,6 +17,7 @@ import (
 	"strings"
 
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
+	"github.com/oceanbase/ob-operator/pkg/controllers/tenant/model"
 )
 
 func ReplaceAll(template string, replacers ...*strings.Replacer) string {
@@ -31,8 +32,12 @@ func SetParameterSQLReplacer(name, value string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
 }
 
-func CreateUnitSQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strings.Replacer {
-	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MaxMemory.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MinMemory.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
+func CreateUnitV3SQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strings.Replacer {
+	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MemorySize.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MemorySize.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
+}
+
+func CreateUnitV4SQLReplacer(unitName string, resourceUnit v1.ResourceUnit, option string) *strings.Replacer {
+	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MEMORY_SIZE}", strconv.Itoa(int(resourceUnit.MemorySize.Value())), "${OPTION}", option)
 }
 
 func CreatePoolSQLReplacer(poolName, unitName string, zone v1.TenantReplica) *strings.Replacer {
@@ -43,8 +48,8 @@ func GetResourceSQLReplacer(zoneName string) *strings.Replacer {
 	return strings.NewReplacer("${ZONE_NAME}", zoneName)
 }
 
-func CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, logonlyReplicaNum, variableList string) *strings.Replacer {
-	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${CHARSET}", charset, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${LOCALITY}", locality, "${COLLATE}", collate, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum, "${VARIABLE_LIST}", variableList)
+func CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, variableList string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${CHARSET}", charset, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${LOCALITY}", locality, "${COLLATE}", collate, "${VARIABLE_LIST}", variableList)
 }
 
 func GetVariableSQLReplacer(name string, tenantID int) *strings.Replacer {
@@ -55,8 +60,12 @@ func SetTenantVariableSQLReplacer(tenantName, name, value string) *strings.Repla
 	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${NAME}", name, "${VALUE}", value)
 }
 
-func SetUnitConfigSQLReplacer(unitName string, resourceUnit v1.ResourceUnit) *strings.Replacer {
-	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MaxMemory.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MinMemory.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
+func SetUnitConfigV3SQLReplacer(unitName string, resourceUnit model.ResourceUnitV3) *strings.Replacer {
+	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MAX_MEMORY}", strconv.Itoa(int(resourceUnit.MemorySize.Value()))+"B", "${MAX_IOPS}", strconv.Itoa(resourceUnit.MaxIops), "${MAX_DISK_SIZE}", strconv.Itoa(int(resourceUnit.MaxDiskSize.Value()))+"B", "${MAX_SESSION_NUM}", strconv.Itoa(resourceUnit.MaxSessionNum), "${MIN_CPU}", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64), "${MIN_MEMORY}", strconv.Itoa(int(resourceUnit.MemorySize.Value()))+"B", "${MIN_IOPS}", strconv.Itoa(resourceUnit.MinIops))
+}
+
+func SetUnitConfigV4SQLReplacer(unitName string, resourceUnit model.ResourceUnitV4, option string) *strings.Replacer {
+	return strings.NewReplacer("${UNIT_NAME}", unitName, "${MAX_CPU}", strconv.FormatFloat(resourceUnit.MaxCPU.AsApproximateFloat64(), 'f', -1, 64), "${MEMORY_SIZE}", strconv.Itoa(int(resourceUnit.MemorySize.Value())), "${OPTION}", option)
 }
 
 func SetPoolUnitNumSQLReplacer(poolName string, unitNum int) *strings.Replacer {
@@ -71,8 +80,8 @@ func SetTenantPoolListSQLReplacer(name, locality string) *strings.Replacer {
 	return strings.NewReplacer("${TENANT_NAME}", name, "${POOL_LIST}", locality)
 }
 
-func SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality, logonlyReplicaNum string) *strings.Replacer {
-	return strings.NewReplacer("${TENANT_NAME}", name, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${CHARSET}", charset, "${LOCALITY}", locality, "${LOGONLY_REPLICA_NUM}", logonlyReplicaNum)
+func SetTenantSQLReplacer(name, zoneList, primaryZone, poolList, charset, locality string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", name, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${CHARSET}", charset, "${LOCALITY}", locality)
 }
 
 func SetNameReplacer(name string) *strings.Replacer {

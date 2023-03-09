@@ -94,3 +94,7 @@ func (r *OBZoneResource) Delete(ctx context.Context, obj interface{}) error {
 func (r *OBZoneResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *OBZoneResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

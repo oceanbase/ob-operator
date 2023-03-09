@@ -10,37 +10,28 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package tenantconst
+package model
 
-const (
-	TenantRunning   = "Running"
-	TenantCreating  = "Creating"
-	TenantModifying = "Modifying"
+import "k8s.io/apimachinery/pkg/api/resource"
 
-	UnitActive = "ACTIVE"
-)
+type ResourceUnitV3 struct {
+	MaxCPU     resource.Quantity
+	MinCPU     resource.Quantity
+	MemorySize resource.Quantity
 
-const (
-	Charset = "utf8mb4"
-)
+	MaxIops       int
+	MinIops       int
+	MaxDiskSize   resource.Quantity
+	MaxSessionNum int
+}
 
-const (
-	TypeFull     = "FULL"
-	TypeReadonly = "READONLY"
-	TypeLogonly  = "LOGONLY"
-	// TypeF        = "F"
-	// TypeR        = "R"
-	// TypeL        = "L"
-)
+type ResourceUnitV4 struct {
+	MaxCPU     resource.Quantity
+	MemorySize resource.Quantity
 
-const (
-	MaxDiskSize   = "512Mi"
-	MaxIops       = 128
-	MinIops       = 128
-	MaxSessionNum = 64
-)
-
-const (
-	Version3 = "3"
-	Version4 = "4"
-)
+	MinCPU      resource.Quantity
+	MaxIops     int
+	MinIops     int
+	IopsWeight  int
+	LogDiskSize resource.Quantity
+}

@@ -23,11 +23,10 @@ type TenantSpec struct {
 	ClusterName string          `json:"clusterName"`
 	Topology    []TenantReplica `json:"topology"`
 
-	Charset           string      `json:"charset,omitempty"`
-	Collate           string      `json:"collate,omitempty"`
-	Mode              string      `json:"mode,omitempty"`
-	LogonlyReplicaNum int         `json:"logonlyReplicaNum,omitempty"`
-	Variables         []Parameter `json:"variables,omitempty"`
+	Charset   string      `json:"charset,omitempty"`
+	Collate   string      `json:"collate,omitempty"`
+	Mode      string      `json:"mode,omitempty"`
+	Variables []Parameter `json:"variables,omitempty"`
 }
 
 type TenantReplica struct {
@@ -44,23 +43,24 @@ type TypeSpec struct {
 }
 
 type ResourceUnit struct {
-	MaxCPU        resource.Quantity `json:"maxCPU"`
-	MinCPU        resource.Quantity `json:"minCPU"`
-	MaxMemory     resource.Quantity `json:"maxMemory"`
-	MinMemory     resource.Quantity `json:"minMemory"`
+	MaxCPU     resource.Quantity `json:"maxCPU"`
+	MemorySize resource.Quantity `json:"memorySize"`
+	MinCPU     resource.Quantity `json:"minCPU,omitempty"`
+	MaxIops    int               `json:"maxIops,omitempty"`
+	MinIops    int               `json:"minIops,omitempty"`
+	// V3
 	MaxDiskSize   resource.Quantity `json:"maxDiskSize,omitempty"`
-	MaxIops       int               `json:"maxIops,omitempty"`
-	MinIops       int               `json:"minIops,omitempty"`
 	MaxSessionNum int               `json:"maxSessionNum,omitempty"`
+	// V4
+	IopsWeight  int               `json:"iopsWeight,omitempty"`
+	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant
 type TenantStatus struct {
-	Status            string                `json:"status"`
-	Topology          []TenantReplicaStatus `json:"topology"`
-	Charset           string                `json:"charset,omitempty"`
-	ReplicaNum        int                   `json:"replicaNum"`
-	LogonlyReplicaNum int                   `json:"logonlyReplicaNum"`
+	Status   string                `json:"status"`
+	Topology []TenantReplicaStatus `json:"topology"`
+	Charset  string                `json:"charset,omitempty"`
 }
 
 type TenantReplicaStatus struct {

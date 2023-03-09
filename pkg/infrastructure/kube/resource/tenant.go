@@ -67,10 +67,6 @@ func (r *TenantResource) Update(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
-func (r *TenantResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
-	return nil
-}
-
 func (r *TenantResource) UpdateStatus(ctx context.Context, obj interface{}) error {
 	Tenant := obj.(cloudv1.Tenant)
 	err := r.Client.Status().Update(ctx, &Tenant)
@@ -91,5 +87,30 @@ func (r *TenantResource) Delete(ctx context.Context, obj interface{}) error {
 	}
 	kube.LogForAppActionStatus(Tenant.Kind, Tenant.Name, "delete", "succeed")
 	r.Recorder.Event(&Tenant, corev1.EventTypeNormal, DeletedTenant, "delete Tenant"+Tenant.Name)
+	return nil
+}
+
+func (r *TenantResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	tenant := obj.(cloudv1.Tenant)
+	err := r.Client.Patch(ctx, &tenant, patch)
+	if err != nil {
+		r.Recorder.Eventf(&tenant, corev1.EventTypeWarning, FailedToCreatePod, "Patch Tenant"+tenant.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(tenant.Kind, tenant.Name, "Patch", "succeed")
+	r.Recorder.Event(&tenant, corev1.EventTypeNormal, PatchedTenant, "Patch tenant"+tenant.Name)
+	return nil
+}
+
+func (r *TenantResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	tenant := obj.(cloudv1.Tenant)
+	err := r.Client.Status().Patch(ctx, &tenant, patch)
+	if err != nil {
+		r.Recorder.Eventf(&tenant, corev1.EventTypeWarning, FailedToCreatePod, "Patch Tenant"+tenant.Name)
+		klog.Errorln(err)
+		return err
+	}
+	r.Recorder.Event(&tenant, corev1.EventTypeNormal, PatchedTenant, "Patch tenant"+tenant.Name)
 	return nil
 }

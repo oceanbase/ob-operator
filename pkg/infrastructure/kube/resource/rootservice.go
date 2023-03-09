@@ -89,3 +89,7 @@ func (r *RootServiceResource) Delete(ctx context.Context, obj interface{}) error
 func (r *RootServiceResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *RootServiceResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

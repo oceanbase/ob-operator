@@ -39,4 +39,5 @@ type ResourceOperator interface {
 	UpdateStatus(ctx context.Context, obj interface{}) error
 	Delete(ctx context.Context, obj interface{}) error
 	Patch(ctx context.Context, obj interface{}, patch client.Patch) error
+	PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error
 }
