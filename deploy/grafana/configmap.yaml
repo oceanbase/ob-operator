@@ -11,7 +11,7 @@ data:
             {
                "access":"proxy",
                 "editable": true,
-                "name": "ob-prometheus",
+                "name": "OB-Prometheus",
                 "orgId": 1,
                 "type": "prometheus",
                 "url": "http://svc-prometheus.obcluster.svc:8080",
