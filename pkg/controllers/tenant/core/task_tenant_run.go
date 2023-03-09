@@ -422,7 +422,7 @@ func (ctrl *TenantCtrl) GeneratePrimaryZoneMap(str string) map[int][]string {
 }
 
 func (ctrl *TenantCtrl) CheckAndSetLocality() error {
-	specLocalityMap := GenerateSpecLocalityMap(ctrl.Tenant.Spec)
+	specLocalityMap := GenerateSpecLocalityMap(ctrl.Tenant.Spec.Topology)
 	statusLocalityMap := GenerateStatusLocalityMap(ctrl.Tenant.Status.Topology)
 	if reflect.DeepEqual(specLocalityMap, statusLocalityMap) {
 		return nil

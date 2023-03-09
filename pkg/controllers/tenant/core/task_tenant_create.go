@@ -240,7 +240,7 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(tenantName string, zone v1.Ten
 			return err
 		}
 		if string(version[0]) == tenantconst.Version3 {
-			err := ctrl.CheckResourceEnough(zone)
+			err := ctrl.CheckResourceEnough(tenantName, zone)
 			if err != nil {
 				return err
 			}
