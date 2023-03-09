@@ -26,7 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
-func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tenantBackupType string) error {
+func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantConfigSpec, tenantBackupType string) error {
 	tenantBackup := ctrl.TenantBackup
 	tenantBackupExecuter := resource.NewTenantBackupResource(ctrl.Resource)
 	tenantBackupTmp, err := tenantBackupExecuter.Get(context.TODO(), tenantBackup.Namespace, tenantBackup.Name)
@@ -52,7 +52,7 @@ func (ctrl *TenantBackupCtrl) UpdateBackupStatus(tenant cloudv1.TenantSpec, tena
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.TenantBackup, tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackup, error) {
+func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.TenantBackup, tenant cloudv1.TenantConfigSpec, tenantBackupType string) (cloudv1.TenantBackup, error) {
 	var tenantBackupCurrentStatus cloudv1.TenantBackupStatus
 	var tenantBackupSet []cloudv1.TenantBackupSetStatus
 	for _, status := range ctrl.TenantBackup.Status.TenantBackupSet {
@@ -88,7 +88,7 @@ func (ctrl *TenantBackupCtrl) buildTenantBackupStatus(tenantBackup cloudv1.Tenan
 	return tenantBackup, nil
 }
 
-func (ctrl *TenantBackupCtrl) buildSingleTenantBackupStatus(tenant cloudv1.TenantSpec, tenantBackupType string) (cloudv1.TenantBackupSetStatus, error) {
+func (ctrl *TenantBackupCtrl) buildSingleTenantBackupStatus(tenant cloudv1.TenantConfigSpec, tenantBackupType string) (cloudv1.TenantBackupSetStatus, error) {
 	var tenantBackupSetStatus cloudv1.TenantBackupSetStatus
 	var err error
 	backupJobList, err := ctrl.buildBackupJobListFromDB(tenant.Name)
@@ -142,7 +142,7 @@ func (ctrl *TenantBackupCtrl) TenantBackupJobListToStatusList(backupJobList []mo
 	return backupJobStatusList
 }
 
-func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantSpec, backupType string) ([]cloudv1.ScheduleSpec, error) {
+func (ctrl *TenantBackupCtrl) buildScheduleList(tenant cloudv1.TenantConfigSpec, backupType string) ([]cloudv1.ScheduleSpec, error) {
 	scheduleSpec := tenant.Schedule
 	backupScheduleList := make([]cloudv1.ScheduleSpec, 0)
 	for _, schedule := range scheduleSpec {

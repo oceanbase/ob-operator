@@ -19,11 +19,11 @@ import (
 // TenantBackupSpec defines the desired state of TenantBackup
 type TenantBackupSpec struct {
 	SourceCluster      SourceClusterSpec        `json:"source"`
-	Tenants            []TenantSpec             `json:"tenant"`
+	Tenants            []TenantConfigSpec       `json:"tenant"`
 	DeleteBackupPolicy []DeleteBackupPolicySpec `json:"deleteBackupPolicy,omitempty"`
 }
 
-type TenantSpec struct {
+type TenantConfigSpec struct {
 	Name                string         `json:"name"`
 	UserSecret          string         `json:"userSecret"`
 	BackupSecret        string         `json:"backupSecret,omitempty"`

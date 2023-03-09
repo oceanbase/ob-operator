@@ -96,12 +96,29 @@ const (
 	FailedToDeleteTenantBackup = "FailedDeleteTenantBackup"
 )
 
+// Restore event reason list
+const (
+	CreatedRestore        = "CreatedRestore"
+	FailedToCreateRestore = "FailedCreateRestore"
+	DeletedRestore        = "DeletedRestore"
+	FailedToDeleteRestore = "FailedDeleteRestore"
+)
+
 // Storage event reason list
+// OBZone event reason list
 const (
 	CreatedOBZone        = "CreatedOBZone"
 	FailedToCreateOBZone = "FailedCreateOBZone"
 	DeletedOBZone        = "DeletedOBZone"
 	FailedToDeleteOBZone = "FailedDeleteOBZone"
+)
+
+// Tenant event reason list
+const (
+	CreatedTenant        = "CreatedTenant"
+	FailedToCreateTenant = "FailedCreateTenant"
+	DeletedTenant        = "DeletedTenant"
+	FailedToDeleteTenant = "FailedDeleteTenant"
 )
 
 // Job event reason list

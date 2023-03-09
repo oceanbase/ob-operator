@@ -33,6 +33,12 @@ spec:
           - mountPath: /etc/grafana/provisioning/datasources
             name: grafana-datasources
             readOnly: false
+          - mountPath: /etc/grafana/provisioning/dashboards
+            name: grafana-providers
+            readOnly: false
+          - mountPath: /etc/grafana/provisioning/dashboards/template
+            name: grafana-dashboards-ob
+            readOnly: false
       volumes:
         - name: grafana-storage
           persistentVolumeClaim:
@@ -41,3 +47,11 @@ spec:
           configMap:
               defaultMode: 420
               name: grafana-datasources
+        - name: grafana-providers
+          configMap:
+              defaultMode: 0777
+              name: grafana-providers
+        - name: grafana-dashboards-ob
+          configMap:
+              defaultMode: 0777
+              name: grafana-dashboards-ob

@@ -189,7 +189,7 @@ func (ctrl *TenantBackupCtrl) GetCancelTenantList() []string {
 	return tenantList
 }
 
-func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantConfigSpec) error {
 	exist, backupTypeList := ctrl.CheckTenantBackupExist(tenant)
 	if exist {
 		backupOnce, finished := ctrl.CheckTenantBackupOnce(tenant, backupTypeList)
@@ -200,7 +200,7 @@ func (ctrl *TenantBackupCtrl) SingleTenantBackupEffector(tenant cloudv1.TenantSp
 	return ctrl.SingleTenantBackup(tenant)
 }
 
-func (ctrl *TenantBackupCtrl) SingleTenantBackup(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) SingleTenantBackup(tenant cloudv1.TenantConfigSpec) error {
 	err := ctrl.CheckAndSetLogArchiveDest(tenant)
 	if err != nil {
 		return err

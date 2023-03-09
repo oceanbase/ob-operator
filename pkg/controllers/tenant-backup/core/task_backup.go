@@ -31,7 +31,7 @@ import (
 	"k8s.io/klog"
 )
 
-func (ctrl *TenantBackupCtrl) GetTenantSecret(tenant cloudv1.TenantSpec) (model.TenantSecret, error) {
+func (ctrl *TenantBackupCtrl) GetTenantSecret(tenant cloudv1.TenantConfigSpec) (model.TenantSecret, error) {
 	var tenantSecret model.TenantSecret
 	obcluster := ctrl.TenantBackup.Spec.SourceCluster
 	secretExecutor := resource.NewSecretResource(ctrl.Resource)
@@ -52,7 +52,7 @@ func (ctrl *TenantBackupCtrl) GetTenantSecret(tenant cloudv1.TenantSpec) (model.
 	return tenantSecret, nil
 }
 
-func (ctrl *TenantBackupCtrl) GetTenantSqlOperator(tenant cloudv1.TenantSpec) (*sql.SqlOperator, error) {
+func (ctrl *TenantBackupCtrl) GetTenantSqlOperator(tenant cloudv1.TenantConfigSpec) (*sql.SqlOperator, error) {
 	tenantSecret, err := ctrl.GetTenantSecret(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' secret error '%s'", tenant.Name, err)
@@ -78,7 +78,7 @@ func (ctrl *TenantBackupCtrl) GetTenantSqlOperator(tenant cloudv1.TenantSpec) (*
 	return nil, errors.New("failed to get tenant sql operator")
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetLogArchiveDest(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndSetLogArchiveDest(tenant cloudv1.TenantConfigSpec) error {
 	logArchiveDest, err := ctrl.GetLogArchiveDest(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' LogArchiveDest error '%s'", tenant.Name, err)
@@ -90,7 +90,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetLogArchiveDest(tenant cloudv1.TenantSpe
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) SetArchiveDest(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) SetArchiveDest(tenant cloudv1.TenantConfigSpec) error {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when set LogArchiveDest", tenant.Name)
@@ -106,7 +106,7 @@ func (ctrl *TenantBackupCtrl) SetArchiveDest(tenant cloudv1.TenantSpec) error {
 	return sqlOperator.SetParameter(tenantBackupconst.LogAechiveDest, value)
 }
 
-func (ctrl *TenantBackupCtrl) GetLogArchiveDest(tenant cloudv1.TenantSpec) ([]model.TenantArchiveDest, error) {
+func (ctrl *TenantBackupCtrl) GetLogArchiveDest(tenant cloudv1.TenantConfigSpec) ([]model.TenantArchiveDest, error) {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator error when get LogArchiveDest")
@@ -114,7 +114,7 @@ func (ctrl *TenantBackupCtrl) GetLogArchiveDest(tenant cloudv1.TenantSpec) ([]mo
 	return sqlOperator.GetArchiveLogDest(), nil
 }
 
-func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantSpec, logArchiveDestList []model.TenantArchiveDest) bool {
+func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantConfigSpec, logArchiveDestList []model.TenantArchiveDest) bool {
 	if len(logArchiveDestList) == 0 {
 		return true
 	}
@@ -128,7 +128,7 @@ func (ctrl *TenantBackupCtrl) NeedSetArchiveDest(tenant cloudv1.TenantSpec, logA
 	return false
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndStartArchive(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndStartArchive(tenant cloudv1.TenantConfigSpec) error {
 	archiveLogList, err := ctrl.GetTenantArchiveLog(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' archive summary list error '%s'", tenant.Name, err)
@@ -144,7 +144,7 @@ func (ctrl *TenantBackupCtrl) CheckAndStartArchive(tenant cloudv1.TenantSpec) er
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) GetTenantArchiveLog(tenant cloudv1.TenantSpec) ([]model.TenantArchiveLog, error) {
+func (ctrl *TenantBackupCtrl) GetTenantArchiveLog(tenant cloudv1.TenantConfigSpec) ([]model.TenantArchiveLog, error) {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator error when get ArchiveLog")
@@ -152,7 +152,7 @@ func (ctrl *TenantBackupCtrl) GetTenantArchiveLog(tenant cloudv1.TenantSpec) ([]
 	return sqlOperator.GetArchiveLog(), nil
 }
 
-func (ctrl *TenantBackupCtrl) NeedStartAchiveLog(tenant cloudv1.TenantSpec, archiveLogList []model.TenantArchiveLog) (bool, error) {
+func (ctrl *TenantBackupCtrl) NeedStartAchiveLog(tenant cloudv1.TenantConfigSpec, archiveLogList []model.TenantArchiveLog) (bool, error) {
 	if len(archiveLogList) == 0 {
 		return true, nil
 	}
@@ -176,7 +176,7 @@ func (ctrl *TenantBackupCtrl) NeedStartAchiveLog(tenant cloudv1.TenantSpec, arch
 	return false, nil
 }
 
-func (ctrl *TenantBackupCtrl) StartAchiveLog(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) StartAchiveLog(tenant cloudv1.TenantConfigSpec) error {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		return errors.Wrap(err, "get sql operator error when start ArchiveLog")
@@ -184,7 +184,7 @@ func (ctrl *TenantBackupCtrl) StartAchiveLog(tenant cloudv1.TenantSpec) error {
 	return sqlOperator.StartAchiveLog()
 }
 
-func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantSpec) (bool, []string) {
+func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantConfigSpec) (bool, []string) {
 	backupTypeList := make([]string, 0)
 	backupSets := ctrl.TenantBackup.Status.TenantBackupSet
 	exist := false
@@ -199,7 +199,7 @@ func (ctrl *TenantBackupCtrl) CheckTenantBackupExist(tenant cloudv1.TenantSpec) 
 	return exist, backupTypeList
 }
 
-func (ctrl *TenantBackupCtrl) CheckTenantBackupOnce(tenant cloudv1.TenantSpec, backupTypeList []string) (bool, bool) {
+func (ctrl *TenantBackupCtrl) CheckTenantBackupOnce(tenant cloudv1.TenantConfigSpec, backupTypeList []string) (bool, bool) {
 	var backupOnce, finished bool
 	for _, schedule := range tenant.Schedule {
 		if schedule.Schedule == tenantBackupconst.BackupOnce {
@@ -230,7 +230,7 @@ func (ctrl *TenantBackupCtrl) getNextCron(schedule string) (time.Time, error) {
 	return nextTime, nil
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetBackupDest(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndSetBackupDest(tenant cloudv1.TenantConfigSpec) error {
 	backupDest, err := ctrl.GetBackupDest(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' LogArchiveDest error '%s'", tenant.Name, err)
@@ -242,7 +242,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetBackupDest(tenant cloudv1.TenantSpec) e
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) GetBackupDest(tenant cloudv1.TenantSpec) ([]model.TenantBackupDest, error) {
+func (ctrl *TenantBackupCtrl) GetBackupDest(tenant cloudv1.TenantConfigSpec) ([]model.TenantBackupDest, error) {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator error when get LogArchiveDest")
@@ -250,7 +250,7 @@ func (ctrl *TenantBackupCtrl) GetBackupDest(tenant cloudv1.TenantSpec) ([]model.
 	return sqlOperator.GetBackupDest(), nil
 }
 
-func (ctrl *TenantBackupCtrl) NeedSetBackupDest(tenant cloudv1.TenantSpec, backupDestList []model.TenantBackupDest) bool {
+func (ctrl *TenantBackupCtrl) NeedSetBackupDest(tenant cloudv1.TenantConfigSpec, backupDestList []model.TenantBackupDest) bool {
 	if len(backupDestList) == 0 {
 		return true
 	}
@@ -262,7 +262,7 @@ func (ctrl *TenantBackupCtrl) NeedSetBackupDest(tenant cloudv1.TenantSpec, backu
 	return false
 }
 
-func (ctrl *TenantBackupCtrl) SetBackupDest(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) SetBackupDest(tenant cloudv1.TenantConfigSpec) error {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when set DataBackupDest", tenant.Name)
@@ -271,7 +271,7 @@ func (ctrl *TenantBackupCtrl) SetBackupDest(tenant cloudv1.TenantSpec) error {
 	return sqlOperator.SetParameter(tenantBackupconst.DataBackupDest, tenant.DataBackupDest)
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetBackupDatabasePassword(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndSetBackupDatabasePassword(tenant cloudv1.TenantConfigSpec) error {
 	tenantSecret, err := ctrl.GetTenantSecret(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' secret error '%s'", tenant.Name, err)
@@ -289,7 +289,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetBackupDatabasePassword(tenant cloudv1.T
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetBackupIncrementalPassword(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndSetBackupIncrementalPassword(tenant cloudv1.TenantConfigSpec) error {
 	tenantSecret, err := ctrl.GetTenantSecret(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' secret error '%s'", tenant.Name, err)
@@ -307,7 +307,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetBackupIncrementalPassword(tenant cloudv
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) error {
 	for _, schedule := range tenant.Schedule {
 		// deal with full backup
 		if strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackup || strings.ToUpper(schedule.BackupType) == tenantBackupconst.FullBackupType {
@@ -430,7 +430,7 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantSpec) error 
 	return ctrl.UpdateBackupStatus(tenant, "")
 }
 
-func (ctrl *TenantBackupCtrl) isBackupDoing(tenant cloudv1.TenantSpec) (bool, error) {
+func (ctrl *TenantBackupCtrl) isBackupDoing(tenant cloudv1.TenantConfigSpec) (bool, error) {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when get backup status", tenant.Name)
@@ -445,7 +445,7 @@ func (ctrl *TenantBackupCtrl) isBackupDoing(tenant cloudv1.TenantSpec) (bool, er
 	return false, nil
 }
 
-func (ctrl *TenantBackupCtrl) StartBackupDatabase(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) StartBackupDatabase(tenant cloudv1.TenantConfigSpec) error {
 	klog.Infof("Tenant '%s' begin backup database", tenant.Name)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
@@ -455,7 +455,7 @@ func (ctrl *TenantBackupCtrl) StartBackupDatabase(tenant cloudv1.TenantSpec) err
 	return sqlOperator.StartBackupDatabase()
 }
 
-func (ctrl *TenantBackupCtrl) getBackupScheduleStatus(tenant cloudv1.TenantSpec, backupType string) cloudv1.ScheduleSpec {
+func (ctrl *TenantBackupCtrl) getBackupScheduleStatus(tenant cloudv1.TenantConfigSpec, backupType string) cloudv1.ScheduleSpec {
 	tenantBackupStatus := ctrl.GetSingleTenantBackupStatus(tenant)
 	var res cloudv1.ScheduleSpec
 	for _, schedule := range tenantBackupStatus.Schedule {
@@ -466,7 +466,7 @@ func (ctrl *TenantBackupCtrl) getBackupScheduleStatus(tenant cloudv1.TenantSpec,
 	return res
 }
 
-func (ctrl *TenantBackupCtrl) GetSingleTenantBackupStatus(tenant cloudv1.TenantSpec) cloudv1.TenantBackupSetStatus {
+func (ctrl *TenantBackupCtrl) GetSingleTenantBackupStatus(tenant cloudv1.TenantConfigSpec) cloudv1.TenantBackupSetStatus {
 	var res cloudv1.TenantBackupSetStatus
 	tenantBackupSetList := ctrl.TenantBackup.Status.TenantBackupSet
 	for _, tenantBackupSet := range tenantBackupSetList {
@@ -477,7 +477,7 @@ func (ctrl *TenantBackupCtrl) GetSingleTenantBackupStatus(tenant cloudv1.TenantS
 	return res
 }
 
-func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantConfigSpec) error {
 	klog.Infof("Tenant '%s' begin backup incremenrtal", tenant.Name)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
@@ -497,7 +497,7 @@ func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
 	return sqlOperator.CancelArchiveLog(name)
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetDeletePolicy(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) CheckAndSetDeletePolicy(tenant cloudv1.TenantConfigSpec) error {
 	deletePolicy, err := ctrl.GetDeletePolicy(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' delete policy error '%s'", tenant.Name, err)
@@ -512,7 +512,7 @@ func (ctrl *TenantBackupCtrl) CheckAndSetDeletePolicy(tenant cloudv1.TenantSpec)
 	return nil
 }
 
-func (ctrl *TenantBackupCtrl) GetDeletePolicy(tenant cloudv1.TenantSpec) ([]model.DeletePolicy, error) {
+func (ctrl *TenantBackupCtrl) GetDeletePolicy(tenant cloudv1.TenantConfigSpec) ([]model.DeletePolicy, error) {
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "get sql operator error when get delete policy")
@@ -520,7 +520,7 @@ func (ctrl *TenantBackupCtrl) GetDeletePolicy(tenant cloudv1.TenantSpec) ([]mode
 	return sqlOperator.GetDeletePolicy(), nil
 }
 
-func (ctrl *TenantBackupCtrl) NeedSetDeletePolicy(tenant cloudv1.TenantSpec, deletePolicyList []model.DeletePolicy) bool {
+func (ctrl *TenantBackupCtrl) NeedSetDeletePolicy(tenant cloudv1.TenantConfigSpec, deletePolicyList []model.DeletePolicy) bool {
 	policy := ctrl.GetTenantDeletePolicy(tenant)
 	if policy.PolicyName == "" {
 		return false
@@ -536,7 +536,7 @@ func (ctrl *TenantBackupCtrl) NeedSetDeletePolicy(tenant cloudv1.TenantSpec, del
 	return false
 }
 
-func (ctrl *TenantBackupCtrl) GetTenantDeletePolicy(tenant cloudv1.TenantSpec) model.DeletePolicy {
+func (ctrl *TenantBackupCtrl) GetTenantDeletePolicy(tenant cloudv1.TenantConfigSpec) model.DeletePolicy {
 	var policy model.DeletePolicy
 	for _, deletePolicy := range ctrl.TenantBackup.Spec.DeleteBackupPolicy {
 		for _, tenantName := range deletePolicy.Tenants {
@@ -549,8 +549,8 @@ func (ctrl *TenantBackupCtrl) GetTenantDeletePolicy(tenant cloudv1.TenantSpec) m
 	return policy
 }
 
-func (ctrl *TenantBackupCtrl) SetDeletePolicy(tenant cloudv1.TenantSpec) error {
-	klog.Infof("Tenant '%s' set delete policy")
+func (ctrl *TenantBackupCtrl) SetDeletePolicy(tenant cloudv1.TenantConfigSpec) error {
+	klog.Infof("Tenant '%s' set delete policy", tenant.Name)
 	policy := ctrl.GetTenantDeletePolicy(tenant)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
@@ -559,12 +559,12 @@ func (ctrl *TenantBackupCtrl) SetDeletePolicy(tenant cloudv1.TenantSpec) error {
 	return sqlOperator.SetDeletePolicy(policy)
 }
 
-func (ctrl *TenantBackupCtrl) NeedDropDeletePolicy(tenant cloudv1.TenantSpec, deletePolicyList []model.DeletePolicy) bool {
+func (ctrl *TenantBackupCtrl) NeedDropDeletePolicy(tenant cloudv1.TenantConfigSpec, deletePolicyList []model.DeletePolicy) bool {
 	policy := ctrl.GetTenantDeletePolicy(tenant)
 	return policy.PolicyName == "" && policy.RecoveryWindow == ""
 }
 
-func (ctrl *TenantBackupCtrl) DropDeletePolicy(tenant cloudv1.TenantSpec) error {
+func (ctrl *TenantBackupCtrl) DropDeletePolicy(tenant cloudv1.TenantConfigSpec) error {
 	policy := ctrl.GetTenantDeletePolicy(tenant)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {

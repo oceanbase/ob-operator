@@ -13,15 +13,33 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
+	"context"
 	"strings"
 	"time"
 
 	"github.com/gorhill/cronexpr"
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
+	"github.com/oceanbase/ob-operator/pkg/controllers/backup/model"
+	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 )
+
+func (ctrl *BackupCtrl) GetSecret(name string) (model.Secret, error) {
+	var secret model.Secret
+	obcluster := ctrl.Backup.Spec.SourceCluster
+	secretExecutor := resource.NewSecretResource(ctrl.Resource)
+	backupSecret, err := secretExecutor.Get(context.TODO(), obcluster.ClusterNamespace, name)
+	if err != nil {
+		klog.Errorf("get backup secret error '%s'", err)
+		return secret, err
+	}
+	secret.IncrementalSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[backupconst.IncrementalSecret]), "\n")
+	secret.FullSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[backupconst.FullSecret]), "\n")
+	return secret, nil
+}
 
 func (ctrl *BackupCtrl) SetBackupDest(dest string) error {
 	klog.Infoln("begin set backup destination: ", dest)
@@ -118,36 +136,48 @@ func (ctrl *BackupCtrl) setBackupLogArchive() error {
 	return sqlOperator.StartArchieveLog()
 }
 
-func (ctrl *BackupCtrl) setBackupDatabasePassword() error {
+func (ctrl *BackupCtrl) CheckAndSetBackupDatabasePassword() error {
+	secretName := ctrl.Backup.Spec.Secret
+	secret, err := ctrl.GetSecret(secretName)
+	if err != nil {
+		klog.Errorf("get secret '%s' error '%s'", secretName, err)
+		return err
+	}
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup database password")
 	}
-	backupDatabasePassword := ctrl.getParameter(backupconst.BackupDatabasePasswordName)
-
-	if backupDatabasePassword != "" {
+	if secret.FullSecret != "" {
 		klog.Infoln("begin set backup database password ")
-		return sqlOperator.SetBackupPassword(backupDatabasePassword)
-	} else {
-		return nil
+		return sqlOperator.SetBackupPassword(secret.FullSecret)
 	}
+	return nil
 }
 
-func (ctrl *BackupCtrl) setBackupIncrementalPassword() error {
+func (ctrl *BackupCtrl) CheckAndSetBackupIncrementalPassword() error {
+	secretName := ctrl.Backup.Spec.Secret
+	secret, err := ctrl.GetSecret(secretName)
+	if err != nil {
+		klog.Errorf("get secret '%s' error '%s'", secretName, err)
+		return err
+	}
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup incremental password")
 	}
-	backupIncrementalPassword := ctrl.getParameter(backupconst.BackupIncrementalPasswordName)
-	if backupIncrementalPassword != "" {
+	if secret.IncrementalSecret != "" {
 		klog.Infoln("begin set backup incremental password ")
-		return sqlOperator.SetBackupPassword(backupIncrementalPassword)
-	} else {
-		return nil
+		return sqlOperator.SetBackupPassword(secret.IncrementalSecret)
 	}
+	return nil
 }
 
 func (ctrl *BackupCtrl) StartBackupDatabase() error {
+	err := ctrl.CheckAndSetBackupDatabasePassword()
+	if err != nil {
+		klog.Errorln("DoBackup: set Backup Database Password err ", err)
+		return err
+	}
 	klog.Infoln("begin backup database ")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -157,6 +187,11 @@ func (ctrl *BackupCtrl) StartBackupDatabase() error {
 }
 
 func (ctrl *BackupCtrl) StartBackupIncremental() error {
+	err := ctrl.CheckAndSetBackupIncrementalPassword()
+	if err != nil {
+		klog.Errorln("DoBackup: set Backup Incremental Password err ", err)
+		return err
+	}
 	klog.Infoln("begin backup database incremental")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -186,7 +221,7 @@ func (ctrl *BackupCtrl) isArchivelogDoing() (error, bool) {
 	}
 	statusList := sqlOperator.GetArchieveLogStatus()
 	for _, status := range statusList {
-		if status.Status != backupconst.ArchiveLogDoing && status.Status != backupconst.ArchiveLogBeginning {
+		if status.Status != backupconst.ArchiveLogDoing {
 			return nil, false
 		}
 
@@ -195,7 +230,6 @@ func (ctrl *BackupCtrl) isArchivelogDoing() (error, bool) {
 }
 
 func (ctrl *BackupCtrl) isBackupDoing() (error, bool) {
-	klog.Infoln("Check whether backup is doing")
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when checking whether backup is doing"), false
@@ -227,4 +261,41 @@ func (ctrl *BackupCtrl) getNextCron(schedule string) (time.Time, error) {
 	}
 	nextTime := expr.Next(time.Now())
 	return nextTime, nil
+}
+
+func (ctrl *BackupCtrl) WaitArchivelogDoing() error {
+	klog.Infoln("Wait Archivelog Doing")
+	err := ctrl.TickerCheckArchivelogDoing()
+	if err != nil {
+		return err
+	}
+	klog.Infoln("Archivelog Doing")
+	return nil
+}
+
+func (ctrl *BackupCtrl) TickerCheckArchivelogDoing() error {
+	tick := time.Tick(backupconst.TickerPeriodLogArchiveCheck)
+	var num int
+	for {
+		select {
+		case <-tick:
+			if num > backupconst.TickNumForLogArchiveCheck {
+				return errors.New("wait for logarchive doing timeout")
+			}
+			num = num + 1
+			err, res := ctrl.isArchivelogDoing()
+			if res {
+				return err
+			}
+		}
+	}
+}
+
+func (ctrl *BackupCtrl) CancelArchiveLog() error {
+	klog.Infoln("begin cancel backup log archieve ")
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when trying to cancel backup log archieve")
+	}
+	return sqlOperator.StopArchiveLog()
 }

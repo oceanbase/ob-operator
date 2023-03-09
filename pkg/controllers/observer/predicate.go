@@ -34,3 +34,22 @@ func (p statefulAppPredicate) Update(e event.UpdateEvent) bool {
 func (p statefulAppPredicate) Generic(e event.GenericEvent) bool {
 	return true
 }
+
+type tenantPredicate struct {
+}
+
+func (p tenantPredicate) Create(e event.CreateEvent) bool {
+	return true
+}
+
+func (p tenantPredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+func (p tenantPredicate) Update(e event.UpdateEvent) bool {
+	return true
+}
+
+func (p tenantPredicate) Generic(e event.GenericEvent) bool {
+	return true
+}
