@@ -37,7 +37,7 @@ func (ctrl *BackupCtrl) GetSecret(name string) (model.Secret, error) {
 		return secret, err
 	}
 	secret.IncrementalSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[backupconst.IncrementalSecret]), "\n")
-	secret.DatabaseSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[backupconst.DatabaseSecret]), "\n")
+	secret.FullSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[backupconst.FullSecret]), "\n")
 	return secret, nil
 }
 
@@ -147,9 +147,9 @@ func (ctrl *BackupCtrl) CheckAndSetBackupDatabasePassword() error {
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to set backup database password")
 	}
-	if secret.DatabaseSecret != "" {
+	if secret.FullSecret != "" {
 		klog.Infoln("begin set backup database password ")
-		return sqlOperator.SetBackupPassword(secret.DatabaseSecret)
+		return sqlOperator.SetBackupPassword(secret.FullSecret)
 	}
 	return nil
 }
@@ -289,4 +289,13 @@ func (ctrl *BackupCtrl) TickerCheckArchivelogDoing() error {
 			}
 		}
 	}
+}
+
+func (ctrl *BackupCtrl) CancelArchiveLog() error {
+	klog.Infoln("begin cancel backup log archieve ")
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when trying to cancel backup log archieve")
+	}
+	return sqlOperator.StopArchiveLog()
 }

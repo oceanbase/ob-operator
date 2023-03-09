@@ -39,6 +39,7 @@ spec:
               charset:
                 type: string
               clusterID:
+                format: int64
                 type: integer
               clusterName:
                 type: string

@@ -69,7 +69,7 @@ const (
 
 const (
 	IncrementalSecret = "incremental"
-	DatabaseSecret    = "database"
+	FullSecret        = "full"
 )
 
 const (

@@ -221,6 +221,32 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
   - rootservices
   verbs:
   - create
@@ -500,7 +526,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: oceanbasedev/ob-operator:1.2.1-snapshot
+        image: oceanbasedev/ob-operator:1.2.0-snapshot
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

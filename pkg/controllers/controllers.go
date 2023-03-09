@@ -22,6 +22,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/pkg/controllers/backup"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer"
+	"github.com/oceanbase/ob-operator/pkg/controllers/restore"
 	"github.com/oceanbase/ob-operator/pkg/controllers/statefulapp"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant"
 )
@@ -32,6 +33,7 @@ func init() {
 	controllerAddFuncs = append(controllerAddFuncs, statefulapp.Add)
 	controllerAddFuncs = append(controllerAddFuncs, observer.Add)
 	controllerAddFuncs = append(controllerAddFuncs, backup.Add)
+	controllerAddFuncs = append(controllerAddFuncs, restore.Add)
 	controllerAddFuncs = append(controllerAddFuncs, tenant.Add)
 }
 

@@ -211,7 +211,8 @@ func GenerateStorageSpec(obClusterSpec cloudv1.OBClusterSpec) []cloudv1.StorageT
 		storageTemplate.Name = storageSpec.Name
 		requestsResources := corev1.ResourceList{}
 		requestsResources["storage"] = storageSpec.Size
-		storageTemplate.PVC.StorageClassName = &(storageSpec.StorageClassName)
+		storageClassName := storageSpec.StorageClassName
+		storageTemplate.PVC.StorageClassName = &(storageClassName)
 		accessModes := make([]corev1.PersistentVolumeAccessMode, 0)
 		accessModes = append(accessModes, corev1.ReadWriteOnce)
 		storageTemplate.PVC.AccessModes = accessModes

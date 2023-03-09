@@ -19,7 +19,7 @@ import (
 
 // TenantSpec defines the desired state of Tenant
 type TenantSpec struct {
-	ClusterID   int             `json:"clusterID"`
+	ClusterID   int64           `json:"clusterID"`
 	ClusterName string          `json:"clusterName"`
 	Topology    []TenantReplica `json:"topology"`
 
