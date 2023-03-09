@@ -33,7 +33,7 @@ spec:
           - mountPath: /etc/grafana/provisioning/datasources
             name: grafana-datasources
             readOnly: false
-          - mountPath: /etc/grafana/provisioning/dashboards/sample
+          - mountPath: /etc/grafana/provisioning/dashboards
             name: grafana-providers
             readOnly: false
           - mountPath: /etc/grafana/provisioning/dashboards/template

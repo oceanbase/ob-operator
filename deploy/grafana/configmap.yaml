@@ -11,7 +11,7 @@ data:
             {
                "access":"proxy",
                 "editable": true,
-                "name": "prometheus",
+                "name": "ob-prometheus",
                 "orgId": 1,
                 "type": "prometheus",
                 "url": "http://svc-prometheus.obcluster.svc:8080",
@@ -35,7 +35,7 @@ data:
           type: file
           name: OceanBase Metrics
           options:
-            path: /etc/grafana/provisioning/dashboards/templates
+            path: /etc/grafana/provisioning/dashboards/template
     
 ---
 apiVersion: v1
