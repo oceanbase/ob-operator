@@ -34,35 +34,31 @@ spec:
         minIops: 1024 # 租户 IOPS 最少数量。取值范围为 [1024,+∞)。
         iopsWeight: 1
     - zone: zone2
-      unitNum: 1 # 指定要创建的单个 ZONE 下的单元个数，取值要小于单个 ZONE 中的 OBServer 个数。
+      unitNum: 1
       type: 
-        name: FUll # FULL READONLY LOGONLY , 需要写出完整类型, 大小写不敏感
-        replica: 1 # FULL 和 LOGONLY 类型只能设置1
-      priority: 3 # 可选，表示当前zone的优先级，数字越大优先级越高，没有填写的放在最后面
+        name: FULL 
+        replica: 1 
+      priority: 1 
       resource:
-        # 必填
-        maxCPU: 2500m # 租户可用最大 CPU 数。可以使用int，float类型需要写成 ***m
-        memorySize: 1Gi # 租户可用内存。string 类型，需要写单位
-        # 非必填
-        minCPU: 2 # 默认等于maxCPU。
-        logDiskSize: 2Gi # 租户可用最大磁盘空间。最小值 2Gi
-        maxIops: 1025 # 租户 IOPS 最多数量，取值范围为 [1024,+∞)。
-        minIops: 1025 # 租户 IOPS 最少数量。取值范围为 [1024,+∞)。
+        maxCPU: 2
+        memorySize: 2Gi 
+        minCPU: 2 
+        logDiskSize: 4Gi 
+        maxIops: 1025 
+        minIops: 1025 
         iopsWeight: 2
     - zone: zone3
-      unitNum: 1 # 指定要创建的单个 ZONE 下的单元个数，取值要小于单个 ZONE 中的 OBServer 个数。
+      unitNum: 1
       type: 
-        name: FULL # FULL READONLY LOGONLY , 需要写出完整类型, 大小写不敏感
-        replica: 1 # FULL 和 LOGONLY 类型只能设置1
-      priority: 1 # 可选，表示当前zone的优先级，数字越大优先级越高，没有填写的放在最后面
+        name: FULL 
+        replica: 1 
+      priority: 1 
       resource:
-        # 必填
-        maxCPU: 2 # 租户可用最大 CPU 数。可以使用int，float类型需要写成 ***m
-        memorySize: 1Gi # 租户可用内存。string 类型，需要写单位
-        # 非必填
-        minCPU: 2 # 默认等于maxCPU。
-        logDiskSize: 3Gi # 租户可用最大磁盘空间。最小值 2Gi
-        maxIops: 1025 # 租户 IOPS 最多数量，取值范围为 [1024,+∞)。
-        minIops: 1025 # 租户 IOPS 最少数量。取值范围为 [1024,+∞)。
+        maxCPU: 2
+        memorySize: 2Gi 
+        minCPU: 2 
+        logDiskSize: 4Gi 
+        maxIops: 1025 
+        minIops: 1025 
         iopsWeight: 2
    
