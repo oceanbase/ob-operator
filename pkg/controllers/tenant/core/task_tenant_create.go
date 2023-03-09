@@ -131,28 +131,30 @@ func (ctrl *TenantCtrl) CheckResourceEnough(zone v1.TenantReplica) error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) OBVersion3() (bool, error) {
+func (ctrl *TenantCtrl) GetOBVersion() (string, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return false, errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
+		return "", errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
 	}
 	version := sqlOperator.GetVersion()
 	if len(version) > 0 && len(version[0].Version) > 0 {
-		if string(version[0].Version[0]) == tenantconst.Version3 {
-			return true, nil
-		} else {
-			return false, nil
-		}
+		return version[0].Version, nil
 	}
-	return false, errors.Errorf("Tenant '%s' get ob version from db failed", ctrl.Tenant.Name)
+	return "", errors.Errorf("Tenant '%s' get ob version from db failed", ctrl.Tenant.Name)
 }
 
-func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit, v3 bool) error {
-	if v3 {
+func (ctrl *TenantCtrl) CreateUnit(unitName string, resourceUnit v1.ResourceUnit) error {
+	version, err := ctrl.GetOBVersion()
+	if err != nil {
+		return err
+	}
+	switch string(version[0]) {
+	case tenantconst.Version3:
 		return ctrl.CreateUnitV3(unitName, resourceUnit)
-	} else {
+	case tenantconst.Version4:
 		return ctrl.CreateUnitV4(unitName, resourceUnit)
 	}
+	return errors.New("no match version for create unit")
 }
 
 func (ctrl *TenantCtrl) CreateUnitV4(unitName string, resourceUnit v1.ResourceUnit) error {
@@ -218,7 +220,7 @@ func (ctrl *TenantCtrl) CreatePool(poolName, unitName string, zone v1.TenantRepl
 	return sqlOperator.CreatePool(poolName, unitName, zone)
 }
 
-func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica, v3 bool) error {
+func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica) error {
 	tenantName := ctrl.Tenant.Name
 	unitName := ctrl.GenerateUnitName(tenantName, zone.ZoneName)
 	poolName := ctrl.GeneratePoolName(tenantName, zone.ZoneName)
@@ -235,13 +237,17 @@ func (ctrl *TenantCtrl) CheckAndCreateUnitAndPool(zone v1.TenantReplica, v3 bool
 	}
 
 	if !unitExist {
-		if v3 {
+		version, err := ctrl.GetOBVersion()
+		if err != nil {
+			return err
+		}
+		if string(version[0]) == tenantconst.Version3 {
 			err := ctrl.CheckResourceEnough(zone)
 			if err != nil {
 				return err
 			}
 		}
-		err = ctrl.CreateUnit(unitName, zone.ResourceUnits, v3)
+		err = ctrl.CreateUnit(unitName, zone.ResourceUnits)
 		if err != nil {
 			klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
 			return err

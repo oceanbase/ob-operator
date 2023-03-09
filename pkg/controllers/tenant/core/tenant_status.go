@@ -15,6 +15,7 @@ package core
 import (
 	"context"
 	"fmt"
+	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"reflect"
 	"strconv"
 	"strings"
@@ -26,7 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
+func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string) error {
 	tenant := ctrl.Tenant
 	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
 	tenantTmp, err := tenantExecuter.Get(context.TODO(), tenant.Namespace, tenant.Name)
@@ -36,7 +37,7 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
 	tenantCurrent := tenantTmp.(cloudv1.Tenant)
 	tenantCurrentDeepCopy := tenantCurrent.DeepCopy()
 	ctrl.Tenant = *tenantCurrentDeepCopy
-	tenantNew, err := ctrl.BuildTenantStatus(*tenantCurrentDeepCopy, tenantStatus, v3)
+	tenantNew, err := ctrl.BuildTenantStatus(*tenantCurrentDeepCopy, tenantStatus)
 	if err != nil {
 		return err
 	}
@@ -51,9 +52,9 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string, v3 bool) error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus string, v3 bool) (cloudv1.Tenant, error) {
+func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus string) (cloudv1.Tenant, error) {
 	var tenantCurrentStatus cloudv1.TenantStatus
-	tenantTopology, err := ctrl.BuildTenantTopology(tenant, v3)
+	tenantTopology, err := ctrl.BuildTenantTopology(tenant)
 	if err != nil {
 		return tenant, err
 	}
@@ -70,7 +71,7 @@ func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus st
 	return tenant, nil
 }
 
-func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant, v3 bool) ([]cloudv1.TenantReplicaStatus, error) {
+func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.TenantReplicaStatus, error) {
 	var tenantTopologyStatusList []cloudv1.TenantReplicaStatus
 	var err error
 	var locality string
@@ -101,7 +102,7 @@ func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant, v3 bool) ([]c
 		tenantCurrentStatus.Type = typeMap[zone]
 		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
 		tenantCurrentStatus.Priority = priorityMap[zone]
-		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone, v3)
+		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone)
 		if err != nil {
 			return tenantTopologyStatusList, err
 		}
@@ -198,12 +199,19 @@ func (ctrl *TenantCtrl) GenerateStatusUnitNumMap(zones []cloudv1.TenantReplica) 
 	return unitNumMap, nil
 }
 
-func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string, v3 bool) (cloudv1.ResourceUnit, error) {
-	if v3 {
+func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUnit, error) {
+	var resourceUnit cloudv1.ResourceUnit
+	version, err := ctrl.GetOBVersion()
+	if err != nil {
+		return resourceUnit, err
+	}
+	switch string(version[0]) {
+	case tenantconst.Version3:
 		return ctrl.BuildResourceUnitV3FromDB(zone)
-	} else {
+	case tenantconst.Version4:
 		return ctrl.BuildResourceUnitV4FromDB(zone)
 	}
+	return resourceUnit, errors.New("no match version for build resource unit from db")
 }
 
 func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.ResourceUnit, error) {
