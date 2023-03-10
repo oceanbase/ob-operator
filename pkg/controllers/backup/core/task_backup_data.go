@@ -137,7 +137,7 @@ func (ctrl *BackupCtrl) setBackupLogArchive() error {
 	return sqlOperator.StartArchieveLog()
 }
 
-func (ctrl *BackupCtrl) CheckAndGetBackupDatabasePassword() (string, error) {
+func (ctrl *BackupCtrl) GetBackupDatabasePasswordSQL() (string, error) {
 	secretName := ctrl.Backup.Spec.Secret
 	secret, err := ctrl.GetSecret(secretName)
 	if err != nil {
@@ -151,7 +151,7 @@ func (ctrl *BackupCtrl) CheckAndGetBackupDatabasePassword() (string, error) {
 	return "", nil
 }
 
-func (ctrl *BackupCtrl) CheckAndGetBackupIncrementalPassword() (string, error) {
+func (ctrl *BackupCtrl) GetBackupIncrementalPasswordSQL() (string, error) {
 	secretName := ctrl.Backup.Spec.Secret
 	secret, err := ctrl.GetSecret(secretName)
 	if err != nil {
@@ -168,7 +168,7 @@ func (ctrl *BackupCtrl) CheckAndGetBackupIncrementalPassword() (string, error) {
 func (ctrl *BackupCtrl) StartBackupDatabase() error {
 	klog.Infoln("begin backup database ")
 	SQLs := make([]string, 0)
-	pwdSQL, err := ctrl.CheckAndGetBackupDatabasePassword()
+	pwdSQL, err := ctrl.GetBackupDatabasePasswordSQL()
 	if err != nil {
 		klog.Errorln("DoBackup: get backup database password err ", err)
 		return err
@@ -187,7 +187,7 @@ func (ctrl *BackupCtrl) StartBackupDatabase() error {
 func (ctrl *BackupCtrl) StartBackupIncremental() error {
 	klog.Infoln("begin backup database incremental")
 	SQLs := make([]string, 0)
-	pwdSQL, err := ctrl.CheckAndGetBackupDatabasePassword()
+	pwdSQL, err := ctrl.GetBackupIncrementalPasswordSQL()
 	if err != nil {
 		klog.Errorln("DoBackup: get backup incremental password err ", err)
 		return err
