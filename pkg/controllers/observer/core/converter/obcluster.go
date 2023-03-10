@@ -52,3 +52,11 @@ func BackupListToBackups(backups cloudv1.BackupList) []cloudv1.Backup {
 	}
 	return res
 }
+
+func RestoreListToRestores(restores cloudv1.RestoreList) []cloudv1.Restore {
+	res := make([]cloudv1.Restore, 0)
+	if len(restores.Items) > 0 {
+		res = restores.Items
+	}
+	return res
+}
