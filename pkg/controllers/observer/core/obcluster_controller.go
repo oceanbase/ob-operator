@@ -101,7 +101,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return reconcile.Result{}, err
 	}
 
-	// handle delete tenant cr
+	// handle delete tenant/backup cr
 	obclusterFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
 	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !util.ContainsString(instance.ObjectMeta.Finalizers, obclusterFinalizerName) {
@@ -179,8 +179,8 @@ func (r *OBClusterReconciler) DeleteBackupCR(clientClient client.Client, recorde
 	if len(backups) == 0 {
 		return nil
 	}
-	for _, tenant := range backups {
-		err := backupExecuter.Delete(context.TODO(), tenant)
+	for _, backup := range backups {
+		err := backupExecuter.Delete(context.TODO(), backup)
 		if err != nil {
 			return err
 		}

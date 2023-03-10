@@ -140,10 +140,17 @@ func (r *BackupReconciler) BackupDelete(ctx context.Context, client client.Clien
 		}
 		return err
 	}
-	err = ctrl.CancelArchiveLog()
+	isArchivelogStop, err := ctrl.IsArchivelogStop()
 	if err != nil {
-		klog.Errorf("cancel archivelog failed, error '%s'", err)
+		klog.Errorf("check archivelog stop, error '%s'", err)
 		return err
+	}
+	if !isArchivelogStop {
+		err = ctrl.CancelArchiveLog()
+		if err != nil {
+			klog.Errorf("cancel archivelog failed, error '%s'", err)
+			return err
+		}
 	}
 	return nil
 }
@@ -208,12 +215,27 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		return err
 	}
 
-	err, isArchivelogDoing := ctrl.isArchivelogDoing()
+	archiveLogStatus, err := ctrl.GetArchivelogStatus()
 	if err != nil {
-		klog.Errorln("DoBackup: check whether Archivelog is doing err ", err)
+		klog.Errorln("DoBackup: get Archivelog status err ", err)
 		return err
 	}
-	if !isArchivelogDoing {
+	switch archiveLogStatus {
+	case backupconst.ArchiveLogInterrupted:
+		klog.Errorln("archivelog status is interrupted")
+		return errors.New("archivelog status is interrupted")
+	case backupconst.ArchiveLogDoing:
+		break
+	case backupconst.ArchiveLogPrepare, backupconst.ArchiveLogBeginning:
+		err = ctrl.WaitArchivelogDoing()
+		if err != nil {
+			klog.Errorln("wait backup logArchive doing err ", err)
+			return err
+		}
+	case backupconst.ArchiveLogStopping:
+		klog.Infoln("archivelog status is stopping")
+		return nil
+	case backupconst.ArchiveLogStop:
 		err = ctrl.setBackupLogArchiveOption()
 		if err != nil {
 			klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
@@ -229,6 +251,7 @@ func (ctrl *BackupCtrl) DoBackup() error {
 			klog.Errorln("wait backup logArchive doing err ", err)
 			return err
 		}
+
 	}
 
 	for _, schedule := range ctrl.Backup.Spec.Schedule {

@@ -75,6 +75,15 @@ func (r *BackupResource) UpdateStatus(ctx context.Context, obj interface{}) erro
 }
 
 func (r *BackupResource) Delete(ctx context.Context, obj interface{}) error {
+	backup := obj.(cloudv1.Backup)
+	err := r.Client.Delete(ctx, &backup)
+	if err != nil {
+		r.Recorder.Eventf(&backup, corev1.EventTypeWarning, FailedToDeleteBackup, "delete backup "+backup.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(backup.Kind, backup.Name, "delete", "succeed")
+	r.Recorder.Event(&backup, corev1.EventTypeNormal, DeletedBackup, "delete backup "+backup.Name)
 	return nil
 }
 
