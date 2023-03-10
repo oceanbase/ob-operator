@@ -201,8 +201,8 @@ func (r *OBClusterReconciler) DeleteRestoreCR(clientClient client.Client, record
 	if len(restores) == 0 {
 		return nil
 	}
-	for _, tenant := range restores {
-		err := restoreExecuter.Delete(context.TODO(), tenant)
+	for _, restore := range restores {
+		err := restoreExecuter.Delete(context.TODO(), restore)
 		if err != nil {
 			return err
 		}
