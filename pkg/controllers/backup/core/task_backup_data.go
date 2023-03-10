@@ -21,6 +21,7 @@ import (
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/backup/model"
+	"github.com/oceanbase/ob-operator/pkg/controllers/backup/sql"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -136,68 +137,70 @@ func (ctrl *BackupCtrl) setBackupLogArchive() error {
 	return sqlOperator.StartArchieveLog()
 }
 
-func (ctrl *BackupCtrl) CheckAndSetBackupDatabasePassword() error {
+func (ctrl *BackupCtrl) CheckAndGetBackupDatabasePassword() (string, error) {
 	secretName := ctrl.Backup.Spec.Secret
 	secret, err := ctrl.GetSecret(secretName)
 	if err != nil {
 		klog.Errorf("get secret '%s' error '%s'", secretName, err)
-		return err
-	}
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when trying to set backup database password")
+		return "", err
 	}
 	if secret.FullSecret != "" {
-		klog.Infoln("begin set backup database password ")
-		return sqlOperator.SetBackupPassword(secret.FullSecret)
+		klog.Infoln("need set backup database password ")
+		return sql.ReplaceAll(sql.SetBackupPasswordTemplate, sql.SetBackupPasswordReplacer(secret.FullSecret)), nil
 	}
-	return nil
+	return "", nil
 }
 
-func (ctrl *BackupCtrl) CheckAndSetBackupIncrementalPassword() error {
+func (ctrl *BackupCtrl) CheckAndGetBackupIncrementalPassword() (string, error) {
 	secretName := ctrl.Backup.Spec.Secret
 	secret, err := ctrl.GetSecret(secretName)
 	if err != nil {
 		klog.Errorf("get secret '%s' error '%s'", secretName, err)
-		return err
-	}
-	sqlOperator, err := ctrl.GetSqlOperator()
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when trying to set backup incremental password")
+		return "", err
 	}
 	if secret.IncrementalSecret != "" {
 		klog.Infoln("begin set backup incremental password ")
-		return sqlOperator.SetBackupPassword(secret.IncrementalSecret)
+		return sql.ReplaceAll(sql.SetBackupPasswordTemplate, sql.SetBackupPasswordReplacer(secret.IncrementalSecret)), nil
 	}
-	return nil
+	return "", nil
 }
 
 func (ctrl *BackupCtrl) StartBackupDatabase() error {
-	err := ctrl.CheckAndSetBackupDatabasePassword()
+	klog.Infoln("begin backup database ")
+	SQLs := make([]string, 0)
+	pwdSQL, err := ctrl.CheckAndGetBackupDatabasePassword()
 	if err != nil {
-		klog.Errorln("DoBackup: set Backup Database Password err ", err)
+		klog.Errorln("DoBackup: get backup database password err ", err)
 		return err
 	}
-	klog.Infoln("begin backup database ")
+	if pwdSQL != "" {
+		SQLs = append(SQLs, pwdSQL)
+	}
+	SQLs = append(SQLs, sql.StartBackupDatabaseSql)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to begin backup database ")
 	}
-	return sqlOperator.StartBackupDatabase()
+	return sqlOperator.ExecSQLs(SQLs)
 }
 
 func (ctrl *BackupCtrl) StartBackupIncremental() error {
-	err := ctrl.CheckAndSetBackupIncrementalPassword()
+	klog.Infoln("begin backup database incremental")
+	SQLs := make([]string, 0)
+	pwdSQL, err := ctrl.CheckAndGetBackupDatabasePassword()
 	if err != nil {
-		klog.Errorln("DoBackup: set Backup Incremental Password err ", err)
+		klog.Errorln("DoBackup: get backup incremental password err ", err)
 		return err
 	}
-	klog.Infoln("begin backup database incremental")
+	if pwdSQL != "" {
+		SQLs = append(SQLs, pwdSQL)
+	}
+	SQLs = append(SQLs, sql.StartBackupIncrementalSql)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to begin backup database incremental")
 	}
-	return sqlOperator.StartBackupIncremental()
+	return sqlOperator.ExecSQLs(SQLs)
 }
 
 func (ctrl *BackupCtrl) isBackupDestSet() (error, bool) {
