@@ -38,8 +38,12 @@ const (
 )
 
 const (
-	ArchiveLogBeginning = "BEGINNING"
-	ArchiveLogDoing     = "DOING"
+	ArchiveLogBeginning   = "BEGINNING"
+	ArchiveLogDoing       = "DOING"
+	ArchiveLogStopping    = "STOPPING"
+	ArchiveLogStop        = "STOP"
+	ArchiveLogInterrupted = "INTERRUPTED"
+	ArchiveLogPrepare     = "PREPARE"
 )
 
 const (

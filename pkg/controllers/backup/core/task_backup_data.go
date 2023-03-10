@@ -214,19 +214,32 @@ func (ctrl *BackupCtrl) isBackupDestSet() (error, bool) {
 	return nil, true
 }
 
-func (ctrl *BackupCtrl) isArchivelogDoing() (error, bool) {
+func (ctrl *BackupCtrl) GetArchivelogStatus() (string, error) {
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, "get sql operator when checking whether archive log is doing"), false
+		return "", errors.Wrap(err, "get sql operator when checking whether archive log is doing")
 	}
-	statusList := sqlOperator.GetArchieveLogStatus()
+	statusList := sqlOperator.GetArchiveLogStatus()
 	for _, status := range statusList {
 		if status.Status != backupconst.ArchiveLogDoing {
-			return nil, false
+			return status.Status, nil
 		}
-
 	}
-	return nil, true
+	return backupconst.ArchiveLogDoing, nil
+}
+
+func (ctrl *BackupCtrl) IsArchivelogStop() (bool, error) {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return false, errors.Wrap(err, "get sql operator when checking whether archive log is doing")
+	}
+	statusList := sqlOperator.GetArchiveLogStatus()
+	for _, status := range statusList {
+		if status.Status != backupconst.ArchiveLogStopping && status.Status != backupconst.ArchiveLogStop {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (ctrl *BackupCtrl) isBackupDoing() (error, bool) {
@@ -283,8 +296,8 @@ func (ctrl *BackupCtrl) TickerCheckArchivelogDoing() error {
 				return errors.New("wait for logarchive doing timeout")
 			}
 			num = num + 1
-			err, res := ctrl.isArchivelogDoing()
-			if res {
+			status, err := ctrl.GetArchivelogStatus()
+			if status == backupconst.ArchiveLogDoing {
 				return err
 			}
 		}

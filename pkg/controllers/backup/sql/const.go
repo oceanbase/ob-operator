@@ -29,9 +29,9 @@ const (
 	SetParameterTemplate      = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 	SetBackupPasswordTemplate = "SET ENCRYPTION ON IDENTIFIED BY '${pwd}' ONLY"
 
-	StartArchieveLogSql     = "ALTER SYSTEM ARCHIVELOG"
-	StopArchieveLogSql      = "ALTER SYSTEM NOARCHIVELOG"
-	GetArchieveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
+	StartArchiveLogSql     = "ALTER SYSTEM ARCHIVELOG"
+	StopArchiveLogSql      = "ALTER SYSTEM NOARCHIVELOG"
+	GetArchiveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
 
 	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
 	StartBackupIncrementalSql = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"

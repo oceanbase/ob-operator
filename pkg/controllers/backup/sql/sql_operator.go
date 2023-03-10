@@ -89,12 +89,12 @@ func (op *SqlOperator) SetBackupPassword(pwd string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) GetArchieveLogStatus() []model.BackupArchiveLogStatus {
+func (op *SqlOperator) GetArchiveLogStatus() []model.BackupArchiveLogStatus {
 	res := make([]model.BackupArchiveLogStatus, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.BackupArchiveLogStatus{}).Raw(GetArchieveLogStatusSql).Rows()
+		rows, err := client.Model(&model.BackupArchiveLogStatus{}).Raw(GetArchiveLogStatusSql).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.BackupArchiveLogStatus
@@ -233,7 +233,7 @@ func (op *SqlOperator) GetBackupIncrementalJob(name string) []model.AllBackupSet
 }
 
 func (op *SqlOperator) StartArchieveLog() error {
-	return op.ExecSQL(StartArchieveLogSql)
+	return op.ExecSQL(StartArchiveLogSql)
 }
 
 func (op *SqlOperator) StartBackupDatabase() error {
@@ -245,5 +245,5 @@ func (op *SqlOperator) StartBackupIncremental() error {
 }
 
 func (op *SqlOperator) StopArchiveLog() error {
-	return op.ExecSQL(StopArchieveLogSql)
+	return op.ExecSQL(StopArchiveLogSql)
 }
