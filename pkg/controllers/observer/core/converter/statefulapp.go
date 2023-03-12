@@ -81,17 +81,16 @@ func GenerateObContainer(obClusterSpec cloudv1.OBClusterSpec) corev1.Container {
 	volumeMountLog := corev1.VolumeMount{}
 	volumeMountLog.Name = observerconst.LogStorageName
 	volumeMountLog.MountPath = observerconst.LogStoragePath
-	volumeMountBackup := corev1.VolumeMount{}
-	volumeMountBackup.Name = observerconst.BackupName
-	volumeMountBackup.MountPath = observerconst.BackupPath
 
 	volumeMounts := make([]corev1.VolumeMount, 0)
 	volumeMounts = append(volumeMounts, volumeMountDataFile)
 	volumeMounts = append(volumeMounts, volumeMountDataLog)
 	volumeMounts = append(volumeMounts, volumeMountLog)
 
-	backupVolumeSpec := obClusterSpec.Resources.Volume
-	if backupVolumeSpec.Name != "" {
+	if obClusterSpec.Resources.Volume != nil {
+		volumeMountBackup := corev1.VolumeMount{}
+		volumeMountBackup.Name = obClusterSpec.Resources.Volume.Name
+		volumeMountBackup.MountPath = observerconst.BackupPath
 		volumeMounts = append(volumeMounts, volumeMountBackup)
 	}
 	readinessProbeHTTP := corev1.HTTPGetAction{}
@@ -183,18 +182,8 @@ func GeneratePodSpec(obClusterSpec cloudv1.OBClusterSpec) corev1.PodSpec {
 	volumes = append(volumes, volumeLog)
 	volumes = append(volumes, volumeObagentConfFile)
 
-	backupVolumeSpec := obClusterSpec.Resources.Volume
-	if backupVolumeSpec.Name != "" {
-		backupHostPathType := corev1.HostPathType(corev1.HostPathDirectory)
-		backupHostPath := corev1.HostPathVolumeSource{
-			Path: backupVolumeSpec.Path,
-			Type: &backupHostPathType,
-		}
-		backupVolume := corev1.Volume{
-			Name: backupVolumeSpec.Name,
-		}
-		backupVolume.HostPath = &backupHostPath
-		volumes = append(volumes, backupVolume)
+	if obClusterSpec.Resources.Volume != nil {
+		volumes = append(volumes, *obClusterSpec.Resources.Volume)
 	}
 
 	podSpec := corev1.PodSpec{

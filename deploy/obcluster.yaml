@@ -47,4 +47,7 @@ spec:
         size: 1Gi
     volume:
         name: backup
-        path: /root/data/nfs
+        nfs:
+          server: 11.124.9.57
+          path: /opt/nfs
+          readOnly: false
