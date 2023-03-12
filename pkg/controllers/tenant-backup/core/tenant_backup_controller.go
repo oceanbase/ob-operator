@@ -93,7 +93,7 @@ func (r *TenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
 		return reconcile.Result{}, nil
 	}
-	// Handle deleted tenant
+	// Handle deleted tenant backup
 	tenantBackupFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
 	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !util.ContainsString(instance.ObjectMeta.Finalizers, tenantBackupFinalizerName) {
