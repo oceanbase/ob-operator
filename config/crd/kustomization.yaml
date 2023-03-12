@@ -7,6 +7,7 @@ resources:
 - bases/cloud.oceanbase.com_rootservices.yaml
 - bases/cloud.oceanbase.com_obzones.yaml
 - bases/cloud.oceanbase.com_backups.yaml
+- bases/cloud.oceanbase.com_tenantbackups.yaml
 - bases/cloud.oceanbase.com_restores.yaml
 - bases/cloud.oceanbase.com_tenants.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
@@ -19,6 +20,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_rootservices.yaml
 #- patches/webhook_in_obzones.yaml
 #- patches/webhook_in_backups.yaml
+#- patches/webhook_in_tenantbackups.yaml
 #- patches/webhook_in_restores.yaml
 #- patches/webhook_in_tenants.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
@@ -30,6 +32,7 @@ patchesStrategicMerge:
 #- patches/cainjection_in_rootservices.yaml
 #- patches/cainjection_in_obzones.yaml
 #- patches/cainjection_in_backups.yaml
+#- patches/cainjection_in_tenantbackups.yaml
 #- patches/cainjection_in_restores.yaml
 #- patches/cainjection_in_tenants.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch

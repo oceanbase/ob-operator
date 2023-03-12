@@ -70,6 +70,9 @@ type OBClusterCtrlOperator interface {
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups/finalizers,verbs=update
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/finalizers,verbs=update

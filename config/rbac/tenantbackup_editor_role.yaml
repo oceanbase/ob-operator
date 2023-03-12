@@ -1,0 +1,24 @@
+# permissions for end users to edit tenantbackups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tenantbackup-editor-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups/status
+  verbs:
+  - get
