@@ -123,6 +123,10 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			if err != nil {
 				return ctrl.Result{}, err
 			}
+			err = r.DeleteRestoreCR(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
 			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, obclusterFinalizerName)
 			if err := r.CRClient.Update(context.Background(), instance); err != nil {
 				return ctrl.Result{}, err
@@ -180,6 +184,28 @@ func (r *OBClusterReconciler) DeleteBackupCR(clientClient client.Client, recorde
 	}
 	for _, backup := range backups {
 		err := backupExecuter.Delete(context.TODO(), backup)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *OBClusterReconciler) DeleteRestoreCR(clientClient client.Client, recorder record.EventRecorder, obCluster *cloudv1.OBCluster) error {
+	ctrlResource := resource.NewResource(clientClient, recorder)
+	ctrl := &OBClusterCtrl{
+		Resource:  ctrlResource,
+		OBCluster: *obCluster,
+	}
+	restoreExecuter := resource.NewRestoreResource(ctrl.Resource)
+	listOption := client.MatchingLabels{}
+	restoreList := restoreExecuter.List(context.TODO(), obCluster.Namespace, listOption)
+	restores := converter.RestoreListToRestores(restoreList.(cloudv1.RestoreList))
+	if len(restores) == 0 {
+		return nil
+	}
+	for _, restore := range restores {
+		err := restoreExecuter.Delete(context.TODO(), restore)
 		if err != nil {
 			return err
 		}

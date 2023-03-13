@@ -78,5 +78,14 @@ func (r *RestoreResource) UpdateStatus(ctx context.Context, obj interface{}) err
 }
 
 func (r *RestoreResource) Delete(ctx context.Context, obj interface{}) error {
+	Restore := obj.(cloudv1.Restore)
+	err := r.Client.Delete(ctx, &Restore)
+	if err != nil {
+		r.Recorder.Eventf(&Restore, corev1.EventTypeWarning, FailedToDeleteRestore, "delete Restore"+Restore.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(Restore.Kind, Restore.Name, "delete", "succeed")
+	r.Recorder.Event(&Restore, corev1.EventTypeNormal, DeletedRestore, "delete Restore"+Restore.Name)
 	return nil
 }

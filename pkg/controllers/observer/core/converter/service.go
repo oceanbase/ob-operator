@@ -43,7 +43,7 @@ func GenerateServiceSpec(statefulAppName string) corev1.ServiceSpec {
 	var res corev1.ServiceSpec
 	res.Ports = ports
 	res.Selector = selector
-	res.Type = corev1.ServiceTypeNodePort
+	res.Type = corev1.ServiceTypeClusterIP
 	return res
 }
 
