@@ -10,24 +10,27 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package restoreconst
+package tenantBackup
 
-const (
-	RestoreConcurrencyDefault = 10
-	RestoreConcurrencyZero    = 0
-	RestoreConcurrency        = "restore_concurrency"
-
-	Locality    = "locality"
-	PrimaryZone = "primary_zone"
-	KmsEncrypt  = "kms_encrypt"
-
-	ResourceUnitName = "unit_restore"
-	ResourcePoolName = "pool_restore"
+import (
+	"sigs.k8s.io/controller-runtime/pkg/event"
 )
 
-const (
-	RestorePending = "RESTORE_PENDING"
-	RestoreRunning = "RESTORE_RUNNING"
-	RestoreSuccess = "RESTORE_SUCCESS"
-	RestoreFail    = "RESTORE_FAIL"
-)
+type tenantBackupPredicate struct {
+}
+
+func (p tenantBackupPredicate) Create(e event.CreateEvent) bool {
+	return true
+}
+
+func (p tenantBackupPredicate) Delete(e event.DeleteEvent) bool {
+	return true
+}
+
+func (p tenantBackupPredicate) Update(e event.UpdateEvent) bool {
+	return true
+}
+
+func (p tenantBackupPredicate) Generic(e event.GenericEvent) bool {
+	return true
+}

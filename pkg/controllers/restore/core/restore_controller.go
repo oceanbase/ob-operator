@@ -99,7 +99,7 @@ func (ctrl *RestoreCtrl) RestoreEffector() error {
 		klog.Infoln("no restore task, create restore task")
 		return ctrl.CreateRestoreTask()
 	} else {
-		return ctrl.UpdateRestoreStatus()
+		return ctrl.UpdateRestoreStatusFromDB()
 	}
 }
 
@@ -136,7 +136,15 @@ func (ctrl *RestoreCtrl) CreateRestoreTask() error {
 		klog.Errorln(err, "fail to trigger restore")
 		return errors.Wrap(err, "trigger restore")
 	}
-	return ctrl.UpdateRestoreStatus()
+	err = ctrl.UpdateRestoreStatusFromDB()
+	if err != nil {
+		klog.Errorln(err, "update restore status failed, set status to init")
+		initRestoreStatus := &cloudv1.RestoreStatus{
+			Status: restoreconst.RestorePending,
+		}
+		return ctrl.UpdateRestoreStatus(initRestoreStatus)
+	}
+	return nil
 }
 
 func (ctrl *RestoreCtrl) GetSqlOperator() (*sql.SqlOperator, error) {

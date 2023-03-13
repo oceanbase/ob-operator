@@ -10,24 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package restoreconst
+package tenantBackupconst
 
+// controller
 const (
-	RestoreConcurrencyDefault = 10
-	RestoreConcurrencyZero    = 0
-	RestoreConcurrency        = "restore_concurrency"
-
-	Locality    = "locality"
-	PrimaryZone = "primary_zone"
-	KmsEncrypt  = "kms_encrypt"
-
-	ResourceUnitName = "unit_restore"
-	ResourcePoolName = "pool_restore"
-)
-
-const (
-	RestorePending = "RESTORE_PENDING"
-	RestoreRunning = "RESTORE_RUNNING"
-	RestoreSuccess = "RESTORE_SUCCESS"
-	RestoreFail    = "RESTORE_FAIL"
+	ControllerName       = "tenant-backup-controller"
+	ConcurrentReconciles = 1
 )
