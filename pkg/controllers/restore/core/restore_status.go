@@ -23,7 +23,15 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
 )
 
-func (ctrl *RestoreCtrl) UpdateRestoreStatus() error {
+func (ctrl *RestoreCtrl) UpdateRestoreStatusFromDB() error {
+	restoreStatus, err := ctrl.getRestoreStatusFromDB()
+	if err != nil {
+		return errors.Wrap(err, "get restore status from OB")
+	}
+	return ctrl.UpdateRestoreStatus(restoreStatus)
+}
+
+func (ctrl *RestoreCtrl) UpdateRestoreStatus(restoreStatus *cloudv1.RestoreStatus) error {
 	restoreExecuter := resource.NewRestoreResource(ctrl.Resource)
 	restoreTmp, err := restoreExecuter.Get(context.TODO(), ctrl.Restore.Namespace, ctrl.Restore.Name)
 	if err != nil {
@@ -31,11 +39,7 @@ func (ctrl *RestoreCtrl) UpdateRestoreStatus() error {
 	}
 	restoreCurrent := restoreTmp.(cloudv1.Restore)
 	restoreCurrentDeepCopy := restoreCurrent.DeepCopy()
-	restoreCurrentStatus, err := ctrl.getRestoreStatusFromDB()
-	if err != nil {
-		return errors.Wrap(err, "get restore status from OB")
-	}
-	restoreCurrentDeepCopy.Status = *restoreCurrentStatus
+	restoreCurrentDeepCopy.Status = *restoreStatus
 	ctrl.Restore = *restoreCurrentDeepCopy
 	if !reflect.DeepEqual(restoreCurrent.Status, ctrl.Restore.Status) {
 		err = restoreExecuter.UpdateStatus(context.TODO(), ctrl.Restore)

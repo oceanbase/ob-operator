@@ -25,11 +25,9 @@ const (
 	ResourcePoolName = "pool_restore"
 )
 
-type RestoreStatus string
-
 const (
-	RestorePending RestoreStatus = "RESTORE_PENDING"
-	RestoreRunning               = "RESTORE_RUNNING"
-	RestoreSuccess               = "RESTORE_SUCCESS"
-	RestoreFail                  = "RESTORE_FAIL"
+	RestorePending = "RESTORE_PENDING"
+	RestoreRunning = "RESTORE_RUNNING"
+	RestoreSuccess = "RESTORE_SUCCESS"
+	RestoreFail    = "RESTORE_FAIL"
 )

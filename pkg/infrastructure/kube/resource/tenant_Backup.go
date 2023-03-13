@@ -76,3 +76,7 @@ func (r *TenantBackupResource) Delete(ctx context.Context, obj interface{}) erro
 func (r *TenantBackupResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }
+
+func (r *TenantBackupResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
