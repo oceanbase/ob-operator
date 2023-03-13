@@ -48,6 +48,6 @@ spec:
     volume:
         name: backup
         nfs:
-          server: 11.124.9.57
+          server: ${nfs_server_address}
           path: /opt/nfs
           readOnly: false

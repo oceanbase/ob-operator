@@ -552,7 +552,7 @@ spec:
         - --cluster-name=cn
         command:
         - /manager
-        image: oceanbasedev/ob-operator:1.2.0-snapshot-volume
+        image: oceanbasedev/ob-operator:1.2.0-snapshot
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
