@@ -464,6 +464,10 @@ func GenerateSpecResourceUnitV3Map(spec v1.TenantSpec) map[string]model.Resource
 		resourceUnit.MaxCPU = zone.ResourceUnits.MaxCPU
 		resourceUnit.MinCPU = zone.ResourceUnits.MinCPU
 		resourceUnit.MemorySize = zone.ResourceUnits.MemorySize
+		resourceUnit.MaxIops = zone.ResourceUnits.MaxIops
+		resourceUnit.MinIops = zone.ResourceUnits.MinIops
+		resourceUnit.MaxSessionNum = zone.ResourceUnits.MaxSessionNum
+		resourceUnit.MaxDiskSize = zone.ResourceUnits.MaxDiskSize
 		if zone.ResourceUnits.MaxIops == 0 {
 			resourceUnit.MaxIops = tenantconst.MaxIops
 		}
