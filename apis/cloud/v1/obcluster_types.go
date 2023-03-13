@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,12 +44,7 @@ type ResourcesSpec struct {
 	CPU     resource.Quantity `json:"cpu"`
 	Memory  resource.Quantity `json:"memory"`
 	Storage []StorageSpec     `json:"storage"`
-	Volume  VolumeSpec        `json:"volume,omitempty"`
-}
-
-type VolumeSpec struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Volume  *corev1.Volume    `json:"volume,omitempty"`
 }
 
 type StorageSpec struct {
