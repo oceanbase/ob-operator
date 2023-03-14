@@ -106,7 +106,7 @@ func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.Te
 		if err != nil {
 			return tenantTopologyStatusList, err
 		}
-		tenantCurrentStatus.UnitConfigs, err = ctrl.BuildUnitFromDB(zone)
+		tenantCurrentStatus.UnitConfigs, err = ctrl.BuildUnitFromDB(zone, tenantID)
 		if err != nil {
 			return tenantTopologyStatusList, err
 		}
@@ -284,25 +284,34 @@ func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string, tenantID int64) (
 	return resourceUnit, nil
 }
 
-func (ctrl *TenantCtrl) BuildUnitFromDB(zone string) ([]cloudv1.Unit, error) {
+func (ctrl *TenantCtrl) BuildUnitFromDB(zone string, tenantID int64) ([]cloudv1.Unit, error) {
 	var unitList []cloudv1.Unit
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
+	poolList := sqlOperator.GetPoolList()
+	var resourcePoolIDList []int64
+	for _, pool := range poolList {
+		if pool.TenantID == tenantID {
+			resourcePoolIDList = append(resourcePoolIDList, pool.ResourcePoolID)
+		}
+	}
 	units := sqlOperator.GetUnitList()
 	for _, unit := range units {
-		if unit.Zone == zone {
-			var res cloudv1.Unit
-			res.UnitId = int(unit.UnitID)
-			res.ServerIP = unit.SvrIP
-			res.ServerPort = int(unit.SvrPort)
-			res.Status = unit.Status
-			var migrateServer cloudv1.MigrateServer
-			migrateServer.ServerIP = unit.MigrateFromSvrIP
-			migrateServer.ServerPort = int(unit.MigrateFromSvrPort)
-			res.Migrate = migrateServer
-			unitList = append(unitList, res)
+		for _, poolId := range resourcePoolIDList {
+			if unit.Zone == zone && poolId == unit.ResourcePoolID {
+				var res cloudv1.Unit
+				res.UnitId = int(unit.UnitID)
+				res.ServerIP = unit.SvrIP
+				res.ServerPort = int(unit.SvrPort)
+				res.Status = unit.Status
+				var migrateServer cloudv1.MigrateServer
+				migrateServer.ServerIP = unit.MigrateFromSvrIP
+				migrateServer.ServerPort = int(unit.MigrateFromSvrPort)
+				res.Migrate = migrateServer
+				unitList = append(unitList, res)
+			}
 		}
 	}
 	return unitList, nil
