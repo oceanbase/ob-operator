@@ -231,7 +231,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string, tenantID int64) (
 	}
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
-			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == int64(tenantID) {
+			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == tenantID {
 				for _, unitConifg := range unitConfigList {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
@@ -266,7 +266,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string, tenantID int64) (
 	}
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
-			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == int64(tenantID) {
+			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == tenantID {
 				for _, unitConifg := range unitConfigList {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
