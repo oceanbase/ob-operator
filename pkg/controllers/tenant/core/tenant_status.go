@@ -102,7 +102,7 @@ func (ctrl *TenantCtrl) BuildTenantTopology(tenant cloudv1.Tenant) ([]cloudv1.Te
 		tenantCurrentStatus.Type = typeMap[zone]
 		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
 		tenantCurrentStatus.Priority = priorityMap[zone]
-		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone)
+		tenantCurrentStatus.ResourceUnits, err = ctrl.BuildResourceUnitFromDB(zone, tenantID)
 		if err != nil {
 			return tenantTopologyStatusList, err
 		}
@@ -199,7 +199,7 @@ func (ctrl *TenantCtrl) GenerateStatusUnitNumMap(zones []cloudv1.TenantReplica) 
 	return unitNumMap, nil
 }
 
-func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUnit, error) {
+func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string, tenantID int64) (cloudv1.ResourceUnit, error) {
 	var resourceUnit cloudv1.ResourceUnit
 	version, err := ctrl.GetOBVersion()
 	if err != nil {
@@ -207,14 +207,14 @@ func (ctrl *TenantCtrl) BuildResourceUnitFromDB(zone string) (cloudv1.ResourceUn
 	}
 	switch string(version[0]) {
 	case tenantconst.Version3:
-		return ctrl.BuildResourceUnitV3FromDB(zone)
+		return ctrl.BuildResourceUnitV3FromDB(zone, tenantID)
 	case tenantconst.Version4:
-		return ctrl.BuildResourceUnitV4FromDB(zone)
+		return ctrl.BuildResourceUnitV4FromDB(zone, tenantID)
 	}
 	return resourceUnit, errors.New("no match version for build resource unit from db")
 }
 
-func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.ResourceUnit, error) {
+func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string, tenantID int64) (cloudv1.ResourceUnit, error) {
 	var resourceUnit cloudv1.ResourceUnit
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -231,7 +231,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.Resource
 	}
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
-			if resourcePoolID == int(pool.ResourcePoolID) {
+			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == int64(tenantID) {
 				for _, unitConifg := range unitConfigList {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
@@ -249,7 +249,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV3FromDB(zone string) (cloudv1.Resource
 	return resourceUnit, nil
 }
 
-func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string) (cloudv1.ResourceUnit, error) {
+func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string, tenantID int64) (cloudv1.ResourceUnit, error) {
 	var resourceUnit cloudv1.ResourceUnit
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
@@ -266,7 +266,7 @@ func (ctrl *TenantCtrl) BuildResourceUnitV4FromDB(zone string) (cloudv1.Resource
 	}
 	for _, pool := range poolList {
 		for _, resourcePoolID := range resourcePoolIDList {
-			if resourcePoolID == int(pool.ResourcePoolID) {
+			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == int64(tenantID) {
 				for _, unitConifg := range unitConfigList {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
 						resourceUnit.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
