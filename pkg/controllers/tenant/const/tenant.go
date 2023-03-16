@@ -28,19 +28,21 @@ const (
 	TypeFull     = "FULL"
 	TypeReadonly = "READONLY"
 	TypeLogonly  = "LOGONLY"
-	// TypeF        = "F"
-	// TypeR        = "R"
-	// TypeL        = "L"
 )
 
 const (
-	MaxDiskSize   = "512Mi"
-	MaxIops       = 128
-	MinIops       = 128
-	MaxSessionNum = 64
+	MaxDiskSize              = "512Mi"
+	MaxIops                  = 128
+	MinIops                  = 128
+	MaxSessionNum            = 64
+	DefaultOBTcpInvitedNodes = "%"
 )
 
 const (
 	Version3 = "3"
 	Version4 = "4"
+)
+
+const (
+	OBTcpInvitedNodes = "ob_tcp_invited_nodes"
 )

@@ -22,40 +22,30 @@ import (
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/tenant/model"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/klog/v2"
 )
 
-func (ctrl *TenantCtrl) CheckAndSetVariables() error {
+func (ctrl *TenantCtrl) CheckAndSetTcpInvitedNode() error {
+	value := ctrl.Tenant.Spec.ConnectWhiteList
+	currentValue := ctrl.Tenant.Status.ConnectWhiteList
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Variables For Tenant ", ctrl.Tenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting ob_tcp_invited_nodes For Tenant ", ctrl.Tenant.Name))
 	}
-	tenant := sqlOperator.GetTenantByName(ctrl.Tenant.Name)
-	if len(tenant) == 0 {
-		return errors.New(fmt.Sprint("Cannot Get Tenant For CheckAndSetVariables: ", ctrl.Tenant.Name))
+	if value == "" {
+		value = tenantconst.DefaultOBTcpInvitedNodes
 	}
-	tenantID := int(tenant[0].TenantID)
-	for _, variable := range ctrl.Tenant.Spec.Variables {
-		currentVariables := sqlOperator.GetVariable(variable.Name, tenantID)
-		match := true
-		for _, currentVariable := range currentVariables {
-			if currentVariable.Value != variable.Value {
-				klog.Infof("found variable %s with value %s did't match with config %s", variable.Name, currentVariable.Value, variable.Value)
-				match = false
-				break
-			}
+	if currentValue != value {
+		klog.Infof("found variable '%s' with value '%s' did't match with config '%s'", tenantconst.OBTcpInvitedNodes, currentValue, value)
+		variableList := ctrl.GenerateVariableList(value)
+		err = sqlOperator.SetTenantVariable(ctrl.Tenant.Name, variableList)
+		if err != nil {
+			return err
 		}
-		if !match {
-			klog.Infof("set variable %s = %s", variable.Name, variable.Value)
-			err = sqlOperator.SetTenantVariable(ctrl.Tenant.Name, variable.Name, variable.Value)
-			if err != nil {
-				return err
-			}
-			err = ctrl.UpdateTenantStatus(tenantconst.TenantModifying)
-			if err != nil {
-				return err
-			}
+		err = ctrl.UpdateTenantStatusOBTcpInvitedNodes(value)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -478,7 +468,7 @@ func GenerateSpecResourceUnitV3Map(spec v1.TenantSpec) map[string]model.Resource
 			resourceUnit.MaxSessionNum = tenantconst.MaxSessionNum
 		}
 		if zone.ResourceUnits.MaxDiskSize.String() == "0" {
-			resourceUnit.MaxDiskSize = resource.MustParse(tenantconst.MaxDiskSize)
+			resourceUnit.MaxDiskSize = apiresource.MustParse(tenantconst.MaxDiskSize)
 		}
 		resourceMap[zone.ZoneName] = resourceUnit
 	}

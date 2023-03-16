@@ -15,10 +15,11 @@ package core
 import (
 	"context"
 	"fmt"
-	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 	"reflect"
 	"strconv"
 	"strings"
+
+	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
@@ -52,6 +53,51 @@ func (ctrl *TenantCtrl) UpdateTenantStatus(tenantStatus string) error {
 	return nil
 }
 
+func (ctrl *TenantCtrl) UpdateTenantStatusOBTcpInvitedNodes(value string) error {
+	tenant := ctrl.Tenant
+	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
+	tenantTmp, err := tenantExecuter.Get(context.TODO(), tenant.Namespace, tenant.Name)
+	if err != nil {
+		return err
+	}
+	tenantCurrent := tenantTmp.(cloudv1.Tenant)
+	tenantCurrentDeepCopy := tenantCurrent.DeepCopy()
+	ctrl.Tenant = *tenantCurrentDeepCopy
+	tenantNew, err := ctrl.BuildTenantStatusForVariables(*tenantCurrentDeepCopy, value)
+	if err != nil {
+		return err
+	}
+	compareStatus := reflect.DeepEqual(tenantCurrent.Status, tenantNew.Status)
+	if !compareStatus {
+		err = tenantExecuter.PatchStatus(context.TODO(), tenantNew, client.MergeFrom(tenantCurrent.DeepCopyObject().(client.Object)))
+		if err != nil {
+			return err
+		}
+	}
+	ctrl.Tenant = tenantNew
+	return nil
+}
+
+func (ctrl *TenantCtrl) BuildTenantStatusForVariables(tenant cloudv1.Tenant, value string) (cloudv1.Tenant, error) {
+	var tenantCurrentStatus cloudv1.TenantStatus
+	tenantTopology, err := ctrl.BuildTenantTopology(tenant)
+	if err != nil {
+		return tenant, err
+	}
+	tenantCurrentStatus.Status = tenant.Status.Status
+	tenantCurrentStatus.Topology = tenantTopology
+	tenantCurrentStatus.ConnectWhiteList = value
+	if err != nil {
+		return tenant, err
+	}
+	tenantCurrentStatus.Charset, err = ctrl.GetCharset()
+	if err != nil {
+		return tenant, err
+	}
+	tenant.Status = tenantCurrentStatus
+	return tenant, nil
+}
+
 func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus string) (cloudv1.Tenant, error) {
 	var tenantCurrentStatus cloudv1.TenantStatus
 	tenantTopology, err := ctrl.BuildTenantTopology(tenant)
@@ -60,6 +106,8 @@ func (ctrl *TenantCtrl) BuildTenantStatus(tenant cloudv1.Tenant, tenantStatus st
 	}
 	tenantCurrentStatus.Status = tenantStatus
 	tenantCurrentStatus.Topology = tenantTopology
+	tenantCurrentStatus.ConnectWhiteList = tenant.Status.ConnectWhiteList
+
 	if err != nil {
 		return tenant, err
 	}

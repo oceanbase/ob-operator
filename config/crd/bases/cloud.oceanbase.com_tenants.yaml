@@ -45,6 +45,8 @@ spec:
                 type: string
               collate:
                 type: string
+              connectWhiteList:
+                type: string
               mode:
                 type: string
               topology:
@@ -118,18 +120,6 @@ spec:
                   - zone
                   type: object
                 type: array
-              variables:
-                items:
-                  properties:
-                    name:
-                      type: string
-                    value:
-                      type: string
-                  required:
-                  - name
-                  - value
-                  type: object
-                type: array
             required:
             - clusterID
             - clusterName
@@ -139,6 +129,8 @@ spec:
             description: TenantStatus defines the observed state of Tenant
             properties:
               charset:
+                type: string
+              connectWhiteList:
                 type: string
               status:
                 type: string

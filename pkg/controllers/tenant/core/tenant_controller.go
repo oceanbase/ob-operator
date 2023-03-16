@@ -219,7 +219,7 @@ func (ctrl *TenantCtrl) TenantCreatingEffector() error {
 }
 
 func (ctrl *TenantCtrl) TenantRunningEffector() error {
-	err := ctrl.CheckAndSetVariables()
+	err := ctrl.CheckAndSetTcpInvitedNode()
 	if err != nil {
 		return err
 	}
