@@ -238,16 +238,16 @@ func (op *SqlOperator) GetCharset() []model.Charset {
 	return res
 }
 
-func (op *SqlOperator) GetVariable(name string, tenantID int) []model.SysVariableStat {
-	res := make([]model.SysVariableStat, 0)
-	sql := ReplaceAll(GetVariableSQLTemplate, GetVariableSQLReplacer(name, tenantID))
+func (op *SqlOperator) GetVariable(name string) []model.Variable {
+	res := make([]model.Variable, 0)
+	sql := ReplaceAll(GetVariableSQLTemplate, GetVariableSQLReplacer(name))
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.SysVariableStat{}).Raw(sql).Rows()
+		rows, err := client.Model(&model.Variable{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
-			var rowData model.SysVariableStat
+			var rowData model.Variable
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {
@@ -320,8 +320,8 @@ func (op *SqlOperator) CreateTenant(tenantName, charset, zoneList, primaryZone, 
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) SetTenantVariable(tenantName, name, value string) error {
-	sql := ReplaceAll(SetTenantVariableSQLTemplate, SetTenantVariableSQLReplacer(tenantName, name, value))
+func (op *SqlOperator) SetTenantVariable(tenantName, variableList string) error {
+	sql := ReplaceAll(SetTenantVariableSQLTemplate, SetTenantVariableSQLReplacer(tenantName, variableList))
 	return op.ExecSQL(sql)
 }
 

@@ -81,11 +81,9 @@ type Charset struct {
 	Charset string
 }
 
-type SysVariableStat struct {
-	TenantID int64
-	Zone     string
-	Name     string
-	Value    string
+type Variable struct {
+	VaribaleName string
+	Value        string
 }
 
 type RsJob struct {

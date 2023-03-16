@@ -52,12 +52,12 @@ func CreateTenantSQLReplacer(tenantName, charset, zoneList, primaryZone, poolLis
 	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${CHARSET}", charset, "${ZONE_LIST}", zoneList, "${PRIMARY_ZONE}", primaryZone, "${RESOURCE_POOL_LIST}", poolList, "${LOCALITY}", locality, "${COLLATE}", collate, "${VARIABLE_LIST}", variableList)
 }
 
-func GetVariableSQLReplacer(name string, tenantID int) *strings.Replacer {
-	return strings.NewReplacer("${NAME}", name, "${TENANT_ID}", strconv.Itoa(tenantID))
+func GetVariableSQLReplacer(name string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name)
 }
 
-func SetTenantVariableSQLReplacer(tenantName, name, value string) *strings.Replacer {
-	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${NAME}", name, "${VALUE}", value)
+func SetTenantVariableSQLReplacer(tenantName, variableList string) *strings.Replacer {
+	return strings.NewReplacer("${TENANT_NAME}", tenantName, "${VARIABLE_LIST}", variableList)
 }
 
 func SetUnitConfigV3SQLReplacer(unitName string, resourceUnit model.ResourceUnitV3) *strings.Replacer {
