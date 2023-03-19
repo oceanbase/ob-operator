@@ -2,16 +2,17 @@
 The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase clusters on Kubernetes.
 
 # Quick Start
-## Installation
+## Deploy ob-operator
 ### Using Helm
-Helm is a package management tool for Kubernetes, Refer to Helm official documentation to install the Helm client.
+[Helm](https://github.com/helm/helm) is a package management tool for Kubernetes, please refer to the helm documentation to install the helm client.
+
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace  --version=1.1.0
 ```
 
 ### Using configuration file
-The configuration files are located at deploy directory, using the following commands to deploy ob-operator.
+The configuration files are located under deploy directory, using the following commands to deploy ob-operator.
 ```
 # Deploy CRD
 kubectl apply -f deploy/crd.yaml
@@ -19,9 +20,9 @@ kubectl apply -f deploy/crd.yaml
 kubectl apply -f deploy/operator.yaml
 ```
 
-## Deploy OceanBase
+## Deploy OceanBase cluster
 ### Customize configuration file
-`deploy/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources etc. You can configure your own OceanBase based on this file.
+`deploy/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources, storages etc. You can configure your own OceanBase based on this file.
 
 
 ### Label node
@@ -38,15 +39,12 @@ kubectl apply -f deploy/obcluster.yaml
 ```
 
 ### Connect to OceanBase Cluster
-After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip or the service address created by ob-operator named svc-${cluster_name}
+After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip or the service address created by ob-operator named `svc-${cluster_name}`
 
 # Contributing
-We highly appreciate any kinds of contribution. For more details, please refer to How to contribute
+Contributions are warmly welcomed and greatly appreciated. Here are a few ways you can contribute:
+- Raise us an [Issue](https://github.com/oceanbase/ob-operator/issues).
+- Create a [Pull Request](https://github.com/oceanbase/ob-operator/pulls).
 
 # License
-Ob-operator is licensed under the Mulan Public License, Version 2. See the LICENSE file for more info.
-
-
-
-
-
+Ob-operator is licensed under the [MulanPSL - 2.0](http://license.coscl.org.cn/MulanPSL2) license. You can copy and use the source code freely. When you modify or distribute the source code, please follow the MulanPSL - 2.0 license.
