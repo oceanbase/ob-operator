@@ -21,6 +21,7 @@ type BackupSpec struct {
 	SourceCluster SourceClusterSpec `json:"source"`
 	DestPath      string            `json:"destPath"`
 	Schedule      []ScheduleSpec    `json:"schedule"`
+	Secret        string            `json:"secret,omitempty"`
 	Parameters    []Parameter       `json:"parameters,omitempty"`
 }
 
@@ -35,8 +36,7 @@ type SourceClusterSpec struct {
 type ScheduleSpec struct {
 	BackupType string `json:"name"`
 	Schedule   string `json:"schedule,omitempty"`
-	// type = time?
-	NextTime string `json:"nextTime,omitempty"`
+	NextTime   string `json:"nextTime,omitempty"`
 }
 
 // ScheduleSpec defines the schedule strategy
@@ -53,6 +53,7 @@ type BackupStatus struct {
 
 type BackupSetStatus struct {
 	TenantID    int    `json:"tenantID"`
+	TenantName  string `json:"tenantName"`
 	BSKey       int    `json:"bsKey"`
 	ClusterName string `json:"clusterName"`
 	BackupType  string `json:"backupType"`
@@ -84,4 +85,8 @@ type BackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Backup `json:"items"`
+}
+
+func init() {
+	SchemeBuilder.Register(&Backup{}, &BackupList{})
 }

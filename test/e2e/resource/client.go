@@ -38,6 +38,8 @@ func NewClient() (*rest.Config, *Client) {
 	client := new(Client)
 	if _, err := os.Stat(filepath.Join(os.Getenv("HOME"), ".kube", "config")); err != nil {
 		config, _ := rest.InClusterConfig()
+		config.QPS = 30
+		config.Burst = 60
 		client.ClientSet, _ = kubernetes.NewForConfig(config)
 		client.DynamicClient, _ = dynamic.NewForConfig(config)
 		client.DiscoveryClient, _ = discovery.NewDiscoveryClientForConfig(config)
@@ -45,6 +47,8 @@ func NewClient() (*rest.Config, *Client) {
 	} else {
 		filePath := filepath.Join(os.Getenv("HOME"), ".kube", "config")
 		config, _ := clientcmd.BuildConfigFromFlags("", filePath)
+		config.QPS = 30
+		config.Burst = 60
 		client.ClientSet, _ = kubernetes.NewForConfig(config)
 		client.DynamicClient, _ = dynamic.NewForConfig(config)
 		client.DiscoveryClient, _ = discovery.NewDiscoveryClientForConfig(config)

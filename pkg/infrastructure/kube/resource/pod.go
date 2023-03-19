@@ -67,6 +67,24 @@ func (r *PodResource) Update(ctx context.Context, obj interface{}) error {
 	return nil
 }
 
+func (r *PodResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	pod := obj.(corev1.Pod)
+	// kube.LogForAppActionStatus(pod.Kind, pod.Name, "patch", pod)
+	err := r.Client.Patch(ctx, &pod, patch)
+	if err != nil {
+		r.Recorder.Eventf(&pod, corev1.EventTypeWarning, FailedToCreatePod, "Patch Pod"+pod.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(pod.Kind, pod.Name, "Patch", "succeed")
+	r.Recorder.Event(&pod, corev1.EventTypeNormal, UpatedPod, "Patch Pod"+pod.Name)
+	return nil
+}
+
+func (r *PodResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
 func (r *PodResource) UpdateStatus(ctx context.Context, obj interface{}) error {
 	var res error
 	return res

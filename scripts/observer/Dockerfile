@@ -11,6 +11,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://goproxy.cn go build -a
 # build server
 FROM openanolis/anolisos:8.4-x86_64
 
+RUN yum -y install python27
+RUN pip2 install mysql-connector -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com 
+
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
 WORKDIR /app
@@ -26,6 +29,7 @@ RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/o
 RUN chown -R admin:admin /home/admin/oceanbase/
 
 ENV TINI_VERSION v0.19.0
+ENV LD_LIBRARY_PATH /home/admin/oceanbase/lib
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 ENTRYPOINT ["/tini", "--"]

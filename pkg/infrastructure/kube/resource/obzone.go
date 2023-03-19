@@ -90,3 +90,11 @@ func (r *OBZoneResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&obZone, corev1.EventTypeNormal, DeletedOBZone, "delete OBZone CR"+obZone.Name)
 	return nil
 }
+
+func (r *OBZoneResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
+func (r *OBZoneResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

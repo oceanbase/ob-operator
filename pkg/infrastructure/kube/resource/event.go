@@ -26,6 +26,7 @@ const (
 // Pod event reason list
 const (
 	CreatedPod        = "CreatedPod"
+	UpatedPod         = "UpatedPod"
 	FailedToCreatePod = "FailedCreatePod"
 	DeletedPod        = "DeletedPod"
 	FailedToKillPod   = "FailedKillPod"
@@ -87,12 +88,46 @@ const (
 	FailedToDeleteBackup = "FailedDeleteBackup"
 )
 
+// TenantBackup event reason list
+const (
+	CreatedTenantBackup        = "CreatedTenantBackup"
+	FailedToCreateTenantBackup = "FailedCreateTenantBackup"
+	DeletedTenantBackup        = "DeletedTenantBackup"
+	FailedToDeleteTenantBackup = "FailedDeleteTenantBackup"
+)
+
+// Restore event reason list
+const (
+	CreatedRestore        = "CreatedRestore"
+	FailedToCreateRestore = "FailedCreateRestore"
+	DeletedRestore        = "DeletedRestore"
+	FailedToDeleteRestore = "FailedDeleteRestore"
+)
+
 // Storage event reason list
+// OBZone event reason list
 const (
 	CreatedOBZone        = "CreatedOBZone"
 	FailedToCreateOBZone = "FailedCreateOBZone"
 	DeletedOBZone        = "DeletedOBZone"
 	FailedToDeleteOBZone = "FailedDeleteOBZone"
+)
+
+// Tenant event reason list
+const (
+	CreatedTenant        = "CreatedTenant"
+	FailedToCreateTenant = "FailedCreateTenant"
+	DeletedTenant        = "DeletedTenant"
+	FailedToDeleteTenant = "FailedDeleteTenant"
+	PatchedTenant        = "PatchedTenant"
+)
+
+// Job event reason list
+const (
+	CreatedJob        = "CreatedJob"
+	FailedToCreateJob = "FailedCreateJob"
+	DeletedJob        = "DeletedJob"
+	FailedToKillJob   = "FailedKillJob"
 )
 
 // Probe event reason list

@@ -52,8 +52,13 @@ func (r *BackupResource) Get(ctx context.Context, namespace, name string) (inter
 }
 
 func (r *BackupResource) List(ctx context.Context, namespace string, listOption client.ListOption) interface{} {
-	var res interface{}
-	return res
+	backupList := &cloudv1.BackupList{}
+	err := r.Client.List(ctx, backupList, client.InNamespace(namespace), listOption)
+	if err != nil {
+		// can definitely get a value, so errors are not returned
+		klog.Errorln(err)
+	}
+	return *backupList
 }
 
 func (r *BackupResource) Update(ctx context.Context, obj interface{}) error {
@@ -70,5 +75,22 @@ func (r *BackupResource) UpdateStatus(ctx context.Context, obj interface{}) erro
 }
 
 func (r *BackupResource) Delete(ctx context.Context, obj interface{}) error {
+	backup := obj.(cloudv1.Backup)
+	err := r.Client.Delete(ctx, &backup)
+	if err != nil {
+		r.Recorder.Eventf(&backup, corev1.EventTypeWarning, FailedToDeleteBackup, "delete backup "+backup.Name)
+		klog.Errorln(err)
+		return err
+	}
+	kube.LogForAppActionStatus(backup.Kind, backup.Name, "delete", "succeed")
+	r.Recorder.Event(&backup, corev1.EventTypeNormal, DeletedBackup, "delete backup "+backup.Name)
+	return nil
+}
+
+func (r *BackupResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
+func (r *BackupResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
 	return nil
 }

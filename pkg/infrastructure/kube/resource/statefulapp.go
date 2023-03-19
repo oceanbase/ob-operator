@@ -90,3 +90,11 @@ func (r *StatefulAppResource) Delete(ctx context.Context, obj interface{}) error
 	r.Recorder.Event(&statefulApp, corev1.EventTypeNormal, DeletedStatefulApp, "delete StatefulApp"+statefulApp.Name)
 	return nil
 }
+
+func (r *StatefulAppResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
+func (r *StatefulAppResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

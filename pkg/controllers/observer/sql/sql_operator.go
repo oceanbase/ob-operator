@@ -119,9 +119,90 @@ func (op *SqlOperator) DeleteZone(zoneName string) error {
 	return op.ExecSQL(sql)
 }
 
+func (op *SqlOperator) BeginUpgrade() error {
+	return op.ExecSQL(BeginUpgradeSQL)
+}
+
+func (op *SqlOperator) EndUpgrade() error {
+	return op.ExecSQL(EndUpgradeSQL)
+}
+
+func (op *SqlOperator) UpgradeSchema() error {
+	return op.ExecSQL(UpgradeSchemaSQL)
+}
+
+func (op *SqlOperator) RunRootInspection() error {
+	return op.ExecSQL(RunRootInspectionJobSQL)
+}
+
+func (op *SqlOperator) MajorFreeze() error {
+	return op.ExecSQL(MajorFreezeSQL)
+}
+
+func (op *SqlOperator) GetVersion() []model.OBVersion {
+	res := make([]model.OBVersion, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.OBVersion{}).Raw(GetObVersionSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.OBVersion
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetLeaderCount() []model.ZoneLeaderCount {
+	res := make([]model.ZoneLeaderCount, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ZoneLeaderCount{}).Raw(GetLeaderCountSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ZoneLeaderCount
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) GetParameter(name string) []model.SysParameterStat {
 	res := make([]model.SysParameterStat, 0)
 	sql := ReplaceAll(GetParameterTemplate, GetParameterSQLReplacer(name))
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.SysParameterStat{}).Raw(sql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.SysParameterStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) ShowParameter(name string) []model.SysParameterStat {
+	res := make([]model.SysParameterStat, 0)
+	sql := ReplaceAll(ShowParameterTemplate, GetParameterSQLReplacer(name))
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
@@ -160,12 +241,72 @@ func (op *SqlOperator) GetOBServer() []model.AllServer {
 	return res
 }
 
+func (op *SqlOperator) GetClogStat() []model.ClogStat {
+	res := make([]model.ClogStat, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ClogStat{}).Raw(GetClogStatSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ClogStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
 func (op *SqlOperator) GetOBZone() []model.AllZone {
 	res := make([]model.AllZone, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
 		rows, err := client.Model(&model.AllZone{}).Raw(GetOBZoneSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetFrozenVersion() []model.AllZone {
+	res := make([]model.AllZone, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(GetFrozeVersionSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.AllZone
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetLastMergedVersion() []model.AllZone {
+	res := make([]model.AllZone, 0)
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.AllZone{}).Raw(GetLastMergedVersionSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllZone
@@ -226,7 +367,7 @@ func (op *SqlOperator) GetAllUnit() []model.AllUnit {
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.AllUnit{}).Raw(GetAllUnitSql).Rows()
+		rows, err := client.Model(&model.AllUnit{}).Raw(GetAllUnitSQL).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.AllUnit
