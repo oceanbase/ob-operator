@@ -35,7 +35,7 @@ kubectl label node ${node_name} ${label_name}=${label_value}
 ### Deploy OceanBase
 Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
 ```
-create namespace ${namespace_name}
+kubectl create namespace ${namespace_name}
 ```
 Using the following command to deploy OceanBase Cluster
 ```
