@@ -109,7 +109,7 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return nil
 }
 
 func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
@@ -148,7 +148,7 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return nil
 }
 
 func (ctrl *TenantCtrl) SetUnitV4(name string, resourceUnit model.ResourceUnitV4) error {
@@ -212,7 +212,7 @@ func (ctrl *TenantCtrl) CheckAndSetResourcePool() error {
 			}
 		}
 	}
-	return ctrl.UpdateTenantStatus(tenantconst.TenantRunning)
+	return nil
 }
 
 func (ctrl *TenantCtrl) CheckAndSetTenant() error {
