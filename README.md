@@ -33,13 +33,17 @@ kubectl label node ${node_name} ${label_name}=${label_value}
 ```
 
 ### Deploy OceanBase
+Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
+```
+create namespace ${namespace_name}
+```
 Using the following command to deploy OceanBase Cluster
 ```
 kubectl apply -f deploy/obcluster.yaml
 ```
 
 ### Connect to OceanBase Cluster
-After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip or the service address created by ob-operator named `svc-${cluster_name}`
+After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip or the service address created by ob-operator named `svc-${cluster_name}`, `${cluster_name}` is the name which you configured in `deploy/obcluster.yaml`
 
 # Contributing
 Contributions are warmly welcomed and greatly appreciated. Here are a few ways you can contribute:
