@@ -270,7 +270,7 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantReplica
 	zoneList := ctrl.GenerateSpecZoneList(zones)
 	primaryZone := ctrl.GenerateSpecPrimaryZone(zones)
 	poolList := ctrl.GenerateSpecPoolList(tenantName, zones)
-	variableList := ctrl.GenerateVariableList(ctrl.Tenant.Spec.Variables)
+	variableList := ctrl.GenerateVariableList(ctrl.Tenant.Spec.ConnectWhiteList)
 	charset := tenantconst.Charset
 	locality := ctrl.GenerateLocality(zones)
 	if locality != "" {
@@ -379,15 +379,10 @@ func (ctrl *TenantCtrl) GenerateLocality(zones []v1.TenantReplica) string {
 	return strings.Join(localityList, ",")
 }
 
-func (ctrl *TenantCtrl) GenerateVariableList(variables []v1.Parameter) string {
-	var variableList string
-	if len(variables) == 0 {
-		return variableList
+func (ctrl *TenantCtrl) GenerateVariableList(variable string) string {
+	if variable == "" {
+		return fmt.Sprintf("SET VARIABLES %s = %s", tenantconst.OBTcpInvitedNodes, tenantconst.DefaultOBTcpInvitedNodes)
+	} else {
+		return fmt.Sprintf("SET VARIABLES %s = '%s'", tenantconst.OBTcpInvitedNodes, variable)
 	}
-	variableList = fmt.Sprint("SET ", variableList)
-	for _, variable := range variables {
-		variableList = fmt.Sprint(variableList, variable.Name, "='", variable.Value, "',")
-	}
-	variableList = variableList[0 : len(variableList)-1]
-	return variableList
 }

@@ -1,7 +1,7 @@
 apiVersion: cloud.oceanbase.com/v1		
 kind: Tenant		
 metadata:		
-  name: tenant1		
+  name: obtenant
   namespace: obcluster		
 spec:	
   # 必填
@@ -10,10 +10,7 @@ spec:
   # 非必填
   charset:  # 租户的字符集
   collate:  # 租户校对规则
-
-  variables: 
-    - name: ob_tcp_invited_nodes
-      value: '%'
+  connectWhiteList: '%'
 
   topology:
     - zone: zone1
@@ -30,8 +27,8 @@ spec:
         maxIops: 1024 # 租户 IOPS 最多数量。
         minIops: 1024 # 租户 IOPS 最少数量。
          # v3
-        maxDiskSize:  # 租户可用最大磁盘空间。
-        maxSessionNum:  # 租户最大 SESSION 数。
+        maxDiskSize: 3Gi # 租户可用最大磁盘空间。
+        maxSessionNum:  512 # 租户最大 SESSION 数。
          # v4
         iopsWeight: 
         logDiskSize: 
@@ -46,8 +43,8 @@ spec:
         memorySize: 1Gi
         # 非必填
         minCPU: 2 
-        maxIops: 256
-        minIops: 256
+        maxIops: 1024
+        minIops: 1024
          # v3
         maxDiskSize: 1Gi
         maxSessionNum: 64 
@@ -65,8 +62,8 @@ spec:
         memorySize: 1Gi
         # 非必填
         minCPU: 2 
-        maxIops: 256
-        minIops: 256
+        maxIops: 1024
+        minIops: 1024
          # v3
         maxDiskSize: 1Gi
         maxSessionNum: 64 
