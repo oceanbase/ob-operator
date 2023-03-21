@@ -37,3 +37,7 @@ func CreateResourcePoolSQLReplacer(pool_name, unit_name, unit_num, zone_list str
 func DoRestoreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restore_option string) *strings.Replacer {
 	return strings.NewReplacer("${dest_tenant}", dest_tenant, "${source_tenant}", source_tenant, "${dest_path}", dest_path, "${time}", time, "${backup_cluster_name}", backup_cluster_name, "${backup_cluster_id}", backup_cluster_id, "${pool_list}", pool_list, "${restore_option}", restore_option)
 }
+
+func DoRestoreSQLReplacer4(dest_tenant, dest_path, save_point, backup_cluster_name, backup_cluster_id, pool_list, restore_option string) *strings.Replacer {
+	return strings.NewReplacer("${dest_tenant}", dest_tenant, "${dest_path}", dest_path, "${save_point}", save_point, "${backup_cluster_name}", backup_cluster_name, "${backup_cluster_id}", backup_cluster_id, "${pool_list}", pool_list, "${restore_option}", restore_option)
+}

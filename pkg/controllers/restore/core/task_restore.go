@@ -71,7 +71,7 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 	}
 	savePoint := spec.SavePoint.Value
 	if spec.SavePoint.Type != "" {
-		savePoint = fmt.Sprintf("%s=%s", spec.SavePoint.Type, spec.SavePoint.Value)
+		savePoint = fmt.Sprintf("%s='%s'", spec.SavePoint.Type, spec.SavePoint.Value)
 	}
 
 	// get secret
@@ -88,8 +88,11 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 			secrets = append(secrets, incrementalSecret)
 		}
 	}
-
-	return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)
+	if spec.SavePoint.Type != "" {
+		return sqlOperator.DoRestore4(spec.Dest.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)
+	} else {
+		return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)
+	}
 }
 
 func (ctrl *RestoreCtrl) GetRestoreOption() string {

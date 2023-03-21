@@ -19,8 +19,11 @@ const (
 const (
 	SetParameterTemplate = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 
-	GetRestoreSetCurrentSql  = "SELECT job_id, backup_cluster_id, backup_cluster_name, tenant_name, backup_tenant_name, status, restore_finish_timestamp FROM oceanbase.CDB_OB_RESTORE_PROGRESS order by job_id desc;"
-	GetRestoreSetHistorySql  = "SELECT job_id, backup_cluster_id, backup_cluster_name, tenant_name, backup_tenant_name, status, restore_finish_timestamp FROM oceanbase.CDB_OB_RESTORE_HISTORY order by job_id desc;"
+	GetObVersionSQL          = "SELECT ob_version() as version;"
+	GetRestoreSetCurrentSql  = "SELECT job_id, backup_cluster_name, tenant_name as restore_tenant_name, backup_tenant_name, status, restore_finish_timestamp as finish_timestamp FROM oceanbase.CDB_OB_RESTORE_PROGRESS order by job_id desc;"
+	GetRestoreSetHistorySql  = "SELECT job_id, backup_cluster_name, tenant_name as restore_tenant_name, backup_tenant_name, status, restore_finish_timestamp as finish_timestamp FROM oceanbase.CDB_OB_RESTORE_HISTORY order by job_id desc;"
+	GetRestoreSetCurrentSql4 = "SELECT job_id, backup_cluster_name, restore_tenant_name, backup_tenant_name, status, '' as finish_timestamp FROM oceanbase.CDB_OB_RESTORE_PROGRESS order by job_id desc;"
+	GetRestoreSetHistorySql4 = "SELECT job_id, backup_cluster_name, restore_tenant_name, backup_tenant_name, status, finish_timestamp FROM oceanbase.CDB_OB_RESTORE_HISTORY order by job_id desc;"
 	GetRestoreConcurrencySql = "select value  from __all_virtual_sys_parameter_stat where name like 'restore_concurrency';"
 
 	CreateResourceUnitSql = "CREATE RESOURCE UNIT ${unit_name} max_cpu ${max_cpu}, max_memory '${max_memory}', max_iops ${max_iops},max_disk_size '${max_disk_size}', max_session_num ${max_session_num}, MIN_CPU=${min_cpu}, MIN_MEMORY= '${min_memory}', MIN_IOPS=${min_iops};"
@@ -28,4 +31,5 @@ const (
 
 	SetDecryptionTemplate = "SET DECRYPTION IDENTIFIED BY '%s'"
 	DoRestoreSql          = "ALTER SYSTEM RESTORE ${dest_tenant} FROM ${source_tenant} at '${dest_path}' UNTIL '${time}' WITH 'backup_cluster_name=${backup_cluster_name}&backup_cluster_id=${backup_cluster_id}&pool_list=${pool_list}&${restore_option}';"
+	DoRestoreSql4         = "ALTER SYSTEM RESTORE ${dest_tenant} FROM '${dest_path}' UNTIL ${save_point} WITH 'backup_cluster_name=${backup_cluster_name}&backup_cluster_id=${backup_cluster_id}&pool_list=${pool_list}&${restore_option}';"
 )

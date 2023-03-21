@@ -61,14 +61,13 @@ func (ctrl *RestoreCtrl) getRestoreStatusFromDB() (*cloudv1.RestoreStatus, error
 	restoreSet = append(restoreSet, restoreSetCurrent...)
 	restoreSet = append(restoreSet, restoreSetHistory...)
 	for _, restoreRecord := range restoreSet {
-		if restoreRecord.BackupClusterId == ctrl.Restore.Spec.Source.ClusterID &&
-			restoreRecord.BackupClusterName == ctrl.Restore.Spec.Source.ClusterName &&
+		if restoreRecord.BackupClusterName == ctrl.Restore.Spec.Source.ClusterName &&
 			restoreRecord.BackupTenantName == ctrl.Restore.Spec.Source.Tenant &&
-			restoreRecord.TenantName == ctrl.Restore.Spec.Dest.Tenant {
+			restoreRecord.RestoreTenantName == ctrl.Restore.Spec.Dest.Tenant {
 			return &cloudv1.RestoreStatus{
 				JobID:           restoreRecord.JobId,
 				Status:          restoreRecord.Status,
-				FinishTimestamp: restoreRecord.RestoreFinishTimestamp,
+				FinishTimestamp: restoreRecord.FinishTimestamp,
 			}, nil
 		}
 	}

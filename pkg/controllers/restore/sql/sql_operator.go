@@ -75,12 +75,46 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 	return nil
 }
 
-func (op *SqlOperator) GetAllRestoreHistorySet() []model.RestoreStatus {
-	res := make([]model.RestoreStatus, 0)
+func (op *SqlOperator) GetVersion() (string, error) {
+	res := make([]model.OBVersion, 0)
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.RestoreStatus{}).Raw(GetRestoreSetHistorySql).Rows()
+		rows, err := client.Model(&model.OBVersion{}).Raw(GetObVersionSQL).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.OBVersion
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	if len(res) == 0 {
+		return "", errors.New("failed to get ob version")
+	} else {
+		return res[0].Version, nil
+
+	}
+}
+
+func (op *SqlOperator) GetAllRestoreHistorySet() []model.RestoreStatus {
+	res := make([]model.RestoreStatus, 0)
+	version, err := op.GetVersion()
+	if err != nil {
+		klog.Errorf("get ob version got exception: %v", err)
+		return res
+	}
+	sql := GetRestoreSetHistorySql
+	if string(version[0]) != "3" {
+		sql = GetRestoreSetHistorySql4
+	}
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.RestoreStatus{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.RestoreStatus
@@ -97,10 +131,19 @@ func (op *SqlOperator) GetAllRestoreHistorySet() []model.RestoreStatus {
 
 func (op *SqlOperator) GetAllRestoreCurrentSet() []model.RestoreStatus {
 	res := make([]model.RestoreStatus, 0)
+	version, err := op.GetVersion()
+	if err != nil {
+		klog.Errorf("get ob version got exception: %v", err)
+		return res
+	}
+	sql := GetRestoreSetCurrentSql
+	if string(version[0]) != "3" {
+		sql = GetRestoreSetCurrentSql4
+	}
 	client, err := GetDBClient(op.ConnectProperties)
 	if err == nil {
 		defer client.Close()
-		rows, err := client.Model(&model.RestoreStatus{}).Raw(GetRestoreSetCurrentSql).Rows()
+		rows, err := client.Model(&model.RestoreStatus{}).Raw(sql).Rows()
 		if err == nil {
 			defer rows.Close()
 			var rowData model.RestoreStatus
@@ -127,6 +170,17 @@ func (op *SqlOperator) DoRestore(dest_tenant, source_tenant, dest_path, time, ba
 		sqls = append(sqls, setDecryptionSql)
 	}
 	doRestoreSql := ReplaceAll(DoRestoreSql, DoRestoreSQLReplacer(dest_tenant, source_tenant, dest_path, time, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
+	sqls = append(sqls, doRestoreSql)
+	return op.ExecSQLs(sqls)
+}
+
+func (op *SqlOperator) DoRestore4(dest_tenant, dest_path, save_point, backup_cluster_name, backup_cluster_id, pool_list, restoreOption string, secrets []string) error {
+	sqls := make([]string, 0)
+	if len(secrets) > 0 {
+		setDecryptionSql := fmt.Sprintf(SetDecryptionTemplate, strings.Join(secrets, "', '"))
+		sqls = append(sqls, setDecryptionSql)
+	}
+	doRestoreSql := ReplaceAll(DoRestoreSql4, DoRestoreSQLReplacer4(dest_tenant, dest_path, save_point, backup_cluster_name, backup_cluster_id, pool_list, restoreOption))
 	sqls = append(sqls, doRestoreSql)
 	return op.ExecSQLs(sqls)
 }
