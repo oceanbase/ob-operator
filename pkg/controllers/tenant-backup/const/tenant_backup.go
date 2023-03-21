@@ -19,11 +19,11 @@ const (
 	User              = "user"
 	UserSecret        = "password"
 	IncrementalSecret = "incremental"
-	DatabaseSecret    = "database"
+	FullSecret        = "full"
 )
 
 const (
-	LogAechiveDest      = "LOG_ARCHIVE_DEST"
+	LogArchiveDest      = "LOG_ARCHIVE_DEST"
 	Path                = "path"
 	Binding             = "binding"
 	PieceSwitchInterval = "piece_switch_interval"
