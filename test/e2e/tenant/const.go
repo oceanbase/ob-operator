@@ -9,13 +9,20 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-
-package e2e
+package tenant
 
 import (
-	_ "github.com/oceanbase/ob-operator/test/e2e/observer"
-	_ "github.com/oceanbase/ob-operator/test/e2e/statefulapp"
-	_ "github.com/oceanbase/ob-operator/test/e2e/tenant"
+	"time"
 )
 
-func runE2E() {}
+const (
+	ClusterReady = "Ready"
+
+	TryInterval                   = 1 * time.Second
+	ApplyWaitTime                 = 5 * time.Second
+	TenantCreateTimeout           = 300 * time.Second
+	TenantModifyTimeout           = 300 * time.Second
+	OBClusterReadyimeout          = 1000 * time.Second
+	OBClusterUpdateTReadyimeout   = 300 * time.Second
+	StatefulappUpdateReadyTimeout = 60 * time.Second
+)

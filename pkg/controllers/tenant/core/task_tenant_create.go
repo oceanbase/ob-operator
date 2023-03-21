@@ -268,7 +268,7 @@ func (ctrl *TenantCtrl) CreateTenant(tenantName string, zones []v1.TenantReplica
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
 	}
 	zoneList := ctrl.GenerateSpecZoneList(zones)
-	primaryZone := ctrl.GenerateSpecPrimaryZone(zones)
+	primaryZone := GenerateSpecPrimaryZone(zones)
 	poolList := ctrl.GenerateSpecPoolList(tenantName, zones)
 	variableList := ctrl.GenerateVariableList(ctrl.Tenant.Spec.ConnectWhiteList)
 	charset := tenantconst.Charset
@@ -320,7 +320,7 @@ func (ctrl *TenantCtrl) GenerateStatusPoolList(tenantName string, zones []v1.Ten
 	return poolList
 }
 
-func (ctrl *TenantCtrl) GenerateSpecPrimaryZone(zones []v1.TenantReplica) string {
+func GenerateSpecPrimaryZone(zones []v1.TenantReplica) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int
@@ -347,7 +347,7 @@ func (ctrl *TenantCtrl) GenerateSpecPrimaryZone(zones []v1.TenantReplica) string
 	return primaryZone
 }
 
-func (ctrl *TenantCtrl) GenerateStatusPrimaryZone(zones []v1.TenantReplicaStatus) string {
+func GenerateStatusPrimaryZone(zones []v1.TenantReplicaStatus) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int

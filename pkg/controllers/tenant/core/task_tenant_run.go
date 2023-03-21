@@ -75,8 +75,8 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
 	statusResourceUnit := GenerateStatusResourceUnitV3Map(ctrl.Tenant.Status)
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		match := true
-		if !ctrl.isUnitV3Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
-			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitV3Config(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitV3Config(statusResourceUnit[zone.ZoneName]))
+		if !IsUnitV3Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
+			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, FormatUnitV3Config(specResourceUnit[zone.ZoneName]), FormatUnitV3Config(statusResourceUnit[zone.ZoneName]))
 			match = false
 		}
 		if !match {
@@ -84,7 +84,7 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV3Config() error {
 			if err != nil {
 				return err
 			}
-			klog.Infof("set zone '%s' unit config '%s'", zone.ZoneName, ctrl.FormatUnitV3Config(specResourceUnit[zone.ZoneName]))
+			klog.Infof("set zone '%s' unit config '%s'", zone.ZoneName, FormatUnitV3Config(specResourceUnit[zone.ZoneName]))
 			unitName := ctrl.GenerateUnitName(ctrl.Tenant.Name, zone.ZoneName)
 			err, unitExist := ctrl.UnitExist(unitName)
 			if err != nil {
@@ -118,8 +118,8 @@ func (ctrl *TenantCtrl) CheckAndSetUnitV4Config() error {
 	statusResourceUnit := GenerateStatusResourceUnitV4Map(ctrl.Tenant.Status)
 	for _, zone := range ctrl.Tenant.Spec.Topology {
 		match := true
-		if !ctrl.isUnitV4Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
-			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, ctrl.FormatUnitV4Config(specResourceUnit[zone.ZoneName]), ctrl.FormatUnitV4Config(statusResourceUnit[zone.ZoneName]))
+		if !IsUnitV4Equal(specResourceUnit[zone.ZoneName], statusResourceUnit[zone.ZoneName]) {
+			klog.Infof("found zone '%s' unit config with value '%s' did't match with config '%s'", zone.ZoneName, FormatUnitV4Config(specResourceUnit[zone.ZoneName]), FormatUnitV4Config(statusResourceUnit[zone.ZoneName]))
 			match = false
 		}
 		if !match {
@@ -382,10 +382,10 @@ func (ctrl *TenantCtrl) TenantDeleteZone(deleteZone v1.TenantReplicaStatus) erro
 }
 
 func (ctrl *TenantCtrl) CheckAndSetPriority() error {
-	specPrimaryZone := ctrl.GenerateSpecPrimaryZone(ctrl.Tenant.Spec.Topology)
-	statusPrimaryZone := ctrl.GenerateStatusPrimaryZone(ctrl.Tenant.Status.Topology)
-	specPrimaryZoneMap := ctrl.GeneratePrimaryZoneMap(specPrimaryZone)
-	statusPrimaryZoneMap := ctrl.GeneratePrimaryZoneMap(statusPrimaryZone)
+	specPrimaryZone := GenerateSpecPrimaryZone(ctrl.Tenant.Spec.Topology)
+	statusPrimaryZone := GenerateStatusPrimaryZone(ctrl.Tenant.Status.Topology)
+	specPrimaryZoneMap := GeneratePrimaryZoneMap(specPrimaryZone)
+	statusPrimaryZoneMap := GeneratePrimaryZoneMap(statusPrimaryZone)
 	if reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
 		return nil
 	}
@@ -400,7 +400,7 @@ func (ctrl *TenantCtrl) CheckAndSetPriority() error {
 	return nil
 }
 
-func (ctrl *TenantCtrl) GeneratePrimaryZoneMap(str string) map[int][]string {
+func GeneratePrimaryZoneMap(str string) map[int][]string {
 	res := make(map[int][]string, 0)
 	levelCuts := strings.Split(str, ";")
 	for idx, levelCut := range levelCuts {
@@ -589,7 +589,7 @@ func (ctrl *TenantCtrl) GenerateLocalityList(localityMap map[string]v1.TypeSpec)
 	return locality
 }
 
-func (ctrl *TenantCtrl) isUnitV3Equal(specResourceUnit model.ResourceUnitV3, statusResourceUnit model.ResourceUnitV3) bool {
+func IsUnitV3Equal(specResourceUnit model.ResourceUnitV3, statusResourceUnit model.ResourceUnitV3) bool {
 	if specResourceUnit.MaxCPU.Equal(statusResourceUnit.MaxCPU) &&
 		specResourceUnit.MinCPU.Equal(statusResourceUnit.MinCPU) &&
 		specResourceUnit.MemorySize.Value() == statusResourceUnit.MemorySize.Value() &&
@@ -603,7 +603,7 @@ func (ctrl *TenantCtrl) isUnitV3Equal(specResourceUnit model.ResourceUnitV3, sta
 	}
 }
 
-func (ctrl *TenantCtrl) isUnitV4Equal(specResourceUnit model.ResourceUnitV4, statusResourceUnit model.ResourceUnitV4) bool {
+func IsUnitV4Equal(specResourceUnit model.ResourceUnitV4, statusResourceUnit model.ResourceUnitV4) bool {
 	if specResourceUnit.MaxCPU.Equal(statusResourceUnit.MaxCPU) &&
 		specResourceUnit.MemorySize.Value() == statusResourceUnit.MemorySize.Value() {
 		if (specResourceUnit.MinIops != 0 && specResourceUnit.MinIops != statusResourceUnit.MinIops) ||
@@ -618,12 +618,12 @@ func (ctrl *TenantCtrl) isUnitV4Equal(specResourceUnit model.ResourceUnitV4, sta
 	return false
 }
 
-func (ctrl *TenantCtrl) FormatUnitV3Config(unit model.ResourceUnitV3) string {
+func FormatUnitV3Config(unit model.ResourceUnitV3) string {
 	return fmt.Sprintf("MaxCPU: %s MinCPU:%s MemorySize:%s MaxIops:%d MinIops:%d MaxDiskSize:%s MaxSessionNum:%d",
 		unit.MaxCPU.String(), unit.MinCPU.String(), unit.MemorySize.String(), unit.MaxIops, unit.MinIops, unit.MaxDiskSize.String(), unit.MaxSessionNum)
 }
 
-func (ctrl *TenantCtrl) FormatUnitV4Config(unit model.ResourceUnitV4) string {
+func FormatUnitV4Config(unit model.ResourceUnitV4) string {
 	return fmt.Sprintf("MaxCPU: %s MinCPU:%s MemorySize:%s MaxIops:%d MinIops:%d IopsWeight:%d LogDiskSize:%s",
 		unit.MaxCPU.String(), unit.MinCPU.String(), unit.MemorySize.String(), unit.MaxIops, unit.MinIops, unit.IopsWeight, unit.LogDiskSize.String())
 }

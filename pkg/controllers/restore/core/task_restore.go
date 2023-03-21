@@ -110,7 +110,7 @@ func (ctrl *RestoreCtrl) GetRestoreOption() string {
 		},
 	}
 	localityOption := fmt.Sprintf("locality=%s", tenantCtrl.GenerateLocality(ctrl.Restore.Spec.Dest.Topology))
-	primaryZoneOption := fmt.Sprintf("primary_zone=%s", tenantCtrl.GenerateSpecPrimaryZone(ctrl.Restore.Spec.Dest.Topology))
+	primaryZoneOption := fmt.Sprintf("primary_zone=%s", tenantCore.GenerateSpecPrimaryZone(ctrl.Restore.Spec.Dest.Topology))
 
 	restoreOption := fmt.Sprintf("%s&%s", localityOption, primaryZoneOption)
 
