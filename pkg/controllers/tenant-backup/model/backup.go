@@ -16,5 +16,5 @@ type TenantSecret struct {
 	User              string
 	UserSecret        string
 	IncrementalSecret string
-	DatabaseSecret    string
+	FullSecret        string
 }
