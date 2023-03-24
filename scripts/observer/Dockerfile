@@ -23,7 +23,7 @@ RUN chmod +x /app/cable
 
 RUN useradd -m admin
 
-ENV OB_VERSION 3.1.4-10000092022071511
+ENV OB_VERSION 4.1.0.0-100000192023032010
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-libs-${OB_VERSION}.el8.x86_64.rpm
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-${OB_VERSION}.el8.x86_64.rpm
 RUN chown -R admin:admin /home/admin/oceanbase/
