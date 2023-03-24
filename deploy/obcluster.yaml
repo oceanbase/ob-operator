@@ -5,7 +5,7 @@ metadata:
   namespace: obcluster
 spec:
   imageRepo: oceanbasedev/oceanbase-cn
-  tag: v3.1.4-10000092022071511-snapshot-08172042
+  tag: v4.1.0.0-100000192023032010
   imageObagent: oceanbase/obagent:1.2.0
   clusterID: 1
   topology:
