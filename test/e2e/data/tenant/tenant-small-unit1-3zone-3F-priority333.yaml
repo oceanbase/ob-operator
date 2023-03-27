@@ -1,0 +1,54 @@
+apiVersion: cloud.oceanbase.com/v1		
+kind: Tenant		
+metadata:		
+  name: tenant1		
+  namespace: ob		
+spec:	
+  clusterName: test-ob
+  clusterID: 1
+  variables: 
+    - name: ob_tcp_invited_nodes
+      value: '%'
+  topology:
+    - zone: zone1
+      unitNum: 1
+      type: 
+        name: FUll
+        replica: 1
+      priority: 3
+      resource:
+        maxCPU: 2500m
+        minCPU: 2 
+        memorySize: 2Gi 
+        maxDiskSize: 1Gi 
+        maxSessionNum: 64 
+        maxIops: 256
+        minIops: 256 
+    - zone: zone2
+      unitNum: 1
+      type: 
+        name: FUll
+        replica: 1
+      priority: 3
+      resource:
+        maxCPU: 2500m
+        minCPU: 2 
+        memorySize: 2Gi 
+        maxDiskSize: 1Gi 
+        maxSessionNum: 64 
+        maxIops: 256
+        minIops: 256 
+    - zone: zone3
+      unitNum: 1
+      type: 
+        name: FUll
+        replica: 1
+      priority: 3
+      resource:
+        maxCPU: 2500m
+        minCPU: 2 
+        memorySize: 2Gi 
+        maxDiskSize: 1Gi 
+        maxSessionNum: 64 
+        maxIops: 256
+        minIops: 256

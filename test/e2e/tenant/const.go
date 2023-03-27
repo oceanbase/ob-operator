@@ -9,12 +9,20 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
+package tenant
 
-package model
+import (
+	"time"
+)
 
-type TenantSecret struct {
-	User              string
-	UserSecret        string
-	IncrementalSecret string
-	FullSecret        string
-}
+const (
+	ClusterReady = "Ready"
+
+	TryInterval                   = 1 * time.Second
+	ApplyWaitTime                 = 5 * time.Second
+	TenantCreateTimeout           = 300 * time.Second
+	TenantModifyTimeout           = 300 * time.Second
+	OBClusterReadyimeout          = 1000 * time.Second
+	OBClusterUpdateTReadyimeout   = 300 * time.Second
+	StatefulappUpdateReadyTimeout = 60 * time.Second
+)

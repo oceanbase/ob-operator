@@ -13,17 +13,20 @@ See the Mulan PSL v2 for more details.
 package model
 
 type RestoreStatus struct {
-	JobId                  int64
-	BackupClusterId        int64
-	BackupClusterName      string
-	TenantName             string
-	BackupTenantName       string
-	Status                 string
-	RestoreFinishTimestamp string
+	JobId             int64
+	BackupClusterName string
+	RestoreTenantName string
+	BackupTenantName  string
+	Status            string
+	FinishTimestamp   string
 }
 
 type RestoreConcurrency struct {
 	ZoneName string
 	SvrIP    string
 	Value    int64
+}
+
+type OBVersion struct {
+	Version string
 }

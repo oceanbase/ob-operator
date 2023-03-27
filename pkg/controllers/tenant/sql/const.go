@@ -34,8 +34,8 @@ const (
 	CreatePoolSQLTemplate   = "CREATE RESOURCE POOL ${POOL_NAME} UNIT=${UNIT_NAME}, UNIT_NUM=${UNIT_NUM}, ZONE_LIST=('${ZONE_NAME}');"
 	CreateTenantSQLTemplate = "CREATE TENANT IF NOT EXISTS ${TENANT_NAME} CHARSET='${CHARSET}', ZONE_LIST=('${ZONE_LIST}'), PRIMARY_ZONE='${PRIMARY_ZONE}', RESOURCE_POOL_LIST=('${RESOURCE_POOL_LIST}') ${LOCALITY}${COLLATE} ${VARIABLE_LIST} "
 
-	GetVariableSQLTemplate       = "SELECT tenant_id, zone, name, value FROM __all_virtual_sys_variable WHERE name = '${NAME}' and tenant_id = ${TENANT_ID}"
-	SetTenantVariableSQLTemplate = "ALTER TENANT ${TENANT_NAME} SET VARIABLES ${NAME} = ${VALUE}"
+	GetVariableSQLTemplate       = "SHOW VARIABLES LIKE '${NAME}'"
+	SetTenantVariableSQLTemplate = "ALTER TENANT ${TENANT_NAME} ${VARIABLE_LIST}"
 	SetUnitConfigV3SQLTemplate   = "ALTER RESOURCE UNIT ${UNIT_NAME} max_cpu ${MAX_CPU}, max_memory '${MAX_MEMORY}', max_iops ${MAX_IOPS}, max_disk_size '${MAX_DISK_SIZE}', max_session_num ${MAX_SESSION_NUM}, MIN_CPU=${MIN_CPU}, MIN_MEMORY='${MIN_MEMORY}', MIN_IOPS=${MIN_IOPS};"
 	SetUnitConfigV4SQLTemplate   = "ALTER RESOURCE UNIT ${UNIT_NAME} max_cpu ${MAX_CPU}, memory_size ${MEMORY_SIZE}${OPTION};"
 

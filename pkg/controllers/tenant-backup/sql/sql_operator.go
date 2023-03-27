@@ -38,12 +38,7 @@ func (op *SqlOperator) TestOK() bool {
 
 func (op *SqlOperator) ExecSQL(SQL string) error {
 	if SQL != "select 1" {
-		match, _ := regexp.MatchString("SET ENCRYPTION ON IDENTIFIED BY '(.*)' ONLY", SQL)
-		if match {
-			klog.Infoln("SET ENCRYPTION ON IDENTIFIED BY '******' ONLY")
-		} else {
-			klog.Infoln(SQL)
-		}
+		klog.Infoln(SQL)
 	}
 	client, err := GetDBClient(op.ConnectProperties)
 	if err != nil {
@@ -55,6 +50,32 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 			errNum, errMsg := covertErrToMySQLError(res.Error)
 			klog.Errorln(errNum, errMsg)
 			return errors.New(errMsg)
+		}
+	}
+	return nil
+}
+
+func (op *SqlOperator) ExecSQLs(SQLs []string) error {
+	client, err := GetDBClient(op.ConnectProperties)
+	if err != nil {
+		return errors.Wrap(err, "Get DB Connection")
+	} else {
+		defer client.Close()
+		for _, SQL := range SQLs {
+			if SQL != "select 1" {
+				match, _ := regexp.MatchString("SET ENCRYPTION ON IDENTIFIED BY '(.*)' ONLY", SQL)
+				if match {
+					klog.Infoln("SET ENCRYPTION ON IDENTIFIED BY '******' ONLY")
+				} else {
+					klog.Infoln(SQL)
+				}
+			}
+			res := client.Exec(SQL)
+			if res.Error != nil {
+				errNum, errMsg := covertErrToMySQLError(res.Error)
+				klog.Errorln(errNum, errMsg)
+				return errors.New(errMsg)
+			}
 		}
 	}
 	return nil

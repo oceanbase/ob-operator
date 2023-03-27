@@ -48,7 +48,7 @@ func (ctrl *TenantBackupCtrl) GetTenantSecret(tenant cloudv1.TenantConfigSpec) (
 	tenantSecret.User = strings.TrimRight(string(userSecret.(corev1.Secret).Data[tenantBackupconst.User]), "\n")
 	tenantSecret.UserSecret = strings.TrimRight(string(userSecret.(corev1.Secret).Data[tenantBackupconst.UserSecret]), "\n")
 	tenantSecret.IncrementalSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.IncrementalSecret]), "\n")
-	tenantSecret.DatabaseSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.DatabaseSecret]), "\n")
+	tenantSecret.FullSecret = strings.TrimRight(string(backupSecret.(corev1.Secret).Data[tenantBackupconst.FullSecret]), "\n")
 	return tenantSecret, nil
 }
 
@@ -103,7 +103,7 @@ func (ctrl *TenantBackupCtrl) SetArchiveDest(tenant cloudv1.TenantConfigSpec) er
 	if tenant.PieceSwitchInterval != "" {
 		value = fmt.Sprint(value, " PIECE_SWITCH_INTERVAL=", tenant.PieceSwitchInterval)
 	}
-	return sqlOperator.SetParameter(tenantBackupconst.LogAechiveDest, value)
+	return sqlOperator.SetParameter(tenantBackupconst.LogArchiveDest, value)
 }
 
 func (ctrl *TenantBackupCtrl) GetLogArchiveDest(tenant cloudv1.TenantConfigSpec) ([]model.TenantArchiveDest, error) {
@@ -271,40 +271,30 @@ func (ctrl *TenantBackupCtrl) SetBackupDest(tenant cloudv1.TenantConfigSpec) err
 	return sqlOperator.SetParameter(tenantBackupconst.DataBackupDest, tenant.DataBackupDest)
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetBackupDatabasePassword(tenant cloudv1.TenantConfigSpec) error {
+func (ctrl *TenantBackupCtrl) GetBackupDatabasePasswordSQL(tenant cloudv1.TenantConfigSpec) (string, error) {
 	tenantSecret, err := ctrl.GetTenantSecret(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' secret error '%s'", tenant.Name, err)
-		return err
+		return "", err
 	}
-	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
-	if err != nil {
-		klog.Errorf("tenant '%s' get sql operator error when set Backup Database Password", tenant.Name)
-		return errors.Wrap(err, "get sql operator error when set Backup Database Password")
+	if tenantSecret.FullSecret != "" {
+		klog.Infof("need set tenant '%s' backup full password", tenant.Name)
+		return sql.ReplaceAll(sql.SetBackupPasswordTemplate, sql.SetBackupPasswordReplacer(tenantSecret.FullSecret)), nil
 	}
-	if tenantSecret.DatabaseSecret != "" {
-		klog.Infof("Begin set tenant '%s' backup database password", tenant.Name)
-		return sqlOperator.SetBackupPassword(tenantSecret.DatabaseSecret)
-	}
-	return nil
+	return "", nil
 }
 
-func (ctrl *TenantBackupCtrl) CheckAndSetBackupIncrementalPassword(tenant cloudv1.TenantConfigSpec) error {
+func (ctrl *TenantBackupCtrl) GetBackupIncrementalPasswordSQL(tenant cloudv1.TenantConfigSpec) (string, error) {
 	tenantSecret, err := ctrl.GetTenantSecret(tenant)
 	if err != nil {
 		klog.Errorf("get tenant '%s' secret error '%s'", tenant.Name, err)
-		return err
-	}
-	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
-	if err != nil {
-		klog.Errorf("tenant '%s' get sql operator error when set Backup Incremental Password", tenant.Name)
-		return errors.Wrap(err, "get sql operator error when set Backup Incremental Password")
+		return "", err
 	}
 	if tenantSecret.IncrementalSecret != "" {
-		klog.Infof("Begin set tenant '%s' backup incremental password", tenant.Name)
-		return sqlOperator.SetBackupPassword(tenantSecret.IncrementalSecret)
+		klog.Infof("need set tenant '%s' backup incremental password", tenant.Name)
+		return sql.ReplaceAll(sql.SetBackupPasswordTemplate, sql.SetBackupPasswordReplacer(tenantSecret.IncrementalSecret)), nil
 	}
-	return nil
+	return "", nil
 }
 
 func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) error {
@@ -319,11 +309,6 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) 
 					return err
 				}
 				if !isBackupRunning {
-					err = ctrl.CheckAndSetBackupDatabasePassword(tenant)
-					if err != nil {
-						klog.Errorf("Tenant '%s' backup database check and set password err '%s'", tenant.Name, err)
-						return err
-					}
 					err = ctrl.StartBackupDatabase(tenant)
 					if err != nil {
 						klog.Errorf("Tenant '%s' start backup database err '%s'", tenant.Name, err)
@@ -353,11 +338,6 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) 
 						klog.Infof("Tenant '%s' is doing backup", tenant.Name)
 						return nil
 					}
-					err = ctrl.CheckAndSetBackupDatabasePassword(tenant)
-					if err != nil {
-						klog.Errorf("Tenant '%s' backup database check and set password err '%s'", tenant.Name, err)
-						return err
-					}
 					err = ctrl.StartBackupDatabase(tenant)
 					if err != nil {
 						klog.Errorf("Tenant '%s' backup database err '%s'", tenant.Name, err)
@@ -378,11 +358,6 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) 
 					return err
 				}
 				if !isBackupDoing {
-					err = ctrl.CheckAndSetBackupIncrementalPassword(tenant)
-					if err != nil {
-						klog.Errorf("Tenant '%s' backup incremental check and set password err '%s'", tenant.Name, err)
-						return err
-					}
 					err = ctrl.StartBackupIncremental(tenant)
 					if err != nil {
 						klog.Errorf("Tenant '%s' start backup incremental err '%s'", tenant.Name, err)
@@ -411,11 +386,6 @@ func (ctrl *TenantBackupCtrl) CheckAndDoBackup(tenant cloudv1.TenantConfigSpec) 
 					if isBackupDoing {
 						klog.Infof("Tenant '%s' is doing backup", tenant.Name)
 						return nil
-					}
-					err = ctrl.CheckAndSetBackupIncrementalPassword(tenant)
-					if err != nil {
-						klog.Errorf("Tenant '%s' backup incremental check and set password err '%s'", tenant.Name, err)
-						return err
 					}
 					err = ctrl.StartBackupIncremental(tenant)
 					if err != nil {
@@ -446,13 +416,22 @@ func (ctrl *TenantBackupCtrl) isBackupDoing(tenant cloudv1.TenantConfigSpec) (bo
 }
 
 func (ctrl *TenantBackupCtrl) StartBackupDatabase(tenant cloudv1.TenantConfigSpec) error {
-	klog.Infof("Tenant '%s' begin backup database", tenant.Name)
+	SQLs := make([]string, 0)
+	pwdSQL, err := ctrl.GetBackupDatabasePasswordSQL(tenant)
+	if err != nil {
+		klog.Errorf("tenant '%s' get full pwd error when start backup database", tenant.Name)
+		return err
+	}
+	if pwdSQL != "" {
+		SQLs = append(SQLs, pwdSQL)
+	}
+	SQLs = append(SQLs, sql.StartBackupDatabaseSql)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when start backup database", tenant.Name)
 		return errors.Wrap(err, "get sql operator error when start backup database")
 	}
-	return sqlOperator.StartBackupDatabase()
+	return sqlOperator.ExecSQLs(SQLs)
 }
 
 func (ctrl *TenantBackupCtrl) getBackupScheduleStatus(tenant cloudv1.TenantConfigSpec, backupType string) cloudv1.ScheduleSpec {
@@ -478,13 +457,22 @@ func (ctrl *TenantBackupCtrl) GetSingleTenantBackupStatus(tenant cloudv1.TenantC
 }
 
 func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantConfigSpec) error {
-	klog.Infof("Tenant '%s' begin backup incremenrtal", tenant.Name)
+	SQLs := make([]string, 0)
+	pwdSQL, err := ctrl.GetBackupIncrementalPasswordSQL(tenant)
+	if err != nil {
+		klog.Errorf("tenant '%s' get incremental pwd error when start backup incremental", tenant.Name)
+		return err
+	}
+	if pwdSQL != "" {
+		SQLs = append(SQLs, pwdSQL)
+	}
+	SQLs = append(SQLs, sql.StartBackupIncrementalSql)
 	sqlOperator, err := ctrl.GetTenantSqlOperator(tenant)
 	if err != nil {
 		klog.Errorf("tenant '%s' get sql operator error when start backup incremental", tenant.Name)
 		return errors.Wrap(err, "get sql operator error when start backup incremental")
 	}
-	return sqlOperator.StartBackupIncremental()
+	return sqlOperator.ExecSQLs(SQLs)
 }
 
 func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
