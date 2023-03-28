@@ -22,13 +22,8 @@
   https://github.com/kubernetes/kubernetes/blob/master/pkg/kubelet/events/event.go
   https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
   https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-  https://kubernetes.io/docs/concepts/containers/images
-  https://kubernetes.io/docs/concepts/containers/images#updating-images
-  https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
-  https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-  https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
-  https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#container-hooks
-  https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+  https://examples.k8s.io/*
+  https://kubernetes.io/docs/*
   https://docs.docker.com/engine/reference/builder/#dockerignore-file
   https://en.wikipedia.org/wiki/ANSI_escape_code#SGR_parameters
   http://linuxcommand.org/lc3_adv_awk.php
