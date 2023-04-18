@@ -54,6 +54,8 @@ const (
 
 	SetParameterTemplate = "ALTER SYSTEM SET ${NAME} = '${VALUE}'"
 
-	GetParameterTemplate  = "SELECT zone, svr_ip, svr_port, name, value, scope, edit_level FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = '${NAME}'"
-	ShowParameterTemplate = "SHOW PARAMETERS LIKE '${NAME}'"
+	GetParameterTemplate          = "SELECT zone, svr_ip, svr_port, name, value, scope, edit_level FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = '${NAME}'"
+	GetServerParameterSQLTemplate = "SELECT svr_ip, svr_port, name, value FROM oceanbase.GV$OB_PARAMETERS WHERE name IN (${NAME});"
+	SetServerParameterTemplate    = "ALTER SYSTEM SET ${NAME} = '${VALUE}' server='${SERVER}';"
+	ShowParameterTemplate         = "SHOW PARAMETERS LIKE '${NAME}'"
 )

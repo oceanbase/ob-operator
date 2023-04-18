@@ -74,10 +74,11 @@ func OBUpgradeRoute(c *gin.Context) {
 	param.CurrentVersion = c.Query(observer.CurrentVersion)
 	log.Infof("get upgrade route from V%s to V%s", param.CurrentVersion, param.TargetVersion)
 	res, err := observer.GetOBUpgradeRoute(*param)
+	route := observer.GenerateUpgradeRoute(res)
 	if err != nil {
 		SendResponse(c, NewErrorResponse(err))
 	} else {
-		SendResponse(c, NewSuccessResponse(res))
+		SendResponse(c, NewSuccessResponse(route))
 	}
 }
 

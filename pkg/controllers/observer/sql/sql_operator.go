@@ -74,6 +74,11 @@ func (op *SqlOperator) SetParameter(name, value string) error {
 	return op.ExecSQL(sql)
 }
 
+func (op *SqlOperator) SetServerParameter(server, name, value string) error {
+	sql := ReplaceAll(SetServerParameterTemplate, SetServerParameterSQLReplacer(server, name, value))
+	return op.ExecSQL(sql)
+}
+
 func (op *SqlOperator) BootstrapForOB(SQL string) error {
 	// TODO: set timeout with variables
 	setTimeOutRes := op.ExecSQL(SetTimeoutSQL)
@@ -189,6 +194,27 @@ func (op *SqlOperator) GetParameter(name string) []model.SysParameterStat {
 		if err == nil {
 			defer rows.Close()
 			var rowData model.SysParameterStat
+			for rows.Next() {
+				err = client.ScanRows(rows, &rowData)
+				if err == nil {
+					res = append(res, rowData)
+				}
+			}
+		}
+	}
+	return res
+}
+
+func (op *SqlOperator) GetServerParameter(param_list string) []model.ServerParameter {
+	res := make([]model.ServerParameter, 0)
+	sql := ReplaceAll(GetServerParameterSQLTemplate, GetParameterSQLReplacer(param_list))
+	client, err := GetDBClient(op.ConnectProperties)
+	if err == nil {
+		defer client.Close()
+		rows, err := client.Model(&model.ServerParameter{}).Raw(sql).Rows()
+		if err == nil {
+			defer rows.Close()
+			var rowData model.ServerParameter
 			for rows.Next() {
 				err = client.ScanRows(rows, &rowData)
 				if err == nil {

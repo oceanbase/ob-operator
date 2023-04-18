@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package cable
 
 import (
+	"errors"
+
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 )
 
@@ -55,14 +57,20 @@ func OBServerGetVersion(podIP string) (string, error) {
 	return version, nil
 }
 
-func OBServerGetUpgradeRoute(podIP, currentVer, targetVer string) ([]string, error) {
+func OBServerGetUpgradeRoute(podIP, currentVer, targetVer string) ([]UpgradeRoute, error) {
 	obUpgradeRouteArgs := GenerateOBUpgradeRouteArgs(currentVer, targetVer)
 	responseData, err := OBServerGetUpgradeRouteExecuter(podIP, obUpgradeRouteArgs)
 	if err != nil {
 		return nil, err
 	}
 	response := responseData["data"]
-	upgradeRoute := GetObUpgradeRouteFromResponse(response)
+	upgradeRoute, err := GetObUpgradeRouteFromResponse(response)
+	if err != nil {
+		return upgradeRoute, err
+	}
+	if len(upgradeRoute) == 0 {
+		return upgradeRoute, errors.New("get upgrade route from response Failed")
+	}
 	return upgradeRoute, nil
 }
 

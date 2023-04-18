@@ -364,6 +364,8 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				err = ctrl.PrepareForPostCheck(statefulApp)
 			case observerconst.UpgradePostChecking:
 				err = ctrl.ExecUpgradePostChecker(statefulApp)
+			case observerconst.RestoreParams:
+				err = ctrl.CheckAndRestoreParams(statefulApp)
 			}
 		}
 	}

@@ -41,6 +41,7 @@ type UpgradeInfo struct {
 	ZoneStatus          string
 	ClusterStatus       string
 	SingleZoneStatus    map[string]string
+	Params              []cloudv1.ServerParameter
 }
 
 const (
@@ -64,16 +65,25 @@ func (ctrl *OBClusterCtrl) OBClusterUpgrade(statefulApp cloudv1.StatefulApp) err
 	if currentVer == targetVer {
 		return ctrl.OBClusterUpgradeBP(statefulApp, currentVer)
 	}
-	if ctrl.IsUpgradeV3(statefulApp) {
-		return ctrl.OBClusterUpgradeV3(statefulApp)
+	if ctrl.IsUpgradeV4(statefulApp) {
+		err = ctrl.CheckAndStoreParameters(statefulApp)
+		if err != nil {
+			return err
+		}
 	}
-	return nil
+	return ctrl.OBClusterDoUpgrade(statefulApp)
 }
 
 func (ctrl *OBClusterCtrl) IsUpgradeV3(statefulApp cloudv1.StatefulApp) bool {
 	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	targetVer := cluster.TargetVersion
 	return targetVer[0:1] == observerconst.OBClusterV3
+}
+
+func (ctrl *OBClusterCtrl) IsUpgradeV4(statefulApp cloudv1.StatefulApp) bool {
+	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	targetVer := cluster.TargetVersion
+	return targetVer[0:1] == observerconst.OBClusterV4
 }
 
 func (ctrl *OBClusterCtrl) OBClusterUpgradeBP(statefulApp cloudv1.StatefulApp, version string) error {
@@ -89,7 +99,7 @@ func (ctrl *OBClusterCtrl) OBClusterUpgradeBP(statefulApp cloudv1.StatefulApp, v
 	return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 }
 
-func (ctrl *OBClusterCtrl) OBClusterUpgradeV3(statefulApp cloudv1.StatefulApp) error {
+func (ctrl *OBClusterCtrl) OBClusterDoUpgrade(statefulApp cloudv1.StatefulApp) error {
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	cluster := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
 	targetVer := cluster.TargetVersion
@@ -113,8 +123,8 @@ func (ctrl *OBClusterCtrl) GetTargetVersion() (string, error) {
 	return cable.OBServerGetVersion(podIp)
 }
 
-func (ctrl *OBClusterCtrl) GetUpgradeRoute(currentVer, targetVer string) ([]string, error) {
-	var upgradeRoute []string
+func (ctrl *OBClusterCtrl) GetUpgradeRoute(currentVer, targetVer string) ([]cable.UpgradeRoute, error) {
+	var upgradeRoute []cable.UpgradeRoute
 	podIp, err := ctrl.GetHelperPodIP()
 	if err != nil {
 		return upgradeRoute, err
@@ -163,17 +173,56 @@ func (ctrl *OBClusterCtrl) CheckAndSetUpgradeRoute(statefulApp cloudv1.StatefulA
 	if err != nil {
 		return err
 	}
+	upgradeRouteList := make([]string, 0)
 	if len(currUpgradeRoute) == 0 {
+		for idx, node := range upgradeRoute {
+			if idx > 0 && idx < len(upgradeRoute)-1 && node.RequireFromBinary {
+				klog.Errorf("Cannot upgrade directly, version '%s' is required from binary", node.Version)
+				return errors.New("Cannot upgrade directly!!!!")
+			}
+			upgradeRouteList = append(upgradeRouteList, node.Version)
+		}
 		upgradeInfo := UpgradeInfo{
-			UpgradeRoute: upgradeRoute,
+			UpgradeRoute: upgradeRouteList,
 		}
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
-	if !reflect.DeepEqual(upgradeRoute, currUpgradeRoute) {
-		klog.Errorf("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRoute)
+	if !reflect.DeepEqual(upgradeRouteList, currUpgradeRoute) {
+		klog.Errorf("Upgrade Route Does Not Match. Current: %s, Target: %s", currUpgradeRoute, upgradeRouteList)
 		return errors.New("Upgrade Route Does Not Match")
 	}
 	return nil
+}
+
+func (ctrl *OBClusterCtrl) CheckAndStoreParameters(statefulApp cloudv1.StatefulApp) error {
+	paramsFromDB, err := ctrl.GetServerParameter()
+	if err != nil {
+		return err
+	}
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	if !reflect.DeepEqual(paramsFromDB, clusterStatus.Params) {
+		UpgradeInfo := UpgradeInfo{
+			Params: paramsFromDB,
+		}
+		return ctrl.UpdateOBStatusForUpgrade(UpgradeInfo)
+	}
+	return nil
+}
+
+func (ctrl *OBClusterCtrl) ExecHealthChecker(statefulApp cloudv1.StatefulApp, jobName, name string) (string, interface{}, error) {
+	// Get Job
+	jobObject, err := ctrl.GetJobObject(jobName)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return observerconst.JobCreating, jobObject, ctrl.CreateHealthCheckerJob(statefulApp, name)
+		} else {
+			klog.Errorln("Get ", jobName, " job failed, err: ", err)
+			return "", jobObject, err
+		}
+	}
+	// Get Job Status
+	jobStatus := ctrl.GetJobStatus(jobObject)
+	return jobStatus, jobObject, err
 }
 
 func (ctrl *OBClusterCtrl) ExecUpgradePreChecker(statefulApp cloudv1.StatefulApp) error {
@@ -203,7 +252,12 @@ func (ctrl *OBClusterCtrl) GetPreCheckJobStatus(statefulApp cloudv1.StatefulApp)
 	case observerconst.JobRunning:
 		return nil
 	case observerconst.JobSucceeded:
-		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.CheckUpgradeMode, "", "")
+		if ctrl.IsUpgradeV3(statefulApp) {
+			err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.CheckUpgradeMode, "", "")
+		}
+		if ctrl.IsUpgradeV4(statefulApp) {
+			err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ExecutingPreScripts, "", "")
+		}
 	case observerconst.JobFailed:
 		err = ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
@@ -235,7 +289,7 @@ func (ctrl *OBClusterCtrl) ExecPreScripts(statefulApp cloudv1.StatefulApp) error
 		return ctrl.UpdateOBStatusForUpgrade(upgradeInfo)
 	}
 	// Get Next Version Job
-	version, index, err := ctrl.GetNextVersion()
+	version, index, err := ctrl.GetNextVersion(statefulApp)
 	if err != nil {
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
 	}
@@ -273,10 +327,15 @@ func (ctrl *OBClusterCtrl) ExecPostScripts(statefulApp cloudv1.StatefulApp) erro
 		return err
 	}
 	if finished {
-		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
+		if ctrl.IsUpgradeV4(statefulApp) {
+			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.RestoreParams, "", "")
+		}
+		if ctrl.IsUpgradeV3(statefulApp) {
+			return ctrl.UpdateOBClusterAndZoneStatus(observerconst.NeedUpgradePostCheck, "", "")
+		}
 	}
 	// Get Next Version Job
-	version, index, err := ctrl.GetNextVersion()
+	version, index, err := ctrl.GetNextVersion(statefulApp)
 	if err != nil {
 		return err
 	}
@@ -371,6 +430,30 @@ func (ctrl *OBClusterCtrl) PrepareForPostCheck(statefulApp cloudv1.StatefulApp) 
 }
 
 func (ctrl *OBClusterCtrl) PreparingForUpgrade(statefulApp cloudv1.StatefulApp) error {
+	if ctrl.IsUpgradeV4(statefulApp) {
+		jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, "cluster-"+observerconst.UpgradeHealthChecker, ctrl.GenerateSpecVersion())
+		jobStatus, jobObject, err := ctrl.ExecHealthChecker(statefulApp, jobName, "cluster-"+observerconst.UpgradeHealthChecker)
+		if err != nil {
+			return err
+		}
+		switch jobStatus {
+		case observerconst.JobRunning, observerconst.JobCreating:
+			return nil
+		case observerconst.JobSucceeded:
+			err = ctrl.DeleteJobObject(jobObject)
+			if err != nil {
+				klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+				return err
+			}
+		case observerconst.JobFailed:
+			klog.Errorln("cluster upgrade health checker job failed")
+			err = ctrl.DeleteJobObject(jobObject)
+			if err != nil {
+				klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+			}
+			return errors.New("cluster upgrade health checker job failed")
+		}
+	}
 	upgradeInfo := UpgradeInfo{
 		ZoneStatus:    observerconst.NeedUpgrading,
 		ClusterStatus: observerconst.Upgrading,
@@ -432,6 +515,30 @@ func (ctrl *OBClusterCtrl) ExecUpgrading(statefulApp cloudv1.StatefulApp) error 
 			return err
 		}
 		if rollingUpgrade {
+			if ctrl.IsUpgradeV4(statefulApp) {
+				jobName := GenerateJobName(ctrl.OBCluster.Name, myconfig.ClusterName, zoneName+"-"+observerconst.UpgradeHealthChecker, ctrl.GenerateSpecVersion())
+				jobStatus, jobObject, err := ctrl.ExecHealthChecker(statefulApp, jobName, zoneName+"-"+observerconst.UpgradeHealthChecker)
+				if err != nil {
+					return err
+				}
+				switch jobStatus {
+				case observerconst.JobRunning, observerconst.JobCreating:
+					return nil
+				case observerconst.JobSucceeded:
+					err = ctrl.DeleteJobObject(jobObject)
+					if err != nil {
+						klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+						return err
+					}
+				case observerconst.JobFailed:
+					klog.Errorln("zone upgrade health checker job failed")
+					err = ctrl.DeleteJobObject(jobObject)
+					if err != nil {
+						klog.Errorln("Delete Job %s Failed, Err: %s", jobName, err)
+					}
+					return errors.New("zone upgrade health checker job failed")
+				}
+			}
 			err = ctrl.StartOBZone(ip, zoneName)
 			if err != nil {
 				klog.Errorln("Start OB Zone err : ", zoneName, err)
@@ -626,4 +733,42 @@ func (ctrl *OBClusterCtrl) UpdateStatefulAppImage(statefulApp cloudv1.StatefulAp
 	newStatefulApp := converter.UpdateStatefulAppImage(statefulApp, image)
 	statefulAppCtrl := NewStatefulAppCtrl(ctrl, newStatefulApp)
 	return statefulAppCtrl.UpdateStatefulApp()
+}
+
+func (ctrl *OBClusterCtrl) CheckAndRestoreParams(statefulApp cloudv1.StatefulApp) error {
+	paramsFromDB, err := ctrl.GetServerParameter()
+	if err != nil {
+		return err
+	}
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	if reflect.DeepEqual(paramsFromDB, clusterStatus.Params) {
+		klog.Infoln("reflect.DeepEqual(paramsFromDB, clusterStatus.Params): ", reflect.DeepEqual(paramsFromDB, clusterStatus.Params))
+		err = ctrl.UpdateStatefulAppImage(statefulApp)
+		if err != nil {
+			klog.Errorln("Update StatefulApp Failed, Err: ", err)
+			return err
+		}
+		klog.Infoln("Upgrade Finished~")
+		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.ClusterReady, "", "")
+	}
+	return ctrl.RestoreParams()
+}
+
+func (ctrl *OBClusterCtrl) RestoreParams() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator error")
+	}
+	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
+	restoreParams := clusterStatus.Params
+	for server, serverParam := range restoreParams {
+		for _, param := range serverParam.Params {
+			err = sqlOperator.SetServerParameter(serverParam.Server, param.Name, param.Value)
+			if err != nil {
+				klog.Errorf("restore server '%s' parameter failed: '%s'", server, err)
+				return err
+			}
+		}
+	}
+	return nil
 }

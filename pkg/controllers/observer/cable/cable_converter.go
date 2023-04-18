@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package cable
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -24,6 +25,11 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/ob"
 )
+
+type UpgradeRoute struct {
+	Version           string
+	RequireFromBinary bool
+}
 
 func GenerateRSListFromSubset(subsets []cloudv1.SubsetStatus) string {
 	var rsList string
@@ -118,10 +124,21 @@ func GenerateOBRecoverConfigArgs(path string) map[string]interface{} {
 	return obUpgradeRouteArgs
 }
 
-func GetObUpgradeRouteFromResponse(responseData interface{}) []string {
-	var res []string
+func GetObUpgradeRouteFromResponse(responseData interface{}) ([]UpgradeRoute, error) {
+	res := make([]UpgradeRoute, 0)
 	for _, v := range responseData.([]interface{}) {
-		res = append(res, v.(string))
+		data, err := json.Marshal(v)
+		if err != nil {
+			klog.Errorln(err)
+			return res, err
+		}
+		var upgradeRoute UpgradeRoute
+		err = json.Unmarshal(data, &upgradeRoute)
+		if err != nil {
+			klog.Errorln(err)
+			return res, err
+		}
+		res = append(res, upgradeRoute)
 	}
-	return res
+	return res, nil
 }

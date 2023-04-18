@@ -67,17 +67,27 @@ type OBUpgradeRouteParam struct {
 }
 
 type VersionDep struct {
-	Version           string        `yaml:"version"`
-	CanBeUpgradedTo   []string      `yaml:"can_be_upgraded_to,flow,omitempty"`
-	RequireFromBinary bool          `yaml:"require_from_binary,flow,omitempty"`
-	Deprecated        bool          `yaml:"deprecated,omitempty"`
-	DirectComeFrom    []*VersionDep `yaml:"directComeFrom,omitempty"`
-	Next              []*VersionDep `yaml:"next,omitempty"`
-	Precursor         *VersionDep   `yaml:"precursor,omitempty"`
-	DirectUpgrade     bool          `yaml:"directUpgrade,omitempty"`
+	Version           string                `yaml:"version"`
+	CanBeUpgradedTo   []string              `yaml:"can_be_upgraded_to,flow,omitempty"`
+	RequireFromBinary RequireFromBinarySpec `yaml:"require_from_binary,flow,omitempty"`
+	Deprecated        bool                  `yaml:"deprecated,omitempty"`
+	DirectComeFrom    []*VersionDep         `yaml:"directComeFrom,omitempty"`
+	Next              []*VersionDep         `yaml:"next,omitempty"`
+	Precursor         *VersionDep           `yaml:"precursor,omitempty"`
+	DirectUpgrade     bool                  `yaml:"directUpgrade,omitempty"`
 }
 
-func GetOBUpgradeRoute(param OBUpgradeRouteParam) ([]string, error) {
+type RequireFromBinarySpec struct {
+	Value        bool     `yaml:"value,omitempty"`
+	WhenComeFrom []string `yaml:"when_come_from,omitempty"`
+}
+
+type UpgradeRoute struct {
+	Version           string
+	RequireFromBinary bool
+}
+
+func GetOBUpgradeRoute(param OBUpgradeRouteParam) ([]VersionDep, error) {
 	currentVersion := param.CurrentVersion
 	targetVersion := param.TargetVersion
 	filePath := FilePath
@@ -98,11 +108,19 @@ func GetOBUpgradeRoute(param OBUpgradeRouteParam) ([]string, error) {
 	}
 	graph := Build(versionDep)
 	res := FindShortestUpgradePath(graph, currentVersion, targetVersion)
-	var upgradeRoute []string
-	for _, v := range res {
-		upgradeRoute = append(upgradeRoute, v.Version)
+	return res, nil
+}
+
+func GenerateUpgradeRoute(versionDepList []VersionDep) []UpgradeRoute {
+	upgradeRouteList := make([]UpgradeRoute, 0)
+	for _, versionDep := range versionDepList {
+		upgradeRoute := UpgradeRoute{
+			Version:           versionDep.Version,
+			RequireFromBinary: versionDep.RequireFromBinary.Value,
+		}
+		upgradeRouteList = append(upgradeRouteList, upgradeRoute)
 	}
-	return upgradeRoute, nil
+	return upgradeRouteList
 }
 
 func Build(versionDep []VersionDep) map[string]*VersionDep {
