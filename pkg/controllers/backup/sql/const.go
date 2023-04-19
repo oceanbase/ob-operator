@@ -33,6 +33,8 @@ const (
 	StopArchiveLogSql      = "ALTER SYSTEM NOARCHIVELOG"
 	GetArchiveLogStatusSql = "SELECT tenant_id, status FROM CDB_OB_BACKUP_ARCHIVELOG"
 
+	CancelBackupTasksSql   = "ALTER SYSTEM CANCEL ALL BACKUP FORCE"
+
 	StartBackupDatabaseSql    = "ALTER SYSTEM BACKUP DATABASE"
 	StartBackupIncrementalSql = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
 

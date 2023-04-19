@@ -307,6 +307,15 @@ func (ctrl *BackupCtrl) TickerCheckArchivelogDoing() error {
 	}
 }
 
+func (ctrl *BackupCtrl) CancelBackupTasks() error {
+	klog.Infoln("begin cancel backup tasks")
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "get sql operator when trying to cancel backup tasks")
+	}
+	return sqlOperator.CancelBackupTasks()
+}
+
 func (ctrl *BackupCtrl) CancelArchiveLog() error {
 	klog.Infoln("begin cancel backup log archieve ")
 	sqlOperator, err := ctrl.GetSqlOperator()
