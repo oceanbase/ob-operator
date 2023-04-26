@@ -17,15 +17,18 @@ const (
 )
 
 const (
-	UpgradePreChecker      = "pre-checker"
-	UpgradePostChecker     = "post-checker"
-	UpgradePre             = "pre"
-	UpgradePost            = "post"
-	UpgradePreCheckerPath  = "/home/admin/oceanbase/etc/upgrade_checker.py"
-	UpgradeScriptsPath     = "/home/admin/oceanbase/scripts/"
-	PreScriptFile          = "/upgrade_pre.py"
-	PostScriptFile         = "/upgrade_post.py"
-	UpgradePostCheckerPath = "/home/admin/oceanbase/etc/upgrade_post_checker.py"
+	UpgradePreChecker        = "pre-checker"
+	UpgradePostChecker       = "post-checker"
+	UpgradeHealthChecker     = "healthchecker"
+	UpgradePre               = "pre"
+	UpgradePost              = "post"
+	UpgradePreCheckerPath    = "/home/admin/oceanbase/etc/upgrade_checker.py"
+	UpgradeHealthCheckerPath = "/home/admin/oceanbase/etc/upgrade_health_checker.py"
+	UpgradeScriptsPath       = "/home/admin/oceanbase/scripts/"
+	UpgradeScriptsPathV4     = "/home/admin/oceanbase/etc"
+	PreScriptFile            = "/upgrade_pre.py"
+	PostScriptFile           = "/upgrade_post.py"
+	UpgradePostCheckerPath   = "/home/admin/oceanbase/etc/upgrade_post_checker.py"
 )
 
 const (
@@ -35,7 +38,14 @@ const (
 )
 
 const (
+	JobCreating  = "Creating"
 	JobRunning   = "Running"
 	JobSucceeded = "Succeeded"
 	JobFailed    = "Failed"
+)
+
+const (
+	ServerPermanentOfflineTime = "'server_permanent_offline_time'"
+	EnableRebalance            = "'enable_rebalance'"
+	EnableRereplication        = "'enable_rereplication'"
 )

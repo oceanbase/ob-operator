@@ -237,6 +237,11 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatusForUpgrade(obCluster cloudv1.OBCl
 	} else {
 		clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
 	}
+	if len(upgradeInfo.Params) != 0 {
+		clusterCurrentStatus.Params = upgradeInfo.Params
+	} else {
+		clusterCurrentStatus.Params = oldClusterStatus.Params
+	}
 	clusterCurrentStatus.Cluster = myconfig.ClusterName
 	clusterCurrentStatus.LastTransitionTime = metav1.Now()
 	topologyStatus := buildMultiClusterStatus(obCluster, clusterCurrentStatus)
@@ -287,11 +292,14 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 	clusterCurrentStatus.TargetVersion = oldClusterStatus.TargetVersion
 	clusterCurrentStatus.UpgradeRoute = oldClusterStatus.UpgradeRoute
 	clusterCurrentStatus.ScriptPassedVersion = oldClusterStatus.ScriptPassedVersion
+	clusterCurrentStatus.Params = oldClusterStatus.Params
 	if clusterStatus == observerconst.ClusterReady {
 		clusterCurrentStatus.TargetVersion = ""
 		var upgradeRoute []string
 		clusterCurrentStatus.UpgradeRoute = upgradeRoute
 		clusterCurrentStatus.ScriptPassedVersion = ""
+		var serverParams []cloudv1.ServerParameter
+		clusterCurrentStatus.Params = serverParams
 	}
 
 	// topology status, multi cluster
@@ -305,7 +313,7 @@ func (ctrl *OBClusterCtrl) buildOBClusterStatus(obCluster cloudv1.OBCluster, clu
 		clusterStatus == observerconst.CheckUpgradeMode || clusterStatus == observerconst.ExecutingPreScripts ||
 		clusterStatus == observerconst.NeedUpgrading || clusterStatus == observerconst.Upgrading ||
 		clusterStatus == observerconst.ExecutingPostScripts || clusterStatus == observerconst.NeedUpgradePostCheck ||
-		clusterStatus == observerconst.UpgradePostChecking {
+		clusterStatus == observerconst.UpgradePostChecking || clusterStatus == observerconst.RestoreParams {
 		obCluster.Status.Status = observerconst.TopologyNotReady
 	} else {
 		obCluster.Status.Status = observerconst.TopologyPrepareing

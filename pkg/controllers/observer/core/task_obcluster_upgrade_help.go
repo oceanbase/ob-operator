@@ -248,6 +248,16 @@ func (ctrl *OBClusterCtrl) CreatePreCheckerJob(statefulApp cloudv1.StatefulApp) 
 	return nil
 }
 
+func (ctrl *OBClusterCtrl) CreateHealthCheckerJob(statefulApp cloudv1.StatefulApp, name string) error {
+	fileName := observerconst.UpgradeHealthCheckerPath
+	err := ctrl.CreateExecScriptJob(name, fileName, statefulApp)
+	if err != nil {
+		klog.Errorln("create upgrade health check job failed, err: ", err)
+		return err
+	}
+	return nil
+}
+
 func (ctrl *OBClusterCtrl) CreatePostCheckerJob(statefulApp cloudv1.StatefulApp) error {
 	name := observerconst.UpgradePostChecker
 	fileName := observerconst.UpgradePostCheckerPath
@@ -261,7 +271,13 @@ func (ctrl *OBClusterCtrl) CreatePostCheckerJob(statefulApp cloudv1.StatefulApp)
 
 func (ctrl *OBClusterCtrl) CreateUpgradePreJob(statefulApp cloudv1.StatefulApp, version string, index int) error {
 	name := fmt.Sprint(observerconst.UpgradePre, "-", index)
-	filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PreScriptFile)
+	var filename string
+	if ctrl.IsUpgradeV3(statefulApp) {
+		filename = fmt.Sprint(observerconst.UpgradeScriptsPath, observerconst.PreScriptFile)
+	}
+	if ctrl.IsUpgradeV4(statefulApp) {
+		filename = fmt.Sprint(observerconst.UpgradeScriptsPathV4, observerconst.PreScriptFile)
+	}
 	err := ctrl.CreateExecScriptJob(name, filename, statefulApp)
 	if err != nil {
 		klog.Errorln("Create Upgrade Pre Job Failed, Err: ", err)
@@ -272,7 +288,13 @@ func (ctrl *OBClusterCtrl) CreateUpgradePreJob(statefulApp cloudv1.StatefulApp, 
 
 func (ctrl *OBClusterCtrl) CreateUpgradePostJob(statefulApp cloudv1.StatefulApp, version string, index int) error {
 	name := fmt.Sprint(observerconst.UpgradePost, "-", index)
-	filename := fmt.Sprint(observerconst.UpgradeScriptsPath, version, observerconst.PostScriptFile)
+	var filename string
+	if ctrl.IsUpgradeV3(statefulApp) {
+		filename = fmt.Sprint(observerconst.UpgradeScriptsPath, observerconst.PostScriptFile)
+	}
+	if ctrl.IsUpgradeV4(statefulApp) {
+		filename = fmt.Sprint(observerconst.UpgradeScriptsPathV4, observerconst.PostScriptFile)
+	}
 	err := ctrl.CreateExecScriptJob(name, filename, statefulApp)
 	if err != nil {
 		klog.Errorln("Create Upgrade Pre Job Failed, Err: ", err)
@@ -290,7 +312,7 @@ func (ctrl *OBClusterCtrl) AllScriptsFinish() (bool, error) {
 	return upgradeRoute[len(upgradeRoute)-1] == clusterStatus.ScriptPassedVersion, nil
 }
 
-func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
+func (ctrl *OBClusterCtrl) GetNextVersion(statefulApp cloudv1.StatefulApp) (string, int, error) {
 	var version string
 	var index int
 	clusterStatus := converter.GetClusterStatusFromOBTopologyStatus(ctrl.OBCluster.Status.Topology)
@@ -298,18 +320,24 @@ func (ctrl *OBClusterCtrl) GetNextVersion() (string, int, error) {
 	if len(upgradeRoute) < 2 {
 		return "", 0, errors.New("OBCluster Upgrade Route is Wrong When Get Next Version")
 	}
-	if clusterStatus.ScriptPassedVersion == "" {
-		version = upgradeRoute[1]
-		index = 1
-	} else {
-		for i, ver := range upgradeRoute {
-			if ver == clusterStatus.ScriptPassedVersion {
-				version = upgradeRoute[i+1]
-				index = i + 1
+	if ctrl.IsUpgradeV4(statefulApp) {
+		return upgradeRoute[len(upgradeRoute)-1], len(upgradeRoute) - 1, nil
+	}
+	if ctrl.IsUpgradeV3(statefulApp) {
+		if clusterStatus.ScriptPassedVersion == "" {
+			version = upgradeRoute[1]
+			index = 1
+		} else {
+			for i, ver := range upgradeRoute {
+				if ver == clusterStatus.ScriptPassedVersion {
+					version = upgradeRoute[i+1]
+					index = i + 1
+				}
 			}
 		}
+		return version, index, nil
 	}
-	return version, index, nil
+	return "", 0, errors.New("not support version")
 }
 
 func (ctrl *OBClusterCtrl) isLeaderCountZero(rsIP, zoneName string) (bool, error) {
@@ -688,4 +716,35 @@ func (ctrl *OBClusterCtrl) GetRsIP(statefulApp cloudv1.StatefulApp, zoneName str
 		}
 	}
 	return "", errors.New("Get RS IP Failed. Cannot Find RS")
+}
+
+func (ctrl *OBClusterCtrl) GetServerParameter() ([]cloudv1.ServerParameter, error) {
+	res := make([]cloudv1.ServerParameter, 0)
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return res, errors.Wrap(err, "get sql operator error")
+	}
+	paramsList := []string{observerconst.ServerPermanentOfflineTime, observerconst.EnableRebalance, observerconst.EnableRereplication}
+	paramsName := strings.Join(paramsList, ",")
+	params := sqlOperator.GetServerParameter(paramsName)
+	for _, param := range params {
+		serverFromDb := fmt.Sprintf("%s:%d", param.SvrIP, param.SvrPort)
+		serverExist := false
+		for idx, serverParam := range res {
+			if serverFromDb == serverParam.Server {
+				serverExist = true
+				p := serverParam.Params
+				p = append(p, cloudv1.Parameter{Name: param.Name, Value: param.Value})
+				serverParam.Params = p
+				res[idx] = serverParam
+				break
+			}
+		}
+		if !serverExist {
+			newParam := []cloudv1.Parameter{{Name: param.Name, Value: param.Value}}
+			newServerParam := cloudv1.ServerParameter{Server: serverFromDb, Params: newParam}
+			res = append(res, newServerParam)
+		}
+	}
+	return res, nil
 }

@@ -54,6 +54,10 @@ func SetParameterSQLReplacer(name, value string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name, "${VALUE}", value)
 }
 
+func SetServerParameterSQLReplacer(server, name, value string) *strings.Replacer {
+	return strings.NewReplacer("${NAME}", name, "${VALUE}", value, "${SERVER}", server)
+}
+
 func GetParameterSQLReplacer(name string) *strings.Replacer {
 	return strings.NewReplacer("${NAME}", name)
 }

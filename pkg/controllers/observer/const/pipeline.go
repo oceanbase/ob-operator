@@ -45,6 +45,8 @@ const (
 
 	NeedUpgradePostCheck = "Need Upgrade Post Check"
 	UpgradePostChecking  = "Upgrade Post Checking"
+
+	RestoreParams = "Restore Parameters"
 )
 
 // Step

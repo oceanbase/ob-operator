@@ -313,7 +313,7 @@ func (op *SqlOperator) CancelArchiveLog(name string) error {
 	return op.ExecSQL(sql)
 }
 
-func (op *SqlOperator) CancelBackup() error {
+func (op *SqlOperator) CancelAllBackupTasks() error {
 	return op.ExecSQL(CancelBackupSQL)
 }
 

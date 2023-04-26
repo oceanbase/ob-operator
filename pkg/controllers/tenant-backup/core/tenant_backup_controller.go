@@ -125,7 +125,12 @@ func (r *TenantBackupReconciler) TenantBackupDelete(client client.Client, record
 		TenantBackup: *tenantBackup,
 		Resource:     ctrlResource,
 	}
-	err := ctrl.CancelArchiveLog(tenantBackupconst.TenantAll)
+    err := ctrl.CancelAllBackupTasks()
+    if err != nil {
+		klog.Errorf("cancel all backup tasks failed, error '%s'", err)
+		return err
+    }
+	err = ctrl.CancelArchiveLog(tenantBackupconst.TenantAll)
 	if err != nil {
 		klog.Errorf("tenant '%s' cancel archivelog failed, error '%s'", tenantBackupconst.TenantAll, err)
 		return err

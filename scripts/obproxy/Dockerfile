@@ -9,8 +9,8 @@ ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
 RUN useradd -m admin
-ENV OBPROXY_VERSION 3.2.3
-ENV OBPROXY_RELEASE 2
+ENV OBPROXY_VERSION 4.1.0.0
+ENV OBPROXY_RELEASE 7
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/obproxy-ce-${OBPROXY_VERSION}-${OBPROXY_RELEASE}.el8.x86_64.rpm
 RUN mv /home/admin/obproxy-${OBPROXY_VERSION} /home/admin/obproxy
 RUN chown -R admin:admin /home/admin/obproxy

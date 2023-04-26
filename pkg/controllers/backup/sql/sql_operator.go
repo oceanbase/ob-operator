@@ -265,6 +265,10 @@ func (op *SqlOperator) StartBackupIncremental() error {
 	return op.ExecSQL(StartBackupIncrementalSql)
 }
 
+func (op *SqlOperator) CancelBackupTasks() error {
+	return op.ExecSQL(CancelBackupTasksSql)
+}
+
 func (op *SqlOperator) StopArchiveLog() error {
 	return op.ExecSQL(StopArchiveLogSql)
 }

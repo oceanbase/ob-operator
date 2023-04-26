@@ -475,6 +475,16 @@ func (ctrl *TenantBackupCtrl) StartBackupIncremental(tenant cloudv1.TenantConfig
 	return sqlOperator.ExecSQLs(SQLs)
 }
 
+func (ctrl *TenantBackupCtrl) CancelAllBackupTasks() error {
+	klog.Infof("begin cancel all backup tasks")
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		klog.Errorf("get sql operator error when cancel all backup tasks")
+		return errors.Wrap(err, "get sql operator error when cancel all backup tasks")
+	}
+	return sqlOperator.CancelAllBackupTasks()
+}
+
 func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
 	klog.Infof("Cancel tenant '%s' archivelog", name)
 	sqlOperator, err := ctrl.GetSqlOperator()

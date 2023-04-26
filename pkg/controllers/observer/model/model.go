@@ -104,3 +104,10 @@ type ClogStat struct {
 type OBVersion struct {
 	Version string
 }
+
+type ServerParameter struct {
+	SvrIP   string
+	SvrPort int64
+	Name    string
+	Value   string
+}

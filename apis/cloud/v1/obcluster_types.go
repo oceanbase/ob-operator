@@ -60,14 +60,15 @@ type OBClusterStatus struct {
 }
 
 type ClusterStatus struct {
-	Cluster             string       `json:"cluster"`
-	CurrentImage        string       `json:"currentImage,omitempty"`
-	ScriptPassedVersion string       `json:"scriptPassedVersion,omitempty"`
-	TargetVersion       string       `json:"targetVersion,omitempty"`
-	UpgradeRoute        []string     `json:"upgradeRoute,omitempty"`
-	ClusterStatus       string       `json:"clusterStatus"`
-	LastTransitionTime  metav1.Time  `json:"lastTransitionTime"`
-	Zone                []ZoneStatus `json:"zone"`
+	Cluster             string            `json:"cluster"`
+	CurrentImage        string            `json:"currentImage,omitempty"`
+	ScriptPassedVersion string            `json:"scriptPassedVersion,omitempty"`
+	TargetVersion       string            `json:"targetVersion,omitempty"`
+	UpgradeRoute        []string          `json:"upgradeRoute,omitempty"`
+	ClusterStatus       string            `json:"clusterStatus"`
+	LastTransitionTime  metav1.Time       `json:"lastTransitionTime"`
+	Zone                []ZoneStatus      `json:"zone"`
+	Params              []ServerParameter `json:"parameters,omitempty"`
 }
 
 type ZoneStatus struct {
@@ -76,6 +77,11 @@ type ZoneStatus struct {
 	ZoneStatus        string `json:"zoneStatus"`
 	ExpectedReplicas  int    `json:"expectedReplicas"`
 	AvailableReplicas int    `json:"availableReplicas"`
+}
+
+type ServerParameter struct {
+	Server string      `json:"Server"`
+	Params []Parameter `json:"Parameters"`
 }
 
 // +genclient

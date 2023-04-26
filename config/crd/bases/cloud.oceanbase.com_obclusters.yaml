@@ -1647,6 +1647,28 @@ spec:
                     lastTransitionTime:
                       format: date-time
                       type: string
+                    parameters:
+                      items:
+                        properties:
+                          Parameters:
+                            items:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          Server:
+                            type: string
+                        required:
+                        - Parameters
+                        - Server
+                        type: object
+                      type: array
                     scriptPassedVersion:
                       type: string
                     targetVersion:
