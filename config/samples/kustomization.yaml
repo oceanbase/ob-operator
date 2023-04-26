@@ -1,0 +1,13 @@
+## Append samples of your project ##
+resources:
+- cloud.oceanbase.com_v2alpha1_obcluster.yaml
+- cloud.oceanbase.com_v2alpha1_obzone.yaml
+- cloud.oceanbase.com_v2alpha1_observer.yaml
+- cloud.oceanbase.com_v2alpha1_obparameter.yaml
+- cloud.oceanbase.com_v2alpha1_obtenant.yaml
+- cloud.oceanbase.com_v2alpha1_obunit.yaml
+- cloud.oceanbase.com_v2alpha1_obclusterbackup.yaml
+- cloud.oceanbase.com_v2alpha1_obtenantbackup.yaml
+- cloud.oceanbase.com_v2alpha1_obclusterrestore.yaml
+- cloud.oceanbase.com_v2alpha1_obtenantrestore.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples

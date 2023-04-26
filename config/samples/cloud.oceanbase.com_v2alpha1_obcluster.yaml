@@ -1,0 +1,12 @@
+apiVersion: cloud.oceanbase.com/v2alpha1
+kind: OBCluster
+metadata:
+  labels:
+    app.kubernetes.io/name: obcluster
+    app.kubernetes.io/instance: obcluster-sample
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator-generate
+  name: obcluster-sample
+spec:
+  # TODO(user): Add fields here

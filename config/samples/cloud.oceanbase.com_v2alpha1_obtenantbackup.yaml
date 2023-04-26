@@ -1,0 +1,12 @@
+apiVersion: cloud.oceanbase.com/v2alpha1
+kind: OBTenantBackup
+metadata:
+  labels:
+    app.kubernetes.io/name: obtenantbackup
+    app.kubernetes.io/instance: obtenantbackup-sample
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator-generate
+  name: obtenantbackup-sample
+spec:
+  # TODO(user): Add fields here

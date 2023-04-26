@@ -1,74 +1,94 @@
-# ob-operator
+# ob-operator-generate
+// TODO(user): Add simple overview of use/purpose
 
-ob-operator 可以让 OceanBase 以容器的方式，无缝运行在公有云或私有部署的 Kubernetes 集群上。
+## Description
+// TODO(user): An in-depth paragraph about your project and overview of use
 
-ob-operator 现已支持 OceanBase 集群的创建、删除，完整的节点生命周期管理，并通过 Service 的形式暴露给用户使用。后续会支持租户管理、ob-proxy 管理、多 Kubernetes 集群等功能。
+## Getting Started
+You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
+**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
-目前支持通过 YAML、Kustomize 来部署 ob-operator。后续会支持 Helm 形式部署。
+### Running on the cluster
+1. Install Instances of Custom Resources:
 
-![01](docs/img/01.png)
-
-## 环境依赖
-
-构建 ob-operator 需要 Go 1.16 版本及以上。
-
-运行 ob-operator 需要 Kubernetes 1.16 版本及以上。
-尚未支持多 Kubernetes 版本，后续会支持。
-
-## 支持的 OceanBase 版本
-
-后续会不断支持新的 OceanBase 社区版本。
-暂不支持 3.1.2 之前的旧的 OceanBase 版本。目前仅对 OceanBase 社区版 3.1.2 进行了测试。
-
-## 开始体验
-
-### 使用 YAML 部署 ob-operator
-
-1. 部署 CRD 相关文件。
-
-```yaml
-kubectl apply -f ./deploy/crd.yaml
+```sh
+kubectl apply -f config/samples/
 ```
 
-2. 部署 ob-operator 相关文件。
+2. Build and push your image to the location specified by `IMG`:
 
-注意配置 `--cluster-name` 启动参数，推荐与 Kubernetes 集群名称保持一致。
-
-```yaml
-kubectl apply -f ./deploy/operator.yaml
+```sh
+make docker-build docker-push IMG=<some-registry>/ob-operator-generate:tag
 ```
 
-3. 配置节点 label。
+3. Deploy the controller to the cluster with the image specified by `IMG`:
 
-需要将 Kubernetes 节点打 label，label 需要与 obcluster.yaml 中 `nodeSelector` 配置相匹配。
-ob-operator 会将 Pod 调度到具有相应 label 的节点上。
-
-推荐配置 label 的 key 为 `topology.kubernetes.io/zone`。
-
-```yaml
-kubectl label node nodename topology.kubernetes.io/zone=zonename
+```sh
+make deploy IMG=<some-registry>/ob-operator-generate:tag
 ```
 
-4. 部署 OceanBase 集群。
+### Uninstall CRDs
+To delete the CRDs from the cluster:
 
-```yaml
-kubectl apply -f ./deploy/obcluster.yaml
+```sh
+make uninstall
 ```
 
-5. 集群部署成功后可以使用 Service 的 ClusterIP 连接 OceanBase 集群。
+### Undeploy controller
+UnDeploy the controller from the cluster:
 
-## 文档
+```sh
+make undeploy
+```
 
-参考 [ob-operator 文档](docs/hello-cn.md)。
+## Contributing
+// TODO(user): Add detailed information on how you would like others to contribute to this project
 
-## 获取帮助
+### How it works
+This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
 
-如果您在使用 ob-operator 时遇到任何问题，欢迎通过以下方式寻求帮助：
+It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/),
+which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
 
-- [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [官方网站](https://open.oceanbase.com/)
+### Test It Out
+1. Install the CRDs into the cluster:
 
-## 许可证
+```sh
+make install
+```
 
-ob-operator 使用 [MulanPSL - 2.0](http://license.coscl.org.cn/MulanPSL2) 许可证。
-您可以免费复制及使用源代码。当您修改或分发源代码时，请遵守木兰协议。
+2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
+
+```sh
+make run
+```
+
+**NOTE:** You can also run this in one step by running: `make install run`
+
+### Modifying the API definitions
+If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
+
+```sh
+make manifests
+```
+
+**NOTE:** Run `make --help` for more information on all potential `make` targets
+
+More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+
+## License
+
+Copyright 2023.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+

@@ -1,39 +1,52 @@
-apiVersion: cloud.oceanbase.com/v1
+apiVersion: cloud.oceanbase.com/v2alpha1
 kind: OBCluster
 metadata:
-  name: ob-test
+  name: test
+  namespace: oceanbase
 spec:
-  imageRepo: oceanbase/oceanbase-ce
-  tag: operator-v3.1.3-10100032022041510
-  clusterID: 1
+  clusterName: obcluster
+  clusterId: 1
+  userSecrets:
+    root: test-user-root
+    proxyro: test-user-proxy
+    monitor: test-user-monitor
+    operator: test-user-operator
   topology:
-    - cluster: cn
-      zone:
-      - name: zone1
-        region: region1
-        nodeSelector:
-          topology.kubernetes.io/zone: zone1
-        replicas: 1
-      - name: zone2
-        region: region1
-        nodeSelector:
-          topology.kubernetes.io/zone: zone2
-        replicas: 1
-      - name: zone3
-        region: region1
-        nodeSelector:
-          topology.kubernetes.io/zone: zone3
-        replicas: 1
-  resources:
-    cpu: 2
-    memory: 10Gi
+    - zone: zone1
+      replica: 1
+      nodeSelector:
+        ob.zone: zone1
+  observer:
+    image: oceanbasedev/oceanbase-cn:v4.1.0.0-100000192023032010
+    resource:
+      cpu: 2
+      memory: 10Gi
     storage:
-      - name: data-file
-        storageClassName: "local-path"
+      dataStorage:
+        storageClass: local-path
         size: 50Gi
-      - name: data-log
-        storageClassName: "local-path"
+      redoLogStorage:
+        storageClass: local-path
         size: 50Gi
-      - name: log
-        storageClassName: "local-path"
-        size: 30Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  monitor:
+    image: oceanbase/obagent:1.2.0
+    resource:
+      cpu: 2
+      memory: 4Gi
+    storage:
+      configStorage:
+        storageClass: local-path
+        size: 1Gi
+  parameters:
+    - name: log_disk_size
+      value: 40G
+  backupVolume:
+    volume:
+      name: backup
+      nfs:
+        server: 11.124.9.57
+        path: /opt/nfs
+        readOnly: false

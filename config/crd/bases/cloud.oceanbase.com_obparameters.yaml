@@ -1,0 +1,124 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.11.3
+  creationTimestamp: null
+  name: obparameters.cloud.oceanbase.com
+spec:
+  group: cloud.oceanbase.com
+  names:
+    kind: OBParameter
+    listKind: OBParameterList
+    plural: obparameters
+    singular: obparameter
+  scope: Namespaced
+  versions:
+  - name: v2alpha1
+    schema:
+      openAPIV3Schema:
+        description: OBParameter is the Schema for the obparameters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OBParameterSpec defines the desired state of OBParameter
+            properties:
+              clusterId:
+                format: int64
+                type: integer
+              clusterName:
+                description: 'INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
+                  Important: Run "make" to regenerate code after modifying this file'
+                type: string
+              parameter:
+                properties:
+                  name:
+                    type: string
+                  scope:
+                    type: string
+                  scopeType:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - name
+                - value
+                type: object
+            required:
+            - clusterName
+            - parameter
+            type: object
+          status:
+            description: OBParameterStatus defines the observed state of OBParameter
+            properties:
+              operationContext:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                properties:
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              parameter:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    server:
+                      type: string
+                    value:
+                      type: string
+                    zone:
+                      type: string
+                  required:
+                  - name
+                  - server
+                  - value
+                  - zone
+                  type: object
+                type: array
+              status:
+                type: string
+            required:
+            - parameter
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

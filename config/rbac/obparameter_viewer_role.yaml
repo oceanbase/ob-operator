@@ -1,0 +1,27 @@
+# permissions for end users to view obparameters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: obparameter-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+  name: obparameter-viewer-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obparameters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - obparameters/status
+  verbs:
+  - get

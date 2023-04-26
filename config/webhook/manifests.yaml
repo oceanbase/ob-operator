@@ -1,0 +1,134 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-cloud-oceanbase-com-v2alpha1-obcluster
+  failurePolicy: Fail
+  name: mobcluster.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-cloud-oceanbase-com-v2alpha1-observer
+  failurePolicy: Fail
+  name: mobserver.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - observers
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-cloud-oceanbase-com-v2alpha1-obzone
+  failurePolicy: Fail
+  name: mobzone.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obzones
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  creationTimestamp: null
+  name: validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cloud-oceanbase-com-v2alpha1-obcluster
+  failurePolicy: Fail
+  name: vobcluster.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cloud-oceanbase-com-v2alpha1-observer
+  failurePolicy: Fail
+  name: vobserver.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - observers
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-cloud-oceanbase-com-v2alpha1-obzone
+  failurePolicy: Fail
+  name: vobzone.kb.io
+  rules:
+  - apiGroups:
+    - cloud.oceanbase.com
+    apiVersions:
+    - v2alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obzones
+  sideEffects: None

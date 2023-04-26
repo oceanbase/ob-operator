@@ -27,6 +27,7 @@ bin
 *.test
 cover.out
 testbin/*
+custom_scripts/*
 
 # Kubernetes Generated files - skip generated files, except for vendored files
 # !vendor/**/zz_generated.*
