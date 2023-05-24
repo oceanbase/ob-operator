@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"strconv"
 
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
@@ -168,7 +169,7 @@ func (ctrl *TenantCtrl) CreateUnitV4(unitName string, resourceUnit v1.ResourceUn
 	}
 	var option string
 	if resourceUnit.MinCPU.Value() != 0 {
-		option = fmt.Sprint(option, ", min_cpu ", resourceUnit.MinCPU.Value())
+		option = fmt.Sprint(option, ", min_cpu ", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64))
 	}
 	if resourceUnit.LogDiskSize.Value() != 0 {
 		option = fmt.Sprint(option, ", log_disk_size ", resourceUnit.LogDiskSize.Value())
