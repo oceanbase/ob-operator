@@ -41,10 +41,8 @@ func (oc *OceanbaseConnector) Init() error {
 	if err != nil {
 		klog.Errorf("Open database connection %s failed: %v", dsn, err)
 		return errors.Wrap(err, "Init db connection")
-	} else {
-		oc.Client = db
-		// TODO: set connection pool properties to Client.DB
 	}
+	oc.Client = db
 	return nil
 }
 

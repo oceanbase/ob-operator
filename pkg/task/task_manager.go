@@ -14,11 +14,12 @@ package task
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/pkg/errors"
-	"sync"
 )
 
 var taskManager *TaskManager
@@ -71,13 +72,12 @@ func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 	if !exists {
 		// m.Logger.Info("Query a task id that's not exists", "task id", taskId)
 		return nil, errors.New(fmt.Sprintf("Task %s not exists", taskId))
-	} else {
-		select {
-		case result := <-retCh:
-			return result, nil
-		default:
-			return nil, nil
-		}
+	}
+	select {
+	case result := <-retCh:
+		return result, nil
+	default:
+		return nil, nil
 	}
 }
 

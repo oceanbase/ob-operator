@@ -60,22 +60,21 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if m.OBCluster.Status.OperationContext != nil {
 		m.Logger.Info("get task flow from obcluster status")
 		return task.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
-	} else {
-		// newly created cluster
-		m.Logger.Info("create task flow according to obcluster status")
-		if m.OBCluster.Status.Status == clusterstatus.New {
-			taskFlow, err := task.GetRegistry().Get(flowname.CreateCluster)
-			if err != nil {
-				return nil, errors.Wrap(err, "Get create obcluster task flow")
-			}
-			return taskFlow, nil
-		}
-		// scale observer
-		// scale obzone
-		// upgrade
-		// no need to execute task flow
-		return nil, nil
 	}
+	// newly created cluster
+	m.Logger.Info("create task flow according to obcluster status")
+	if m.OBCluster.Status.Status == clusterstatus.New {
+		taskFlow, err := task.GetRegistry().Get(flowname.CreateCluster)
+		if err != nil {
+			return nil, errors.Wrap(err, "Get create obcluster task flow")
+		}
+		return taskFlow, nil
+	}
+	// scale observer
+	// scale obzone
+	// upgrade
+	// no need to execute task flow
+	return nil, nil
 }
 
 func (m *OBClusterManager) UpdateStatus() error {

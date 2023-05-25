@@ -41,9 +41,8 @@ func NewOceanbaseConnectProperties(address string, port int64, user, tenant, pas
 func (p *OceanbaseConnectProperties) GetDSN() string {
 	if p.Database != "" {
 		return fmt.Sprintf("%s@%s:%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", p.User, p.Tenant, p.Password, p.Address, p.Port, p.Database)
-	} else {
-		return fmt.Sprintf("%s@%s@tcp(%s:%d)/", p.User, p.Tenant, p.Address, p.Port)
 	}
+	return fmt.Sprintf("%s@%s@tcp(%s:%d)/", p.User, p.Tenant, p.Address, p.Port)
 }
 
 func (p *OceanbaseConnectProperties) HashValue() string {

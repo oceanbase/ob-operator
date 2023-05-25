@@ -73,9 +73,8 @@ func (m *OBClusterManager) WaitOBZoneBootstrapReady() error {
 		}
 		if allready {
 			return nil
-		} else {
-			time.Sleep(time.Second)
 		}
+		time.Sleep(time.Second)
 	}
 	return errors.New("all server still not bootstrap ready when timeout")
 }

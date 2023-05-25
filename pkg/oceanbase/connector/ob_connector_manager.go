@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package connector
 
 import (
+	"sync"
+
 	"github.com/pkg/errors"
 	"k8s.io/klog/v2"
-	"sync"
 )
 
 var oceanbaseConnectorManager *OceanbaseConnectorManager
@@ -38,15 +39,14 @@ func (ocm *OceanbaseConnectorManager) GetOceanbaseConnector(p *OceanbaseConnectP
 	connectorStored, loaded := ocm.Cache.Load(key)
 	if loaded && connectorStored.(*OceanbaseConnector).IsAlive() {
 		return connectorStored.(*OceanbaseConnector), nil
-	} else {
-		klog.Warningf("no connector or connector is not alive in cache with connect property: %s:%d %s", p.Address, p.Port, p.User)
-		connector := NewOceanbaseConnector(p)
-		err := connector.Init()
-		if err != nil {
-			klog.Errorf("init connector failed with connect property: %s:%d %s, %v", p.Address, p.Port, p.User, err)
-			return nil, errors.Wrap(err, "create oceanbase connector")
-		}
-		ocm.Cache.Store(key, connector)
-		return connector, nil
 	}
+	klog.Warningf("no connector or connector is not alive in cache with connect property: %s:%d %s", p.Address, p.Port, p.User)
+	connector := NewOceanbaseConnector(p)
+	err := connector.Init()
+	if err != nil {
+		klog.Errorf("init connector failed with connect property: %s:%d %s, %v", p.Address, p.Port, p.User, err)
+		return nil, errors.Wrap(err, "create oceanbase connector")
+	}
+	ocm.Cache.Store(key, connector)
+	return connector, nil
 }

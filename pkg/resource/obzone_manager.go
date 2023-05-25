@@ -62,38 +62,37 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if m.OBZone.Status.OperationContext != nil {
 		m.Logger.Info("get task flow from obzone status")
 		return task.NewTaskFlow(m.OBZone.Status.OperationContext), nil
-	} else {
-		// newly created zone
-		var taskFlow *task.TaskFlow
-		var err error
-		var obcluster *cloudv2alpha1.OBCluster
-
-		m.Logger.Info("create task flow according to obzone status")
-		if m.OBZone.Status.Status == zonestatus.New {
-			obcluster, err = m.getOBCluster()
-			if err != nil {
-				return nil, errors.Wrap(err, "Get obcluster")
-			}
-			if obcluster.Status.Status == clusterstatus.New {
-				// created when create obcluster
-				m.Logger.Info("Create obzone when create obcluster")
-				taskFlow, err = task.GetRegistry().Get(flowname.CreateZoneForBootstrap)
-			} else {
-				// created normally
-				m.Logger.Info("Create obzone when obcluster already exists")
-				taskFlow, err = task.GetRegistry().Get(flowname.CreateZone)
-			}
-			if err != nil {
-				return nil, errors.Wrap(err, "Get create obzone task flow")
-			}
-			return taskFlow, nil
-		}
-		// scale observer
-		// upgrade
-
-		// no need to execute task flow
-		return nil, nil
 	}
+	// newly created zone
+	var taskFlow *task.TaskFlow
+	var err error
+	var obcluster *cloudv2alpha1.OBCluster
+
+	m.Logger.Info("create task flow according to obzone status")
+	if m.OBZone.Status.Status == zonestatus.New {
+		obcluster, err = m.getOBCluster()
+		if err != nil {
+			return nil, errors.Wrap(err, "Get obcluster")
+		}
+		if obcluster.Status.Status == clusterstatus.New {
+			// created when create obcluster
+			m.Logger.Info("Create obzone when create obcluster")
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateZoneForBootstrap)
+		} else {
+			// created normally
+			m.Logger.Info("Create obzone when obcluster already exists")
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateZone)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "Get create obzone task flow")
+		}
+		return taskFlow, nil
+	}
+	// scale observer
+	// upgrade
+
+	// no need to execute task flow
+	return nil, nil
 }
 
 func (m *OBZoneManager) UpdateStatus() error {

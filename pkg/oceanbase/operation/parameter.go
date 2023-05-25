@@ -14,6 +14,7 @@ package operation
 
 import (
 	"fmt"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
@@ -21,18 +22,16 @@ import (
 func (m *OceanbaseOperationManager) GetParameter(name string, scope *param.Scope) error {
 	if scope == nil {
 		return m.ExecWithDefaultTimeout(sql.QueryParameter, name)
-	} else {
-		queryParameterSql := fmt.Sprintf(sql.QueryParameterWithScope, scope.Name)
-		return m.ExecWithDefaultTimeout(queryParameterSql, name, scope.Value)
 	}
+	queryParameterSql := fmt.Sprintf(sql.QueryParameterWithScope, scope.Name)
+	return m.ExecWithDefaultTimeout(queryParameterSql, name, scope.Value)
 }
 
 func (m *OceanbaseOperationManager) SetParameter(name string, value interface{}, scope *param.Scope) error {
 	if scope == nil {
 		setParameterSql := fmt.Sprintf(sql.SetParameter, name)
 		return m.ExecWithDefaultTimeout(setParameterSql, value)
-	} else {
-		setParameterSql := fmt.Sprintf(sql.SetParameterWithScope, name, scope.Name)
-		return m.ExecWithDefaultTimeout(setParameterSql, value, scope.Value)
 	}
+	setParameterSql := fmt.Sprintf(sql.SetParameterWithScope, name, scope.Name)
+	return m.ExecWithDefaultTimeout(setParameterSql, value, scope.Value)
 }

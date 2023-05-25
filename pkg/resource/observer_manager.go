@@ -107,38 +107,37 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if m.OBServer.Status.OperationContext != nil {
 		m.Logger.Info("get task flow from observer status")
 		return task.NewTaskFlow(m.OBServer.Status.OperationContext), nil
-	} else {
-		// newly created observer
-		var taskFlow *task.TaskFlow
-		var err error
-		var obcluster *cloudv2alpha1.OBCluster
-
-		m.Logger.Info("create task flow according to observer status")
-		if m.OBServer.Status.Status == serverstatus.New {
-			obcluster, err = m.getOBCluster()
-			if err != nil {
-				return nil, errors.Wrap(err, "Get obcluster")
-			}
-			if obcluster.Status.Status == clusterstatus.New {
-				// created when create obcluster
-				m.Logger.Info("Create observer when create obcluster")
-				taskFlow, err = task.GetRegistry().Get(flowname.CreateServerForBootstrap)
-			} else {
-				// created normally
-				m.Logger.Info("Create observer when obcluster already exists")
-				taskFlow, err = task.GetRegistry().Get(flowname.CreateServer)
-			}
-			if err != nil {
-				return nil, errors.Wrap(err, "Get create observer task flow")
-			}
-			return taskFlow, nil
-		}
-		// scale observer
-		// upgrade
-
-		// no need to execute task flow
-		return nil, nil
 	}
+	// newly created observer
+	var taskFlow *task.TaskFlow
+	var err error
+	var obcluster *cloudv2alpha1.OBCluster
+
+	m.Logger.Info("create task flow according to observer status")
+	if m.OBServer.Status.Status == serverstatus.New {
+		obcluster, err = m.getOBCluster()
+		if err != nil {
+			return nil, errors.Wrap(err, "Get obcluster")
+		}
+		if obcluster.Status.Status == clusterstatus.New {
+			// created when create obcluster
+			m.Logger.Info("Create observer when create obcluster")
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateServerForBootstrap)
+		} else {
+			// created normally
+			m.Logger.Info("Create observer when obcluster already exists")
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateServer)
+		}
+		if err != nil {
+			return nil, errors.Wrap(err, "Get create observer task flow")
+		}
+		return taskFlow, nil
+	}
+	// scale observer
+	// upgrade
+
+	// no need to execute task flow
+	return nil, nil
 }
 
 func (m *OBServerManager) ClearTaskInfo() {
