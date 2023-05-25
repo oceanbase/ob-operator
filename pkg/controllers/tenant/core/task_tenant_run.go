@@ -15,6 +15,7 @@ package core
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"sort"
 	"strings"
 
@@ -158,7 +159,7 @@ func (ctrl *TenantCtrl) SetUnitV4(name string, resourceUnit model.ResourceUnitV4
 	}
 	var option string
 	if resourceUnit.MinCPU.Value() != 0 {
-		option = fmt.Sprint(option, ", min_cpu ", resourceUnit.MinCPU.Value())
+		option = fmt.Sprint(option, ", min_cpu ", strconv.FormatFloat(resourceUnit.MinCPU.AsApproximateFloat64(), 'f', -1, 64))
 	}
 	if resourceUnit.LogDiskSize.Value() != 0 {
 		option = fmt.Sprint(option, ", log_disk_size ", resourceUnit.LogDiskSize.Value())
@@ -608,7 +609,7 @@ func IsUnitV4Equal(specResourceUnit model.ResourceUnitV4, statusResourceUnit mod
 		specResourceUnit.MemorySize.Value() == statusResourceUnit.MemorySize.Value() {
 		if (specResourceUnit.MinIops != 0 && specResourceUnit.MinIops != statusResourceUnit.MinIops) ||
 			(specResourceUnit.MaxIops != 0 && specResourceUnit.MaxIops != statusResourceUnit.MaxIops) ||
-			(specResourceUnit.MinCPU.Value() != 0 && specResourceUnit.MinCPU.Value() != statusResourceUnit.MinCPU.Value()) ||
+			(specResourceUnit.MinCPU.Value() != 0 && !specResourceUnit.MinCPU.Equal(statusResourceUnit.MinCPU)) ||
 			(specResourceUnit.LogDiskSize.Value() != 0 && specResourceUnit.LogDiskSize.Value() != statusResourceUnit.LogDiskSize.Value()) ||
 			(specResourceUnit.IopsWeight != 0 && specResourceUnit.IopsWeight != statusResourceUnit.IopsWeight) {
 			return false
