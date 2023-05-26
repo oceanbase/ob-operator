@@ -14,11 +14,14 @@ package core
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/klog/v2"
 
 	statefulAppCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/core"
+	"github.com/oceanbase/ob-operator/pkg/util"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -67,6 +70,18 @@ type OBClusterCtrlOperator interface {
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=backups/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenantbackups/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=restores/finalizers,verbs=update
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=cloud.oceanbase.com,resources=tenants/finalizers,verbs=update
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
@@ -88,6 +103,37 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		// Error reading the object, requeue the request.
 		return reconcile.Result{}, err
 	}
+
+	// handle delete tenant/backup cr
+	obclusterFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, obclusterFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, obclusterFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, obclusterFinalizerName) {
+			err := r.DeleteTenantCR(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			err = r.DeleteBackupCR(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			err = r.DeleteRestoreCR(r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, obclusterFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
 	// custom logic
 	obClusterCtrl := NewOBServerCtrl(r.CRClient, r.Recorder, *instance)
 	return obClusterCtrl.OBClusterCoordinator()
@@ -101,6 +147,72 @@ func NewOBServerCtrl(client client.Client, recorder record.EventRecorder, obClus
 	}
 }
 
+func (r *OBClusterReconciler) DeleteTenantCR(clientClient client.Client, recorder record.EventRecorder, obCluster *cloudv1.OBCluster) error {
+	ctrlResource := resource.NewResource(clientClient, recorder)
+	ctrl := &OBClusterCtrl{
+		Resource:  ctrlResource,
+		OBCluster: *obCluster,
+	}
+	tenantExecuter := resource.NewTenantResource(ctrl.Resource)
+	listOption := client.MatchingLabels{}
+	tenantList := tenantExecuter.List(context.TODO(), obCluster.Namespace, listOption)
+	tenants := converter.TenantListToTenants(tenantList.(cloudv1.TenantList))
+	if len(tenants) == 0 {
+		return nil
+	}
+	for _, tenant := range tenants {
+		err := tenantExecuter.Delete(context.TODO(), tenant)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *OBClusterReconciler) DeleteBackupCR(clientClient client.Client, recorder record.EventRecorder, obCluster *cloudv1.OBCluster) error {
+	ctrlResource := resource.NewResource(clientClient, recorder)
+	ctrl := &OBClusterCtrl{
+		Resource:  ctrlResource,
+		OBCluster: *obCluster,
+	}
+	backupExecuter := resource.NewBackupResource(ctrl.Resource)
+	listOption := client.MatchingLabels{}
+	backupList := backupExecuter.List(context.TODO(), obCluster.Namespace, listOption)
+	backups := converter.BackupListToBackups(backupList.(cloudv1.BackupList))
+	if len(backups) == 0 {
+		return nil
+	}
+	for _, backup := range backups {
+		err := backupExecuter.Delete(context.TODO(), backup)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *OBClusterReconciler) DeleteRestoreCR(clientClient client.Client, recorder record.EventRecorder, obCluster *cloudv1.OBCluster) error {
+	ctrlResource := resource.NewResource(clientClient, recorder)
+	ctrl := &OBClusterCtrl{
+		Resource:  ctrlResource,
+		OBCluster: *obCluster,
+	}
+	restoreExecuter := resource.NewRestoreResource(ctrl.Resource)
+	listOption := client.MatchingLabels{}
+	restoreList := restoreExecuter.List(context.TODO(), obCluster.Namespace, listOption)
+	restores := converter.RestoreListToRestores(restoreList.(cloudv1.RestoreList))
+	if len(restores) == 0 {
+		return nil
+	}
+	for _, restore := range restores {
+		err := restoreExecuter.Delete(context.TODO(), restore)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.StatefulApp) (*sql.SqlOperator, error) {
 	podCtrl := &statefulAppCore.PodCtrl{
 		Resource:    ctrl.Resource,
@@ -109,12 +221,17 @@ func (ctrl *OBClusterCtrl) GetSqlOperatorFromStatefulApp(statefulApp cloudv1.Sta
 	return podCtrl.GetSqlOperator()
 }
 
-func (ctrl *OBClusterCtrl) GetSqlOperator() (*sql.SqlOperator, error) {
-	clusterIP, err := ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
-
-	// get svc failed
-	if err != nil {
-		return nil, errors.New("failed to get service address")
+func (ctrl *OBClusterCtrl) GetSqlOperator(server ...string) (*sql.SqlOperator, error) {
+	var clusterIP string
+	var err error
+	if server != nil {
+		clusterIP = server[0]
+	} else {
+		clusterIP, err = ctrl.GetServiceClusterIPByName(ctrl.OBCluster.Namespace, ctrl.OBCluster.Name)
+		// get svc failed
+		if err != nil {
+			return nil, errors.New("failed to get service address")
+		}
 	}
 
 	secretName := converter.GenerateSecretNameForDBUser(ctrl.OBCluster.Name, "sys", "admin")
@@ -229,6 +346,26 @@ func (ctrl *OBClusterCtrl) TopologyNotReadyEffector(statefulApp cloudv1.Stateful
 				// OBZone Scale Down
 			case observerconst.ZoneScaleDown:
 				err = ctrl.OBZoneScaleDown(statefulApp)
+			case observerconst.NeedUpgradeCheck:
+				err = ctrl.ExecUpgradePreChecker(statefulApp)
+			case observerconst.UpgradeChecking:
+				err = ctrl.GetPreCheckJobStatus(statefulApp)
+			case observerconst.CheckUpgradeMode:
+				err = ctrl.CheckUpgradeModeBegin(statefulApp)
+			case observerconst.ExecutingPreScripts:
+				err = ctrl.ExecPreScripts(statefulApp)
+			case observerconst.NeedUpgrading:
+				err = ctrl.PreparingForUpgrade(statefulApp)
+			case observerconst.Upgrading:
+				err = ctrl.ExecUpgrading(statefulApp)
+			case observerconst.ExecutingPostScripts:
+				err = ctrl.ExecPostScripts(statefulApp)
+			case observerconst.NeedUpgradePostCheck:
+				err = ctrl.PrepareForPostCheck(statefulApp)
+			case observerconst.UpgradePostChecking:
+				err = ctrl.ExecUpgradePostChecker(statefulApp)
+			case observerconst.RestoreParams:
+				err = ctrl.CheckAndRestoreParams(statefulApp)
 			}
 		}
 	}
@@ -272,8 +409,8 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 	}
 	if versionIsModified {
 		// TODO: support version update
-		klog.Errorln("version update is not supported yet")
-		return nil
+		err = ctrl.OBClusterUpgrade(statefulApp)
+		return err
 	}
 
 	// check resource modified
@@ -298,10 +435,6 @@ func (ctrl *OBClusterCtrl) TopologyReadyEffector(statefulApp cloudv1.StatefulApp
 		err = ctrl.OBZoneScaleDown(statefulApp)
 	case observerconst.Maintain:
 		err = ctrl.OBServerCoordinator(statefulApp)
-		if err != nil {
-			return err
-		}
 	}
-
-	return nil
+	return err
 }

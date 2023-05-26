@@ -115,8 +115,13 @@ func (ctrl *OBClusterCtrl) ResourceReadyEffectorForBootstrap(statefulApp cloudv1
 		// generate rsList
 		rsList := cable.GenerateRSListFromSubset(subsets)
 
+		version, err := ctrl.GetCurrentVersion(statefulApp)
+		if err != nil {
+			klog.Errorln("bootstrap server get Version failed")
+			version = observerconst.OBClusterV3
+		}
 		// start observer
-		go cable.OBServerStart(ctrl.OBCluster, subsets, rsList)
+		go cable.OBServerStart(ctrl.OBCluster, subsets, rsList, version)
 
 		// update status
 		return ctrl.UpdateOBClusterAndZoneStatus(observerconst.OBServerPrepareing, "", "")

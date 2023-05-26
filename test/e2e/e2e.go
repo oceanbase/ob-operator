@@ -15,6 +15,7 @@ package e2e
 import (
 	_ "github.com/oceanbase/ob-operator/test/e2e/observer"
 	_ "github.com/oceanbase/ob-operator/test/e2e/statefulapp"
+	_ "github.com/oceanbase/ob-operator/test/e2e/tenant"
 )
 
 func runE2E() {}

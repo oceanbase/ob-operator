@@ -14,9 +14,11 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
@@ -25,6 +27,7 @@ import (
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
 	"github.com/oceanbase/ob-operator/pkg/infrastructure/kube/resource"
+	"github.com/oceanbase/ob-operator/pkg/util"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -74,7 +77,87 @@ func (r *BackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 	// custom logic
 	backupCtrl := NewBackupCtrl(r.CRClient, r.Recorder, *instance)
+
+	backupFinalizerName := fmt.Sprintf("cloud.oceanbase.com.finalizers.%s", instance.Name)
+	if instance.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !util.ContainsString(instance.ObjectMeta.Finalizers, backupFinalizerName) {
+			instance.ObjectMeta.Finalizers = append(instance.ObjectMeta.Finalizers, backupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		if util.ContainsString(instance.ObjectMeta.Finalizers, backupFinalizerName) {
+			err := r.BackupDelete(ctx, r.CRClient, r.Recorder, instance)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+			instance.ObjectMeta.Finalizers = util.RemoveString(instance.ObjectMeta.Finalizers, backupFinalizerName)
+			if err := r.CRClient.Update(context.Background(), instance); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		return ctrl.Result{}, nil
+	}
+
+	// Fetch the OBCluster CR instance
+	obNamespace := types.NamespacedName{
+		Namespace: instance.Spec.SourceCluster.ClusterNamespace,
+		Name:      instance.Spec.SourceCluster.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err = r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			klog.Infof("OBCluster %s not found, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
+	}
+	if obInstance.Status.Status != observerconst.ClusterReady {
+		klog.Infoln("OBCluster  %s is not ready, namespace %s", instance.Spec.SourceCluster.ClusterName, instance.Spec.SourceCluster.ClusterNamespace)
+		return reconcile.Result{}, nil
+	}
+
 	return backupCtrl.BackupCoordinator()
+}
+
+func (r *BackupReconciler) BackupDelete(ctx context.Context, client client.Client, recorder record.EventRecorder, backup *cloudv1.Backup) error {
+	ctrlResource := resource.NewResource(client, recorder)
+	ctrl := &BackupCtrl{
+		Backup:   *backup,
+		Resource: ctrlResource,
+	}
+	obNamespace := types.NamespacedName{
+		Namespace: backup.Namespace,
+		Name:      backup.Spec.SourceCluster.ClusterName,
+	}
+	obInstance := &cloudv1.OBCluster{}
+	err := r.CRClient.Get(ctx, obNamespace, obInstance)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+    err = ctrl.CancelBackupTasks()
+    if err != nil {
+		klog.Errorf("cancel backup tasks failed, error '%s'", err)
+		return err
+    }
+	isArchivelogStop, err := ctrl.IsArchivelogStop()
+	if err != nil {
+		klog.Errorf("check archivelog stop, error '%s'", err)
+		return err
+	}
+	if !isArchivelogStop {
+		err = ctrl.CancelArchiveLog()
+		if err != nil {
+			klog.Errorf("cancel archivelog failed, error '%s'", err)
+			return err
+		}
+	}
+	return nil
 }
 
 func NewBackupCtrl(client client.Client, recorder record.EventRecorder, backup cloudv1.Backup) BackupCtrlOperator {
@@ -126,7 +209,6 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		klog.Errorln("DoBackup: check whether Backup Dest is Set err ", err)
 		return err
 	}
-
 	if !isBackupDestSet {
 		dest_path := ctrl.Backup.Spec.DestPath
 		return ctrl.SetBackupDest(dest_path)
@@ -138,49 +220,62 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		return err
 	}
 
-	err, isArchivelogDoing := ctrl.isArchivelogDoing()
+	archiveLogStatus, err := ctrl.GetArchivelogStatus()
 	if err != nil {
-		klog.Errorln("DoBackup: check whether Archivelog is doing err ", err)
+		klog.Errorln("DoBackup: get Archivelog status err ", err)
 		return err
 	}
-	if !isArchivelogDoing {
-		return ctrl.setBackupLogArchive()
-	}
+	switch archiveLogStatus {
+	case backupconst.ArchiveLogInterrupted:
+		klog.Errorln("archivelog status is interrupted")
+		return errors.New("archivelog status is interrupted")
+	case backupconst.ArchiveLogDoing:
+		break
+	case backupconst.ArchiveLogPrepare, backupconst.ArchiveLogBeginning:
+		err = ctrl.WaitArchivelogDoing()
+		if err != nil {
+			klog.Errorln("wait backup logArchive doing err ", err)
+			return err
+		}
+	case backupconst.ArchiveLogStopping:
+		klog.Infoln("archivelog status is stopping")
+		return nil
+	case backupconst.ArchiveLogStop:
+		err = ctrl.setBackupLogArchiveOption()
+		if err != nil {
+			klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
+			return err
+		}
+		err = ctrl.setBackupLogArchive()
+		if err != nil {
+			klog.Errorln("DoBackup: set Backup LogArchive err ", err)
+			return err
+		}
+		err = ctrl.WaitArchivelogDoing()
+		if err != nil {
+			klog.Errorln("wait backup logArchive doing err ", err)
+			return err
+		}
 
-	err = ctrl.setBackupLogArchiveOption()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup LogArchive Option err ", err)
-		return err
-	}
-
-	err = ctrl.setBackupDatabasePassword()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup Database Password err ", err)
-		return err
-	}
-
-	err = ctrl.setBackupIncrementalPassword()
-	if err != nil {
-		klog.Errorln("DoBackup: set Backup Incremental Password err ", err)
-		return err
 	}
 
 	for _, schedule := range ctrl.Backup.Spec.Schedule {
+		err, isBackupDoing := ctrl.isBackupDoing()
+		if err != nil {
+			klog.Errorln("DoBackup: check whether backup is doing err ", err)
+			return err
+		}
+		if isBackupDoing {
+			continue
+		}
 		// deal with full backup
 		if schedule.BackupType == backupconst.FullBackup {
 			// full backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				err, isBackupRunning := ctrl.isBackupDoing()
+				err = ctrl.StartBackupDatabase()
 				if err != nil {
-					klog.Errorln("DoBackup:full backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup: Start Backup Database err ", err)
 					return err
-				}
-				if !isBackupRunning {
-					err = ctrl.StartBackupDatabase()
-					if err != nil {
-						klog.Errorln("DoBackup: Start Backup Database err ", err)
-						return err
-					}
 				}
 				return ctrl.UpdateBackupStatus("")
 				//full backup, periodic
@@ -210,17 +305,10 @@ func (ctrl *BackupCtrl) DoBackup() error {
 		if schedule.BackupType == backupconst.IncrementalBackup {
 			// incremental backup once
 			if schedule.Schedule == backupconst.BackupOnce {
-				err, isBackupDoing := ctrl.isBackupDoing()
+				err = ctrl.StartBackupIncremental()
 				if err != nil {
-					klog.Errorln("DoBackup: incremental backup check whether backup is doing err ", err)
+					klog.Errorln("DoBackup: Start Backup Incremental err ", err)
 					return err
-				}
-				if !isBackupDoing {
-					err = ctrl.StartBackupIncremental()
-					if err != nil {
-						klog.Errorln("DoBackup: Start Backup Incremental err ", err)
-						return err
-					}
 				}
 				// incremental backup, periodic
 			} else {

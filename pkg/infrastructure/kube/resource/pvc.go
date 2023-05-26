@@ -83,3 +83,11 @@ func (r *PVCResource) Delete(ctx context.Context, obj interface{}) error {
 	r.Recorder.Event(&pvc, corev1.EventTypeNormal, DeletedPVC, "delete PVC"+pvc.Name)
 	return nil
 }
+
+func (r *PVCResource) Patch(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}
+
+func (r *PVCResource) PatchStatus(ctx context.Context, obj interface{}, patch client.Patch) error {
+	return nil
+}

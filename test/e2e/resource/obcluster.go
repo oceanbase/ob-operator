@@ -59,6 +59,20 @@ func (client *Client) GetOBClusterStatus(namespace, name string) string {
 	return ""
 }
 
+func (client *Client) GetOBStatusClusterStatus(namespace, name, clusterName string) string {
+	instance, err := client.GetOBClusterInstance(namespace, name)
+	if err == nil {
+		for _, cluster := range instance.Status.Topology {
+			if cluster.Cluster == clusterName {
+				return cluster.ClusterStatus
+			}
+
+		}
+
+	}
+	return ""
+}
+
 func (client *Client) UpdateOBClusterInstance(obj unstructured.Unstructured) error {
 	oldObj, _ := client.GetObj(obj)
 	obj.SetResourceVersion(oldObj.(*unstructured.Unstructured).GetResourceVersion())

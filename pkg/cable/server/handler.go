@@ -68,6 +68,20 @@ func OBStart(c *gin.Context) {
 	}
 }
 
+func OBUpgradeRoute(c *gin.Context) {
+	param := new(observer.OBUpgradeRouteParam)
+	param.TargetVersion = c.Query(observer.TargetVersion)
+	param.CurrentVersion = c.Query(observer.CurrentVersion)
+	log.Infof("get upgrade route from V%s to V%s", param.CurrentVersion, param.TargetVersion)
+	res, err := observer.GetOBUpgradeRoute(*param)
+	route := observer.GenerateUpgradeRoute(res)
+	if err != nil {
+		SendResponse(c, NewErrorResponse(err))
+	} else {
+		SendResponse(c, NewSuccessResponse(route))
+	}
+}
+
 func OBStop(c *gin.Context) {
 	go observer.StopProcess()
 	SendResponse(c, NewSuccessResponse("successful"))
@@ -78,6 +92,24 @@ func OBStatus(c *gin.Context) {
 		SendResponse(c, NewSuccessResponse(status.Liveness))
 	} else {
 		SendResponse(c, NewErrorResponse(errors.New(fmt.Sprintf("liveness is %v", status.Liveness))))
+	}
+}
+
+func OBRecoverConfig(c *gin.Context) {
+	err := observer.RecoverConfig()
+	if err != nil {
+		SendResponse(c, NewErrorResponse(err))
+	} else {
+		SendResponse(c, NewSuccessResponse("successful"))
+	}
+}
+
+func OBVersion(c *gin.Context) {
+	res, err := observer.GetObVersion()
+	if err != nil {
+		SendResponse(c, NewErrorResponse(err))
+	} else {
+		SendResponse(c, NewSuccessResponse(res.Output))
 	}
 }
 

@@ -22,6 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 )
 
 func (ctrl *OBClusterCtrl) AsyncStartOBServer(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
@@ -61,9 +62,13 @@ func (ctrl *OBClusterCtrl) StartOBServer(clusterIP, zoneName, podIP string, stat
 		klog.Info("rs list is empty")
 		return errors.New("rs list is empty")
 	}
-
 	// generate start args
-	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList)
+	version, err := ctrl.GetCurrentVersion(statefulApp)
+	if err != nil {
+		klog.Errorln("add server get Version failed")
+		version = observerconst.OBClusterV3
+	}
+	obServerStartArgs := cable.GenerateOBServerStartArgs(ctrl.OBCluster, zoneName, rsList, version)
 	// check OBServer is already running, for OBServer Scale UP
 	err = cable.OBServerStatusCheckExecuter(ctrl.OBCluster.Name, podIP)
 	// nil is OBServer is already running
@@ -139,7 +144,7 @@ func (ctrl *OBClusterCtrl) AddOBServerExecuter(clusterIP, zoneName, podIP string
 
 func (ctrl *OBClusterCtrl) WaitOBServerActive(clusterIP, zoneName, podIP string, statefulApp cloudv1.StatefulApp) error {
 	klog.Infof("wait observer %s ready", podIP)
-	err := ctrl.TickerOBServerStatusCheckFromDB(clusterIP, podIP)
+	err := ctrl.TickerOBServerStatusCheckFromDB(clusterIP, podIP, statefulApp)
 	if err != nil {
 		// kill pod
 		klog.Infof("observer %s still not ready", podIP)
@@ -179,7 +184,7 @@ func TickerOBServerStatusCheck(clusterName, podIP string) error {
 
 }
 
-func (ctrl *OBClusterCtrl) TickerOBServerStatusCheckFromDB(clusterIP string, podIP string) error {
+func (ctrl *OBClusterCtrl) TickerOBServerStatusCheckFromDB(clusterIP string, podIP string, args ...cloudv1.StatefulApp) error {
 	tick := time.Tick(observerconst.TickPeriodForOBServerStatusCheck)
 	var num int
 	for {
@@ -189,7 +194,13 @@ func (ctrl *OBClusterCtrl) TickerOBServerStatusCheckFromDB(clusterIP string, pod
 				return errors.New("observer starting timeout")
 			}
 			num = num + 1
-			sqlOperator, err := ctrl.GetSqlOperator()
+			var sqlOperator *sql.SqlOperator
+			var err error
+			if args != nil {
+				sqlOperator, err = ctrl.GetSqlOperatorFromStatefulApp(args[0])
+			} else {
+				sqlOperator, err = ctrl.GetSqlOperator()
+			}
 			if err == nil {
 				obServerList := sqlOperator.GetOBServer()
 				for _, obServer := range obServerList {

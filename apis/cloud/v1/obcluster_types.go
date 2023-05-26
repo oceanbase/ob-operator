@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,12 +44,7 @@ type ResourcesSpec struct {
 	CPU     resource.Quantity `json:"cpu"`
 	Memory  resource.Quantity `json:"memory"`
 	Storage []StorageSpec     `json:"storage"`
-	Volume  VolumeSpec        `json:"volume"`
-}
-
-type VolumeSpec struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Volume  *corev1.Volume    `json:"volume,omitempty"`
 }
 
 type StorageSpec struct {
@@ -64,10 +60,15 @@ type OBClusterStatus struct {
 }
 
 type ClusterStatus struct {
-	Cluster            string       `json:"cluster"`
-	ClusterStatus      string       `json:"clusterStatus"`
-	LastTransitionTime metav1.Time  `json:"lastTransitionTime"`
-	Zone               []ZoneStatus `json:"zone"`
+	Cluster             string            `json:"cluster"`
+	CurrentImage        string            `json:"currentImage,omitempty"`
+	ScriptPassedVersion string            `json:"scriptPassedVersion,omitempty"`
+	TargetVersion       string            `json:"targetVersion,omitempty"`
+	UpgradeRoute        []string          `json:"upgradeRoute,omitempty"`
+	ClusterStatus       string            `json:"clusterStatus"`
+	LastTransitionTime  metav1.Time       `json:"lastTransitionTime"`
+	Zone                []ZoneStatus      `json:"zone"`
+	Params              []ServerParameter `json:"parameters,omitempty"`
 }
 
 type ZoneStatus struct {
@@ -76,6 +77,11 @@ type ZoneStatus struct {
 	ZoneStatus        string `json:"zoneStatus"`
 	ExpectedReplicas  int    `json:"expectedReplicas"`
 	AvailableReplicas int    `json:"availableReplicas"`
+}
+
+type ServerParameter struct {
+	Server string      `json:"Server"`
+	Params []Parameter `json:"Parameters"`
 }
 
 // +genclient

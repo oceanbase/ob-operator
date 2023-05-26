@@ -36,3 +36,8 @@ type BackupSchedule struct {
 	Schedule   string
 	NextTime   string
 }
+
+type Tenant struct {
+	TenantID   int64
+	TenantName string
+}

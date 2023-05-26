@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: obproxy
-          image: oceanbase/obproxy-ce:4.0.0-5
+          image: oceanbasedev/obproxy-ce:4.1.0.0-7
           ports:
             - containerPort: 2883
               name: "sql"

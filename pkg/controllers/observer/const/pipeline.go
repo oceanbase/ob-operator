@@ -30,6 +30,25 @@ const (
 	ZoneMaintain  = "Zone Maintain"
 )
 
+// obcluster upgrade state machine
+const (
+	NeedUpgradeCheck = "Need Upgrade Check"
+	UpgradeChecking  = "Upgrade Checking"
+
+	CheckUpgradeMode    = "Check Upgrade Mode"
+	ExecutingPreScripts = "Executing Pre Scripts"
+
+	NeedUpgrading = "Need Upgrading"
+	Upgrading     = "Upgrading"
+
+	ExecutingPostScripts = "Executing Post Scripts"
+
+	NeedUpgradePostCheck = "Need Upgrade Post Check"
+	UpgradePostChecking  = "Upgrade Post Checking"
+
+	RestoreParams = "Restore Parameters"
+)
+
 // Step
 const (
 	StepBootstrap = "Bootstrap"
@@ -45,6 +64,12 @@ const (
 
 	TickPeriodForRSJobStatusCheck = 5 * time.Second
 	TickNumForRSJobStatusCheck    = 12
+
+	TickPeriodForPodStatusCheck = 1 * time.Second
+	TickNumForPodStatusCheck    = 60
+
+	TickPeriodForPodGetObVersion = 5 * time.Second
+	TickNumForPodGetObVersion    = 20
 
 	DelServerTimeout = 30
 )

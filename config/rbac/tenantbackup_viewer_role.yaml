@@ -1,0 +1,20 @@
+# permissions for end users to view tenantbackups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tenantbackup-viewer-role
+rules:
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups/status
+  verbs:
+  - get
