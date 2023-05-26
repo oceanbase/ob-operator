@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
 )
 
@@ -60,7 +60,7 @@ type OBServerReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-	observer := &cloudv2alpha1.OBServer{}
+	observer := &v1alpha1.OBServer{}
 	err := r.Client.Get(ctx, req.NamespacedName, observer)
 	if err != nil {
 		logger.Error(err, "get observer error")
@@ -90,6 +90,6 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudv2alpha1.OBServer{}).
+		For(&v1alpha1.OBServer{}).
 		Complete(r)
 }

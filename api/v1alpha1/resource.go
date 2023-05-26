@@ -10,18 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-type Parameter struct {
-	Name      string `json:"name"`
-	Value     string `json:"value"`
-	ScopeType string `json:"scopeType,omitempty"`
-	Scope     string `json:"scope,omitempty"`
-}
+import (
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
-type ParameterValue struct {
-	Name   string `json:"name"`
-	Value  string `json:"value"`
-	Zone   string `json:"zone"`
-	Server string `json:"server"`
+type ResourceSpec struct {
+	Cpu    resource.Quantity `json:"cpu"`
+	Memory resource.Quantity `json:"memory"`
 }

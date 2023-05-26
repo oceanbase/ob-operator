@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 )
 
@@ -78,14 +78,14 @@ func (m *OBZoneManager) CreateOBServer() error {
 		labels["reference-uid"] = string(m.OBZone.GetUID())
 		labels["reference-zone"] = m.OBZone.Name
 		labels["reference-cluster"] = cluster
-		observer := &cloudv2alpha1.OBServer{
+		observer := &v1alpha1.OBServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            serverName,
 				Namespace:       m.OBZone.Namespace,
 				OwnerReferences: ownerReferenceList,
 				Labels:          labels,
 			},
-			Spec: cloudv2alpha1.OBServerSpec{
+			Spec: v1alpha1.OBServerSpec{
 				ClusterName:      m.OBZone.Spec.ClusterName,
 				ClusterId:        m.OBZone.Spec.ClusterId,
 				Zone:             m.OBZone.Spec.Topology.Zone,

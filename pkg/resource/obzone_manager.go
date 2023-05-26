@@ -22,7 +22,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -33,7 +33,7 @@ import (
 type OBZoneManager struct {
 	ResourceManager
 	Ctx      context.Context
-	OBZone   *cloudv2alpha1.OBZone
+	OBZone   *v1alpha1.OBZone
 	Client   client.Client
 	Recorder record.EventRecorder
 	Logger   *logr.Logger
@@ -45,15 +45,15 @@ func (m *OBZoneManager) IsNewResource() bool {
 
 func (m *OBZoneManager) InitStatus() {
 	m.Logger.Info("newly created zone, init status")
-	status := cloudv2alpha1.OBZoneStatus{
+	status := v1alpha1.OBZoneStatus{
 		Image:          m.OBZone.Spec.OBServerTemplate.Image,
 		Status:         zonestatus.New,
-		OBServerStatus: make([]cloudv2alpha1.OBServerReplicaStatus, 0, m.OBZone.Spec.Topology.Replica),
+		OBServerStatus: make([]v1alpha1.OBServerReplicaStatus, 0, m.OBZone.Spec.Topology.Replica),
 	}
 	m.OBZone.Status = status
 }
 
-func (m *OBZoneManager) SetOperationContext(c *cloudv2alpha1.OperationContext) {
+func (m *OBZoneManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBZone.Status.OperationContext = c
 }
 
@@ -66,7 +66,7 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// newly created zone
 	var taskFlow *task.TaskFlow
 	var err error
-	var obcluster *cloudv2alpha1.OBCluster
+	var obcluster *v1alpha1.OBCluster
 
 	m.Logger.Info("create task flow according to obzone status")
 	if m.OBZone.Status.Status == zonestatus.New {
@@ -101,9 +101,9 @@ func (m *OBZoneManager) UpdateStatus() error {
 		m.Logger.Error(err, "Got error when list observers")
 	}
 
-	observerReplicaStatusList := make([]cloudv2alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
+	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
 	for _, observer := range observerList.Items {
-		observerReplicaStatusList = append(observerReplicaStatusList, cloudv2alpha1.OBServerReplicaStatus{
+		observerReplicaStatusList = append(observerReplicaStatusList, v1alpha1.OBServerReplicaStatus{
 			Server: observer.Status.PodIp,
 			Status: observer.Status.Status,
 		})
@@ -141,9 +141,9 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 	}
 }
 
-func (m *OBZoneManager) listOBServers() (*cloudv2alpha1.OBServerList, error) {
+func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {
 	// this label always exists
-	observerList := &cloudv2alpha1.OBServerList{}
+	observerList := &v1alpha1.OBServerList{}
 	err := m.Client.List(m.Ctx, observerList, client.MatchingLabels{
 		"reference-zone": m.OBZone.Name,
 	}, client.InNamespace(m.OBZone.Namespace))
@@ -160,9 +160,9 @@ func (m *OBZoneManager) generateNamespacedName(name string) types.NamespacedName
 	return namespacedName
 }
 
-func (m *OBZoneManager) getOBZone() (*cloudv2alpha1.OBZone, error) {
+func (m *OBZoneManager) getOBZone() (*v1alpha1.OBZone, error) {
 	// this label always exists
-	obzone := &cloudv2alpha1.OBZone{}
+	obzone := &v1alpha1.OBZone{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBZone.Name), obzone)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obzone")
@@ -170,10 +170,10 @@ func (m *OBZoneManager) getOBZone() (*cloudv2alpha1.OBZone, error) {
 	return obzone, nil
 }
 
-func (m *OBZoneManager) getOBCluster() (*cloudv2alpha1.OBCluster, error) {
+func (m *OBZoneManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	// this label always exists
 	clusterName, _ := m.OBZone.Labels["reference-cluster"]
-	obcluster := &cloudv2alpha1.OBCluster{}
+	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")

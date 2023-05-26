@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OBClusterBackupSpec defines the desired state of OBClusterBackup
-type OBClusterBackupSpec struct {
+// OBTenantBackupSpec defines the desired state of OBTenantBackup
+type OBTenantBackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBClusterBackup. Edit obclusterbackup_types.go to remove/update
+	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// OBClusterBackupStatus defines the observed state of OBClusterBackup
-type OBClusterBackupStatus struct {
+// OBTenantBackupStatus defines the observed state of OBTenantBackup
+type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -41,24 +41,24 @@ type OBClusterBackupStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBClusterBackup is the Schema for the obclusterbackups API
-type OBClusterBackup struct {
+// OBTenantBackup is the Schema for the obtenantbackups API
+type OBTenantBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OBClusterBackupSpec   `json:"spec,omitempty"`
-	Status OBClusterBackupStatus `json:"status,omitempty"`
+	Spec   OBTenantBackupSpec   `json:"spec,omitempty"`
+	Status OBTenantBackupStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OBClusterBackupList contains a list of OBClusterBackup
-type OBClusterBackupList struct {
+// OBTenantBackupList contains a list of OBTenantBackup
+type OBTenantBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OBClusterBackup `json:"items"`
+	Items           []OBTenantBackup `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OBClusterBackup{}, &OBClusterBackupList{})
+	SchemeBuilder.Register(&OBTenantBackup{}, &OBTenantBackupList{})
 }

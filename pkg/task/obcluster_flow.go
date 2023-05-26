@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
@@ -21,7 +21,7 @@ import (
 
 func CreateClusterTaskFlow() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &cloudv2alpha1.OperationContext{
+		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.CreateCluster,
 			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneBootstrapReady, taskname.Bootstrap, taskname.CreateUsers, taskname.CreateOBParameter},
 			TargetStatus: clusterstatus.Running,

@@ -10,8 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-type ObagentStorageSpec struct {
-	ConfigStorage *StorageSpec `json:"configStorage"`
+type OceanbaseStorageSpec struct {
+	DataStorage    *StorageSpec `json:"dataStorage"`
+	RedoLogStorage *StorageSpec `json:"redoLogStorage"`
+	LogStorage     *StorageSpec `json:"logStorage"`
 }

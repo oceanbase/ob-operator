@@ -10,13 +10,8 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-import (
-	"k8s.io/apimachinery/pkg/api/resource"
-)
-
-type StorageSpec struct {
-	StorageClass string            `json:"storageClass"`
-	Size         resource.Quantity `json:"size"`
+type ObagentStorageSpec struct {
+	ConfigStorage *StorageSpec `json:"configStorage"`
 }

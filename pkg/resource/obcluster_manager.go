@@ -21,7 +21,7 @@ import (
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -31,7 +31,7 @@ import (
 type OBClusterManager struct {
 	ResourceManager
 	Ctx       context.Context
-	OBCluster *cloudv2alpha1.OBCluster
+	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
 	Recorder  record.EventRecorder
 	Logger    *logr.Logger
@@ -43,15 +43,15 @@ func (m *OBClusterManager) IsNewResource() bool {
 
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
-	status := cloudv2alpha1.OBClusterStatus{
+	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
-		OBZoneStatus: make([]cloudv2alpha1.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
+		OBZoneStatus: make([]v1alpha1.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
 	}
 	m.OBCluster.Status = status
 }
 
-func (m *OBClusterManager) SetOperationContext(c *cloudv2alpha1.OperationContext) {
+func (m *OBClusterManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBCluster.Status.OperationContext = c
 }
 
@@ -83,9 +83,9 @@ func (m *OBClusterManager) UpdateStatus() error {
 		m.Logger.Error(err, "list obzones error")
 		return errors.Wrap(err, "list obzones")
 	}
-	obzoneReplicaStatusList := make([]cloudv2alpha1.OBZoneReplicaStatus, 0, len(obzoneList.Items))
+	obzoneReplicaStatusList := make([]v1alpha1.OBZoneReplicaStatus, 0, len(obzoneList.Items))
 	for _, obzone := range obzoneList.Items {
-		obzoneReplicaStatusList = append(obzoneReplicaStatusList, cloudv2alpha1.OBZoneReplicaStatus{
+		obzoneReplicaStatusList = append(obzoneReplicaStatusList, v1alpha1.OBZoneReplicaStatus{
 			Zone:   obzone.Name,
 			Status: obzone.Status.Status,
 		})
@@ -127,9 +127,9 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	}
 }
 
-func (m *OBClusterManager) listOBZones() (*cloudv2alpha1.OBZoneList, error) {
+func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 	// this label always exists
-	obzoneList := &cloudv2alpha1.OBZoneList{}
+	obzoneList := &v1alpha1.OBZoneList{}
 	err := m.Client.List(m.Ctx, obzoneList, client.MatchingLabels{
 		"reference-cluster": m.OBCluster.Name,
 	}, client.InNamespace(m.OBCluster.Namespace))

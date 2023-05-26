@@ -13,10 +13,10 @@ resources:
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBCluster
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
   webhooks:
     defaulting: true
     validation: true
@@ -26,10 +26,10 @@ resources:
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBZone
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
   webhooks:
     defaulting: true
     validation: true
@@ -39,10 +39,10 @@ resources:
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBServer
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
   webhooks:
     defaulting: true
     validation: true
@@ -52,62 +52,62 @@ resources:
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBParameter
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBTenant
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBUnit
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBClusterBackup
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBTenantBackup
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBClusterRestore
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
   domain: oceanbase.com
-  group: cloud
+  group: oceanbase
   kind: OBTenantRestore
-  path: github.com/oceanbase/ob-operator/api/v2alpha1
-  version: v2alpha1
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

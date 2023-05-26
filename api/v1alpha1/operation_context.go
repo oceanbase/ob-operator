@@ -10,13 +10,14 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-import (
-	"k8s.io/apimachinery/pkg/api/resource"
-)
-
-type ResourceSpec struct {
-	Cpu    resource.Quantity `json:"cpu"`
-	Memory resource.Quantity `json:"memory"`
+type OperationContext struct {
+	Name         string   `json:"name"`
+	Tasks        []string `json:"tasks"`
+	Task         string   `json:"task"`
+	Idx          int      `json:"idx"`
+	TaskStatus   string   `json:"taskStatus"`
+	TaskId       string   `json:"taskId"`
+	TargetStatus string   `json:"targetStatus"`
 }

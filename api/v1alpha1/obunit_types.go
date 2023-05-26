@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,52 +23,42 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OBClusterSpec defines the desired state of OBCluster
-type OBClusterSpec struct {
+// OBUnitSpec defines the desired state of OBUnit
+type OBUnitSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string            `json:"clusterName"`
-	ClusterId        int64             `json:"clusterId,omitempty"`
-	OBServerTemplate *OBServerTemplate `json:"observer"`
-	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
-	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
-	Parameters       []Parameter       `json:"parameters,omitempty"`
-	Topology         []OBZoneTopology  `json:"topology"`
-	UserSecrets      *OBUserSecrets    `json:"userSecrets"`
+	// Foo is an example field of OBUnit. Edit obunit_types.go to remove/update
+	Foo string `json:"foo,omitempty"`
 }
 
-// OBClusterStatus defines the observed state of OBCluster
-type OBClusterStatus struct {
+// OBUnitStatus defines the observed state of OBUnit
+type OBUnitStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Image            string                `json:"image"`
-	OperationContext *OperationContext     `json:"operationContext,omitempty"`
-	Status           string                `json:"status"`
-	OBZoneStatus     []OBZoneReplicaStatus `json:"obzones"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBCluster is the Schema for the obclusters API
-type OBCluster struct {
+// OBUnit is the Schema for the obunits API
+type OBUnit struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OBClusterSpec   `json:"spec,omitempty"`
-	Status OBClusterStatus `json:"status,omitempty"`
+	Spec   OBUnitSpec   `json:"spec,omitempty"`
+	Status OBUnitStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OBClusterList contains a list of OBCluster
-type OBClusterList struct {
+// OBUnitList contains a list of OBUnit
+type OBUnitList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OBCluster `json:"items"`
+	Items           []OBUnit `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OBCluster{}, &OBClusterList{})
+	SchemeBuilder.Register(&OBUnit{}, &OBUnitList{})
 }

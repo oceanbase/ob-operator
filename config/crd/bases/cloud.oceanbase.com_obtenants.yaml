@@ -15,7 +15,7 @@ spec:
     singular: obtenant
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenant is the Schema for the obtenants API

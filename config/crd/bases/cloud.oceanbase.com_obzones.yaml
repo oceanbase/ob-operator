@@ -15,7 +15,7 @@ spec:
     singular: obzone
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBZone is the Schema for the obzones API

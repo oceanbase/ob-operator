@@ -15,7 +15,7 @@ spec:
     singular: obclusterrestore
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBClusterRestore is the Schema for the obclusterrestores API

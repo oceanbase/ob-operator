@@ -10,10 +10,9 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-type MonitorTemplate struct {
-	Image    string              `json:"image"`
-	Resource *ResourceSpec       `json:"resource,omitempty"`
-	Storage  *ObagentStorageSpec `json:"storage"`
+type OBZoneReplicaStatus struct {
+	Zone   string `json:"zone"`
+	Status string `json:"status"`
 }

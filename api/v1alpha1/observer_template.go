@@ -10,9 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v2alpha1
+package v1alpha1
 
-type OBZoneReplicaStatus struct {
-	Zone   string `json:"zone"`
-	Status string `json:"status"`
+type OBServerTemplate struct {
+	Image    string                `json:"image"`
+	Resource *ResourceSpec         `json:"resource"`
+	Storage  *OceanbaseStorageSpec `json:"storage"`
 }

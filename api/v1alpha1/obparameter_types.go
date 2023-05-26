@@ -14,66 +14,54 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OBServerSpec defines the desired state of OBServer
-type OBServerSpec struct {
+// OBParameterSpec defines the desired state of OBParameter
+type OBParameterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	ClusterName      string             `json:"clusterName"`
-	ClusterId        int64              `json:"clusterId,omitempty"`
-	Zone             string             `json:"zone"`
-	NodeSelector     *map[string]string `json:"nodeSelector,omitempty"`
-	OBServerTemplate *OBServerTemplate  `json:"observerTemplate"`
-	MonitorTemplate  *MonitorTemplate   `json:"monitorTemplate,omitempty"`
-	BackupVolume     *BackupVolumeSpec  `json:"backupVolume,omitempty"`
+	ClusterName string     `json:"clusterName"`
+	ClusterId   int64      `json:"clusterId,omitempty"`
+	Parameter   *Parameter `json:"parameter"`
 }
 
-// OBServerStatus defines the observed state of OBServer
-type OBServerStatus struct {
+// OBParameterStatus defines the observed state of OBParameter
+type OBParameterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	OperationContext *OperationContext `json:"operationContext,omitempty"`
-	Image            string            `json:"image"`
 	Status           string            `json:"status"`
-	PodPhase         corev1.PodPhase   `json:"podPhase"`
-	Ready            bool              `json:"ready"`
-	PodIp            string            `json:"podIp"`
-	NodeIp           string            `json:"nodeIp"`
-	// TODO uncomment this
-	// Storage          []PVCStatus       `json:"storage"`
+	Parameter        *[]ParameterValue `json:"parameter"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBServer is the Schema for the observers API
-type OBServer struct {
+// OBParameter is the Schema for the obparameters API
+type OBParameter struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OBServerSpec   `json:"spec,omitempty"`
-	Status OBServerStatus `json:"status,omitempty"`
+	Spec   OBParameterSpec   `json:"spec,omitempty"`
+	Status OBParameterStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OBServerList contains a list of OBServer
-type OBServerList struct {
+// OBParameterList contains a list of OBParameter
+type OBParameterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OBServer `json:"items"`
+	Items           []OBParameter `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OBServer{}, &OBServerList{})
+	SchemeBuilder.Register(&OBParameter{}, &OBParameterList{})
 }

@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 // OBTenantRestoreReconciler reconciles a OBTenantRestore object
@@ -59,6 +59,6 @@ func (r *OBTenantRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBTenantRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&cloudv2alpha1.OBTenantRestore{}).
+		For(&v1alpha1.OBTenantRestore{}).
 		Complete(r)
 }

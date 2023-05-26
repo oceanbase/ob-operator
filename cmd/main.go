@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
 	//+kubebuilder:scaffold:imports
@@ -46,7 +46,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(cloudv2alpha1.AddToScheme(scheme))
+	utilruntime.Must(v1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -190,15 +190,15 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantRestore")
 		os.Exit(1)
 	}
-	// if err = (&cloudv2alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
+	// if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
 	// 	os.Exit(1)
 	// }
-	// if err = (&cloudv2alpha1.OBZone{}).SetupWebhookWithManager(mgr); err != nil {
+	// if err = (&v1alpha1.OBZone{}).SetupWebhookWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBZone")
 	// 	os.Exit(1)
 	// }
-	// if err = (&cloudv2alpha1.OBServer{}).SetupWebhookWithManager(mgr); err != nil {
+	// if err = (&v1alpha1.OBServer{}).SetupWebhookWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBServer")
 	// 	os.Exit(1)
 	// }

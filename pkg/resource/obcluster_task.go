@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -27,8 +27,8 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 )
 
-func (m *OBClusterManager) getOBCluster() (*cloudv2alpha1.OBCluster, error) {
-	obcluster := &cloudv2alpha1.OBCluster{}
+func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
+	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBCluster.Name), obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
@@ -94,14 +94,14 @@ func (m *OBClusterManager) CreateOBZone() error {
 		labels := make(map[string]string)
 		labels["reference-uid"] = string(m.OBCluster.GetUID())
 		labels["reference-cluster"] = m.OBCluster.Name
-		obzone := &cloudv2alpha1.OBZone{
+		obzone := &v1alpha1.OBZone{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            zoneName,
 				Namespace:       m.OBCluster.Namespace,
 				OwnerReferences: ownerReferenceList,
 				Labels:          labels,
 			},
-			Spec: cloudv2alpha1.OBZoneSpec{
+			Spec: v1alpha1.OBZoneSpec{
 				ClusterName:      m.OBCluster.Spec.ClusterName,
 				ClusterId:        m.OBCluster.Spec.ClusterId,
 				OBServerTemplate: m.OBCluster.Spec.OBServerTemplate,

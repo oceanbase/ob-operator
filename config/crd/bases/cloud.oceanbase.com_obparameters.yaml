@@ -15,7 +15,7 @@ spec:
     singular: obparameter
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBParameter is the Schema for the obparameters API

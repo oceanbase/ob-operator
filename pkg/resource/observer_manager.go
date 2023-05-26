@@ -25,7 +25,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -36,7 +36,7 @@ import (
 type OBServerManager struct {
 	ResourceManager
 	Ctx      context.Context
-	OBServer *cloudv2alpha1.OBServer
+	OBServer *v1alpha1.OBServer
 	Client   client.Client
 	Recorder record.EventRecorder
 	Logger   *logr.Logger
@@ -65,14 +65,14 @@ func (m *OBServerManager) IsNewResource() bool {
 
 func (m *OBServerManager) InitStatus() {
 	m.Logger.Info("newly created server, init status")
-	status := cloudv2alpha1.OBServerStatus{
+	status := v1alpha1.OBServerStatus{
 		Image:  m.OBServer.Spec.OBServerTemplate.Image,
 		Status: serverstatus.New,
 	}
 	m.OBServer.Status = status
 }
 
-func (m *OBServerManager) SetOperationContext(c *cloudv2alpha1.OperationContext) {
+func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
@@ -111,7 +111,7 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// newly created observer
 	var taskFlow *task.TaskFlow
 	var err error
-	var obcluster *cloudv2alpha1.OBCluster
+	var obcluster *v1alpha1.OBCluster
 
 	m.Logger.Info("create task flow according to observer status")
 	if m.OBServer.Status.Status == serverstatus.New {
@@ -167,10 +167,10 @@ func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 	return pod, nil
 }
 
-func (m *OBServerManager) getOBCluster() (*cloudv2alpha1.OBCluster, error) {
+func (m *OBServerManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	// this label always exists
 	clusterName, _ := m.OBServer.Labels["reference-cluster"]
-	obcluster := &cloudv2alpha1.OBCluster{}
+	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
@@ -179,9 +179,9 @@ func (m *OBServerManager) getOBCluster() (*cloudv2alpha1.OBCluster, error) {
 }
 
 // get observer from K8s api server
-func (m *OBServerManager) getOBServer() (*cloudv2alpha1.OBServer, error) {
+func (m *OBServerManager) getOBServer() (*v1alpha1.OBServer, error) {
 	// this label always exists
-	observer := &cloudv2alpha1.OBServer{}
+	observer := &v1alpha1.OBServer{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), observer)
 	if err != nil {
 		return nil, errors.Wrap(err, "get observer")
@@ -189,10 +189,10 @@ func (m *OBServerManager) getOBServer() (*cloudv2alpha1.OBServer, error) {
 	return observer, nil
 }
 
-func (m *OBServerManager) getOBZone() (*cloudv2alpha1.OBZone, error) {
+func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
 	// this label always exists
 	zoneName, _ := m.OBServer.Labels["reference-zone"]
-	obzone := &cloudv2alpha1.OBZone{}
+	obzone := &v1alpha1.OBZone{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(zoneName), obzone)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obzone")

@@ -15,13 +15,13 @@ package resource
 import (
 	"github.com/oceanbase/ob-operator/pkg/task"
 
-	cloudv2alpha1 "github.com/oceanbase/ob-operator/api/v2alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 type ResourceManager interface {
 	IsNewResource() bool
 	InitStatus()
-	SetOperationContext(*cloudv2alpha1.OperationContext)
+	SetOperationContext(*v1alpha1.OperationContext)
 	ClearTaskInfo()
 	FinishTask()
 	UpdateStatus() error

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,42 +23,52 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OBTenantBackupSpec defines the desired state of OBTenantBackup
-type OBTenantBackupSpec struct {
+// OBClusterSpec defines the desired state of OBCluster
+type OBClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	ClusterName      string            `json:"clusterName"`
+	ClusterId        int64             `json:"clusterId,omitempty"`
+	OBServerTemplate *OBServerTemplate `json:"observer"`
+	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
+	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
+	Parameters       []Parameter       `json:"parameters,omitempty"`
+	Topology         []OBZoneTopology  `json:"topology"`
+	UserSecrets      *OBUserSecrets    `json:"userSecrets"`
 }
 
-// OBTenantBackupStatus defines the observed state of OBTenantBackup
-type OBTenantBackupStatus struct {
+// OBClusterStatus defines the observed state of OBCluster
+type OBClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Image            string                `json:"image"`
+	OperationContext *OperationContext     `json:"operationContext,omitempty"`
+	Status           string                `json:"status"`
+	OBZoneStatus     []OBZoneReplicaStatus `json:"obzones"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBTenantBackup is the Schema for the obtenantbackups API
-type OBTenantBackup struct {
+// OBCluster is the Schema for the obclusters API
+type OBCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OBTenantBackupSpec   `json:"spec,omitempty"`
-	Status OBTenantBackupStatus `json:"status,omitempty"`
+	Spec   OBClusterSpec   `json:"spec,omitempty"`
+	Status OBClusterStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OBTenantBackupList contains a list of OBTenantBackup
-type OBTenantBackupList struct {
+// OBClusterList contains a list of OBCluster
+type OBClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OBTenantBackup `json:"items"`
+	Items           []OBCluster `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OBTenantBackup{}, &OBTenantBackupList{})
+	SchemeBuilder.Register(&OBCluster{}, &OBClusterList{})
 }

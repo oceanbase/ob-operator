@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2alpha1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,50 +23,42 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// OBZoneSpec defines the desired state of OBZone
-type OBZoneSpec struct {
+// OBClusterBackupSpec defines the desired state of OBClusterBackup
+type OBClusterBackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string            `json:"clusterName"`
-	ClusterId        int64             `json:"clusterId,omitempty"`
-	Topology         OBZoneTopology    `json:"topology"`
-	OBServerTemplate *OBServerTemplate `json:"observerTemplate"`
-	MonitorTemplate  *MonitorTemplate  `json:"monitorTemplate,omitempty"`
-	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
+	// Foo is an example field of OBClusterBackup. Edit obclusterbackup_types.go to remove/update
+	Foo string `json:"foo,omitempty"`
 }
 
-// OBZoneStatus defines the observed state of OBZone
-type OBZoneStatus struct {
+// OBClusterBackupStatus defines the observed state of OBClusterBackup
+type OBClusterBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Image            string                  `json:"image"`
-	OperationContext *OperationContext       `json:"operationContext,omitempty"`
-	Status           string                  `json:"status"`
-	OBServerStatus   []OBServerReplicaStatus `json:"observers"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBZone is the Schema for the obzones API
-type OBZone struct {
+// OBClusterBackup is the Schema for the obclusterbackups API
+type OBClusterBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   OBZoneSpec   `json:"spec,omitempty"`
-	Status OBZoneStatus `json:"status,omitempty"`
+	Spec   OBClusterBackupSpec   `json:"spec,omitempty"`
+	Status OBClusterBackupStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// OBZoneList contains a list of OBZone
-type OBZoneList struct {
+// OBClusterBackupList contains a list of OBClusterBackup
+type OBClusterBackupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []OBZone `json:"items"`
+	Items           []OBClusterBackup `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&OBZone{}, &OBZoneList{})
+	SchemeBuilder.Register(&OBClusterBackup{}, &OBClusterBackupList{})
 }
