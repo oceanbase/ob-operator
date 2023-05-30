@@ -19,16 +19,32 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 )
 
-func CreateServerForBootstrapTaskFlow() *TaskFlow {
+func PrepareOBServerForBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.CreateServerForBootstrap,
+			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady},
 			TargetStatus: serverstatus.BootstrapReady,
 		},
 	}
 }
 
-func CreateServerTaskFlow() *TaskFlow {
-	return nil
+func MaintainOBServerAfterBootstrap() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.PrepareOBServerForBootstrap,
+			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
+
+func CreateOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.CreateOBServer,
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady, taskname.AddServer},
+			TargetStatus: serverstatus.Running,
+		},
+	}
 }

@@ -17,9 +17,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obclusterbackups.cloud.oceanbase.com
+  name: obclusterbackups.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBClusterBackup
     listKind: OBClusterBackupList
@@ -27,7 +27,7 @@ spec:
     singular: obclusterbackup
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBClusterBackup is the Schema for the obclusterbackups API
@@ -67,9 +67,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obclusterrestores.cloud.oceanbase.com
+  name: obclusterrestores.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBClusterRestore
     listKind: OBClusterRestoreList
@@ -77,7 +77,7 @@ spec:
     singular: obclusterrestore
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBClusterRestore is the Schema for the obclusterrestores API
@@ -117,9 +117,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obclusters.cloud.oceanbase.com
+  name: obclusters.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBCluster
     listKind: OBClusterList
@@ -127,7 +127,7 @@ spec:
     singular: obcluster
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBCluster is the Schema for the obclusters API
@@ -1982,9 +1982,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obparameters.cloud.oceanbase.com
+  name: obparameters.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBParameter
     listKind: OBParameterList
@@ -1992,7 +1992,7 @@ spec:
     singular: obparameter
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBParameter is the Schema for the obparameters API
@@ -2106,9 +2106,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: observers.cloud.oceanbase.com
+  name: observers.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBServer
     listKind: OBServerList
@@ -2116,7 +2116,7 @@ spec:
     singular: observer
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBServer is the Schema for the observers API
@@ -3930,9 +3930,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obtenantbackups.cloud.oceanbase.com
+  name: obtenantbackups.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBTenantBackup
     listKind: OBTenantBackupList
@@ -3940,7 +3940,7 @@ spec:
     singular: obtenantbackup
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantBackup is the Schema for the obtenantbackups API
@@ -3980,9 +3980,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obtenantrestores.cloud.oceanbase.com
+  name: obtenantrestores.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBTenantRestore
     listKind: OBTenantRestoreList
@@ -3990,7 +3990,7 @@ spec:
     singular: obtenantrestore
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantRestore is the Schema for the obtenantrestores API
@@ -4030,9 +4030,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obtenants.cloud.oceanbase.com
+  name: obtenants.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBTenant
     listKind: OBTenantList
@@ -4040,7 +4040,7 @@ spec:
     singular: obtenant
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenant is the Schema for the obtenants API
@@ -4080,9 +4080,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obunits.cloud.oceanbase.com
+  name: obunits.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBUnit
     listKind: OBUnitList
@@ -4090,7 +4090,7 @@ spec:
     singular: obunit
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBUnit is the Schema for the obunits API
@@ -4130,9 +4130,9 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.3
   creationTimestamp: null
-  name: obzones.cloud.oceanbase.com
+  name: obzones.oceanbase.oceanbase.com
 spec:
-  group: cloud.oceanbase.com
+  group: oceanbase.oceanbase.com
   names:
     kind: OBZone
     listKind: OBZoneList
@@ -4140,7 +4140,7 @@ spec:
     singular: obzone
   scope: Namespaced
   versions:
-  - name: v2alpha1
+  - name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBZone is the Schema for the obzones API
@@ -6027,9 +6027,9 @@ rules:
   - create
   - patch
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups
+  - secrets
   verbs:
   - create
   - delete
@@ -6039,249 +6039,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups/finalizers
+  - secrets/finalizers
   verbs:
   - update
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones/status
+  - secrets/status
   verbs:
   - get
   - patch
@@ -6348,6 +6114,266 @@ rules:
   - ""
   resources:
   - pods/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones/status
   verbs:
   - get
   - patch

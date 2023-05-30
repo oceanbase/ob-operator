@@ -38,16 +38,12 @@ type OBClusterReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusters/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=persistentvolumeclaims/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=persistentvolumes,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=persistentvolumes/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups="",resources=secrets/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to

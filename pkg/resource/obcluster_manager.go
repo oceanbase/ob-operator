@@ -16,13 +16,14 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
+	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
@@ -61,20 +62,27 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		m.Logger.Info("get task flow from obcluster status")
 		return task.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
 	}
+	// return task flow depends on status
+
 	// newly created cluster
+	var taskFlow *task.TaskFlow
+	var err error
 	m.Logger.Info("create task flow according to obcluster status")
-	if m.OBCluster.Status.Status == clusterstatus.New {
-		taskFlow, err := task.GetRegistry().Get(flowname.CreateCluster)
-		if err != nil {
-			return nil, errors.Wrap(err, "Get create obcluster task flow")
-		}
-		return taskFlow, nil
+	switch m.OBCluster.Status.Status {
+	// create obcluster, return taskflow to bootstrap obcluster
+	case clusterstatus.New:
+		taskFlow, err = task.GetRegistry().Get(flowname.BootstrapOBCluster)
+	// after obcluster bootstraped, return taskflow to maintain obcluster after bootstrap
+	case clusterstatus.Bootstrapped:
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBClusterAfterBootstrap)
+	case clusterstatus.AddOBZone:
+		taskFlow, err = task.GetRegistry().Get(flowname.AddOBZone)
 	}
 	// scale observer
 	// scale obzone
 	// upgrade
 	// no need to execute task flow
-	return nil, nil
+	return taskFlow, err
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
@@ -91,6 +99,24 @@ func (m *OBClusterManager) UpdateStatus() error {
 		})
 	}
 	m.OBCluster.Status.OBZoneStatus = obzoneReplicaStatusList
+	// compare spec and set status
+	if m.OBCluster.Status.Status != clusterstatus.Running {
+		m.Logger.Info("OBCluster status is not running, skip compare")
+	} else {
+		// check topology
+		if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
+			m.Logger.Info("Compare topology need add zone")
+			m.OBCluster.Status.Status = clusterstatus.AddOBZone
+		} else if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
+			m.Logger.Info("Compare topology need delete zone")
+			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
+		} else {
+			// check observer
+		}
+		// check version
+		// check resource
+		// TODO resource change require pod restart, currently
+	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
 	err = m.Client.Status().Update(m.Ctx, m.OBCluster)
@@ -115,11 +141,15 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	case taskname.CreateOBZone:
 		return m.CreateOBZone, nil
 	case taskname.WaitOBZoneBootstrapReady:
-		return m.WaitOBZoneBootstrapReady, nil
+		return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case taskname.WaitOBZoneRunning:
+		return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.Bootstrap:
 		return m.Bootstrap, nil
 	case taskname.CreateUsers:
 		return m.CreateUsers, nil
+	case taskname.CreateOBClusterService:
+		return m.CreateService, nil
 	case taskname.CreateOBParameter:
 		return m.CreateOBParameter, nil
 	default:
@@ -131,17 +161,10 @@ func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 	// this label always exists
 	obzoneList := &v1alpha1.OBZoneList{}
 	err := m.Client.List(m.Ctx, obzoneList, client.MatchingLabels{
-		"reference-cluster": m.OBCluster.Name,
+		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
 	}, client.InNamespace(m.OBCluster.Namespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "get obzone list")
 	}
 	return obzoneList, nil
-}
-
-func (m *OBClusterManager) generateNamespacedName(name string) types.NamespacedName {
-	var namespacedName types.NamespacedName
-	namespacedName.Namespace = m.OBCluster.Namespace
-	namespacedName.Name = name
-	return namespacedName
 }

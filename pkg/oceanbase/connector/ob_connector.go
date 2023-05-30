@@ -16,7 +16,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
 )
 
 // oceanbase connector, support mysql mode only
@@ -39,8 +38,7 @@ func (oc *OceanbaseConnector) Init() error {
 	dsn := oc.ConnectProperties.GetDSN()
 	db, err = sqlx.Connect(DRIVER_MYSQL, dsn)
 	if err != nil {
-		klog.Errorf("Open database connection %s failed: %v", dsn, err)
-		return errors.Wrap(err, "Init db connection")
+		return errors.Wrapf(err, "Init db connection %s", dsn)
 	}
 	oc.Client = db
 	return nil
@@ -49,7 +47,6 @@ func (oc *OceanbaseConnector) Init() error {
 func (oc *OceanbaseConnector) IsAlive() bool {
 	err := oc.Client.Ping()
 	if err != nil {
-		klog.Errorf("Check database connection alive got error: %v", err)
 		return false
 	}
 	return true

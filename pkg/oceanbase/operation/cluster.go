@@ -14,12 +14,12 @@ package operation
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
-	"strings"
 )
 
 // TODO
@@ -32,7 +32,7 @@ func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.Bootst
 	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapInfo)
 	err := m.ExecWithTimeout(config.BootstrapTimeout, bootstrapSql)
 	if err != nil {
-		klog.Errorf("Got exception when bootstrap: %v", err)
+		m.Logger.Error(err, "Got exception when bootstrap")
 		return errors.Wrap(err, "Bootstrap")
 	}
 	return nil

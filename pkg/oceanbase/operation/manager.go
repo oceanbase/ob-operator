@@ -14,20 +14,24 @@ package operation
 
 import (
 	"context"
+	"time"
+
+	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
-	"time"
 )
 
 type OceanbaseOperationManager struct {
 	Connector *connector.OceanbaseConnector
+	Logger    *logr.Logger
 }
 
 func NewOceanbaseOperationManager(connector *connector.OceanbaseConnector) *OceanbaseOperationManager {
+	logger := logr.FromContextOrDiscard(context.TODO())
 	return &OceanbaseOperationManager{
 		Connector: connector,
+		Logger:    &logger,
 	}
 }
 
@@ -44,7 +48,7 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql s
 	defer cancel()
 	_, err := m.Connector.Client.ExecContext(ctx, sql, params...)
 	if err != nil {
-		klog.Errorf("Execute sql %s with param %v got error: %v", sql, params, err)
+		m.Logger.Error(errors.Wrapf(err, "sql %s, param %v", sql, params), "Execute sql")
 		return errors.Wrap(err, "Execute sql")
 	}
 	return nil
@@ -54,6 +58,20 @@ func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ..
 	return m.ExecWithTimeout(config.DefaultSqlTimeout, sql, params...)
 }
 
-func (m *OceanbaseOperationManager) Query(sql string, params ...interface{}) error {
-	return m.ExecWithTimeout(config.DefaultSqlTimeout, sql, params...)
+func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params ...interface{}) error {
+	err := m.Connector.Client.Get(ret, sql, params...)
+	if err != nil {
+		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Query row")
+	}
+	return err
+}
+
+func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, params ...interface{}) error {
+	err := m.Connector.Client.Select(ret, sql, params...)
+	if err != nil {
+		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Query list")
+	}
+	return err
 }

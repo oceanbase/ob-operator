@@ -18,6 +18,8 @@ const (
 	WaitOBZoneBootstrapReady = "wait obzone bootstrap ready"
 	Bootstrap                = "bootstrap"
 	CreateUsers              = "create users"
+	WaitOBZoneRunning        = "wait obzone running"
+	CreateOBClusterService   = "create obcluster service"
 	CreateOBParameter        = "create obparameter"
 )
 
@@ -29,13 +31,15 @@ const (
 	StopZone                   = "stop zone"
 	DeleteZone                 = "delete zone"
 	WaitOBServerBootstrapReady = "wait observer bootstrap ready"
+	WaitOBServerRunning        = "wait observer running"
 )
 
 // observer tasks
 const (
-	CreateOBPVC    = "create observer pvc"
-	CreateOBPod    = "create observer pod"
-	WaitOBPodReady = "wait observer pod ready"
-	StartOBServer  = "start observer"
-	AddServer      = "add observer"
+	WaitOBClusterBootstrapped = "wait obcluster bootstrapped"
+	CreateOBPVC               = "create observer pvc"
+	CreateOBPod               = "create observer pod"
+	WaitOBPodReady            = "wait observer pod ready"
+	StartOBServer             = "start observer"
+	AddServer                 = "add observer"
 )

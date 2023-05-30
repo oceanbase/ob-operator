@@ -14,17 +14,26 @@ package operation
 
 import (
 	"fmt"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
 )
+
+func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBServer, error) {
+	observer := &model.OBServer{}
+	err := m.QueryRow(observer, sql.GetServer, s.Ip, s.Port)
+	if err != nil {
+		return nil, errors.Wrap(err, "Get observer failed")
+	}
+	return observer, nil
+}
 
 func (m *OceanbaseOperationManager) AddServer(serverInfo *model.ServerInfo) error {
 	server := fmt.Sprintf("%s:%d", serverInfo.Ip, serverInfo.Port)
 	err := m.ExecWithDefaultTimeout(sql.AddServer, server)
 	if err != nil {
-		klog.Errorf("Got exception when add server: %v", err)
+		m.Logger.Error(err, "Got exception when add server")
 		return errors.Wrap(err, "Add server")
 	}
 	return nil
@@ -34,7 +43,7 @@ func (m *OceanbaseOperationManager) DeleteServer(serverInfo *model.ServerInfo) e
 	server := fmt.Sprintf("%s:%d", serverInfo.Ip, serverInfo.Port)
 	err := m.ExecWithDefaultTimeout(sql.DeleteServer, server)
 	if err != nil {
-		klog.Errorf("Got exception when delete server: %v", err)
+		m.Logger.Error(err, "Got exception when delete server")
 		return errors.Wrap(err, "Delete server")
 	}
 	return nil

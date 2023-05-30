@@ -35,9 +35,9 @@ type OBClusterBackupReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusterbackups,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusterbackups/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=cloud.oceanbase.com,resources=obclusterbackups/finalizers,verbs=update
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusterbackups,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusterbackups/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusterbackups/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

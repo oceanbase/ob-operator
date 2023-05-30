@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package connector
 
 import (
+	"context"
 	"sync"
 
+	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	"k8s.io/klog/v2"
 )
 
 var oceanbaseConnectorManager *OceanbaseConnectorManager
@@ -24,29 +25,33 @@ var oceanbaseConnectorManagerCreateOnce sync.Once
 
 type OceanbaseConnectorManager struct {
 	// TODO: maintain cache size and data experiation, maybe change to a cache library
-	Cache sync.Map
+	Cache  sync.Map
+	Logger *logr.Logger
 }
 
 func GetOceanbaseConnectorManager() *OceanbaseConnectorManager {
 	oceanbaseConnectorManagerCreateOnce.Do(func() {
-		oceanbaseConnectorManager = &OceanbaseConnectorManager{}
+		logger := logr.FromContextOrDiscard(context.TODO())
+		oceanbaseConnectorManager = &OceanbaseConnectorManager{
+			Logger: &logger,
+		}
 	})
 	return oceanbaseConnectorManager
 }
 
-func (ocm *OceanbaseConnectorManager) GetOceanbaseConnector(p *OceanbaseConnectProperties) (*OceanbaseConnector, error) {
+func (m *OceanbaseConnectorManager) GetOceanbaseConnector(p *OceanbaseConnectProperties) (*OceanbaseConnector, error) {
 	key := p.HashValue()
-	connectorStored, loaded := ocm.Cache.Load(key)
+	connectorStored, loaded := m.Cache.Load(key)
 	if loaded && connectorStored.(*OceanbaseConnector).IsAlive() {
 		return connectorStored.(*OceanbaseConnector), nil
 	}
-	klog.Warningf("no connector or connector is not alive in cache with connect property: %s:%d %s", p.Address, p.Port, p.User)
+	m.Logger.Info("no connector or connector is not alive in cache with connect property", "address", p.Address, "port", p.Port, "user", p.User)
 	connector := NewOceanbaseConnector(p)
 	err := connector.Init()
 	if err != nil {
-		klog.Errorf("init connector failed with connect property: %s:%d %s, %v", p.Address, p.Port, p.User, err)
+		m.Logger.Error(err, "init connector failed with connect property", "address", p.Address, "port", p.Port, "user", p.User)
 		return nil, errors.Wrap(err, "create oceanbase connector")
 	}
-	ocm.Cache.Store(key, connector)
+	m.Cache.Store(key, connector)
 	return connector, nil
 }

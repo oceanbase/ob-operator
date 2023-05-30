@@ -19,21 +19,31 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 )
 
-func CreateZoneForBootstrapTaskFlow() *TaskFlow {
+func PrepareOBZoneForBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.CreateZone,
+			Name:         flowname.PrepareOBZoneForBootstrap,
 			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerBootstrapReady},
 			TargetStatus: zonestatus.BootstrapReady,
 		},
 	}
 }
 
-func CreateZoneTaskFlow() *TaskFlow {
+func MaintainOBZoneAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.CreateZone,
-			Tasks:        []string{taskname.AddZone, taskname.CreateOBServer, taskname.StartZone},
+			Name:         flowname.MaintainOBZoneAfterBootstrap,
+			Tasks:        []string{taskname.WaitOBServerRunning},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}
+
+func CreateOBZone() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.CreateOBZone,
+			Tasks:        []string{taskname.AddZone, taskname.CreateOBServer, taskname.WaitOBServerRunning, taskname.StartZone},
 			TargetStatus: zonestatus.Running,
 		},
 	}

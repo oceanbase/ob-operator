@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 type OBZoneTopology struct {
-	Zone         string             `json:"zone"`
-	NodeSelector *map[string]string `json:"nodeSelector,omitempty"`
-	Replica      int                `json:"replica"`
+	Zone         string            `json:"zone"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
+	Replica      int               `json:"replica"`
 }

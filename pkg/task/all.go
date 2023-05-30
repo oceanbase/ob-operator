@@ -19,13 +19,17 @@ import (
 // register all task flows at init
 func init() {
 	// obcluster
-	GetRegistry().Register(flowname.CreateCluster, CreateClusterTaskFlow)
+	GetRegistry().Register(flowname.BootstrapOBCluster, BootstrapOBCluster)
+	GetRegistry().Register(flowname.MaintainOBClusterAfterBootstrap, MaintainOBClusterAfterBootstrap)
+	GetRegistry().Register(flowname.AddOBZone, AddOBZone)
 
 	// obzone
-	GetRegistry().Register(flowname.CreateZone, CreateZoneTaskFlow)
-	GetRegistry().Register(flowname.CreateZoneForBootstrap, CreateZoneForBootstrapTaskFlow)
+	GetRegistry().Register(flowname.CreateOBZone, CreateOBZone)
+	GetRegistry().Register(flowname.PrepareOBZoneForBootstrap, PrepareOBZoneForBootstrap)
+	GetRegistry().Register(flowname.MaintainOBZoneAfterBootstrap, MaintainOBZoneAfterBootstrap)
 
 	// observer
-	GetRegistry().Register(flowname.CreateServer, CreateServerTaskFlow)
-	GetRegistry().Register(flowname.CreateServerForBootstrap, CreateServerForBootstrapTaskFlow)
+	GetRegistry().Register(flowname.CreateOBServer, CreateOBServer)
+	GetRegistry().Register(flowname.PrepareOBServerForBootstrap, PrepareOBServerForBootstrap)
+	GetRegistry().Register(flowname.MaintainOBServerAfterBootstrap, MaintainOBServerAfterBootstrap)
 }

@@ -18,12 +18,21 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 )
+
+func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return nil, errors.Wrap(err, "Get obcluster from K8s")
+	}
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+}
 
 func (m *OBZoneManager) generateServerName() string {
 	parts := strings.Split(uuid.New().String(), "-")
@@ -32,33 +41,46 @@ func (m *OBZoneManager) generateServerName() string {
 }
 
 func (m *OBZoneManager) AddZone() error {
-	return nil
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		m.Logger.Error(err, "Get oceanbase operation manager failed")
+		return errors.Wrap(err, "Get oceanbase operation manager")
+	}
+	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
 }
 
 func (m *OBZoneManager) StartZone() error {
-	return nil
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		m.Logger.Error(err, "Get oceanbase operation manager failed")
+		return errors.Wrap(err, "Get oceanbase operation manager")
+	}
+	return oceanbaseOperationManager.StartZone(m.OBZone.Spec.Topology.Zone)
 }
 
-func (m *OBZoneManager) WaitOBServerBootstrapReady() error {
-	for i := 1; i < 300; i++ {
-		obzone, err := m.getOBZone()
-		if err != nil {
-			return errors.Wrap(err, "get obzoen failed")
-		}
-		allready := true
-		for _, observerStatus := range obzone.Status.OBServerStatus {
-			if observerStatus.Status != serverstatus.BootstrapReady {
-				m.Logger.Info("server still not ready for bootstrap", "server ip", observerStatus.Server)
-				allready = false
-				break
+func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSeconds int) func() error {
+	f := func() error {
+		for i := 1; i < timeoutSeconds; i++ {
+			obzone, err := m.getOBZone()
+			if err != nil {
+				return errors.Wrap(err, "get obzoen failed")
 			}
+			allMatched := true
+			for _, observerStatus := range obzone.Status.OBServerStatus {
+				if observerStatus.Status != status {
+					m.Logger.Info("server status still not matched", "server", observerStatus.Server, "status", status)
+					allMatched = false
+					break
+				}
+			}
+			if allMatched {
+				return nil
+			}
+			time.Sleep(time.Second)
 		}
-		if allready {
-			return nil
-		}
-		time.Sleep(time.Second)
+		return errors.New("all server still not bootstrap ready when timeout")
 	}
-	return errors.New("all server still not bootstrap ready when timeout")
+	return f
 }
 
 func (m *OBZoneManager) CreateOBServer() error {
@@ -74,10 +96,10 @@ func (m *OBZoneManager) CreateOBServer() error {
 	for i := 0; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		labels := make(map[string]string)
-		cluster, _ := m.OBZone.Labels["reference-cluster"]
-		labels["reference-uid"] = string(m.OBZone.GetUID())
-		labels["reference-zone"] = m.OBZone.Name
-		labels["reference-cluster"] = cluster
+		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
+		labels[oceanbaseconst.LabelRefUID] = string(m.OBZone.GetUID())
+		labels[oceanbaseconst.LabelRefOBZone] = m.OBZone.Name
+		labels[oceanbaseconst.LabelRefOBCluster] = cluster
 		observer := &v1alpha1.OBServer{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            serverName,

@@ -16,20 +16,23 @@ import (
 	"fmt"
 	"time"
 
+	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 )
 
 func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBCluster.Name), obcluster)
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.OBCluster.Name,
+	}, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
@@ -40,43 +43,29 @@ func (m *OBClusterManager) generateZoneName(zone string) string {
 	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
 }
 
-func (m *OBClusterManager) FindTask(name string) (func() error, error) {
-	switch name {
-	case taskname.CreateOBZone:
-		return m.CreateOBZone, nil
-	case taskname.WaitOBZoneBootstrapReady:
-		return m.WaitOBZoneBootstrapReady, nil
-	case taskname.Bootstrap:
-		return m.Bootstrap, nil
-	case taskname.CreateUsers:
-		return m.CreateUsers, nil
-	case taskname.CreateOBParameter:
-		return m.CreateOBParameter, nil
-	default:
-		return nil, errors.New(fmt.Sprintf("Can not find an function for %s", name))
-	}
-}
-
-func (m *OBClusterManager) WaitOBZoneBootstrapReady() error {
-	for i := 1; i < 300; i++ {
-		obcluster, err := m.getOBCluster()
-		if err != nil {
-			return errors.Wrap(err, "get obcluster failed")
-		}
-		allready := true
-		for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
-			if obzoneStatus.Status != zonestatus.BootstrapReady {
-				m.Logger.Info("zone still not ready for bootstrap", "zone", obzoneStatus.Zone)
-				allready = false
-				break
+func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() error {
+	f := func() error {
+		for i := 1; i < timeoutSeconds; i++ {
+			obcluster, err := m.getOBCluster()
+			if err != nil {
+				return errors.Wrap(err, "get obcluster failed")
 			}
+			allMatched := true
+			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
+				if obzoneStatus.Status != status {
+					m.Logger.Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
+					allMatched = false
+					break
+				}
+			}
+			if allMatched {
+				return nil
+			}
+			time.Sleep(time.Second)
 		}
-		if allready {
-			return nil
-		}
-		time.Sleep(time.Second)
+		return errors.New("zone status still not matched when timeout")
 	}
-	return errors.New("all server still not bootstrap ready when timeout")
+	return f
 }
 
 func (m *OBClusterManager) CreateOBZone() error {
@@ -91,9 +80,20 @@ func (m *OBClusterManager) CreateOBZone() error {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
+		zoneExists := false
+		for _, zoneStatus := range m.OBCluster.Status.OBZoneStatus {
+			if zoneName == zoneStatus.Zone {
+				zoneExists = true
+				break
+			}
+		}
+		if zoneExists {
+			m.Logger.Info("Zone already exists", "zone", zoneName)
+			continue
+		}
 		labels := make(map[string]string)
-		labels["reference-uid"] = string(m.OBCluster.GetUID())
-		labels["reference-cluster"] = m.OBCluster.Name
+		labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
+		labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
 		obzone := &v1alpha1.OBZone{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            zoneName,
@@ -120,8 +120,8 @@ func (m *OBClusterManager) CreateOBZone() error {
 	return nil
 }
 
-func (m *OBClusterManager) BootstrapEmpty() error {
-	return nil
+func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
 }
 
 func (m *OBClusterManager) Bootstrap() error {
@@ -134,23 +134,20 @@ func (m *OBClusterManager) Bootstrap() error {
 	if len(obzoneList.Items) <= 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
-	address := obzoneList.Items[0].Status.OBServerStatus[0].Server
-	p := connector.NewOceanbaseConnectProperties(address, 2881, "root", "sys", "root", "")
-	manager, err := operation.GetOceanbaseOperationManager(p)
+	manager, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
 	if err != nil {
-		m.Logger.Error(err, "get oceanbase sql operator failed")
-		return errors.Wrap(err, "get oceanbase sql operator")
+		m.Logger.Error(err, "get oceanbase operation manager failed")
+		return errors.Wrap(err, "get oceanbase operation manager")
 	}
-	m.Logger.Info("successfully get oceanbase sql operator")
 
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
 	for _, zone := range obzoneList.Items {
 		serverInfo := &model.ServerInfo{
 			Ip:   zone.Status.OBServerStatus[0].Server,
-			Port: 2882,
+			Port: oceanbaseconst.RpcPort,
 		}
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-			Region: "default",
+			Region: oceanbaseconst.DefaultRegion,
 			Zone:   zone.Spec.Topology.Zone,
 			Server: serverInfo,
 		})
@@ -168,6 +165,57 @@ func (m *OBClusterManager) CreateService() error {
 }
 
 func (m *OBClusterManager) CreateUsers() error {
+	err := m.createUser(oceanbaseconst.OperatorUser, m.OBCluster.Spec.UserSecrets.Operator, oceanbaseconst.AllPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create operator user")
+	}
+	err = m.createUser(obagentconst.MonitorUser, m.OBCluster.Spec.UserSecrets.Monitor, oceanbaseconst.SelectPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create root user")
+	}
+	err = m.createUser(oceanbaseconst.ProxyUser, m.OBCluster.Spec.UserSecrets.ProxyRO, oceanbaseconst.SelectPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create root user")
+	}
+	err = m.createUser(oceanbaseconst.RootUser, m.OBCluster.Spec.UserSecrets.Root, oceanbaseconst.AllPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create root user")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
+	m.Logger.Info("begin create user", "username", userName)
+	password, err := ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
+	if err != nil {
+		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
+	}
+	m.Logger.Info("finish get password", "username", userName, "password", password)
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		m.Logger.Error(err, "Get oceanbase operation manager")
+		return errors.Wrap(err, "Get oceanbase operation manager")
+	}
+	m.Logger.Info("finish get operationmanager", "username", userName)
+	err = oceanbaseOperationManager.CreateUser(userName)
+	if err != nil {
+		m.Logger.Error(err, "Create user")
+		return errors.Wrapf(err, "Create user %s", userName)
+	}
+	m.Logger.Info("finish create user", "username", userName)
+	err = oceanbaseOperationManager.SetUserPassword(userName, password)
+	if err != nil {
+		m.Logger.Error(err, "Set user password")
+		return errors.Wrapf(err, "Set password for user %s", userName)
+	}
+	m.Logger.Info("finish set user password", "username", userName)
+	object := "*.*"
+	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
+	if err != nil {
+		m.Logger.Error(err, "Grant privilege")
+		return errors.Wrapf(err, "Grant privilege for user %s", userName)
+	}
+	m.Logger.Info("finish grant user privilege", "username", userName)
 	return nil
 }
 

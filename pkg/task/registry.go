@@ -14,8 +14,9 @@ package task
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 var taskFlowRegistry *Registry
@@ -46,7 +47,7 @@ func (r *Registry) Register(name string, f func() *TaskFlow) error {
 func (r *Registry) Get(name string) (*TaskFlow, error) {
 	f, exists := r.Store[name]
 	if !exists {
-		return nil, errors.New(fmt.Sprintf("Task flow %s not registered", name))
+		return nil, errors.Errorf("Task flow %s not registered", name)
 	}
 	return f(), nil
 }

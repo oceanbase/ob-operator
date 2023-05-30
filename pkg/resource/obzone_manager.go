@@ -14,7 +14,6 @@ package resource
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -23,7 +22,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
+	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -77,16 +78,19 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create obzone when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateZoneForBootstrap)
+			taskFlow, err = task.GetRegistry().Get(flowname.PrepareOBZoneForBootstrap)
 		} else {
 			// created normally
 			m.Logger.Info("Create obzone when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateZone)
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateOBZone)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
 		return taskFlow, nil
+	}
+	if m.OBZone.Status.Status == zonestatus.BootstrapReady {
+		return task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
 	}
 	// scale observer
 	// upgrade
@@ -133,11 +137,15 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 	case taskname.CreateOBServer:
 		return m.CreateOBServer, nil
 	case taskname.WaitOBServerBootstrapReady:
-		return m.WaitOBServerBootstrapReady, nil
+		return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case taskname.WaitOBServerRunning:
+		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.AddZone:
 		return m.AddZone, nil
+	case taskname.StartZone:
+		return m.StartZone, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("Can not find an function for %s", name))
+		return nil, errors.Errorf("Can not find an function for %s", name)
 	}
 }
 
@@ -145,7 +153,7 @@ func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {
 	// this label always exists
 	observerList := &v1alpha1.OBServerList{}
 	err := m.Client.List(m.Ctx, observerList, client.MatchingLabels{
-		"reference-zone": m.OBZone.Name,
+		oceanbaseconst.LabelRefOBZone: m.OBZone.Name,
 	}, client.InNamespace(m.OBZone.Namespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "get observers")
@@ -172,7 +180,7 @@ func (m *OBZoneManager) getOBZone() (*v1alpha1.OBZone, error) {
 
 func (m *OBZoneManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	// this label always exists
-	clusterName, _ := m.OBZone.Labels["reference-cluster"]
+	clusterName, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {

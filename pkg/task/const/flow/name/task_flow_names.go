@@ -14,17 +14,22 @@ package flow
 
 // obcluster flows
 const (
-	CreateCluster = "create cluster"
+	BootstrapOBCluster              = "bootstrap obcluster"
+	MaintainOBClusterAfterBootstrap = "maintain obcluster after bootstrap"
+	AddOBZone                       = "add obzone"
+	DeleteOBZone                    = "delete obzone"
 )
 
 // obzone flows
 const (
-	CreateZone             = "create zone"
-	CreateZoneForBootstrap = "create zone for bootstrap"
+	PrepareOBZoneForBootstrap    = "prepare obzone for bootstrap"
+	MaintainOBZoneAfterBootstrap = "maintain obzone after bootstrap"
+	CreateOBZone                 = "create obzone"
 )
 
 // observer flows
 const (
-	CreateServer             = "create server"
-	CreateServerForBootstrap = "create server for bootstrap"
+	PrepareOBServerForBootstrap    = "prepare observer for bootstrap"
+	MaintainOBServerAfterBootstrap = "maintain observer after bootstrap"
+	CreateOBServer                 = "create observer"
 )

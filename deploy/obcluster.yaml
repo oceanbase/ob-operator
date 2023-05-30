@@ -1,4 +1,4 @@
-apiVersion: cloud.oceanbase.com/v2alpha1
+apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBCluster
 metadata:
   name: test
@@ -8,14 +8,22 @@ spec:
   clusterId: 1
   userSecrets:
     root: test-user-root
-    proxyro: test-user-proxy
+    proxyro: test-user-proxyro
     monitor: test-user-monitor
     operator: test-user-operator
   topology:
     - zone: zone1
+      replica: 2
+      nodeSelector:
+        ob.zone1: zone1
+    - zone: zone2
       replica: 1
       nodeSelector:
-        ob.zone: zone1
+        ob.zone2: zone2
+    - zone: zone3
+      replica: 1
+      nodeSelector:
+        ob.zone3: zone3
   observer:
     image: oceanbasedev/oceanbase-cn:v4.1.0.0-100000192023032010
     resource:
@@ -32,10 +40,10 @@ spec:
         storageClass: local-path
         size: 20Gi
   monitor:
-    image: oceanbase/obagent:1.2.0
+    image: oceanbasedev/obagent:1.2.1-snapshot
     resource:
-      cpu: 2
-      memory: 4Gi
+      cpu: 1
+      memory: 1Gi
     storage:
       configStorage:
         storageClass: local-path

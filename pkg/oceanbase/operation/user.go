@@ -11,3 +11,37 @@ See the Mulan PSL v2 for more details.
 */
 
 package operation
+
+import (
+	"fmt"
+
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
+	"github.com/pkg/errors"
+)
+
+func (m *OceanbaseOperationManager) CreateUser(userName string) error {
+	err := m.ExecWithDefaultTimeout(sql.CreateUser, userName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when create user")
+		return errors.Wrap(err, "Create user")
+	}
+	return nil
+}
+
+func (m *OceanbaseOperationManager) SetUserPassword(userName, password string) error {
+	err := m.ExecWithDefaultTimeout(sql.SetUserPassword, userName, password)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when set user password")
+		return errors.Wrap(err, "Set user password")
+	}
+	return nil
+}
+
+func (m *OceanbaseOperationManager) GrantPrivilege(privilege, object, userName string) error {
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.GrantPrivilege, privilege, object), userName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when grant privilege user")
+		return errors.Wrap(err, "Grant privilege to user")
+	}
+	return nil
+}

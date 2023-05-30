@@ -13,9 +13,9 @@ rules:
   - create
   - patch
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups
+  - secrets
   verbs:
   - create
   - delete
@@ -25,249 +25,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups/finalizers
+  - secrets/finalizers
   verbs:
   - update
 - apiGroups:
-  - cloud.oceanbase.com
+  - ""
   resources:
-  - obclusterbackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusterrestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obclusters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obparameters/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - observers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantbackups/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenantrestores/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obtenants/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obunits/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones/finalizers
-  verbs:
-  - update
-- apiGroups:
-  - cloud.oceanbase.com
-  resources:
-  - obzones/status
+  - secrets/status
   verbs:
   - get
   - patch
@@ -334,6 +100,266 @@ rules:
   - ""
   resources:
   - pods/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusterrestores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obparameters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - observers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obzones/status
   verbs:
   - get
   - patch

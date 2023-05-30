@@ -13,13 +13,14 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	"fmt"
+	"context"
 	"sync"
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/pkg/errors"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var taskManager *TaskManager
@@ -27,8 +28,10 @@ var taskManagerOnce sync.Once
 
 func GetTaskManager() *TaskManager {
 	taskManagerOnce.Do(func() {
+		logger := log.FromContext(context.TODO())
 		taskManager = &TaskManager{
 			ResultMap: make(map[string]chan *TaskResult),
+			Logger:    &logger,
 		}
 	})
 	return taskManager
@@ -52,7 +55,7 @@ func (m *TaskManager) Submit(f func() error) string {
 	go func() {
 		err := f()
 		if err != nil {
-			// m.Logger.Error(err, "Run task got error", "taskId", TaskId)
+			m.Logger.Error(err, "Run task got error", "taskId", TaskId)
 			retCh <- &TaskResult{
 				Status: taskstatus.Failed,
 				Error:  err,
@@ -71,7 +74,7 @@ func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {
 		// m.Logger.Info("Query a task id that's not exists", "task id", taskId)
-		return nil, errors.New(fmt.Sprintf("Task %s not exists", taskId))
+		return nil, errors.Errorf("Task %s not exists", taskId)
 	}
 	select {
 	case result := <-retCh:
@@ -84,7 +87,7 @@ func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 func (m *TaskManager) CleanTaskResult(taskId string) error {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {
-		return errors.New("Task not exists")
+		return errors.Errorf("Task %s not exists", taskId)
 		// m.Logger.Error(err, "Task not exists", "task id", taskId)
 	}
 	close(retCh)

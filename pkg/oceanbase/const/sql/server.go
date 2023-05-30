@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	AddServer    = "ALTER SYSTEM ADD SERVER ?"
-	DeleteServer = "ALTER SYSTEM DELETE SERVER ?"
+	ListServer   = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, status, start_service_time from __all_server"
+	GetServer    = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, status, start_service_time from __all_server where svr_ip = ? and svr_port = ?"
+	AddServer    = "alter system add server ?"
+	DeleteServer = "alter system delete server ?"
 )

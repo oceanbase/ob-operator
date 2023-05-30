@@ -15,6 +15,7 @@ package resource
 import (
 	"context"
 
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -50,12 +51,12 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateOBPod, nil
 	case taskname.WaitOBPodReady:
 		return m.WaitOBPodReady, nil
-	case taskname.StartOBServer:
-		return m.StartOBServer, nil
+	case taskname.WaitOBClusterBootstrapped:
+		return m.WaitOBClusterBootstrapped, nil
 	case taskname.AddServer:
 		return m.AddServer, nil
 	default:
-		return nil, errors.New("Can not find an function for task")
+		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
 }
 
@@ -122,16 +123,19 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create observer when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateServerForBootstrap)
+			taskFlow, err = task.GetRegistry().Get(flowname.PrepareOBServerForBootstrap)
 		} else {
 			// created normally
 			m.Logger.Info("Create observer when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateServer)
+			taskFlow, err = task.GetRegistry().Get(flowname.CreateOBServer)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
 		return taskFlow, nil
+	}
+	if m.OBServer.Status.Status == serverstatus.BootstrapReady {
+		return task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
 	}
 	// scale observer
 	// upgrade
@@ -169,7 +173,7 @@ func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 
 func (m *OBServerManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	// this label always exists
-	clusterName, _ := m.OBServer.Labels["reference-cluster"]
+	clusterName, _ := m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster]
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
@@ -191,7 +195,7 @@ func (m *OBServerManager) getOBServer() (*v1alpha1.OBServer, error) {
 
 func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
 	// this label always exists
-	zoneName, _ := m.OBServer.Labels["reference-zone"]
+	zoneName, _ := m.OBServer.Labels[oceanbaseconst.LabelRefOBZone]
 	obzone := &v1alpha1.OBZone{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(zoneName), obzone)
 	if err != nil {

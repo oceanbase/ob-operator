@@ -13,7 +13,11 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 const (
-	New         = "new"
-	Maintaining = "maintaining"
-	Running     = "running"
+	New            = "new"
+	Running        = "running"
+	AddOBZone      = "add obzone"
+	DeleteOBZone   = "delete obzone"
+	AddOBServer    = "add observer"
+	DeleteOBServer = "delete observer"
+	Bootstrapped   = "bootstrapped"
 )

@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the cloud.oceanbase.com v1alpha1 API group
+// Package v1alpha1 contains API Schema definitions for the oceanbase.oceanbase.com v1alpha1 API group
 // +kubebuilder:object:generate=true
-// +groupName=cloud.oceanbase.com
+// +groupName=oceanbase.oceanbase.com
 package v1alpha1
 
 import (
