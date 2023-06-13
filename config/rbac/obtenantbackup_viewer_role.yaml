@@ -1,0 +1,27 @@
+# permissions for end users to view obtenantbackups.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: obtenantbackup-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+  name: obtenantbackup-viewer-role
+rules:
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackups/status
+  verbs:
+  - get

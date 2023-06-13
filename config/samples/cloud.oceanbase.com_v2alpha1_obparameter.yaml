@@ -1,0 +1,12 @@
+apiVersion: oceanbase.oceanbase.com/v2alpha1
+kind: OBParameter
+metadata:
+  labels:
+    app.kubernetes.io/name: obparameter
+    app.kubernetes.io/instance: obparameter-sample
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator-generate
+  name: obparameter-sample
+spec:
+  # TODO(user): Add fields here

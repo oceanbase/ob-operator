@@ -1,0 +1,27 @@
+# permissions for end users to view obtenants.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: obtenant-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+  name: obtenant-viewer-role
+rules:
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenants/status
+  verbs:
+  - get

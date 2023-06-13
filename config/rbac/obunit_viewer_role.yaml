@@ -1,0 +1,27 @@
+# permissions for end users to view obunits.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: obunit-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/part-of: ob-operator-generate
+    app.kubernetes.io/managed-by: kustomize
+  name: obunit-viewer-role
+rules:
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obunits/status
+  verbs:
+  - get
