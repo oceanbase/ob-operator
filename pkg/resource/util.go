@@ -39,24 +39,24 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alp
 		return nil, errors.Wrapf(err, "No observer belongs to cluster %s", obcluster.Name)
 	}
 
-	var p *connector.OceanbaseConnectProperties
+	var s *connector.OceanBaseDataSource
 	for _, observer := range observerList.Items {
 		address := observer.Status.PodIp
 		switch obcluster.Status.Status {
 		case clusterstatus.New:
-			p = connector.NewOceanbaseConnectProperties(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", "")
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", "")
 		case clusterstatus.Bootstrapped:
-			p = connector.NewOceanbaseConnectProperties(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", oceanbaseconst.DefaultDatabase)
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", oceanbaseconst.DefaultDatabase)
 		default:
 			// TODO use user operator and read password from secret
 			password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator)
 			if err != nil {
 				return nil, errors.Wrapf(err, "Get oceanbase operation manager of cluster %s", obcluster.Name)
 			}
-			p = connector.NewOceanbaseConnectProperties(address, oceanbaseconst.SqlPort, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, password, oceanbaseconst.DefaultDatabase)
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, password, oceanbaseconst.DefaultDatabase)
 		}
 		// if err is nil, db connection is already checked available
-		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(p)
+		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)
 		if err == nil {
 			return oceanbaseOperationManager, nil
 		}
