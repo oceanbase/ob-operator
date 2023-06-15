@@ -65,10 +65,7 @@ func (c *Connector) IsAlive() bool {
 		return false
 	}
 	err := c.client.Ping()
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }
 
 func (c *Connector) GetClient() *Client {

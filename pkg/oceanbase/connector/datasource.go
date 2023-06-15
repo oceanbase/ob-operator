@@ -39,7 +39,7 @@ func NewOceanBaseDataSource(address string, port int64, user, tenant, password, 
 	}
 }
 
-func (s *OceanBaseDataSource) DriverName() string {
+func (_ *OceanBaseDataSource) DriverName() string {
 	return "mysql"
 }
 
@@ -57,7 +57,10 @@ func (s *OceanBaseDataSource) DataSourceName() string {
 func (s *OceanBaseDataSource) ID() string {
 	h := md5.New()
 	key := fmt.Sprintf("%s@%s@%s:%d/%s", s.User, s.Tenant, s.Address, s.Port, s.Database)
-	h.Write([]byte(key))
+	_, err := h.Write([]byte(key))
+	if err != nil {
+		return key
+	}
 	return hex.EncodeToString(h.Sum(nil))
 }
 
