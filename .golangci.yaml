@@ -27,6 +27,9 @@ issues:
         - unused
 
 linters-settings:
+  gocritic:
+    disabled-checks:
+      - ifElseChain
   goimports:
     local-prefixes: github.com/oceanbase/ob-operator
   revive:
