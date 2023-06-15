@@ -15,10 +15,14 @@ package name
 // obcluster tasks
 const (
 	CreateOBZone             = "create obzone"
+	DeleteOBZone             = "delete obzone"
 	WaitOBZoneBootstrapReady = "wait obzone bootstrap ready"
 	Bootstrap                = "bootstrap"
 	CreateUsers              = "create users"
+	ModifyOBZoneReplica      = "modify obzone replica"
 	WaitOBZoneRunning        = "wait obzone running"
+	WaitOBZoneTopologyMatch  = "wait obzone topology match"
+	WaitOBZoneDeleted        = "wait obzone deleted"
 	CreateOBClusterService   = "create obcluster service"
 	CreateOBParameter        = "create obparameter"
 )
@@ -26,12 +30,12 @@ const (
 // obzone tasks
 const (
 	CreateOBServer             = "create observer"
+	DeleteOBServer             = "delete observer"
 	AddZone                    = "add zone"
 	StartZone                  = "start zone"
-	StopZone                   = "stop zone"
-	DeleteZone                 = "delete zone"
 	WaitOBServerBootstrapReady = "wait observer bootstrap ready"
 	WaitOBServerRunning        = "wait observer running"
+	WaitReplicaMatch           = "wait replica match"
 )
 
 // observer tasks

@@ -48,3 +48,23 @@ func CreateOBZone() *TaskFlow {
 		},
 	}
 }
+
+func AddOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.AddOBServer,
+			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerRunning},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}
+
+func DeleteOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.DeleteOBServer,
+			Tasks:        []string{taskname.DeleteOBServer, taskname.WaitReplicaMatch},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}

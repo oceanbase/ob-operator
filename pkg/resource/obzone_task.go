@@ -93,7 +93,8 @@ func (m *OBZoneManager) CreateOBServer() error {
 		UID:        m.OBZone.GetUID(),
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
-	for i := 0; i < m.OBZone.Spec.Topology.Replica; i++ {
+	currentReplica := len(m.OBZone.Status.OBServerStatus)
+	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		labels := make(map[string]string)
 		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]

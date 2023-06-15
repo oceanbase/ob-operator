@@ -48,3 +48,23 @@ func AddOBZone() *TaskFlow {
 		},
 	}
 }
+
+func DeleteOBZone() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.DeleteOBZone,
+			Tasks:        []string{taskname.DeleteOBZone, taskname.WaitOBZoneDeleted},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}
+
+func ModifyOBZoneReplica() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.ModifyOBZoneReplica,
+			Tasks:        []string{taskname.ModifyOBZoneReplica, taskname.WaitOBZoneTopologyMatch, taskname.WaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}

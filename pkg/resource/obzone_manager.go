@@ -70,7 +70,8 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var obcluster *v1alpha1.OBCluster
 
 	m.Logger.Info("create task flow according to obzone status")
-	if m.OBZone.Status.Status == zonestatus.New {
+	switch m.OBZone.Status.Status {
+	case zonestatus.New:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
 			return nil, errors.Wrap(err, "Get obcluster")
@@ -88,14 +89,14 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
 		return taskFlow, nil
-	}
-	if m.OBZone.Status.Status == zonestatus.BootstrapReady {
+	case zonestatus.BootstrapReady:
 		return task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
+	case zonestatus.AddOBServer:
+		return task.GetRegistry().Get(flowname.AddOBServer)
+	case zonestatus.DeleteOBServer:
+		return task.GetRegistry().Get(flowname.DeleteOBServer)
+		// TODO upgrade
 	}
-	// scale observer
-	// upgrade
-
-	// no need to execute task flow
 	return nil, nil
 }
 
@@ -113,6 +114,21 @@ func (m *OBZoneManager) UpdateStatus() error {
 		})
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
+	if m.OBZone.Status.Status != zonestatus.Running {
+		m.Logger.Info("OBZone status is not running, skip compare")
+	} else {
+		// check topology
+		if m.OBZone.Spec.Topology.Replica > len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("Compare topology need add observer")
+			m.OBZone.Status.Status = zonestatus.AddOBServer
+		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("Compare topology need delete observer")
+			m.OBZone.Status.Status = zonestatus.DeleteOBServer
+		} else {
+			// do nothing when observer match topology replica
+		}
+		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
+	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
 	err = m.Client.Status().Update(m.Ctx, m.OBZone)

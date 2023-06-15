@@ -43,6 +43,11 @@ func (m *OBClusterManager) generateZoneName(zone string) string {
 	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
 }
 
+func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
+	// TODO
+	return nil
+}
+
 func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() error {
 	f := func() error {
 		for i := 1; i < timeoutSeconds; i++ {
@@ -66,6 +71,31 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 		return errors.New("zone status still not matched when timeout")
 	}
 	return f
+}
+
+func (m *OBClusterManager) ModifyOBZoneReplica() error {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		m.Logger.Error(err, "List obzone failed")
+		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+	}
+	for _, zone := range m.OBCluster.Spec.Topology {
+		for _, obzone := range obzoneList.Items {
+			if zone.Zone == obzone.Spec.Topology.Zone && zone.Replica != obzone.Spec.Topology.Replica {
+				m.Logger.Info("Modify obzone replica", "obzone", zone.Zone)
+				obzone.Spec.Topology.Replica = zone.Replica
+				err = m.Client.Update(m.Ctx, &obzone)
+				if err != nil {
+					return errors.Wrapf(err, "Modify obzone %s replica failed", zone.Zone)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) DeleteOBZone() error {
+	return nil
 }
 
 func (m *OBClusterManager) CreateOBZone() error {

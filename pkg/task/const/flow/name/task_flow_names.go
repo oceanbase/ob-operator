@@ -18,12 +18,16 @@ const (
 	MaintainOBClusterAfterBootstrap = "maintain obcluster after bootstrap"
 	AddOBZone                       = "add obzone"
 	DeleteOBZone                    = "delete obzone"
+	ModifyOBZoneReplica             = "modify obzone replica"
+	Upgrade                         = "upgrade"
 )
 
 // obzone flows
 const (
 	PrepareOBZoneForBootstrap    = "prepare obzone for bootstrap"
 	MaintainOBZoneAfterBootstrap = "maintain obzone after bootstrap"
+	AddOBServer                  = "add observer"
+	DeleteOBServer               = "delete observer"
 	CreateOBZone                 = "create obzone"
 )
 

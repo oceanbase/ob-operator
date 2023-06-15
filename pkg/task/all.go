@@ -22,9 +22,13 @@ func init() {
 	GetRegistry().Register(flowname.BootstrapOBCluster, BootstrapOBCluster)
 	GetRegistry().Register(flowname.MaintainOBClusterAfterBootstrap, MaintainOBClusterAfterBootstrap)
 	GetRegistry().Register(flowname.AddOBZone, AddOBZone)
+	GetRegistry().Register(flowname.DeleteOBZone, DeleteOBZone)
+	GetRegistry().Register(flowname.ModifyOBZoneReplica, ModifyOBZoneReplica)
 
 	// obzone
 	GetRegistry().Register(flowname.CreateOBZone, CreateOBZone)
+	GetRegistry().Register(flowname.AddOBServer, AddOBServer)
+	GetRegistry().Register(flowname.DeleteOBServer, DeleteOBServer)
 	GetRegistry().Register(flowname.PrepareOBZoneForBootstrap, PrepareOBZoneForBootstrap)
 	GetRegistry().Register(flowname.MaintainOBZoneAfterBootstrap, MaintainOBZoneAfterBootstrap)
 

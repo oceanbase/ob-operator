@@ -16,5 +16,7 @@ const (
 	New            = "new"
 	Maintaining    = "maintaining"
 	Running        = "running"
+	AddOBServer    = "add observer"
+	DeleteOBServer = "delete observer"
 	BootstrapReady = "bootstrap ready"
 )
