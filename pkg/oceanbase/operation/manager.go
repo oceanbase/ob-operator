@@ -17,17 +17,18 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/pkg/errors"
 )
 
 type OceanbaseOperationManager struct {
-	Connector *connector.OceanbaseConnector
+	Connector *database.Connector
 	Logger    *logr.Logger
 }
 
-func NewOceanbaseOperationManager(connector *connector.OceanbaseConnector) *OceanbaseOperationManager {
+func NewOceanbaseOperationManager(connector *database.Connector) *OceanbaseOperationManager {
 	logger := logr.FromContextOrDiscard(context.TODO())
 	return &OceanbaseOperationManager{
 		Connector: connector,
@@ -35,10 +36,10 @@ func NewOceanbaseOperationManager(connector *connector.OceanbaseConnector) *Ocea
 	}
 }
 
-func GetOceanbaseOperationManager(p *connector.OceanbaseConnectProperties) (*OceanbaseOperationManager, error) {
-	connector, err := connector.GetOceanbaseConnectorManager().GetOceanbaseConnector(p)
+func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseOperationManager, error) {
+	connector, err := database.GetConnector(p)
 	if err != nil {
-		return nil, errors.Wrap(err, "Get OceanBase connector")
+		return nil, err
 	}
 	return NewOceanbaseOperationManager(connector), nil
 }
@@ -46,7 +47,7 @@ func GetOceanbaseOperationManager(p *connector.OceanbaseConnectProperties) (*Oce
 func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql string, params ...interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	_, err := m.Connector.Client.ExecContext(ctx, sql, params...)
+	_, err := m.Connector.GetClient().ExecContext(ctx, sql, params...)
 	if err != nil {
 		m.Logger.Error(errors.Wrapf(err, "sql %s, param %v", sql, params), "Execute sql")
 		return errors.Wrap(err, "Execute sql")
@@ -59,7 +60,7 @@ func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ..
 }
 
 func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params ...interface{}) error {
-	err := m.Connector.Client.Get(ret, sql, params...)
+	err := m.Connector.GetClient().Get(ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query row")
@@ -68,7 +69,7 @@ func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params
 }
 
 func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, params ...interface{}) error {
-	err := m.Connector.Client.Select(ret, sql, params...)
+	err := m.Connector.GetClient().Select(ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query list")
