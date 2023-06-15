@@ -21,7 +21,7 @@ import (
 // Connector represents a connection pool.
 type Connector struct {
 	ds     DataSource
-	client *sqlx.DB
+	client *Client
 }
 
 // DataSource represents a data source.
@@ -30,6 +30,18 @@ type DataSource interface {
 	DriverName() string
 	DataSourceName() string
 	String() string
+}
+
+// Client represents a wrapper around sqlx.DB.
+type Client struct {
+	*sqlx.DB
+}
+
+func (c *Client) configure() {
+	c.SetMaxOpenConns(DefaultConnMaxOpenCount)
+	c.SetMaxIdleConns(DefaultConnMaxIdleCount)
+	c.SetConnMaxLifetime(DefaultConnMaxLifetime)
+	c.SetConnMaxIdleTime(DefaultConnMaxIdleTime)
 }
 
 func NewConnector(dataSource DataSource) *Connector {
@@ -43,7 +55,8 @@ func (c *Connector) Init() error {
 	if err != nil {
 		return err
 	}
-	c.client = db
+	c.client = &Client{db}
+	c.client.configure()
 	return nil
 }
 
@@ -58,7 +71,7 @@ func (c *Connector) IsAlive() bool {
 	return true
 }
 
-func (c *Connector) GetClient() *sqlx.DB {
+func (c *Connector) GetClient() *Client {
 	return c.client
 }
 
