@@ -39,7 +39,7 @@ func NewOceanBaseDataSource(address string, port int64, user, tenant, password, 
 	}
 }
 
-func (_ *OceanBaseDataSource) DriverName() string {
+func (*OceanBaseDataSource) DriverName() string {
 	return "mysql"
 }
 
