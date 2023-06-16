@@ -18,5 +18,4 @@ jobs:
       - name: addlicense-check
         run: |
           go install github.com/google/addlicense@latest
-          find . -type f -name "*.go" | xargs addlicense
-          git diff --name-only --exit-code
+          find . -type f -name "*.go" | xargs addlicense -check
