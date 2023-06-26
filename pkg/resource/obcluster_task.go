@@ -95,6 +95,27 @@ func (m *OBClusterManager) ModifyOBZoneReplica() error {
 }
 
 func (m *OBClusterManager) DeleteOBZone() error {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		m.Logger.Error(err, "List obzone failed")
+		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+	}
+	for _, obzone := range obzoneList.Items {
+		reserve := false
+		for _, zone := range m.OBCluster.Spec.Topology {
+			if zone.Zone == obzone.Spec.Topology.Zone {
+				reserve = true
+				break
+			}
+		}
+		if !reserve {
+			m.Logger.Info("Need to delete obzone", "obzone", obzone.Name)
+			err = m.Client.Delete(m.Ctx, &obzone)
+			if err != nil {
+				return errors.Wrapf(err, "Delete obzone %s", obzone.Name)
+			}
+		}
+	}
 	return nil
 }
 
