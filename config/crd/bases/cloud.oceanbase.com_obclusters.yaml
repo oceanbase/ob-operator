@@ -36,6 +36,9 @@ spec:
           spec:
             description: OBClusterSpec defines the desired state of OBCluster
             properties:
+              bootstrapTimeoutSeconds:
+                format: int64
+                type: integer
               clusterID:
                 minimum: 1
                 type: integer

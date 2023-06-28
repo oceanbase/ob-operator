@@ -14,10 +14,11 @@ package sql
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/oceanbase/ob-operator/pkg/controllers/restore/model"
 	"github.com/pkg/errors"
 	"k8s.io/klog"
-	"strings"
 )
 
 type SqlOperator struct {
@@ -73,6 +74,11 @@ func (op *SqlOperator) ExecSQL(SQL string) error {
 		}
 	}
 	return nil
+}
+
+func (op *SqlOperator) ActivateTenant(tenant string) error {
+	sql := ReplaceAll(ActivateTenantSql, ActivateTenantSqlReplacer(tenant))
+	return op.ExecSQL(sql)
 }
 
 func (op *SqlOperator) GetVersion() (string, error) {
