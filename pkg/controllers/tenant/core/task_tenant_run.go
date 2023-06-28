@@ -15,8 +15,8 @@ package core
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"sort"
+	"strconv"
 	"strings"
 
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"

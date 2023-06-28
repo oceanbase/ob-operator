@@ -15,8 +15,8 @@ package core
 import (
 	"fmt"
 	"sort"
-	"strings"
 	"strconv"
+	"strings"
 
 	v1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	tenantconst "github.com/oceanbase/ob-operator/pkg/controllers/tenant/const"
