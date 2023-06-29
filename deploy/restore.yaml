@@ -5,6 +5,7 @@ metadata:
   namespace: obcluster
 spec:
   savePoint:
+    type: time
     value: "2023-03-10 15:05:35.536997"
   source:
     clusterName: ob-test
