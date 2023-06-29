@@ -56,7 +56,7 @@ const (
 )
 
 const (
-	BootstrapTimeout = 600
+	BootstrapTimeout = 1800
 
 	AddServerTimeout                 = 60
 	TickPeriodForOBServerStatusCheck = 5 * time.Second

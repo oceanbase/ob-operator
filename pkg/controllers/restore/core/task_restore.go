@@ -15,9 +15,10 @@ package core
 import (
 	"context"
 	"fmt"
-	"k8s.io/klog/v2"
 	"strconv"
 	"strings"
+
+	"k8s.io/klog/v2"
 
 	cloudv1 "github.com/oceanbase/ob-operator/apis/cloud/v1"
 	backupconst "github.com/oceanbase/ob-operator/pkg/controllers/backup/const"
@@ -63,14 +64,18 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 	if err != nil {
 		return errors.Wrap(err, "get sql operator when trying to do restore ")
 	}
+	version, err := sqlOperator.GetVersion()
+	if err != nil {
+		return errors.Wrap(err, "get version failed")
+	}
 	spec := ctrl.Restore.Spec
-	restoreOption := ctrl.GetRestoreOption()
 	path := spec.Source.Path.Root
-	if path == "" {
+	if string(version[0]) == "4" {
 		path = fmt.Sprintf("%s,%s", spec.Source.Path.Data, spec.Source.Path.Log)
 	}
+	restoreOption := ctrl.GetRestoreOption()
 	savePoint := spec.SavePoint.Value
-	if spec.SavePoint.Type != "" {
+	if string(version[0]) == "4" {
 		savePoint = fmt.Sprintf("%s='%s'", spec.SavePoint.Type, spec.SavePoint.Value)
 	}
 
@@ -88,7 +93,7 @@ func (ctrl *RestoreCtrl) DoRestore(pools []string) error {
 			secrets = append(secrets, incrementalSecret)
 		}
 	}
-	if spec.SavePoint.Type != "" {
+	if string(version[0]) == "4" {
 		return sqlOperator.DoRestore4(spec.Dest.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)
 	} else {
 		return sqlOperator.DoRestore(spec.Dest.Tenant, spec.Source.Tenant, path, savePoint, spec.Source.ClusterName, strconv.FormatInt(spec.Source.ClusterID, 10), strings.Join(pools, ","), restoreOption, secrets)

@@ -98,9 +98,27 @@ func (ctrl *RestoreCtrl) RestoreEffector() error {
 	if "" == ctrl.Restore.Status.Status {
 		klog.Infoln("no restore task, create restore task")
 		return ctrl.CreateRestoreTask()
-	} else {
+	} else if "SUCCESS" == ctrl.Restore.Status.Status {
+		return ctrl.ActivateTenant()
+	} else if "FINISHED" != ctrl.Restore.Status.Status {
 		return ctrl.UpdateRestoreStatusFromDB()
 	}
+	return nil
+}
+
+func (ctrl *RestoreCtrl) ActivateTenant() error {
+	sqlOperator, err := ctrl.GetSqlOperator()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get sql operator")
+	}
+	err = sqlOperator.ActivateTenant(ctrl.Restore.Spec.Dest.Tenant)
+	if err != nil {
+		klog.Error("failed to activate tenant")
+		return errors.Wrap(err, "failed to activate tenant")
+	}
+	ctrl.Restore.Status.Status = "FINISHED"
+	ctrl.UpdateRestoreStatus(&ctrl.Restore.Status)
+	return nil
 }
 
 func (ctrl *RestoreCtrl) CreateRestoreTask() error {

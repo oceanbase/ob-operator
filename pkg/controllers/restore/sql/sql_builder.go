@@ -30,6 +30,10 @@ func CreateResourceUnitSQLReplacer(unit_name, max_cpu, max_memory, max_iops, max
 	return strings.NewReplacer("${unit_name}", unit_name, "${max_cpu}", max_cpu, "${max_memory}", max_memory, "${max_iops}", max_iops, "${max_disk_size}", max_disk_size, "${max_session_num}", max_session_num, "${min_cpu}", min_cpu, "${min_memory}", min_memory, "${min_iops}", min_iops)
 }
 
+func ActivateTenantSqlReplacer(tenant string) *strings.Replacer {
+	return strings.NewReplacer("${tenant}", tenant)
+}
+
 func CreateResourcePoolSQLReplacer(pool_name, unit_name, unit_num, zone_list string) *strings.Replacer {
 	return strings.NewReplacer("${pool_name}", pool_name, "${unit_name}", unit_name, "${unit_num}", unit_num, "${zone_list}", zone_list)
 }

@@ -140,11 +140,11 @@ func (r *BackupReconciler) BackupDelete(ctx context.Context, client client.Clien
 		}
 		return err
 	}
-    err = ctrl.CancelBackupTasks()
-    if err != nil {
+	err = ctrl.CancelBackupTasks()
+	if err != nil {
 		klog.Errorf("cancel backup tasks failed, error '%s'", err)
 		return err
-    }
+	}
 	isArchivelogStop, err := ctrl.IsArchivelogStop()
 	if err != nil {
 		klog.Errorf("check archivelog stop, error '%s'", err)

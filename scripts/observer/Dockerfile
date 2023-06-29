@@ -23,14 +23,15 @@ RUN chmod +x /app/cable
 
 RUN useradd -m admin
 
-ENV OB_VERSION 4.1.0.0-100000192023032010
+ENV TINI_VERSION v0.19.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+ENV OB_VERSION 4.1.0.1-102000042023061314
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-libs-${OB_VERSION}.el8.x86_64.rpm
 RUN rpm -ivh https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-${OB_VERSION}.el8.x86_64.rpm
 RUN chown -R admin:admin /home/admin/oceanbase/
-
-ENV TINI_VERSION v0.19.0
 ENV LD_LIBRARY_PATH /home/admin/oceanbase/lib
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
+
 ENTRYPOINT ["/tini", "--"]
 CMD ["/app/cable"]
