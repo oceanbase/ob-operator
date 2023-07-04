@@ -459,28 +459,40 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 	if err != nil {
 		return errors.Wrapf(err, "Get oceanbase operation manager failed")
 	}
-	err = operationManager.DeleteServer(&model.ServerInfo{
+	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
-		Port: oceanbaseconst.SqlPort,
-	})
-	if err != nil {
-		return errors.Wrapf(err, "Failed to delete observer %s", m.OBServer.Status.PodIp)
+		Port: oceanbaseconst.RpcPort,
+	}
+	observer, err := operationManager.GetServer(observerInfo)
+	if observer != nil && observer.Status != "deleting" {
+		if observer.Status == "deleting" {
+			m.Logger.Info("observer is deleting", "observer", observerInfo.Ip)
+		} else {
+			m.Logger.Info("need to delete observer")
+			err = operationManager.DeleteServer(observerInfo)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to delete observer %s", m.OBServer.Status.PodIp)
+			}
+		}
+	} else {
+		m.Logger.Info("observer already deleted", "observer", observerInfo.Ip)
 	}
 	return nil
 }
 
 func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 	m.Logger.Info("wait observer deleted in cluster")
+	observerInfo := &model.ServerInfo{
+		Ip:   m.OBServer.Status.PodIp,
+		Port: oceanbaseconst.RpcPort,
+	}
 	deleted := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(&model.ServerInfo{
-			Ip:   m.OBServer.Status.PodIp,
-			Port: oceanbaseconst.SqlPort,
-		})
+		observer, err := operationManager.GetServer(observerInfo)
 		if observer == nil {
 			m.Logger.Info("Observer deleted")
 			deleted = true
@@ -490,7 +502,9 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 	}
 	if !deleted {
 		m.Logger.Info("Wait observer deleted timeout")
-		return errors.Errorf("Wait observer %s deleted timeout", m.OBServer.Status.PodIp)
+		return errors.Errorf("Wait observer %s deleted timeout", observerInfo.Ip)
+	} else {
+		m.Logger.Info("observer deleted", "observer", observerInfo)
 	}
 	return nil
 }

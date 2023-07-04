@@ -157,10 +157,15 @@ func (m *OBZoneManager) DeleteOBServer() error {
 func (m *OBZoneManager) WaitReplicaMatch() error {
 	matched := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
-		if m.OBZone.Spec.Topology.Replica == len(m.OBZone.Status.OBServerStatus) {
+		obzone, err := m.getOBZone()
+		if err != nil {
+			m.Logger.Error(err, "Get obzone from K8s failed")
+		} else if m.OBZone.Spec.Topology.Replica == len(obzone.Status.OBServerStatus) {
 			m.Logger.Info("Obzone replica matched")
 			matched = true
 			break
+		} else {
+			m.Logger.Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
 		}
 		time.Sleep(time.Second * 1)
 	}

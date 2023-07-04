@@ -54,7 +54,7 @@ func DeleteOBServerFinalizer() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.DeleteOBServerFinalizer,
 			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
-			TargetStatus: serverstatus.Running,
+			TargetStatus: serverstatus.FinalizerFinished,
 		},
 	}
 }
