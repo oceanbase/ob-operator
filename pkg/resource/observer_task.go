@@ -452,3 +452,45 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	}
 	return container
 }
+
+func (m *OBServerManager) DeleteOBServerInCluster() error {
+	m.Logger.Info("delete observer in cluster")
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Get oceanbase operation manager failed")
+	}
+	err = operationManager.DeleteServer(&model.ServerInfo{
+		Ip:   m.OBServer.Status.PodIp,
+		Port: oceanbaseconst.SqlPort,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete observer %s", m.OBServer.Status.PodIp)
+	}
+	return nil
+}
+
+func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
+	m.Logger.Info("wait observer deleted in cluster")
+	deleted := false
+	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		operationManager, err := m.getOceanbaseOperationManager()
+		if err != nil {
+			return errors.Wrapf(err, "Get oceanbase operation manager failed")
+		}
+		observer, err := operationManager.GetServer(&model.ServerInfo{
+			Ip:   m.OBServer.Status.PodIp,
+			Port: oceanbaseconst.SqlPort,
+		})
+		if observer == nil {
+			m.Logger.Info("Observer deleted")
+			deleted = true
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if !deleted {
+		m.Logger.Info("Wait observer deleted timeout")
+		return errors.Errorf("Wait observer %s deleted timeout", m.OBServer.Status.PodIp)
+	}
+	return nil
+}

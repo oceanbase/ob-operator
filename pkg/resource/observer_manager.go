@@ -55,6 +55,10 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.WaitOBClusterBootstrapped, nil
 	case taskname.AddServer:
 		return m.AddServer, nil
+	case taskname.DeleteOBServerInCluster:
+		return m.DeleteOBServerInCluster, nil
+	case taskname.WaitOBServerDeletedInCluster:
+		return m.WaitOBServerDeletedInCluster, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -103,6 +107,19 @@ func (m *OBServerManager) UpdateStatus() error {
 	return err
 }
 
+func (m *OBServerManager) IsDeleting() bool {
+	return !m.OBServer.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBServerManager) CheckAndUpdateFinalizers() error {
+	if m.OBServer.Status.Status == serverstatus.FinalizerFinished {
+		m.Logger.Info("Finalizer finished")
+		m.OBServer.ObjectMeta.Finalizers = make([]string, 0)
+		return m.Client.Update(m.Ctx, m.OBServer)
+	}
+	return nil
+}
+
 func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBServer.Status.OperationContext != nil {
@@ -114,6 +131,9 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
+	if m.IsDeleting() {
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+	}
 	m.Logger.Info("create task flow according to observer status")
 	if m.OBServer.Status.Status == serverstatus.New {
 		obcluster, err = m.getOBCluster()

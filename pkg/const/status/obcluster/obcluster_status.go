@@ -20,4 +20,5 @@ const (
 	ModifyOBZoneReplica = "modify obzone replica"
 	Upgrade             = "upgrade"
 	Bootstrapped        = "bootstrapped"
+	FinalizerFinished   = "finalizer finished"
 )

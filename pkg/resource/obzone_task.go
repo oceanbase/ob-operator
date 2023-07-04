@@ -85,17 +85,21 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 
 func (m *OBZoneManager) CreateOBServer() error {
 	m.Logger.Info("create observers")
+	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBZone.APIVersion,
-		Kind:       m.OBZone.Kind,
-		Name:       m.OBZone.Name,
-		UID:        m.OBZone.GetUID(),
+		APIVersion:         m.OBZone.APIVersion,
+		Kind:               m.OBZone.Kind,
+		Name:               m.OBZone.Name,
+		UID:                m.OBZone.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	currentReplica := len(m.OBZone.Status.OBServerStatus)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
+		finalizerName := "finalizers.oceanbase.com.deleteobserver"
+		finalizers := []string{finalizerName}
 		labels := make(map[string]string)
 		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
 		labels[oceanbaseconst.LabelRefUID] = string(m.OBZone.GetUID())
@@ -106,6 +110,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 				Name:            serverName,
 				Namespace:       m.OBZone.Namespace,
 				OwnerReferences: ownerReferenceList,
+				Finalizers:      finalizers,
 				Labels:          labels,
 			},
 			Spec: v1alpha1.OBServerSpec{
@@ -124,6 +129,83 @@ func (m *OBZoneManager) CreateOBServer() error {
 			m.Logger.Error(err, "create observer failed", "server", serverName)
 			return errors.Wrap(err, "create observer")
 		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) DeleteOBServer() error {
+	m.Logger.Info("delete observers")
+	observerList, err := m.listOBServers()
+	if err != nil {
+		m.Logger.Error(err, "List observers failed")
+		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
+	}
+	observerCount := 0
+	for _, observer := range observerList.Items {
+		observerCount += 1
+		if observerCount > m.OBZone.Spec.Topology.Replica {
+			m.Logger.Info("need delete observer", "observer", observer.Name)
+			err = m.Client.Delete(m.Ctx, &observer)
+			if err != nil {
+				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) WaitReplicaMatch() error {
+	matched := false
+	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		if m.OBZone.Spec.Topology.Replica == len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("Obzone replica matched")
+			matched = true
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+	if !matched {
+		return errors.Errorf("wait obzone %s replica match timeout", m.OBZone.Name)
+	}
+	return nil
+}
+
+func (m *OBZoneManager) WaitOBServerDeleted() error {
+	matched := false
+	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		if 0 == len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("observer all deleted")
+			matched = true
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+	if !matched {
+		return errors.Errorf("wait obzone %s observer deleted timeout", m.OBZone.Name)
+	}
+	return nil
+}
+
+func (m *OBZoneManager) StopOBZone() error {
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	err = operationManager.StopZone(m.OBZone.Spec.Topology.Zone)
+	if err != nil {
+		return errors.Wrapf(err, "Stop obzone %s failed", m.OBZone.Spec.Topology.Zone)
+	}
+	return nil
+}
+
+func (m *OBZoneManager) DeleteOBZoneInCluster() error {
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	err = operationManager.DeleteZone(m.OBZone.Spec.Topology.Zone)
+	if err != nil {
+		return errors.Wrapf(err, "Delete obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
 	return nil
 }

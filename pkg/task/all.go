@@ -36,4 +36,5 @@ func init() {
 	GetRegistry().Register(flowname.CreateOBServer, CreateOBServer)
 	GetRegistry().Register(flowname.PrepareOBServerForBootstrap, PrepareOBServerForBootstrap)
 	GetRegistry().Register(flowname.MaintainOBServerAfterBootstrap, MaintainOBServerAfterBootstrap)
+	GetRegistry().Register(flowname.DeleteOBServerFinalizer, DeleteOBServerFinalizer)
 }

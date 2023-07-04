@@ -49,6 +49,14 @@ func (c *Coordinator) Coordinate() error {
 			c.executeTaskFlow(f)
 		}
 	}
+
+	// handle instance deletion
+	if c.Manager.IsDeleting() {
+		err := c.Manager.CheckAndUpdateFinalizers()
+		if err != nil {
+			return errors.Wrapf(err, "Check and update finalizer failed")
+		}
+	}
 	return c.Manager.UpdateStatus()
 }
 

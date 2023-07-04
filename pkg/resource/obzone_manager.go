@@ -69,6 +69,9 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
+	if m.IsDeleting() {
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+	}
 	m.Logger.Info("create task flow according to obzone status")
 	switch m.OBZone.Status.Status {
 	case zonestatus.New:
@@ -98,6 +101,18 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		// TODO upgrade
 	}
 	return nil, nil
+}
+
+func (m *OBZoneManager) IsDeleting() bool {
+	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
+	if m.OBZone.Status.Status == zonestatus.FinalizerFinished {
+		m.OBZone.ObjectMeta.Finalizers = make([]string, 0)
+		return m.Client.Update(m.Ctx, m.OBZone)
+	}
+	return nil
 }
 
 func (m *OBZoneManager) UpdateStatus() error {
@@ -160,6 +175,16 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.AddZone, nil
 	case taskname.StartZone:
 		return m.StartZone, nil
+	case taskname.DeleteOBServer:
+		return m.DeleteOBServer, nil
+	case taskname.WaitReplicaMatch:
+		return m.WaitReplicaMatch, nil
+	case taskname.WaitOBServerDeleted:
+		return m.WaitOBServerDeleted, nil
+	case taskname.StopOBZone:
+		return m.StopOBZone, nil
+	case taskname.DeleteOBZoneInCluster:
+		return m.DeleteOBZoneInCluster, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

@@ -89,6 +89,18 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	return taskFlow, err
 }
 
+func (m *OBClusterManager) IsDeleting() bool {
+	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
+	if m.OBCluster.Status.Status == clusterstatus.FinalizerFinished {
+		m.OBCluster.ObjectMeta.Finalizers = make([]string, 0)
+		return m.Client.Update(m.Ctx, m.OBCluster)
+	}
+	return nil
+}
+
 func (m *OBClusterManager) UpdateStatus() error {
 	obzoneList, err := m.listOBZones()
 	if err != nil {

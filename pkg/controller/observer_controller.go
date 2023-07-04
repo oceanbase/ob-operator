@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/pkg/errors"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -72,8 +74,6 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	logger.Info("reconcile observer:", "spec", observer.Spec, "status", observer.Status)
 
-	// TODO add finalizers
-
 	// create observer manager
 	observerManager := &resource.OBServerManager{
 		Ctx:      ctx,
@@ -81,6 +81,25 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Client:   r.Client,
 		Recorder: r.Recorder,
 		Logger:   &logger,
+	}
+
+	// execute finalizers
+	finalizerName := fmt.Sprintf("observer.oceanbase.com.finalizers.%s", observer.Name)
+	if !observer.ObjectMeta.DeletionTimestamp.IsZero() {
+		needExecuteFinalizer := false
+		for _, finalizer := range observer.ObjectMeta.Finalizers {
+			if finalizer == finalizerName {
+				needExecuteFinalizer = true
+				break
+			}
+		}
+		if needExecuteFinalizer {
+			err = observerManager.DeleteOBServerInCluster()
+			if err != nil {
+				logger.Error(err, "delete observer failed")
+				return ctrl.Result{}, errors.Wrapf(err, "delete observer %s failed", observer.Name)
+			}
+		}
 	}
 	coordinator := resource.NewCoordinator(observerManager, &logger)
 	err = coordinator.Coordinate()

@@ -20,6 +20,7 @@ const (
 	DeleteOBZone                    = "delete obzone"
 	ModifyOBZoneReplica             = "modify obzone replica"
 	Upgrade                         = "upgrade"
+	DeleteOBClusterFinalizer        = "delete obcluster finalizer"
 )
 
 // obzone flows
@@ -29,6 +30,7 @@ const (
 	AddOBServer                  = "add observer"
 	DeleteOBServer               = "delete observer"
 	CreateOBZone                 = "create obzone"
+	DeleteOBZoneFinalizer        = "delete obzone finalizer"
 )
 
 // observer flows
@@ -36,4 +38,5 @@ const (
 	PrepareOBServerForBootstrap    = "prepare observer for bootstrap"
 	MaintainOBServerAfterBootstrap = "maintain observer after bootstrap"
 	CreateOBServer                 = "create observer"
+	DeleteOBServerFinalizer        = "delete observer finalizer"
 )

@@ -48,6 +48,38 @@ func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
 	return nil
 }
 
+func (m *OBClusterManager) WaitOBZoneDeleted() error {
+	waitSuccess := false
+	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		zoneDeleted := true
+		for _, zoneStatus := range m.OBCluster.Status.OBZoneStatus {
+			found := false
+			for _, zone := range m.OBCluster.Spec.Topology {
+				if zoneStatus.Zone == zone.Zone {
+					found = true
+					break
+				}
+			}
+			if !found {
+				m.Logger.Info("OBZone not in spec, still not deleted", "zone", zoneStatus.Zone)
+				zoneDeleted = false
+				break
+			}
+		}
+		if zoneDeleted {
+			m.Logger.Info("All zone deleted")
+			waitSuccess = true
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+	if waitSuccess {
+		return nil
+	} else {
+		return errors.Errorf("OBCluster %s zone still not deleted when timeout", m.OBCluster.Name)
+	}
+}
+
 func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() error {
 	f := func() error {
 		for i := 1; i < timeoutSeconds; i++ {

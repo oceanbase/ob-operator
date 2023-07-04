@@ -36,14 +36,19 @@ const (
 	WaitOBServerBootstrapReady = "wait observer bootstrap ready"
 	WaitOBServerRunning        = "wait observer running"
 	WaitReplicaMatch           = "wait replica match"
+	WaitOBServerDeleted        = "wait observer deleted"
+	StopOBZone                 = "stop obzone"
+	DeleteOBZoneInCluster      = "delete obzone in cluster"
 )
 
 // observer tasks
 const (
-	WaitOBClusterBootstrapped = "wait obcluster bootstrapped"
-	CreateOBPVC               = "create observer pvc"
-	CreateOBPod               = "create observer pod"
-	WaitOBPodReady            = "wait observer pod ready"
-	StartOBServer             = "start observer"
-	AddServer                 = "add observer"
+	WaitOBClusterBootstrapped    = "wait obcluster bootstrapped"
+	CreateOBPVC                  = "create observer pvc"
+	CreateOBPod                  = "create observer pod"
+	WaitOBPodReady               = "wait observer pod ready"
+	StartOBServer                = "start observer"
+	AddServer                    = "add observer"
+	DeleteOBServerInCluster      = "delete observer in cluster"
+	WaitOBServerDeletedInCluster = "wait observer deleted in cluster"
 )
