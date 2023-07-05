@@ -18,6 +18,7 @@ const (
 	Running           = "running"
 	AddOBServer       = "add observer"
 	DeleteOBServer    = "delete observer"
+	Deleting          = "deleting"
 	BootstrapReady    = "bootstrap ready"
 	FinalizerFinished = "finalizer finished"
 )

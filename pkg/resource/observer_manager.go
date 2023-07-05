@@ -125,6 +125,7 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 			m.Logger.Info("OBCluster is deleted, no need to wait finalizer")
 			finalizerFinished = true
 		} else {
+			m.Logger.Error(err, "query obcluster failed")
 			return errors.Wrap(err, "Get obcluster failed")
 		}
 	} else if !obcluster.ObjectMeta.DeletionTimestamp.IsZero() {

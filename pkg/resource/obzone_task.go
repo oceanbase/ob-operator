@@ -154,6 +154,24 @@ func (m *OBZoneManager) DeleteOBServer() error {
 	return nil
 }
 
+// TODO refactor Delete observer method together
+func (m *OBZoneManager) DeleteAllOBServer() error {
+	m.Logger.Info("delete all observers")
+	observerList, err := m.listOBServers()
+	if err != nil {
+		m.Logger.Error(err, "List observers failed")
+		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
+	}
+	for _, observer := range observerList.Items {
+		m.Logger.Info("need delete observer", "observer", observer.Name)
+		err = m.Client.Delete(m.Ctx, &observer)
+		if err != nil {
+			return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
+		}
+	}
+	return nil
+}
+
 func (m *OBZoneManager) WaitReplicaMatch() error {
 	matched := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
@@ -178,7 +196,11 @@ func (m *OBZoneManager) WaitReplicaMatch() error {
 func (m *OBZoneManager) WaitOBServerDeleted() error {
 	matched := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
-		if 0 == len(m.OBZone.Status.OBServerStatus) {
+		obzone, err := m.getOBZone()
+		if err != nil {
+			m.Logger.Error(err, "Get obzone from K8s failed")
+		}
+		if 0 == len(obzone.Status.OBServerStatus) {
 			m.Logger.Info("observer all deleted")
 			matched = true
 			break

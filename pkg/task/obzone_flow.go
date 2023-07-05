@@ -73,7 +73,7 @@ func DeleteOBZoneFinalizer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.DeleteOBZoneFinalizer,
-			Tasks:        []string{taskname.WaitOBServerDeleted, taskname.StopOBZone, taskname.DeleteOBZoneInCluster},
+			Tasks:        []string{taskname.StopOBZone, taskname.DeleteAllOBServer, taskname.WaitOBServerDeleted, taskname.DeleteOBZoneInCluster},
 			TargetStatus: zonestatus.FinalizerFinished,
 		},
 	}

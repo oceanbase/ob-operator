@@ -31,6 +31,7 @@ const (
 const (
 	CreateOBServer             = "create observer"
 	DeleteOBServer             = "delete observer"
+	DeleteAllOBServer          = "delete all observer"
 	AddZone                    = "add zone"
 	StartZone                  = "start zone"
 	WaitOBServerBootstrapReady = "wait observer bootstrap ready"

@@ -153,12 +153,14 @@ func (m *OBClusterManager) DeleteOBZone() error {
 
 func (m *OBClusterManager) CreateOBZone() error {
 	m.Logger.Info("create obzones")
+	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBCluster.APIVersion,
-		Kind:       m.OBCluster.Kind,
-		Name:       m.OBCluster.Name,
-		UID:        m.OBCluster.GetUID(),
+		APIVersion:         m.OBCluster.APIVersion,
+		Kind:               m.OBCluster.Kind,
+		Name:               m.OBCluster.Name,
+		UID:                m.OBCluster.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	for _, zone := range m.OBCluster.Spec.Topology {
@@ -177,12 +179,15 @@ func (m *OBClusterManager) CreateOBZone() error {
 		labels := make(map[string]string)
 		labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
 		labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+		finalizerName := "finalizers.oceanbase.com.deleteobzone"
+		finalizers := []string{finalizerName}
 		obzone := &v1alpha1.OBZone{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            zoneName,
 				Namespace:       m.OBCluster.Namespace,
 				OwnerReferences: ownerReferenceList,
 				Labels:          labels,
+				Finalizers:      finalizers,
 			},
 			Spec: v1alpha1.OBZoneSpec{
 				ClusterName:      m.OBCluster.Spec.ClusterName,
