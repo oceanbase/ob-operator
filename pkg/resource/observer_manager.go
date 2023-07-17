@@ -55,6 +55,10 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.WaitOBClusterBootstrapped, nil
 	case taskname.AddServer:
 		return m.AddServer, nil
+	case taskname.DeleteOBServerInCluster:
+		return m.DeleteOBServerInCluster, nil
+	case taskname.WaitOBServerDeletedInCluster:
+		return m.WaitOBServerDeletedInCluster, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -78,29 +82,68 @@ func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
 }
 
 func (m *OBServerManager) UpdateStatus() error {
-	// get Pod status and update
-	pod, err := m.getPod()
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			m.Logger.Error(err, "pod not found")
-		} else {
-			return errors.Wrap(err, "get pod when update status")
-		}
+	// update deleting status when object is deleting
+	if m.IsDeleting() {
+		m.OBServer.Status.Status = serverstatus.Deleting
 	} else {
-		m.Logger.Info(">>>>>>>>>>>>>>get pod<<<<<<<<<<<<", "pod ip", pod.Status.PodIP, "pod phase", pod.Status.Phase)
-		m.OBServer.Status.Ready = apipod.IsPodReady(pod)
-		m.OBServer.Status.PodPhase = pod.Status.Phase
-		m.OBServer.Status.PodIp = pod.Status.PodIP
-		m.OBServer.Status.NodeIp = pod.Status.HostIP
+		// get Pod status and update
+		pod, err := m.getPod()
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				m.Logger.Error(err, "pod not found")
+			} else {
+				return errors.Wrap(err, "get pod when update status")
+			}
+		} else {
+			m.Logger.Info(">>>>>>>>>>>>>>get pod<<<<<<<<<<<<", "pod ip", pod.Status.PodIP, "pod phase", pod.Status.Phase)
+			m.OBServer.Status.Ready = apipod.IsPodReady(pod)
+			m.OBServer.Status.PodPhase = pod.Status.Phase
+			m.OBServer.Status.PodIp = pod.Status.PodIP
+			m.OBServer.Status.NodeIp = pod.Status.HostIP
+		}
+
+		m.Logger.Info("update observer status", "status", m.OBServer.Status)
+		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
-	m.Logger.Info("update observer status", "status", m.OBServer.Status)
-	m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBServer)
+	err := m.Client.Status().Update(m.Ctx, m.OBServer)
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
 	return err
+}
+
+func (m *OBServerManager) IsDeleting() bool {
+	return !m.OBServer.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBServerManager) CheckAndUpdateFinalizers() error {
+	finalizerFinished := false
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("OBCluster is deleted, no need to wait finalizer")
+			finalizerFinished = true
+		} else {
+			m.Logger.Error(err, "query obcluster failed")
+			return errors.Wrap(err, "Get obcluster failed")
+		}
+	} else if !obcluster.ObjectMeta.DeletionTimestamp.IsZero() {
+		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
+		finalizerFinished = true
+	} else {
+		finalizerFinished = finalizerFinished || (m.OBServer.Status.Status == serverstatus.FinalizerFinished)
+	}
+	if finalizerFinished {
+		m.Logger.Info("Finalizer finished")
+		m.OBServer.ObjectMeta.Finalizers = make([]string, 0)
+		err := m.Client.Update(m.Ctx, m.OBServer)
+		if err != nil {
+			m.Logger.Error(err, "update observer instance failed")
+			return errors.Wrapf(err, "Update observer %s in K8s failed", m.OBServer.Name)
+		}
+	}
+	return nil
 }
 
 func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
@@ -115,7 +158,8 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var obcluster *v1alpha1.OBCluster
 
 	m.Logger.Info("create task flow according to observer status")
-	if m.OBServer.Status.Status == serverstatus.New {
+	switch m.OBServer.Status.Status {
+	case serverstatus.New:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
 			return nil, errors.Wrap(err, "Get obcluster")
@@ -133,15 +177,15 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
 		return taskFlow, nil
-	}
-	if m.OBServer.Status.Status == serverstatus.BootstrapReady {
+	case serverstatus.BootstrapReady:
+		m.Logger.Info("Get task flow when bootstrap ready")
 		return task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
+	case serverstatus.Deleting:
+		m.Logger.Info("Get task flow when observer deleting")
+		return task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+	default:
+		return nil, nil
 	}
-	// scale observer
-	// upgrade
-
-	// no need to execute task flow
-	return nil, nil
 }
 
 func (m *OBServerManager) ClearTaskInfo() {

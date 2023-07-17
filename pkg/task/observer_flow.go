@@ -48,3 +48,13 @@ func CreateOBServer() *TaskFlow {
 		},
 	}
 }
+
+func DeleteOBServerFinalizer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.DeleteOBServerFinalizer,
+			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
+			TargetStatus: serverstatus.FinalizerFinished,
+		},
+	}
+}

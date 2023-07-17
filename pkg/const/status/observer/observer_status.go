@@ -13,8 +13,10 @@ See the Mulan PSL v2 for more details.
 package observer
 
 const (
-	New            = "new"
-	Maintaining    = "maintaining"
-	Running        = "running"
-	BootstrapReady = "bootstrap ready"
+	New               = "new"
+	Maintaining       = "maintaining"
+	Running           = "running"
+	BootstrapReady    = "bootstrap ready"
+	Deleting          = "deleting"
+	FinalizerFinished = "finalizer finished"
 )

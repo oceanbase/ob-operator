@@ -94,7 +94,7 @@ func (m *OceanbaseOperationManager) StopZone(zoneName string) error {
 		m.Logger.Info("Obzone already inactive", "zone", zoneName)
 		return nil
 	}
-	err = m.ExecWithDefaultTimeout(sql.StartZone, zoneName)
+	err = m.ExecWithDefaultTimeout(sql.StopZone, zoneName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start zone")
 		return errors.Wrap(err, "Start zone")

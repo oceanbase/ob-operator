@@ -77,12 +77,28 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBClusterAfterBootstrap)
 	case clusterstatus.AddOBZone:
 		taskFlow, err = task.GetRegistry().Get(flowname.AddOBZone)
+	case clusterstatus.DeleteOBZone:
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBZone)
+	case clusterstatus.ModifyOBZoneReplica:
+		taskFlow, err = task.GetRegistry().Get(flowname.ModifyOBZoneReplica)
+	case clusterstatus.Upgrade:
+		taskFlow, err = task.GetRegistry().Get(flowname.Upgrade)
+	default:
+		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 	}
-	// scale observer
-	// scale obzone
-	// upgrade
-	// no need to execute task flow
 	return taskFlow, err
+}
+
+func (m *OBClusterManager) IsDeleting() bool {
+	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
+	if m.OBCluster.Status.Status == clusterstatus.FinalizerFinished {
+		m.OBCluster.ObjectMeta.Finalizers = make([]string, 0)
+		return m.Client.Update(m.Ctx, m.OBCluster)
+	}
+	return nil
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
@@ -107,15 +123,27 @@ func (m *OBClusterManager) UpdateStatus() error {
 		if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
 			m.Logger.Info("Compare topology need add zone")
 			m.OBCluster.Status.Status = clusterstatus.AddOBZone
-		} else if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
+		} else if len(m.OBCluster.Spec.Topology) < len(obzoneList.Items) {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
-			// check observer
+			observerMatch := true
+			for _, zone := range m.OBCluster.Spec.Topology {
+				if !observerMatch {
+					break
+				}
+				for _, obzone := range obzoneList.Items {
+					if zone.Zone == obzone.Spec.Topology.Zone {
+						if zone.Replica != len(obzone.Status.OBServerStatus) {
+							m.OBCluster.Status.Status = clusterstatus.ModifyOBZoneReplica
+							observerMatch = false
+						}
+						break
+					}
+				}
+			}
 		}
-		// check version
-		// check resource
-		// TODO resource change require pod restart, currently
+		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
 	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
@@ -140,6 +168,12 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	switch name {
 	case taskname.CreateOBZone:
 		return m.CreateOBZone, nil
+	case taskname.DeleteOBZone:
+		return m.DeleteOBZone, nil
+	case taskname.ModifyOBZoneReplica:
+		return m.ModifyOBZoneReplica, nil
+	case taskname.WaitOBZoneTopologyMatch:
+		return m.WaitOBZoneTopologyMatch, nil
 	case taskname.WaitOBZoneBootstrapReady:
 		return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.WaitOBZoneRunning:

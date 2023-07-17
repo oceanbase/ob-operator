@@ -1830,6 +1830,8 @@ spec:
                     type: integer
                   name:
                     type: string
+                  operationObject:
+                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -1845,6 +1847,7 @@ spec:
                 required:
                 - idx
                 - name
+                - operationObject
                 - targetStatus
                 - task
                 - taskId

@@ -20,6 +20,8 @@ import (
 
 type ResourceManager interface {
 	IsNewResource() bool
+	IsDeleting() bool
+	CheckAndUpdateFinalizers() error
 	InitStatus()
 	SetOperationContext(*v1alpha1.OperationContext)
 	ClearTaskInfo()

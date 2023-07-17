@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -69,8 +70,8 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
-	m.Logger.Info("create task flow according to obzone status")
-	if m.OBZone.Status.Status == zonestatus.New {
+	switch m.OBZone.Status.Status {
+	case zonestatus.New:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
 			return nil, errors.Wrap(err, "Get obcluster")
@@ -88,15 +89,50 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
 		return taskFlow, nil
-	}
-	if m.OBZone.Status.Status == zonestatus.BootstrapReady {
+	case zonestatus.BootstrapReady:
 		return task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
+	case zonestatus.AddOBServer:
+		return task.GetRegistry().Get(flowname.AddOBServer)
+	case zonestatus.DeleteOBServer:
+		return task.GetRegistry().Get(flowname.DeleteOBServer)
+	case zonestatus.Deleting:
+		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+		// TODO upgrade
 	}
-	// scale observer
-	// upgrade
-
-	// no need to execute task flow
 	return nil, nil
+}
+
+func (m *OBZoneManager) IsDeleting() bool {
+	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero()
+}
+
+func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
+	finalizerFinished := false
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("OBCluster is deleted, no need to wait finalizer")
+			finalizerFinished = true
+		} else {
+			m.Logger.Error(err, "query obcluster failed")
+			return errors.Wrap(err, "Get obcluster failed")
+		}
+	} else if !obcluster.ObjectMeta.DeletionTimestamp.IsZero() {
+		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
+		finalizerFinished = true
+	} else {
+		finalizerFinished = finalizerFinished || (m.OBZone.Status.Status == zonestatus.FinalizerFinished)
+	}
+	if finalizerFinished {
+		m.Logger.Info("Finalizer finished")
+		m.OBZone.ObjectMeta.Finalizers = make([]string, 0)
+		err := m.Client.Update(m.Ctx, m.OBZone)
+		if err != nil {
+			m.Logger.Error(err, "update obzone instance failed")
+			return errors.Wrapf(err, "Update obzone %s in K8s failed", m.OBZone.Name)
+		}
+	}
+	return nil
 }
 
 func (m *OBZoneManager) UpdateStatus() error {
@@ -113,6 +149,24 @@ func (m *OBZoneManager) UpdateStatus() error {
 		})
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
+	if m.IsDeleting() {
+		m.OBZone.Status.Status = serverstatus.Deleting
+	}
+	if m.OBZone.Status.Status != zonestatus.Running {
+		m.Logger.Info("OBZone status is not running, skip compare")
+	} else {
+		// check topology
+		if m.OBZone.Spec.Topology.Replica > len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("Compare topology need add observer")
+			m.OBZone.Status.Status = zonestatus.AddOBServer
+		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
+			m.Logger.Info("Compare topology need delete observer")
+			m.OBZone.Status.Status = zonestatus.DeleteOBServer
+		} else {
+			// do nothing when observer match topology replica
+		}
+		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
+	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
 	err = m.Client.Status().Update(m.Ctx, m.OBZone)
@@ -144,6 +198,18 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.AddZone, nil
 	case taskname.StartZone:
 		return m.StartZone, nil
+	case taskname.DeleteOBServer:
+		return m.DeleteOBServer, nil
+	case taskname.DeleteAllOBServer:
+		return m.DeleteAllOBServer, nil
+	case taskname.WaitReplicaMatch:
+		return m.WaitReplicaMatch, nil
+	case taskname.WaitOBServerDeleted:
+		return m.WaitOBServerDeleted, nil
+	case taskname.StopOBZone:
+		return m.StopOBZone, nil
+	case taskname.DeleteOBZoneInCluster:
+		return m.DeleteOBZoneInCluster, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

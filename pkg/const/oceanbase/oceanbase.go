@@ -1,8 +1,9 @@
 package oceanbase
 
 const (
-	BootstrapTimeoutSeconds = 300
-	DefaultStateWaitTimeout = 300
+	BootstrapTimeoutSeconds    = 300
+	DefaultStateWaitTimeout    = 300
+	ServerDeleteTimeoutSeconds = 86400
 )
 
 const (

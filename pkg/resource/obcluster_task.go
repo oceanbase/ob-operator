@@ -43,6 +43,43 @@ func (m *OBClusterManager) generateZoneName(zone string) string {
 	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
 }
 
+func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
+	// TODO
+	return nil
+}
+
+func (m *OBClusterManager) WaitOBZoneDeleted() error {
+	waitSuccess := false
+	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		zoneDeleted := true
+		for _, zoneStatus := range m.OBCluster.Status.OBZoneStatus {
+			found := false
+			for _, zone := range m.OBCluster.Spec.Topology {
+				if zoneStatus.Zone == zone.Zone {
+					found = true
+					break
+				}
+			}
+			if !found {
+				m.Logger.Info("OBZone not in spec, still not deleted", "zone", zoneStatus.Zone)
+				zoneDeleted = false
+				break
+			}
+		}
+		if zoneDeleted {
+			m.Logger.Info("All zone deleted")
+			waitSuccess = true
+			break
+		}
+		time.Sleep(time.Second * 1)
+	}
+	if waitSuccess {
+		return nil
+	} else {
+		return errors.Errorf("OBCluster %s zone still not deleted when timeout", m.OBCluster.Name)
+	}
+}
+
 func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() error {
 	f := func() error {
 		for i := 1; i < timeoutSeconds; i++ {
@@ -68,14 +105,62 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 	return f
 }
 
+func (m *OBClusterManager) ModifyOBZoneReplica() error {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		m.Logger.Error(err, "List obzone failed")
+		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+	}
+	for _, zone := range m.OBCluster.Spec.Topology {
+		for _, obzone := range obzoneList.Items {
+			if zone.Zone == obzone.Spec.Topology.Zone && zone.Replica != obzone.Spec.Topology.Replica {
+				m.Logger.Info("Modify obzone replica", "obzone", zone.Zone)
+				obzone.Spec.Topology.Replica = zone.Replica
+				err = m.Client.Update(m.Ctx, &obzone)
+				if err != nil {
+					return errors.Wrapf(err, "Modify obzone %s replica failed", zone.Zone)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) DeleteOBZone() error {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		m.Logger.Error(err, "List obzone failed")
+		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+	}
+	for _, obzone := range obzoneList.Items {
+		reserve := false
+		for _, zone := range m.OBCluster.Spec.Topology {
+			if zone.Zone == obzone.Spec.Topology.Zone {
+				reserve = true
+				break
+			}
+		}
+		if !reserve {
+			m.Logger.Info("Need to delete obzone", "obzone", obzone.Name)
+			err = m.Client.Delete(m.Ctx, &obzone)
+			if err != nil {
+				return errors.Wrapf(err, "Delete obzone %s", obzone.Name)
+			}
+		}
+	}
+	return nil
+}
+
 func (m *OBClusterManager) CreateOBZone() error {
 	m.Logger.Info("create obzones")
+	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBCluster.APIVersion,
-		Kind:       m.OBCluster.Kind,
-		Name:       m.OBCluster.Name,
-		UID:        m.OBCluster.GetUID(),
+		APIVersion:         m.OBCluster.APIVersion,
+		Kind:               m.OBCluster.Kind,
+		Name:               m.OBCluster.Name,
+		UID:                m.OBCluster.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	for _, zone := range m.OBCluster.Spec.Topology {
@@ -94,12 +179,15 @@ func (m *OBClusterManager) CreateOBZone() error {
 		labels := make(map[string]string)
 		labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
 		labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+		finalizerName := "finalizers.oceanbase.com.deleteobzone"
+		finalizers := []string{finalizerName}
 		obzone := &v1alpha1.OBZone{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            zoneName,
 				Namespace:       m.OBCluster.Namespace,
 				OwnerReferences: ownerReferenceList,
 				Labels:          labels,
+				Finalizers:      finalizers,
 			},
 			Spec: v1alpha1.OBZoneSpec{
 				ClusterName:      m.OBCluster.Spec.ClusterName,
