@@ -46,10 +46,6 @@ spec:
                 properties:
                   name:
                     type: string
-                  scope:
-                    type: string
-                  scopeType:
-                    type: string
                   value:
                     type: string
                 required:

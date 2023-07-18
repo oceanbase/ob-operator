@@ -14,6 +14,7 @@ package resource
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
@@ -41,6 +42,10 @@ func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 
 func (m *OBClusterManager) generateZoneName(zone string) string {
 	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
+}
+
+func (m *OBClusterManager) generateParameterName(name string) string {
+	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, strings.Replace(name, "_", "-", -1))
 }
 
 func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
@@ -307,6 +312,110 @@ func (m *OBClusterManager) createUser(userName, secretName, privilege string) er
 	return nil
 }
 
-func (m *OBClusterManager) CreateOBParameter() error {
+func (m *OBClusterManager) MaintainOBParameter() error {
+	parameterMap := make(map[string]v1alpha1.Parameter)
+	for _, parameter := range m.OBCluster.Status.Parameters {
+		m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+		parameterMap[parameter.Name] = parameter
+	}
+	for _, parameter := range m.OBCluster.Spec.Parameters {
+		parameterStatus, parameterExists := parameterMap[parameter.Name]
+		if !parameterExists {
+			m.Logger.Info("Parameter not exists, need create", "param", parameter.Name)
+			err := m.CreateOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Crate obparameter failed", "param", parameter.Name)
+			}
+		} else if parameterStatus.Value != parameter.Value {
+			m.Logger.Info("Parameter value not matched, need update", "param", parameter.Name)
+			err := m.UpdateOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Update obparameter failed", "param", parameter.Name)
+			}
+		}
+		m.Logger.Info("Remove parameter from map", "parameter", parameter.Name)
+		delete(parameterMap, parameter.Name)
+	}
+
+	// delete parameters that not in spec definition
+	for _, parameter := range parameterMap {
+		m.Logger.Info("Delete parameter", "parameter", parameter.Name)
+		err := m.DeleteOBParameter(&parameter)
+		if err != nil {
+			m.Logger.Error(err, "Failed to delete parameter")
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) error {
+	m.Logger.Info("create ob parameters")
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBCluster.APIVersion,
+		Kind:       m.OBCluster.Kind,
+		Name:       m.OBCluster.Name,
+		UID:        m.OBCluster.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	labels := make(map[string]string)
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
+	labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+	parameterName := m.generateParameterName(parameter.Name)
+	obparameter := &v1alpha1.OBParameter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            parameterName,
+			Namespace:       m.OBCluster.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBParameterSpec{
+			ClusterName: m.OBCluster.Spec.ClusterName,
+			ClusterId:   m.OBCluster.Spec.ClusterId,
+			Parameter:   parameter,
+		},
+	}
+	m.Logger.Info("create obparameter", "parameter", parameterName)
+	err := m.Client.Create(m.Ctx, obparameter)
+	if err != nil {
+		m.Logger.Error(err, "create obparameter failed")
+		return errors.Wrap(err, "create obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) UpdateOBParameter(parameter *v1alpha1.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Update(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Update obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Delete(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Delete obparameter")
+	}
 	return nil
 }

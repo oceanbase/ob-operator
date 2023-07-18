@@ -33,7 +33,7 @@ func MaintainOBClusterAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.MaintainOBClusterAfterBootstrap,
-			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.CreateOBParameter},
+			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -64,6 +64,16 @@ func ModifyOBZoneReplica() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.ModifyOBZoneReplica,
 			Tasks:        []string{taskname.ModifyOBZoneReplica, taskname.WaitOBZoneTopologyMatch, taskname.WaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}
+
+func MaintainOBParameter() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.MaintainOBParameter,
+			Tasks:        []string{taskname.MaintainOBParameter},
 			TargetStatus: clusterstatus.Running,
 		},
 	}

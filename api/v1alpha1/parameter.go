@@ -13,10 +13,8 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 type Parameter struct {
-	Name      string `json:"name"`
-	Value     string `json:"value"`
-	ScopeType string `json:"scopeType,omitempty"`
-	Scope     string `json:"scope,omitempty"`
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type ParameterValue struct {

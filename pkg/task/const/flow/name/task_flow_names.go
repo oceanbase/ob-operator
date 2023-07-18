@@ -20,6 +20,7 @@ const (
 	DeleteOBZone                    = "delete obzone"
 	ModifyOBZoneReplica             = "modify obzone replica"
 	Upgrade                         = "upgrade"
+	MaintainOBParameter             = "maintain ob parameter"
 	DeleteOBClusterFinalizer        = "delete obcluster finalizer"
 )
 
@@ -39,4 +40,9 @@ const (
 	MaintainOBServerAfterBootstrap = "maintain observer after bootstrap"
 	CreateOBServer                 = "create observer"
 	DeleteOBServerFinalizer        = "delete observer finalizer"
+)
+
+// obparameter flows
+const (
+	SetOBParameter = "set ob parameter"
 )

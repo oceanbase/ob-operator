@@ -16,15 +16,20 @@ import (
 	"fmt"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
 
-func (m *OceanbaseOperationManager) GetParameter(name string, scope *param.Scope) error {
+func (m *OceanbaseOperationManager) GetParameter(name string, scope *param.Scope) ([]model.Parameter, error) {
+	parameters := make([]model.Parameter, 0)
+	var err error
 	if scope == nil {
-		return m.ExecWithDefaultTimeout(sql.QueryParameter, name)
+		err = m.QueryList(&parameters, sql.QueryParameter, name)
+	} else {
+		queryParameterSql := fmt.Sprintf(sql.QueryParameterWithScope, scope.Name)
+		err = m.QueryList(&parameters, queryParameterSql, name, scope.Value)
 	}
-	queryParameterSql := fmt.Sprintf(sql.QueryParameterWithScope, scope.Name)
-	return m.ExecWithDefaultTimeout(queryParameterSql, name, scope.Value)
+	return parameters, err
 }
 
 func (m *OceanbaseOperationManager) SetParameter(name string, value interface{}, scope *param.Scope) error {

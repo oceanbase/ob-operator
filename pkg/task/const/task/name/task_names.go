@@ -19,12 +19,13 @@ const (
 	WaitOBZoneBootstrapReady = "wait obzone bootstrap ready"
 	Bootstrap                = "bootstrap"
 	CreateUsers              = "create users"
+	UpdateParameter          = "update parameter"
 	ModifyOBZoneReplica      = "modify obzone replica"
 	WaitOBZoneRunning        = "wait obzone running"
 	WaitOBZoneTopologyMatch  = "wait obzone topology match"
 	WaitOBZoneDeleted        = "wait obzone deleted"
 	CreateOBClusterService   = "create obcluster service"
-	CreateOBParameter        = "create obparameter"
+	MaintainOBParameter      = "maintain obparameter"
 )
 
 // obzone tasks
@@ -52,4 +53,9 @@ const (
 	AddServer                    = "add observer"
 	DeleteOBServerInCluster      = "delete observer in cluster"
 	WaitOBServerDeletedInCluster = "wait observer deleted in cluster"
+)
+
+// obparameter tasks
+const (
+	SetOBParameter = "set ob parameter"
 )

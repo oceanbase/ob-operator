@@ -83,6 +83,8 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.ModifyOBZoneReplica)
 	case clusterstatus.Upgrade:
 		taskFlow, err = task.GetRegistry().Get(flowname.Upgrade)
+	case clusterstatus.ModifyOBParameter:
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
 		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 	}
@@ -102,6 +104,7 @@ func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
+	// update obzone status
 	obzoneList, err := m.listOBZones()
 	if err != nil {
 		m.Logger.Error(err, "list obzones error")
@@ -115,6 +118,19 @@ func (m *OBClusterManager) UpdateStatus() error {
 		})
 	}
 	m.OBCluster.Status.OBZoneStatus = obzoneReplicaStatusList
+
+	// update parameter, only need to record and compare parameter spec
+	obparameterList, err := m.listOBParameters()
+	if err != nil {
+		m.Logger.Error(err, "list obparameters error")
+		return errors.Wrap(err, "list obparameters")
+	}
+	obparameterStatusList := make([]v1alpha1.Parameter, 0)
+	for _, obparameter := range obparameterList.Items {
+		obparameterStatusList = append(obparameterStatusList, *(obparameter.Spec.Parameter))
+	}
+	m.OBCluster.Status.Parameters = obparameterStatusList
+
 	// compare spec and set status
 	if m.OBCluster.Status.Status != clusterstatus.Running {
 		m.Logger.Info("OBCluster status is not running, skip compare")
@@ -143,7 +159,29 @@ func (m *OBClusterManager) UpdateStatus() error {
 				}
 			}
 		}
-		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
+
+		// only do this when obzone matched, thus obcluster status is running after obzone check
+		if m.OBCluster.Status.Status == clusterstatus.Running {
+			parameterMap := make(map[string]v1alpha1.Parameter)
+			for _, parameter := range m.OBCluster.Status.Parameters {
+				m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+				parameterMap[parameter.Name] = parameter
+			}
+			for _, parameter := range m.OBCluster.Spec.Parameters {
+				parameterStatus, parameterExists := parameterMap[parameter.Name]
+				// need create or update parameter
+				if !parameterExists || parameterStatus.Value != parameter.Value {
+					m.OBCluster.Status.Status = clusterstatus.ModifyOBParameter
+					break
+				}
+				delete(parameterMap, parameter.Name)
+			}
+
+			// need delete parameter
+			if len(parameterMap) > 0 {
+				m.OBCluster.Status.Status = clusterstatus.ModifyOBParameter
+			}
+		}
 	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
@@ -184,8 +222,8 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateUsers, nil
 	case taskname.CreateOBClusterService:
 		return m.CreateService, nil
-	case taskname.CreateOBParameter:
-		return m.CreateOBParameter, nil
+	case taskname.MaintainOBParameter:
+		return m.MaintainOBParameter, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
@@ -201,4 +239,16 @@ func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 		return nil, errors.Wrap(err, "get obzone list")
 	}
 	return obzoneList, nil
+}
+
+func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
+	// this label always exists
+	obparameterList := &v1alpha1.OBParameterList{}
+	err := m.Client.List(m.Ctx, obparameterList, client.MatchingLabels{
+		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
+	}, client.InNamespace(m.OBCluster.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "get obzone list")
+	}
+	return obparameterList, nil
 }
