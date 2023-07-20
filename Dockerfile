@@ -6,8 +6,7 @@ WORKDIR /workspace
 COPY . .
 RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOPROXY=https://goproxy.cn go build -a -o manager cmd/main.go
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
+# start build docker image
 FROM openanolis/anolisos:8.4-x86_64
 WORKDIR /
 COPY --from=builder /workspace/manager .

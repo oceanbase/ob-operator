@@ -25,7 +25,7 @@ spec:
       nodeSelector:
         ob.zone3: zone3
   observer:
-    image: oceanbasedev/oceanbase-cn:v4.1.0.0-100000192023032010
+    image: oceanbasedev/oceanbase-cn:4.2.0.0-100000072023071317
     resource:
       cpu: 2
       memory: 10Gi

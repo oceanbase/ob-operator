@@ -48,7 +48,7 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alp
 		return nil, errors.Wrap(err, "Get observer list")
 	}
 	if len(observerList.Items) <= 0 {
-		return nil, errors.Wrapf(err, "No observer belongs to cluster %s", obcluster.Name)
+		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
 
 	var s *connector.OceanBaseDataSource
@@ -63,13 +63,13 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alp
 			// TODO use user operator and read password from secret
 			password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator)
 			if err != nil {
-				return nil, errors.Wrapf(err, "Get oceanbase operation manager of cluster %s", obcluster.Name)
+				return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
 			}
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, password, oceanbaseconst.DefaultDatabase)
 		}
 		// if err is nil, db connection is already checked available
 		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)
-		if err == nil {
+		if err == nil && oceanbaseOperationManager != nil {
 			return oceanbaseOperationManager, nil
 		}
 	}

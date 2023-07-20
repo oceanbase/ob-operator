@@ -95,7 +95,6 @@ func (m *OBServerManager) UpdateStatus() error {
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
-			m.Logger.Info(">>>>>>>>>>>>>>get pod<<<<<<<<<<<<", "pod ip", pod.Status.PodIP, "pod phase", pod.Status.Phase)
 			m.OBServer.Status.Ready = apipod.IsPodReady(pod)
 			m.OBServer.Status.PodPhase = pod.Status.Phase
 			m.OBServer.Status.PodIp = pod.Status.PodIP

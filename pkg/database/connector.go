@@ -16,6 +16,7 @@ import (
 	// register mysql driver
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 // Connector represents a connection pool.
@@ -51,9 +52,13 @@ func NewConnector(dataSource DataSource) *Connector {
 }
 
 func (c *Connector) Init() error {
-	db, err := sqlx.Connect(c.ds.DriverName(), c.ds.DataSourceName())
+	db, err := sqlx.Open(c.ds.DriverName(), c.ds.DataSourceName())
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "Open datasource %s", c.ds.String())
+	}
+	err = db.Ping()
+	if err != nil {
+		return errors.Wrapf(err, "Ping datasource %s", c.ds.String())
 	}
 	c.client = &Client{db}
 	c.client.configure()
@@ -64,8 +69,7 @@ func (c *Connector) IsAlive() bool {
 	if c.client == nil {
 		return false
 	}
-	err := c.client.Ping()
-	return err == nil
+	return c.client.Ping() == nil
 }
 
 func (c *Connector) GetClient() *Client {

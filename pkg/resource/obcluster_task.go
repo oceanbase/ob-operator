@@ -227,7 +227,17 @@ func (m *OBClusterManager) Bootstrap() error {
 	if len(obzoneList.Items) <= 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
-	manager, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
+	var manager *operation.OceanbaseOperationManager
+	for i := 0; i < oceanbaseconst.GetConnectionMaxRetries; i++ {
+		manager, err = m.getOceanbaseOperationManager()
+		if err != nil || manager == nil {
+			m.Logger.Info("Get oceanbase operation manager failed")
+			time.Sleep(time.Second * oceanbaseconst.CheckConnectionInterval)
+		} else {
+			m.Logger.Info("Successfully got oceanbase operation manager")
+			break
+		}
+	}
 	if err != nil {
 		m.Logger.Error(err, "get oceanbase operation manager failed")
 		return errors.Wrap(err, "get oceanbase operation manager")
