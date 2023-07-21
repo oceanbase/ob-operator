@@ -25,6 +25,7 @@ func init() {
 	GetRegistry().Register(flowname.DeleteOBZone, DeleteOBZone)
 	GetRegistry().Register(flowname.ModifyOBZoneReplica, ModifyOBZoneReplica)
 	GetRegistry().Register(flowname.MaintainOBParameter, MaintainOBParameter)
+	GetRegistry().Register(flowname.UpgradeOBCluster, UpgradeOBCluster)
 
 	// obzone
 	GetRegistry().Register(flowname.CreateOBZone, CreateOBZone)

@@ -82,7 +82,7 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case clusterstatus.ModifyOBZoneReplica:
 		taskFlow, err = task.GetRegistry().Get(flowname.ModifyOBZoneReplica)
 	case clusterstatus.Upgrade:
-		taskFlow, err = task.GetRegistry().Get(flowname.Upgrade)
+		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBCluster)
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
@@ -135,6 +135,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 	if m.OBCluster.Status.Status != clusterstatus.Running {
 		m.Logger.Info("OBCluster status is not running, skip compare")
 	} else {
+		// TODO: refactor this part of code
 		// check topology
 		if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
 			m.Logger.Info("Compare topology need add zone")
@@ -157,6 +158,14 @@ func (m *OBClusterManager) UpdateStatus() error {
 						break
 					}
 				}
+			}
+		}
+
+		// check for upgrade
+		if m.OBCluster.Status.Status == clusterstatus.Running {
+			if m.OBCluster.Spec.DeepCopy().OBServerTemplate.Image != m.OBCluster.Status.Image {
+				m.Logger.Info("Check obcluster image not match, need upgrade")
+				m.OBCluster.Status.Status = clusterstatus.Upgrade
 			}
 		}
 
@@ -224,6 +233,22 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateService, nil
 	case taskname.MaintainOBParameter:
 		return m.MaintainOBParameter, nil
+	case taskname.GetUpgradeInfo:
+		return m.GetUpgradeInfo, nil
+	case taskname.UpgradeCheck:
+		return m.UpgradeCheck, nil
+	case taskname.BackupEssentialParameters:
+		return m.BackupEssentialParameters, nil
+	case taskname.BeginUpgrade:
+		return m.BeginUpgrade, nil
+	case taskname.RollingUpgradeByZone:
+		return m.RollingUpgradeByZone, nil
+	case taskname.FinishUpgrade:
+		return m.FinishUpgrade, nil
+	case taskname.RestoreEssentialParameters:
+		return m.RestoreEssentialParameters, nil
+	case taskname.UpdateStatusImageTag:
+		return m.UpdateStatusImageTag, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

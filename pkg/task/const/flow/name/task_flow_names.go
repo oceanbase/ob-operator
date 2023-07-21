@@ -19,7 +19,7 @@ const (
 	AddOBZone                       = "add obzone"
 	DeleteOBZone                    = "delete obzone"
 	ModifyOBZoneReplica             = "modify obzone replica"
-	Upgrade                         = "upgrade"
+	UpgradeOBCluster                = "upgrade ob cluster"
 	MaintainOBParameter             = "maintain ob parameter"
 	DeleteOBClusterFinalizer        = "delete obcluster finalizer"
 )

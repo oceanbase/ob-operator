@@ -26,6 +26,15 @@ const (
 	WaitOBZoneDeleted        = "wait obzone deleted"
 	CreateOBClusterService   = "create obcluster service"
 	MaintainOBParameter      = "maintain obparameter"
+	// for upgrade
+	GetUpgradeInfo             = "get upgrade info"
+	UpgradeCheck               = "upgrade check"
+	BackupEssentialParameters  = "backup essential parameters"
+	BeginUpgrade               = "execute upgrade pre script"
+	RollingUpgradeByZone       = "rolling upgrade by zone"
+	FinishUpgrade              = "execute upgrade post script"
+	RestoreEssentialParameters = "restore essential parameters"
+	UpdateStatusImageTag       = "update status image tag"
 )
 
 // obzone tasks

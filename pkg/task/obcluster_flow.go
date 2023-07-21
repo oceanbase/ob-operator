@@ -78,3 +78,13 @@ func MaintainOBParameter() *TaskFlow {
 		},
 	}
 }
+
+func UpgradeOBCluster() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.UpgradeOBCluster,
+			Tasks:        []string{taskname.GetUpgradeInfo, taskname.UpgradeCheck, taskname.BackupEssentialParameters, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}

@@ -429,3 +429,29 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) erro
 	}
 	return nil
 }
+
+func (m *OBClusterManager) GetUpgradeInfo() error {
+	return nil
+}
+func (m *OBClusterManager) UpgradeCheck() error {
+	return nil
+}
+func (m *OBClusterManager) BackupEssentialParameters() error {
+	return nil
+}
+func (m *OBClusterManager) BeginUpgrade() error {
+	return nil
+}
+func (m *OBClusterManager) RollingUpgradeByZone() error {
+	return nil
+}
+func (m *OBClusterManager) FinishUpgrade() error {
+	return nil
+}
+func (m *OBClusterManager) RestoreEssentialParameters() error {
+	return nil
+}
+
+func (m *OBClusterManager) UpdateStatusImageTag() error {
+	return nil
+}
