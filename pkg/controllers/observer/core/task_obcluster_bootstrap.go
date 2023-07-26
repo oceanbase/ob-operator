@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 package core
 
 import (
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/pkg/errors"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog/v2"
@@ -24,6 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/cable"
 	observerconst "github.com/oceanbase/ob-operator/pkg/controllers/observer/const"
 	"github.com/oceanbase/ob-operator/pkg/controllers/observer/core/converter"
+	"github.com/oceanbase/ob-operator/pkg/controllers/observer/sql"
 	statefulappCore "github.com/oceanbase/ob-operator/pkg/controllers/statefulapp/const"
 	"github.com/oceanbase/ob-operator/pkg/util"
 )
@@ -201,17 +203,24 @@ func (ctrl *OBClusterCtrl) OBServerReadyEffectorForBootstrap(statefulApp cloudv1
 }
 
 func (ctrl *OBClusterCtrl) BootstrapForOB(statefulApp cloudv1.StatefulApp, SQL string) error {
-	sqlOperator, err := ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
-	if err != nil {
-		return errors.Wrap(err, "get sql operator when bootstrap")
+	var sqlOperator *sql.SqlOperator
+	var err error
+	for i := 0; i < 60; i++ {
+		sqlOperator, err = ctrl.GetSqlOperatorFromStatefulApp(statefulApp)
+		if err != nil {
+			klog.Errorf("get sql operator for bootstrap failed")
+			time.Sleep(5 * time.Second)
+		} else {
+			break
+		}
 	}
-	// TODO: return error when got sql error
-	// set timeout 10 min
 	sqlOperator.ConnectProperties.Timeout = 600
 	err = sqlOperator.BootstrapForOB(SQL)
 	if err != nil {
-		return errors.Wrap(err, "bootstrap ob")
+		klog.Errorf("bootstrap failed %v", err)
+		return errors.New("bootstrap ob failed")
 	}
+
 	klog.Infoln("OBCluster", ctrl.OBCluster.Name, "run bootstrap sql finish")
 	_ = ctrl.UpdateOBClusterStatusBootstrapReady()
 	return nil
@@ -275,8 +284,11 @@ func (ctrl *OBClusterCtrl) StatefulAppStatusCheckForBootstrap(statefulApp cloudv
 func (ctrl *OBClusterCtrl) CheckTimeoutAndKillForBootstrap(statefulApp cloudv1.StatefulApp) (bool, error) {
 	creationTimestamp := statefulApp.CreationTimestamp.Unix()
 	nowTimestamp := time.Now().Unix()
-	// 5 min
-	if nowTimestamp-creationTimestamp > observerconst.BootstrapTimeout {
+	timeoutSeconds := ctrl.OBCluster.Spec.BootstrapTimeoutSeconds
+	if timeoutSeconds == 0 {
+		timeoutSeconds = observerconst.BootstrapTimeout
+	}
+	if nowTimestamp-creationTimestamp > timeoutSeconds {
 		klog.Infoln("OBCluster Bootstraping timeout, now time", nowTimestamp, "create time", creationTimestamp)
 		statefulAppCtrl := NewStatefulAppCtrl(ctrl, statefulApp)
 		// delete StatefulApp

@@ -23,10 +23,11 @@ type OBClusterSpec struct {
 	ImageRepo string `json:"imageRepo"`
 	Tag       string `json:"tag"`
 	// +kubebuilder:validation:Minimum=1
-	ClusterID    int           `json:"clusterID"`
-	ImageObagent string        `json:"imageObagent"`
-	Topology     []Cluster     `json:"topology"`
-	Resources    ResourcesSpec `json:"resources"`
+	ClusterID               int           `json:"clusterID"`
+	BootstrapTimeoutSeconds int64         `json:"bootstrapTimeoutSeconds,omitempty"`
+	ImageObagent            string        `json:"imageObagent"`
+	Topology                []Cluster     `json:"topology"`
+	Resources               ResourcesSpec `json:"resources"`
 }
 
 type Cluster struct {

@@ -180,6 +180,9 @@ spec:
           spec:
             description: OBClusterSpec defines the desired state of OBCluster
             properties:
+              bootstrapTimeoutSeconds:
+                format: int64
+                type: integer
               clusterID:
                 minimum: 1
                 type: integer
@@ -1208,6 +1211,28 @@ spec:
                     lastTransitionTime:
                       format: date-time
                       type: string
+                    parameters:
+                      items:
+                        properties:
+                          Parameters:
+                            items:
+                              properties:
+                                name:
+                                  type: string
+                                value:
+                                  type: string
+                              required:
+                              - name
+                              - value
+                              type: object
+                            type: array
+                          Server:
+                            type: string
+                        required:
+                        - Parameters
+                        - Server
+                        type: object
+                      type: array
                     scriptPassedVersion:
                       type: string
                     targetVersion:

@@ -486,6 +486,7 @@ func (ctrl *TenantBackupCtrl) CancelAllBackupTasks() error {
 }
 
 func (ctrl *TenantBackupCtrl) CancelArchiveLog(name string) error {
+
 	klog.Infof("Cancel tenant '%s' archivelog", name)
 	sqlOperator, err := ctrl.GetSqlOperator()
 	if err != nil {

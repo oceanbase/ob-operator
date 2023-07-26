@@ -13,7 +13,6 @@ sql_port='2881'
 rpc_port='2882'
 
 ob_install_path='ori_path'
-host_ip=$host_ip
 
 cluster_name=$cluster_name
 cluster_id=$cluster_id
@@ -38,7 +37,7 @@ sed -i "s/{monitor_password}/${monitor_password}/g" ./conf/config_properties/mon
 sed -i "s/{sql_port}/${sql_port}/g" ./conf/config_properties/monagent_pipeline.yaml
 sed -i "s/{rpc_port}/${rpc_port}/g" ./conf/config_properties/monagent_pipeline.yaml
 sed -i "s/{ob_install_path}/${ob_install_path}/g" ./conf/config_properties/monagent_pipeline.yaml
-sed -i "s/{host_ip}/${host_ip}/g" ./conf/config_properties/monagent_pipeline.yaml
+sed -i "s/{host_ip}/`hostname -i`/g" ./conf/config_properties/monagent_pipeline.yaml
 
 sed -i "s/{cluster_name}/${cluster_name}/g" ./conf/config_properties/monagent_pipeline.yaml
 sed -i "s/{cluster_id}/${cluster_id}/g" ./conf/config_properties/monagent_pipeline.yaml
