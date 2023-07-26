@@ -233,8 +233,8 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateService, nil
 	case taskname.MaintainOBParameter:
 		return m.MaintainOBParameter, nil
-	case taskname.GetUpgradeInfo:
-		return m.GetUpgradeInfo, nil
+	case taskname.ValidateUpgradeInfo:
+		return m.ValidateUpgradeInfo, nil
 	case taskname.UpgradeCheck:
 		return m.UpgradeCheck, nil
 	case taskname.BackupEssentialParameters:

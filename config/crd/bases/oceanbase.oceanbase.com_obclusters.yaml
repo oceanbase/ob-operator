@@ -1822,11 +1822,10 @@ spec:
                 type: array
               operationContext:
                 properties:
+                  context: {}
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -1841,9 +1840,9 @@ spec:
                       type: string
                     type: array
                 required:
+                - context
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId

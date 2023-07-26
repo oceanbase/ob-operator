@@ -37,3 +37,25 @@ func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.Bootst
 	}
 	return nil
 }
+
+// get oceanbase version by every observer with build number
+func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
+	observers, err := m.ListServers()
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to List observers of cluster")
+	}
+
+	var version *model.OBVersion
+	for _, observer := range observers {
+		v, err := model.ParseOBVersion(observer.BuildVersion)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Failed to parse version %s of observer %s:%d", observer.BuildVersion, observer.Ip, observer.Port)
+		}
+		if version != nil && version.Compare(v) != 0 {
+			return nil, errors.Errorf("Version %s of observer %s:%d is not consistent with other observer", observer.BuildVersion, observer.Ip, observer.Port)
+		} else {
+			version = v
+		}
+	}
+	return version, nil
+}

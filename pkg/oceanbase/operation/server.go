@@ -29,6 +29,15 @@ func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBSer
 	return observer, nil
 }
 
+func (m *OceanbaseOperationManager) ListServers() ([]model.OBServer, error) {
+	observers := make([]model.OBServer, 0)
+	err := m.QueryList(&observers, sql.ListServer)
+	if err != nil {
+		return nil, errors.Wrap(err, "List observer failed")
+	}
+	return observers, nil
+}
+
 func (m *OceanbaseOperationManager) AddServer(serverInfo *model.ServerInfo) error {
 	server := fmt.Sprintf("%s:%d", serverInfo.Ip, serverInfo.Port)
 	err := m.ExecWithDefaultTimeout(sql.AddServer, server)

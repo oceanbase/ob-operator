@@ -27,7 +27,7 @@ const (
 	CreateOBClusterService   = "create obcluster service"
 	MaintainOBParameter      = "maintain obparameter"
 	// for upgrade
-	GetUpgradeInfo             = "get upgrade info"
+	ValidateUpgradeInfo        = "validate upgrade info"
 	UpgradeCheck               = "upgrade check"
 	BackupEssentialParameters  = "backup essential parameters"
 	BeginUpgrade               = "execute upgrade pre script"

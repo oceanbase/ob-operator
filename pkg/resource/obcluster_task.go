@@ -17,15 +17,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/pkg/errors"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
 
 func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
@@ -430,28 +435,253 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) erro
 	return nil
 }
 
-func (m *OBClusterManager) GetUpgradeInfo() error {
+func (m *OBClusterManager) GetJob(jobName string) (*batchv1.Job, error) {
+	return nil, nil
+}
+
+func (m *OBClusterManager) ValidateUpgradeInfo() error {
 	return nil
 }
+func (m *OBClusterManager) ValidateUpgradeInfoTemp() error {
+	// Get current obcluster version
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	//version, err := oceanbaseOperationManager.GetVersion()
+	version, err := oceanbaseOperationManager.GetVersion()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
+	}
+	// Get target version and patch
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
+	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", suffix)
+	var backoffLimit int32
+	var ttl int32 = 86400
+	container := corev1.Container{
+		Name:    "observer",
+		Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+		Command: []string{"bash", "-c", fmt.Sprintf("/usr/bin/observer-update-validator %s", version.String())},
+	}
+	job := batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: m.OBCluster.Namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttl,
+		},
+	}
+
+	m.Logger.Info("Create validate upgrade job", "job", jobName)
+	err = m.Client.Create(m.Ctx, &job)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to create validate job for obcluster %s", m.OBCluster.Name)
+	}
+
+	var jobObject *batchv1.Job
+	for {
+		jobObject, err = m.GetJob(jobName)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get validate job for obcluster %s", m.OBCluster.Name)
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			m.Logger.Info("job is still running")
+		} else {
+			m.Logger.Info("job finished")
+			break
+		}
+	}
+	if jobObject.Status.Succeeded == 1 {
+		m.Logger.Info("job succeeded")
+	} else {
+		m.Logger.Info("job is failed", "job", jobName)
+		return errors.Wrap(err, "Failed to run validate job")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) ExecuteUpgradeScript(filepath string) error {
+	password, err := ReadPassword(m.Client, m.OBCluster.Namespace, m.OBCluster.Spec.UserSecrets.Root)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get root password")
+	}
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", m.OBCluster.Name)
+	}
+	observers, err := oceanbaseOperationManager.ListServers()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to list all servers for obcluster %s", m.OBCluster.Name)
+	}
+	var rootserver model.OBServer
+	for _, observer := range observers {
+		rootserver = observer
+		if observer.WithRootserver > 0 {
+			m.Logger.Info(fmt.Sprintf("Found rootserver, %s:%d", observer.Ip, observer.Port))
+			break
+		}
+	}
+
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
+	jobName := fmt.Sprintf("%s-%s", "script-runner", suffix)
+	var backoffLimit int32 = 0
+	var ttl int32 = 86400
+	container := corev1.Container{
+		Name:    "script-runner",
+		Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+		Command: []string{"bash", "-c", fmt.Sprintf("python2 %s -h%s -P%d -uroot -p'%s'", filepath, rootserver.Ip, rootserver.Port, password)},
+	}
+	job := batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: m.OBCluster.Namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttl,
+		},
+	}
+	m.Logger.Info("Create run upgrade script job", "script", filepath)
+	err = m.Client.Create(m.Ctx, &job)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to create run upgrade script job for obcluster %s", m.OBCluster.Name)
+	}
+
+	var jobObject *batchv1.Job
+	for {
+		jobObject, err = m.GetJob(jobName)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", m.OBCluster.Name)
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			m.Logger.Info("job is still running")
+		} else {
+			m.Logger.Info("job finished")
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+	}
+	if jobObject.Status.Succeeded == 1 {
+		m.Logger.Info("job succeeded")
+	} else {
+		m.Logger.Info("job failed", "job", jobName)
+		return errors.Wrap(err, "Failed to run upgrade script job")
+	}
+	return nil
+}
+
 func (m *OBClusterManager) UpgradeCheck() error {
-	return nil
+	return m.ExecuteUpgradeScript(oceanbaseconst.UpgradeCheckerScriptPath)
 }
+
 func (m *OBClusterManager) BackupEssentialParameters() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	essentialParameters := make([]model.Parameter, 0)
+	for _, parameter := range oceanbaseconst.UpgradeEssentialParameters {
+		parameterValues, err := oceanbaseOperationManager.GetParameter(parameter, nil)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get parameter %s", parameter)
+		}
+		essentialParameters = append(essentialParameters, parameterValues...)
+	}
+	codec.EncodeToJson()
+	m.OBCluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey] = essentialParameters
 	return nil
 }
 func (m *OBClusterManager) BeginUpgrade() error {
+	return m.ExecuteUpgradeScript(oceanbaseconst.UpgradePreScriptPath)
+}
+
+// TODO: add timeout
+func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get obzone list")
+	}
+	for _, zone := range zones.Items {
+		if zone.Name != zoneName {
+			continue
+		}
+		m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
+		if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+			m.Logger.Info("Obzone upgrade finished", "obzone", zoneName)
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
+	}
 	return nil
 }
+
+// TODO: add timeout
 func (m *OBClusterManager) RollingUpgradeByZone() error {
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get obzone list")
+	}
+	for _, zone := range zones.Items {
+		// update image and tag
+		zone.Spec.OBServerTemplate.Image = m.OBCluster.Spec.OBServerTemplate.Image
+		err = m.Client.Update(m.Ctx, &zone)
+		if err != nil {
+			return errors.Wrap(err, "Failed to update obzone image")
+		}
+		err = m.WaitOBZoneUpgradeFinished(zone.Name)
+		if err != nil {
+			return errors.Wrapf(err, "Wait obzone %s upgrade finish failed", zone.Name)
+		}
+	}
 	return nil
 }
+
 func (m *OBClusterManager) FinishUpgrade() error {
-	return nil
+	return m.ExecuteUpgradeScript(oceanbaseconst.UpgradePostScriptPath)
 }
 func (m *OBClusterManager) RestoreEssentialParameters() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	essentialParameters, parameterExists := m.OBCluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey]
+	if !parameterExists {
+		m.Logger.Info("No backuped essential parameters")
+		return nil
+	}
+	parameters, ok := essentialParameters.([]model.Parameter)
+	if !ok {
+		return errors.New("Transfer essential parameter failed")
+	}
+	for _, parameter := range parameters {
+		err = oceanbaseOperationManager.SetParameter(parameter.Name, parameter.Value, &param.Scope{
+			Name:  "server",
+			Value: fmt.Sprintf("%s:%d", parameter.SvrIp, parameter.SvrPort),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to set parameter %s to %s:%d", parameter.Name, parameter.SvrIp, parameter.SvrPort)
+		}
+	}
 	return nil
 }
 
 func (m *OBClusterManager) UpdateStatusImageTag() error {
+	m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
 	return nil
 }
