@@ -1,0 +1,19 @@
+apiVersion: cloud.oceanbase.com/v1		
+kind: Tenant		
+metadata:		
+  name: obtenant
+spec:	
+  clusterName: ob-test		
+  clusterID: 1
+  connectWhiteList: '%'
+
+  topology:
+    - zone: zone1
+      unitNum: 1
+      type: 
+        name: FUll
+        replica: 1
+      priority: 3
+      resource:
+        maxCPU: 2
+        memorySize: 2Gi
