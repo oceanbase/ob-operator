@@ -30,6 +30,7 @@ const (
 	MaintainOBZoneAfterBootstrap = "maintain obzone after bootstrap"
 	AddOBServer                  = "add observer"
 	DeleteOBServer               = "delete observer"
+	UpgradeOBZone                = "upgrade obzone"
 	CreateOBZone                 = "create obzone"
 	DeleteOBZoneFinalizer        = "delete obzone finalizer"
 )

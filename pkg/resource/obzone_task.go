@@ -49,7 +49,7 @@ func (m *OBZoneManager) AddZone() error {
 	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
 }
 
-func (m *OBZoneManager) StartZone() error {
+func (m *OBZoneManager) StartOBZone() error {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -222,6 +222,26 @@ func (m *OBZoneManager) StopOBZone() error {
 	if err != nil {
 		return errors.Wrapf(err, "Stop obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
+	return nil
+}
+
+func (m *OBZoneManager) OBClusterHealthCheck() error {
+	// TODO: implement this
+	return nil
+}
+
+func (m *OBZoneManager) OBZoneHealthCheck() error {
+	// TODO: implement this
+	return nil
+}
+
+func (m *OBZoneManager) UpgradeOBServer() error {
+	// TODO: implement this
+	return nil
+}
+
+func (m *OBZoneManager) WaitOBServerUpgraded() error {
+	// TODO: implement this
 	return nil
 }
 

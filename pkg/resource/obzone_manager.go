@@ -97,6 +97,8 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return task.GetRegistry().Get(flowname.DeleteOBServer)
 	case zonestatus.Deleting:
 		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+	case zonestatus.Upgrade:
+		return task.GetRegistry().Get(flowname.UpgradeOBZone)
 		// TODO upgrade
 	}
 	return nil, nil
@@ -166,6 +168,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 			// do nothing when observer match topology replica
 		}
 		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
+		if m.OBZone.Status.Status == zonestatus.Running {
+			if m.OBZone.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
+				m.Logger.Info("Found image changed, need upgrade")
+				m.OBZone.Status.Status = zonestatus.Upgrade
+			}
+		}
 	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
@@ -196,8 +204,8 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.AddZone:
 		return m.AddZone, nil
-	case taskname.StartZone:
-		return m.StartZone, nil
+	case taskname.StartOBZone:
+		return m.StartOBZone, nil
 	case taskname.DeleteOBServer:
 		return m.DeleteOBServer, nil
 	case taskname.DeleteAllOBServer:
@@ -210,6 +218,14 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.StopOBZone, nil
 	case taskname.DeleteOBZoneInCluster:
 		return m.DeleteOBZoneInCluster, nil
+	case taskname.OBClusterHealthCheck:
+		return m.OBClusterHealthCheck, nil
+	case taskname.OBZoneHealthCheck:
+		return m.OBZoneHealthCheck, nil
+	case taskname.UpgradeOBServer:
+		return m.UpgradeOBServer, nil
+	case taskname.WaitOBServerUpgraded:
+		return m.WaitOBServerUpgraded, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

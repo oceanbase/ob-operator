@@ -40,16 +40,20 @@ const (
 // obzone tasks
 const (
 	CreateOBServer             = "create observer"
+	UpgradeOBServer            = "upgrade observer"
+	WaitOBServerUpgraded       = "wait observer upgraded"
 	DeleteOBServer             = "delete observer"
 	DeleteAllOBServer          = "delete all observer"
 	AddZone                    = "add zone"
-	StartZone                  = "start zone"
+	StartOBZone                = "start obzone"
 	WaitOBServerBootstrapReady = "wait observer bootstrap ready"
 	WaitOBServerRunning        = "wait observer running"
 	WaitReplicaMatch           = "wait replica match"
 	WaitOBServerDeleted        = "wait observer deleted"
 	StopOBZone                 = "stop obzone"
 	DeleteOBZoneInCluster      = "delete obzone in cluster"
+	OBClusterHealthCheck       = "obcluster health check"
+	OBZoneHealthCheck          = "obzone health check"
 )
 
 // observer tasks

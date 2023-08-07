@@ -43,7 +43,7 @@ func CreateOBZone() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.CreateOBZone,
-			Tasks:        []string{taskname.AddZone, taskname.CreateOBServer, taskname.WaitOBServerRunning, taskname.StartZone},
+			Tasks:        []string{taskname.AddZone, taskname.CreateOBServer, taskname.WaitOBServerRunning, taskname.StartOBZone},
 			TargetStatus: zonestatus.Running,
 		},
 	}
@@ -75,6 +75,16 @@ func DeleteOBZoneFinalizer() *TaskFlow {
 			Name:         flowname.DeleteOBZoneFinalizer,
 			Tasks:        []string{taskname.StopOBZone, taskname.DeleteAllOBServer, taskname.WaitOBServerDeleted, taskname.DeleteOBZoneInCluster},
 			TargetStatus: zonestatus.FinalizerFinished,
+		},
+	}
+}
+
+func UpgradeOBZone() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.UpgradeOBZone,
+			Tasks:        []string{taskname.OBClusterHealthCheck, taskname.StopOBZone, taskname.UpgradeOBServer, taskname.WaitOBServerUpgraded, taskname.OBZoneHealthCheck, taskname.StartOBZone},
+			TargetStatus: zonestatus.Running,
 		},
 	}
 }
