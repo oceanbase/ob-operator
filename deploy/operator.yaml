@@ -1934,11 +1934,13 @@ spec:
                 type: array
               operationContext:
                 properties:
+                  context:
+                    additionalProperties:
+                      type: string
+                    type: object
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -1955,7 +1957,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -2053,11 +2054,13 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
+                  context:
+                    additionalProperties:
+                      type: string
+                    type: object
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -2074,7 +2077,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -3886,11 +3888,13 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
+                  context:
+                    additionalProperties:
+                      type: string
+                    type: object
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -3907,7 +3911,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -5931,11 +5934,13 @@ spec:
                 type: array
               operationContext:
                 properties:
+                  context:
+                    additionalProperties:
+                      type: string
+                    type: object
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -5952,7 +5957,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -6065,6 +6069,32 @@ rules:
   - ""
   resources:
   - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs/status
   verbs:
   - get
   - patch

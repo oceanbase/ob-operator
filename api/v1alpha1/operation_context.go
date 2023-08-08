@@ -20,5 +20,5 @@ type OperationContext struct {
 	TaskStatus   string            `json:"taskStatus"`
 	TaskId       string            `json:"taskId"`
 	TargetStatus string            `json:"targetStatus"`
-	Context      map[string]string `json:"context"`
+	Context      map[string]string `json:"context,omitempty"`
 }

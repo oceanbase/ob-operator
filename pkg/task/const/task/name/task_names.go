@@ -68,7 +68,7 @@ const (
 	DeleteOBServerInCluster      = "delete observer in cluster"
 	WaitOBServerDeletedInCluster = "wait observer deleted in cluster"
 	WaitOBServerActiveInCluster  = "wait observer active in cluster"
-	UpgradeOBServerImage         = "UpgradeOBServerImage"
+	UpgradeOBServerImage         = "upgrade observer image"
 	UpdateOBServerStatusImage    = "update observer status image tag"
 )
 

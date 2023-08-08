@@ -25,6 +25,7 @@ func PrepareOBZoneForBootstrap() *TaskFlow {
 			Name:         flowname.PrepareOBZoneForBootstrap,
 			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerBootstrapReady},
 			TargetStatus: zonestatus.BootstrapReady,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -35,6 +36,7 @@ func MaintainOBZoneAfterBootstrap() *TaskFlow {
 			Name:         flowname.MaintainOBZoneAfterBootstrap,
 			Tasks:        []string{taskname.WaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -45,6 +47,7 @@ func CreateOBZone() *TaskFlow {
 			Name:         flowname.CreateOBZone,
 			Tasks:        []string{taskname.AddZone, taskname.CreateOBServer, taskname.WaitOBServerRunning, taskname.StartOBZone},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -55,6 +58,7 @@ func AddOBServer() *TaskFlow {
 			Name:         flowname.AddOBServer,
 			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -65,6 +69,7 @@ func DeleteOBServer() *TaskFlow {
 			Name:         flowname.DeleteOBServer,
 			Tasks:        []string{taskname.DeleteOBServer, taskname.WaitReplicaMatch},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -75,6 +80,7 @@ func DeleteOBZoneFinalizer() *TaskFlow {
 			Name:         flowname.DeleteOBZoneFinalizer,
 			Tasks:        []string{taskname.StopOBZone, taskname.DeleteAllOBServer, taskname.WaitOBServerDeleted, taskname.DeleteOBZoneInCluster},
 			TargetStatus: zonestatus.FinalizerFinished,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -85,6 +91,7 @@ func UpgradeOBZone() *TaskFlow {
 			Name:         flowname.UpgradeOBZone,
 			Tasks:        []string{taskname.OBClusterHealthCheck, taskname.StopOBZone, taskname.UpgradeOBServer, taskname.WaitOBServerUpgraded, taskname.OBZoneHealthCheck, taskname.StartOBZone, taskname.UpdateOBZoneStatusImage},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -95,6 +102,7 @@ func ForceUpgradeOBZone() *TaskFlow {
 			Name:         flowname.ForceUpgradeOBZone,
 			Tasks:        []string{taskname.OBClusterHealthCheck, taskname.UpgradeOBServer, taskname.WaitOBServerUpgraded, taskname.OBZoneHealthCheck, taskname.UpdateOBZoneStatusImage},
 			TargetStatus: zonestatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }

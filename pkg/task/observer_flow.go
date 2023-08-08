@@ -25,6 +25,7 @@ func PrepareOBServerForBootstrap() *TaskFlow {
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady},
 			TargetStatus: serverstatus.BootstrapReady,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -35,6 +36,7 @@ func MaintainOBServerAfterBootstrap() *TaskFlow {
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer},
 			TargetStatus: serverstatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -45,6 +47,7 @@ func CreateOBServer() *TaskFlow {
 			Name:         flowname.CreateOBServer,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady, taskname.AddServer},
 			TargetStatus: serverstatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -55,6 +58,7 @@ func DeleteOBServerFinalizer() *TaskFlow {
 			Name:         flowname.DeleteOBServerFinalizer,
 			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
 			TargetStatus: serverstatus.FinalizerFinished,
+			Context:      make(map[string]string),
 		},
 	}
 }
@@ -65,6 +69,7 @@ func UpgradeOBServer() *TaskFlow {
 			Name:         flowname.UpgradeOBServer,
 			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerActiveInCluster, taskname.UpdateOBServerStatusImage},
 			TargetStatus: serverstatus.Running,
+			Context:      make(map[string]string),
 		},
 	}
 }

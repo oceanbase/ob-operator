@@ -491,10 +491,9 @@ func (m *OBServerManager) UpgradeOBServerImage() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
 	}
-	for _, container := range observerPod.Spec.Containers {
+	for idx, container := range observerPod.Spec.Containers {
 		if container.Name == oceanbaseconst.ContainerName {
-			// observerPod.Spec.Containers[idx].Image = m.OBServer.Spec.OBServerTemplate.Image
-			container.Image = m.OBServer.Spec.OBServerTemplate.Image
+			observerPod.Spec.Containers[idx].Image = m.OBServer.Spec.OBServerTemplate.Image
 			break
 		}
 	}

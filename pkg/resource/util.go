@@ -123,7 +123,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	container := corev1.Container{
 		Name:    "script-runner",
 		Image:   obcluster.Spec.OBServerTemplate.Image,
-		Command: []string{"bash", "-c", fmt.Sprintf("python2 %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.Port, password, extraOpt)},
+		Command: []string{"bash", "-c", fmt.Sprintf("python2 %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.SqlPort, password, extraOpt)},
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -151,7 +151,8 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	for {
 		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
 		if err != nil {
-			return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+			logger.Error(err, "Failed to get job")
+			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
 			logger.Info("job is still running")

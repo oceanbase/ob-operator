@@ -532,6 +532,7 @@ func (m *OBClusterManager) BackupEssentialParameters() error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to marshal essential parameters")
 	}
+	m.OBCluster.Status.OperationContext.Context = make(map[string]string)
 	m.OBCluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey] = string(jsonStr)
 	return nil
 }
@@ -546,12 +547,19 @@ func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to get obzone list")
 	}
-	for _, zone := range zones.Items {
-		if zone.Name != zoneName {
-			continue
+	upgradeFinished := false
+	for {
+		for _, zone := range zones.Items {
+			if zone.Name != zoneName {
+				continue
+			}
+			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
+			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+				upgradeFinished = true
+				break
+			}
 		}
-		m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
-		if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+		if upgradeFinished {
 			m.Logger.Info("Obzone upgrade finished", "obzone", zoneName)
 			break
 		}
