@@ -1792,7 +1792,10 @@ spec:
                 type: array
               operationContext:
                 properties:
-                  context: {}
+                  context:
+                    additionalProperties:
+                      type: string
+                    type: object
                   idx:
                     type: integer
                   name:

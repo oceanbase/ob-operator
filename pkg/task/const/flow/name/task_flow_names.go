@@ -31,6 +31,7 @@ const (
 	AddOBServer                  = "add observer"
 	DeleteOBServer               = "delete observer"
 	UpgradeOBZone                = "upgrade obzone"
+	ForceUpgradeOBZone           = "force upgrade obzone"
 	CreateOBZone                 = "create obzone"
 	DeleteOBZoneFinalizer        = "delete obzone finalizer"
 )
@@ -41,6 +42,7 @@ const (
 	MaintainOBServerAfterBootstrap = "maintain observer after bootstrap"
 	CreateOBServer                 = "create observer"
 	DeleteOBServerFinalizer        = "delete observer finalizer"
+	UpgradeOBServer                = "upgrade observer"
 )
 
 // obparameter flows

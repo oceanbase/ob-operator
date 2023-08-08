@@ -21,6 +21,7 @@ import (
 	podconst "github.com/oceanbase/ob-operator/pkg/const/pod"
 	secretconst "github.com/oceanbase/ob-operator/pkg/const/secret"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
+	observerstatus "github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/server"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
@@ -476,6 +477,63 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 		}
 	} else {
 		m.Logger.Info("observer already deleted", "observer", observerInfo.Ip)
+	}
+	return nil
+}
+
+func (m *OBServerManager) UpdateOBServerStatusImage() error {
+	m.OBServer.Status.Image = m.OBServer.Spec.OBServerTemplate.Image
+	return nil
+}
+
+func (m *OBServerManager) UpgradeOBServerImage() error {
+	observerPod, err := m.getPod()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+	}
+	for _, container := range observerPod.Spec.Containers {
+		if container.Name == oceanbaseconst.ContainerName {
+			// observerPod.Spec.Containers[idx].Image = m.OBServer.Spec.OBServerTemplate.Image
+			container.Image = m.OBServer.Spec.OBServerTemplate.Image
+			break
+		}
+	}
+	err = m.Client.Update(m.Ctx, observerPod)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to update pod of observer %s", m.OBServer.Name)
+	}
+	return nil
+}
+
+func (m *OBServerManager) WaitOBServerActiveInCluster() error {
+	m.Logger.Info("wait observer deleted in cluster")
+	observerInfo := &model.ServerInfo{
+		Ip:   m.OBServer.Status.PodIp,
+		Port: oceanbaseconst.RpcPort,
+	}
+	active := false
+	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+		operationManager, err := m.getOceanbaseOperationManager()
+		if err != nil {
+			return errors.Wrapf(err, "Get oceanbase operation manager failed")
+		}
+		observer, err := operationManager.GetServer(observerInfo)
+		if err != nil {
+			m.Logger.Error(err, "Failed to get observer in cluster")
+		} else {
+			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
+				m.Logger.Info("Observer active")
+				active = true
+				break
+			}
+		}
+		time.Sleep(time.Second)
+	}
+	if !active {
+		m.Logger.Info("Wait observer active timeout")
+		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
+	} else {
+		m.Logger.Info("observer active", "observer", observerInfo)
 	}
 	return nil
 }

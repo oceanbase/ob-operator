@@ -15,9 +15,10 @@ package oceanbase
 var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "enable_rebalance", "enable_rereplication"}
 
 const (
-	BootstrapTimeoutSeconds    = 300
-	DefaultStateWaitTimeout    = 300
-	ServerDeleteTimeoutSeconds = 86400
+	BootstrapTimeoutSeconds       = 300
+	DefaultStateWaitTimeout       = 300
+	TimeConsumingStateWaitTimeout = 3600
+	ServerDeleteTimeoutSeconds    = 86400
 )
 
 const (
@@ -40,19 +41,20 @@ const (
 )
 
 const (
-	ContainerName            = "observer"
-	InstallPath              = "/home/admin/oceanbase"
-	DataPath                 = "/home/admin/data-file"
-	ClogPath                 = "/home/admin/data-log"
-	LogPath                  = "/home/admin/log"
-	UpgradeCheckerScriptPath = "/home/admin/oceanbase/etc/upgrade_checker.py"
-	UpgradePreScriptPath     = "/home/admin/oceanbase/etc/upgrade_pre.py"
-	UpgradePostScriptPath    = "/home/admin/oceanbase/etc/upgrade_post.py"
-	BackupPath               = "/ob-backup"
-	DataVolumeSuffix         = "data-file"
-	ClogVolumeSuffix         = "data-log"
-	LogVolumeSuffix          = "log"
-	BackupVolumeSuffix       = "backup"
+	ContainerName                  = "observer"
+	InstallPath                    = "/home/admin/oceanbase"
+	DataPath                       = "/home/admin/data-file"
+	ClogPath                       = "/home/admin/data-log"
+	LogPath                        = "/home/admin/log"
+	UpgradeHealthCheckerScriptPath = "/home/admin/oceanbase/etc/upgrade_health_checker.py"
+	UpgradeCheckerScriptPath       = "/home/admin/oceanbase/etc/upgrade_checker.py"
+	UpgradePreScriptPath           = "/home/admin/oceanbase/etc/upgrade_pre.py"
+	UpgradePostScriptPath          = "/home/admin/oceanbase/etc/upgrade_post.py"
+	BackupPath                     = "/ob-backup"
+	DataVolumeSuffix               = "data-file"
+	ClogVolumeSuffix               = "data-log"
+	LogVolumeSuffix                = "log"
+	BackupVolumeSuffix             = "backup"
 )
 
 const (

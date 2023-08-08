@@ -14,15 +14,23 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
+	"github.com/go-logr/logr"
+	"github.com/google/uuid"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	secretconst "github.com/oceanbase/ob-operator/pkg/const/secret"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -74,4 +82,90 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alp
 		}
 	}
 	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all server", obcluster.Name)
+}
+
+func GetJob(c client.Client, namespace string, jobName string) (*batchv1.Job, error) {
+	job := &batchv1.Job{}
+	err := c.Get(context.Background(), types.NamespacedName{
+		Namespace: namespace,
+		Name:      jobName,
+	}, job)
+	return job, err
+}
+
+func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
+	password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Root)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get root password")
+	}
+	oceanbaseOperationManager, err := GetOceanbaseOperationManagerFromOBCluster(c, obcluster)
+	if err != nil {
+		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
+	}
+	observers, err := oceanbaseOperationManager.ListServers()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to list all servers for obcluster %s", obcluster.Name)
+	}
+	var rootserver model.OBServer
+	for _, observer := range observers {
+		rootserver = observer
+		if observer.WithRootserver > 0 {
+			logger.Info(fmt.Sprintf("Found rootserver, %s:%d", observer.Ip, observer.Port))
+			break
+		}
+	}
+
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
+	jobName := fmt.Sprintf("%s-%s", "script-runner", suffix)
+	var backoffLimit int32 = 0
+	var ttl int32 = 86400
+	container := corev1.Container{
+		Name:    "script-runner",
+		Image:   obcluster.Spec.OBServerTemplate.Image,
+		Command: []string{"bash", "-c", fmt.Sprintf("python2 %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.Port, password, extraOpt)},
+	}
+	job := batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: obcluster.Namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttl,
+		},
+	}
+	logger.Info("Create run upgrade script job", "script", filepath)
+	err = c.Create(context.Background(), &job)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to create run upgrade script job for obcluster %s", obcluster.Name)
+	}
+
+	var jobObject *batchv1.Job
+	for {
+		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			logger.Info("job is still running")
+		} else {
+			logger.Info("job finished")
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+	}
+	if jobObject.Status.Succeeded == 1 {
+		logger.Info("job succeeded")
+	} else {
+		logger.Info("job failed", "job", jobName)
+		return errors.Wrap(err, "Failed to run upgrade script job")
+	}
+	return nil
 }

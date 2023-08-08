@@ -59,6 +59,12 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.DeleteOBServerInCluster, nil
 	case taskname.WaitOBServerDeletedInCluster:
 		return m.WaitOBServerDeletedInCluster, nil
+	case taskname.WaitOBServerActiveInCluster:
+		return m.WaitOBServerActiveInCluster, nil
+	case taskname.UpgradeOBServerImage:
+		return m.UpgradeOBServerImage, nil
+	case taskname.UpdateOBServerStatusImage:
+		return m.UpdateOBServerStatusImage, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -99,6 +105,10 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodPhase = pod.Status.Phase
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
+		}
+		if m.OBServer.Status.Status == serverstatus.Running && m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
+			m.Logger.Info("Found image changed, begin upgrade")
+			m.OBServer.Status.Status = serverstatus.Upgrade
 		}
 
 		m.Logger.Info("update observer status", "status", m.OBServer.Status)
@@ -182,6 +192,9 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case serverstatus.Deleting:
 		m.Logger.Info("Get task flow when observer deleting")
 		return task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+	case serverstatus.Upgrade:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.UpgradeOBServer)
 	default:
 		return nil, nil
 	}

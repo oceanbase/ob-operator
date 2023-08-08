@@ -16,6 +16,7 @@ const (
 	New               = "new"
 	Maintaining       = "maintaining"
 	Running           = "running"
+	Upgrade           = "upgrade"
 	BootstrapReady    = "bootstrap ready"
 	Deleting          = "deleting"
 	FinalizerFinished = "finalizer finished"

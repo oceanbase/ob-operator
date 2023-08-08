@@ -58,3 +58,13 @@ func DeleteOBServerFinalizer() *TaskFlow {
 		},
 	}
 }
+
+func UpgradeOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.UpgradeOBServer,
+			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerActiveInCluster, taskname.UpdateOBServerStatusImage},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}

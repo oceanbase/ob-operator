@@ -226,6 +226,8 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.UpgradeOBServer, nil
 	case taskname.WaitOBServerUpgraded:
 		return m.WaitOBServerUpgraded, nil
+	case taskname.UpdateOBZoneStatusImage:
+		return m.WaitOBServerUpgraded, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}
