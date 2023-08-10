@@ -23,9 +23,8 @@ func PrepareOBServerForBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
-			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady},
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -36,7 +35,6 @@ func MaintainOBServerAfterBootstrap() *TaskFlow {
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer},
 			TargetStatus: serverstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -45,9 +43,8 @@ func CreateOBServer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.CreateOBServer,
-			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady, taskname.AddServer},
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.AddServer},
 			TargetStatus: serverstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -58,7 +55,6 @@ func DeleteOBServerFinalizer() *TaskFlow {
 			Name:         flowname.DeleteOBServerFinalizer,
 			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
 			TargetStatus: serverstatus.FinalizerFinished,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -67,9 +63,8 @@ func UpgradeOBServer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.UpgradeOBServer,
-			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerActiveInCluster, taskname.UpdateOBServerStatusImage},
+			Tasks:        []string{taskname.StoreCurrentOBServerVersion, taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster, taskname.UpdateOBServerStatusImage},
 			TargetStatus: serverstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }

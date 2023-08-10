@@ -53,6 +53,7 @@ func (m *OBClusterManager) InitStatus() {
 }
 
 func (m *OBClusterManager) SetOperationContext(c *v1alpha1.OperationContext) {
+	m.Logger.Info("Set operation context", "current", m.OBCluster.Status.OperationContext, "new", c)
 	m.OBCluster.Status.OperationContext = c
 }
 
@@ -111,11 +112,16 @@ func (m *OBClusterManager) UpdateStatus() error {
 		return errors.Wrap(err, "list obzones")
 	}
 	obzoneReplicaStatusList := make([]v1alpha1.OBZoneReplicaStatus, 0, len(obzoneList.Items))
+	allZoneVersionSync := true
 	for _, obzone := range obzoneList.Items {
 		obzoneReplicaStatusList = append(obzoneReplicaStatusList, v1alpha1.OBZoneReplicaStatus{
 			Zone:   obzone.Name,
 			Status: obzone.Status.Status,
 		})
+		if obzone.Status.Image != m.OBCluster.Spec.OBServerTemplate.Image {
+			m.Logger.Info("obzone still not sync")
+			allZoneVersionSync = false
+		}
 	}
 	m.OBCluster.Status.OBZoneStatus = obzoneReplicaStatusList
 
@@ -135,6 +141,9 @@ func (m *OBClusterManager) UpdateStatus() error {
 	if m.OBCluster.Status.Status != clusterstatus.Running {
 		m.Logger.Info("OBCluster status is not running, skip compare")
 	} else {
+		if allZoneVersionSync {
+			m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
+		}
 		// TODO: refactor this part of code
 		// check topology
 		if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
@@ -163,7 +172,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 
 		// check for upgrade
 		if m.OBCluster.Status.Status == clusterstatus.Running {
-			if m.OBCluster.Spec.DeepCopy().OBServerTemplate.Image != m.OBCluster.Status.Image {
+			if m.OBCluster.Spec.OBServerTemplate.Image != m.OBCluster.Status.Image {
 				m.Logger.Info("Check obcluster image not match, need upgrade")
 				m.OBCluster.Status.Status = clusterstatus.Upgrade
 			}

@@ -1795,6 +1795,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - context
                 - idx
                 - name
                 - targetStatus

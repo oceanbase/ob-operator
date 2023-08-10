@@ -32,7 +32,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
-func (m *OBServerManager) WaitOBPodReady() error {
+func (m *OBServerManager) WaitOBServerReady() error {
 	for i := 0; i < podconst.ReadyTimeoutSeconds; i++ {
 		observer, err := m.getOBServer()
 		if err != nil {
@@ -481,6 +481,35 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 	return nil
 }
 
+// TODO: add a set context method
+func (m *OBServerManager) StoreOBVersion() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get operation manager")
+	}
+	observerInfo := &model.ServerInfo{
+		Ip:   m.OBServer.Status.PodIp,
+		Port: oceanbaseconst.RpcPort,
+	}
+	// observer, err := oceanbaseOperationManager.GetServer(observerInfo)
+	_, err = oceanbaseOperationManager.GetServer(observerInfo)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get observer info from obcluster")
+	}
+
+	// store build version into context
+	// observerObject, err := m.getOBServer()
+	// if err != nil {
+	// 	return errors.Wrap(err, "Get observer object")
+	// }
+	// observerObject.Status.OperationContext.Context[oceanbaseconst.OBServerVersionKey] = observer.BuildVersion
+	// err = m.Client.Status().Update(m.Ctx, observerObject)
+	// if err != nil {
+	// 	return errors.Wrap(err, "Got error when update observer status")
+	// }
+	return nil
+}
+
 func (m *OBServerManager) UpdateOBServerStatusImage() error {
 	m.OBServer.Status.Image = m.OBServer.Spec.OBServerTemplate.Image
 	return nil
@@ -504,8 +533,33 @@ func (m *OBServerManager) UpgradeOBServerImage() error {
 	return nil
 }
 
+func (m *OBServerManager) WaitOBServerPodReady() error {
+	observerPodRestarted := false
+	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+		observerPod, err := m.getPod()
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+		}
+		for _, containerStatus := range observerPod.Status.ContainerStatuses {
+			if containerStatus.Name == oceanbaseconst.ContainerName && containerStatus.Image == m.OBServer.Spec.OBServerTemplate.Image && containerStatus.Ready {
+				observerPodRestarted = true
+				break
+			}
+		}
+		if observerPodRestarted {
+			m.Logger.Info("observer pod restarted")
+			break
+		}
+		time.Sleep(time.Second)
+	}
+	if !observerPodRestarted {
+		return errors.Errorf("observer %s pod still not restart when timeout", m.OBServer.Name)
+	}
+	return nil
+}
+
 func (m *OBServerManager) WaitOBServerActiveInCluster() error {
-	m.Logger.Info("wait observer deleted in cluster")
+	m.Logger.Info("wait observer active in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,

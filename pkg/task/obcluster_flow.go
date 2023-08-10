@@ -25,7 +25,6 @@ func BootstrapOBCluster() *TaskFlow {
 			Name:         flowname.BootstrapOBCluster,
 			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneBootstrapReady, taskname.Bootstrap},
 			TargetStatus: clusterstatus.Bootstrapped,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -36,7 +35,6 @@ func MaintainOBClusterAfterBootstrap() *TaskFlow {
 			Name:         flowname.MaintainOBClusterAfterBootstrap,
 			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -47,7 +45,6 @@ func AddOBZone() *TaskFlow {
 			Name:         flowname.AddOBZone,
 			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneRunning},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -58,7 +55,6 @@ func DeleteOBZone() *TaskFlow {
 			Name:         flowname.DeleteOBZone,
 			Tasks:        []string{taskname.DeleteOBZone, taskname.WaitOBZoneDeleted},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -69,7 +65,6 @@ func ModifyOBZoneReplica() *TaskFlow {
 			Name:         flowname.ModifyOBZoneReplica,
 			Tasks:        []string{taskname.ModifyOBZoneReplica, taskname.WaitOBZoneTopologyMatch, taskname.WaitOBZoneRunning},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -80,7 +75,6 @@ func MaintainOBParameter() *TaskFlow {
 			Name:         flowname.MaintainOBParameter,
 			Tasks:        []string{taskname.MaintainOBParameter},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }
@@ -91,7 +85,6 @@ func UpgradeOBCluster() *TaskFlow {
 			Name:         flowname.UpgradeOBCluster,
 			Tasks:        []string{taskname.ValidateUpgradeInfo, taskname.UpgradeCheck, taskname.BackupEssentialParameters, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters, taskname.UpdateOBClusterStatusImage},
 			TargetStatus: clusterstatus.Running,
-			Context:      make(map[string]string),
 		},
 	}
 }

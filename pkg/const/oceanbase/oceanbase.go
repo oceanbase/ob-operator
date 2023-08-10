@@ -78,6 +78,7 @@ const (
 )
 
 const (
+	OBServerVersionKey     = "observer-version"
 	EssentialParametersKey = "essential-parameters"
 )
 

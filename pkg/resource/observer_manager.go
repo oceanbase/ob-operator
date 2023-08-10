@@ -49,8 +49,8 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateOBPVC, nil
 	case taskname.CreateOBPod:
 		return m.CreateOBPod, nil
-	case taskname.WaitOBPodReady:
-		return m.WaitOBPodReady, nil
+	case taskname.WaitOBServerReady:
+		return m.WaitOBServerReady, nil
 	case taskname.WaitOBClusterBootstrapped:
 		return m.WaitOBClusterBootstrapped, nil
 	case taskname.AddServer:
@@ -59,10 +59,14 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.DeleteOBServerInCluster, nil
 	case taskname.WaitOBServerDeletedInCluster:
 		return m.WaitOBServerDeletedInCluster, nil
+	case taskname.WaitOBServerPodReady:
+		return m.WaitOBServerPodReady, nil
 	case taskname.WaitOBServerActiveInCluster:
 		return m.WaitOBServerActiveInCluster, nil
 	case taskname.UpgradeOBServerImage:
 		return m.UpgradeOBServerImage, nil
+	case taskname.StoreCurrentOBServerVersion:
+		return m.StoreOBVersion, nil
 	case taskname.UpdateOBServerStatusImage:
 		return m.UpdateOBServerStatusImage, nil
 	default:
@@ -106,9 +110,17 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
 		}
-		if m.OBServer.Status.Status == serverstatus.Running && m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
-			m.Logger.Info("Found image changed, begin upgrade")
-			m.OBServer.Status.Status = serverstatus.Upgrade
+		if m.OBServer.Status.Status == serverstatus.Running {
+			for _, container := range pod.Spec.Containers {
+				if container.Name == oceanbaseconst.ContainerName {
+					m.OBServer.Status.Image = container.Image
+					break
+				}
+			}
+			if m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
+				m.Logger.Info("Found image changed, begin upgrade")
+				m.OBServer.Status.Status = serverstatus.Upgrade
+			}
 		}
 
 		m.Logger.Info("update observer status", "status", m.OBServer.Status)

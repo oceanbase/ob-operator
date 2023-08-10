@@ -144,11 +144,17 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 
 	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
+	// handle upgrade
+	allServerVersionSync := true
 	for _, observer := range observerList.Items {
 		observerReplicaStatusList = append(observerReplicaStatusList, v1alpha1.OBServerReplicaStatus{
 			Server: observer.Status.PodIp,
 			Status: observer.Status.Status,
 		})
+		if observer.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
+			m.Logger.Info("Found observer image not match")
+			allServerVersionSync = false
+		}
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
 	if m.IsDeleting() {
@@ -157,6 +163,10 @@ func (m *OBZoneManager) UpdateStatus() error {
 	if m.OBZone.Status.Status != zonestatus.Running {
 		m.Logger.Info("OBZone status is not running, skip compare")
 	} else {
+		// set status image
+		if allServerVersionSync {
+			m.OBZone.Status.Image = m.OBZone.Spec.OBServerTemplate.Image
+		}
 		// check topology
 		if m.OBZone.Spec.Topology.Replica > len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need add observer")

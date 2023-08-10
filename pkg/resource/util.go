@@ -119,7 +119,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	suffix := parts[len(parts)-1]
 	jobName := fmt.Sprintf("%s-%s", "script-runner", suffix)
 	var backoffLimit int32 = 0
-	var ttl int32 = 86400
+	var ttl int32 = 300
 	container := corev1.Container{
 		Name:    "script-runner",
 		Image:   obcluster.Spec.OBServerTemplate.Image,

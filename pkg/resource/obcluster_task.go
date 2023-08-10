@@ -528,12 +528,20 @@ func (m *OBClusterManager) BackupEssentialParameters() error {
 		}
 		essentialParameters = append(essentialParameters, parameterValues...)
 	}
-	jsonStr, err := json.Marshal(essentialParameters)
-	if err != nil {
-		return errors.Wrap(err, "Failed to marshal essential parameters")
-	}
-	m.OBCluster.Status.OperationContext.Context = make(map[string]string)
-	m.OBCluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey] = string(jsonStr)
+	// refresh obcluster, and set parameters into context
+	// jsonStr, err := json.Marshal(essentialParameters)
+	// if err != nil {
+	// 	return errors.Wrap(err, "Failed to marshal essential parameters")
+	// }
+	// obcluster, err := m.getOBCluster()
+	// if err != nil {
+	// 	return errors.Wrap(err, "Get obcluster object")
+	// }
+	// obcluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey] = string(jsonStr)
+	// err = m.Client.Status().Update(m.Ctx, obcluster)
+	// if err != nil {
+	// 	return errors.Wrap(err, "Update obcluster context")
+	// }
 	return nil
 }
 
@@ -543,12 +551,12 @@ func (m *OBClusterManager) BeginUpgrade() error {
 
 // TODO: add timeout
 func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
-	zones, err := m.listOBZones()
-	if err != nil {
-		return errors.Wrap(err, "Failed to get obzone list")
-	}
 	upgradeFinished := false
 	for {
+		zones, err := m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "Failed to get obzone list")
+		}
 		for _, zone := range zones.Items {
 			if zone.Name != zoneName {
 				continue
@@ -597,12 +605,8 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
 	}
-	encodedParameters, parameterExists := m.OBCluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey]
-	if !parameterExists {
-		m.Logger.Info("No backuped essential parameters")
-		return nil
-	}
 	essentialParameters := make([]model.Parameter, 0)
+	encodedParameters := ""
 	err = json.Unmarshal([]byte(encodedParameters), &essentialParameters)
 	if err != nil {
 		return errors.New("Parse encoded parameters failed")
