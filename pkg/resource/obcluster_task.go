@@ -528,20 +528,26 @@ func (m *OBClusterManager) BackupEssentialParameters() error {
 		}
 		essentialParameters = append(essentialParameters, parameterValues...)
 	}
-	// refresh obcluster, and set parameters into context
-	// jsonStr, err := json.Marshal(essentialParameters)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Failed to marshal essential parameters")
-	// }
-	// obcluster, err := m.getOBCluster()
-	// if err != nil {
-	// 	return errors.Wrap(err, "Get obcluster object")
-	// }
-	// obcluster.Status.OperationContext.Context[oceanbaseconst.EssentialParametersKey] = string(jsonStr)
-	// err = m.Client.Status().Update(m.Ctx, obcluster)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Update obcluster context")
-	// }
+
+	contextMap := make(map[string]string)
+	jsonContent, err := json.Marshal(essentialParameters)
+	if err != nil {
+		return errors.Wrap(err, "Failed to marshal essential parameters")
+	}
+	contextMap[oceanbaseconst.EssentialParametersKey] = string(jsonContent)
+	contextObjectName := fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, oceanbaseconst.EssentialParametersKey)
+	contextSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      contextObjectName,
+			Namespace: m.OBCluster.Namespace,
+		},
+		Type:       "Opaque",
+		StringData: contextMap,
+	}
+	err = m.Client.Create(m.Ctx, contextSecret)
+	if err != nil {
+		return errors.Wrap(err, "Create context secret object")
+	}
 	return nil
 }
 
@@ -606,7 +612,22 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
 	}
 	essentialParameters := make([]model.Parameter, 0)
-	encodedParameters := ""
+
+	contextObjectName := fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, oceanbaseconst.EssentialParametersKey)
+	contextSecret := &corev1.Secret{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      contextObjectName,
+	}, contextSecret)
+	if err != nil {
+		m.Logger.Error(err, "Failed to get context secret")
+		return nil
+		// parameter can be set manually, just return here and emit an event
+		// TODO: emit an event
+	}
+
+	encodedParameters := string(contextSecret.Data[oceanbaseconst.EssentialParametersKey])
+	m.Logger.Info("Get encoded parameters", "parameters", encodedParameters)
 	err = json.Unmarshal([]byte(encodedParameters), &essentialParameters)
 	if err != nil {
 		return errors.New("Parse encoded parameters failed")
@@ -621,10 +642,6 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 			return errors.Wrapf(err, "Failed to set parameter %s to %s:%d", parameter.Name, parameter.SvrIp, parameter.SvrPort)
 		}
 	}
-	return nil
-}
-
-func (m *OBClusterManager) UpdateStatusImage() error {
-	m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
+	m.Client.Delete(m.Ctx, contextSecret)
 	return nil
 }

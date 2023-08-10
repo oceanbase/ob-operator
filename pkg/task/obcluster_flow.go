@@ -83,7 +83,7 @@ func UpgradeOBCluster() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.UpgradeOBCluster,
-			Tasks:        []string{taskname.ValidateUpgradeInfo, taskname.UpgradeCheck, taskname.BackupEssentialParameters, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters, taskname.UpdateOBClusterStatusImage},
+			Tasks:        []string{taskname.ValidateUpgradeInfo, taskname.UpgradeCheck, taskname.BackupEssentialParameters, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters},
 			TargetStatus: clusterstatus.Running,
 		},
 	}

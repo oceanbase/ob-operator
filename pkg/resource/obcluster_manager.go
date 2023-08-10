@@ -256,8 +256,6 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.FinishUpgrade, nil
 	case taskname.RestoreEssentialParameters:
 		return m.RestoreEssentialParameters, nil
-	case taskname.UpdateOBClusterStatusImage:
-		return m.UpdateStatusImage, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

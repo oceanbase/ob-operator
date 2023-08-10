@@ -481,40 +481,6 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 	return nil
 }
 
-// TODO: add a set context method
-func (m *OBServerManager) StoreOBVersion() error {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		return errors.Wrap(err, "Failed to get operation manager")
-	}
-	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
-		Port: oceanbaseconst.RpcPort,
-	}
-	// observer, err := oceanbaseOperationManager.GetServer(observerInfo)
-	_, err = oceanbaseOperationManager.GetServer(observerInfo)
-	if err != nil {
-		return errors.Wrap(err, "Failed to get observer info from obcluster")
-	}
-
-	// store build version into context
-	// observerObject, err := m.getOBServer()
-	// if err != nil {
-	// 	return errors.Wrap(err, "Get observer object")
-	// }
-	// observerObject.Status.OperationContext.Context[oceanbaseconst.OBServerVersionKey] = observer.BuildVersion
-	// err = m.Client.Status().Update(m.Ctx, observerObject)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Got error when update observer status")
-	// }
-	return nil
-}
-
-func (m *OBServerManager) UpdateOBServerStatusImage() error {
-	m.OBServer.Status.Image = m.OBServer.Spec.OBServerTemplate.Image
-	return nil
-}
-
 func (m *OBServerManager) UpgradeOBServerImage() error {
 	observerPod, err := m.getPod()
 	if err != nil {

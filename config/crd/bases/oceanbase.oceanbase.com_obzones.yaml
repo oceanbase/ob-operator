@@ -1792,10 +1792,6 @@ spec:
                 type: array
               operationContext:
                 properties:
-                  context:
-                    additionalProperties:
-                      type: string
-                    type: object
                   idx:
                     type: integer
                   name:
@@ -1813,7 +1809,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - context
                 - idx
                 - name
                 - targetStatus

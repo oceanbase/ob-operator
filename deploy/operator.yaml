@@ -1934,10 +1934,6 @@ spec:
                 type: array
               operationContext:
                 properties:
-                  context:
-                    additionalProperties:
-                      type: string
-                    type: object
                   idx:
                     type: integer
                   name:
@@ -1955,7 +1951,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - context
                 - idx
                 - name
                 - targetStatus
@@ -2055,10 +2050,6 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
-                  context:
-                    additionalProperties:
-                      type: string
-                    type: object
                   idx:
                     type: integer
                   name:
@@ -2076,7 +2067,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - context
                 - idx
                 - name
                 - targetStatus
@@ -3890,10 +3880,6 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
-                  context:
-                    additionalProperties:
-                      type: string
-                    type: object
                   idx:
                     type: integer
                   name:
@@ -3911,7 +3897,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - context
                 - idx
                 - name
                 - targetStatus
@@ -5937,10 +5922,6 @@ spec:
                 type: array
               operationContext:
                 properties:
-                  context:
-                    additionalProperties:
-                      type: string
-                    type: object
                   idx:
                     type: integer
                   name:
@@ -5958,7 +5939,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - context
                 - idx
                 - name
                 - targetStatus

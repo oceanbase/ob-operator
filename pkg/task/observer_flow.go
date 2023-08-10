@@ -63,7 +63,7 @@ func UpgradeOBServer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.UpgradeOBServer,
-			Tasks:        []string{taskname.StoreCurrentOBServerVersion, taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster, taskname.UpdateOBServerStatusImage},
+			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}

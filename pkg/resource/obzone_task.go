@@ -262,11 +262,6 @@ func (m *OBZoneManager) UpgradeOBServer() error {
 	return nil
 }
 
-func (m *OBZoneManager) UpdateStatusImage() error {
-	m.OBZone.Status.Image = m.OBZone.Spec.OBServerTemplate.Image
-	return nil
-}
-
 func (m *OBZoneManager) WaitOBServerUpgraded() error {
 	for i := 0; i < oceanbaseconst.TimeConsumingStateWaitTimeout; i++ {
 		observerList, err := m.listOBServers()

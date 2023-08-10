@@ -65,10 +65,6 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.WaitOBServerActiveInCluster, nil
 	case taskname.UpgradeOBServerImage:
 		return m.UpgradeOBServerImage, nil
-	case taskname.StoreCurrentOBServerVersion:
-		return m.StoreOBVersion, nil
-	case taskname.UpdateOBServerStatusImage:
-		return m.UpdateOBServerStatusImage, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}

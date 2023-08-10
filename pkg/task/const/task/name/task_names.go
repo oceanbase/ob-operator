@@ -34,7 +34,6 @@ const (
 	RollingUpgradeByZone       = "rolling upgrade by zone"
 	FinishUpgrade              = "execute upgrade post script"
 	RestoreEssentialParameters = "restore essential parameters"
-	UpdateOBClusterStatusImage = "update obcluster status image tag"
 )
 
 // obzone tasks
@@ -54,7 +53,6 @@ const (
 	DeleteOBZoneInCluster      = "delete obzone in cluster"
 	OBClusterHealthCheck       = "obcluster health check"
 	OBZoneHealthCheck          = "obzone health check"
-	UpdateOBZoneStatusImage    = "update obzone status image tag"
 )
 
 // observer tasks
@@ -69,9 +67,7 @@ const (
 	WaitOBServerDeletedInCluster = "wait observer deleted in cluster"
 	WaitOBServerPodReady         = "wait observer pod ready"
 	WaitOBServerActiveInCluster  = "wait observer active in cluster"
-	StoreCurrentOBServerVersion  = "store current observer version"
 	UpgradeOBServerImage         = "upgrade observer image"
-	UpdateOBServerStatusImage    = "update observer status image tag"
 )
 
 // obparameter tasks
