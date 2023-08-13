@@ -98,7 +98,15 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case zonestatus.Deleting:
 		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
 	case zonestatus.Upgrade:
-		return task.GetRegistry().Get(flowname.UpgradeOBZone)
+		obcluster, err = m.getOBCluster()
+		if err != nil {
+			return nil, errors.Wrap(err, "Get obcluster")
+		}
+		if len(obcluster.Status.OBZoneStatus) >= 3 {
+			return task.GetRegistry().Get(flowname.UpgradeOBZone)
+		} else {
+			return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
+		}
 		// TODO upgrade
 	}
 	return nil, nil

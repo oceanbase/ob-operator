@@ -507,9 +507,11 @@ func (m *OBServerManager) WaitOBServerPodReady() error {
 			return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
 		}
 		for _, containerStatus := range observerPod.Status.ContainerStatuses {
-			if containerStatus.Name == oceanbaseconst.ContainerName && containerStatus.Image == m.OBServer.Spec.OBServerTemplate.Image && containerStatus.Ready {
+			if containerStatus.Name != oceanbaseconst.ContainerName {
+				continue
+			}
+			if containerStatus.Ready && containerStatus.Image == m.OBServer.Spec.OBServerTemplate.Image {
 				observerPodRestarted = true
-				break
 			}
 		}
 		if observerPodRestarted {

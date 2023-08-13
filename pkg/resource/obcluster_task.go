@@ -436,15 +436,7 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) erro
 	return nil
 }
 
-func (m *OBClusterManager) GetJob(jobName string) (*batchv1.Job, error) {
-	return nil, nil
-}
-
 func (m *OBClusterManager) ValidateUpgradeInfo() error {
-	return nil
-}
-
-func (m *OBClusterManager) ValidateUpgradeInfoTemp() error {
 	// Get current obcluster version
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -460,11 +452,11 @@ func (m *OBClusterManager) ValidateUpgradeInfoTemp() error {
 	suffix := parts[len(parts)-1]
 	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", suffix)
 	var backoffLimit int32
-	var ttl int32 = 86400
+	var ttl int32 = 300
 	container := corev1.Container{
-		Name:    "observer",
+		Name:    "ob-upgrade-validator",
 		Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-		Command: []string{"bash", "-c", fmt.Sprintf("/usr/bin/observer-update-validator %s", version.String())},
+		Command: []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper upgrade validate -s %s", version.String())},
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -491,9 +483,9 @@ func (m *OBClusterManager) ValidateUpgradeInfoTemp() error {
 
 	var jobObject *batchv1.Job
 	for {
-		jobObject, err = m.GetJob(jobName)
+		jobObject, err = GetJob(m.Client, m.OBCluster.Namespace, jobName)
 		if err != nil {
-			return errors.Wrapf(err, "Failed to get validate job for obcluster %s", m.OBCluster.Name)
+			m.Logger.Error(err, "Failed to get job")
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
 			m.Logger.Info("job is still running")
