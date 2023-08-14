@@ -19,6 +19,11 @@ const (
 	DefaultStateWaitTimeout       = 300
 	TimeConsumingStateWaitTimeout = 3600
 	ServerDeleteTimeoutSeconds    = 86400
+	GigaConverter                 = 1073741824
+)
+
+const (
+	DefaultDiskUsePercent = 90
 )
 
 const (

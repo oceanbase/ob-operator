@@ -411,24 +411,12 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
 
-	makeLogDirCmd := fmt.Sprintf("mkdir -p %s/log && ln -sf %s/log %s/log", oceanbaseconst.LogPath, oceanbaseconst.LogPath, oceanbaseconst.InstallPath)
-	makeStoreDirCmd := fmt.Sprintf("mkdir -p %s/store", oceanbaseconst.InstallPath)
-	makeCLogDirCmd := fmt.Sprintf("mkdir -p %s/clog && ln -sf %s/clog %s/store/clog", oceanbaseconst.ClogPath, oceanbaseconst.ClogPath, oceanbaseconst.InstallPath)
-	makeILogDirCmd := fmt.Sprintf("mkdir -p %s/ilog && ln -sf %s/ilog %s/store/ilog", oceanbaseconst.ClogPath, oceanbaseconst.ClogPath, oceanbaseconst.InstallPath)
-	makeSLogDirCmd := fmt.Sprintf("mkdir -p %s/slog && ln -sf %s/slog %s/store/slog", oceanbaseconst.DataPath, oceanbaseconst.DataPath, oceanbaseconst.InstallPath)
-	makeEtcDirCmd := fmt.Sprintf("mkdir -p %s/etc && ln -sf %s/etc %s/store/etc", oceanbaseconst.DataPath, oceanbaseconst.DataPath, oceanbaseconst.InstallPath)
-	makeSortDirCmd := fmt.Sprintf("mkdir -p %s/sort_dir && ln -sf %s/sort_dir %s/store/sort_dir", oceanbaseconst.DataPath, oceanbaseconst.DataPath, oceanbaseconst.InstallPath)
-	makeSstableDirCmd := fmt.Sprintf("mkdir -p %s/sstable && ln -sf %s/sstable %s/store/sstable", oceanbaseconst.DataPath, oceanbaseconst.DataPath, oceanbaseconst.InstallPath)
-
-	// TODO this config is only for small quota, should calculate based on resource
-	optStr := "cpu_count=16,memory_limit=8G,system_memory=1G,__min_full_resource_pool_memory=1073741824,datafile_size=40G,log_disk_size=40G,net_thread_count=2,stack_size=512K,cache_wash_threshold=1G,schema_history_expire_time=1d,enable_separate_sys_clog=false,enable_merge_by_turn=false,enable_syslog_recycle=true,enable_syslog_wf=false,max_syslog_file_count=4"
-
-	startObserverCmd := fmt.Sprintf("chown -R root:root /home/admin/oceanbase && /home/admin/oceanbase/bin/observer --nodaemon --appname %s --cluster_id %d --zone %s --devname eth0 -p 2881 -P 2882 -d /home/admin/oceanbase/store/ -l info -o config_additional_dir=/home/admin/oceanbase/store/etc,%s", m.OBServer.Spec.ClusterName, m.OBServer.Spec.ClusterId, m.OBServer.Spec.Zone, optStr)
+	startOBServerCmd := fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper start")
 
 	cmds := []string{
 		"bash",
 		"-c",
-		fmt.Sprintf(" %s && %s && %s && %s && %s && %s && %s && %s && %s ", makeLogDirCmd, makeStoreDirCmd, makeCLogDirCmd, makeILogDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd, startObserverCmd),
+		startOBServerCmd,
 	}
 
 	// TODO make a new image take environment variables as commandline option
@@ -437,7 +425,50 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 		Name:  "LD_LIBRARY_PATH",
 		Value: "/home/admin/oceanbase/lib",
 	}
+	cpuCount := m.OBServer.Spec.OBServerTemplate.Resource.Cpu.Value()
+	if cpuCount < 16 {
+		cpuCount = 16
+	}
+	envCpu := corev1.EnvVar{
+		Name:  "CPU_COUNT",
+		Value: fmt.Sprintf("%d", cpuCount),
+	}
+	datafileSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
+	if !ok {
+		m.Logger.Error(errors.New("Parse datafile size failed"), "failed to parse datafiel size")
+	}
+	envDataFile := corev1.EnvVar{
+		Name:  "DATAFILE_SIZE",
+		Value: fmt.Sprintf("%dG", datafileSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100),
+	}
+	clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
+	if !ok {
+		m.Logger.Error(errors.New("Parse log disk size failed"), "failed to parse log disk size")
+	}
+	envLogDisk := corev1.EnvVar{
+		Name:  "LOG_DISK_SIZE",
+		Value: fmt.Sprintf("%dG", clogDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100),
+	}
+	envClusterName := corev1.EnvVar{
+		Name:  "CLUSTER_NAME",
+		Value: m.OBServer.Spec.ClusterName,
+	}
+	envClusterId := corev1.EnvVar{
+		Name:  "CLUSTER_ID",
+		Value: fmt.Sprintf("%d", m.OBServer.Spec.ClusterId),
+	}
+	envZoneName := corev1.EnvVar{
+		Name:  "ZONE_NAME",
+		Value: m.OBServer.Spec.Zone,
+	}
 	env = append(env, envLib)
+	env = append(env, envCpu)
+	env = append(env, envCpu)
+	env = append(env, envDataFile)
+	env = append(env, envLogDisk)
+	env = append(env, envClusterName)
+	env = append(env, envClusterId)
+	env = append(env, envZoneName)
 
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
