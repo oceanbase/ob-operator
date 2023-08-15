@@ -116,7 +116,7 @@ func startOBServerWithParam() error {
 	if !found {
 		return errors.New("zone name is required")
 	}
-	optStr := fmt.Sprintf("cpu_count=%s,datafile_size=%s,log_disk_size=%s", cpuCountOpt, datafileSizeOpt, logDiskSizeOpt)
+	optStr := fmt.Sprintf("cpu_count=%s,datafile_size=%s,log_disk_size=%s,enable_syslog_recycle=true,max_syslog_file_count=4", cpuCountOpt, datafileSizeOpt, logDiskSizeOpt)
 	cmd := fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	return exec.Command("bash", "-c", cmd).Run()
 }
