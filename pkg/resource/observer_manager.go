@@ -132,7 +132,7 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
 		finalizerFinished = true
 	} else {
-		finalizerFinished = finalizerFinished || (m.OBServer.Status.Status == serverstatus.FinalizerFinished)
+		finalizerFinished = m.OBServer.Status.Status == serverstatus.FinalizerFinished
 	}
 	if finalizerFinished {
 		m.Logger.Info("Finalizer finished")

@@ -53,3 +53,9 @@ const (
 	DeleteOBServerInCluster      = "delete observer in cluster"
 	WaitOBServerDeletedInCluster = "wait observer deleted in cluster"
 )
+
+const (
+	CreateTenant = "create tenant"
+	MaintainTenant = "check and apply tenant modification"
+	DeleteTenant = "delete tenant"
+)

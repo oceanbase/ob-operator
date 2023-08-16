@@ -38,4 +38,9 @@ func init() {
 	GetRegistry().Register(flowname.PrepareOBServerForBootstrap, PrepareOBServerForBootstrap)
 	GetRegistry().Register(flowname.MaintainOBServerAfterBootstrap, MaintainOBServerAfterBootstrap)
 	GetRegistry().Register(flowname.DeleteOBServerFinalizer, DeleteOBServerFinalizer)
+
+	// obtenant
+	GetRegistry().Register(flowname.CreateTenant, CreateTenant)
+	GetRegistry().Register(flowname.MaintainTenant, MaintainTenant)
+	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
 }

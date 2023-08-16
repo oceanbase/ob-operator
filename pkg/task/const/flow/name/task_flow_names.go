@@ -40,3 +40,9 @@ const (
 	CreateOBServer                 = "create observer"
 	DeleteOBServerFinalizer        = "delete observer finalizer"
 )
+
+const(
+	CreateTenant = "create tenant"
+	MaintainTenant = "maintain Tenant"
+	DeleteTenant = "delete tenant"
+)

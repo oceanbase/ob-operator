@@ -78,7 +78,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
 			taskId := task.GetTaskManager().Submit(taskFunc)
-			c.Logger.Info("Successfullly submit task", "taskid", taskId)
+			c.Logger.Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId
 			f.OperationContext.TaskStatus = taskstatus.Running
 		}

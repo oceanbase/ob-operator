@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,14 +29,62 @@ type OBTenantSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBTenant. Edit obtenant_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	ClusterID   int64  `json:"clusterID"`
+	ClusterName string `json:"clusterName"`
+
+	Charset          string `json:"charset,omitempty"`
+	Collate          string `json:"collate,omitempty"`
+	Mode             string `json:"mode,omitempty"`
+	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
+
+	Pools []ResourcePoolSpec `json:"pools"`
+}
+
+type UnitConfig struct {
+	MaxCPU     resource.Quantity `json:"maxCPU"`
+	MemorySize resource.Quantity `json:"memorySize"`
+	MinCPU     resource.Quantity `json:"minCPU,omitempty"`
+	MaxIops    int               `json:"maxIops,omitempty"`
+	MinIops    int               `json:"minIops,omitempty"`
+	// V3
+	MaxDiskSize   resource.Quantity `json:"maxDiskSize,omitempty"`
+	MaxSessionNum int               `json:"maxSessionNum,omitempty"`
+	// V4
+	IopsWeight  int               `json:"iopsWeight,omitempty"`
+	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
 
 // OBTenantStatus defines the observed state of OBTenant
 type OBTenantStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Status           string               `json:"status"`
+	Pools            []ResourcePoolStatus `json:"resourcePool"`
+	ConnectWhiteList string               `json:"connectWhiteList,omitempty"`
+	Charset          string               `json:"charset,omitempty"`
+	OperationContext *OperationContext     `json:"operationContext,omitempty"`
+}
+
+type ResourcePoolStatus struct {
+	ZoneList string       `json:"zone"`
+	Units    []UnitStatus `json:"units"`
+	Priority int          `json:"priority,omitempty"`
+	Type       LocalityType `json:"type"`
+	UnitConfig UnitConfig       `json:"unitConfig"`
+	UnitNumber int          `json:"unitNum"`
+}
+
+type UnitStatus struct {
+	UnitId     int                 `json:"unitId"`
+	ServerIP   string              `json:"serverIP"`
+	ServerPort int                 `json:"serverPort"`
+	Status     string              `json:"status"`
+	Migrate    MigrateServerStatus `json:"migrate"`
+}
+
+type MigrateServerStatus struct {
+	ServerIP   string `json:"serverIP"`
+	ServerPort int    `json:"serverPort"`
 }
 
 //+kubebuilder:object:root=true

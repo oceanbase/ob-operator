@@ -121,7 +121,7 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
 		finalizerFinished = true
 	} else {
-		finalizerFinished = finalizerFinished || (m.OBZone.Status.Status == zonestatus.FinalizerFinished)
+		finalizerFinished = m.OBZone.Status.Status == zonestatus.FinalizerFinished
 	}
 	if finalizerFinished {
 		m.Logger.Info("Finalizer finished")
