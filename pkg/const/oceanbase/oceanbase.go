@@ -46,6 +46,10 @@ const (
 )
 
 const (
+	CNICalico = "calico"
+)
+
+const (
 	ContainerName                  = "observer"
 	InstallPath                    = "/home/admin/oceanbase"
 	DataPath                       = "/home/admin/data-file"

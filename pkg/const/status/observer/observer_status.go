@@ -14,7 +14,8 @@ package observer
 
 const (
 	New               = "new"
-	Maintaining       = "maintaining"
+	RecreateOBServer  = "recreate observer"
+	Unrecoverable     = "observer unrecoverable"
 	Running           = "running"
 	Upgrade           = "upgrade"
 	BootstrapReady    = "bootstrap ready"

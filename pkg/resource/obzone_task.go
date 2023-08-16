@@ -68,7 +68,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 			}
 			allMatched := true
 			for _, observerStatus := range obzone.Status.OBServerStatus {
-				if observerStatus.Status != status {
+				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
 					m.Logger.Info("server status still not matched", "server", observerStatus.Server, "status", status)
 					allMatched = false
 					break
@@ -96,7 +96,12 @@ func (m *OBZoneManager) CreateOBServer() error {
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
-	currentReplica := len(m.OBZone.Status.OBServerStatus)
+	currentReplica := 0
+	for _, observerStatus := range m.OBZone.Status.OBServerStatus {
+		if observerStatus.Status != serverstatus.Unrecoverable {
+			currentReplica = currentReplica + 1
+		}
+	}
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -143,14 +148,15 @@ func (m *OBZoneManager) DeleteOBServer() error {
 	}
 	observerCount := 0
 	for _, observer := range observerList.Items {
-		observerCount += 1
-		if observerCount > m.OBZone.Spec.Topology.Replica {
-			m.Logger.Info("need delete observer", "observer", observer.Name)
+		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
+			m.Logger.Info("delete observer", "observer", observer)
 			err = m.Client.Delete(m.Ctx, &observer)
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
+			continue
 		}
+		observerCount += 1
 	}
 	return nil
 }

@@ -87,6 +87,15 @@ func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
+func (m *OBServerManager) recoverable() bool {
+	switch m.OBServer.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		return true
+	default:
+		return false
+	}
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -96,7 +105,16 @@ func (m *OBServerManager) UpdateStatus() error {
 		pod, err := m.getPod()
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
-				m.Logger.Error(err, "pod not found")
+				m.Logger.Info("pod not found")
+				if m.OBServer.Status.Status == serverstatus.Running {
+					if m.recoverable() {
+						m.Logger.Info("recreate observer")
+						m.OBServer.Status.Status = serverstatus.RecreateOBServer
+					} else {
+						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+						m.OBServer.Status.Status = serverstatus.Unrecoverable
+					}
+				}
 			} else {
 				return errors.Wrap(err, "get pod when update status")
 			}
@@ -203,6 +221,9 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case serverstatus.Upgrade:
 		m.Logger.Info("Get task flow when observer upgrade")
 		return task.GetRegistry().Get(flowname.UpgradeOBServer)
+	case serverstatus.RecreateOBServer:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.RecoverOBServer)
 	default:
 		return nil, nil
 	}

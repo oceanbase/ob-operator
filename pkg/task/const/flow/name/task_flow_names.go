@@ -43,6 +43,7 @@ const (
 	CreateOBServer                 = "create observer"
 	DeleteOBServerFinalizer        = "delete observer finalizer"
 	UpgradeOBServer                = "upgrade observer"
+	RecoverOBServer                = "recover observer"
 )
 
 // obparameter flows

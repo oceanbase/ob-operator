@@ -152,6 +152,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 
 	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
+	availableReplica := 0
 	// handle upgrade
 	allServerVersionSync := true
 	for _, observer := range observerList.Items {
@@ -159,6 +160,9 @@ func (m *OBZoneManager) UpdateStatus() error {
 			Server: observer.Status.PodIp,
 			Status: observer.Status.Status,
 		})
+		if observer.Status.Status != serverstatus.Unrecoverable {
+			availableReplica = availableReplica + 1
+		}
 		if observer.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
 			m.Logger.Info("Found observer image not match")
 			allServerVersionSync = false
@@ -176,7 +180,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			m.OBZone.Status.Image = m.OBZone.Spec.OBServerTemplate.Image
 		}
 		// check topology
-		if m.OBZone.Spec.Topology.Replica > len(m.OBZone.Status.OBServerStatus) {
+		if m.OBZone.Spec.Topology.Replica > availableReplica {
 			m.Logger.Info("Compare topology need add observer")
 			m.OBZone.Status.Status = zonestatus.AddOBServer
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {

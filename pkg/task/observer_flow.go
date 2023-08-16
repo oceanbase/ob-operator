@@ -68,3 +68,13 @@ func UpgradeOBServer() *TaskFlow {
 		},
 	}
 }
+
+func RecoverOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.RecoverOBServer,
+			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
