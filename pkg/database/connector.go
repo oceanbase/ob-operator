@@ -30,6 +30,11 @@ type DataSource interface {
 	ID() string
 	DriverName() string
 	DataSourceName() string
+	GetAddress() string
+	GetPort() int64
+	GetUser() string
+	GetPassword() string
+	GetDatabase() string
 	String() string
 }
 
@@ -76,8 +81,8 @@ func (c *Connector) GetClient() *Client {
 	return c.client
 }
 
-func (c *Connector) DataSource() string {
-	return c.ds.String()
+func (c *Connector) DataSource() DataSource {
+	return c.ds
 }
 
 func (c *Connector) Close() error {

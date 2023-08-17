@@ -30,7 +30,7 @@ func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.Bootst
 	}
 	bootstrapInfo := strings.Join(serverInfoList, ", ")
 	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapInfo)
-	m.Logger.Info("Execute bootstrap sql", "sql", bootstrapSql, "datasource", m.Connector.DataSource())
+	m.Logger.Info("Execute bootstrap sql", "sql", bootstrapSql, "datasource", m.Connector.DataSource().String())
 	err := m.ExecWithTimeout(config.BootstrapTimeout, bootstrapSql)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when bootstrap")

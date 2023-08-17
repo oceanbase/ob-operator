@@ -124,9 +124,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
 			// TODO update from obcluster
-			if m.OBServer.Status.CNI == "" {
-				m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
-			}
+			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
 			for _, container := range pod.Spec.Containers {

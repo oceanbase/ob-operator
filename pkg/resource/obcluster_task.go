@@ -250,9 +250,16 @@ func (m *OBClusterManager) Bootstrap() error {
 	}
 
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
+	connectAddress := manager.Connector.DataSource().GetAddress()
 	for _, zone := range obzoneList.Items {
+		serverIp := zone.Status.OBServerStatus[0].Server
+		for _, serverInfo := range zone.Status.OBServerStatus {
+			if serverInfo.Server == connectAddress {
+				serverIp = connectAddress
+			}
+		}
 		serverInfo := &model.ServerInfo{
-			Ip:   zone.Status.OBServerStatus[0].Server,
+			Ip:   serverIp,
 			Port: oceanbaseconst.RpcPort,
 		}
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{

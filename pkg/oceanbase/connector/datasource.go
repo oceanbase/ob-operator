@@ -45,6 +45,26 @@ func (*OceanBaseDataSource) DriverName() string {
 	return "mysql"
 }
 
+func (ds *OceanBaseDataSource) GetAddress() string {
+	return ds.Address
+}
+
+func (ds *OceanBaseDataSource) GetPort() int64 {
+	return ds.Port
+}
+
+func (ds *OceanBaseDataSource) GetUser() string {
+	return fmt.Sprintf("%s@%s", ds.User, ds.Tenant)
+}
+
+func (ds *OceanBaseDataSource) GetPassword() string {
+	return ds.Password
+}
+
+func (ds *OceanBaseDataSource) GetDatabase() string {
+	return ds.Database
+}
+
 func (s *OceanBaseDataSource) DataSourceName() string {
 	passwordPart := ""
 	tenantPart := ""
