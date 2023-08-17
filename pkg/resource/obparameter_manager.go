@@ -185,5 +185,5 @@ func (m *OBParameterManager) getOceanbaseOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 }

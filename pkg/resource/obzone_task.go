@@ -32,7 +32,7 @@ func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOper
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBZoneManager) generateServerName() string {

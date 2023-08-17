@@ -220,7 +220,7 @@ func (m *OBClusterManager) CreateOBZone() error {
 }
 
 func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, m.OBCluster)
 }
 
 func (m *OBClusterManager) Bootstrap() error {

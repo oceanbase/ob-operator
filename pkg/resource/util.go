@@ -47,7 +47,7 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 	return string(secret.Data[secretconst.PasswordKeyName]), err
 }
 
-func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
+func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
 		oceanbaseconst.LabelRefOBCluster: obcluster.Name,
@@ -78,6 +78,7 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, obcluster *v1alp
 		// if err is nil, db connection is already checked available
 		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)
 		if err == nil && oceanbaseOperationManager != nil {
+			oceanbaseOperationManager.Logger = logger
 			return oceanbaseOperationManager, nil
 		}
 	}
@@ -98,7 +99,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get root password")
 	}
-	oceanbaseOperationManager, err := GetOceanbaseOperationManagerFromOBCluster(c, obcluster)
+	oceanbaseOperationManager, err := GetOceanbaseOperationManagerFromOBCluster(c, logger, obcluster)
 	if err != nil {
 		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
 	}
@@ -169,4 +170,12 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		return errors.Wrap(err, "Failed to run upgrade script job")
 	}
 	return nil
+}
+
+func GetCNIFromAnnotation(pod *corev1.Pod) string {
+	_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoValidate]
+	if found {
+		return oceanbaseconst.CNICalico
+	}
+	return oceanbaseconst.CNIUnknown
 }

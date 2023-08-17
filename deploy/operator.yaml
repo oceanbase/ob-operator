@@ -3915,8 +3915,6 @@ spec:
                 description: PodPhase is a label for the condition of a pod at the
                   current time.
                 type: string
-              previousIp:
-                type: string
               ready:
                 type: boolean
               startServiceTime:

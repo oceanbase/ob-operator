@@ -87,7 +87,7 @@ func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
-func (m *OBServerManager) recoverable() bool {
+func (m *OBServerManager) SupportStaticIp() bool {
 	switch m.OBServer.Status.CNI {
 	case oceanbaseconst.CNICalico:
 		return true
@@ -107,9 +107,9 @@ func (m *OBServerManager) UpdateStatus() error {
 			if kubeerrors.IsNotFound(err) {
 				m.Logger.Info("pod not found")
 				if m.OBServer.Status.Status == serverstatus.Running {
-					if m.recoverable() {
+					if m.SupportStaticIp() {
 						m.Logger.Info("recreate observer")
-						m.OBServer.Status.Status = serverstatus.RecreateOBServer
+						m.OBServer.Status.Status = serverstatus.Recover
 					} else {
 						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
 						m.OBServer.Status.Status = serverstatus.Unrecoverable
@@ -123,6 +123,10 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodPhase = pod.Status.Phase
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
+			// TODO update from obcluster
+			if m.OBServer.Status.CNI == "" {
+				m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
+			}
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
 			for _, container := range pod.Spec.Containers {
@@ -221,7 +225,7 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case serverstatus.Upgrade:
 		m.Logger.Info("Get task flow when observer upgrade")
 		return task.GetRegistry().Get(flowname.UpgradeOBServer)
-	case serverstatus.RecreateOBServer:
+	case serverstatus.Recover:
 		m.Logger.Info("Get task flow when observer upgrade")
 		return task.GetRegistry().Get(flowname.RecoverOBServer)
 	default:

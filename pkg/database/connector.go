@@ -76,6 +76,10 @@ func (c *Connector) GetClient() *Client {
 	return c.client
 }
 
+func (c *Connector) DataSource() string {
+	return c.ds.String()
+}
+
 func (c *Connector) Close() error {
 	if c.client.DB != nil {
 		return c.client.DB.Close()

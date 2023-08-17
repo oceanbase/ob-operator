@@ -52,7 +52,7 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBServerManager) AddServer() error {
@@ -90,6 +90,19 @@ func (m *OBServerManager) WaitOBClusterBootstrapped() error {
 	return errors.New("Timeout to wait obcluster bootstrapped")
 }
 
+func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
+	annotations := make(map[string]string)
+	switch m.OBServer.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		if m.OBServer.Status.PodIp != "" {
+			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
+		}
+	default:
+		m.Logger.Info("static ip not supported, set empty annotation")
+	}
+	return annotations
+}
+
 func (m *OBServerManager) CreateOBPod() error {
 	m.Logger.Info("create observer pod")
 	obcluster, err := m.getOBCluster()
@@ -103,6 +116,7 @@ func (m *OBServerManager) CreateOBPod() error {
 		Name:       m.OBServer.Name,
 		UID:        m.OBServer.GetUID(),
 	}
+	annotations := m.generateStaticIpAnnotation()
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	observerPodSpec := m.createOBPodSpec(obcluster)
 	// create pod
@@ -112,6 +126,7 @@ func (m *OBServerManager) CreateOBPod() error {
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
 			Labels:          m.OBServer.Labels,
+			Annotations:     annotations,
 		},
 		Spec: observerPodSpec,
 	}

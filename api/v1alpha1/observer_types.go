@@ -51,7 +51,6 @@ type OBServerStatus struct {
 	NodeIp           string            `json:"nodeIp"`
 	OBStatus         string            `json:"obStatus,omitempty"`
 	StartServiceTime int64             `json:"startServiceTime,omitempty"`
-	PreviousIp       string            `json:"previousIp,omitempty"`
 	CNI              string            `json:"cni,omitempty"`
 }
 

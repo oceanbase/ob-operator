@@ -46,7 +46,13 @@ const (
 )
 
 const (
-	CNICalico = "calico"
+	AnnotationCalicoValidate = "cni.projectcalico.org/podIP"
+	AnnotationCalicoIpAddrs  = "cni.projectcalico.org/ipAddrs"
+)
+
+const (
+	CNICalico  = "calico"
+	CNIUnknown = "unknown"
 )
 
 const (
