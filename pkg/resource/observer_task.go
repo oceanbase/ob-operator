@@ -478,7 +478,6 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	}
 	env = append(env, envLib)
 	env = append(env, envCpu)
-	env = append(env, envCpu)
 	env = append(env, envDataFile)
 	env = append(env, envLogDisk)
 	env = append(env, envClusterName)
@@ -523,6 +522,23 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 		}
 	} else {
 		m.Logger.Info("observer already deleted", "observer", observerInfo.Ip)
+	}
+	return nil
+}
+
+func (m *OBServerManager) AnnotateOBServerPod() error {
+	observerPod, err := m.getPod()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+	}
+	switch m.OBServer.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		m.Logger.Info("Update pod annotation, cni is calico")
+		observerPod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
+	}
+	err = m.Client.Update(m.Ctx, observerPod)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to update pod annotation of observer %s", m.OBServer.Name)
 	}
 	return nil
 }

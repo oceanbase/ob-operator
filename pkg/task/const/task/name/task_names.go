@@ -60,6 +60,7 @@ const (
 	WaitOBClusterBootstrapped    = "wait obcluster bootstrapped"
 	CreateOBPVC                  = "create observer pvc"
 	CreateOBPod                  = "create observer pod"
+	AnnotateOBServerPod          = "annotate observer pod"
 	WaitOBServerReady            = "wait observer ready"
 	StartOBServer                = "start observer"
 	AddServer                    = "add observer"

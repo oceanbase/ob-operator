@@ -78,3 +78,13 @@ func RecoverOBServer() *TaskFlow {
 		},
 	}
 }
+
+func AnnotateOBServerPod() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.AnnotateOBServerPod,
+			Tasks:        []string{taskname.AnnotateOBServerPod},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}

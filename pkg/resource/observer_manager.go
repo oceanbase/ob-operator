@@ -65,6 +65,8 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.WaitOBServerActiveInCluster, nil
 	case taskname.UpgradeOBServerImage:
 		return m.UpgradeOBServerImage, nil
+	case taskname.AnnotateOBServerPod:
+		return m.AnnotateOBServerPod, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -127,15 +129,19 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			for _, container := range pod.Spec.Containers {
-				if container.Name == oceanbaseconst.ContainerName {
-					m.OBServer.Status.Image = container.Image
-					break
+			if NeedAnnonation(pod, m.OBServer.Status.CNI) {
+				m.OBServer.Status.Status = serverstatus.Annotate
+			} else {
+				for _, container := range pod.Spec.Containers {
+					if container.Name == oceanbaseconst.ContainerName {
+						m.OBServer.Status.Image = container.Image
+						break
+					}
 				}
-			}
-			if m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
-				m.Logger.Info("Found image changed, begin upgrade")
-				m.OBServer.Status.Status = serverstatus.Upgrade
+				if m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
+					m.Logger.Info("Found image changed, begin upgrade")
+					m.OBServer.Status.Status = serverstatus.Upgrade
+				}
 			}
 		}
 
@@ -226,6 +232,9 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case serverstatus.Recover:
 		m.Logger.Info("Get task flow when observer upgrade")
 		return task.GetRegistry().Get(flowname.RecoverOBServer)
+	case serverstatus.Annotate:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.AnnotateOBServerPod)
 	default:
 		return nil, nil
 	}

@@ -18,6 +18,7 @@ const (
 	Unrecoverable     = "observer unrecoverable"
 	Running           = "running"
 	Upgrade           = "upgrade"
+	Annotate          = "annotate"
 	BootstrapReady    = "bootstrap ready"
 	Deleting          = "deleting"
 	FinalizerFinished = "finalizer finished"

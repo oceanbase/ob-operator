@@ -179,3 +179,13 @@ func GetCNIFromAnnotation(pod *corev1.Pod) string {
 	}
 	return oceanbaseconst.CNIUnknown
 }
+
+func NeedAnnonation(pod *corev1.Pod, cni string) bool {
+	switch cni {
+	case oceanbaseconst.CNICalico:
+		_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs]
+		return !found
+	default:
+		return false
+	}
+}

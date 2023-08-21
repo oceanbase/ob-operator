@@ -44,6 +44,7 @@ const (
 	DeleteOBServerFinalizer        = "delete observer finalizer"
 	UpgradeOBServer                = "upgrade observer"
 	RecoverOBServer                = "recover observer"
+	AnnotateOBServerPod            = "annotate observer pod"
 )
 
 // obparameter flows
