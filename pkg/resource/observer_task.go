@@ -426,7 +426,7 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
 
-	startOBServerCmd := fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper start")
+	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
 
 	cmds := []string{
 		"bash",
