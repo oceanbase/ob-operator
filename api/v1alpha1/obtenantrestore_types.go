@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,20 +25,27 @@ type OBTenantRestoreSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBTenantRestore. Edit obtenantrestore_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	RestoreTenantName string       `json:"restoreTenantName"`
+	Type              string       `json:"type"`
+	SourceUri         string       `json:"sourceUri"`
+	Until             *metav1.Time `json:"until,omitempty"`
 }
 
 // OBTenantRestoreStatus defines the observed state of OBTenantRestore
 type OBTenantRestoreStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Status           RestoreJobStatus  `json:"status"`
+	JobStatus        batchv1.JobStatus `json:"jobStatus"`
+	Progress         string            `json:"progress"`
+	OperationContext *OperationContext `json:"operationContext,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
 // OBTenantRestore is the Schema for the obtenantrestores API
+// An instance of OBTenantRestore stands for a tenant restore job
 type OBTenantRestore struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -58,3 +66,19 @@ type OBTenantRestoreList struct {
 func init() {
 	SchemeBuilder.Register(&OBTenantRestore{}, &OBTenantRestoreList{})
 }
+
+type RestoreJobType string
+
+const (
+	RestoreJobRestore  RestoreJobType = "RESTORE"
+	RestoreJobActivate RestoreJobType = "ACTIVATE"
+)
+
+type RestoreJobStatus string
+
+const (
+	RestoreJobRunning    RestoreJobStatus = "RUNNING"
+	RestoreJobFailed     RestoreJobStatus = "FAILED"
+	RestoreJobSuccessful RestoreJobStatus = "SUCCESSFUL"
+	RestoreJobCanceled   RestoreJobStatus = "CANCELED"
+)

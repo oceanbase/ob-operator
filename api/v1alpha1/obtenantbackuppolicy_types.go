@@ -27,13 +27,17 @@ type OBTenantBackupPolicySpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantBackupPolicy. Edit obtenantbackuppolicy_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	TenantName string           `json:"tenantName"`
+	LogArchive LogArchiveConfig `json:"logArchive"`
+	DataBackup DataBackupConfig `json:"dataBackup"`
+	DataClean  CleanPolicy      `json:"dataClean"`
 }
 
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Status                 BackupPolicyStatusType `json:"status"`
+	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
+	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -60,3 +64,41 @@ type OBTenantBackupPolicyList struct {
 func init() {
 	SchemeBuilder.Register(&OBTenantBackupPolicy{}, &OBTenantBackupPolicyList{})
 }
+
+// LogArchiveConfig contains the configuration for log archive progress
+type LogArchiveConfig struct {
+	Destination         string `json:"destination"`
+	SwitchPieceInterval string `json:"switchPieceInterval"`
+	DestDisabled        bool   `json:"destDisabled"`
+	Concurrency         int    `json:"concurrency"`
+}
+
+type BackupType string
+
+const (
+	BackupFull BackupType = "FULL"
+	BackupIncr BackupType = "INCR"
+)
+
+// DataBackupConfig contains the configuration for data backup progress
+type DataBackupConfig struct {
+	Destination string     `json:"destination"`
+	Type        BackupType `json:"type"`
+	Crontab     string     `json:"crontab"`
+}
+
+type CleanPolicy struct {
+	Name          string `json:"name"`
+	RecoverWindow string `json:"recoverWindow"`
+	Enabled       string `json:"enabled"`
+}
+
+type BackupPolicyStatusType string
+
+const (
+	BackupPolicyStatusPreparing BackupPolicyStatusType = "PREPARING"
+	BackupPolicyStatusRunning   BackupPolicyStatusType = "RUNNING"
+	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
+	BackupPolicyStatusSuccess   BackupPolicyStatusType = "SUCCESS"
+	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
+)

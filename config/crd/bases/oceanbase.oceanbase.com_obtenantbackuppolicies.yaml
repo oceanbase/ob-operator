@@ -36,14 +36,103 @@ spec:
           spec:
             description: OBTenantBackupPolicySpec defines the desired state of OBTenantBackupPolicy
             properties:
-              foo:
+              dataBackup:
+                description: DataBackupConfig contains the configuration for data
+                  backup progress
+                properties:
+                  crontab:
+                    type: string
+                  destination:
+                    type: string
+                  type:
+                    type: string
+                required:
+                - crontab
+                - destination
+                - type
+                type: object
+              dataClean:
+                properties:
+                  enabled:
+                    type: string
+                  name:
+                    type: string
+                  recoverWindow:
+                    type: string
+                required:
+                - enabled
+                - name
+                - recoverWindow
+                type: object
+              logArchive:
+                description: LogArchiveConfig contains the configuration for log archive
+                  progress
+                properties:
+                  concurrency:
+                    type: integer
+                  destDisabled:
+                    type: boolean
+                  destination:
+                    type: string
+                  switchPieceInterval:
+                    type: string
+                required:
+                - concurrency
+                - destDisabled
+                - destination
+                - switchPieceInterval
+                type: object
+              tenantName:
                 description: Foo is an example field of OBTenantBackupPolicy. Edit
                   obtenantbackuppolicy_types.go to remove/update
                 type: string
+            required:
+            - dataBackup
+            - dataClean
+            - logArchive
+            - tenantName
             type: object
           status:
             description: OBTenantBackupPolicyStatus defines the observed state of
               OBTenantBackupPolicy
+            properties:
+              logArchiveDestDisabled:
+                type: boolean
+              operationContext:
+                properties:
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  operationObject:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - idx
+                - name
+                - operationObject
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              status:
+                type: string
+            required:
+            - logArchiveDestDisabled
+            - status
             type: object
         type: object
     served: true

@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,19 +28,27 @@ type OBTenantBackupSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Type           BackupJobType `json:"type"`
+	TenantName     string        `json:"tenantName"`
+	LogArchiveDest string        `json:"logArchiveDest"`
+	DataBackupDest string        `json:"dataBackupDest"`
 }
 
 // OBTenantBackupStatus defines the observed state of OBTenantBackup
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Status           BackupJobStatus   `json:"status"`
+	JobStatus        batchv1.JobStatus `json:"jobStatus"`
+	Progress         string            `json:"progress"`
+	OperationContext *OperationContext `json:"operationContext,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// OBTenantBackup is the Schema for the obtenantbackups API
+// OBTenantBackup is the Schema for the obtenantbackups API.
+// An instance of OBTenantBackup stands for a tenant backup job
 type OBTenantBackup struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -60,3 +69,20 @@ type OBTenantBackupList struct {
 func init() {
 	SchemeBuilder.Register(&OBTenantBackup{}, &OBTenantBackupList{})
 }
+
+type BackupJobType string
+
+const (
+	BackupJobFull    BackupJobType = "FULL"
+	BackupJobIncr    BackupJobType = "INCR"
+	BackupJobClean   BackupJobType = "CLEAN"
+	BackupJobArchive BackupJobType = "ARCHIVE"
+)
+
+type BackupJobStatus string
+
+const (
+	BackupJobRunning    BackupJobStatus = "RUNNING"
+	BackupJobSuccessful BackupJobStatus = "SUCCESSFUL"
+	BackupJobFailed     BackupJobStatus = "FAILED"
+)
