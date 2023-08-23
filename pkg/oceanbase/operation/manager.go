@@ -14,6 +14,7 @@ package operation
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -49,10 +50,10 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql s
 	defer cancel()
 	_, err := m.Connector.GetClient().ExecContext(ctx, sql, params...)
 	if err != nil {
-		m.Logger.Error(errors.Wrapf(err, "sql %s, param %v", sql, params), "Execute sql")
-		return errors.Wrap(err, "Execute sql")
+		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Execute sql failed", "sql", sql, "params", params)
 	}
-	return nil
+	return err
 }
 
 func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ...interface{}) error {
@@ -62,8 +63,8 @@ func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ..
 func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params ...interface{}) error {
 	err := m.Connector.GetClient().Get(ret, sql, params...)
 	if err != nil {
-		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query row")
+		err = errors.Wrapf(err, "Query row failed, sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Query row failed","sql", sql, "params", params)
 	}
 	return err
 }
@@ -71,8 +72,25 @@ func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params
 func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, params ...interface{}) error {
 	err := m.Connector.GetClient().Select(ret, sql, params...)
 	if err != nil {
-		err = errors.Wrapf(err, "sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query list")
+		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Query list failed", "sql", sql, "params", params)
 	}
 	return err
+}
+
+func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ...interface{}) error {
+	err := m.Connector.GetClient().Get(count, sql, params...)
+	if err != nil {
+		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)
+		m.Logger.Error(err, "Query count failed", "sql", sql, "params", params)
+	}
+	return err
+}
+
+func replaceAll(template string, replacers ...*strings.Replacer) string {
+	s := template
+	for _, replacer := range replacers {
+		s = replacer.Replace(s)
+	}
+	return s
 }

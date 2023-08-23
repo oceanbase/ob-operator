@@ -14,11 +14,11 @@ package operation
 
 import (
 	"fmt"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.Tenant, error) {
@@ -26,7 +26,7 @@ func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.T
 	err := m.QueryRow(tenant, sql.GetTenantByName, tenantName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get tenantconst by tenantName")
-		return tenant, errors.Wrap(err, "Get tenantconst by tenantName")
+		return tenant, errors.Wrap(err, "Get tenantconst by tenantName failed")
 	}
 	return tenant, nil
 }
@@ -36,7 +36,7 @@ func (m *OceanbaseOperationManager) GetPoolByName(poolName string) (*model.Pool,
 	err := m.QueryRow(pool, sql.GetPoolByName, poolName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get pool by poolName")
-		return pool, errors.Wrap(err, "Get pool by poolName")
+		return pool, errors.Wrap(err, "Get pool by poolName failed")
 	}
 	return pool, nil
 }
@@ -46,7 +46,7 @@ func (m *OceanbaseOperationManager) GetPoolList() ([]model.Pool, error) {
 	err := m.QueryList(&poolList, sql.GetPoolList)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get pool list")
-		return poolList, errors.Wrap(err, "Get get pool list")
+		return poolList, errors.Wrap(err, "Get get pool list failed")
 	}
 	return poolList, nil
 }
@@ -56,7 +56,7 @@ func (m *OceanbaseOperationManager) GetResourceTotal(zoneName string) (*model.Re
 	err := m.QueryRow(resource, sql.GetResourceTotal, zoneName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get resource by zoneName")
-		return resource, errors.Wrap(err, "Get resource by zoneName")
+		return resource, errors.Wrap(err, "Get resource by zoneName failed")
 	}
 	return resource, nil
 }
@@ -66,7 +66,7 @@ func (m *OceanbaseOperationManager) GetUnitList() ([]model.Unit, error) {
 	err := m.QueryList(&unitList, sql.GetUnitList)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get all unit list")
-		return unitList, errors.Wrap(err, "Get all unit list")
+		return unitList, errors.Wrap(err, "Get all unit list failed")
 	}
 	return unitList, nil
 }
@@ -76,7 +76,7 @@ func (m *OceanbaseOperationManager) GetUnitConfigV4List() ([]model.UnitConfigV4,
 	err := m.QueryList(&unitConfigV4List, sql.GetUnitConfigV4List)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get all unitConfigV4 list")
-		return unitConfigV4List, errors.Wrap(err, "Get all unitConfigV4 list")
+		return unitConfigV4List, errors.Wrap(err, "Get all unitConfigV4 list failed")
 	}
 	return unitConfigV4List, nil
 }
@@ -86,7 +86,7 @@ func (m *OceanbaseOperationManager) GetUnitConfigV4ByName(name string) (*model.U
 	err := m.QueryRow(pool, sql.GetUnitConfigV4ByName, name)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get unitConfigV4 by name")
-		return pool, errors.Wrap(err, "Get unitConfigV4 By Name")
+		return pool, errors.Wrap(err, "Get unitConfigV4 By Name failed")
 	}
 	return pool, nil
 }
@@ -96,19 +96,19 @@ func (m *OceanbaseOperationManager) GetCharset() (*model.Charset, error) {
 	err := m.QueryRow(charset, sql.GetCharset)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get charset")
-		return charset, errors.Wrap(err, "Get charset")
+		return charset, errors.Wrap(err, "Get charset failed")
 	}
 	return charset, nil
 }
 
-func (m *OceanbaseOperationManager) GetVariable(name string) ([]model.Variable, error) {
-	var variableList []model.Variable
-	err := m.QueryRow(&variableList, sql.GetVariableLike, name)
+func (m *OceanbaseOperationManager) GetVariable(name string) (*model.Variable, error) {
+	variable := &model.Variable{}
+	err := m.QueryRow(variable, sql.GetVariableLike, name)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when get variableList")
-		return variableList, errors.Wrap(err, "Get variableList")
+		m.Logger.Error(err, "Got exception when get variable")
+		return variable, errors.Wrap(err, "Get variable failed")
 	}
-	return variableList, nil
+	return variable, nil
 }
 
 func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, error) {
@@ -116,7 +116,7 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 	err := m.QueryRow(rsJob, sql.GetRsJob, reJobName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get rsJob by reJobName")
-		return rsJob, errors.Wrap(err, "Get rsJob by reJobName")
+		return rsJob, errors.Wrap(err, "Get rsJob by reJobName failed")
 	}
 	return rsJob, nil
 }
@@ -126,7 +126,7 @@ func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
 	err := m.QueryRow(version, sql.GetObVersion)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when get version")
-		return version, errors.Wrap(err, "Get version")
+		return version, errors.Wrap(err, "Get version failed")
 	}
 	return version, nil
 }
@@ -134,86 +134,96 @@ func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
 // ------------ delete ------------
 
 func (m *OceanbaseOperationManager) DeleteTenant(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(sql.DeleteTenant, tenantName)
+	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when delete tenantconst by tenantName")
-		return errors.Wrap(err, "Delete tenantconst by tenantName")
+		return errors.Wrap(err, "Delete tenantconst by tenantName failed")
 	}
 	return nil
 }
 
 func (m *OceanbaseOperationManager) DeletePool(poolName string) error {
-	err := m.ExecWithDefaultTimeout(sql.DeletePool, poolName)
+	preparedSQL, params := m.preparedSQLForDeletePool(poolName)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when delete pool by poolName")
-		return errors.Wrap(err, "Delete pool by poolName")
+		return errors.Wrap(err, "Delete pool by poolName failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) DeleteUnit(unitName string) error {
-	err := m.ExecWithDefaultTimeout(sql.DeleteUnit, unitName)
+func (m *OceanbaseOperationManager) DeleteUnitConfig(unitName string) error {
+	preparedSQL, params := m.preparedSQLForDeleteUnitConfig(unitName)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when delete unit by unitName")
-		return errors.Wrap(err, "Delete unit by unitName")
+		return errors.Wrap(err, "Delete unit by unitName failed")
 	}
 	return nil
+}
+
+// ------------ check function ------------
+
+func (m *OceanbaseOperationManager) CheckTenantExistByName(tenantName string) (bool, error) {
+	var count int
+	err := m.QueryCount(&count, sql.GetTenantCountByName, tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when get tenantconst by tenantName")
+		return false, errors.Wrap(err, "Get tenantconst by tenantName failed")
+	}
+	return count != 0, nil
+}
+
+func (m *OceanbaseOperationManager) CheckPoolExistByName(poolName string) (bool, error) {
+	var count int
+	err := m.QueryCount(&count, sql.GetPoolCountByName, poolName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when check pool whether exist by poolName")
+		return false, errors.Wrap(err, "Check whether pool exist by poolName failed")
+	}
+	return count != 0, nil
+}
+
+func (m *OceanbaseOperationManager) CheckUnitConfigExistByName(unitConfigName string) (bool, error) {
+	var count int
+	err := m.QueryCount(&count, sql.GetUnitConfigV4CountByName, unitConfigName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when check unitconfigV4 whether exist by poolName")
+		return false, errors.Wrap(err, "Check whether unitconfigV4 exist by poolName failed")
+	}
+	return count != 0, nil
 }
 
 // ------------ add ------------
 
-func (m *OceanbaseOperationManager) AddTenant(tenantName, charset, zoneList, primaryZone, poolList, locality, collate, variableList string) error {
-	var option string
-	if charset == "" {
-		charset = tenant.Charset
-	}
-	if locality != "" {
-		option = fmt.Sprint(option,  ", LOCALITY='%s' ", locality)
-	}
-	if collate != "" {
-		option = fmt.Sprint(option,  ", COLLATE = %s ", collate)
-	}
+func (m *OceanbaseOperationManager) AddTenant(tenantSQLParam model.TenantSQLParam) error {
 
-	err := m.ExecWithDefaultTimeout(sql.AddTenant, tenantName, charset, zoneList, primaryZone, poolList, option, variableList)
+	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam)
+	err := m.ExecWithTimeout(config.TenantTimeout, preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when add Tenant")
-		return errors.Wrap(err, "Add Tenant")
+		return errors.Wrap(err, "Add Tenant failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) AddPool(poolName, unitName string, pool v1alpha1.ResourcePoolSpec) error {
-	err := m.ExecWithDefaultTimeout(sql.AddPool, poolName, unitName, pool.UnitNumber, pool.ZoneList)
+func (m *OceanbaseOperationManager) AddPool(pool model.PoolSQLParam) error {
+	preparedSQL, params := preparedSQLForAddPool(pool)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when add pool")
-		return errors.Wrap(err, "Add pool")
+		return errors.Wrap(err, "Add pool failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigName string, unitConfigV4 model.UnitConfigV4) error {
-
-	var option string
-	if unitConfigV4.MinCPU != 0 {
-		option = fmt.Sprint(option, ", min_cpu ", unitConfigV4.MinCPU)
-	}
-	if unitConfigV4.LogDiskSize != 0 {
-		option = fmt.Sprint(option, ", log_disk_size ", unitConfigV4.LogDiskSize)
-	}
-	if unitConfigV4.MaxIops != 0 {
-		option = fmt.Sprint(option, ", max_iops ", unitConfigV4.MaxIops)
-	}
-	if unitConfigV4.MinIops != 0 {
-		option = fmt.Sprint(option, ", min_iops ", unitConfigV4.MinIops)
-	}
-	if unitConfigV4.IopsWeight != 0 {
-		option = fmt.Sprint(option, ", iops_weight ", unitConfigV4.IopsWeight)
-	}
-
-	err := m.ExecWithDefaultTimeout(sql.AddUnitV4, unitConfigName, unitConfigV4.MaxCPU, unitConfigV4.MemorySize, option)
+func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) error {
+	preparedSQL, params := preparedSQLForAddUnitConfigV4(unitConfigV4)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+		return errors.Wrap(err, "Add UnitConfigV4 failed")
 	}
 	return nil
 }
@@ -221,64 +231,208 @@ func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigName string, unitC
 // ------------ modify ------------
 
 func (m *OceanbaseOperationManager) SetTenantVariable(tenantName, variableList string) error {
-	err := m.ExecWithDefaultTimeout(sql.SetTenantVariable, tenantName, variableList)
+	preparedSQL, params := m.preparedSQLForSetTenantVariable(tenantName, variableList)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+		m.Logger.Error(err, "Got exception when execute sql SetTenantVariable")
+		return errors.Wrap(err, "Set Tenant Variable failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigName string,  unitConfigV4 model.UnitConfigV4) error {
-
-	var option string
-	if unitConfigV4.MinCPU != 0 {
-		option = fmt.Sprint(option, ", min_cpu ", unitConfigV4.MinCPU)
-	}
-	if unitConfigV4.LogDiskSize != 0 {
-		option = fmt.Sprint(option, ", log_disk_size ", unitConfigV4.LogDiskSize)
-	}
-	if unitConfigV4.MaxIops != 0 {
-		option = fmt.Sprint(option, ", max_iops ", unitConfigV4.MaxIops)
-	}
-	if unitConfigV4.MinIops != 0 {
-		option = fmt.Sprint(option, ", min_iops ", unitConfigV4.MinIops)
-	}
-	if unitConfigV4.IopsWeight != 0 {
-		option = fmt.Sprint(option, ", iops_weight ", unitConfigV4.IopsWeight)
-	}
-
-	err := m.ExecWithDefaultTimeout(sql.SetUnitConfigV4_MaxCpu_MemorySize, unitConfigName, unitConfigV4.MaxCPU, unitConfigV4.MemorySize, option)
+func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) error {
+	preparedSQL, params := preparedSQLForSetUnitConfigV4(unitConfigV4)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+		return errors.Wrap(err, "Set UnitConfig")
 	}
 	return nil
 }
 
 func (m *OceanbaseOperationManager) SetPoolUnitNum(poolName string, unitNum int) error {
-	err := m.ExecWithDefaultTimeout(sql.SetPoolUnitNum, poolName, unitNum)
+	preparedSQL, params := m.preparedSQLForSetPoolUnitNum(poolName, unitNum)
+	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+		m.Logger.Error(err, "Got exception when set pool unitNum")
+		return errors.Wrap(err, "Set pool UnitNum failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetTenantLocality(tenantName, locality string) error {
-	err := m.ExecWithDefaultTimeout(sql.SetTenantLocality, tenantName, locality)
+func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLParam) error {
+	preparedSQL, params := preparedSQLForSetTenant(tenantSQLParam)
+	err := m.ExecWithTimeout(config.TenantTimeout, preparedSQL, params...)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+		m.Logger.Error(err, "Got exception when set tenant")
+		return errors.Wrap(err, "Set tenant failed")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetTenant(tenantName, zoneList, primaryZone, poolList, charset, locality string) error {
-	err := m.ExecWithDefaultTimeout(sql.SetTenantSQLTemplate, tenantName, zoneList, primaryZone, poolList, charset, locality)
-	if err != nil {
-		m.Logger.Error(err, "Got exception when add UnitV4")
-		return errors.Wrap(err, "Add server")
+// ---------- replacer sql and collect params ----------
+
+func preparedSQLForAddUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (string,[]interface{}) {
+	var optionSql string
+	params := make([]interface{}, 0)
+	params = append(params, unitConfigV4.MaxCPU, unitConfigV4.MemorySize)
+	if unitConfigV4.MinCPU != 0 {
+		optionSql = fmt.Sprint(optionSql, ", min_cpu ?")
+		params = append(params, unitConfigV4.MinCPU)
 	}
-	return nil
+	if unitConfigV4.LogDiskSize != 0 {
+		optionSql = fmt.Sprint(optionSql, ", log_disk_size ?")
+		params = append(params, unitConfigV4.LogDiskSize)
+	}
+	if unitConfigV4.MaxIops != 0 {
+		optionSql = fmt.Sprint(optionSql, ", max_iops ?")
+		params = append(params, unitConfigV4.MaxIops)
+	}
+	if unitConfigV4.MinIops != 0 {
+		optionSql = fmt.Sprint(optionSql, ", min_iops ?")
+		params = append(params, unitConfigV4.MinIops)
+	}
+	if unitConfigV4.IopsWeight != 0 {
+		optionSql = fmt.Sprint(optionSql, ", iops_weight ?")
+		params = append(params, unitConfigV4.IopsWeight)
+	}
+	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigV4.UnitConfigName, "${OPTION}", optionSql)
+	return replaceAll(sql.AddUnitConfigV4, replacer), params
+}
+
+
+
+func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
+	params := make([]interface{}, 0)
+	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
+	replacer := strings.NewReplacer("${POOL_NAME}", poolSQLParam.PoolName)
+ 	return replaceAll(sql.AddPool, replacer) , params
+}
+
+func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
+	var option string
+	var variableList string
+	params := make([]interface{}, 0)
+	params = append(params, tenantSQLParam.Charset, tenantSQLParam.PrimaryZone)
+
+	symbols := make([]string, 0)
+	for i := 0; i < len(tenantSQLParam.PoolList); i++ {
+		symbols = append(symbols, "?")
+		params = append(params, tenantSQLParam.PoolList[i])
+	}
+	if tenantSQLParam.Locality!= "" {
+		option = fmt.Sprint(option, ", LOCALITY= ?")
+		params = append(params, tenantSQLParam.Locality)
+	}
+	if tenantSQLParam.Collate != "" {
+		option = fmt.Sprint(option, ", COLLATE = ?")
+		params = append(params, tenantSQLParam.Collate)
+	}
+	variableList = fmt.Sprintf("SET VARIABLES %s", tenantSQLParam.VariableList)
+	replacer := strings.NewReplacer("${TENANT_NAME}", tenantSQLParam.TenantName, "${POOL_LIST}", strings.Join(symbols, ", "),
+		"${OPTION}", option, "${VARIABLE_LIST}", variableList)
+	return replaceAll(sql.AddTenant, replacer), params
+}
+
+func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
+	var alterItemStr string
+	params := make([]interface{}, 0)
+	alterItemList := make([]string, 0)
+	if tenantSQLParam.PrimaryZone != "" {
+		alterItemList = append(alterItemList, "PRIMARY_ZONE=?")
+		params = append(params, tenantSQLParam.PrimaryZone)
+	}
+	if tenantSQLParam.Charset!= "" {
+		alterItemList = append(alterItemList, "CHARSET=?")
+		params = append(params, tenantSQLParam.Charset)
+	}
+	if len(tenantSQLParam.PoolList) != 0 {
+		symbols := make([]string, 0)
+		for i := 0; i < len(tenantSQLParam.PoolList); i++ {
+			symbols = append(symbols, "?")
+			params = append(params, tenantSQLParam.PoolList[i])
+		}
+		alterItemList = append(alterItemList, fmt.Sprintf("RESOURCE_POOL_LIST=(%s)", strings.Join(symbols, ", ")))
+	}
+	if tenantSQLParam.Locality!= "" {
+		alterItemList = append(alterItemList, ", LOCALITY=?")
+		params = append(params, tenantSQLParam.Locality)
+	}
+	alterItemStr = strings.Join(alterItemList, ",")
+	replacer := strings.NewReplacer("${TENANT_NAME}", tenantSQLParam.TenantName, "${ALTER_ITEM}", alterItemStr)
+	return replaceAll(sql.SetTenant, replacer), params
+}
+
+func preparedSQLForSetUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (string,[]interface{}) {
+	var alterItemStr string
+	params := make([]interface{}, 0)
+	alterItemList := make([]string, 0)
+	if unitConfigV4.MaxCPU!= 0 {
+		alterItemList = append(alterItemList, "max_cpu=?")
+		params = append(params, unitConfigV4.MaxCPU)
+	}
+	if unitConfigV4.MemorySize!= 0 {
+		alterItemList = append(alterItemList, "memory_size=?")
+		params = append(params, unitConfigV4.MemorySize)
+	}
+	if unitConfigV4.MinCPU != 0 {
+		alterItemList = append(alterItemList, "min_cpu=?")
+		params = append(params, unitConfigV4.MinCPU)
+	}
+	if unitConfigV4.MinCPU != 0 {
+		alterItemList = append(alterItemList, "min_cpu=?")
+		params = append(params, unitConfigV4.MinCPU)
+	}
+	if unitConfigV4.LogDiskSize != 0 {
+		alterItemList = append(alterItemList, "log_disk_size=?")
+		params = append(params, unitConfigV4.LogDiskSize)
+	}
+	if unitConfigV4.MaxIops != 0 {
+		alterItemList = append(alterItemList, "max_iops=?")
+		params = append(params, unitConfigV4.MaxIops)
+	}
+	if unitConfigV4.MinIops != 0 {
+		alterItemList = append(alterItemList, "min_iops=?")
+		params = append(params, unitConfigV4.MinIops)
+	}
+	if unitConfigV4.IopsWeight != 0 {
+		alterItemList = append(alterItemList, "iops_weight=?")
+		params = append(params, unitConfigV4.IopsWeight)
+	}
+
+	alterItemStr = strings.Join(alterItemList, ",")
+	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigV4.UnitConfigName, "${ALTER_ITEM}", alterItemStr)
+	return replaceAll(sql.SetUnitConfigV4, replacer), params
+}
+
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string,[]interface{}) {
+	params := make([]interface{}, 0)
+	replacer := strings.NewReplacer("${TENANT_NAME}", tenantName, "${VARIABLE_LIST}", variableList)
+	return replaceAll(sql.SetTenantVariable, replacer), params
+}
+
+func (m *OceanbaseOperationManager) preparedSQLForSetPoolUnitNum(poolName string, unitNum int) (string,[]interface{}) {
+	params := make([]interface{}, 0)
+	params = append(params, unitNum)
+	replacer := strings.NewReplacer("${POOL_NAME}", poolName)
+	return replaceAll(sql.SetPoolUnitNum, replacer), params
+
+}
+
+func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string) (string,[]interface{}) {
+	params := make([]interface{}, 0)
+	replacer := strings.NewReplacer("${TENANT_NAME}", tenantName)
+	return replaceAll(sql.DeleteTenant, replacer), params
+}
+
+func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string,[]interface{}) {
+	params := make([]interface{}, 0)
+	replacer := strings.NewReplacer("${POOL_NAME}", poolName)
+	return replaceAll(sql.DeletePool, replacer), params
+}
+
+func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string,[]interface{}) {
+	params := make([]interface{}, 0)
+	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigName)
+	return replaceAll(sql.DeleteUnitConfig, replacer), params
 }

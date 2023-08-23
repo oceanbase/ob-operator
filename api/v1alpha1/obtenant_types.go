@@ -29,8 +29,8 @@ type OBTenantSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterID   int64  `json:"clusterID"`
 	ClusterName string `json:"clusterName"`
+	TenantName  string `json:"tenantName"`
 
 	Charset          string `json:"charset,omitempty"`
 	Collate          string `json:"collate,omitempty"`
@@ -46,10 +46,6 @@ type UnitConfig struct {
 	MinCPU     resource.Quantity `json:"minCPU,omitempty"`
 	MaxIops    int               `json:"maxIops,omitempty"`
 	MinIops    int               `json:"minIops,omitempty"`
-	// V3
-	MaxDiskSize   resource.Quantity `json:"maxDiskSize,omitempty"`
-	MaxSessionNum int               `json:"maxSessionNum,omitempty"`
-	// V4
 	IopsWeight  int               `json:"iopsWeight,omitempty"`
 	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
@@ -66,7 +62,7 @@ type OBTenantStatus struct {
 }
 
 type ResourcePoolStatus struct {
-	ZoneList string       `json:"zone"`
+	ZoneList string       `json:"zoneList"`
 	Units    []UnitStatus `json:"units"`
 	Priority int          `json:"priority,omitempty"`
 	Type       LocalityType `json:"type"`

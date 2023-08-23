@@ -1,9 +1,10 @@
 package model
 
+import "database/sql"
+
 type Tenant struct {
 	TenantID    int64  `json:"tenant_id" db:"tenant_id"`
 	TenantName  string `json:"tenant_name" db:"tenant_name"`
-	ZoneList    string `json:"zone_list" db:"zone_list"`
 	PrimaryZone string `json:"primary_zone" db:"primary_zone"`
 	Locality    string `json:"locality" db:"locality"`
 	Status      string `json:"status" db:"status"`
@@ -11,9 +12,9 @@ type Tenant struct {
 
 type Pool struct {
 	ResourcePoolID int64  `json:"resource_pool_id" db:"resource_pool_id"`
-	Name           string `json:"name" db:"name"`
-	UnitCount      int64  `json:"unit_count" db:"unit_count"`
-	UnitConfigID   int64  `json:"unit_config_id" db:"unit_config_id"`
+	Name         string `json:"name" db:"name"`
+	UnitNum      int64  `json:"unit_count" db:"unit_count"`
+	UnitConfigID int64  `json:"unit_config_id" db:"unit_config_id"`
 	ZoneList       string `json:"zone_list" db:"zone_list"`
 	TenantID       int64  `json:"tenant_id" db:"tenant_id"`
 }
@@ -24,8 +25,8 @@ type Unit struct {
 	Zone               string `json:"zone" db:"zone"`
 	SvrIP              string `json:"svr_ip" db:"svr_ip"`
 	SvrPort            int64  `json:"svr_port" db:"svr_port"`
-	MigrateFromSvrIP   string `json:"migrate_from_svr_ip" db:"migrate_from_svr_ip"`
-	MigrateFromSvrPort int64  `json:"migrate_from_svr_port" db:"migrate_from_svr_port"`
+	MigrateFromSvrIP   sql.NullString `json:"migrate_from_svr_ip" db:"migrate_from_svr_ip"`
+	MigrateFromSvrPort sql.NullInt64  `json:"migrate_from_svr_port" db:"migrate_from_svr_port"`
 	Status             string `json:"status" db:"status"`
 }
 
@@ -67,4 +68,32 @@ type RsJob struct {
 
 type OBVersion struct {
 	Version string `json:"version" db:"version"`
+}
+
+type TenantSQLParam struct {
+	TenantName string
+	PrimaryZone string
+	Locality string
+	PoolList []string
+	Charset string
+	Collate string
+	VariableList string
+}
+
+type PoolSQLParam struct {
+	PoolName string
+	UnitNum  int64
+	ZoneList string
+	UnitName string
+}
+
+type UnitConfigV4SQLParam struct {
+	UnitConfigName string
+	MaxCPU       float64
+	MinCPU       float64
+	MemorySize   int64
+	MaxIops      int64
+	MinIops      int64
+	LogDiskSize  int64
+	IopsWeight   int64
 }

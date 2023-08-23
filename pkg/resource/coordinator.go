@@ -44,7 +44,7 @@ func (c *Coordinator) Coordinate() error {
 			c.Logger.Info("No need to execute task flow")
 		} else {
 			c.Manager.SetOperationContext(f.OperationContext)
-			c.Logger.Info("Successfully got task flow")
+			c.Logger.Info("Successfully got task flow", "OperationContext", f)
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
 		}
@@ -90,7 +90,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
-				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult.Status)
+				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 				f.OperationContext.TaskStatus = taskResult.Status
 			} else {
 				c.Logger.Info("Didn't get task result, task is still running", "task id", f.OperationContext.TaskId)

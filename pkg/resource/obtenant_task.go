@@ -7,8 +7,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/klog/v2"
+	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"reflect"
 	"sort"
 	"strconv"
@@ -18,114 +17,117 @@ import (
 // ---------- task entry point ----------
 
 func (m *OBTenantManager) CreateTenantTask() error {
-	tenantName := m.OBTenant.Name
-	tenantExist, _, err := m.TenantExist(tenantName)
+	m.Logger.Info("===== debug: create tenant task =====")
+	tenantName := m.OBTenant.Spec.TenantName
+	tenantExist, err := m.TenantExist(tenantName)
 	if err != nil {
-		klog.Errorf("Check Whether The Tenant %s Exists Error: %s", tenantName, err)
+		m.Logger.Error(err, "Check Whether Tenant exist failed", "tenantName", tenantName)
 		return err
 	}
 	if tenantExist {
 		m.OBTenant.Status.Status = obtenant.Pending
-		klog.Errorf("%s has existed and it is not a controlled resource of k8s, please manually delete existing tenants or change name", tenantName)
-		return errors.Wrapf(err, "%s has existed and it is not a controlled resource of k8s, please manually delete existing tenants or change name", tenantName)
+		err = errors.New("tenant has exist")
+		m.Logger.Error(err, "tenant has exist", "tenantName", tenantName)
+		return err
 	}
 
+	m.Logger.Info("===== debug: Create Tenant begin =====")
 	for _, pool := range m.OBTenant.Spec.Pools{
-		err := m.CreateUnitAndPool(pool)
+		err := m.CreateUnitAndPoolV4(pool)
 		if err != nil {
+			m.Logger.Error(err, "Create Tenant failed", "tenantName", tenantName)
 			return err
 		}
 	}
 
 	err = m.CreateTenant()
 	if err != nil {
-		klog.Errorf("Create Tenant '%s' Error: %s", tenantName, err)
+		m.Logger.Error(err, "Create Tenant failed", "tenantName", tenantName)
 		return err
 	}
 
-	klog.Infof("Create Tenant '%s' OK", tenantName)
-	m.OBTenant.Status.Status = obtenant.Running
+	m.Logger.Info("Create Tenant success", "tenantName", tenantName)
 	return nil
 }
 
 func (m *OBTenantManager) MaintainTenantTask() error {
-	tenantName := m.OBTenant.Name
+	tenantName := m.OBTenant.Spec.TenantName
 
 	err := m.CheckAndApplyTcpInvitedNode()
 	if err != nil {
-		klog.Errorf("Maintain Tenant %s Check And Set Tcp Invited Node Error: %s", tenantName, err)
+		m.Logger.Error(err, "maintain tenant failed ----- check and set tcp invited node failed", "tenantName", tenantName)
 		return err
 	}
-	err = m.CheckAndApplyUnitConfigV4()
+	err = m.CheckAndApplyUnitConfig()
 	if err != nil {
-		klog.Errorf("Maintain Tenant %s Check And Apply UnitConfigV4 Error: %s", tenantName, err)
+		m.Logger.Error(err, "maintain tenant failed ----- check and apply unitConfigV4 failed", "tenantName", tenantName)
 		return err
 	}
 	err = m.CheckAndApplyResourcePool()
 	if err != nil {
-		klog.Errorf("Maintain Tenant %s Check And Apply Resource Pool Error: %s", tenantName, err)
+		m.Logger.Error(err, "maintain tenant failed ----- Check And Apply Resource Pool failed","tenantName", tenantName)
 		return err
 	}
-	err = m.CheckAndUpdateTenant()
+	err = m.CheckAndApplyTenant()
 	if err != nil {
-		klog.Errorf("Maintain Tenant %s Check And Apply Tenant Error: %s", tenantName, err)
+		m.Logger.Error(err, "maintain tenant failed ----- check and apply tenant failed", "tenantName", tenantName)
 		return err
 	}
-	m.OBTenant.Status.Status = obtenant.Running
+	m.Logger.Info("Maintain tenant success", "tenantName", tenantName)
 	return nil
 }
 
 func (m *OBTenantManager) hasModifiedTenantTask() bool {
-	tenantName := m.OBTenant.Name
+	tenantName := m.OBTenant.Spec.TenantName
 
 	hasModifiedTcpInvitedNode := m.hasModifiedTcpInvitedNode()
 	if hasModifiedTcpInvitedNode {
-		klog.Infof("Maintain Tenant %s Tcp Invited Node has modified", tenantName)
+		m.Logger.Info("Maintain Tenant ----- Tcp Invited Node has modified", "tenantName", tenantName)
 	}
 	hasModifiedUnitConfigV4 := m.hasModifiedUnitConfigV4()
 	if hasModifiedUnitConfigV4 {
-		klog.Infof("Maintain Tenant %s UnitConfigV4 has modified", tenantName)
+		m.Logger.Info("Maintain Tenant ----- UnitConfigV4 has modified", "tenantName", tenantName)
 	}
 	hasModifiedResourcePool := m.hasModifiedResourcePool()
 	if hasModifiedResourcePool {
-		klog.Infof("Maintain Tenant %s Resource Pool has modified", tenantName)
+		m.Logger.Info("Maintain Tenant ----- Resource Pool has modified", "tenantName", tenantName)
 	}
 	hasModifiedTenant := m.hasModifiedTenant()
 	if hasModifiedTenant {
-		klog.Infof("Maintain Tenant %s Tenant has modified", tenantName)
+		m.Logger.Info("Maintain Tenant ----- Tenant has modified", "tenantName", tenantName)
 	}
-	m.OBTenant.Status.Status = obtenant.Running
 	return hasModifiedTcpInvitedNode || hasModifiedUnitConfigV4 || hasModifiedResourcePool || hasModifiedTenant
 }
 
 func (m *OBTenantManager) DeleteTenantTask() error {
 	var err error
-	tenantName := m.OBTenant.Name
-	klog.Infof("Begin Delete Tenant '%s'", tenantName)
+	tenantName := m.OBTenant.Spec.TenantName
+	m.Logger.Info("Begin Delete Tenant", "tenantName",tenantName)
 	err = m.DeleteTenant()
 	if err != nil {
 		return err
 	}
-	klog.Infof("Begin Delete Pool, Tenant '%s'", tenantName)
+	m.Logger.Info("Begin Delete Pool", "tenantName",tenantName)
 	err = m.DeletePool()
 	if err != nil {
 		return err
 	}
-	klog.Infof("Begin Delete Unit, Tenant '%s'", tenantName)
-	err = m.DeleteUnit()
+	m.Logger.Info("Begin Delete Unit", "tenantName",tenantName)
+	err = m.DeleteUnitConfig()
 	if err != nil {
 		return err
 	}
-	klog.Infof("Succeed Delete Tenant '%s'", tenantName)
+	m.Logger.Info("Succeed Delete Tenant", "tenantName",tenantName)
 	return nil
 }
 
-// ---------- Check And Update function ----------
+// ---------- Check And Apply function ----------
 
 func (m *OBTenantManager) CheckAndApplyTcpInvitedNode() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting ob_tcp_invited_nodes For Tenant ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying ob_tcp_invited_nodes For Tenant ",tenantName))
 	}
 
 	specWhiteList := m.OBTenant.Spec.ConnectWhiteList
@@ -135,22 +137,32 @@ func (m *OBTenantManager) CheckAndApplyTcpInvitedNode() error {
 		specWhiteList = tenant.DefaultOBTcpInvitedNodes
 	}
 	if statusWhiteList != specWhiteList {
-		klog.Infof("found variable '%s' with specWhiteList '%s' did't match with config '%s'", tenant.OBTcpInvitedNodes, statusWhiteList, specWhiteList)
-		variableList := m.GenerateVariableList(specWhiteList)
-		err = oceanbaseOperationManager.SetTenantVariable(m.OBTenant.Name, variableList)
+		m.Logger.Info("found specWhiteList didn't match", "tenantName", tenantName,
+			"statusWhiteList",statusWhiteList, "specWhiteList", specWhiteList)
+		variableList := m.GenerateWhiteListInVariableForm(specWhiteList)
+		err = oceanbaseOperationManager.SetTenantVariable(tenantName, variableList)
 		if err != nil {
 			return err
 		}
-		err = m.UpdateTenantStatusOBTcpInvitedNodes(specWhiteList)
-		if err != nil {
-			return err
-		}
+		m.OBTenant.Status.ConnectWhiteList = specWhiteList
 	}
 	return nil
 }
 
+func (m *OBTenantManager) CheckAndApplyUnitConfig() error {
+	version, err := m.GetOBVersion()
+	if err != nil {
+		return err
+	}
+	switch string(version[0]) {
+	case tenant.Version4:
+		return m.CheckAndApplyUnitConfigV4()
+	}
+	return errors.New("no match version for check and set unit config")
+}
+
 func (m *OBTenantManager) CheckAndApplyUnitConfigV4() error {
-	tenantName := m.OBTenant.Name
+	tenantName := m.OBTenant.Spec.TenantName
 	specUnitConfigMap := GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
 	statusUnitConfigMap := GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
 	for _, pool := range m.OBTenant.Spec.Pools {
@@ -165,15 +177,15 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() error {
 		}
 
 		if !IsUnitConfigV4Equal(specUnitConfig, statusUnitConfig) {
-			klog.Infof("found pool '%s' unit config with value '%s' did't match with config '%s'", pool.ZoneList, FormatUnitV4Config(specUnitConfigMap[pool.ZoneList]), FormatUnitV4Config(statusUnitConfigMap[pool.ZoneList]))
+			m.Logger.Info("found unit config v4 didn't match", "tenantName", tenantName, "zoneName", pool.ZoneList,
+				"statusUnitConfig", FormatUnitConfigV4(statusUnitConfigMap[pool.ZoneList]), "specUnitConfig",FormatUnitConfigV4(specUnitConfigMap[pool.ZoneList]))
 			match = false
 		}
 		if !match {
-			m.OBTenant.Status.Status = obtenant.Maintaining
 			unitName := m.GenerateUnitName(pool.ZoneList)
 			err := m.SetUnitConfigV4(unitName, specUnitConfigMap[pool.ZoneList])
 			if err != nil {
-				klog.Errorf("Set Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
+				m.Logger.Error(err,"Set Tenant Unit failed","tenantName", tenantName, "unitName", unitName)
 				return err
 			}
 		}
@@ -182,15 +194,16 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() error {
 }
 
 func (m *OBTenantManager) CheckAndApplyResourcePool() error {
+	m.Logger.Info("===== debug: begin CheckAndApplyResourcePool")
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting ob_tcp_invited_nodes For Tenant ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying Resource Pool ", tenantName))
 	}
 
 	// handle add pool
 	for _, addPool := range m.GetPoolsForAdd(){
 		if addPool.ZoneList != "" {
-			m.OBTenant.Status.Status = obtenant.Maintaining
 			err := m.TenantAddPool(addPool)
 			if err != nil {
 				return err
@@ -201,7 +214,6 @@ func (m *OBTenantManager) CheckAndApplyResourcePool() error {
 	// handle delete pool
 	poolStatuses := m.GetPoolsForDelete()
 	if len(poolStatuses) > 0 {
-		m.OBTenant.Status.Status = obtenant.Maintaining
 		if err != nil {
 			return err
 		}
@@ -220,10 +232,9 @@ func (m *OBTenantManager) CheckAndApplyResourcePool() error {
 		specUnitNum := specUnitNumMap[pool.ZoneList]
 		statusUnitNum := statusUnitNumMap[pool.ZoneList]
 		if specUnitNum != statusUnitNum {
-			klog.Infof("found pool %s resource pool with unit_num value %d did't match with config %d", pool.ZoneList, statusUnitNum, specUnitNum)
-			m.OBTenant.Status.Status = obtenant.Maintaining
+			m.Logger.Info("found unit_num didn't match","zoneName", pool.ZoneList,"statusUnitNum", statusUnitNum, "specUnitNum", specUnitNum)
 			poolName := m.GeneratePoolName(pool.ZoneList)
-			klog.Infof("set pool %s resource pool unit_num %d", pool.ZoneList, specUnitNumMap)
+			m.Logger.Info("set pool unit_num","zoneName", pool.ZoneList, "specUnitNum", specUnitNum)
 			err = oceanbaseOperationManager.SetPoolUnitNum(poolName, specUnitNum)
 			if err != nil {
 				return err
@@ -233,26 +244,25 @@ func (m *OBTenantManager) CheckAndApplyResourcePool() error {
 	return nil
 }
 
-
-
-func (m *OBTenantManager) CheckAndUpdateTenant() error {
+func (m *OBTenantManager) CheckAndApplyTenant() error {
 	var err error
-	err = m.CheckAndSetPriority()
+	err = m.CheckAndApplyPriority()
 	if err != nil {
 		return err
 	}
-	err = m.CheckAndSetLocality()
+	err = m.CheckAndApplyLocality()
 	if err != nil {
 		return err
 	}
-	err = m.CheckAndUpdateCharset()
+	err = m.CheckAndApplyCharset()
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *OBTenantManager) CheckAndSetPriority() error {
+func (m *OBTenantManager) CheckAndApplyPriority() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 
 	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
@@ -262,18 +272,22 @@ func (m *OBTenantManager) CheckAndSetPriority() error {
 	if reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
 		return nil
 	}
-	m.OBTenant.Status.Status = obtenant.Maintaining
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Priority ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Priority ", tenantName))
 	}
-	err = oceanbaseOperationManager.SetTenant(m.OBTenant.Name, "", fmt.Sprint("PRIMARY_ZONE = '", specPrimaryZone, "'"), "", "", "")
+	tenantSQLParam := model.TenantSQLParam{
+		TenantName:  tenantName,
+		PrimaryZone: specPrimaryZone,
+	}
+	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *OBTenantManager) CheckAndSetLocality() error {
+func (m *OBTenantManager) CheckAndApplyLocality() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	specLocalityMap := GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
 	statusLocalityMap := GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
@@ -281,28 +295,34 @@ func (m *OBTenantManager) CheckAndSetLocality() error {
 		return nil
 	}
 	locality := m.GenerateLocality(m.OBTenant.Spec.Pools)
-	m.OBTenant.Status.Status = obtenant.Maintaining
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Locality ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Locality ", tenantName))
 	}
-	err = oceanbaseOperationManager.SetTenant(m.OBTenant.Name, "", "", "", "", fmt.Sprint("LOCALITY = '", locality, "'"))
+	tenantSQLParam := model.TenantSQLParam{
+		TenantName:  tenantName,
+		Locality: locality,
+	}
+	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *OBTenantManager) CheckAndUpdateCharset() error {
+func (m *OBTenantManager) CheckAndApplyCharset() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Params ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Checking and Applying Tenant '%s' Charset ", tenantName))
 	}
 	charset := m.OBTenant.Spec.Charset
 	if charset != "" {
 		charset = fmt.Sprintf("CHARSET = %s", charset)
-	}
-	if charset != "" {
-		err = oceanbaseOperationManager.SetTenant(m.OBTenant.Name, "", "", "", charset, "")
+		tenantSQLParam := model.TenantSQLParam{
+			TenantName:  tenantName,
+			Charset: charset,
+		}
+		err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 		if err != nil {
 			return err
 		}
@@ -329,7 +349,6 @@ func (m *OBTenantManager) hasModifiedUnitConfigV4() bool {
 	specUnitConfigMap := GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
 	statusUnitConfigMap := GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
 	for _, pool := range m.OBTenant.Spec.Pools {
-		match := true
 		specUnitConfig := specUnitConfigMap[pool.ZoneList]
 		statusUnitConfig, statusExist := statusUnitConfigMap[pool.ZoneList]
 
@@ -340,11 +359,7 @@ func (m *OBTenantManager) hasModifiedUnitConfigV4() bool {
 		}
 
 		if !IsUnitConfigV4Equal(specUnitConfig, statusUnitConfig) {
-			klog.Infof("found pool '%s' unit config with value '%s' did't match with config '%s'", pool.ZoneList, FormatUnitV4Config(specUnitConfigMap[pool.ZoneList]), FormatUnitV4Config(statusUnitConfigMap[pool.ZoneList]))
-			match = false
-		}
-		if !match {
-			return true
+			return false
 		}
 	}
 	return false
@@ -407,83 +422,56 @@ func (m *OBTenantManager) hasModifiedCharset() bool {
 	return false
 }
 
-
-func (m *OBTenantManager) SetTcpInvitedNode() error {
-	value := m.OBTenant.Spec.ConnectWhiteList
-	currentValue := m.OBTenant.Status.ConnectWhiteList
+func (m *OBTenantManager) CreateTenant() error {
+	tenantName := m.OBTenant.Spec.TenantName
+	pools := m.OBTenant.Spec.Pools
+	m.Logger.Info("Create Tenant","tenantName", tenantName)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting ob_tcp_invited_nodes For Tenant ", m.OBTenant.Name))
+		return errors.Wrap(err, "Get Sql Operator Error When Creating Tenant")
 	}
-	if value == "" {
-		value = tenant.DefaultOBTcpInvitedNodes
+
+	tenantSQLParam := model.TenantSQLParam{
+		TenantName: tenantName,
+		PrimaryZone: GenerateSpecPrimaryZone(pools),
+		VariableList: m.GenerateWhiteListInVariableForm(m.OBTenant.Spec.ConnectWhiteList),
+		Charset: m.OBTenant.Spec.Charset,
+		PoolList: m.GenerateSpecPoolList(pools),
+		Locality: m.GenerateLocality(pools),
+		Collate: m.OBTenant.Spec.Collate,
 	}
-	if currentValue != value {
-		klog.Infof("found variable '%s' with value '%s' did't match with config '%s'", tenant.OBTcpInvitedNodes, currentValue, value)
-		variableList := m.GenerateVariableList(value)
-		err = oceanbaseOperationManager.SetTenantVariable(m.OBTenant.Name, variableList)
-		if err != nil {
-			return err
-		}
-		err = m.UpdateTenantStatusOBTcpInvitedNodes(value)
-		if err != nil {
-			return err
-		}
+	if tenantSQLParam.Charset == "" {
+		tenantSQLParam.Charset = tenant.Charset
 	}
-	return nil
+
+	return oceanbaseOperationManager.AddTenant(tenantSQLParam)
 }
 
-func (m *OBTenantManager) SetUnitConfig() error {
-	version, err := m.GetOBVersion()
-	if err != nil {
+func (m *OBTenantManager) CreateUnitConfigV4(unitName string, unitConfig v1alpha1.UnitConfig) error {
+	tenantName := m.OBTenant.Spec.TenantName
+	m.Logger.Info("Create UnitConfig", "tenantName", tenantName, "unitName", unitName)
+	unitModel := GenerateModelUnitConfigV4SQLParam(unitName, GenerateModelUnitConfigV4(unitConfig))
+	if unitModel.MemorySize == 0 {
+		err := errors.New("unit memorySize is empty")
+		m.Logger.Error(err, "unit memorySize cannot be zero", "tenantName", tenantName, "unitName", unitName)
 		return err
 	}
-	switch string(version[0]) {
-	case tenant.Version4:
-		return m.CheckAndApplyUnitConfigV4()
-	}
-	return errors.New("no match version for check and set unit config")
-}
-
-
-func (m *OBTenantManager) CreateTenant() error {
-	tenantName := m.OBTenant.Name
-	pools := m.OBTenant.Spec.Pools
-	klog.Infof("Create Tenant '%s'", tenantName)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
+		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource UnitConfigV4")
 	}
-	zoneList := m.GenerateSpecZoneList(pools)
-	primaryZone := GenerateSpecPrimaryZone(pools)
-	poolList := m.GenerateSpecPoolList(tenantName, pools)
-	variableList := m.GenerateVariableList(m.OBTenant.Spec.ConnectWhiteList)
-	charset := tenant.Charset
-	locality := m.GenerateLocality(pools)
-	collate := m.OBTenant.Spec.Collate
-	return oceanbaseOperationManager.AddTenant(tenantName, charset, strings.Join(zoneList, "','"), primaryZone, strings.Join(poolList, "','"), locality, collate, variableList)
+
+	return oceanbaseOperationManager.AddUnitConfigV4(unitModel)
 }
 
-func (m *OBTenantManager) CreateUnitConfigV4(unitName string, unitConfig model.UnitConfigV4) error {
-	klog.Infof("Create Tenant '%s' Resource Unit '%s' ", m.OBTenant.Name, unitName)
-	if unitConfig.MemorySize == 0 {
-		klog.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", m.OBTenant.Name, unitName)
-		return errors.Errorf("Tenant '%s'  resource unit '%s' memorySize cannot be empty", m.OBTenant.Name, unitName)
-	}
+func (m *OBTenantManager) SetUnitConfigV4(unitName string, unitConfig model.UnitConfigV4) error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	unitModel := GenerateModelUnitConfigV4SQLParam(unitName, unitConfig)
 	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Unit")
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", tenantName))
 	}
-
-	return oceanbaseOperationManager.AddUnitConfigV4(unitName, unitConfig)
-}
-
-func (m *OBTenantManager) SetUnitConfigV4(name string, unitConfig model.UnitConfigV4) error {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", m.OBTenant.Name))
-	}
-	return oceanbaseOperationManager.SetUnitConfigV4(name, unitConfig)
+	return oceanbaseOperationManager.SetUnitConfigV4(unitModel)
 }
 
 func (m *OBTenantManager) GetPoolsForAdd() []v1alpha1.ResourcePoolSpec {
@@ -519,47 +507,56 @@ func (m *OBTenantManager) GetPoolsForDelete() []v1alpha1.ResourcePoolStatus {
 }
 
 func (m *OBTenantManager) TenantAddPool(pool v1alpha1.ResourcePoolSpec) error {
-	tenantName := m.OBTenant.Name
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Add Zone ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' -- Add Pool", tenantName))
 	}
-	resourcePoolStatus := v1alpha1.ResourcePoolStatus{
+	err = m.CreateUnitAndPoolV4(pool)
+	if err != nil {
+		return err
+	}
+
+	poolStatusAdd := v1alpha1.ResourcePoolStatus{
 		ZoneList:   pool.ZoneList,
 		Type:       pool.Type,
 		UnitNumber: pool.UnitNumber,
 	}
-	resourcePoolStatusList := m.OBTenant.Status.Pools
-	resourcePoolStatusList = append(resourcePoolStatusList, resourcePoolStatus)
-	err = m.CreateUnitAndPool(pool)
-	if err != nil {
-		return err
-	}
-	var localityString string
-	poolList := m.GenerateStatusPoolList(tenantName, resourcePoolStatusList)
-	poolListString := fmt.Sprintf("RESOURCE_POOL_LIST = ('%s')", strings.Join(poolList, "','"))
+	resourcePoolStatusList := append(m.OBTenant.Status.Pools, poolStatusAdd)
+	poolList := m.GenerateStatusPoolList(resourcePoolStatusList)
 	statusLocalityMap := GenerateStatusLocalityMap(resourcePoolStatusList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
-	localityString = fmt.Sprintf(", LOCALITY = '%s'", strings.Join(localityList, ","))
-	err = oceanbaseOperationManager.SetTenant(tenantName, "", "", poolListString, "", localityString)
+
+	tenantSQLParam := model.TenantSQLParam{
+		TenantName: tenantName,
+		PoolList:   poolList,
+		Locality:   strings.Join(localityList, ","),
+	}
+	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+
 	if err != nil {
 		return err
 	}
-	klog.Infof("Wait For Tenant '%s' 'ALTER_TENANT_LOCALITY' Job Success", tenantName)
+	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
 	for {
 		_, err := oceanbaseOperationManager.GetRsJob(tenantName)
 		if err != nil {
 			break
 		}
 	}
-	return m.UpdateTenantStatus(obtenant.Running)
+	return nil
 }
 
 func (m *OBTenantManager) TenantDeletePool(deleteZone v1alpha1.ResourcePoolStatus) error {
-	tenantName := m.OBTenant.Name
+
+	m.Logger.Info("===== debug: begin TenantDeletePool", "deleteZone", deleteZone)
+	tenantName := m.OBTenant.Spec.TenantName
+	poolName := m.GeneratePoolName(deleteZone.ZoneList)
+	unitName := m.GenerateUnitName(deleteZone.ZoneList)
+
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Delete Zone ", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' -- Delete Pool ", tenantName))
 	}
 	var zoneList []v1alpha1.ResourcePoolStatus
 	for _, zone := range m.OBTenant.Status.Pools {
@@ -567,32 +564,32 @@ func (m *OBTenantManager) TenantDeletePool(deleteZone v1alpha1.ResourcePoolStatu
 			zoneList = append(zoneList, zone)
 		}
 	}
+
 	statusLocalityMap := GenerateStatusLocalityMap(zoneList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
-	localityString := fmt.Sprintf("LOCALITY = '%s'", strings.Join(localityList, ","))
-	err = oceanbaseOperationManager.SetTenant(tenantName, "", "", "", "", localityString)
+	poolList := m.GenerateStatusPoolList(zoneList)
+	tenantSQLParam := model.TenantSQLParam{
+		TenantName: tenantName,
+		Locality:   strings.Join(localityList, ","),
+		PoolList: poolList,
+	}
+	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 	if err != nil {
-		klog.Errorf("Modify Tenant '%s' Locality Error : %s", tenantName, err)
+		m.Logger.Error(err, "Modify Tenant failed", "tenantName", tenantName)
 		return err
 	}
-	klog.Infof("Wait For Tenant '%s' 'ALTER_TENANT_LOCALITY' Job Success", tenantName)
+	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for deletePool Finished", "tenantName", tenantName)
 	for {
 		_, err := oceanbaseOperationManager.GetRsJob(tenantName)
 		if err != nil {
 			break
 		}
 	}
-	poolList := m.GenerateStatusPoolList(tenantName, zoneList)
-	poolListString := fmt.Sprintf(", RESOURCE_POOL_LIST = ('%s')", strings.Join(poolList, "','"))
-	err = oceanbaseOperationManager.SetTenant(tenantName, "", "", poolListString, "", "")
+
+	// delete pool
+	poolExist, err := m.PoolExist(poolName)
 	if err != nil {
-		klog.Errorf("Modify Tenant '%s' Resource Pool List Error : %s", tenantName, err)
-		return err
-	}
-	poolName := m.GeneratePoolName(deleteZone.ZoneList)
-	poolExist, _, err := m.PoolExist(poolName)
-	if err != nil {
-		klog.Errorln("Check Whether The Resource Pool Exists Error: ", err)
+		m.Logger.Error(err, "Check ResourcePool exist failed", "poolName", poolName)
 		return err
 	}
 	if poolExist {
@@ -601,23 +598,22 @@ func (m *OBTenantManager) TenantDeletePool(deleteZone v1alpha1.ResourcePoolStatu
 			return err
 		}
 	}
-	unitName := m.GenerateUnitName(deleteZone.ZoneList)
+
+	// delete unit
 	unitExist, err := m.UnitConfigV4Exist(unitName)
 	if err != nil {
-		klog.Errorln("Check Whether The Resource Unit Exists Error: ", err)
+		m.Logger.Error(err, "Check UnitConfigV4 Exist failed", "unitName", unitName)
 		return err
 	}
 	if unitExist {
-		err = oceanbaseOperationManager.DeleteUnit(unitName)
+		err = oceanbaseOperationManager.DeleteUnitConfig(unitName)
 		if err != nil {
 			return err
 		}
 	}
-	klog.Infoln("Succeed delete zone  ", deleteZone.ZoneList)
-	return m.UpdateTenantStatus(obtenant.Running)
+	m.Logger.Info("Succeed delete pool", "deleted poolName", deleteZone.ZoneList)
+	return nil
 }
-
-
 
 // ---------- compare helper function ----------
 
@@ -636,7 +632,7 @@ func IsUnitConfigV4Equal(specUnitConfig model.UnitConfigV4, statusUnitConfig mod
 	return false
 }
 
-func FormatUnitV4Config(unit model.UnitConfigV4) string {
+func FormatUnitConfigV4(unit model.UnitConfigV4) string {
 	return fmt.Sprintf("MaxCPU: %f MinCPU:%f MemorySize:%d MaxIops:%d MinIops:%d IopsWeight:%d LogDiskSize:%d",
 		unit.MaxCPU, unit.MinCPU, unit.MemorySize, unit.MaxIops, unit.MinIops, unit.IopsWeight, unit.LogDiskSize)
 }
@@ -679,6 +675,19 @@ func GenerateModelUnitConfigV4(unitConfig v1alpha1.UnitConfig) model.UnitConfigV
 	modelUnitConfigV4.IopsWeight = int64(unitConfig.IopsWeight)
 	modelUnitConfigV4.MemorySize = unitConfig.MemorySize.Value()
 	modelUnitConfigV4.LogDiskSize = unitConfig.LogDiskSize.Value()
+	return modelUnitConfigV4
+}
+
+func GenerateModelUnitConfigV4SQLParam(unitConfigName string, unitConfig model.UnitConfigV4) model.UnitConfigV4SQLParam{
+	var modelUnitConfigV4 model.UnitConfigV4SQLParam
+	modelUnitConfigV4.UnitConfigName = unitConfigName
+	modelUnitConfigV4.MaxCPU = unitConfig.MaxCPU
+	modelUnitConfigV4.MinCPU = unitConfig.MinCPU
+	modelUnitConfigV4.MaxIops = unitConfig.MaxIops
+	modelUnitConfigV4.MinIops = unitConfig.MinIops
+	modelUnitConfigV4.IopsWeight = unitConfig.IopsWeight
+	modelUnitConfigV4.MemorySize = unitConfig.MemorySize
+	modelUnitConfigV4.LogDiskSize = unitConfig.LogDiskSize
 	return modelUnitConfigV4
 }
 
@@ -730,55 +739,53 @@ func GenerateSpecLocalityMap(zones []v1alpha1.ResourcePoolSpec) map[string]v1alp
 	return localityMap
 }
 
-func GenerateStatusLocalityMap(topology []v1alpha1.ResourcePoolStatus) map[string]v1alpha1.LocalityType {
+func GenerateStatusLocalityMap(pools []v1alpha1.ResourcePoolStatus) map[string]v1alpha1.LocalityType {
 	localityMap := make(map[string]v1alpha1.LocalityType, 0)
-	for _, zone := range topology {
-		localityMap[zone.ZoneList] = zone.Type
+	for _, pool := range pools {
+		localityMap[pool.ZoneList] = pool.Type
 	}
 	return localityMap
 }
 
 func (m *OBTenantManager) GenerateLocalityList(localityMap map[string]v1alpha1.LocalityType) []string {
 	var locality []string
-	for zoneName, zoneType := range localityMap {
+	for zoneList, zoneType := range localityMap {
 		if zoneType.Name != "" {
-			locality = append(locality, fmt.Sprint(zoneType.Name, "{", zoneType.Replica, "}@", zoneName))
+			locality = append(locality, fmt.Sprintf("%s{%d}@%s", zoneType.Name, zoneType.Replica, zoneList))
 		}
 	}
 	return locality
 }
 
-
-
-func (m *OBTenantManager) GenerateSpecZoneList(zones []v1alpha1.ResourcePoolSpec) []string {
+func (m *OBTenantManager) GenerateSpecZoneList(pools []v1alpha1.ResourcePoolSpec) []string {
 	var zoneList []string
-	for _, zone := range zones {
-		zoneList = append(zoneList, zone.ZoneList)
+	for _, pool := range pools {
+		zoneList = append(zoneList, pool.ZoneList)
 	}
 	return zoneList
 }
 
-func (m *OBTenantManager) GenerateStatusZoneList(zones []v1alpha1.ResourcePoolStatus) []string {
+func (m *OBTenantManager) GenerateStatusZoneList(pools []v1alpha1.ResourcePoolStatus) []string {
 	var zoneList []string
-	for _, zone := range zones {
-		zoneList = append(zoneList, zone.ZoneList)
+	for _, pool := range pools {
+		zoneList = append(zoneList, pool.ZoneList)
 	}
 	return zoneList
 }
 
-func (m *OBTenantManager) GenerateSpecPoolList(tenantName string, zones []v1alpha1.ResourcePoolSpec) []string {
+func (m *OBTenantManager) GenerateSpecPoolList(pools []v1alpha1.ResourcePoolSpec) []string {
 	var poolList []string
-	for _, zone := range zones {
-		poolName := m.GeneratePoolName(zone.ZoneList)
+	for _, pool := range pools {
+		poolName := m.GeneratePoolName(pool.ZoneList)
 		poolList = append(poolList, poolName)
 	}
 	return poolList
 }
 
-func (m *OBTenantManager) GenerateStatusPoolList(tenantName string, zones []v1alpha1.ResourcePoolStatus) []string {
+func (m *OBTenantManager) GenerateStatusPoolList(pools []v1alpha1.ResourcePoolStatus) []string {
 	var poolList []string
-	for _, zone := range zones {
-		poolName := m.GeneratePoolName(zone.ZoneList)
+	for _, pool := range pools {
+		poolName := m.GeneratePoolName(pool.ZoneList)
 		poolList = append(poolList, poolName)
 	}
 	return poolList
@@ -830,11 +837,11 @@ func (m *OBTenantManager) GenerateLocality(zones []v1alpha1.ResourcePoolSpec) st
 	return strings.Join(localityList, ",")
 }
 
-func (m *OBTenantManager) GenerateVariableList(variable string) string {
-	if variable == "" {
-		return fmt.Sprintf("SET VARIABLES %s = %s", tenant.OBTcpInvitedNodes, tenant.DefaultOBTcpInvitedNodes)
+func (m *OBTenantManager) GenerateWhiteListInVariableForm(whiteList string) string {
+	if whiteList == "" {
+		return fmt.Sprintf("%s = '%s'", tenant.OBTcpInvitedNodes, tenant.DefaultOBTcpInvitedNodes)
 	} else {
-		return fmt.Sprintf("SET VARIABLES %s = '%s'", tenant.OBTcpInvitedNodes, variable)
+		return fmt.Sprintf("%s = '%s'", tenant.OBTcpInvitedNodes, whiteList)
 	}
 }
 
@@ -868,119 +875,61 @@ func GeneratePriorityMap(primaryZone string) map[string]int {
 	return priorityMap
 }
 
-// ---------- update status function ----------
-
-func (m *OBTenantManager) UpdateTenantStatus(tenantStatus string) error {
-	tenantCurrent, err := m.getObTenant()
-	if err != nil {
-		return err
-	}
-	tenantCurrentDeepCopy := tenantCurrent.DeepCopy()
-	m.OBTenant = tenantCurrentDeepCopy
-	tenantNew, err := m.BuildTenantStatusForVariables(tenantCurrentDeepCopy, tenantStatus)
-	if err != nil {
-		return err
-	}
-	compareStatus := reflect.DeepEqual(tenantCurrent.Status, tenantNew.Status)
-	if !compareStatus {
-		err = m.PatchStatus(tenantNew, tenantCurrent)
-		if err != nil {
-			return err
-		}
-	}
-	m.OBTenant = tenantNew
-	return nil
-}
-
-func (m *OBTenantManager) UpdateTenantStatusOBTcpInvitedNodes(value string) error {
-	tenantCurrent, err := m.getObTenant()
-	if err != nil {
-		return err
-	}
-	tenantCurrentDeepCopy := tenantCurrent.DeepCopy()
-	m.OBTenant = tenantCurrentDeepCopy
-	tenantNew, err := m.BuildTenantStatusForVariables(tenantCurrentDeepCopy, value)
-	if err != nil {
-		return err
-	}
-	compareStatus := reflect.DeepEqual(tenantCurrent.Status, tenantNew.Status)
-	if !compareStatus {
-		err = m.PatchStatus(tenantNew, tenantCurrent)
-		if err != nil {
-			return err
-		}
-	}
-	m.OBTenant = tenantNew
-	return nil
-}
-
 // ---------- buildTenant function ----------
 
-func (m *OBTenantManager) BuildTenantStatusForVariables(tenant *v1alpha1.OBTenant, value string) (*v1alpha1.OBTenant, error) {
-	var tenantCurrentStatus v1alpha1.OBTenantStatus
-	tenantTopology, err := m.BuildPoolStatusList(tenant)
-	if err != nil {
-		return tenant, err
-	}
-	tenantCurrentStatus.Status = tenant.Status.Status
-	tenantCurrentStatus.Pools = tenantTopology
-	tenantCurrentStatus.ConnectWhiteList = value
-	if err != nil {
-		return tenant, err
-	}
-	tenantCurrentStatus.Charset, err = m.GetCharset()
-	if err != nil {
-		return tenant, err
-	}
-	tenant.Status = tenantCurrentStatus
-	return tenant, nil
-}
+func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) {
+	tenantName := m.OBTenant.Spec.TenantName
+	tenantCurrentStatus := &v1alpha1.OBTenantStatus{}
 
-func (m *OBTenantManager) BuildTenantStatus(tenant *v1alpha1.OBTenant, tenantStatus string) (*v1alpha1.OBTenant, error) {
-	var tenantCurrentStatus v1alpha1.OBTenantStatus
-	poolStatusList, err := m.BuildPoolStatusList(tenant)
+	tenantExist, err := m.TenantExist(tenantName)
 	if err != nil {
-		return tenant, err
+		return nil, err
 	}
-	tenantCurrentStatus.Status = tenantStatus
+	if !tenantExist {
+		return nil, errors.New(fmt.Sprintf("Tenant not exist, Tenant name: %s", tenantName))
+	}
+	gvTenant, err := m.GetTenantByName(tenantName)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprint("Cannot Get Tenant Failed When Build Tenant Status", tenantName))
+	}
+
+	poolStatusList, err := m.BuildPoolStatusList(gvTenant)
+	if err != nil {
+		return nil, err
+	}
+	tenantCurrentStatus.Status = m.OBTenant.Status.Status
 	tenantCurrentStatus.Pools = poolStatusList
-	tenantCurrentStatus.ConnectWhiteList = tenant.Status.ConnectWhiteList
-
+	tenantCurrentStatus.OperationContext = m.OBTenant.Status.OperationContext
+	tenantCurrentStatus.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
 	if err != nil {
-		return tenant, err
+		return nil, err
 	}
+
 	tenantCurrentStatus.Charset, err = m.GetCharset()
 	if err != nil {
-		return tenant, err
+		return nil, err
 	}
-	tenant.Status = tenantCurrentStatus
-	return tenant, nil
+	return tenantCurrentStatus, nil
 }
 
-func (m *OBTenantManager) BuildPoolStatusList(tenant *v1alpha1.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
-	var tenantTopologyStatusList []v1alpha1.ResourcePoolStatus
+func (m *OBTenantManager) BuildPoolStatusList(gvTenant *model.Tenant) ([]v1alpha1.ResourcePoolStatus, error) {
+	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var err error
 	var locality string
 	var primaryZone string
-	gvTenant, err := m.GetTenantByName(m.OBTenant.Name)
-	if err != nil {
-		return tenantTopologyStatusList, err
-	}
-	if err != nil {
-		return tenantTopologyStatusList, errors.New(fmt.Sprint("Cannot Get Tenant For BuildPoolStatusList: ", m.OBTenant.Name))
-	}
+
 	locality = gvTenant.Locality
 	primaryZone = gvTenant.PrimaryZone
 	typeMap := GenerateTypeMap(locality)
 	tenantID := gvTenant.TenantID
 	priorityMap := GeneratePriorityMap(primaryZone)
-	unitNumMap, err := m.GenerateStatusUnitNumMap(tenant.Spec.Pools)
+	unitNumMap, err := m.GenerateStatusUnitNumMap(m.OBTenant.Spec.Pools)
 	if err != nil {
-		return tenantTopologyStatusList, err
+		return poolStatusList, err
 	}
 	zoneList, err := m.GenerateStatusZone(tenantID)
 	if err != nil {
-		return tenantTopologyStatusList, err
+		return poolStatusList, err
 	}
 	for _, zone := range zoneList {
 		var tenantCurrentStatus v1alpha1.ResourcePoolStatus
@@ -988,17 +937,17 @@ func (m *OBTenantManager) BuildPoolStatusList(tenant *v1alpha1.OBTenant) ([]v1al
 		tenantCurrentStatus.Type = typeMap[zone]
 		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
 		tenantCurrentStatus.Priority = priorityMap[zone]
-		tenantCurrentStatus.UnitConfig, err = m.BuilUnitConfigV4FromDB(zone, tenantID)
+		tenantCurrentStatus.UnitConfig, err = m.BuildUnitConfigV4FromDB(zone, tenantID)
 		if err != nil {
-			return tenantTopologyStatusList, err
+			return poolStatusList, err
 		}
 		tenantCurrentStatus.Units, err = m.BuildUnitStatusFromDB(zone, tenantID)
 		if err != nil {
-			return tenantTopologyStatusList, err
+			return poolStatusList, err
 		}
-		tenantTopologyStatusList = append(tenantTopologyStatusList, tenantCurrentStatus)
+		poolStatusList = append(poolStatusList, tenantCurrentStatus)
 	}
-	return tenantTopologyStatusList, nil
+	return poolStatusList, nil
 }
 
 func (m *OBTenantManager) GenerateStatusZone(tenantID int64) ([]string, error) {
@@ -1050,14 +999,14 @@ func (m *OBTenantManager) GenerateStatusUnitNumMap(zones []v1alpha1.ResourcePool
 		poolName := m.GeneratePoolName(zone.ZoneList)
 		for _, pool := range poolList {
 			if pool.Name == poolName {
-				unitNumMap[zone.ZoneList] = int(pool.UnitCount)
+				unitNumMap[zone.ZoneList] = int(pool.UnitNum)
 			}
 		}
 	}
 	return unitNumMap, nil
 }
 
-func (m *OBTenantManager) BuilUnitConfigV4FromDB(zone string, tenantID int64) (v1alpha1.UnitConfig, error) {
+func (m *OBTenantManager) BuildUnitConfigV4FromDB(zone string, tenantID int64) (v1alpha1.UnitConfig, error) {
 	var unitConfig v1alpha1.UnitConfig
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -1086,10 +1035,10 @@ func (m *OBTenantManager) BuilUnitConfigV4FromDB(zone string, tenantID int64) (v
 			if resourcePoolID == int(pool.ResourcePoolID) && pool.TenantID == tenantID {
 				for _, unitConifg := range unitConfigList {
 					if unitConifg.UnitConfigID == pool.UnitConfigID {
-						unitConfig.MaxCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
-						unitConfig.MinCPU = apiresource.MustParse(strconv.FormatFloat(unitConifg.MinCPU, 'f', -1, 64))
-						unitConfig.MemorySize = *apiresource.NewQuantity(unitConifg.MemorySize, apiresource.DecimalSI)
-						unitConfig.LogDiskSize = *apiresource.NewQuantity(unitConifg.LogDiskSize, apiresource.DecimalSI)
+						unitConfig.MaxCPU = kuberesource.MustParse(strconv.FormatFloat(unitConifg.MaxCPU, 'f', -1, 64))
+						unitConfig.MinCPU = kuberesource.MustParse(strconv.FormatFloat(unitConifg.MinCPU, 'f', -1, 64))
+						unitConfig.MemorySize = *kuberesource.NewQuantity(unitConifg.MemorySize, kuberesource.DecimalSI)
+						unitConfig.LogDiskSize = *kuberesource.NewQuantity(unitConifg.LogDiskSize, kuberesource.DecimalSI)
 						unitConfig.MaxIops = int(unitConifg.MaxIops)
 						unitConfig.MinIops = int(unitConifg.MinIops)
 						unitConfig.IopsWeight = int(unitConifg.IopsWeight)
@@ -1130,8 +1079,12 @@ func (m *OBTenantManager) BuildUnitStatusFromDB(zone string, tenantID int64) ([]
 				res.ServerPort = int(unit.SvrPort)
 				res.Status = unit.Status
 				var migrateServer v1alpha1.MigrateServerStatus
-				migrateServer.ServerIP = unit.MigrateFromSvrIP
-				migrateServer.ServerPort = int(unit.MigrateFromSvrPort)
+				if unit.MigrateFromSvrIP.Valid {
+					migrateServer.ServerIP = unit.MigrateFromSvrIP.String
+				}
+				if unit.MigrateFromSvrPort.Valid {
+					migrateServer.ServerPort = int(unit.MigrateFromSvrPort.Int64)
+				}
 				res.Migrate = migrateServer
 				unitList = append(unitList, res)
 			}
@@ -1142,24 +1095,27 @@ func (m *OBTenantManager) BuildUnitStatusFromDB(zone string, tenantID int64) ([]
 
 
 func (m *OBTenantManager) GetOBVersion() (string, error) {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
 	}
 	version, err := oceanbaseOperationManager.GetVersion()
 	if err != nil {
-		return "", errors.Errorf("Tenant '%s' get ob version from db failed", m.OBTenant.Name)
+		return "", errors.Wrapf(err,"Tenant '%s' get ob version from db failed", tenantName)
 	}
 	return version.Version, nil
 }
 
-func (m *OBTenantManager) GenerateUnitName( zoneList string) string {
-	unitName := fmt.Sprintf("unitconfig_%s_%s", m.OBTenant.Name, zoneList)
+func (m *OBTenantManager) GenerateUnitName(zoneList string) string {
+	tenantName := m.OBTenant.Spec.TenantName
+	unitName := fmt.Sprintf("unitconfig_%s_%s", tenantName, zoneList)
 	return unitName
 }
 
 func (m *OBTenantManager) GeneratePoolName( zoneList string) string {
-	poolName := fmt.Sprintf("pool_%s_%s", m.OBTenant.Name, zoneList)
+	tenantName := m.OBTenant.Spec.TenantName
+	poolName := fmt.Sprintf("pool_%s_%s", tenantName, zoneList)
 	return poolName
 }
 
@@ -1177,11 +1133,22 @@ func (m *OBTenantManager) GetCharset() (string, error) {
 	return charset.Charset, nil
 }
 
+func (m *OBTenantManager) GetVariable(variableName string) (string, error) {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return "", errors.Wrap(err, "Get Sql Operator Error When Getting Variable")
+	}
+	variable, err := oceanbaseOperationManager.GetVariable(variableName)
+	if err != nil {
+		return "", errors.Wrap(err, "Get sql error when get variable")
+	}
+	return variable.Value, nil
+}
 
 func (m *OBTenantManager) GetTenantByName(tenantName string) (*model.Tenant, error) {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
+		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant")
 	}
 	tenant, err := oceanbaseOperationManager.GetTenantByName(tenantName)
 	if err != nil {
@@ -1193,7 +1160,7 @@ func (m *OBTenantManager) GetTenantByName(tenantName string) (*model.Tenant, err
 func (m *OBTenantManager) GetPoolByName(poolName string) (*model.Pool, error) {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
+		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Pool by poolName")
 	}
 	pool, err := oceanbaseOperationManager.GetPoolByName(poolName)
 	if err != nil {
@@ -1205,7 +1172,7 @@ func (m *OBTenantManager) GetPoolByName(poolName string) (*model.Pool, error) {
 func (m *OBTenantManager) GetUnitConfigV4ByName(unitName string) (*model.UnitConfigV4, error) {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant List")
+		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting UnitConfigV4 By unitConfig name")
 	}
 	unit, err := oceanbaseOperationManager.GetUnitConfigV4ByName(unitName)
 	if err != nil {
@@ -1214,146 +1181,104 @@ func (m *OBTenantManager) GetUnitConfigV4ByName(unitName string) (*model.UnitCon
 	return unit, nil
 }
 
-func (m *OBTenantManager) TenantExist(tenantName string) (bool, int, error) {
-	klog.Infof("Check Whether The Tenant '%s' Exists", tenantName)
-	tenant, err := m.GetTenantByName(m.OBTenant.Name)
+func (m *OBTenantManager) TenantExist(tenantName string) (bool, error) {
+	m.Logger.Info("Check Whether The Tenant Exists", "tenantName", tenantName)
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return false, 0, err
+		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether tenant exist")
 	}
-	return true, int(tenant.TenantID), nil
+	isExist, err := oceanbaseOperationManager.CheckTenantExistByName(tenantName)
+	if err != nil {
+		return false, err
+	}
+	return isExist, nil
 }
 
-func (m *OBTenantManager) PoolExist(poolName string) (bool, int, error) {
-	klog.Infof("Check Whether The Resource Pool '%s' Exists", poolName)
-	pool, err := m.GetPoolByName(poolName)
+func (m *OBTenantManager) PoolExist(poolName string) (bool, error) {
+	m.Logger.Info("Check Whether The Resource Pool Exists", "poolName", poolName)
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return false, 0, err
+		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether pool exist")
 	}
-	return true, int(pool.ResourcePoolID), nil
+	isExist, err := oceanbaseOperationManager.CheckPoolExistByName(poolName)
+	if err != nil {
+		return false, err
+	}
+	return isExist, nil
 }
 
 func (m *OBTenantManager) UnitConfigV4Exist(unitConfigName string) (bool, error) {
-	klog.Infof("Check Whether The Resource Unit '%s' Exists", unitConfigName)
-	_, err := m.GetUnitConfigV4ByName(unitConfigName)
-	if  err != nil {
-		return false, nil
+	m.Logger.Info("Check Whether The Resource Unit Exists", "unitConfigName", unitConfigName)
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether UnitConfigV4 exist")
 	}
-	return true, nil
+	isExist, err := oceanbaseOperationManager.CheckUnitConfigExistByName(unitConfigName)
+	if err != nil {
+		return false, err
+	}
+	return isExist, nil
 }
 
 func (m *OBTenantManager) CreatePool(poolName, unitName string, pool v1alpha1.ResourcePoolSpec) error {
-	klog.Infof("Create Tenant '%s' Resource Pool %s ", m.OBTenant.Name, poolName)
+	tenantName := m.OBTenant.Spec.TenantName
+	m.Logger.Info("Create Resource Pool", "tenantName", tenantName, "poolName", poolName)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
 	}
-	return oceanbaseOperationManager.AddPool(poolName, unitName, pool)
+	poolSQLParam := model.PoolSQLParam{
+		PoolName: poolName,
+		UnitName: unitName,
+		UnitNum:  int64(pool.UnitNumber),
+		ZoneList: pool.ZoneList,
+	}
+	return oceanbaseOperationManager.AddPool(poolSQLParam)
 }
 
-func (m *OBTenantManager) CreateUnitAndPool(pool v1alpha1.ResourcePoolSpec) error {
-	tenantName := m.OBTenant.Name
+func (m *OBTenantManager) CreateUnitAndPoolV4(pool v1alpha1.ResourcePoolSpec) error {
+	tenantName := m.OBTenant.Spec.TenantName
 	unitName := m.GenerateUnitName(pool.ZoneList)
 	poolName := m.GeneratePoolName(pool.ZoneList)
-	poolExist, _, err := m.PoolExist(poolName)
+	poolExist, err := m.PoolExist(poolName)
 	if err != nil {
-		klog.Errorf("Check Tenant '%s' Whether The Resource Pool '%s' Exists Error: %s", tenantName, poolName, err)
+		m.Logger.Error(err, "Check Resource Pool Exist Failed", "tenantName", tenantName, "poolName", poolName)
 		return err
 	}
 
 	unitExist, err := m.UnitConfigV4Exist(unitName)
 	if err != nil {
-		klog.Errorf("Check Tenant '%s' Whether The Resource Unit '%s' Exists Error: %s", tenantName, unitName, err)
+		m.Logger.Error(err, "Check UnitConfig Exist Failed", "tenantName", tenantName, "unitName", unitName)
 		return err
 	}
 
 	if !unitExist {
-		version, err := m.GetOBVersion()
+		err = m.CreateUnitConfigV4(unitName, pool.UnitConfig)
 		if err != nil {
-			return err
-		}
-		if string(version[0]) == tenant.Version3 {
-			err := m.CheckResourceEnough(tenantName, pool)
-			if err != nil {
-				return err
-			}
-		}
-		err = m.CreateUnitConfigV4(unitName, GenerateModelUnitConfigV4(pool.UnitConfig))
-		if err != nil {
-			klog.Errorf("Create Tenant '%s' Unit '%s' Error: %s", tenantName, unitName, err)
+			m.Logger.Error(err, "Create UnitConfigV4 Failed", "tenantName", tenantName, "unitName", unitName)
 			return err
 		}
 	}
 	if !poolExist {
 		err = m.CreatePool(poolName, unitName, pool)
 		if err != nil {
-			klog.Errorf("Create Tenant '%s' Pool '%s' Error: %s", tenantName, poolName, err)
+			m.Logger.Error(err,"Create Tenant Failed", "tenantName", tenantName, "poolName", poolName)
 			return err
 		}
 	}
 	return nil
 }
 
-
-func (m *OBTenantManager) CheckResourceEnough(tenantName string, zone v1alpha1.ResourcePoolSpec) error {
-	klog.Infof("Check Tenant '%s' Zone '%s' Reousrce ", tenantName, zone.ZoneList)
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		return errors.Wrap(err, "Get Sql Operator Error When Checking Reousrce")
-	}
-	resource, err := oceanbaseOperationManager.GetResourceTotal(zone.ZoneList)
-	if err != nil {
-		return errors.Errorf("Tenant '%s' cannot get resource", tenantName)
-	}
-	unitList, err := oceanbaseOperationManager.GetUnitList()
-	if err != nil {
-		return errors.Wrap(err, "Get sql error when get unit list")
-	}
-	var resourcePoolIDList []int
-	for _, unit := range unitList {
-		if unit.Zone == zone.ZoneList {
-			resourcePoolIDList = append(resourcePoolIDList, int(unit.ResourcePoolID))
-		}
-	}
-	poolList, err := oceanbaseOperationManager.GetPoolList()
-	if err != nil {
-		return errors.Wrap(err, "Get sql error when get pool list")
-	}
-	unitConfigList, err := oceanbaseOperationManager.GetUnitConfigV4List()
-	for _, pool := range poolList {
-		for _, resourcePoolID := range resourcePoolIDList {
-			if resourcePoolID == int(pool.ResourcePoolID) {
-				for _, unitConfig := range unitConfigList {
-					if unitConfig.UnitConfigID == pool.UnitConfigID {
-						resource.CPUTotal -= unitConfig.MaxCPU
-					}
-				}
-			}
-		}
-	}
-	if zone.UnitConfig.MaxCPU.AsApproximateFloat64() > resource.CPUTotal {
-		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' CPU Is Not Enough: Need %f, Only %f", tenantName, zone.ZoneList, zone.UnitConfig.MaxCPU.AsApproximateFloat64(), resource.CPUTotal))
-	}
-	maxMem := zone.UnitConfig.MemorySize.Value()
-	if err != nil {
-		return err
-	}
-	if maxMem > resource.MemTotal {
-		return errors.New(fmt.Sprintf("Tenant '%s' Zone '%s' Memory Is Not Enough: Need %d, Only %d", tenantName, zone.ZoneList, int(maxMem), int(resource.MemTotal)))
-	}
-	return nil
-}
-
-
 func (m *OBTenantManager) DeleteTenant() error {
-	tenantName := m.OBTenant.Name
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Tenant ", tenantName))
 	}
 
-	tenantExist, _, err := m.TenantExist(m.OBTenant.Name)
+	tenantExist, err := m.TenantExist(tenantName)
 	if err != nil {
-		klog.Errorf("Check Whether The Tenant '%s' Exists Error: %s", tenantName, err)
+		m.Logger.Error(err, "Check Whether The Tenant Exists Failed", "tenantName", tenantName)
 		return err
 	}
 	if tenantExist {
@@ -1363,15 +1288,16 @@ func (m *OBTenantManager) DeleteTenant() error {
 }
 
 func (m *OBTenantManager) DeletePool() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Pool", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Pool", tenantName))
 	}
 	for _, zone := range m.OBTenant.Spec.Pools {
 		poolName := m.GeneratePoolName(zone.ZoneList)
-		poolExist, _, err := m.PoolExist(poolName)
+		poolExist,  err := m.PoolExist(poolName)
 		if err != nil {
-			klog.Errorln("Check Whether The Resource Pool Exists Error: ", err)
+			m.Logger.Error(err, "Check Whether The Resource Pool Exists Failed")
 			return err
 		}
 		if poolExist {
@@ -1384,20 +1310,21 @@ func (m *OBTenantManager) DeletePool() error {
 	return nil
 }
 
-func (m *OBTenantManager) DeleteUnit() error {
+func (m *OBTenantManager) DeleteUnitConfig() error {
+	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Unit", m.OBTenant.Name))
+		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Unit", tenantName))
 	}
 	for _, zone := range m.OBTenant.Spec.Pools {
 		unitName := m.GenerateUnitName(zone.ZoneList)
 		unitExist, err := m.UnitConfigV4Exist(unitName)
 		if err != nil {
-			klog.Errorln("Check Whether The Resource Unit Exists Error: ", err)
+			m.Logger.Error(err, "Check Whether The Resource Unit Exists Failed", "tenantName", tenantName, "unitName", unitName)
 			return err
 		}
 		if unitExist {
-			err = oceanbaseOperationManager.DeleteUnit(unitName)
+			err = oceanbaseOperationManager.DeleteUnitConfig(unitName)
 			if err != nil {
 				return err
 			}

@@ -2,11 +2,10 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/obtenant"
-	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -15,7 +14,6 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -32,7 +30,9 @@ type OBTenantManager struct {
 func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get obcluster from K8s")
+		m.Logger.Error(err, "get obcluster from k8s failed",
+			"clusterName", m.OBTenant.Spec.ClusterName, "tenantName", m.OBTenant.Spec.TenantName)
+		return nil, errors.Wrap(err, "Get obcluster from K8s failed")
 	}
 	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
 }
@@ -47,7 +47,7 @@ func (m *OBTenantManager) IsDeleting() bool {
 
 
 func (m *OBTenantManager) InitStatus() {
-	m.Logger.Info("newly created cluster, init status")
+	m.Logger.Info("newly created obtenant, init status")
 	status := v1alpha1.OBTenantStatus{
 		Status:           obtenant.Creating,
 		Pools:            make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
@@ -71,17 +71,49 @@ func (m *OBTenantManager) FinishTask() {
 }
 
 func (m *OBTenantManager) UpdateStatus() error {
-	if m.hasModifiedTenantTask() {
-		m.OBTenant.Status.Status = obtenant.Maintaining
+ 	obtenantName := m.OBTenant.Spec.TenantName
+	status := m.OBTenant.Status.Status
+	var err error
+	if status == obtenant.FinalizerFinished {
+		m.Logger.Info("OBTenant has remove Finalizer", "tenantName", obtenantName)
+		return nil
+	} else if m.IsDeleting() {
+		status = obtenant.Deleting
+		m.Logger.Info("OBTenant prepare deleting", "tenantName", obtenantName)
+	} else if status == obtenant.Creating {
+		m.Logger.Info("OBTenant is creating", "tenantName", obtenantName)
+	} else if status == obtenant.Pending {
+		m.Logger.Info("OBTenant create failed because tenant has exist!", "tenantName", obtenantName)
+	} else if status == obtenant.Maintaining {
+		m.Logger.Info("OBTenant status has been maintaining, skip compare spec with status", "status", m.OBTenant.Status, "tenantName", obtenantName)
+	} else if status == obtenant.Running {
+		if m.hasModifiedTenantTask() {
+			status = obtenant.Maintaining
+		}
+	}
 
-		m.Logger.Info("update obtenant status", "status", m.OBTenant.Status)
-		m.Logger.Info("update obtenant status", "operation context", m.OBTenant.Status.OperationContext)
+	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
 
-		err := m.Client.Status().Update(m.Ctx, m.OBTenant)
+	// build tenant status from DB
+	if status == obtenant.Running {
+		tenantStatusCurrent, err := m.BuildTenantStatus()
 		if err != nil {
-			m.Logger.Error(err, "Got error when update obtenant status")
+			m.Logger.Error(err, "Got error when build obtenant status from DB")
 			return err
 		}
+		m.OBTenant.Status = *tenantStatusCurrent
+	} else {
+		m.Logger.Info(fmt.Sprintf("obtenant is %s, skip build obtenant status from DB", status))
+	}
+
+	err = m.Client.Status().Update(m.Ctx, m.OBTenant)
+	if err != nil {
+		m.Logger.Error(err, "Got error when update obtenant status")
+		return err
+	}
+
+	if status == obtenant.Pending {
+		return errors.New("obtenant is pending because tenant has exist, please delete tenant with the same name")
 	}
 	return nil
 }
@@ -102,18 +134,11 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 		finalizerFinished = true
 	} else if m.IsDeleting() {
 		m.Logger.Info("OBTenant is deleting")
-		finalizerFinished = m.OBTenant.Status.Status == zonestatus.FinalizerFinished
+		finalizerFinished = m.OBTenant.Status.Status == obtenant.FinalizerFinished
 	}
-
 	if finalizerFinished {
-		m.Logger.Info("Finalizer finished")
+		m.Logger.Info("Obtenant Finalizer finished")
 		m.OBTenant.ObjectMeta.Finalizers = make([]string, 0)
-
-		err := m.Client.Update(m.Ctx, m.OBTenant)
-		if err != nil {
-			m.Logger.Error(err, "update obtenant instance failed")
-			return errors.Wrapf(err, "Update obtenant %s in K8s failed", m.OBTenant.Name)
-		}
 	}
 	return nil
 }
@@ -134,11 +159,11 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBTenant.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from observer status")
+		m.Logger.Info("get task flow from obtenant status")
 		return task.NewTaskFlow(m.OBTenant.Status.OperationContext), nil
 	}
 
-	m.Logger.Info("create task flow according to observer status")
+	m.Logger.Info("create task flow according to obtenant status")
 
 	switch m.OBTenant.Status.Status {
 	case obtenant.Creating:
@@ -165,33 +190,21 @@ func (m *OBTenantManager) generateNamespacedName(name string) types.NamespacedNa
 
 
 func (m *OBTenantManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	// this label always exists
-	clusterName, _ := m.OBTenant.Labels[oceanbaseconst.LabelRefOBCluster]
+	clusterName := m.OBTenant.Spec.ClusterName
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
+		m.Logger.Error(err, "get obcluster failed", "clusterName", clusterName, "namespaced", m.OBTenant.Namespace)
+		return nil, errors.Wrap(err, "get obcluster failed")
 	}
 	return obcluster, nil
 }
 
 func (m *OBTenantManager) getObTenant() (*v1alpha1.OBTenant, error) {
 	var TenantCurrent *v1alpha1.OBTenant
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBTenant.Name), TenantCurrent)
+	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBTenant.Spec.TenantName), TenantCurrent)
 	if err != nil {
-		klog.Errorln(err)
+		return nil, errors.Wrap(err, "get obtenant")
 	}
-	return TenantCurrent, err
+	return TenantCurrent, nil
 }
-
-func (m *OBTenantManager) PatchStatus(newTenant, curTenant *v1alpha1.OBTenant) error {
-	err := m.Client.Status().Patch(m.Ctx, newTenant, client.MergeFrom(curTenant.DeepCopyObject().(client.Object)))
-
-	if err != nil {
-		klog.Errorln(err)
-		return err
-	}
-	return nil
-}
-
-
