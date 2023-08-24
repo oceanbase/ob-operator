@@ -27,7 +27,7 @@ const (
 const (
 	DefaultNamespace    = "default"
 	DefaultStorageClass = "local-path"
-	DefaultImage        = "oceanbasedev/oceanbase-cn:v4.1.0.0-100000192023032010"
+	DefaultImage        = "oceanbasedev/oceanbase-cn:4.1.0.1-test"
 )
 
 func newMinimalOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
