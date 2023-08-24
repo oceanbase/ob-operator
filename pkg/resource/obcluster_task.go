@@ -70,7 +70,7 @@ func (m *OBClusterManager) WaitOBZoneDeleted() error {
 		for _, zoneStatus := range obcluster.Status.OBZoneStatus {
 			found := false
 			for _, zone := range m.OBCluster.Spec.Topology {
-				if zoneStatus.Zone == zone.Zone {
+				if zoneStatus.Zone == m.generateZoneName(zone.Zone) {
 					found = true
 					break
 				}
