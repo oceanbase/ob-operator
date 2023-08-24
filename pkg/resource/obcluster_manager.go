@@ -234,6 +234,8 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.WaitOBZoneRunning:
 		return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case taskname.WaitOBZoneDeleted:
+		return m.WaitOBZoneDeleted, nil
 	case taskname.Bootstrap:
 		return m.Bootstrap, nil
 	case taskname.CreateUsers:
