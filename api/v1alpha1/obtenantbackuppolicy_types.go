@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,6 +38,7 @@ type OBTenantBackupPolicySpec struct {
 type OBTenantBackupPolicyStatus struct {
 	Status                 BackupPolicyStatusType `json:"status"`
 	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
+	TenantInfo             *model.OBTenant        `json:"tenantInfo"`
 	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
 }
 
@@ -90,15 +92,16 @@ type DataBackupConfig struct {
 type CleanPolicy struct {
 	Name          string `json:"name"`
 	RecoverWindow string `json:"recoverWindow"`
-	Enabled       string `json:"enabled"`
+	Disabled      string `json:"Disabled"`
 }
 
 type BackupPolicyStatusType string
 
 const (
 	BackupPolicyStatusPreparing BackupPolicyStatusType = "PREPARING"
+	BackupPolicyStatusPrepared  BackupPolicyStatusType = "PREPARED"
 	BackupPolicyStatusRunning   BackupPolicyStatusType = "RUNNING"
 	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
-	BackupPolicyStatusSuccess   BackupPolicyStatusType = "SUCCESS"
 	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
+	BackupPolicyStatusStopped   BackupPolicyStatusType = "STOPPED"
 )

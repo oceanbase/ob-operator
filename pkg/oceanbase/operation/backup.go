@@ -60,7 +60,7 @@ func (m *OceanbaseOperationManager) CreateBackupIncr(tenantName string) error {
 	return m.ExecWithDefaultTimeout(sql.CreateBackupIncr, tenantName)
 }
 
-func (m *OceanbaseOperationManager) StopBackupJob(tenantName string) error {
+func (m *OceanbaseOperationManager) StopBackupJobOfTenant(tenantName string) error {
 	return m.ExecWithDefaultTimeout(sql.StopBackupJob, tenantName)
 }
 

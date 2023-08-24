@@ -40,3 +40,10 @@ const (
 	CreateOBServer                 = "create observer"
 	DeleteOBServerFinalizer        = "delete observer finalizer"
 )
+
+// tenant-level backup
+const (
+	PrepareBackupPolicy = "prepare backup policy"
+	StartBackupJob      = "start backup job"
+	StopBackupJob       = "stop backup job"
+)

@@ -11,3 +11,22 @@ See the Mulan PSL v2 for more details.
 */
 
 package operation
+
+import (
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/pkg/errors"
+)
+
+func (m *OceanbaseOperationManager) QueryTenantWithName(tenantName string) ([]*model.OBTenant, error) {
+	tenants := make([]*model.OBTenant, 0)
+	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query tenants")
+		return nil, errors.Wrap(err, "Query tenants")
+	}
+	if len(tenants) == 0 {
+		return nil, errors.Errorf("No tenants found")
+	}
+	return tenants, nil
+}

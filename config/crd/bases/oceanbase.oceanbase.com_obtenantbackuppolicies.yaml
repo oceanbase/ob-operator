@@ -53,14 +53,14 @@ spec:
                 type: object
               dataClean:
                 properties:
-                  enabled:
+                  Disabled:
                     type: string
                   name:
                     type: string
                   recoverWindow:
                     type: string
                 required:
-                - enabled
+                - Disabled
                 - name
                 - recoverWindow
                 type: object
@@ -130,9 +130,77 @@ spec:
                 type: object
               status:
                 type: string
+              tenantInfo:
+                description: OBTenant is the tenant model of OB system
+                properties:
+                  arbitration_service_status:
+                    type: string
+                  compatibility_mode:
+                    type: string
+                  create_time:
+                    type: string
+                  in_recyclebin:
+                    type: string
+                  locality:
+                    type: string
+                  locked:
+                    type: string
+                  log_mode:
+                    type: string
+                  modify_time:
+                    type: string
+                  previous_locality:
+                    type: string
+                  primary_zone:
+                    type: string
+                  readable_scn:
+                    format: int64
+                    type: integer
+                  recovery_until_scn:
+                    format: int64
+                    type: integer
+                  replayable_scn:
+                    format: int64
+                    type: integer
+                  status:
+                    type: string
+                  sync_scn:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  tenant_name:
+                    type: string
+                  tenant_role:
+                    type: string
+                  tenant_type:
+                    type: string
+                required:
+                - arbitration_service_status
+                - compatibility_mode
+                - create_time
+                - in_recyclebin
+                - locality
+                - locked
+                - log_mode
+                - modify_time
+                - previous_locality
+                - primary_zone
+                - readable_scn
+                - recovery_until_scn
+                - replayable_scn
+                - status
+                - sync_scn
+                - tenant_id
+                - tenant_name
+                - tenant_role
+                - tenant_type
+                type: object
             required:
             - logArchiveDestDisabled
             - status
+            - tenantInfo
             type: object
         type: object
     served: true

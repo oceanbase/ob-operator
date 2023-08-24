@@ -17,7 +17,11 @@ import (
 
 	"github.com/go-logr/logr"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
+	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
+	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -29,10 +33,12 @@ type ObTenantBackupPolicyManager struct {
 	Client       client.Client
 	Recorder     record.EventRecorder
 	Logger       *logr.Logger
+
+	con *operation.OceanbaseOperationManager
 }
 
 func (m *ObTenantBackupPolicyManager) IsNewResource() bool {
-	return true
+	return m.BackupPolicy.Status.Status == ""
 }
 
 func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
@@ -75,12 +81,32 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	return err
 }
 
-func (m *ObTenantBackupPolicyManager) GetTaskFunc(string) (func() error, error) {
-	return nil, nil
+func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, error) {
+	switch name {
+	case taskname.ConfigureServerForBackup:
+		return m.ConfigureServerForBackup, nil
+	case taskname.GetTenantInfo:
+		return m.GetTenantInfo, nil
+	case taskname.StartBackupJob:
+		return m.StartBackup, nil
+	case taskname.StopBackupJob:
+		return m.StopBackup, nil
+	default:
+		return nil, errors.Errorf("unknown task name %s", name)
+	}
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// get task flow depending on BackupPolicy status
-
-	return nil, nil
+	status := m.BackupPolicy.Status.Status
+	switch status {
+	case v1alpha1.BackupPolicyStatusPreparing:
+		return task.GetRegistry().Get(flow.PrepareBackupPolicy)
+	case v1alpha1.BackupPolicyStatusPrepared:
+		return task.GetRegistry().Get(flow.StartBackupJob)
+	case v1alpha1.BackupPolicyStatusRunning:
+		return nil, nil
+	default:
+		return nil, nil
+	}
 }
