@@ -62,8 +62,12 @@ func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
 func (m *OBClusterManager) WaitOBZoneDeleted() error {
 	waitSuccess := false
 	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		obcluster, err := m.getOBCluster()
+		if err != nil {
+			return errors.Wrap(err, "get obcluster failed")
+		}
 		zoneDeleted := true
-		for _, zoneStatus := range m.OBCluster.Status.OBZoneStatus {
+		for _, zoneStatus := range obcluster.Status.OBZoneStatus {
 			found := false
 			for _, zone := range m.OBCluster.Spec.Topology {
 				if zoneStatus.Zone == zone.Zone {
