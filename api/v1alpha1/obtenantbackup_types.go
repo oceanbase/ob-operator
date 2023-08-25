@@ -15,7 +15,6 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
-	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -39,7 +38,6 @@ type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           BackupJobStatus   `json:"status"`
-	JobStatus        batchv1.JobStatus `json:"jobStatus"`
 	Progress         string            `json:"progress"`
 	OperationContext *OperationContext `json:"operationContext,omitempty"`
 }

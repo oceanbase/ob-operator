@@ -89,3 +89,34 @@ type OBBackupCleanJob struct {
 	TaskCount        int64  `json:"task_count" db:"task_count"`
 	SuccessTaskCount int64  `json:"success_task_count" db:"success_task_count"`
 }
+
+// OBBackupTask belonging to OBBackupJob, matches CDB_OB_BACKUP_TASKS
+type OBBackupTask struct {
+	TenantId              int64  `json:"tenant_id" db:"tenant_id"`
+	TaskId                int64  `json:"task_id" db:"task_id"`
+	JobId                 int64  `json:"job_id" db:"job_id"`
+	Incarnation           int64  `json:"incarnation" db:"incarnation"`
+	BackupSetId           int64  `json:"backup_set_id" db:"backup_set_id"`
+	StartTimestamp        int64  `json:"start_timestamp" db:"start_timestamp"`
+	EndTimestamp          int64  `json:"end_timestamp" db:"end_timestamp"`
+	Status                string `json:"status" db:"status"`
+	StartScn              int64  `json:"start_scn" db:"start_scn"`
+	EndScn                int64  `json:"end_scn" db:"end_scn"`
+	UserLsStartScn        int64  `json:"user_ls_start_scn" db:"user_ls_start_scn"`
+	EncryptionMode        string `json:"encryption_mode" db:"encryption_mode"`
+	Password              string `json:"passwd" db:"passwd"`
+	InputBytes            int64  `json:"input_bytes" db:"input_bytes"`
+	OutputBytes           int64  `json:"output_bytes" db:"output_bytes"`
+	OutputRateBytes       int64  `json:"output_rate_bytes" db:"output_rate_bytes"`
+	ExtraMetaBytes        int64  `json:"extra_meta_bytes" db:"extra_meta_bytes"`
+	TabletCount           int64  `json:"tablet_count" db:"tablet_count"`
+	FinishTabletCount     int64  `json:"finish_tablet_count" db:"finish_tablet_count"`
+	MacroBlockCount       int64  `json:"macro_block_count" db:"macro_block_count"`
+	FinishMacroBlockCount int64  `json:"finish_macro_block_count" db:"finish_macro_block_count"`
+	FileCount             int64  `json:"file_count" db:"file_count"`
+	MetaTurnId            int64  `json:"meta_turn_id" db:"meta_turn_id"`
+	DataTurnId            int64  `json:"data_turn_id" db:"data_turn_id"`
+	Result                string `json:"result" db:"result"`
+	Comment               string `json:"comment" db:"comment"`
+	Path                  string `json:"path" db:"path"`
+}

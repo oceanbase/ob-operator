@@ -31,20 +31,19 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantName := m.BackupPolicy.Spec.TenantName
-	err = con.SetLogArchiveDestForTenant(tenantName, m.getArchiveDestPath())
-	if err != nil {
-		return err
-	}
-	err = con.SetDataBackupDestForTenant(tenantName, m.getBackupDestPath())
-	if err != nil {
-		return err
-	}
+	// err = con.SetLogArchiveDestForTenant(m.getArchiveDestPath())
+	// if err != nil {
+	// 	return err
+	// }
 	if m.BackupPolicy.Spec.LogArchive.Concurrency != 0 {
-		err = con.SetLogArchiveConcurrency(tenantName, m.BackupPolicy.Spec.LogArchive.Concurrency)
+		err = con.SetLogArchiveConcurrency(m.BackupPolicy.Spec.LogArchive.Concurrency)
 		if err != nil {
 			return err
 		}
+	}
+	err = con.SetDataBackupDestForTenant(m.getBackupDestPath())
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -76,12 +75,11 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantName := m.BackupPolicy.Spec.TenantName
-	err = con.EnableArchiveLogForTenant(tenantName)
+	err = con.EnableArchiveLogForTenant()
 	if err != nil {
 		return err
 	}
-	err = con.CreateBackupFull(tenantName)
+	err = con.CreateBackupFull()
 	// if m.BackupPolicy.Spec.DataBackup.Type == v1alpha1.BackupFull {
 	// } else {
 	// 	err = con.CreateBackupIncr(tenantName)
@@ -90,7 +88,7 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 		return err
 	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	err = con.AddCleanBackupPolicy(cleanConfig.Name, cleanConfig.RecoverWindow, m.BackupPolicy.Spec.TenantName)
+	err = con.AddCleanBackupPolicy(cleanConfig.Name, cleanConfig.RecoverWindow)
 	if err != nil {
 		return err
 	}
@@ -102,17 +100,16 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantName := m.BackupPolicy.Spec.TenantName
-	err = con.DisableArchiveLogForTenant(tenantName)
+	err = con.DisableArchiveLogForTenant()
 	if err != nil {
 		return err
 	}
-	err = con.StopBackupJobOfTenant(tenantName)
+	err = con.StopBackupJobOfTenant()
 	if err != nil {
 		return err
 	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	err = con.RemoveCleanBackupPolicy(cleanConfig.Name, m.BackupPolicy.Spec.TenantName)
+	err = con.RemoveCleanBackupPolicy(cleanConfig.Name)
 	if err != nil {
 		return err
 	}
@@ -133,7 +130,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -142,13 +139,13 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
-	dest := path.Join("file://", backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
+	dest := path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
 	if m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval != "" {
 		dest += fmt.Sprintf(" PIECE_SWITCH_INTERVAL=%s", m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval)
 	}
-	return dest
+	return "file://" + dest
 }
 
 func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
-	return path.Join("file://", backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
+	return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
 }

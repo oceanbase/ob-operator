@@ -15,65 +15,55 @@ package operation
 import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 	"github.com/pkg/errors"
 )
 
-func (m *OceanbaseOperationManager) SetLogArchiveDestForTenant(tenantName, uri string) error {
-	return m.SetParameter("LOG_ARCHIVE_DEST", uri, &param.Scope{
-		Name:  "TENANT",
-		Value: tenantName,
-	})
+func (m *OceanbaseOperationManager) SetLogArchiveDestForTenant(uri string) error {
+	return m.SetParameter("LOG_ARCHIVE_DEST", uri, nil)
 }
 
-func (m *OceanbaseOperationManager) SetLogArchiveConcurrency(tenantName string, concurrency int) error {
-	return m.SetParameter("log_archive_concurrency", concurrency, &param.Scope{
-		Name:  "TENANT",
-		Value: tenantName,
-	})
+func (m *OceanbaseOperationManager) SetLogArchiveConcurrency(concurrency int) error {
+	return m.SetParameter("log_archive_concurrency", concurrency, nil)
 }
 
-func (m *OceanbaseOperationManager) SetDataBackupDestForTenant(tenantName, uri string) error {
-	return m.SetParameter("DATA_BACKUP_DEST", uri, &param.Scope{
-		Name:  "TENANT",
-		Value: tenantName,
-	})
+func (m *OceanbaseOperationManager) SetDataBackupDestForTenant(uri string) error {
+	return m.SetParameter("DATA_BACKUP_DEST", uri, nil)
 }
 
-func (m *OceanbaseOperationManager) EnableArchiveLogForTenant(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.EnableArchiveLog, tenantName)
+func (m *OceanbaseOperationManager) EnableArchiveLogForTenant() error {
+	return m.ExecWithDefaultTimeout(sql.EnableArchiveLog)
 }
 
-func (m *OceanbaseOperationManager) DisableArchiveLogForTenant(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.DisableArchiveLog, tenantName)
+func (m *OceanbaseOperationManager) DisableArchiveLogForTenant() error {
+	return m.ExecWithDefaultTimeout(sql.DisableArchiveLog)
 }
 
 func (m *OceanbaseOperationManager) SetBackupPassword(password string) error {
 	return m.ExecWithDefaultTimeout(sql.SetBackupPassword, password)
 }
 
-func (m *OceanbaseOperationManager) CreateBackupFull(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.CreateBackupFull, tenantName)
+func (m *OceanbaseOperationManager) CreateBackupFull() error {
+	return m.ExecWithDefaultTimeout(sql.CreateBackupFull)
 }
 
-func (m *OceanbaseOperationManager) CreateBackupIncr(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.CreateBackupIncr, tenantName)
+func (m *OceanbaseOperationManager) CreateBackupIncr() error {
+	return m.ExecWithDefaultTimeout(sql.CreateBackupIncr)
 }
 
-func (m *OceanbaseOperationManager) StopBackupJobOfTenant(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.StopBackupJob, tenantName)
+func (m *OceanbaseOperationManager) StopBackupJobOfTenant() error {
+	return m.ExecWithDefaultTimeout(sql.StopBackupJob)
 }
 
-func (m *OceanbaseOperationManager) AddCleanBackupPolicy(policyName, recoverWindow, tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.AddCleanBackupPolicy, policyName, recoverWindow, tenantName)
+func (m *OceanbaseOperationManager) AddCleanBackupPolicy(policyName, recoverWindow string) error {
+	return m.ExecWithDefaultTimeout(sql.AddCleanBackupPolicy, policyName, recoverWindow)
 }
 
-func (m *OceanbaseOperationManager) RemoveCleanBackupPolicy(policyName, tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.RemoveCleanBackupPolicy, policyName, tenantName)
+func (m *OceanbaseOperationManager) RemoveCleanBackupPolicy(policyName string) error {
+	return m.ExecWithDefaultTimeout(sql.RemoveCleanBackupPolicy, policyName)
 }
 
-func (m *OceanbaseOperationManager) CancelCleanBackup(tenantName string) error {
-	return m.ExecWithDefaultTimeout(sql.CancelCleanBackup, tenantName)
+func (m *OceanbaseOperationManager) CancelCleanBackup() error {
+	return m.ExecWithDefaultTimeout(sql.CancelCleanBackup)
 }
 
 func (m *OceanbaseOperationManager) CancelAllCleanBackup() error {

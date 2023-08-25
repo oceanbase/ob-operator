@@ -78,7 +78,6 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
-	m.Logger.Info("Update Policy Status", "status", m.BackupPolicy.Status)
 	return err
 }
 

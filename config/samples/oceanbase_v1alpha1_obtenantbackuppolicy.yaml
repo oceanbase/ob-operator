@@ -12,8 +12,6 @@ metadata:
   namespace: oceanbase
 spec:
   tenantName: "yuyi"
-  dataBackup:
-    type: "FULL"
   dataClean:
     name: "clean_yuyi"
     recoverWindow: "7d"
