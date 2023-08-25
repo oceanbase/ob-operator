@@ -20,7 +20,7 @@ import (
 )
 
 func PrepareOBServerForBootstrap() *TaskFlow {
-	return &TaskFlow{
+	return &TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady},

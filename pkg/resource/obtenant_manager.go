@@ -60,6 +60,7 @@ func (m *OBTenantManager) InitStatus() {
 func (m *OBTenantManager) SetOperationContext(ctx *v1alpha1.OperationContext) {
 	m.OBTenant.Status.OperationContext = ctx
 }
+
 func (m *OBTenantManager) ClearTaskInfo() {
 	m.OBTenant.Status.Status = obtenant.Running
 	m.OBTenant.Status.OperationContext = nil
@@ -72,48 +73,38 @@ func (m *OBTenantManager) FinishTask() {
 
 func (m *OBTenantManager) UpdateStatus() error {
  	obtenantName := m.OBTenant.Spec.TenantName
-	status := m.OBTenant.Status.Status
 	var err error
-	if status == obtenant.FinalizerFinished {
+	if m.OBTenant.Status.Status == obtenant.FinalizerFinished {
 		m.Logger.Info("OBTenant has remove Finalizer", "tenantName", obtenantName)
 		return nil
 	} else if m.IsDeleting() {
-		status = obtenant.Deleting
+		m.OBTenant.Status.Status = obtenant.Deleting
 		m.Logger.Info("OBTenant prepare deleting", "tenantName", obtenantName)
-	} else if status == obtenant.Creating {
-		m.Logger.Info("OBTenant is creating", "tenantName", obtenantName)
-	} else if status == obtenant.Pending {
-		m.Logger.Info("OBTenant create failed because tenant has exist!", "tenantName", obtenantName)
-	} else if status == obtenant.Maintaining {
-		m.Logger.Info("OBTenant status has been maintaining, skip compare spec with status", "status", m.OBTenant.Status, "tenantName", obtenantName)
-	} else if status == obtenant.Running {
-		if m.hasModifiedTenantTask() {
-			status = obtenant.Maintaining
-		}
-	}
-
-	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
-
-	// build tenant status from DB
-	if status == obtenant.Running {
+	} else if m.OBTenant.Status.Status != obtenant.Running {
+		m.Logger.Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
+	} else {
+		// build tenant status from DB
 		tenantStatusCurrent, err := m.BuildTenantStatus()
 		if err != nil {
 			m.Logger.Error(err, "Got error when build obtenant status from DB")
 			return err
 		}
 		m.OBTenant.Status = *tenantStatusCurrent
-	} else {
-		m.Logger.Info(fmt.Sprintf("obtenant is %s, skip build obtenant status from DB", status))
+
+		if m.hasModifiedTenantTask() {
+			m.OBTenant.Status.Status = obtenant.Maintaining
+		}
 	}
 
+	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
 	err = m.Client.Status().Update(m.Ctx, m.OBTenant)
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obtenant status")
 		return err
 	}
 
-	if status == obtenant.Pending {
-		return errors.New("obtenant is pending because tenant has exist, please delete tenant with the same name")
+	if m.OBTenant.Status.Status == obtenant.Pending {
+		return errors.New(fmt.Sprintf("obtenant is pending because tenant existed, please delete tenant %s with granted resource pool and unit config", m.OBTenant.Spec.TenantName))
 	}
 	return nil
 }
@@ -166,7 +157,7 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	m.Logger.Info("create task flow according to obtenant status")
 
 	switch m.OBTenant.Status.Status {
-	case obtenant.Creating:
+	case obtenant.Creating, obtenant.Pending:
 		return task.GetRegistry().Get(flowname.CreateTenant)
 	case obtenant.Maintaining:
 		m.Logger.Info("Get task flow when obtenant maintaining")

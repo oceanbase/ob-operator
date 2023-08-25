@@ -31,6 +31,7 @@ type OBTenantSpec struct {
 
 	ClusterName string `json:"clusterName"`
 	TenantName  string `json:"tenantName"`
+	UnitNumber int          `json:"unitNum"`
 
 	Charset          string `json:"charset,omitempty"`
 	Collate          string `json:"collate,omitempty"`
@@ -55,9 +56,11 @@ type OBTenantStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           string               `json:"status"`
+	TenantID		 int 					`json:"tenantID"`
 	Pools            []ResourcePoolStatus `json:"resourcePool"`
 	ConnectWhiteList string               `json:"connectWhiteList,omitempty"`
 	Charset          string               `json:"charset,omitempty"`
+	UnitNumber 		 int          		`json:"unitNum"`
 	OperationContext *OperationContext     `json:"operationContext,omitempty"`
 }
 

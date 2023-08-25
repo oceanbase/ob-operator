@@ -8,6 +8,7 @@ type Tenant struct {
 	PrimaryZone string `json:"primary_zone" db:"primary_zone"`
 	Locality    string `json:"locality" db:"locality"`
 	Status      string `json:"status" db:"status"`
+	GmtCreateTime  string `json:"gmt_create_time" db:"gmt_create"`
 }
 
 type Pool struct {
@@ -16,7 +17,7 @@ type Pool struct {
 	UnitNum      int64  `json:"unit_count" db:"unit_count"`
 	UnitConfigID int64  `json:"unit_config_id" db:"unit_config_id"`
 	ZoneList       string `json:"zone_list" db:"zone_list"`
-	TenantID       int64  `json:"tenant_id" db:"tenant_id"`
+	TenantID       sql.NullInt64`json:"tenant_id" db:"tenant_id"`
 }
 
 type Unit struct {
@@ -44,9 +45,9 @@ type UnitConfigV4 struct {
 }
 
 type ResourceTotal struct {
-	CPUTotal  float64 `json:"cpu_total" db:"cpu_total"`
-	MemTotal  int64   `json:"mem_total" db:"mem_total"`
-	DiskTotal int64   `json:"disk_total" db:"disk_total"`
+	CPUTotal  float64 `json:"cpu_total" db:"cpu_capacity"`
+	MemTotal  int64   `json:"mem_total" db:"mem_capacity"`
+	DiskTotal int64   `json:"disk_total" db:"data_disk_capacity"`
 }
 
 type Charset struct {
@@ -78,6 +79,7 @@ type TenantSQLParam struct {
 	Charset string
 	Collate string
 	VariableList string
+	UnitNum int64
 }
 
 type PoolSQLParam struct {

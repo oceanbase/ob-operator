@@ -51,7 +51,7 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql s
 	_, err := m.Connector.GetClient().ExecContext(ctx, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Execute sql failed", "sql", sql, "params", params)
+		m.Logger.Error(err, "Execute sql failed")
 	}
 	return err
 }
@@ -63,8 +63,7 @@ func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ..
 func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params ...interface{}) error {
 	err := m.Connector.GetClient().Get(ret, sql, params...)
 	if err != nil {
-		err = errors.Wrapf(err, "Query row failed, sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query row failed","sql", sql, "params", params)
+		err = errors.Wrapf(err, "Query row, sql %s, param %v", sql, params)
 	}
 	return err
 }
@@ -73,7 +72,7 @@ func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, param
 	err := m.Connector.GetClient().Select(ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query list failed", "sql", sql, "params", params)
+		m.Logger.Error(err, "Query list failed")
 	}
 	return err
 }
@@ -82,7 +81,7 @@ func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ..
 	err := m.Connector.GetClient().Get(count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query count failed", "sql", sql, "params", params)
+		m.Logger.Error(err, "Query count failed" )
 	}
 	return err
 }

@@ -102,7 +102,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Info("No more task to run, task flow successfully finished")
 			c.Manager.FinishTask()
 		} else {
-			c.Logger.Info("Task finished successfully, set next task")
+			c.Logger.Info("Task succeed, set next task")
 			f.NextTask()
 		}
 	case taskstatus.Failed:

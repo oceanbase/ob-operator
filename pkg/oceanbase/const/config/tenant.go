@@ -3,5 +3,6 @@ package config
 import "time"
 
 const (
-	TenantTimeout = 600 * time.Second
+	TenantSqlTimeout = 600 * time.Second
+	PollingJobSleepTime = 1 * time.Second
 )
