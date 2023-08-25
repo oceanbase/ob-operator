@@ -30,7 +30,7 @@ const (
 	DefaultImage        = "oceanbasedev/oceanbase-cn:4.1.0.1-test"
 )
 
-func newMinimalOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
+func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
 	observerResource := &v1alpha1.ResourceSpec{
 		Cpu:    *resource.NewQuantity(2, resource.DecimalSI),
 		Memory: *resource.NewQuantity(10*GB, resource.BinarySI),
