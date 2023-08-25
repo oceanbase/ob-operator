@@ -53,16 +53,16 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	policy := &v1alpha1.OBTenantBackupPolicy{}
 	err := r.Client.Get(ctx, req.NamespacedName, policy)
 	if err != nil {
-		logger.Error(err, "get observer error")
+		logger.Error(err, "get backup policy error")
 		if kubeerrors.IsNotFound(err) {
-			// observer not found, just return
+			// backup policy not found, just return
 			return ctrl.Result{}, nil
 		}
 		return ctrl.Result{}, err
 	}
-	logger.Info("reconcile observer:", "spec", policy.Spec, "status", policy.Status)
+	logger.Info("reconcile backup policy:", "spec", policy.Spec, "status", policy.Status)
 
-	// create observer manager
+	// create backup policy manager
 	mgr := &resource.ObTenantBackupPolicyManager{
 		Ctx:          ctx,
 		BackupPolicy: policy,

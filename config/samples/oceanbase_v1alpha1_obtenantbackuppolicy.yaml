@@ -2,11 +2,18 @@ apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenantBackupPolicy
 metadata:
   labels:
+    ref-obcluster: test
     app.kubernetes.io/name: obtenantbackuppolicy
     app.kubernetes.io/instance: obtenantbackuppolicy-sample
     app.kubernetes.io/part-of: ob-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: ob-operator
   name: obtenantbackuppolicy-sample
+  namespace: oceanbase
 spec:
-  # TODO(user): Add fields here
+  tenantName: "yuyi"
+  dataBackup:
+    type: "FULL"
+  dataClean:
+    name: "clean_yuyi"
+    recoverWindow: "7d"

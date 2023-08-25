@@ -33,5 +33,6 @@ func (m *OceanbaseOperationManager) SetParameter(name string, value interface{},
 		return m.ExecWithDefaultTimeout(setParameterSql, value)
 	}
 	setParameterSql := fmt.Sprintf(sql.SetParameterWithScope, name, scope.Name)
+	m.Logger.Info("setParameterSql statement", "statement", setParameterSql)
 	return m.ExecWithDefaultTimeout(setParameterSql, value, scope.Value)
 }

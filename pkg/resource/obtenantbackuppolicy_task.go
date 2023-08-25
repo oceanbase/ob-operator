@@ -23,9 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const backupVolumePath = "/opt/nfs"
+const backupVolumePath = oceanbaseconst.BackupPath
 
 func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
+	m.Logger.Info("Start configuring server for backup")
 	con, err := m.getOperationManager()
 	if err != nil {
 		return err
@@ -49,19 +50,23 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 }
 
 func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
+	m.Logger.Info("Start getting tenant info")
 	// Admission Control
 	con, err := m.getOperationManager()
 	if err != nil {
+		m.Logger.Error(err, "Failed to get operator manager")
 		return err
 	}
 	tenants, err := con.QueryTenantWithName(m.BackupPolicy.Spec.TenantName)
 	if err != nil {
+		m.Logger.Error(err, "Failed to query tenant with name")
 		return err
 	}
 	if len(tenants) == 0 {
 		// never happen by design
 		return errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
 	}
+	m.Logger.Info("get tenant info:", "tenants", tenants[0])
 	m.BackupPolicy.Status.TenantInfo = tenants[0]
 	return nil
 }
@@ -76,11 +81,11 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	if m.BackupPolicy.Spec.DataBackup.Type == v1alpha1.BackupFull {
-		err = con.CreateBackupFull(tenantName)
-	} else {
-		err = con.CreateBackupIncr(tenantName)
-	}
+	err = con.CreateBackupFull(tenantName)
+	// if m.BackupPolicy.Spec.DataBackup.Type == v1alpha1.BackupFull {
+	// } else {
+	// 	err = con.CreateBackupIncr(tenantName)
+	// }
 	if err != nil {
 		return err
 	}

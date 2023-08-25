@@ -47,22 +47,18 @@ spec:
                   type:
                     type: string
                 required:
-                - crontab
-                - destination
                 - type
                 type: object
               dataClean:
                 properties:
-                  Disabled:
+                  disabled:
                     type: string
                   name:
                     type: string
                   recoverWindow:
                     type: string
                 required:
-                - Disabled
                 - name
-                - recoverWindow
                 type: object
               logArchive:
                 description: LogArchiveConfig contains the configuration for log archive
@@ -87,9 +83,7 @@ spec:
                   obtenantbackuppolicy_types.go to remove/update
                 type: string
             required:
-            - dataBackup
             - dataClean
-            - logArchive
             - tenantName
             type: object
           status:
@@ -200,7 +194,6 @@ spec:
             required:
             - logArchiveDestDisabled
             - status
-            - tenantInfo
             type: object
         type: object
     served: true

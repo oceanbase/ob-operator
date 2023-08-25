@@ -78,6 +78,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
+	m.Logger.Info("Update Policy Status", "status", m.BackupPolicy.Status)
 	return err
 }
 
@@ -97,8 +98,13 @@ func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, er
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
-	// get task flow depending on BackupPolicy status
+	// exists unfinished task flow, return the last task flow
+	if m.BackupPolicy.Status.OperationContext != nil {
+		m.Logger.Info("get task flow from BackupPolicy status")
+		return task.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
+	}
 	status := m.BackupPolicy.Status.Status
+	// get task flow depending on BackupPolicy status
 	switch status {
 	case v1alpha1.BackupPolicyStatusPreparing:
 		return task.GetRegistry().Get(flow.PrepareBackupPolicy)

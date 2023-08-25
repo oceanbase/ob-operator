@@ -22,8 +22,8 @@ func PrepareBackupPolicy() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareBackupPolicy,
-			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.CreateOBParameter},
-			TargetStatus: string(v1alpha1.BackupPolicyStatusPreparing),
+			Tasks:        []string{taskname.GetTenantInfo, taskname.ConfigureServerForBackup},
+			TargetStatus: string(v1alpha1.BackupPolicyStatusPrepared),
 		},
 	}
 }

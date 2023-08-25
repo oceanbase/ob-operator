@@ -29,8 +29,8 @@ type OBTenantBackupPolicySpec struct {
 
 	// Foo is an example field of OBTenantBackupPolicy. Edit obtenantbackuppolicy_types.go to remove/update
 	TenantName string           `json:"tenantName"`
-	LogArchive LogArchiveConfig `json:"logArchive"`
-	DataBackup DataBackupConfig `json:"dataBackup"`
+	LogArchive LogArchiveConfig `json:"logArchive,omitempty"`
+	DataBackup DataBackupConfig `json:"dataBackup,omitempty"`
 	DataClean  CleanPolicy      `json:"dataClean"`
 }
 
@@ -38,7 +38,7 @@ type OBTenantBackupPolicySpec struct {
 type OBTenantBackupPolicyStatus struct {
 	Status                 BackupPolicyStatusType `json:"status"`
 	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
-	TenantInfo             *model.OBTenant        `json:"tenantInfo"`
+	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
 	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
 }
 
@@ -84,15 +84,15 @@ const (
 
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
-	Destination string     `json:"destination"`
-	Type        BackupType `json:"type"`
-	Crontab     string     `json:"crontab"`
+	Destination string `json:"destination,omitempty"`
+	Crontab     string `json:"crontab,omitempty"`
+	IncrCrontab string `json:"incrCrontab,omitempty"`
 }
 
 type CleanPolicy struct {
 	Name          string `json:"name"`
-	RecoverWindow string `json:"recoverWindow"`
-	Disabled      string `json:"Disabled"`
+	RecoverWindow string `json:"recoverWindow,omitempty"`
+	Disabled      string `json:"disabled,omitempty"`
 }
 
 type BackupPolicyStatusType string
