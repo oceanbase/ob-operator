@@ -2,13 +2,11 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: ob-operator-controller-manager
-  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: ob-operator-leader-election-role
-  
 rules:
 - apiGroups:
   - ""
@@ -108,6 +106,58 @@ rules:
   - patch
   - update
 - apiGroups:
+  - batch
+  resources:
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - batch
+  resources:
+  - jobs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - batch
+  resources:
+  - jobs/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - backups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - backups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - backups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - cloud.oceanbase.com
   resources:
   - obclusters
@@ -162,6 +212,32 @@ rules:
 - apiGroups:
   - cloud.oceanbase.com
   resources:
+  - restores
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - restores/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
   - rootservices
   verbs:
   - create
@@ -207,6 +283,58 @@ rules:
   - cloud.oceanbase.com
   resources:
   - statefulapps/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenantbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - cloud.oceanbase.com
+  resources:
+  - tenants/status
   verbs:
   - get
   - patch
@@ -310,7 +438,6 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: ob-operator-leader-election-rolebinding
-  
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -318,7 +445,6 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
-  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -332,7 +458,6 @@ subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
   namespace: {{ .Release.Namespace }}
-  
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -346,7 +471,6 @@ subjects:
 - kind: ServiceAccount
   name: ob-operator-controller-manager
   namespace: {{ .Release.Namespace }}
-  
 ---
 apiVersion: v1
 data:
@@ -365,7 +489,6 @@ data:
 kind: ConfigMap
 metadata:
   name: ob-operator-manager-config
-  
 ---
 apiVersion: v1
 kind: Service
@@ -373,7 +496,6 @@ metadata:
   labels:
     control-plane: controller-manager
   name: ob-operator-controller-manager-metrics-service
-  
 spec:
   ports:
   - name: https
@@ -388,7 +510,6 @@ metadata:
   labels:
     control-plane: controller-manager
   name: ob-operator-controller-manager
-  
 spec:
   replicas: 1
   selector:
