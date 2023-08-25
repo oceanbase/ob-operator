@@ -48,6 +48,9 @@ type OBArchiveLogSummary struct {
 	Path                      string `json:"path" db:"path"`
 }
 
+// OBArchiveLogJob
+type OBArchiveLogJob OBArchiveLogSummary
+
 type JobCommon struct {
 	TenantId         int64  `json:"tenant_id" db:"tenant_id"`
 	JobId            int64  `json:"job_id" db:"job_id"`

@@ -84,8 +84,16 @@ func (m *OceanbaseOperationManager) QueryArchiveLogSummary() ([]*model.OBArchive
 }
 
 func (m *OceanbaseOperationManager) QueryBackupJobs() ([]*model.OBBackupJob, error) {
+	return m.queryBackupJobOrHistory(sql.QueryBackupJobs)
+}
+
+func (m *OceanbaseOperationManager) QueryBackupJobHistory() ([]*model.OBBackupJob, error) {
+	return m.queryBackupJobOrHistory(sql.QueryBackupHistory)
+}
+
+func (m *OceanbaseOperationManager) queryBackupJobOrHistory(statement string) ([]*model.OBBackupJob, error) {
 	histories := make([]*model.OBBackupJob, 0)
-	err := m.QueryList(&histories, sql.QueryBackupJobs)
+	err := m.QueryList(&histories, statement)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query backup history")
 		return nil, errors.Wrap(err, "Query backup history")
@@ -120,4 +128,38 @@ func (m *OceanbaseOperationManager) QueryBackupCleanJobs() ([]*model.OBBackupCle
 		return nil, errors.Errorf("No backup clean history found")
 	}
 	return histories, nil
+}
+
+func (m *OceanbaseOperationManager) QueryArchiveLogParameters() ([]*model.OBArchiveDest, error) {
+	configs := make([]*model.OBArchiveDest, 0)
+	err := m.QueryList(&configs, sql.QueryArchiveLogConfigs)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query archive log configs")
+		return nil, errors.Wrap(err, "Query archive log configs")
+	}
+	if len(configs) == 0 {
+		return nil, errors.Errorf("No archive log configs found")
+	}
+	return configs, nil
+}
+
+func (m *OceanbaseOperationManager) QueryBackupTasks() ([]*model.OBBackupTask, error) {
+	return m.queryBackupTaskOrHistory(sql.QueryBackupTasks)
+}
+
+func (m *OceanbaseOperationManager) QueryBackupTaskHistory() ([]*model.OBBackupTask, error) {
+	return m.queryBackupTaskOrHistory(sql.QueryBackupTaskHistory)
+}
+
+func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) ([]*model.OBBackupTask, error) {
+	tasks := make([]*model.OBBackupTask, 0)
+	err := m.QueryList(&tasks, statement)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query backup tasks")
+		return nil, errors.Wrap(err, "Query backup tasks")
+	}
+	if len(tasks) == 0 {
+		return nil, errors.Errorf("No backup task found")
+	}
+	return tasks, nil
 }

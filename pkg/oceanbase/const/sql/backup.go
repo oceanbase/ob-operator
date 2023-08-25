@@ -12,7 +12,6 @@ See the Mulan PSL v2 for more details.
 
 package sql
 
-// TODO: filter tenant
 // TODO: select specific columns instead of '*' in sql
 
 // TIPS: use parameter to set log archive dest and data backup dest
@@ -23,13 +22,16 @@ const (
 	QueryPieceInfo         = "SELECT * from DBA_OB_ARCHIVELOG_PIECE_FILES"
 	QueryArchiveLog        = "SELECT * from DBA_OB_ARCHIVELOG"
 	QueryArchiveLogSummary = "SELECT * FROM DBA_OB_ARCHIVELOG_SUMMARY"
+	QueryArchiveLogConfigs = "SELECT dest_no, name, value FROM DBA_OB_ARCHIVE_DEST"
 
-	SetBackupPassword  = "SET ENCRYPTION ON IDENTIFIED BY ? ONLY"
-	CreateBackupFull   = "ALTER SYSTEM BACKUP DATABASE"
-	CreateBackupIncr   = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
-	StopBackupJob      = "ALTER SYSTEM CANCEL BACKUP"
-	QueryBackupJobs    = "SELECT * FROM DBA_OB_BACKUP_JOBS"
-	QueryBackupHistory = "SELECT * FROM DBA_OB_BACKUP_JOB_HISTORY"
+	SetBackupPassword      = "SET ENCRYPTION ON IDENTIFIED BY ? ONLY"
+	CreateBackupFull       = "ALTER SYSTEM BACKUP DATABASE"
+	CreateBackupIncr       = "ALTER SYSTEM BACKUP INCREMENTAL DATABASE"
+	StopBackupJob          = "ALTER SYSTEM CANCEL BACKUP"
+	QueryBackupJobs        = "SELECT * FROM DBA_OB_BACKUP_JOBS"
+	QueryBackupTasks       = "SELECT * FROM DBA_OB_BACKUP_TASKS"
+	QueryBackupHistory     = "SELECT * FROM DBA_OB_BACKUP_JOB_HISTORY"
+	QueryBackupTaskHistory = "SELECT * FROM DBA_OB_BACKUP_TASK_HISTORY"
 
 	AddCleanBackupPolicy       = "ALTER SYSTEM ADD DELETE BACKUP POLICY ? RECOVERY_WINDOW ?"
 	RemoveCleanBackupPolicy    = "ALTER SYSTEM DROP DELETE BACKUP POLICY ?"

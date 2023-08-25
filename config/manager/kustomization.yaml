@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: oceanbasedev/ob-operator
-  newTag: 2.0.3-alpha.20
+  newTag: 2.0.3-alpha.21

@@ -26,15 +26,15 @@ import (
 const backupVolumePath = oceanbaseconst.BackupPath
 
 func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
-	m.Logger.Info("Start configuring server for backup")
 	con, err := m.getOperationManager()
 	if err != nil {
 		return err
 	}
-	// err = con.SetLogArchiveDestForTenant(m.getArchiveDestPath())
-	// if err != nil {
-	// 	return err
-	// }
+	// TODO: check tenant's archivelog mode by DBA_OB_TENANTS
+	err = con.SetLogArchiveDestForTenant(m.getArchiveDestPath())
+	if err != nil {
+		return err
+	}
 	if m.BackupPolicy.Spec.LogArchive.Concurrency != 0 {
 		err = con.SetLogArchiveConcurrency(m.BackupPolicy.Spec.LogArchive.Concurrency)
 		if err != nil {
@@ -49,23 +49,19 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 }
 
 func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
-	m.Logger.Info("Start getting tenant info")
 	// Admission Control
 	con, err := m.getOperationManager()
 	if err != nil {
-		m.Logger.Error(err, "Failed to get operator manager")
 		return err
 	}
 	tenants, err := con.QueryTenantWithName(m.BackupPolicy.Spec.TenantName)
 	if err != nil {
-		m.Logger.Error(err, "Failed to query tenant with name")
 		return err
 	}
 	if len(tenants) == 0 {
 		// never happen by design
 		return errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
 	}
-	m.Logger.Info("get tenant info:", "tenants", tenants[0])
 	m.BackupPolicy.Status.TenantInfo = tenants[0]
 	return nil
 }
@@ -75,10 +71,20 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	err = con.EnableArchiveLogForTenant()
+	configs, err := con.QueryArchiveLogParameters()
 	if err != nil {
 		return err
 	}
+	for _, config := range configs {
+		if config.Name == "state" && config.Value != "ENABLE" {
+			err = con.EnableArchiveLogForTenant()
+			if err != nil {
+				return err
+			}
+			break
+		}
+	}
+	// create backup job of full type
 	err = con.CreateBackupFull()
 	// if m.BackupPolicy.Spec.DataBackup.Type == v1alpha1.BackupFull {
 	// } else {
@@ -143,7 +149,7 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
 	if m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval != "" {
 		dest += fmt.Sprintf(" PIECE_SWITCH_INTERVAL=%s", m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval)
 	}
-	return "file://" + dest
+	return "location=" + "file://" + dest
 }
 
 func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
