@@ -19,6 +19,7 @@ import (
 
 	"github.com/google/uuid"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,7 +32,7 @@ func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOper
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBZoneManager) generateServerName() string {
@@ -49,7 +50,7 @@ func (m *OBZoneManager) AddZone() error {
 	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
 }
 
-func (m *OBZoneManager) StartZone() error {
+func (m *OBZoneManager) StartOBZone() error {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -67,7 +68,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 			}
 			allMatched := true
 			for _, observerStatus := range obzone.Status.OBServerStatus {
-				if observerStatus.Status != status {
+				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
 					m.Logger.Info("server status still not matched", "server", observerStatus.Server, "status", status)
 					allMatched = false
 					break
@@ -95,7 +96,12 @@ func (m *OBZoneManager) CreateOBServer() error {
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
-	currentReplica := len(m.OBZone.Status.OBServerStatus)
+	currentReplica := 0
+	for _, observerStatus := range m.OBZone.Status.OBServerStatus {
+		if observerStatus.Status != serverstatus.Unrecoverable {
+			currentReplica = currentReplica + 1
+		}
+	}
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -142,14 +148,15 @@ func (m *OBZoneManager) DeleteOBServer() error {
 	}
 	observerCount := 0
 	for _, observer := range observerList.Items {
-		observerCount += 1
-		if observerCount > m.OBZone.Spec.Topology.Replica {
-			m.Logger.Info("need delete observer", "observer", observer.Name)
+		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
+			m.Logger.Info("delete observer", "observer", observer)
 			err = m.Client.Delete(m.Ctx, &observer)
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
+			continue
 		}
+		observerCount += 1
 	}
 	return nil
 }
@@ -223,6 +230,66 @@ func (m *OBZoneManager) StopOBZone() error {
 		return errors.Wrapf(err, "Stop obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
 	return nil
+}
+
+func (m *OBZoneManager) OBClusterHealthCheck() error {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster from K8s")
+	}
+	ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, "")
+	return nil
+}
+
+func (m *OBZoneManager) OBZoneHealthCheck() error {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster from K8s")
+	}
+	zoneOpt := fmt.Sprintf("-z '%s'", m.OBZone.Spec.Topology.Zone)
+	ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, zoneOpt)
+	return nil
+}
+
+func (m *OBZoneManager) UpgradeOBServer() error {
+	observerList, err := m.listOBServers()
+	if err != nil {
+		m.Logger.Error(err, "List observers failed")
+		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
+	}
+	for _, observer := range observerList.Items {
+		m.Logger.Info("upgrade observer", "observer", observer.Name)
+		observer.Spec.OBServerTemplate.Image = m.OBZone.Spec.OBServerTemplate.Image
+		err = m.Client.Update(m.Ctx, &observer)
+		if err != nil {
+			return errors.Wrapf(err, "Upgrade observer %s failed", observer.Name)
+		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) WaitOBServerUpgraded() error {
+	for i := 0; i < oceanbaseconst.TimeConsumingStateWaitTimeout; i++ {
+		observerList, err := m.listOBServers()
+		if err != nil {
+			m.Logger.Error(err, "List observers failed")
+			return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
+		}
+		allServerUpgraded := true
+		for _, observer := range observerList.Items {
+			if !(observer.Status.Status == serverstatus.Running && observer.Status.Image == m.OBZone.Spec.OBServerTemplate.Image) {
+				m.Logger.Info("Found observer upgrade not finished", "observer", observer.Name)
+				allServerUpgraded = false
+				break
+			}
+		}
+		if allServerUpgraded {
+			m.Logger.Info("All server upgraded")
+			return nil
+		}
+		time.Sleep(oceanbaseconst.CommonCheckInterval * time.Second)
+	}
+	return errors.New("Wait all server upgraded timeout")
 }
 
 func (m *OBZoneManager) DeleteOBZoneInCluster() error {

@@ -49,8 +49,8 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.CreateOBPVC, nil
 	case taskname.CreateOBPod:
 		return m.CreateOBPod, nil
-	case taskname.WaitOBPodReady:
-		return m.WaitOBPodReady, nil
+	case taskname.WaitOBServerReady:
+		return m.WaitOBServerReady, nil
 	case taskname.WaitOBClusterBootstrapped:
 		return m.WaitOBClusterBootstrapped, nil
 	case taskname.AddServer:
@@ -59,6 +59,14 @@ func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {
 		return m.DeleteOBServerInCluster, nil
 	case taskname.WaitOBServerDeletedInCluster:
 		return m.WaitOBServerDeletedInCluster, nil
+	case taskname.WaitOBServerPodReady:
+		return m.WaitOBServerPodReady, nil
+	case taskname.WaitOBServerActiveInCluster:
+		return m.WaitOBServerActiveInCluster, nil
+	case taskname.UpgradeOBServerImage:
+		return m.UpgradeOBServerImage, nil
+	case taskname.AnnotateOBServerPod:
+		return m.AnnotateOBServerPod, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -81,6 +89,15 @@ func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
+func (m *OBServerManager) SupportStaticIp() bool {
+	switch m.OBServer.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		return true
+	default:
+		return false
+	}
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -90,16 +107,42 @@ func (m *OBServerManager) UpdateStatus() error {
 		pod, err := m.getPod()
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
-				m.Logger.Error(err, "pod not found")
+				m.Logger.Info("pod not found")
+				if m.OBServer.Status.Status == serverstatus.Running {
+					if m.SupportStaticIp() {
+						m.Logger.Info("recreate observer")
+						m.OBServer.Status.Status = serverstatus.Recover
+					} else {
+						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+						m.OBServer.Status.Status = serverstatus.Unrecoverable
+					}
+				}
 			} else {
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
-			m.Logger.Info(">>>>>>>>>>>>>>get pod<<<<<<<<<<<<", "pod ip", pod.Status.PodIP, "pod phase", pod.Status.Phase)
 			m.OBServer.Status.Ready = apipod.IsPodReady(pod)
 			m.OBServer.Status.PodPhase = pod.Status.Phase
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
+			// TODO update from obcluster
+			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
+		}
+		if m.OBServer.Status.Status == serverstatus.Running {
+			if NeedAnnonation(pod, m.OBServer.Status.CNI) {
+				m.OBServer.Status.Status = serverstatus.Annotate
+			} else {
+				for _, container := range pod.Spec.Containers {
+					if container.Name == oceanbaseconst.ContainerName {
+						m.OBServer.Status.Image = container.Image
+						break
+					}
+				}
+				if m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
+					m.Logger.Info("Found image changed, begin upgrade")
+					m.OBServer.Status.Status = serverstatus.Upgrade
+				}
+			}
 		}
 
 		m.Logger.Info("update observer status", "status", m.OBServer.Status)
@@ -183,6 +226,15 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case serverstatus.Deleting:
 		m.Logger.Info("Get task flow when observer deleting")
 		return task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+	case serverstatus.Upgrade:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.UpgradeOBServer)
+	case serverstatus.Recover:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.RecoverOBServer)
+	case serverstatus.Annotate:
+		m.Logger.Info("Get task flow when observer upgrade")
+		return task.GetRegistry().Get(flowname.AnnotateOBServerPod)
 	default:
 		return nil, nil
 	}

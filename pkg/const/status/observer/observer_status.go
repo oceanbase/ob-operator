@@ -14,8 +14,11 @@ package observer
 
 const (
 	New               = "new"
-	Maintaining       = "maintaining"
+	Recover           = "recover observer"
+	Unrecoverable     = "observer unrecoverable"
 	Running           = "running"
+	Upgrade           = "upgrade"
+	Annotate          = "annotate"
 	BootstrapReady    = "bootstrap ready"
 	Deleting          = "deleting"
 	FinalizerFinished = "finalizer finished"

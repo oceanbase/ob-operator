@@ -38,7 +38,7 @@ type OBParameterStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	OperationContext *OperationContext `json:"operationContext,omitempty"`
 	Status           string            `json:"status"`
-	Parameter        *[]ParameterValue `json:"parameter"`
+	Parameter        []ParameterValue  `json:"parameter"`
 }
 
 //+kubebuilder:object:root=true

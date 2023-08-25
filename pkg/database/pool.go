@@ -33,8 +33,7 @@ func GetConnector(dataSource DataSource) (*Connector, error) {
 	connector := NewConnector(dataSource)
 	err := connector.Init()
 	if err != nil {
-		err = errors.Wrap(err, "init connector failed with datasource: "+dataSource.String())
-		return nil, err
+		return nil, errors.Wrapf(err, "Init connector failed with datasource: %s", dataSource.String())
 	}
 	p.Cache.Store(dataSource.ID(), connector)
 	return connector, nil

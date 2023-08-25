@@ -13,11 +13,11 @@ See the Mulan PSL v2 for more details.
 package model
 
 type Parameter struct {
-	Zone      string
-	SvrIp     string
-	SvrPort   int64
-	Name      string
-	Value     string
-	Scope     string
-	EditLevel string
+	Zone      string `json:"zone" db:"zone"`
+	SvrIp     string `json:"svr_ip" db:"svr_ip"`
+	SvrPort   int64  `json:"svr_port" db:"svr_port"`
+	Name      string `json:"name" db:"name"`
+	Value     string `json:"value" db:"value"`
+	Scope     string `json:"scope" db:"scope"`
+	EditLevel string `json:"edit_level" db:"edit_level"`
 }

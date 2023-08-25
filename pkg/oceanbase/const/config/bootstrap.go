@@ -17,5 +17,5 @@ import (
 )
 
 const (
-	BootstrapTimeout = 300 * time.Second
+	BootstrapTimeout = 600 * time.Second
 )

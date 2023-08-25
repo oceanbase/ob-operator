@@ -13,7 +13,7 @@ spec:
     operator: test-user-operator
   topology:
     - zone: zone1
-      replica: 2
+      replica: 1
       nodeSelector:
         ob.zone1: zone1
     - zone: zone2
@@ -25,7 +25,7 @@ spec:
       nodeSelector:
         ob.zone3: zone3
   observer:
-    image: oceanbasedev/oceanbase-cn:v4.1.0.0-100000192023032010
+    image: oceanbasedev/oceanbase-cn:4.2.0.0-100000072023071317
     resource:
       cpu: 2
       memory: 10Gi
@@ -49,8 +49,8 @@ spec:
         storageClass: local-path
         size: 1Gi
   parameters:
-    - name: log_disk_size
-      value: 40G
+    - name: system_memory
+      value: 2G
   backupVolume:
     volume:
       name: backup

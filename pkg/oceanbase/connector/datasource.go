@@ -16,6 +16,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 )
 
 // OceanBaseDataSource implements the database.DataSource interface for OceanBase.
@@ -43,15 +45,39 @@ func (*OceanBaseDataSource) DriverName() string {
 	return "mysql"
 }
 
+func (ds *OceanBaseDataSource) GetAddress() string {
+	return ds.Address
+}
+
+func (ds *OceanBaseDataSource) GetPort() int64 {
+	return ds.Port
+}
+
+func (ds *OceanBaseDataSource) GetUser() string {
+	return fmt.Sprintf("%s@%s", ds.User, ds.Tenant)
+}
+
+func (ds *OceanBaseDataSource) GetPassword() string {
+	return ds.Password
+}
+
+func (ds *OceanBaseDataSource) GetDatabase() string {
+	return ds.Database
+}
+
 func (s *OceanBaseDataSource) DataSourceName() string {
 	passwordPart := ""
+	tenantPart := ""
 	if s.Password != "" {
 		passwordPart = fmt.Sprintf(":%s", s.Password)
 	}
-	if s.Database != "" {
-		return fmt.Sprintf("%s@%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", s.User, s.Tenant, passwordPart, s.Address, s.Port, s.Database)
+	if !(s.Tenant == "" || s.Tenant == oceanbaseconst.SysTenant) {
+		tenantPart = fmt.Sprintf("@%s", s.Password)
 	}
-	return fmt.Sprintf("%s@%s@tcp(%s:%d)/", s.User, s.Tenant, s.Address, s.Port)
+	if s.Database != "" {
+		return fmt.Sprintf("%s%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", s.User, tenantPart, passwordPart, s.Address, s.Port, s.Database)
+	}
+	return fmt.Sprintf("%s%s%s@tcp(%s:%d)/", s.User, tenantPart, passwordPart, s.Address, s.Port)
 }
 
 func (s *OceanBaseDataSource) ID() string {

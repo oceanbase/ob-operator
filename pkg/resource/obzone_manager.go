@@ -97,6 +97,16 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return task.GetRegistry().Get(flowname.DeleteOBServer)
 	case zonestatus.Deleting:
 		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+	case zonestatus.Upgrade:
+		obcluster, err = m.getOBCluster()
+		if err != nil {
+			return nil, errors.Wrap(err, "Get obcluster")
+		}
+		if len(obcluster.Status.OBZoneStatus) >= 3 {
+			return task.GetRegistry().Get(flowname.UpgradeOBZone)
+		} else {
+			return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
+		}
 		// TODO upgrade
 	}
 	return nil, nil
@@ -142,11 +152,21 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 
 	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
+	availableReplica := 0
+	// handle upgrade
+	allServerVersionSync := true
 	for _, observer := range observerList.Items {
 		observerReplicaStatusList = append(observerReplicaStatusList, v1alpha1.OBServerReplicaStatus{
 			Server: observer.Status.PodIp,
 			Status: observer.Status.Status,
 		})
+		if observer.Status.Status != serverstatus.Unrecoverable {
+			availableReplica = availableReplica + 1
+		}
+		if observer.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
+			m.Logger.Info("Found observer image not match")
+			allServerVersionSync = false
+		}
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
 	if m.IsDeleting() {
@@ -155,8 +175,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 	if m.OBZone.Status.Status != zonestatus.Running {
 		m.Logger.Info("OBZone status is not running, skip compare")
 	} else {
+		// set status image
+		if allServerVersionSync {
+			m.OBZone.Status.Image = m.OBZone.Spec.OBServerTemplate.Image
+		}
 		// check topology
-		if m.OBZone.Spec.Topology.Replica > len(m.OBZone.Status.OBServerStatus) {
+		if m.OBZone.Spec.Topology.Replica > availableReplica {
 			m.Logger.Info("Compare topology need add observer")
 			m.OBZone.Status.Status = zonestatus.AddOBServer
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
@@ -166,6 +190,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 			// do nothing when observer match topology replica
 		}
 		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
+		if m.OBZone.Status.Status == zonestatus.Running {
+			if m.OBZone.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
+				m.Logger.Info("Found image changed, need upgrade")
+				m.OBZone.Status.Status = zonestatus.Upgrade
+			}
+		}
 	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
@@ -196,8 +226,8 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case taskname.AddZone:
 		return m.AddZone, nil
-	case taskname.StartZone:
-		return m.StartZone, nil
+	case taskname.StartOBZone:
+		return m.StartOBZone, nil
 	case taskname.DeleteOBServer:
 		return m.DeleteOBServer, nil
 	case taskname.DeleteAllOBServer:
@@ -210,6 +240,14 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 		return m.StopOBZone, nil
 	case taskname.DeleteOBZoneInCluster:
 		return m.DeleteOBZoneInCluster, nil
+	case taskname.OBClusterHealthCheck:
+		return m.OBClusterHealthCheck, nil
+	case taskname.OBZoneHealthCheck:
+		return m.OBZoneHealthCheck, nil
+	case taskname.UpgradeOBServer:
+		return m.UpgradeOBServer, nil
+	case taskname.WaitOBServerUpgraded:
+		return m.WaitOBServerUpgraded, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

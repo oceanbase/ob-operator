@@ -13,8 +13,8 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	SetParameter            = "ALTER SYSTEM SET %s = ?"
-	SetParameterWithScope   = "ALTER SYSTEM SET %s = ? %s = ?"
-	QueryParameter          = "SELECT ZONE, SVR_IP, SVR_PORT, NAME, VALUE, SCOPE, EDIT_LEVEL FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = ?"
-	QueryParameterWithScope = "SELECT ZONE, SVR_IP, SVR_PORT, NAME, VALUE, SCOPE, EDIT_LEVEL FROM __ALL_VIRTUAL_SYS_PARAMETER_STAT WHERE NAME = ? AND %s = ?"
+	SetParameter            = "alter system set %s = ?"
+	SetParameterWithScope   = "alter system set %s = ? %s = ?"
+	QueryParameter          = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ?"
+	QueryParameterWithScope = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ? and %s = ?"
 )

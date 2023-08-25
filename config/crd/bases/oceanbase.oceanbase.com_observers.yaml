@@ -1765,9 +1765,13 @@ spec:
           status:
             description: OBServerStatus defines the observed state of OBServer
             properties:
+              cni:
+                type: string
               image:
                 type: string
               nodeIp:
+                type: string
+              obStatus:
                 type: string
               operationContext:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
@@ -1777,8 +1781,6 @@ spec:
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -1795,7 +1797,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -1810,6 +1811,9 @@ spec:
                 type: string
               ready:
                 type: boolean
+              startServiceTime:
+                format: int64
+                type: integer
               status:
                 type: string
             required:

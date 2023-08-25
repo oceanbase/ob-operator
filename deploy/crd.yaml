@@ -1855,10 +1855,6 @@ spec:
                   properties:
                     name:
                       type: string
-                    scope:
-                      type: string
-                    scopeType:
-                      type: string
                     value:
                       type: string
                   required:
@@ -1929,8 +1925,6 @@ spec:
                     type: integer
                   name:
                     type: string
-                  operationObject:
-                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -1946,18 +1940,30 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
                 - taskStatus
                 - tasks
                 type: object
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
               status:
                 type: string
             required:
             - image
             - obzones
+            - parameters
             - status
             type: object
         type: object
@@ -2013,10 +2019,6 @@ spec:
                 properties:
                   name:
                     type: string
-                  scope:
-                    type: string
-                  scopeType:
-                    type: string
                   value:
                     type: string
                 required:
@@ -2039,8 +2041,6 @@ spec:
                     type: integer
                   name:
                     type: string
-                  operationObject:
-                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -2056,7 +2056,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -3859,9 +3858,13 @@ spec:
           status:
             description: OBServerStatus defines the observed state of OBServer
             properties:
+              cni:
+                type: string
               image:
                 type: string
               nodeIp:
+                type: string
+              obStatus:
                 type: string
               operationContext:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
@@ -3871,8 +3874,6 @@ spec:
                   idx:
                     type: integer
                   name:
-                    type: string
-                  operationObject:
                     type: string
                   targetStatus:
                     type: string
@@ -3889,7 +3890,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
@@ -3904,6 +3904,9 @@ spec:
                 type: string
               ready:
                 type: boolean
+              startServiceTime:
+                format: int64
+                type: integer
               status:
                 type: string
             required:
@@ -5917,8 +5920,6 @@ spec:
                     type: integer
                   name:
                     type: string
-                  operationObject:
-                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -5934,7 +5935,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
