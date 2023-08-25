@@ -34,7 +34,7 @@ func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 			"clusterName", m.OBTenant.Spec.ClusterName, "tenantName", m.OBTenant.Spec.TenantName)
 		return nil, errors.Wrap(err, "Get obcluster from K8s failed")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, obcluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBTenantManager) IsNewResource() bool {

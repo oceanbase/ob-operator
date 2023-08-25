@@ -29,4 +29,5 @@ type OBServer struct {
 	WithPartition    int64  `json:"with_partition" db:"with_partition"`
 	Status           string `json:"status" db:"status"`
 	StartServiceTime int64  `json:"start_service_time" db:"start_service_time"`
+	BuildVersion     string `json:"build_version" db:"build_version"`
 }

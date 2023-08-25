@@ -1,0 +1,60 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: test
+  namespace: oceanbase
+spec:
+  clusterName: obcluster
+  clusterId: 1
+  userSecrets:
+    root: test-user-root
+    proxyro: test-user-proxyro
+    monitor: test-user-monitor
+    operator: test-user-operator
+  topology:
+    - zone: zone1
+      replica: 1
+      nodeSelector:
+        ob.zone1: zone1
+    - zone: zone2
+      replica: 1
+      nodeSelector:
+        ob.zone2: zone2
+    - zone: zone3
+      replica: 1
+      nodeSelector:
+        ob.zone3: zone3
+  observer:
+    image: oceanbasedev/oceanbase-cn:4.2.0.0-100000072023071317
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  monitor:
+    image: oceanbasedev/obagent:1.2.1-snapshot
+    resource:
+      cpu: 1
+      memory: 1Gi
+    storage:
+      configStorage:
+        storageClass: local-path
+        size: 1Gi
+  parameters:
+    - name: system_memory
+      value: 2G
+  backupVolume:
+    volume:
+      name: backup
+      nfs:
+        server: 11.124.9.57
+        path: /opt/nfs
+        readOnly: false

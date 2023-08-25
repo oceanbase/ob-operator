@@ -67,10 +67,6 @@ type RsJob struct {
 	TenantName string `json:"tenant_name" db:"tenant_name"`
 }
 
-type OBVersion struct {
-	Version string `json:"version" db:"version"`
-}
-
 type TenantSQLParam struct {
 	TenantName string
 	PrimaryZone string

@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -26,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/resource"
 )
 
 // OBParameterReconciler reconciles a OBParameter object
@@ -49,11 +51,32 @@ type OBParameterReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	obparameter := &v1alpha1.OBParameter{}
+	err := r.Client.Get(ctx, req.NamespacedName, obparameter)
+	if err != nil {
+		logger.Error(err, "get obparameter error")
+		if kubeerrors.IsNotFound(err) {
+			// obparameter not found, just return
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	logger.Info("reconcile obparameter:", "spec", obparameter.Spec, "status", obparameter.Status)
 
-	// TODO(user): your logic here
+	// TODO add finalizers
 
-	return ctrl.Result{}, nil
+	// create cluster manager
+	obparameterManager := &resource.OBParameterManager{
+		Ctx:         ctx,
+		OBParameter: obparameter,
+		Client:      r.Client,
+		Recorder:    r.Recorder,
+		Logger:      &logger,
+	}
+	coordinator := resource.NewCoordinator(obparameterManager, &logger)
+	err = coordinator.Coordinate()
+	return ctrl.Result{}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

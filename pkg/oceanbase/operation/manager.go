@@ -14,6 +14,7 @@ package operation
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -30,10 +31,8 @@ type OceanbaseOperationManager struct {
 }
 
 func NewOceanbaseOperationManager(connector *database.Connector) *OceanbaseOperationManager {
-	logger := logr.FromContextOrDiscard(context.TODO())
 	return &OceanbaseOperationManager{
 		Connector: connector,
-		Logger:    &logger,
 	}
 }
 
@@ -48,6 +47,7 @@ func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseO
 func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql string, params ...interface{}) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
+	m.Logger.Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
 	_, err := m.Connector.GetClient().ExecContext(ctx, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)

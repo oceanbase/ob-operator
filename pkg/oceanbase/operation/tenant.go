@@ -111,15 +111,6 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 	return rsJob, nil
 }
 
-func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
-	version := &model.OBVersion{}
-	err := m.QueryRow(version, sql.GetObVersion)
-	if err != nil {
-		return version, errors.Wrap(err, "Get version")
-	}
-	return version, nil
-}
-
 // ------------ delete ------------
 
 func (m *OceanbaseOperationManager) DeleteTenant(tenantName string) error {

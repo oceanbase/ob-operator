@@ -46,10 +46,6 @@ spec:
                 properties:
                   name:
                     type: string
-                  scope:
-                    type: string
-                  scopeType:
-                    type: string
                   value:
                     type: string
                 required:
@@ -72,8 +68,6 @@ spec:
                     type: integer
                   name:
                     type: string
-                  operationObject:
-                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -89,7 +83,6 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId

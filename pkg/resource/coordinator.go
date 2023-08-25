@@ -43,6 +43,7 @@ func (c *Coordinator) Coordinate() error {
 		} else if f == nil {
 			c.Logger.Info("No need to execute task flow")
 		} else {
+			c.Logger.Info("set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
 			c.Logger.Info("Successfully got task flow", "OperationContext", f)
 			// execution errors reflects by task status

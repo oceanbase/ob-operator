@@ -24,12 +24,16 @@ func init() {
 	GetRegistry().Register(flowname.AddOBZone, AddOBZone)
 	GetRegistry().Register(flowname.DeleteOBZone, DeleteOBZone)
 	GetRegistry().Register(flowname.ModifyOBZoneReplica, ModifyOBZoneReplica)
+	GetRegistry().Register(flowname.MaintainOBParameter, MaintainOBParameter)
+	GetRegistry().Register(flowname.UpgradeOBCluster, UpgradeOBCluster)
 
 	// obzone
 	GetRegistry().Register(flowname.CreateOBZone, CreateOBZone)
 	GetRegistry().Register(flowname.AddOBServer, AddOBServer)
 	GetRegistry().Register(flowname.DeleteOBServer, DeleteOBServer)
 	GetRegistry().Register(flowname.PrepareOBZoneForBootstrap, PrepareOBZoneForBootstrap)
+	GetRegistry().Register(flowname.UpgradeOBZone, UpgradeOBZone)
+	GetRegistry().Register(flowname.ForceUpgradeOBZone, ForceUpgradeOBZone)
 	GetRegistry().Register(flowname.MaintainOBZoneAfterBootstrap, MaintainOBZoneAfterBootstrap)
 	GetRegistry().Register(flowname.DeleteOBZoneFinalizer, DeleteOBZoneFinalizer)
 
@@ -43,4 +47,10 @@ func init() {
 	GetRegistry().Register(flowname.CreateTenant, CreateTenant)
 	GetRegistry().Register(flowname.MaintainTenant, MaintainTenant)
 	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
+	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
+	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
+	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)
+
+	// obparameter
+	GetRegistry().Register(flowname.SetOBParameter, SetOBParameter)
 }

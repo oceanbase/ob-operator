@@ -12,10 +12,18 @@ See the Mulan PSL v2 for more details.
 
 package oceanbase
 
+var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "enable_rebalance", "enable_rereplication"}
+
 const (
-	BootstrapTimeoutSeconds    = 300
-	DefaultStateWaitTimeout    = 300
-	ServerDeleteTimeoutSeconds = 86400
+	BootstrapTimeoutSeconds       = 300
+	DefaultStateWaitTimeout       = 300
+	TimeConsumingStateWaitTimeout = 3600
+	ServerDeleteTimeoutSeconds    = 86400
+	GigaConverter                 = 1073741824
+)
+
+const (
+	DefaultDiskUsePercent = 90
 )
 
 const (
@@ -31,19 +39,37 @@ const (
 const (
 	ProbeCheckPeriodSeconds = 2
 	ProbeCheckDelaySeconds  = 5
+	GetConnectionMaxRetries = 10
+	CheckConnectionInterval = 3
+	CheckJobInterval        = 3
+	CommonCheckInterval     = 5
 )
 
 const (
-	ContainerName      = "observer"
-	InstallPath        = "/home/admin/oceanbase"
-	DataPath           = "/home/admin/data-file"
-	ClogPath           = "/home/admin/data-log"
-	LogPath            = "/home/admin/log"
-	BackupPath         = "/ob-backup"
-	DataVolumeSuffix   = "data-file"
-	ClogVolumeSuffix   = "data-log"
-	LogVolumeSuffix    = "log"
-	BackupVolumeSuffix = "backup"
+	AnnotationCalicoValidate = "cni.projectcalico.org/podIP"
+	AnnotationCalicoIpAddrs  = "cni.projectcalico.org/ipAddrs"
+)
+
+const (
+	CNICalico  = "calico"
+	CNIUnknown = "unknown"
+)
+
+const (
+	ContainerName                  = "observer"
+	InstallPath                    = "/home/admin/oceanbase"
+	DataPath                       = "/home/admin/data-file"
+	ClogPath                       = "/home/admin/data-log"
+	LogPath                        = "/home/admin/log"
+	UpgradeHealthCheckerScriptPath = "/home/admin/oceanbase/etc/upgrade_health_checker.py"
+	UpgradeCheckerScriptPath       = "/home/admin/oceanbase/etc/upgrade_checker.py"
+	UpgradePreScriptPath           = "/home/admin/oceanbase/etc/upgrade_pre.py"
+	UpgradePostScriptPath          = "/home/admin/oceanbase/etc/upgrade_post.py"
+	BackupPath                     = "/ob-backup"
+	DataVolumeSuffix               = "data-file"
+	ClogVolumeSuffix               = "data-log"
+	LogVolumeSuffix                = "log"
+	BackupVolumeSuffix             = "backup"
 )
 
 const (
@@ -63,6 +89,12 @@ const (
 	LabelRefOBZone    = "ref-obzone"
 	LabelRefOBServer  = "ref-observer"
 	LabelRefUID       = "ref-uid"
+	LabelJobName      = "job-name"
+)
+
+const (
+	OBServerVersionKey     = "observer-version"
+	EssentialParametersKey = "essential-parameters"
 )
 
 const (

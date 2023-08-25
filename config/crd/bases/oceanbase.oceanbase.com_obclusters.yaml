@@ -1756,10 +1756,6 @@ spec:
                   properties:
                     name:
                       type: string
-                    scope:
-                      type: string
-                    scopeType:
-                      type: string
                     value:
                       type: string
                   required:
@@ -1830,8 +1826,6 @@ spec:
                     type: integer
                   name:
                     type: string
-                  operationObject:
-                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -1847,18 +1841,30 @@ spec:
                 required:
                 - idx
                 - name
-                - operationObject
                 - targetStatus
                 - task
                 - taskId
                 - taskStatus
                 - tasks
                 type: object
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
               status:
                 type: string
             required:
             - image
             - obzones
+            - parameters
             - status
             type: object
         type: object

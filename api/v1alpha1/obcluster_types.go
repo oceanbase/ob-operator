@@ -46,6 +46,7 @@ type OBClusterStatus struct {
 	OperationContext *OperationContext     `json:"operationContext,omitempty"`
 	Status           string                `json:"status"`
 	OBZoneStatus     []OBZoneReplicaStatus `json:"obzones"`
+	Parameters       []Parameter           `json:"parameters"`
 }
 
 //+kubebuilder:object:root=true

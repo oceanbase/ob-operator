@@ -23,7 +23,7 @@ func PrepareOBServerForBootstrap() *TaskFlow {
 	return &TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
-			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady},
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
 		},
 	}
@@ -43,7 +43,7 @@ func CreateOBServer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.CreateOBServer,
-			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBPodReady, taskname.AddServer},
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.AddServer},
 			TargetStatus: serverstatus.Running,
 		},
 	}
@@ -55,6 +55,36 @@ func DeleteOBServerFinalizer() *TaskFlow {
 			Name:         flowname.DeleteOBServerFinalizer,
 			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
 			TargetStatus: serverstatus.FinalizerFinished,
+		},
+	}
+}
+
+func UpgradeOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.UpgradeOBServer,
+			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
+
+func RecoverOBServer() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.RecoverOBServer,
+			Tasks:        []string{taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.WaitOBServerActiveInCluster},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
+
+func AnnotateOBServerPod() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.AnnotateOBServerPod,
+			Tasks:        []string{taskname.AnnotateOBServerPod},
+			TargetStatus: serverstatus.Running,
 		},
 	}
 }

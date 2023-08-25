@@ -13,18 +13,25 @@ See the Mulan PSL v2 for more details.
 package resource
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/pkg/errors"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
 
 func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
@@ -43,6 +50,10 @@ func (m *OBClusterManager) generateZoneName(zone string) string {
 	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
 }
 
+func (m *OBClusterManager) generateParameterName(name string) string {
+	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, strings.Replace(name, "_", "-", -1))
+}
+
 func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
 	// TODO
 	return nil
@@ -51,11 +62,15 @@ func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
 func (m *OBClusterManager) WaitOBZoneDeleted() error {
 	waitSuccess := false
 	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+		obcluster, err := m.getOBCluster()
+		if err != nil {
+			return errors.Wrap(err, "get obcluster failed")
+		}
 		zoneDeleted := true
-		for _, zoneStatus := range m.OBCluster.Status.OBZoneStatus {
+		for _, zoneStatus := range obcluster.Status.OBZoneStatus {
 			found := false
 			for _, zone := range m.OBCluster.Spec.Topology {
-				if zoneStatus.Zone == zone.Zone {
+				if zoneStatus.Zone == m.generateZoneName(zone.Zone) {
 					found = true
 					break
 				}
@@ -209,7 +224,7 @@ func (m *OBClusterManager) CreateOBZone() error {
 }
 
 func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
+	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, m.OBCluster)
 }
 
 func (m *OBClusterManager) Bootstrap() error {
@@ -222,16 +237,33 @@ func (m *OBClusterManager) Bootstrap() error {
 	if len(obzoneList.Items) <= 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
-	manager, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.OBCluster)
+	var manager *operation.OceanbaseOperationManager
+	for i := 0; i < oceanbaseconst.GetConnectionMaxRetries; i++ {
+		manager, err = m.getOceanbaseOperationManager()
+		if err != nil || manager == nil {
+			m.Logger.Info("Get oceanbase operation manager failed")
+			time.Sleep(time.Second * oceanbaseconst.CheckConnectionInterval)
+		} else {
+			m.Logger.Info("Successfully got oceanbase operation manager")
+			break
+		}
+	}
 	if err != nil {
 		m.Logger.Error(err, "get oceanbase operation manager failed")
 		return errors.Wrap(err, "get oceanbase operation manager")
 	}
 
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
+	connectAddress := manager.Connector.DataSource().GetAddress()
 	for _, zone := range obzoneList.Items {
+		serverIp := zone.Status.OBServerStatus[0].Server
+		for _, serverInfo := range zone.Status.OBServerStatus {
+			if serverInfo.Server == connectAddress {
+				serverIp = connectAddress
+			}
+		}
 		serverInfo := &model.ServerInfo{
-			Ip:   zone.Status.OBServerStatus[0].Server,
+			Ip:   serverIp,
 			Port: oceanbaseconst.RpcPort,
 		}
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
@@ -307,6 +339,312 @@ func (m *OBClusterManager) createUser(userName, secretName, privilege string) er
 	return nil
 }
 
-func (m *OBClusterManager) CreateOBParameter() error {
+func (m *OBClusterManager) MaintainOBParameter() error {
+	parameterMap := make(map[string]v1alpha1.Parameter)
+	for _, parameter := range m.OBCluster.Status.Parameters {
+		m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+		parameterMap[parameter.Name] = parameter
+	}
+	for _, parameter := range m.OBCluster.Spec.Parameters {
+		parameterStatus, parameterExists := parameterMap[parameter.Name]
+		if !parameterExists {
+			m.Logger.Info("Parameter not exists, need create", "param", parameter.Name)
+			err := m.CreateOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Crate obparameter failed", "param", parameter.Name)
+			}
+		} else if parameterStatus.Value != parameter.Value {
+			m.Logger.Info("Parameter value not matched, need update", "param", parameter.Name)
+			err := m.UpdateOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Update obparameter failed", "param", parameter.Name)
+			}
+		}
+		m.Logger.Info("Remove parameter from map", "parameter", parameter.Name)
+		delete(parameterMap, parameter.Name)
+	}
+
+	// delete parameters that not in spec definition
+	for _, parameter := range parameterMap {
+		m.Logger.Info("Delete parameter", "parameter", parameter.Name)
+		err := m.DeleteOBParameter(&parameter)
+		if err != nil {
+			m.Logger.Error(err, "Failed to delete parameter")
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) error {
+	m.Logger.Info("create ob parameters")
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBCluster.APIVersion,
+		Kind:       m.OBCluster.Kind,
+		Name:       m.OBCluster.Name,
+		UID:        m.OBCluster.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	labels := make(map[string]string)
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
+	labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+	parameterName := m.generateParameterName(parameter.Name)
+	obparameter := &v1alpha1.OBParameter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            parameterName,
+			Namespace:       m.OBCluster.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBParameterSpec{
+			ClusterName: m.OBCluster.Spec.ClusterName,
+			ClusterId:   m.OBCluster.Spec.ClusterId,
+			Parameter:   parameter,
+		},
+	}
+	m.Logger.Info("create obparameter", "parameter", parameterName)
+	err := m.Client.Create(m.Ctx, obparameter)
+	if err != nil {
+		m.Logger.Error(err, "create obparameter failed")
+		return errors.Wrap(err, "create obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) UpdateOBParameter(parameter *v1alpha1.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Update(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Update obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Delete(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Delete obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) ValidateUpgradeInfo() error {
+	// Get current obcluster version
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	//version, err := oceanbaseOperationManager.GetVersion()
+	version, err := oceanbaseOperationManager.GetVersion()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
+	}
+	// Get target version and patch
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
+	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", suffix)
+	var backoffLimit int32
+	var ttl int32 = 300
+	container := corev1.Container{
+		Name:    "ob-upgrade-validator",
+		Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+		Command: []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper upgrade validate -s %s", version.String())},
+	}
+	job := batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: m.OBCluster.Namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttl,
+		},
+	}
+
+	m.Logger.Info("Create validate upgrade job", "job", jobName)
+	err = m.Client.Create(m.Ctx, &job)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to create validate job for obcluster %s", m.OBCluster.Name)
+	}
+
+	var jobObject *batchv1.Job
+	for {
+		jobObject, err = GetJob(m.Client, m.OBCluster.Namespace, jobName)
+		if err != nil {
+			m.Logger.Error(err, "Failed to get job")
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			m.Logger.Info("job is still running")
+		} else {
+			m.Logger.Info("job finished")
+			break
+		}
+	}
+	if jobObject.Status.Succeeded == 1 {
+		m.Logger.Info("job succeeded")
+	} else {
+		m.Logger.Info("job is failed", "job", jobName)
+		return errors.Wrap(err, "Failed to run validate job")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) UpgradeCheck() error {
+	return ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
+}
+
+func (m *OBClusterManager) BackupEssentialParameters() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	essentialParameters := make([]model.Parameter, 0)
+	for _, parameter := range oceanbaseconst.UpgradeEssentialParameters {
+		parameterValues, err := oceanbaseOperationManager.GetParameter(parameter, nil)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get parameter %s", parameter)
+		}
+		essentialParameters = append(essentialParameters, parameterValues...)
+	}
+
+	contextMap := make(map[string]string)
+	jsonContent, err := json.Marshal(essentialParameters)
+	if err != nil {
+		return errors.Wrap(err, "Failed to marshal essential parameters")
+	}
+	contextMap[oceanbaseconst.EssentialParametersKey] = string(jsonContent)
+	contextObjectName := fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, oceanbaseconst.EssentialParametersKey)
+	contextSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      contextObjectName,
+			Namespace: m.OBCluster.Namespace,
+		},
+		Type:       "Opaque",
+		StringData: contextMap,
+	}
+	err = m.Client.Create(m.Ctx, contextSecret)
+	if err != nil {
+		return errors.Wrap(err, "Create context secret object")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) BeginUpgrade() error {
+	return ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
+}
+
+// TODO: add timeout
+func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
+	upgradeFinished := false
+	for {
+		zones, err := m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "Failed to get obzone list")
+		}
+		for _, zone := range zones.Items {
+			if zone.Name != zoneName {
+				continue
+			}
+			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
+			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+				upgradeFinished = true
+				break
+			}
+		}
+		if upgradeFinished {
+			m.Logger.Info("Obzone upgrade finished", "obzone", zoneName)
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
+	}
+	return nil
+}
+
+// TODO: add timeout
+func (m *OBClusterManager) RollingUpgradeByZone() error {
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get obzone list")
+	}
+	for _, zone := range zones.Items {
+		// update image and tag
+		zone.Spec.OBServerTemplate.Image = m.OBCluster.Spec.OBServerTemplate.Image
+		err = m.Client.Update(m.Ctx, &zone)
+		if err != nil {
+			return errors.Wrap(err, "Failed to update obzone image")
+		}
+		err = m.WaitOBZoneUpgradeFinished(zone.Name)
+		if err != nil {
+			return errors.Wrapf(err, "Wait obzone %s upgrade finish failed", zone.Name)
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) FinishUpgrade() error {
+	return ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
+}
+func (m *OBClusterManager) RestoreEssentialParameters() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+	essentialParameters := make([]model.Parameter, 0)
+
+	contextObjectName := fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, oceanbaseconst.EssentialParametersKey)
+	contextSecret := &corev1.Secret{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      contextObjectName,
+	}, contextSecret)
+	if err != nil {
+		m.Logger.Error(err, "Failed to get context secret")
+		return nil
+		// parameter can be set manually, just return here and emit an event
+		// TODO: emit an event
+	}
+
+	encodedParameters := string(contextSecret.Data[oceanbaseconst.EssentialParametersKey])
+	m.Logger.Info("Get encoded parameters", "parameters", encodedParameters)
+	err = json.Unmarshal([]byte(encodedParameters), &essentialParameters)
+	if err != nil {
+		return errors.New("Parse encoded parameters failed")
+	}
+
+	for _, parameter := range essentialParameters {
+		err = oceanbaseOperationManager.SetParameter(parameter.Name, parameter.Value, &param.Scope{
+			Name:  "server",
+			Value: fmt.Sprintf("%s:%d", parameter.SvrIp, parameter.SvrPort),
+		})
+		if err != nil {
+			return errors.Wrapf(err, "Failed to set parameter %s to %s:%d", parameter.Name, parameter.SvrIp, parameter.SvrPort)
+		}
+	}
+	m.Client.Delete(m.Ctx, contextSecret)
 	return nil
 }

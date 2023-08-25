@@ -49,8 +49,9 @@ type OBServerStatus struct {
 	Ready            bool              `json:"ready"`
 	PodIp            string            `json:"podIp"`
 	NodeIp           string            `json:"nodeIp"`
-	// TODO uncomment this
-	// Storage          []PVCStatus       `json:"storage"`
+	OBStatus         string            `json:"obStatus,omitempty"`
+	StartServiceTime int64             `json:"startServiceTime,omitempty"`
+	CNI              string            `json:"cni,omitempty"`
 }
 
 //+kubebuilder:object:root=true
