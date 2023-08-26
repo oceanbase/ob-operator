@@ -39,8 +39,9 @@ const (
 	SetUnitConfigV4  = "ALTER RESOURCE UNIT ${UNIT_NAME} ${ALTER_ITEM};"
 	SetTenantUnitNum = "ALTER RESOURCE TENANT ${TENANT_NAME} UNIT_NUM = ?;"
 	SetTenant        = "ALTER TENANT ${TENANT_NAME} ${ALTER_ITEM};"
+	SetTenantName = "ALTER TENANT ${TENANT_NAME} RENAME GLOBAL_NAME TO ?"
 
 	DeleteUnitConfig = "DROP RESOURCE UNIT ${UNIT_NAME};"
 	DeletePool       = "DROP RESOURCE POOL ${POOL_NAME};"
-	DeleteTenant = "DROP TENANT ${TENANT_NAME} FORCE;"
+	DeleteTenant = "DROP TENANT ${TENANT_NAME} ${FORCE};"
 )

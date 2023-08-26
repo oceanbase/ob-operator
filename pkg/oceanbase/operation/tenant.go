@@ -113,8 +113,8 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 
 // ------------ delete ------------
 
-func (m *OceanbaseOperationManager) DeleteTenant(tenantName string) error {
-	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName)
+func (m *OceanbaseOperationManager) DeleteTenant(tenantName string, force bool) error {
+	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
@@ -399,9 +399,14 @@ func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum str
 
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string,[]interface{}) {
 	params := make([]interface{}, 0)
-	replacer := strings.NewReplacer("${TENANT_NAME}", tenantName)
+	var replacer *strings.Replacer
+	if force {
+		replacer = strings.NewReplacer("${TENANT_NAME}", tenantName, "${FORCE}", "force")
+	} else {
+		replacer = strings.NewReplacer("${TENANT_NAME}", tenantName, "${FORCE}", "")
+	}
 	return replaceAll(sql.DeleteTenant, replacer), params
 }
 

@@ -17,6 +17,7 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 )
 
 func BootstrapOBCluster() *TaskFlow {
@@ -80,11 +81,16 @@ func MaintainOBParameter() *TaskFlow {
 }
 
 func UpgradeOBCluster() *TaskFlow {
-	return &TaskFlow{
+	flow := TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.UpgradeOBCluster,
 			Tasks:        []string{taskname.ValidateUpgradeInfo, taskname.BackupEssentialParameters, taskname.UpgradeCheck, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters},
 			TargetStatus: clusterstatus.Running,
+			FailureRule: &fail.FailureRule{
+				Strategy:      fail.NoRetry,
+				FailureStatus: clusterstatus.UpgradeFailed,
+			},
 		},
 	}
+	return &flow
 }

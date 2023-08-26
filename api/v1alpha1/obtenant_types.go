@@ -33,6 +33,8 @@ type OBTenantSpec struct {
 	TenantName  string `json:"tenantName"`
 	UnitNumber int          `json:"unitNum"`
 
+	//+kubebuilder:default=false
+	ForceDelete bool `json:"forceDelete,omitempty"`
 	Charset          string `json:"charset,omitempty"`
 	Collate          string `json:"collate,omitempty"`
 	Mode             string `json:"mode,omitempty"`

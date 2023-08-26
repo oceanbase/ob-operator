@@ -66,6 +66,10 @@ func (m *OBTenantManager) ClearTaskInfo() {
 	m.OBTenant.Status.OperationContext = nil
 }
 
+func (m *OBTenantManager) HandleFailure() {
+
+}
+
 func (m *OBTenantManager) FinishTask() {
 	m.OBTenant.Status.Status = m.OBTenant.Status.OperationContext.TargetStatus
 	m.OBTenant.Status.OperationContext = nil

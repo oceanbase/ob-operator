@@ -28,11 +28,11 @@ func (m *OBTenantManager) CreateTenantTask() error {
 
 	if tenantExist {
 		// TODO handle failed
-		//err = errors.New("tenant has exist")
-		//m.Logger.Error(err, "tenant has exist", "tenantName", tenantName)
-		//return err
-		m.Logger.Info("Create Tenant success", "tenantName", tenantName)
-		return nil
+		err = errors.New("tenant has exist")
+		m.Logger.Error(err, "tenant has exist", "tenantName", tenantName)
+		return err
+		//m.Logger.Info("Create Tenant success", "tenantName", tenantName)
+		//return nil
 	}
 
 	m.Logger.Info("===== debug: Create Tenant begin =====")
@@ -57,24 +57,24 @@ func (m *OBTenantManager) CreateTenantTask() error {
 func (m *OBTenantManager) MaintainTenantTask() error {
 	tenantName := m.OBTenant.Spec.TenantName
 
-	err := m.CheckAndApplyTcpInvitedNode()
+	err := m.CheckAndApplyWhiteList()
 	if err != nil {
-		m.Logger.Error(err, "maintain tenant failed ----- check and set tcp invited node failed", "tenantName", tenantName)
+		m.Logger.Error(err, "maintain tenant failed, check and set tcp invited node", "tenantName", tenantName)
 		return err
 	}
 	err = m.CheckAndApplyUnitConfig()
 	if err != nil {
-		m.Logger.Error(err, "maintain tenant failed ----- check and apply unitConfigV4 failed", "tenantName", tenantName)
+		m.Logger.Error(err, "maintain tenant failed, check and apply unitConfigV4", "tenantName", tenantName)
 		return err
 	}
 	err = m.CheckAndApplyResourcePool()
 	if err != nil {
-		m.Logger.Error(err, "maintain tenant failed ----- Check And Apply Resource Pool failed","tenantName", tenantName)
+		m.Logger.Error(err, "maintain tenant failed, Check And Apply Resource Pool","tenantName", tenantName)
 		return err
 	}
 	err = m.CheckAndApplyTenant()
 	if err != nil {
-		m.Logger.Error(err, "maintain tenant failed ----- check and apply tenant failed", "tenantName", tenantName)
+		m.Logger.Error(err, "maintain tenant failed, check and apply tenant", "tenantName", tenantName)
 		return err
 	}
 	m.Logger.Info("Maintain tenant success", "tenantName", tenantName)
@@ -127,7 +127,7 @@ func (m *OBTenantManager) DeleteTenantTask() error {
 
 // ---------- Check And Apply function ----------
 
-func (m *OBTenantManager) CheckAndApplyTcpInvitedNode() error {
+func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -230,15 +230,15 @@ func (m *OBTenantManager) CheckAndApplyTenant() error {
 	if err != nil {
 		return err
 	}
+	err = m.CheckAndApplyCharset()
+	if err != nil {
+		return err
+	}
 	err = m.CheckAndApplyPriority()
 	if err != nil {
 		return err
 	}
 	err = m.CheckAndApplyLocality()
-	if err != nil {
-		return err
-	}
-	err = m.CheckAndApplyCharset()
 	if err != nil {
 		return err
 	}
@@ -269,8 +269,8 @@ func (m *OBTenantManager) CheckAndApplyPriority() error {
 	}
 
 	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
-	statusPrimaryZone := GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
 	specPrimaryZoneMap := GeneratePrimaryZoneMap(specPrimaryZone)
+	statusPrimaryZone := GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
 	statusPrimaryZoneMap := GeneratePrimaryZoneMap(statusPrimaryZone)
 	if !reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
 		tenantSQLParam := model.TenantSQLParam{
@@ -304,6 +304,18 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 			return err
 		}
 	}
+	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
+	for {
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantID)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+		}
+		if !exist {
+			break
+		}
+		time.Sleep(config.PollingJobSleepTime)
+	}
+	m.Logger.Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
 	return nil
 }
 
@@ -558,12 +570,14 @@ func (m *OBTenantManager) TenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 	statusLocalityMap := GenerateStatusLocalityMap(resourcePoolStatusList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
 	poolList := m.GenerateStatusPoolList(resourcePoolStatusList)
+	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
 
 	// step 2.1: update locality and resource poolAdd list
 	tenantSQLParam := model.TenantSQLParam{
 		TenantName: tenantName,
 		Locality:   strings.Join(localityList, ","),
 		PoolList: poolList,
+		PrimaryZone: specPrimaryZone,
 	}
 	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 	if err != nil {
@@ -609,6 +623,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 	statusLocalityMap := GenerateStatusLocalityMap(zoneList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
 	poolList := m.GenerateStatusPoolList(zoneList)
+	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
 
 	// step 1.1: update locality
 	// note：this operator is async in oceanbase, polling until update locality task success
@@ -641,6 +656,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 	tenantSQLParam = model.TenantSQLParam{
 		TenantName: tenantName,
 		PoolList: poolList,
+		PrimaryZone: specPrimaryZone,
 	}
 	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
 	if err != nil {
@@ -816,7 +832,13 @@ func GenerateStatusLocalityMap(pools []v1alpha1.ResourcePoolStatus) map[string]v
 
 func (m *OBTenantManager) GenerateLocalityList(localityMap map[string]v1alpha1.LocalityType) []string {
 	var locality []string
-	for zoneList, zoneType := range localityMap {
+	var zoneSortList []string
+	for k := range localityMap{
+		zoneSortList = append(zoneSortList, k)
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(zoneSortList)))
+	for _, zoneList := range zoneSortList {
+		zoneType := localityMap[zoneList]
 		if zoneType.Name != "" {
 			locality = append(locality, fmt.Sprintf("%s{%d}@%s", zoneType.Name, zoneType.Replica, zoneList))
 		}
@@ -1173,6 +1195,7 @@ func (m *OBTenantManager) GetOBVersion() (string, error) {
 	if err != nil {
 		return "", errors.Wrapf(err,"Tenant '%s' get ob version from db failed", tenantName)
 	}
+	m.Logger.Info("debug version", "version", version)
 	return version.Version, nil
 }
 
@@ -1349,7 +1372,7 @@ func (m *OBTenantManager) DeleteTenant() error {
 		return err
 	}
 	if tenantExist {
-		return oceanbaseOperationManager.DeleteTenant(tenantName)
+		return oceanbaseOperationManager.DeleteTenant(tenantName, m.OBTenant.Spec.ForceDelete)
 	}
 	return nil
 }

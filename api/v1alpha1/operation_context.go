@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package v1alpha1
 
+import "github.com/oceanbase/ob-operator/pkg/task/fail"
+
 type OperationContext struct {
 	Name         string   `json:"name"`
 	Tasks        []string `json:"tasks"`
@@ -20,4 +22,5 @@ type OperationContext struct {
 	TaskStatus   string   `json:"taskStatus"`
 	TaskId       string   `json:"taskId"`
 	TargetStatus string   `json:"targetStatus"`
+	FailureRule  *fail.FailureRule `json:"failureRule"`
 }
