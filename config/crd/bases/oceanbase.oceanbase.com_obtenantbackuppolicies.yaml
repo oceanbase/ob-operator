@@ -43,9 +43,18 @@ spec:
                   crontab:
                     type: string
                   destination:
-                    type: string
+                    properties:
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - type
+                    type: object
                   incrCrontab:
                     type: string
+                required:
+                - destination
                 type: object
               dataClean:
                 properties:
@@ -55,8 +64,6 @@ spec:
                     type: string
                   recoverWindow:
                     type: string
-                required:
-                - name
                 type: object
               logArchive:
                 description: LogArchiveConfig contains the configuration for log archive
@@ -67,12 +74,17 @@ spec:
                   destDisabled:
                     type: boolean
                   destination:
-                    type: string
+                    properties:
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - type
+                    type: object
                   switchPieceInterval:
                     type: string
                 required:
-                - concurrency
-                - destDisabled
                 - destination
                 - switchPieceInterval
                 type: object
@@ -81,7 +93,7 @@ spec:
                   obtenantbackuppolicy_types.go to remove/update
                 type: string
             required:
-            - dataClean
+            - dataBackup
             - tenantName
             type: object
           status:

@@ -13,5 +13,12 @@ metadata:
 spec:
   tenantName: "yuyi"
   dataClean:
-    name: "clean_yuyi"
-    recoverWindow: "7d"
+    recoverWindow: "4d"
+  logArchive:
+    destination:
+      type: "NFS"
+      path: "log_archive_custom"
+  dataBackup:
+    destination:
+      type: "NFS"
+      path: "data_backup_custom"

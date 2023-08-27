@@ -30,10 +30,12 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-	// TODO: check tenant's archivelog mode by DBA_OB_TENANTS
-	err = con.SetLogArchiveDestForTenant(m.getArchiveDestPath())
-	if err != nil {
-		return err
+	if m.BackupPolicy.Status.TenantInfo != nil &&
+		m.BackupPolicy.Status.TenantInfo.LogMode == "NOARCHIVELOG" {
+		err = con.SetLogArchiveDestForTenant(m.getArchiveDestPath())
+		if err != nil {
+			return err
+		}
 	}
 	if m.BackupPolicy.Spec.LogArchive.Concurrency != 0 {
 		err = con.SetLogArchiveConcurrency(m.BackupPolicy.Spec.LogArchive.Concurrency)
@@ -63,6 +65,7 @@ func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
 		return errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
 	}
 	m.BackupPolicy.Status.TenantInfo = tenants[0]
+	m.Logger.Info("get tenant info", "info", m.BackupPolicy.Status.TenantInfo)
 	return nil
 }
 
@@ -71,32 +74,45 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	configs, err := con.QueryArchiveLogParameters()
-	if err != nil {
-		return err
-	}
-	for _, config := range configs {
-		if config.Name == "state" && config.Value != "ENABLE" {
-			err = con.EnableArchiveLogForTenant()
-			if err != nil {
-				return err
-			}
-			break
+	if m.BackupPolicy.Status.TenantInfo != nil &&
+		m.BackupPolicy.Status.TenantInfo.LogMode == "NOARCHIVELOG" {
+		err = con.EnableArchiveLogForTenant()
+		if err != nil {
+			return err
 		}
 	}
 	// create backup job of full type
+	// TODO: create backup job to manage the tasks
 	err = con.CreateBackupFull()
-	// if m.BackupPolicy.Spec.DataBackup.Type == v1alpha1.BackupFull {
-	// } else {
-	// 	err = con.CreateBackupIncr(tenantName)
-	// }
 	if err != nil {
 		return err
 	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	err = con.AddCleanBackupPolicy(cleanConfig.Name, cleanConfig.RecoverWindow)
+	cleanPolicy, err := con.QueryBackupCleanPolicy()
 	if err != nil {
 		return err
+	}
+	policyName := "default"
+	if len(cleanPolicy) == 0 {
+		// the name of the policy can only be 'default', and the recovery window can only be 1d-7d
+		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoverWindow)
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, policy := range cleanPolicy {
+			if policy.RecoverWindow != cleanConfig.RecoverWindow {
+				err = con.RemoveCleanBackupPolicy(policy.PolicyName)
+				if err != nil {
+					return err
+				}
+				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoverWindow)
+				if err != nil {
+					return err
+				}
+				break
+			}
+		}
 	}
 	return nil
 }
@@ -119,6 +135,10 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) SpawnCronBackupJob() error {
 	return nil
 }
 
@@ -145,13 +165,32 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
-	dest := path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
-	if m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval != "" {
-		dest += fmt.Sprintf(" PIECE_SWITCH_INTERVAL=%s", m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval)
+	targetDest := m.BackupPolicy.Spec.LogArchive.Destination
+	if targetDest.Type == v1alpha1.BackupDestTypeNFS {
+		var dest string
+		if targetDest.Path == "" {
+			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
+		} else {
+			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
+		}
+		if m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval != "" {
+			dest += fmt.Sprintf(" PIECE_SWITCH_INTERVAL=%s", m.BackupPolicy.Spec.LogArchive.SwitchPieceInterval)
+		}
+		return "location=" + dest
+	} else {
+		return targetDest.Path
 	}
-	return "location=" + "file://" + dest
 }
 
 func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
-	return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
+	targetDest := m.BackupPolicy.Spec.DataBackup.Destination
+	if targetDest.Type == v1alpha1.BackupDestTypeNFS {
+		if targetDest.Path == "" {
+			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
+		} else {
+			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
+		}
+	} else {
+		return targetDest.Path
+	}
 }

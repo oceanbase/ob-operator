@@ -52,7 +52,6 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Log
 }
 
 func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName string) (*operation.OceanbaseOperationManager, error) {
-	// TODO: tenants won't neccessarily be created in every zone, so we need to check
 	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, tenantName+"-credential")
 }
 
@@ -91,7 +90,6 @@ func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha
 			oceanbaseOperationManager.Logger = logger
 			return oceanbaseOperationManager, nil
 		}
-		logger.Error(err, "Get oceanbase operation manager failed")
 	}
 	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all server", obcluster.Name)
 }
@@ -191,7 +189,7 @@ func GetCNIFromAnnotation(pod *corev1.Pod) string {
 	return oceanbaseconst.CNIUnknown
 }
 
-func NeedAnnonation(pod *corev1.Pod, cni string) bool {
+func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	switch cni {
 	case oceanbaseconst.CNICalico:
 		_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs]

@@ -30,8 +30,8 @@ type OBTenantBackupPolicySpec struct {
 	// Foo is an example field of OBTenantBackupPolicy. Edit obtenantbackuppolicy_types.go to remove/update
 	TenantName string           `json:"tenantName"`
 	LogArchive LogArchiveConfig `json:"logArchive,omitempty"`
-	DataBackup DataBackupConfig `json:"dataBackup,omitempty"`
-	DataClean  CleanPolicy      `json:"dataClean"`
+	DataBackup DataBackupConfig `json:"dataBackup"`
+	DataClean  CleanPolicy      `json:"dataClean,omitempty"`
 }
 
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
@@ -69,10 +69,10 @@ func init() {
 
 // LogArchiveConfig contains the configuration for log archive progress
 type LogArchiveConfig struct {
-	Destination         string `json:"destination"`
-	SwitchPieceInterval string `json:"switchPieceInterval"`
-	DestDisabled        bool   `json:"destDisabled"`
-	Concurrency         int    `json:"concurrency"`
+	Destination         BackupDestination `json:"destination"`
+	SwitchPieceInterval string            `json:"switchPieceInterval"`
+	DestDisabled        bool              `json:"destDisabled,omitempty"`
+	Concurrency         int               `json:"concurrency,omitempty"`
 }
 
 type BackupType string
@@ -84,13 +84,13 @@ const (
 
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
-	Destination string `json:"destination,omitempty"`
-	Crontab     string `json:"crontab,omitempty"`
-	IncrCrontab string `json:"incrCrontab,omitempty"`
+	Destination BackupDestination `json:"destination"`
+	Crontab     string            `json:"crontab,omitempty"`
+	IncrCrontab string            `json:"incrCrontab,omitempty"`
 }
 
 type CleanPolicy struct {
-	Name          string `json:"name"`
+	Name          string `json:"name,omitempty"`
 	RecoverWindow string `json:"recoverWindow,omitempty"`
 	Disabled      string `json:"disabled,omitempty"`
 }
@@ -104,4 +104,16 @@ const (
 	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
 	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
 	BackupPolicyStatusStopped   BackupPolicyStatusType = "STOPPED"
+)
+
+type BackupDestination struct {
+	Type BackupDestType `json:"type"`
+	Path string         `json:"path,omitempty"`
+}
+
+type BackupDestType string
+
+const (
+	BackupDestTypeOSS BackupDestType = "OSS"
+	BackupDestTypeNFS BackupDestType = "NFS"
 )
