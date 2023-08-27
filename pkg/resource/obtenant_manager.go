@@ -83,9 +83,14 @@ func (m *OBTenantManager) HandleFailure() {
 	case fail.PauseReconcile:
 		m.OBTenant.Status.Status = tenantstatus.PausingReconcile
 	}
+
+	if m.IsClearOperationContextIfFailed() {
+		m.OBTenant.Status.OperationContext = nil
+	}
+
 }
 
-func (m *OBTenantManager) IsClearTaskInfoIfFailed() bool {
+func (m *OBTenantManager) IsClearOperationContextIfFailed() bool {
 	m.Logger.Info("debug:", "status", m.OBTenant.Status)
 	return  m.OBTenant.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
 }

@@ -226,7 +226,7 @@ func (m *OBZoneManager) ClearTaskInfo() {
 	m.OBZone.Status.OperationContext = nil
 }
 
-func (m *OBZoneManager) IsClearTaskInfoIfFailed() bool {
+func (m *OBZoneManager) IsClearOperationContextIfFailed() bool {
 	return m.OBZone.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
 }
 
@@ -238,6 +238,10 @@ func (m *OBZoneManager) HandleFailure() {
 		m.OBZone.Status.Status = failureRule.NextTryStatus
 	case fail.RetryCurrentStep:
 		operationContext.TaskStatus = taskstatus.Pending
+	}
+
+	if m.IsClearOperationContextIfFailed() {
+		m.OBZone.Status.OperationContext = nil
 	}
 }
 

@@ -107,10 +107,6 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.NextTask()
 		}
 	case taskstatus.Failed:
-		// TODO handle failed task
-		if c.Manager.IsClearTaskInfoIfFailed() {
-			c.Manager.ClearTaskInfo()
-		}
 		c.Manager.HandleFailure()
 		c.Logger.Info("Task failed, back to initial status")
 

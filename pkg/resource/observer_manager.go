@@ -260,7 +260,7 @@ func (m *OBServerManager) ClearTaskInfo() {
 }
 
 
-func (m *OBServerManager) IsClearTaskInfoIfFailed() bool {
+func (m *OBServerManager) IsClearOperationContextIfFailed() bool {
 	return  m.OBServer.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
 }
 
@@ -274,13 +274,12 @@ func (m *OBServerManager) HandleFailure() {
 	failureRule := operationContext.FailureRule
 	switch failureRule.Strategy {
 	case fail.RetryTask:
-		if failureRule.NextTryStatus == "" {
-			m.OBServer.Status.Status = serverstatus.Running
-		} else {
-			m.OBServer.Status.Status = failureRule.NextTryStatus
-		}
+		m.OBServer.Status.Status = failureRule.NextTryStatus
 	case fail.RetryCurrentStep:
 		operationContext.TaskStatus = taskstatus.Pending
+	}
+	if m.IsClearOperationContextIfFailed() {
+		m.OBServer.Status.OperationContext = nil
 	}
 }
 
