@@ -14,6 +14,8 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 
 	"github.com/go-logr/logr"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
@@ -70,10 +72,10 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 	m.Logger.Info("create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
-	// create obcluster, return taskflow to bootstrap obcluster
+	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.New:
 		taskFlow, err = task.GetRegistry().Get(flowname.BootstrapOBCluster)
-	// after obcluster bootstraped, return taskflow to maintain obcluster after bootstrap
+	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBClusterAfterBootstrap)
 	case clusterstatus.AddOBZone:
@@ -84,11 +86,28 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.ModifyOBZoneReplica)
 	case clusterstatus.Upgrade:
 		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBCluster)
+	case clusterstatus.UpgradeFailed:
+		m.Logger.Error(errors.New("upgrade failed"),
+			"upgrade failed, please Set status to running after manually resolving the problem")
+		return nil, nil
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
 		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
+		return nil, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.FailureRule.Strategy == "" {
+		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
+		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
+			taskFlow.OperationContext.FailureRule.NextTryStatus = clusterstatus.Running
+		}
+	}
+
 	return taskFlow, err
 }
 
@@ -215,9 +234,25 @@ func (m *OBClusterManager) ClearTaskInfo() {
 	m.OBCluster.Status.OperationContext = nil
 }
 
+func (m *OBClusterManager) IsClearTaskInfoIfFailed() bool {
+	return  m.OBCluster.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+}
+
 func (m *OBClusterManager) FinishTask() {
 	m.OBCluster.Status.Status = m.OBCluster.Status.OperationContext.TargetStatus
 	m.OBCluster.Status.OperationContext = nil
+}
+func (m *OBClusterManager) HandleFailure() {
+	operationContext := m.OBCluster.Status.OperationContext
+	failureRule := operationContext.FailureRule
+	switch failureRule.Strategy {
+	case fail.RetryTask:
+		m.OBCluster.Status.Status = failureRule.NextTryStatus
+	case fail.RetryCurrentStep:
+		operationContext.TaskStatus = taskstatus.Pending
+	case fail.PauseReconcile:
+		m.OBCluster.Status.Status = clusterstatus.UpgradeFailed
+	}
 }
 
 func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {

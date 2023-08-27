@@ -45,8 +45,17 @@ func init() {
 
 	// obtenant
 	GetRegistry().Register(flowname.CreateTenant, CreateTenant)
-	GetRegistry().Register(flowname.MaintainTenant, MaintainTenant)
+	GetRegistry().Register(flowname.MaintainWhiteList, MaintainWhiteList)
+	GetRegistry().Register(flowname.MaintainCharset, MaintainCharset)
+	GetRegistry().Register(flowname.MaintainUnitNum, MaintainUnitNum)
+	GetRegistry().Register(flowname.MaintainPrimaryZone, MaintainPrimaryZone)
+	GetRegistry().Register(flowname.MaintainLocality, MaintainLocality)
+	GetRegistry().Register(flowname.AddPool, AddPool)
+	GetRegistry().Register(flowname.DeletePool, DeletePool)
+	GetRegistry().Register(flowname.MaintainUnitConfig, MaintainUnitConfig)
 	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
+
+
 	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
 	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
 	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)

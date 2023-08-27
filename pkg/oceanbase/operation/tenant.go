@@ -115,7 +115,7 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 
 func (m *OceanbaseOperationManager) DeleteTenant(tenantName string, force bool) error {
 	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithTimeout(config.TenantSqlTimeout ,preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
 	}

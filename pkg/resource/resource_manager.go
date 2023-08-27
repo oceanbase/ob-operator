@@ -25,7 +25,9 @@ type ResourceManager interface {
 	InitStatus()
 	SetOperationContext(*v1alpha1.OperationContext)
 	ClearTaskInfo()
+	HandleFailure()
 	FinishTask()
+	IsClearTaskInfoIfFailed() bool
 	UpdateStatus() error
 	GetTaskFunc(string) (func() error, error)
 	GetTaskFlow() (*task.TaskFlow, error)

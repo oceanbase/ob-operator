@@ -1,6 +1,6 @@
 package fail
 
 type FailureRule struct {
-	Strategy string `json:"failureStrategy"`
-	FailureStatus string `json:"failureStatus"`
+	Strategy      string `json:"failureStrategy"`
+	NextTryStatus string `json:"failureStatus"`
 }

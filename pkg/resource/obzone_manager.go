@@ -14,6 +14,8 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -88,15 +90,14 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
-		return taskFlow, nil
 	case zonestatus.BootstrapReady:
-		return task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
 	case zonestatus.AddOBServer:
-		return task.GetRegistry().Get(flowname.AddOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.AddOBServer)
 	case zonestatus.DeleteOBServer:
-		return task.GetRegistry().Get(flowname.DeleteOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServer)
 	case zonestatus.Deleting:
-		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -108,8 +109,22 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 			return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		}
 		// TODO upgrade
+	default:
+		m.Logger.Info("no need to run anything for obzone")
+		return nil, nil
 	}
-	return nil, nil
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.FailureRule.Strategy == "" {
+		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
+		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
+			taskFlow.OperationContext.FailureRule.NextTryStatus = zonestatus.Running
+		}
+	}
+	return taskFlow, nil
 }
 
 func (m *OBZoneManager) IsDeleting() bool {
@@ -209,6 +224,21 @@ func (m *OBZoneManager) UpdateStatus() error {
 func (m *OBZoneManager) ClearTaskInfo() {
 	m.OBZone.Status.Status = zonestatus.Running
 	m.OBZone.Status.OperationContext = nil
+}
+
+func (m *OBZoneManager) IsClearTaskInfoIfFailed() bool {
+	return m.OBZone.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+}
+
+func (m *OBZoneManager) HandleFailure() {
+	operationContext := m.OBZone.Status.OperationContext
+	failureRule := operationContext.FailureRule
+	switch failureRule.Strategy {
+	case fail.RetryTask:
+		m.OBZone.Status.Status = failureRule.NextTryStatus
+	case fail.RetryCurrentStep:
+		operationContext.TaskStatus = taskstatus.Pending
+	}
 }
 
 func (m *OBZoneManager) FinishTask() {

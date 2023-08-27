@@ -1,8 +1,8 @@
 package fail
 
 const (
-	NoRetry = "no retry"
-	RetryBackRunning = "retry back running"
+	RetryTask        = "retry task"
 	RetryCurrentStep = "retry current step"
+	PauseReconcile="Pause Reconcile"
 )
 

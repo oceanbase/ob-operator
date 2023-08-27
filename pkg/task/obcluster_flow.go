@@ -81,16 +81,14 @@ func MaintainOBParameter() *TaskFlow {
 }
 
 func UpgradeOBCluster() *TaskFlow {
-	flow := TaskFlow{
+	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.UpgradeOBCluster,
 			Tasks:        []string{taskname.ValidateUpgradeInfo, taskname.BackupEssentialParameters, taskname.UpgradeCheck, taskname.BeginUpgrade, taskname.RollingUpgradeByZone, taskname.FinishUpgrade, taskname.RestoreEssentialParameters},
 			TargetStatus: clusterstatus.Running,
-			FailureRule: &fail.FailureRule{
-				Strategy:      fail.NoRetry,
-				FailureStatus: clusterstatus.UpgradeFailed,
+			FailureRule: fail.FailureRule{
+				Strategy:      fail.PauseReconcile,
 			},
 		},
 	}
-	return &flow
 }

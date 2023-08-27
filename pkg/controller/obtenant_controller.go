@@ -63,6 +63,20 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 		return ctrl.Result{}, err
 	}
+
+	if obtenant.ObjectMeta.DeletionTimestamp.IsZero() {
+		finalizerName := "finalizers.oceanbase.com.deleteobtenant"
+		if !containsString(obtenant.ObjectMeta.Finalizers, finalizerName){
+			finalizers := []string{finalizerName}
+			obtenant.ObjectMeta.Finalizers = finalizers
+			err := r.Client.Update(ctx, obtenant)
+			if err != nil {
+				logger.Error(err, "got erro when update finalizers")
+			}
+			return ctrl.Result{}, err
+		}
+	}
+
 	logger.Info("reconcile obtenant begin:  >>>>>>>>>>>>>>> * <<<<<<<<<<<<<<<", "spec", obtenant.Spec, "status", obtenant.Status)
 
 	// create observer manager
@@ -76,12 +90,6 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	coordinator := resource.NewCoordinator(obtenantManager, &logger)
 	err = coordinator.Coordinate()
-	if err != nil {
-		if kubeerrors.IsConflict(err) {
-			obtenantManager.Logger.Error(err, "retry Reconcile tenant >>>>>>>>>>> * <<<<<<<<<<<<<")
-			return ctrl.Result{Requeue: true}, nil
-		}
-	}
 	return ctrl.Result{}, err
 }
 
@@ -91,3 +99,15 @@ func (r *OBTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha1.OBTenant{}).
 		Complete(r)
 }
+
+func containsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}
+
+
+

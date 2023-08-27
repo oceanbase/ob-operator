@@ -14,6 +14,8 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	corev1 "k8s.io/api/core/v1"
@@ -219,25 +221,37 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
-		return taskFlow, nil
 	case serverstatus.BootstrapReady:
 		m.Logger.Info("Get task flow when bootstrap ready")
-		return task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
+		taskFlow,err = task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
 	case serverstatus.Deleting:
 		m.Logger.Info("Get task flow when observer deleting")
-		return task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
 	case serverstatus.Upgrade:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.UpgradeOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBServer)
 	case serverstatus.Recover:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.RecoverOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.RecoverOBServer)
 	case serverstatus.Annotate:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.AnnotateOBServerPod)
+		taskFlow, err = task.GetRegistry().Get(flowname.AnnotateOBServerPod)
 	default:
+		m.Logger.Info("no need to run anything for observer")
 		return nil, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.FailureRule.Strategy == "" {
+		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
+		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
+			taskFlow.OperationContext.FailureRule.NextTryStatus = serverstatus.Running
+		}
+	}
+	return taskFlow, nil
 }
 
 func (m *OBServerManager) ClearTaskInfo() {
@@ -245,9 +259,29 @@ func (m *OBServerManager) ClearTaskInfo() {
 	m.OBServer.Status.OperationContext = nil
 }
 
+
+func (m *OBServerManager) IsClearTaskInfoIfFailed() bool {
+	return  m.OBServer.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+}
+
 func (m *OBServerManager) FinishTask() {
 	m.OBServer.Status.Status = m.OBServer.Status.OperationContext.TargetStatus
 	m.OBServer.Status.OperationContext = nil
+}
+
+func (m *OBServerManager) HandleFailure() {
+	operationContext := m.OBServer.Status.OperationContext
+	failureRule := operationContext.FailureRule
+	switch failureRule.Strategy {
+	case fail.RetryTask:
+		if failureRule.NextTryStatus == "" {
+			m.OBServer.Status.Status = serverstatus.Running
+		} else {
+			m.OBServer.Status.Status = failureRule.NextTryStatus
+		}
+	case fail.RetryCurrentStep:
+		operationContext.TaskStatus = taskstatus.Pending
+	}
 }
 
 func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {

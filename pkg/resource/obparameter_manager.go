@@ -15,6 +15,8 @@ package resource
 import (
 	"context"
 	"fmt"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
@@ -75,6 +77,18 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
 	default:
 		m.Logger.Info("no need to run anything for obparameter")
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.FailureRule.Strategy == "" {
+		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
+		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
+			taskFlow.OperationContext.FailureRule.NextTryStatus = parameterstatus.Matched
+		}
 	}
 	return taskFlow, err
 }
@@ -134,9 +148,24 @@ func (m *OBParameterManager) ClearTaskInfo() {
 	m.OBParameter.Status.OperationContext = nil
 }
 
+func (m *OBParameterManager) IsClearTaskInfoIfFailed() bool {
+	return  m.OBParameter.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+}
+
 func (m *OBParameterManager) FinishTask() {
 	m.OBParameter.Status.Status = m.OBParameter.Status.OperationContext.TargetStatus
 	m.OBParameter.Status.OperationContext = nil
+}
+
+func (m *OBParameterManager) HandleFailure() {
+	operationContext := m.OBParameter.Status.OperationContext
+	failureRule := operationContext.FailureRule
+	switch failureRule.Strategy {
+	case fail.RetryTask:
+		m.OBParameter.Status.Status = failureRule.NextTryStatus
+	case fail.RetryCurrentStep:
+		operationContext.TaskStatus = taskstatus.Pending
+	}
 }
 
 func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
