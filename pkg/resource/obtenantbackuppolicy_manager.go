@@ -90,6 +90,8 @@ func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, er
 		return m.StartBackup, nil
 	case taskname.StopBackupJob:
 		return m.StopBackup, nil
+	case taskname.CheckAndSpawnJobs:
+		return m.CheckAndSpawnJobs, nil
 	default:
 		return nil, errors.Errorf("unknown task name %s", name)
 	}
@@ -108,7 +110,7 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case v1alpha1.BackupPolicyStatusPrepared:
 		return task.GetRegistry().Get(flow.StartBackupJob)
 	case v1alpha1.BackupPolicyStatusRunning:
-		return nil, nil
+		return task.GetRegistry().Get(flow.MaintainCrontab)
 	default:
 		return nil, nil
 	}

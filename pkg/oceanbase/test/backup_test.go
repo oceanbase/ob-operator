@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package test
 
 import (
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
@@ -101,4 +103,21 @@ var _ = Describe("Test Backup Operation", func() {
 		printSlice(histories, "backup task history")
 	})
 
+	It("Parse Timestamp", func() {
+		timestamp := "2023-08-25 19:13:18.961907"
+		t, err := time.Parse(time.DateTime+".000000", timestamp)
+		Expect(err).To(BeNil())
+		GinkgoWriter.Println(t, t.UnixMilli())
+
+		t1, err := time.Parse(time.DateTime, timestamp)
+		Expect(err).To(BeNil())
+		Expect(t1.Equal(t)).To(BeTrue())
+
+		ts2 := "2023-08-25 19:13:18"
+		t2, err := time.Parse(time.DateTime, ts2)
+		Expect(err).To(BeNil())
+		Expect(t2.Equal(t)).NotTo(BeTrue())
+
+		GinkgoWriter.Println(t, t2, t.UnixMicro()-t2.UnixMicro(), t.Sub(t2))
+	})
 })

@@ -18,6 +18,6 @@ const (
 )
 
 const (
-	QueryTenantWithName    = "SELECT " + tenantFields + " FROM DBA_OB_TENANTS where tenant_name = ?"
+	QueryTenantWithName    = "SELECT " + tenantFields + " FROM DBA_OB_TENANTS where tenant_name = ? and tenant_type = 'USER'"
 	QueryUnitsWithTenantId = "SELECT " + unitFields + " FROM DBA_OB_UNITS where tenant_id = ?"
 )

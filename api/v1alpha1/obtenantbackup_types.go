@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -37,9 +38,11 @@ type OBTenantBackupSpec struct {
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           BackupJobStatus   `json:"status"`
-	Progress         string            `json:"progress"`
-	OperationContext *OperationContext `json:"operationContext,omitempty"`
+	Status           BackupJobStatus    `json:"status"`
+	Progress         string             `json:"progress"`
+	OperationContext *OperationContext  `json:"operationContext,omitempty"`
+	JobId            int64              `json:"jobId,omitempty"`
+	BackupJob        *model.OBBackupJob `json:"backupJob,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -72,7 +75,7 @@ type BackupJobType string
 
 const (
 	BackupJobTypeFull    BackupJobType = "FULL"
-	BackupJobTypeIncr    BackupJobType = "INCR"
+	BackupJobTypeIncr    BackupJobType = "INC"
 	BackupJobTypeClean   BackupJobType = "CLEAN"
 	BackupJobTypeArchive BackupJobType = "ARCHIVE"
 )

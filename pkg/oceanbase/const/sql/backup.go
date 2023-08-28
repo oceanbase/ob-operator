@@ -45,4 +45,7 @@ const (
 	CancelAllCleanBackup       = "ALTER SYSTEM CANCEL DELETE BACKUP"
 	QueryBackupCleanJobs       = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS"
 	QueryBackupCleanJobHistory = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY"
+
+	QueryLatestBackupJob        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE backup_type = ? order by job_id DESC LIMIT 1"
+	QueryLatestBackupJobHistory = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE backup_type = ? order by job_id DESC LIMIT 1"
 )

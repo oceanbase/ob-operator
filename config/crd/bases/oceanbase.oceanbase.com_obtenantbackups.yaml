@@ -53,6 +53,60 @@ spec:
           status:
             description: OBTenantBackupStatus defines the observed state of OBTenantBackup
             properties:
+              backupJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOB & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - end_timestamp
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
+              jobId:
+                format: int64
+                type: integer
               operationContext:
                 properties:
                   idx:

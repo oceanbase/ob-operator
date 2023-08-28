@@ -13,9 +13,9 @@ See the Mulan PSL v2 for more details.
 package name
 
 const (
-	CreatePersistentVolumes  = "create persistent volumes"
 	GetTenantInfo            = "get tenant info"
 	ConfigureServerForBackup = "configure server for backup"
+	CheckAndSpawnJobs        = "check and spawn jobs"
 	StartBackupJob           = "start backup job"
 	StopBackupJob            = "stop backup job"
 )

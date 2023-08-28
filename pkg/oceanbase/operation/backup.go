@@ -168,3 +168,20 @@ func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) (
 	}
 	return tasks, nil
 }
+
+func (m *OceanbaseOperationManager) QueryLatestBackupJobHistory(jobType string) ([]*model.OBBackupJob, error) {
+	jobs := make([]*model.OBBackupJob, 0)
+	err := m.QueryList(&jobs, sql.QueryLatestBackupJob, jobType)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query latest running backup job")
+		return nil, errors.Wrap(err, "Query latest running backup job")
+	}
+	if len(jobs) == 0 {
+		err = m.QueryList(&jobs, sql.QueryLatestBackupJobHistory, jobType)
+		if err != nil {
+			m.Logger.Error(err, "Failed to query latest backup job history")
+			return nil, errors.Wrap(err, "Query latest backup job history")
+		}
+	}
+	return jobs, nil
+}

@@ -19,8 +19,10 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
+	cron "github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
@@ -56,21 +58,13 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 
 func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
 	// Admission Control
-	con, err := m.getOperationManager()
+	tenant, err := m.getTenantInfo()
 	if err != nil {
 		return err
 	}
-	tenants, err := con.QueryTenantWithName(m.BackupPolicy.Spec.TenantName)
-	if err != nil {
-		return err
-	}
-	if len(tenants) == 0 {
-		// never happen by design
-		return errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
-	}
-	m.BackupPolicy.Status.TenantInfo = tenants[0]
-	m.Logger.Info("get tenant info", "info", m.BackupPolicy.Status.TenantInfo)
-	return nil
+	m.BackupPolicy.Status.TenantInfo = tenant
+	// update status ahead of regular task
+	return m.Client.Status().Update(m.Ctx, m.BackupPolicy)
 }
 
 func (m *ObTenantBackupPolicyManager) StartBackup() error {
@@ -78,8 +72,11 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	if m.BackupPolicy.Status.TenantInfo != nil &&
-		m.BackupPolicy.Status.TenantInfo.LogMode == "NOARCHIVELOG" {
+	tenantInfo, err := m.getTenantInfo()
+	if err != nil {
+		return err
+	}
+	if tenantInfo.LogMode == "NOARCHIVELOG" {
 		err = con.EnableArchiveLogForTenant()
 		if err != nil {
 			return err
@@ -112,32 +109,8 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 			}
 		}
 	}
-	var runningFullJobs v1alpha1.OBTenantBackupList
-	err = m.Client.List(m.Ctx, &runningFullJobs,
-		client.MatchingLabels{
-			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
-		},
-		client.MatchingFieldsSelector{
-			Selector: fields.AndSelectors(
-				fields.OneTermEqualSelector("spec.type", string(v1alpha1.BackupJobTypeFull)),
-				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusFailed)),
-				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusSuccessful)),
-			),
-		},
-		client.InNamespace(m.BackupPolicy.Namespace))
-	if err != nil {
-		return err
-	}
-	if len(runningFullJobs.Items) > 0 {
-		// there is already a backup job running
-		return nil
-	}
 	// create backup job of full type
-	err = m.createBackupJob(v1alpha1.BackupJobTypeFull)
-	if err != nil {
-		return err
-	}
-	return nil
+	return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
 }
 
 func (m *ObTenantBackupPolicyManager) StopBackup() error {
@@ -163,7 +136,93 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 }
 
 func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
+	latestFull, err := m.getLatestBackupJob(v1alpha1.BackupJobTypeFull)
+	if err != nil {
+		return err
+	}
+	if latestFull == nil {
+		return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
+	}
+	if latestFull.Status == "COMPLETED" {
+		lastFullBackupFinishedAt, err := time.Parse(time.DateTime, latestFull.EndTimestamp)
+		if err != nil {
+			m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+		}
+		timeNow := time.Now()
+		fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
+		if err != nil {
+			// TODO: Check pattern of crontab with admission webhook
+			m.Logger.Error(err, "Failed to parse full backup crontab")
+			return nil
+		}
+		nextFullTime := fullCron.Next(lastFullBackupFinishedAt)
+		if nextFullTime.Before(timeNow) {
+			err = m.createBackupJob(v1alpha1.BackupJobTypeFull)
+			if err != nil {
+				return err
+			}
+		}
+
+		// considering incremental backup
+		// create incremental backup if there is a full backup job or an incremental backup job
+		incrementalCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrCrontab)
+		if err != nil {
+			m.Logger.Error(err, "Failed to parse full backup crontab")
+			return nil
+		}
+		latestIncr, err := m.getLatestBackupJob(v1alpha1.BackupJobTypeIncr)
+		if err != nil {
+			return err
+		}
+		if latestIncr != nil {
+			if latestIncr.Status == "COMPLETED" {
+				lastIncrBackupFinishedAt, err := time.Parse(time.DateTime, latestIncr.EndTimestamp)
+				if err != nil {
+					m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+				}
+
+				nextIncrTime := incrementalCron.Next(lastIncrBackupFinishedAt)
+				if nextIncrTime.Before(timeNow) {
+					err = m.createBackupJob(v1alpha1.BackupJobTypeIncr)
+					if err != nil {
+						return err
+					}
+				}
+			} else if latestIncr.Status == "DOING" {
+				// do nothing
+			} else {
+				m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+			}
+		} else {
+			nextIncrTime := incrementalCron.Next(lastFullBackupFinishedAt)
+			if nextIncrTime.Before(timeNow) {
+				err = m.createBackupJob(v1alpha1.BackupJobTypeIncr)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	} else if latestFull.Status == "DOING" {
+		// do nothing
+	} else {
+		m.Logger.Info("BackupJob are in status " + latestFull.Status)
+	}
 	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType v1alpha1.BackupJobType) (*model.OBBackupJob, error) {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return nil, err
+	}
+	jobs, err := con.QueryLatestBackupJobHistory(string(jobType))
+	if err != nil {
+		return nil, err
+	}
+	if len(jobs) == 0 {
+		return nil, nil
+	}
+	return jobs[0], nil
 }
 
 // get operation manager to exec sql
@@ -241,17 +300,56 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJob
 			TenantName: m.BackupPolicy.Spec.TenantName,
 		},
 	}
-	err := m.Client.Create(m.Ctx, backupJob)
+	return m.Client.Create(m.Ctx, backupJob)
+}
+
+func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType v1alpha1.BackupJobType) error {
+	noRunningJobs, err := m.noRunningJobs(jobType)
 	if err != nil {
-		return errors.Wrap(err, "create backup job")
+		m.Logger.Error(err, "Failed to check if there is running backup job")
+		return nil
 	}
-	switch jobType {
-	case v1alpha1.BackupJobTypeFull:
-	case v1alpha1.BackupJobTypeIncr:
-	case v1alpha1.BackupJobTypeArchive:
-	case v1alpha1.BackupJobTypeClean:
-	default:
-		return errors.Errorf("unknown backup job type %s", jobType)
+	if noRunningJobs {
+		return m.createBackupJob(jobType)
 	}
 	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType v1alpha1.BackupJobType) (bool, error) {
+	var runningJobs v1alpha1.OBTenantBackupList
+	err := m.Client.List(m.Ctx, &runningJobs,
+		client.MatchingLabels{
+			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
+		},
+		client.MatchingFieldsSelector{
+			Selector: fields.AndSelectors(
+				fields.OneTermEqualSelector("spec.type", string(jobType)),
+				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusFailed)),
+				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusSuccessful)),
+			),
+		},
+		client.InNamespace(m.BackupPolicy.Namespace))
+	if err != nil {
+		return false, err
+	}
+	return len(runningJobs.Items) == 0, nil
+}
+
+// getTenantInfo return tenant info from status if exists, otherwise query from database view
+func (m *ObTenantBackupPolicyManager) getTenantInfo() (*model.OBTenant, error) {
+	if m.BackupPolicy.Status.TenantInfo != nil {
+		return m.BackupPolicy.Status.TenantInfo, nil
+	}
+	con, err := m.getOperationManager()
+	if err != nil {
+		return nil, err
+	}
+	tenants, err := con.QueryTenantWithName(m.BackupPolicy.Spec.TenantName)
+	if err != nil {
+		return nil, err
+	}
+	if len(tenants) == 0 {
+		return nil, errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
+	}
+	return tenants[0], nil
 }

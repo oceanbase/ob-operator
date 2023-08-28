@@ -35,9 +35,9 @@ var (
 func init() {
 	flag.StringVar(&tenant, "tenant", "", "ob tenant")
 	flag.StringVar(&user, "user", "root", "ob database user")
-	flag.StringVar(&sysUser, "user", "root", "ob database user")
+	flag.StringVar(&sysUser, "sysUser", "root", "ob database user")
 	flag.StringVar(&password, "password", "root", "password to log in")
-	flag.StringVar(&sysPassword, "password", "root", "password to log in")
+	flag.StringVar(&sysPassword, "sysPassword", "root", "password to log in")
 	flag.StringVar(&database, "database", "oceanbase", "ob database")
 	flag.StringVar(&host, "host", "", "observer host")
 	flag.Int64Var(&port, "port", 2881, "observer port")

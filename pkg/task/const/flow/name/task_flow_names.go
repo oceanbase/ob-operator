@@ -57,4 +57,5 @@ const (
 	PrepareBackupPolicy = "prepare backup policy"
 	StartBackupJob      = "start backup job"
 	StopBackupJob       = "stop backup job"
+	MaintainCrontab     = "maintain crontab"
 )

@@ -47,3 +47,13 @@ func StopBackupJob() *TaskFlow {
 		},
 	}
 }
+
+func CheckAndSpawnJobs() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.MaintainCrontab,
+			Tasks:        []string{taskname.CheckAndSpawnJobs},
+			TargetStatus: string(v1alpha1.BackupPolicyStatusRunning),
+		},
+	}
+}

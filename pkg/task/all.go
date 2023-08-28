@@ -50,6 +50,7 @@ func init() {
 	GetRegistry().Register(flowname.PrepareBackupPolicy, PrepareBackupPolicy)
 	GetRegistry().Register(flowname.StartBackupJob, StartBackupJob)
 	GetRegistry().Register(flowname.StopBackupJob, StopBackupJob)
+	GetRegistry().Register(flowname.MaintainCrontab, CheckAndSpawnJobs)
 
 	// obparameter
 	GetRegistry().Register(flowname.SetOBParameter, SetOBParameter)
