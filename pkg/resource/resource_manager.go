@@ -31,4 +31,5 @@ type ResourceManager interface {
 	UpdateStatus() error
 	GetTaskFunc(string) (func() error, error)
 	GetTaskFlow() (*task.TaskFlow, error)
+	PrintErrEvent(error)
 }

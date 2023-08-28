@@ -20,7 +20,6 @@ import (
 	"context"
 	"github.com/oceanbase/ob-operator/pkg/resource"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -90,6 +89,10 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	coordinator := resource.NewCoordinator(obtenantManager, &logger)
 	err = coordinator.Coordinate()
+	if err != nil {
+		//r.Recorder.Event(obtenant, corev1.EventTypeWarning, "coordinate failed", err.Error())
+	}
+
 	return ctrl.Result{}, err
 }
 

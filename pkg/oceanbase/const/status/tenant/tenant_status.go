@@ -1,10 +1,6 @@
 package tenant
 
 const (
-	MaxDiskSize              = "512Mi"
-	MaxIops                  = 128
-	MinIops                  = 128
-	MaxSessionNum            = 64
 	DefaultOBTcpInvitedNodes = "%"
 )
 

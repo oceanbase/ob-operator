@@ -283,6 +283,10 @@ func (m *OBServerManager) HandleFailure() {
 	}
 }
 
+func (m *OBServerManager) PrintErrEvent(err error)  {
+	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning,"task exec failed", err.Error())
+}
+
 func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {
 	var namespacedName types.NamespacedName
 	namespacedName.Namespace = m.OBServer.Namespace

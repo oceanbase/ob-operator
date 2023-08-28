@@ -16,6 +16,19 @@ import (
 
 // ---------- task entry point ----------
 
+func (m *OBTenantManager) CreateTenantTaskWithClear() error {
+	err := m.CreateTenantTask()
+	// clean created resource, restore to the initial state
+	if err != nil {
+		err := m.DeleteTenantTask()
+		if err != nil {
+			err = errors.Wrapf(err,"delete tenant when creating tenant")
+			return err
+		}
+	}
+	return err
+}
+
 func (m *OBTenantManager) CreateTenantTask() error {
 	m.Logger.Info("===== debug: create tenant task =====")
 	tenantName := m.OBTenant.Spec.TenantName
@@ -86,7 +99,7 @@ func (m *OBTenantManager) MaintainWhiteListTask() error {
 	tenantName := m.OBTenant.Spec.TenantName
 	err := m.CheckAndApplyWhiteList()
 	if err != nil {
-		m.Logger.Error(err, "maintain tenant, check and set tcp invited node", "tenantName", tenantName)
+		m.Logger.Error(err, "maintain tenant, check and set whitelist (tcp invited node)", "tenantName", tenantName)
 		return err
 	}
 	return nil
@@ -108,7 +121,6 @@ func (m *OBTenantManager) AddPoolTask() error {
 }
 
 func (m *OBTenantManager) DeletePoolTask() error {
-
 	m.Logger.Info("debug: delete pool", "obtenant", m.OBTenant, "spec", m.OBTenant.Spec, "status", m.OBTenant.Status)
 
 	// handle delete pool
@@ -170,7 +182,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 	}
 
 	specWhiteList := m.OBTenant.Spec.ConnectWhiteList
-	statusWhiteList := m.OBTenant.Status.ConnectWhiteList
+	statusWhiteList := m.OBTenant.Status.TenantRecordInfo.ConnectWhiteList
 
 	if specWhiteList == "" {
 		specWhiteList = tenant.DefaultOBTcpInvitedNodes
@@ -183,7 +195,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 		if err != nil {
 			return err
 		}
-		m.OBTenant.Status.ConnectWhiteList = specWhiteList
+		m.OBTenant.Status.TenantRecordInfo.ConnectWhiteList = specWhiteList
 	}
 	return nil
 }
@@ -230,7 +242,7 @@ func (m *OBTenantManager) CheckAndApplyUnitNum() error {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying Tenant UnitNum", tenantName))
 	}
 
-	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.UnitNumber {
+	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.TenantRecordInfo.UnitNumber {
 		err = oceanbaseOperationManager.SetTenantUnitNum(tenantName, m.OBTenant.Spec.UnitNumber)
 		if err != nil {
 			return err
@@ -284,7 +296,7 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 	}
 	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}
@@ -307,7 +319,7 @@ func (m *OBTenantManager) CheckAndApplyCharset() error {
 	if specCharset == "" {
 		specCharset = tenant.Charset
 	}
-	if specCharset != m.OBTenant.Status.Charset {
+	if specCharset != m.OBTenant.Status.TenantRecordInfo.Charset {
 		tenantSQLParam := model.TenantSQLParam{
 			TenantName: tenantName,
 			Charset:    specCharset,
@@ -444,7 +456,7 @@ func (m *OBTenantManager) TenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 	// step 2.2: Wait for task finished
 	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}
@@ -497,7 +509,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for deletePool Finished", "tenantName", tenantName)
 
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}
@@ -651,28 +663,9 @@ func GenerateSpecLocalityMap(pools []v1alpha1.ResourcePoolSpec) map[string]v1alp
 	localityMap := make(map[string]v1alpha1.LocalityType, 0)
 	for _, pool := range pools {
 		if pool.Type.Name != "" {
-			switch strings.ToUpper(pool.Type.Name) {
-			case tenant.TypeFull:
-				localityMap[pool.ZoneList] = v1alpha1.LocalityType{
-					Name:    tenant.TypeFull,
-					Replica: 1,
-				}
-			case tenant.TypeLogonly:
-				localityMap[pool.ZoneList] = v1alpha1.LocalityType{
-					Name:    tenant.TypeLogonly,
-					Replica: 1,
-				}
-			case tenant.TypeReadonly:
-				var replica int
-				if pool.Type.Replica == 0 {
-					replica = 1
-				} else {
-					replica = pool.Type.Replica
-				}
-				localityMap[pool.ZoneList] = v1alpha1.LocalityType{
-					Name:    tenant.TypeReadonly,
-					Replica: replica,
-				}
+			localityMap[pool.ZoneList] = v1alpha1.LocalityType{
+				Name:    strings.ToUpper(pool.Type.Name),
+				Replica: pool.Type.Replica,
 			}
 		}
 	}

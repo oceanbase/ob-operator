@@ -15,6 +15,7 @@ import (
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/fail"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,6 +23,7 @@ import (
 	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"strconv"
+	"strings"
 )
 
 type OBTenantManager struct {
@@ -57,8 +59,6 @@ func (m *OBTenantManager) InitStatus() {
 	status := v1alpha1.OBTenantStatus{
 		Status:           tenantstatus.Creating,
 		Pools:            make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
-		ConnectWhiteList: m.OBTenant.Status.ConnectWhiteList,
-		Charset:          m.OBTenant.Status.Charset,
 	}
 	m.OBTenant.Status = status
 }
@@ -124,7 +124,11 @@ func (m *OBTenantManager) UpdateStatus() error {
 		}
 		m.OBTenant.Status = *tenantStatusCurrent
 
-		m.CheckModified()
+		nextStatus, err := m.NextStatus()
+		if err != nil {
+			return err
+		}
+		m.OBTenant.Status.Status = nextStatus
 	}
 
 	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
@@ -173,7 +177,7 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 	case taskname.CheckPoolAndUnitConfig:
 		return m.CheckPoolAndConfigTask, nil
 	case taskname.CreateTenant:
-		return m.CreateTenantTask, nil
+		return m.CreateTenantTaskWithClear, nil
 	case taskname.MaintainCharset:
 		return m.CheckAndApplyCharset, nil
 	case taskname.MaintainUnitNum:
@@ -224,7 +228,7 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case tenantstatus.MaintainingPrimaryZone:
 		m.Logger.Info("Get task flow when obtenant maintaining primary zone")
 		taskFlow,err = task.GetRegistry().Get(flowname.MaintainPrimaryZone)
-	case tenantstatus.MaintainLocality:
+	case tenantstatus.MaintainingLocality:
 		m.Logger.Info("Get task flow when obtenant maintaining locality")
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainLocality)
 	case tenantstatus.AddingPool:
@@ -262,6 +266,10 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	return taskFlow, nil
 }
 
+func (m *OBTenantManager) PrintErrEvent(err error)  {
+	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
 // ---------- K8S API Helper ----------
 
 func (m *OBTenantManager) generateNamespacedName(name string) types.NamespacedName {
@@ -293,65 +301,59 @@ func (m *OBTenantManager) getObTenant() (*v1alpha1.OBTenant, error) {
 }
 
 // --------- compare spec and status ----------
-
-func (m *OBTenantManager) CheckModified() bool {
+func (m *OBTenantManager) NextStatus() (string, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 
-	hasModifiedTcpInvitedNode := m.hasModifiedWhiteList()
-	if hasModifiedTcpInvitedNode {
-		m.Logger.Info("Maintain Tenant ----- Tcp Invited Node modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainingWhiteList
-		return true
-	}
-	hasModifiedCharset := m.hasModifiedCharset()
-	if hasModifiedCharset {
-		m.Logger.Info("tenant charset modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainingCharset
-		return true
-	}
-	hasModifiedUnitNum := m.hasModifiedUnitNum()
-	if hasModifiedUnitNum {
-		m.Logger.Info("tenant unitNum modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainingUnitNum
-		return true
-	}
-	hasModifiedPriority := m.hasModifiedPrimaryZone()
-	if hasModifiedPriority {
-		m.Logger.Info("tenant priority modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainingPrimaryZone
-		return true
-	}
-	hasModifiedLocality := m.hasModifiedLocality()
-	if hasModifiedLocality {
-		m.Logger.Info("tenant locality modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainLocality
-		return true
-	}
 	hasModifiedResourcePool := m.hasToAddPool()
 	if hasModifiedResourcePool {
 		m.Logger.Info("Maintain Tenant ----- Resource Pool modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.AddingPool
-		return true
+		return tenantstatus.AddingPool, nil
 	}
 	hasModifiedTenant := m.hasToDeletePool()
 	if hasModifiedTenant {
 		m.Logger.Info("Maintain Tenant ----- Tenant modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.DeletingPool
-		return true
+		return tenantstatus.DeletingPool, nil
 	}
-	hasModifiedUnitConfigV4 := m.hasModifiedUnitConfigV4()
-	if hasModifiedUnitConfigV4 {
-		m.Logger.Info("Maintain Tenant ----- UnitConfigV4 modified", "tenantName", tenantName)
-		m.OBTenant.Status.Status = tenantstatus.MaintainingUnitConfig
-		return true
+	hasModifiedLocality := m.hasModifiedLocality()
+	if hasModifiedLocality {
+		m.Logger.Info("tenant locality modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingLocality, nil
 	}
-	return false
+	hasModifiedPriority := m.hasModifiedPrimaryZone()
+	if hasModifiedPriority {
+		m.Logger.Info("tenant PrimaryZone modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingPrimaryZone, nil
+	}
+	hasModifiedTcpInvitedNode := m.hasModifiedWhiteList()
+	if hasModifiedTcpInvitedNode {
+		m.Logger.Info("tenant WhiteList modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingWhiteList, nil
+	}
+	hasModifiedCharset := m.hasModifiedCharset()
+	if hasModifiedCharset {
+		m.Logger.Info("tenant charset modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingCharset, nil
+	}
+	hasModifiedUnitNum := m.hasModifiedUnitNum()
+	if hasModifiedUnitNum {
+		m.Logger.Info("tenant unitNum modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingUnitNum, nil
+	}
+	hasModifiedUnitConfig, err := m.hasModifiedUnitConfig()
+	if err != nil {
+		return tenantstatus.Running, err
+	}
+	if hasModifiedUnitConfig {
+		m.Logger.Info("tenant UnitConfig modified", "tenantName", tenantName)
+		return tenantstatus.MaintainingUnitConfig, nil
+	}
+	return tenantstatus.Running, nil
 }
 // ---------- Check function ----------
 
 func (m *OBTenantManager) hasModifiedWhiteList() bool {
 	specWhiteList := m.OBTenant.Spec.ConnectWhiteList
-	statusWhiteList := m.OBTenant.Status.ConnectWhiteList
+	statusWhiteList := m.OBTenant.Status.TenantRecordInfo.ConnectWhiteList
 
 	if specWhiteList == "" {
 		specWhiteList = tenant.DefaultOBTcpInvitedNodes
@@ -361,6 +363,21 @@ func (m *OBTenantManager) hasModifiedWhiteList() bool {
 		return true
 	}
 	return false
+}
+
+func (m *OBTenantManager) hasModifiedUnitConfig() (bool, error) {
+	tenantName := m.OBTenant.Spec.TenantName
+
+	version, err := m.GetOBVersion()
+	if err != nil {
+		m.Logger.Error(err, "maintain tenant failed, check and apply unitConfigV4", "tenantName", tenantName)
+		return false, err
+	}
+	switch string(version[0]) {
+	case tenant.Version4:
+		return m.hasModifiedUnitConfigV4(), nil
+	}
+	return false, errors.New("no match version for check and set unit config")
 }
 
 func (m *OBTenantManager) hasModifiedUnitConfigV4() bool {
@@ -383,6 +400,7 @@ func (m *OBTenantManager) hasModifiedUnitConfigV4() bool {
 	}
 	return false
 }
+
 func (m *OBTenantManager) hasToAddPool() bool{
 	poolsForAdd := m.GetPoolsForAdd()
 	if len(poolsForAdd) > 0 {
@@ -404,9 +422,9 @@ func (m *OBTenantManager) hasToDeletePool() bool{
 
 func (m *OBTenantManager) hasModifiedUnitNum() bool {
 	// handle pool unitNum changed
-	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.UnitNumber {
+	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.TenantRecordInfo.UnitNumber {
 		m.Logger.Info("debug: unitNumber changed", "specUnitNumber", m.OBTenant.Spec.UnitNumber,
-			"statusUnitNumber", m.OBTenant.Status.UnitNumber)
+			"statusUnitNumber", m.OBTenant.Status.TenantRecordInfo.UnitNumber)
 		return true
 	}
 	return false
@@ -418,8 +436,8 @@ func (m *OBTenantManager) hasModifiedPrimaryZone() bool {
 	specPrimaryZoneMap := GeneratePrimaryZoneMap(specPrimaryZone)
 	statusPrimaryZoneMap := GeneratePrimaryZoneMap(statusPrimaryZone)
 	if !reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
-		m.Logger.Info("debug: priority changed", "specUnitConfig", specPrimaryZoneMap,
-			"statusPrimaryZoneMap", statusPrimaryZone)
+		m.Logger.Info("debug: priority changed", "specPrimaryZoneMap", specPrimaryZoneMap,
+			"statusPrimaryZoneMap", statusPrimaryZoneMap)
 		return true
 	}
 	return false
@@ -429,7 +447,7 @@ func (m *OBTenantManager) hasModifiedLocality() bool {
 	specLocalityMap := GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
 	statusLocalityMap := GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
 	if !reflect.DeepEqual(specLocalityMap, statusLocalityMap) {
-		m.Logger.Info("debug: priority changed", "specLocalityMap", specLocalityMap,
+		m.Logger.Info("debug: locality changed", "specLocalityMap", specLocalityMap,
 			"statusLocalityMap", statusLocalityMap)
 		return true
 	}
@@ -441,7 +459,9 @@ func (m *OBTenantManager) hasModifiedCharset() bool {
 	if specCharset == "" {
 		specCharset = tenant.Charset
 	}
-	if specCharset != m.OBTenant.Status.Charset {
+	if specCharset != m.OBTenant.Status.TenantRecordInfo.Charset{
+		m.Logger.Info("debug: charset changed", "specCharset",specCharset,
+			"statusCharset", m.OBTenant.Status.TenantRecordInfo.Charset)
 		return true
 	}
 	return false
@@ -471,23 +491,37 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 	tenantCurrentStatus.Status = m.OBTenant.Status.Status
 	tenantCurrentStatus.Pools = poolStatusList
 	tenantCurrentStatus.OperationContext = m.OBTenant.Status.OperationContext
-	tenantCurrentStatus.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
-	tenantCurrentStatus.UnitNumber = poolStatusList[0].UnitNumber
-	tenantCurrentStatus.TenantID = int(gvTenant.TenantID)
-	if err != nil {
-		return nil, err
-	}
 
-	tenantCurrentStatus.Charset, err = m.GetCharset()
+	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
+	tenantCurrentStatus.TenantRecordInfo.TenantID = int(gvTenant.TenantID)
+	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
 	if err != nil {
 		return nil, err
 	}
+	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
+	charset, err := m.GetCharset()
+	if err != nil {
+		return nil, err
+	}
+	tenantCurrentStatus.TenantRecordInfo.Charset = charset
+	tenantCurrentStatus.TenantRecordInfo.Locality = gvTenant.Locality
+	tenantCurrentStatus.TenantRecordInfo.PrimaryZone = gvTenant.PrimaryZone
+	poolList := make([]string, 0)
+	zoneList := make([]string, 0)
+	for _, pool := range tenantCurrentStatus.Pools {
+		poolList = append(poolList, m.GeneratePoolName(pool.ZoneList))
+		zoneList = append(zoneList, pool.ZoneList)
+	}
+	tenantCurrentStatus.TenantRecordInfo.PoolList = strings.Join(poolList, ",")
+	tenantCurrentStatus.TenantRecordInfo.ZoneList= strings.Join(zoneList, ",")
+	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
+
 	return tenantCurrentStatus, nil
 }
 
 func (m *OBTenantManager) BuildPoolStatusList(gvTenant *model.Tenant) ([]v1alpha1.ResourcePoolStatus, error) {
+
 	var poolStatusList []v1alpha1.ResourcePoolStatus
-	var err error
 	var locality string
 	var primaryZone string
 

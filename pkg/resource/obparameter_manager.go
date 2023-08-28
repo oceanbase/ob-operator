@@ -15,12 +15,12 @@ package resource
 import (
 	"context"
 	"fmt"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/fail"
-
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/fail"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -178,6 +178,10 @@ func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
+}
+
+func (m *OBParameterManager) PrintErrEvent(err error)  {
+	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBParameterManager) SetOBParameter() error {

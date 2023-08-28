@@ -14,10 +14,9 @@ package resource
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/pkg/errors"
 )
 
 type Coordinator struct {
@@ -86,6 +85,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 	case taskstatus.Running:
 		// check task status and update cr status
 		taskResult, err := task.GetTaskManager().GetTaskResult(f.OperationContext.TaskId)
+
 		if err != nil {
 			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
 			f.OperationContext.TaskStatus = taskstatus.Failed
@@ -93,6 +93,9 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			if taskResult != nil {
 				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 				f.OperationContext.TaskStatus = taskResult.Status
+				if taskResult.Error != nil {
+					c.Manager.PrintErrEvent(taskResult.Error)
+				}
 			} else {
 				c.Logger.Info("Didn't get task result, task is still running", "task id", f.OperationContext.TaskId)
 			}
@@ -102,14 +105,22 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 		if !f.HasNext() {
 			c.Logger.Info("No more task to run, task flow successfully finished")
 			c.Manager.FinishTask()
+			err := task.GetTaskManager().CleanTaskResult(f.OperationContext.TaskId)
+			if err != nil {
+				c.Logger.Error(err, "clean task result got error", "task id", f.OperationContext.TaskId)
+				f.OperationContext.TaskStatus = taskstatus.Failed
+			}
 		} else {
 			c.Logger.Info("Task succeed, set next task")
 			f.NextTask()
 		}
 	case taskstatus.Failed:
-		c.Manager.HandleFailure()
 		c.Logger.Info("Task failed, back to initial status")
-
+		c.Manager.HandleFailure()
+		err := task.GetTaskManager().CleanTaskResult(f.OperationContext.TaskId)
+		if err != nil {
+			return
+		}
 	}
 	c.Logger.Info("Coordinate finished", "operation context", f.OperationContext)
 }

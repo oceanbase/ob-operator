@@ -16,6 +16,7 @@ import (
 	"context"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/fail"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -285,6 +286,10 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}
+}
+
+func (m *OBZoneManager) PrintErrEvent(err error)  {
+	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {

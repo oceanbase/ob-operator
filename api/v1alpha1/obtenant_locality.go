@@ -2,5 +2,5 @@ package v1alpha1
 
 type LocalityType struct {
 	Name    string `json:"name"`
-	Replica int    `json:"replica,omitempty"`
+	Replica int    `json:"replica"`
 }
