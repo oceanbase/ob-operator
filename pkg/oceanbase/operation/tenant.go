@@ -25,8 +25,15 @@ func (m *OceanbaseOperationManager) QueryTenantWithName(tenantName string) ([]*m
 		m.Logger.Error(err, "Failed to query tenants")
 		return nil, errors.Wrap(err, "Query tenants")
 	}
-	if len(tenants) == 0 {
-		return nil, errors.Errorf("No tenants found")
-	}
 	return tenants, nil
+}
+
+func (m *OceanbaseOperationManager) QueryUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
+	units := make([]*model.OBUnit, 0)
+	err := m.QueryList(&units, sql.QueryUnitsWithTenantId, tenantID)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query units")
+		return nil, errors.Wrap(err, "Query units")
+	}
+	return units, nil
 }

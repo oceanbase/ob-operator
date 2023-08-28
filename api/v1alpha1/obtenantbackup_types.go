@@ -29,8 +29,8 @@ type OBTenantBackupSpec struct {
 	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
 	Type           BackupJobType `json:"type"`
 	TenantName     string        `json:"tenantName"`
-	LogArchiveDest string        `json:"logArchiveDest"`
-	DataBackupDest string        `json:"dataBackupDest"`
+	LogArchiveDest string        `json:"logArchiveDest,omitempty"`
+	DataBackupDest string        `json:"dataBackupDest,omitempty"`
 }
 
 // OBTenantBackupStatus defines the observed state of OBTenantBackup
@@ -71,16 +71,17 @@ func init() {
 type BackupJobType string
 
 const (
-	BackupJobFull    BackupJobType = "FULL"
-	BackupJobIncr    BackupJobType = "INCR"
-	BackupJobClean   BackupJobType = "CLEAN"
-	BackupJobArchive BackupJobType = "ARCHIVE"
+	BackupJobTypeFull    BackupJobType = "FULL"
+	BackupJobTypeIncr    BackupJobType = "INCR"
+	BackupJobTypeClean   BackupJobType = "CLEAN"
+	BackupJobTypeArchive BackupJobType = "ARCHIVE"
 )
 
 type BackupJobStatus string
 
 const (
-	BackupJobRunning    BackupJobStatus = "RUNNING"
-	BackupJobSuccessful BackupJobStatus = "SUCCESSFUL"
-	BackupJobFailed     BackupJobStatus = "FAILED"
+	BackupJobStatusRunning      BackupJobStatus = "RUNNING"
+	BackupJobStatusInitializing BackupJobStatus = "INITIALIZING"
+	BackupJobStatusSuccessful   BackupJobStatus = "SUCCESSFUL"
+	BackupJobStatusFailed       BackupJobStatus = "FAILED"
 )

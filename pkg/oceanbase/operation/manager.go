@@ -76,3 +76,7 @@ func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, param
 	}
 	return err
 }
+
+func (m *OceanbaseOperationManager) Close() error {
+	return m.Connector.Close()
+}

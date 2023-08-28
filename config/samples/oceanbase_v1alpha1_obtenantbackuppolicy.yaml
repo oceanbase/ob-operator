@@ -13,11 +13,12 @@ metadata:
 spec:
   tenantName: "yuyi"
   dataClean:
-    recoverWindow: "4d"
+    recoveryWindow: "4d"
   logArchive:
     destination:
       type: "NFS"
       path: "log_archive_custom"
+    switchPieceInterval: "1d"
   dataBackup:
     destination:
       type: "NFS"

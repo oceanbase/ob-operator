@@ -36,10 +36,11 @@ type OBTenantBackupPolicySpec struct {
 
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
-	Status                 BackupPolicyStatusType `json:"status"`
-	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
-	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
-	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
+	Status                       BackupPolicyStatusType `json:"status"`
+	LogArchiveDestDisabled       bool                   `json:"logArchiveDestDisabled"`
+	LastFullTypeBackupFinishedAt metav1.Time            `json:"lastFullTypeBackupFinishedAt,omitempty"`
+	TenantInfo                   *model.OBTenant        `json:"tenantInfo,omitempty"`
+	OperationContext             *OperationContext      `json:"operationContext,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -75,24 +76,17 @@ type LogArchiveConfig struct {
 	Concurrency         int               `json:"concurrency,omitempty"`
 }
 
-type BackupType string
-
-const (
-	BackupFull BackupType = "FULL"
-	BackupIncr BackupType = "INCR"
-)
-
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
 	Destination BackupDestination `json:"destination"`
-	Crontab     string            `json:"crontab,omitempty"`
+	FullCrontab string            `json:"fullCrontab,omitempty"`
 	IncrCrontab string            `json:"incrCrontab,omitempty"`
 }
 
 type CleanPolicy struct {
-	Name          string `json:"name,omitempty"`
-	RecoverWindow string `json:"recoverWindow,omitempty"`
-	Disabled      string `json:"disabled,omitempty"`
+	Name           string `json:"name,omitempty"`
+	RecoveryWindow string `json:"recoveryWindow,omitempty"`
+	Disabled       string `json:"disabled,omitempty"`
 }
 
 type BackupPolicyStatusType string

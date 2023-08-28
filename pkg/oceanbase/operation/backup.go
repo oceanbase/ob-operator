@@ -54,8 +54,8 @@ func (m *OceanbaseOperationManager) StopBackupJobOfTenant() error {
 	return m.ExecWithDefaultTimeout(sql.StopBackupJob)
 }
 
-func (m *OceanbaseOperationManager) AddCleanBackupPolicy(policyName, recoverWindow string) error {
-	return m.ExecWithDefaultTimeout(sql.AddCleanBackupPolicy, policyName, recoverWindow)
+func (m *OceanbaseOperationManager) AddCleanBackupPolicy(policyName, recoveryWindow string) error {
+	return m.ExecWithDefaultTimeout(sql.AddCleanBackupPolicy, policyName, recoveryWindow)
 }
 
 func (m *OceanbaseOperationManager) RemoveCleanBackupPolicy(policyName string) error {
@@ -70,15 +70,22 @@ func (m *OceanbaseOperationManager) CancelAllCleanBackup() error {
 	return m.ExecWithDefaultTimeout(sql.CancelAllCleanBackup)
 }
 
+func (m *OceanbaseOperationManager) QueryArchiveLog() ([]*model.OBArchiveLogJob, error) {
+	summaries := make([]*model.OBArchiveLogJob, 0)
+	err := m.QueryList(&summaries, sql.QueryArchiveLog)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query archive log job")
+		return nil, errors.Wrap(err, "Query archive log job")
+	}
+	return summaries, nil
+}
+
 func (m *OceanbaseOperationManager) QueryArchiveLogSummary() ([]*model.OBArchiveLogSummary, error) {
 	summaries := make([]*model.OBArchiveLogSummary, 0)
 	err := m.QueryList(&summaries, sql.QueryArchiveLogSummary)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query archive log summary")
 		return nil, errors.Wrap(err, "Query archive log summary")
-	}
-	if len(summaries) == 0 {
-		return nil, errors.Errorf("No archive log summary found")
 	}
 	return summaries, nil
 }
@@ -98,9 +105,6 @@ func (m *OceanbaseOperationManager) queryBackupJobOrHistory(statement string) ([
 		m.Logger.Error(err, "Failed to query backup history")
 		return nil, errors.Wrap(err, "Query backup history")
 	}
-	if len(histories) == 0 {
-		return nil, errors.Errorf("No backup history found")
-	}
 	return histories, nil
 }
 
@@ -111,21 +115,25 @@ func (m *OceanbaseOperationManager) QueryBackupCleanPolicy() ([]*model.OBBackupC
 		m.Logger.Error(err, "Failed to query backup clean policy")
 		return nil, errors.Wrap(err, "Query backup clean policy")
 	}
-	if len(policies) == 0 {
-		return nil, errors.Errorf("No backup clean policy found")
-	}
 	return policies, nil
 }
 
 func (m *OceanbaseOperationManager) QueryBackupCleanJobs() ([]*model.OBBackupCleanJob, error) {
+	jobs := make([]*model.OBBackupCleanJob, 0)
+	err := m.QueryList(&jobs, sql.QueryBackupCleanJobs)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query backup clean job")
+		return nil, errors.Wrap(err, "Query backup clean job")
+	}
+	return jobs, nil
+}
+
+func (m *OceanbaseOperationManager) QueryBackupCleanHistory() ([]*model.OBBackupCleanJob, error) {
 	histories := make([]*model.OBBackupCleanJob, 0)
-	err := m.QueryList(&histories, sql.QueryBackupCleanJobs)
+	err := m.QueryList(&histories, sql.QueryBackupCleanJobHistory)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query backup clean history")
 		return nil, errors.Wrap(err, "Query backup clean history")
-	}
-	if len(histories) == 0 {
-		return nil, errors.Errorf("No backup clean history found")
 	}
 	return histories, nil
 }
@@ -157,9 +165,6 @@ func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) (
 	if err != nil {
 		m.Logger.Error(err, "Failed to query backup tasks")
 		return nil, errors.Wrap(err, "Query backup tasks")
-	}
-	if len(tasks) == 0 {
-		return nil, errors.Errorf("No backup task found")
 	}
 	return tasks, nil
 }

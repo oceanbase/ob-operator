@@ -15,12 +15,16 @@ package resource
 import (
 	"fmt"
 	"path"
+	"time"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const backupVolumePath = oceanbaseconst.BackupPath
@@ -81,12 +85,6 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 			return err
 		}
 	}
-	// create backup job of full type
-	// TODO: create backup job to manage the tasks
-	err = con.CreateBackupFull()
-	if err != nil {
-		return err
-	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
 	cleanPolicy, err := con.QueryBackupCleanPolicy()
 	if err != nil {
@@ -95,24 +93,49 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	policyName := "default"
 	if len(cleanPolicy) == 0 {
 		// the name of the policy can only be 'default', and the recovery window can only be 1d-7d
-		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoverWindow)
+		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
 		if err != nil {
 			return err
 		}
 	} else {
 		for _, policy := range cleanPolicy {
-			if policy.RecoverWindow != cleanConfig.RecoverWindow {
+			if policy.RecoveryWindow != cleanConfig.RecoveryWindow {
 				err = con.RemoveCleanBackupPolicy(policy.PolicyName)
 				if err != nil {
 					return err
 				}
-				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoverWindow)
+				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
 				if err != nil {
 					return err
 				}
 				break
 			}
 		}
+	}
+	var runningFullJobs v1alpha1.OBTenantBackupList
+	err = m.Client.List(m.Ctx, &runningFullJobs,
+		client.MatchingLabels{
+			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
+		},
+		client.MatchingFieldsSelector{
+			Selector: fields.AndSelectors(
+				fields.OneTermEqualSelector("spec.type", string(v1alpha1.BackupJobTypeFull)),
+				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusFailed)),
+				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusSuccessful)),
+			),
+		},
+		client.InNamespace(m.BackupPolicy.Namespace))
+	if err != nil {
+		return err
+	}
+	if len(runningFullJobs.Items) > 0 {
+		// there is already a backup job running
+		return nil
+	}
+	// create backup job of full type
+	err = m.createBackupJob(v1alpha1.BackupJobTypeFull)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -122,6 +145,7 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
+	// ignore the error
 	err = con.DisableArchiveLogForTenant()
 	if err != nil {
 		return err
@@ -130,15 +154,15 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
-	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	err = con.RemoveCleanBackupPolicy(cleanConfig.Name)
+	cleanPolicyName := "default"
+	err = con.RemoveCleanBackupPolicy(cleanPolicyName)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) SpawnCronBackupJob() error {
+func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	return nil
 }
 
@@ -193,4 +217,41 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	} else {
 		return targetDest.Path
 	}
+}
+
+func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJobType) error {
+	backupJob := &v1alpha1.OBTenantBackup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.BackupPolicy.Name + "-" + string(jobType) + fmt.Sprintf("%d", time.Now().Unix()),
+			Namespace: m.BackupPolicy.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion:         m.BackupPolicy.APIVersion,
+				Kind:               m.BackupPolicy.Kind,
+				Name:               m.BackupPolicy.Name,
+				UID:                m.BackupPolicy.GetUID(),
+				BlockOwnerDeletion: getRef(true),
+			}},
+			Labels: map[string]string{
+				oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
+				oceanbaseconst.LabelRefUID:          string(m.BackupPolicy.GetUID()),
+			},
+		},
+		Spec: v1alpha1.OBTenantBackupSpec{
+			Type:       jobType,
+			TenantName: m.BackupPolicy.Spec.TenantName,
+		},
+	}
+	err := m.Client.Create(m.Ctx, backupJob)
+	if err != nil {
+		return errors.Wrap(err, "create backup job")
+	}
+	switch jobType {
+	case v1alpha1.BackupJobTypeFull:
+	case v1alpha1.BackupJobTypeIncr:
+	case v1alpha1.BackupJobTypeArchive:
+	case v1alpha1.BackupJobTypeClean:
+	default:
+		return errors.Errorf("unknown backup job type %s", jobType)
+	}
+	return nil
 }

@@ -40,8 +40,6 @@ spec:
                 description: DataBackupConfig contains the configuration for data
                   backup progress
                 properties:
-                  crontab:
-                    type: string
                   destination:
                     properties:
                       path:
@@ -51,6 +49,8 @@ spec:
                     required:
                     - type
                     type: object
+                  fullCrontab:
+                    type: string
                   incrCrontab:
                     type: string
                 required:
@@ -62,7 +62,7 @@ spec:
                     type: string
                   name:
                     type: string
-                  recoverWindow:
+                  recoveryWindow:
                     type: string
                 type: object
               logArchive:
@@ -100,6 +100,9 @@ spec:
             description: OBTenantBackupPolicyStatus defines the observed state of
               OBTenantBackupPolicy
             properties:
+              lastFullTypeBackupFinishedAt:
+                format: date-time
+                type: string
               logArchiveDestDisabled:
                 type: boolean
               operationContext:

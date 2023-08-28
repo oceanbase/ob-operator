@@ -47,8 +47,6 @@ spec:
                   to remove/update
                 type: string
             required:
-            - dataBackupDest
-            - logArchiveDest
             - tenantName
             - type
             type: object

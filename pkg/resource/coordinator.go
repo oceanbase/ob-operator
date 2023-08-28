@@ -34,18 +34,18 @@ func NewCoordinator(m ResourceManager, logger *logr.Logger) *Coordinator {
 
 func (c *Coordinator) Coordinate() error {
 	if c.Manager.IsNewResource() {
-		c.Logger.Info("Need init status for resource")
+		// c.Logger.Info("Need init status for resource")
 		c.Manager.InitStatus()
 	} else {
 		f, err := c.Manager.GetTaskFlow()
 		if err != nil {
 			return errors.Wrap(err, "Get task flow")
 		} else if f == nil {
-			c.Logger.Info("No need to execute task flow")
+			// c.Logger.Info("No need to execute task flow")
 		} else {
-			c.Logger.Info("set operation context", "operation context", f.OperationContext)
+			// c.Logger.Info("set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
-			c.Logger.Info("Successfully got task flow")
+			// c.Logger.Info("Successfully got task flow")
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
 		}
@@ -65,11 +65,11 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 	switch f.OperationContext.TaskStatus {
 	case taskstatus.Empty:
 		if !f.HasNext() {
-			c.Logger.Info("No task to execute")
+			// c.Logger.Info("No task to execute")
 			// clean task info sets resource status to normal, and context to nil
 			c.Manager.ClearTaskInfo()
 		} else {
-			c.Logger.Info("Set first task to execute")
+			// c.Logger.Info("Set first task to execute")
 			f.NextTask()
 		}
 	case taskstatus.Pending:
@@ -79,7 +79,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
 			taskId := task.GetTaskManager().Submit(taskFunc)
-			c.Logger.Info("Successfullly submit task", "taskid", taskId)
+			// c.Logger.Info("Successfullly submit task", "taskid", taskId)
 			f.OperationContext.TaskId = taskId
 			f.OperationContext.TaskStatus = taskstatus.Running
 		}
@@ -91,25 +91,25 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
-				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult.Status)
+				// c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult.Status)
 				f.OperationContext.TaskStatus = taskResult.Status
 			} else {
-				c.Logger.Info("Didn't get task result, task is still running", "task id", f.OperationContext.TaskId)
+				// c.Logger.Info("Didn't get task result, task is still running", "task id", f.OperationContext.TaskId)
 			}
 		}
 	case taskstatus.Successful:
 		// clean operation context and set status to target status
 		if !f.HasNext() {
-			c.Logger.Info("No more task to run, task flow successfully finished")
+			// c.Logger.Info("No more task to run, task flow successfully finished")
 			c.Manager.FinishTask()
 		} else {
-			c.Logger.Info("Task finished successfully, set next task")
+			// c.Logger.Info("Task finished successfully, set next task")
 			f.NextTask()
 		}
 	case taskstatus.Failed:
 		// TODO handle failed task
-		c.Logger.Info("Task failed, back to initial status")
+		// c.Logger.Info("Task failed, back to initial status")
 		c.Manager.ClearTaskInfo()
 	}
-	c.Logger.Info("Coordinate finished", "operation context", f.OperationContext)
+	// c.Logger.Info("Coordinate finished", "operation context", f.OperationContext)
 }

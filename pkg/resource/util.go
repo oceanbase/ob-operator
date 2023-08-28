@@ -198,3 +198,7 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 		return false
 	}
 }
+
+func getRef[T any](val T) *T {
+	return &val
+}

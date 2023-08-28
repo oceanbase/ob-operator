@@ -85,11 +85,12 @@ const (
 )
 
 const (
-	LabelRefOBCluster = "ref-obcluster"
-	LabelRefOBZone    = "ref-obzone"
-	LabelRefOBServer  = "ref-observer"
-	LabelRefUID       = "ref-uid"
-	LabelJobName      = "job-name"
+	LabelRefOBCluster    = "ref-obcluster"
+	LabelRefOBZone       = "ref-obzone"
+	LabelRefOBServer     = "ref-observer"
+	LabelRefUID          = "ref-uid"
+	LabelJobName         = "job-name"
+	LabelRefBackupPolicy = "ref-backuppolicy"
 )
 
 const (
