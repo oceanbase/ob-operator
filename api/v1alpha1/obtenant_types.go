@@ -44,6 +44,19 @@ type OBTenantSpec struct {
 	Pools []ResourcePoolSpec `json:"pools"`
 }
 
+type ResourcePoolSpec struct {
+	ZoneList   string       `json:"zoneList"`
+	Priority   int          `json:"priority,omitempty"`
+	Type       LocalityType `json:"type,omitempty"`
+	UnitConfig UnitConfig   `json:"resource"`
+}
+
+type LocalityType struct {
+	Name    string `json:"name"`
+	Replica int    `json:"replica"`
+	IsActive bool`json:"isActive"`
+}
+
 type UnitConfig struct {
 	MaxCPU      resource.Quantity `json:"maxCPU"`
 	MemorySize  resource.Quantity `json:"memorySize"`

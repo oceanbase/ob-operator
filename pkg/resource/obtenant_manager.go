@@ -381,8 +381,8 @@ func (m *OBTenantManager) hasModifiedUnitConfig() (bool, error) {
 }
 
 func (m *OBTenantManager) hasModifiedUnitConfigV4() bool {
-	specUnitConfigMap := GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
-	statusUnitConfigMap := GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
+	specUnitConfigMap := m.GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
+	statusUnitConfigMap := m.GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
 	for _, pool := range m.OBTenant.Spec.Pools {
 		specUnitConfig := specUnitConfigMap[pool.ZoneList]
 		statusUnitConfig, statusExist := statusUnitConfigMap[pool.ZoneList]
@@ -431,12 +431,12 @@ func (m *OBTenantManager) hasModifiedUnitNum() bool {
 }
 
 func (m *OBTenantManager) hasModifiedPrimaryZone() bool {
-	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
-	statusPrimaryZone := GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
-	specPrimaryZoneMap := GeneratePrimaryZoneMap(specPrimaryZone)
-	statusPrimaryZoneMap := GeneratePrimaryZoneMap(statusPrimaryZone)
+	specPrimaryZone := m.GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	statusPrimaryZone := m.GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
+	specPrimaryZoneMap := m.GeneratePrimaryZoneMap(specPrimaryZone)
+	statusPrimaryZoneMap := m.GeneratePrimaryZoneMap(statusPrimaryZone)
 	if !reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
-		m.Logger.Info("debug: priority changed", "specPrimaryZoneMap", specPrimaryZoneMap,
+		m.Logger.Info("debug: primaryZone changed", "specPrimaryZoneMap", specPrimaryZoneMap,
 			"statusPrimaryZoneMap", statusPrimaryZoneMap)
 		return true
 	}
@@ -444,8 +444,8 @@ func (m *OBTenantManager) hasModifiedPrimaryZone() bool {
 }
 
 func (m *OBTenantManager) hasModifiedLocality() bool {
-	specLocalityMap := GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
-	statusLocalityMap := GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
+	specLocalityMap := m.GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
+	statusLocalityMap := m.GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
 	if !reflect.DeepEqual(specLocalityMap, statusLocalityMap) {
 		m.Logger.Info("debug: locality changed", "specLocalityMap", specLocalityMap,
 			"statusLocalityMap", statusLocalityMap)
@@ -483,8 +483,11 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprint("Cannot Get Tenant Failed When Build Tenant Status", tenantName))
 	}
+	m.Logger.Info("debug: gvTenant", "gvTenant", gvTenant)
 
 	poolStatusList, err := m.BuildPoolStatusList(gvTenant)
+
+
 	if err != nil {
 		return nil, err
 	}
@@ -494,10 +497,11 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 
 	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(gvTenant.TenantID)
-	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
-	if err != nil {
-		return nil, err
-	}
+	//tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
+	//if err != nil {
+	//	return nil, err
+	//}
+
 	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
 	charset, err := m.GetCharset()
 	if err != nil {
@@ -516,6 +520,7 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 	tenantCurrentStatus.TenantRecordInfo.ZoneList= strings.Join(zoneList, ",")
 	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
 
+	m.Logger.Info("debug: poolStatusList", "tenantCurrentStatus", tenantCurrentStatus)
 	return tenantCurrentStatus, nil
 }
 
@@ -527,32 +532,45 @@ func (m *OBTenantManager) BuildPoolStatusList(gvTenant *model.Tenant) ([]v1alpha
 
 	locality = gvTenant.Locality
 	primaryZone = gvTenant.PrimaryZone
-	typeMap := GenerateTypeMap(locality)
+	statusTypeMap := m.GenerateStatusTypeMapFromLocalityStr(locality)
+	specTypeMap := m.GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
+
+	m.Logger.Info("debug; =====:", "statusTypeMap", statusTypeMap, "specTypeMap", specTypeMap)
+
 	tenantID := gvTenant.TenantID
-	priorityMap := GeneratePriorityMap(primaryZone)
+	priorityMap := m.GenerateStatusPriorityMap(primaryZone)
 	unitNumMap, err := m.GenerateStatusUnitNumMap(m.OBTenant.Spec.Pools)
 	if err != nil {
 		return poolStatusList, err
 	}
-	zoneList, err := m.GenerateStatusZone(tenantID)
+	poolList, err := m.GenerateStatusZone(tenantID)
 	if err != nil {
 		return poolStatusList, err
 	}
-	for _, zone := range zoneList {
-		var tenantCurrentStatus v1alpha1.ResourcePoolStatus
-		tenantCurrentStatus.ZoneList = zone
-		tenantCurrentStatus.Type = typeMap[zone]
-		tenantCurrentStatus.UnitNumber = unitNumMap[zone]
-		tenantCurrentStatus.Priority = priorityMap[zone]
-		tenantCurrentStatus.UnitConfig, err = m.BuildUnitConfigV4FromDB(zone, tenantID)
+	for _, zoneList := range poolList {
+		var poolCurrentStatus v1alpha1.ResourcePoolStatus
+		poolCurrentStatus.ZoneList = zoneList
+		localityType , exist := statusTypeMap[zoneList]
+		if exist {
+			poolCurrentStatus.Type = localityType
+		} else {
+			poolCurrentStatus.Type = v1alpha1.LocalityType{
+				Name: specTypeMap[zoneList].Name,
+				Replica: specTypeMap[zoneList].Replica,
+				IsActive: false,
+			}
+		}
+		poolCurrentStatus.UnitNumber = unitNumMap[zoneList]
+		poolCurrentStatus.Priority = priorityMap[zoneList]
+		poolCurrentStatus.UnitConfig, err = m.BuildUnitConfigV4FromDB(zoneList, tenantID)
 		if err != nil {
 			return poolStatusList, err
 		}
-		tenantCurrentStatus.Units, err = m.BuildUnitStatusFromDB(zone, tenantID)
+		poolCurrentStatus.Units, err = m.BuildUnitStatusFromDB(zoneList, tenantID)
 		if err != nil {
 			return poolStatusList, err
 		}
-		poolStatusList = append(poolStatusList, tenantCurrentStatus)
+		poolStatusList = append(poolStatusList, poolCurrentStatus)
 	}
 	return poolStatusList, nil
 }

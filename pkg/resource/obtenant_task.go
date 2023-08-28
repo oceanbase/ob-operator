@@ -195,6 +195,8 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 		if err != nil {
 			return err
 		}
+		// TODO get whitelist variable by tenant account
+		// Because getting a whitelist requires specifying a tenant , temporary use .Status.TenantRecordInfo.ConnectWhiteList as value in db
 		m.OBTenant.Status.TenantRecordInfo.ConnectWhiteList = specWhiteList
 	}
 	return nil
@@ -203,8 +205,8 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 
 func (m *OBTenantManager) CheckAndApplyUnitConfigV4() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	specUnitConfigMap := GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
-	statusUnitConfigMap := GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
+	specUnitConfigMap := m.GenerateSpecUnitConfigV4Map(m.OBTenant.Spec)
+	statusUnitConfigMap := m.GenerateStatusUnitConfigV4Map(m.OBTenant.Status)
 	for _, pool := range m.OBTenant.Spec.Pools {
 		match := true
 		specUnitConfig := specUnitConfigMap[pool.ZoneList]
@@ -258,10 +260,10 @@ func (m *OBTenantManager) CheckAndApplyPrimaryZone() error {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Priority ", tenantName))
 	}
 
-	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
-	specPrimaryZoneMap := GeneratePrimaryZoneMap(specPrimaryZone)
-	statusPrimaryZone := GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
-	statusPrimaryZoneMap := GeneratePrimaryZoneMap(statusPrimaryZone)
+	specPrimaryZone := m.GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	specPrimaryZoneMap := m.GeneratePrimaryZoneMap(specPrimaryZone)
+	statusPrimaryZone := m.GenerateStatusPrimaryZone(m.OBTenant.Status.Pools)
+	statusPrimaryZoneMap := m.GeneratePrimaryZoneMap(statusPrimaryZone)
 	if !reflect.DeepEqual(specPrimaryZoneMap, statusPrimaryZoneMap) {
 		tenantSQLParam := model.TenantSQLParam{
 			TenantName:  tenantName,
@@ -281,8 +283,8 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Locality ", tenantName))
 	}
-	specLocalityMap := GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
-	statusLocalityMap := GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
+	specLocalityMap := m.GenerateSpecLocalityMap(m.OBTenant.Spec.Pools)
+	statusLocalityMap := m.GenerateStatusLocalityMap(m.OBTenant.Status.Pools)
 	if !reflect.DeepEqual(specLocalityMap, statusLocalityMap) {
 		locality := m.GenerateLocality(m.OBTenant.Spec.Pools)
 		tenantSQLParam := model.TenantSQLParam{
@@ -343,7 +345,7 @@ func (m *OBTenantManager) CreateTenant() error {
 
 	tenantSQLParam := model.TenantSQLParam{
 		TenantName: tenantName,
-		PrimaryZone: GenerateSpecPrimaryZone(pools),
+		PrimaryZone: m.GenerateSpecPrimaryZone(pools),
 		VariableList: m.GenerateWhiteListInVariableForm(m.OBTenant.Spec.ConnectWhiteList),
 		Charset: m.OBTenant.Spec.Charset,
 		PoolList: m.GenerateSpecPoolList(pools),
@@ -360,7 +362,7 @@ func (m *OBTenantManager) CreateTenant() error {
 func (m *OBTenantManager) CreateUnitConfigV4(unitName string, unitConfig v1alpha1.UnitConfig) error {
 	tenantName := m.OBTenant.Spec.TenantName
 	m.Logger.Info("Create UnitConfig", "tenantName", tenantName, "unitName", unitName)
-	unitModel := GenerateModelUnitConfigV4SQLParam(unitName, GenerateModelUnitConfigV4(unitConfig))
+	unitModel := m.GenerateModelUnitConfigV4SQLParam(unitName, m.GenerateModelUnitConfigV4(unitConfig))
 	if unitModel.MemorySize == 0 {
 		err := errors.New("unit memorySize is empty")
 		m.Logger.Error(err, "unit memorySize cannot be zero", "tenantName", tenantName, "unitName", unitName)
@@ -377,7 +379,7 @@ func (m *OBTenantManager) CreateUnitConfigV4(unitName string, unitConfig v1alpha
 func (m *OBTenantManager) SetUnitConfigV4(unitName string, unitConfig model.UnitConfigV4) error {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	unitModel := GenerateModelUnitConfigV4SQLParam(unitName, unitConfig)
+	unitModel := m.GenerateModelUnitConfigV4SQLParam(unitName, unitConfig)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", tenantName))
 	}
@@ -437,10 +439,10 @@ func (m *OBTenantManager) TenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 	}
 
 	resourcePoolStatusList := append(m.OBTenant.Status.Pools, poolStatusAdd)
-	statusLocalityMap := GenerateStatusLocalityMap(resourcePoolStatusList)
+	statusLocalityMap := m.GenerateStatusLocalityMap(resourcePoolStatusList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
 	poolList := m.GenerateStatusPoolList(resourcePoolStatusList)
-	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	specPrimaryZone := m.GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
 
 	tenantSQLParam := model.TenantSQLParam{
 		TenantName: tenantName,
@@ -489,10 +491,10 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		}
 	}
 
-	statusLocalityMap := GenerateStatusLocalityMap(zoneList)
+	statusLocalityMap := m.GenerateStatusLocalityMap(zoneList)
 	localityList := m.GenerateLocalityList(statusLocalityMap)
 	poolList := m.GenerateStatusPoolList(zoneList)
-	specPrimaryZone := GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	specPrimaryZone := m.GenerateSpecPrimaryZone(m.OBTenant.Spec.Pools)
 
 	// step 1.1: update locality
 	// note：this operator is async in oceanbase, polling until update locality task success
@@ -591,7 +593,7 @@ func FormatUnitConfigV4(unit model.UnitConfigV4) string {
 
 // ---------- generate "zoneName-value" map function ----------
 
-func GeneratePrimaryZoneMap(str string) map[int][]string {
+func(m *OBTenantManager) GeneratePrimaryZoneMap(str string) map[int][]string {
 	res := make(map[int][]string, 0)
 	levelCuts := strings.Split(str, ";")
 	for idx, levelCut := range levelCuts {
@@ -602,23 +604,23 @@ func GeneratePrimaryZoneMap(str string) map[int][]string {
 	return res
 }
 
-func GenerateSpecUnitConfigV4Map(spec v1alpha1.OBTenantSpec) map[string]model.UnitConfigV4 {
+func(m *OBTenantManager) GenerateSpecUnitConfigV4Map(spec v1alpha1.OBTenantSpec) map[string]model.UnitConfigV4 {
 	var unitConfigMap = make(map[string]model.UnitConfigV4, 0)
 	for _, pool := range spec.Pools {
-		unitConfigMap[pool.ZoneList] = GenerateModelUnitConfigV4(pool.UnitConfig)
+		unitConfigMap[pool.ZoneList] = m.GenerateModelUnitConfigV4(pool.UnitConfig)
 	}
 	return unitConfigMap
 }
 
-func GenerateStatusUnitConfigV4Map(status v1alpha1.OBTenantStatus) map[string]model.UnitConfigV4 {
+func (m *OBTenantManager) GenerateStatusUnitConfigV4Map(status v1alpha1.OBTenantStatus) map[string]model.UnitConfigV4 {
 	var unitConfigMap = make(map[string]model.UnitConfigV4, 0)
 	for _, pool := range status.Pools {
-		unitConfigMap[pool.ZoneList] = GenerateModelUnitConfigV4(pool.UnitConfig)
+		unitConfigMap[pool.ZoneList] = m.GenerateModelUnitConfigV4(pool.UnitConfig)
 	}
 	return unitConfigMap
 }
 
-func GenerateModelUnitConfigV4(unitConfig v1alpha1.UnitConfig) model.UnitConfigV4 {
+func (m *OBTenantManager) GenerateModelUnitConfigV4(unitConfig v1alpha1.UnitConfig) model.UnitConfigV4 {
 	var modelUnitConfigV4 model.UnitConfigV4
 	modelUnitConfigV4.MaxCPU = unitConfig.MaxCPU.AsApproximateFloat64()
 	modelUnitConfigV4.MinCPU = unitConfig.MinCPU.AsApproximateFloat64()
@@ -630,7 +632,7 @@ func GenerateModelUnitConfigV4(unitConfig v1alpha1.UnitConfig) model.UnitConfigV
 	return modelUnitConfigV4
 }
 
-func GenerateModelUnitConfigV4SQLParam(unitConfigName string, unitConfig model.UnitConfigV4) model.UnitConfigV4SQLParam{
+func (m *OBTenantManager) GenerateModelUnitConfigV4SQLParam(unitConfigName string, unitConfig model.UnitConfigV4) model.UnitConfigV4SQLParam{
 	var modelUnitConfigV4 model.UnitConfigV4SQLParam
 	modelUnitConfigV4.UnitConfigName = unitConfigName
 	modelUnitConfigV4.MaxCPU = unitConfig.MaxCPU
@@ -643,7 +645,7 @@ func GenerateModelUnitConfigV4SQLParam(unitConfigName string, unitConfig model.U
 	return modelUnitConfigV4
 }
 
-func GenerateSpecUnitNumMap(spec v1alpha1.OBTenantSpec) map[string]int {
+func(m *OBTenantManager) GenerateSpecUnitNumMap(spec v1alpha1.OBTenantSpec) map[string]int {
 	var unitNumMap = make(map[string]int, 0)
 	for _, zone := range spec.Pools {
 		unitNumMap[zone.ZoneList] = spec.UnitNumber
@@ -651,28 +653,19 @@ func GenerateSpecUnitNumMap(spec v1alpha1.OBTenantSpec) map[string]int {
 	return unitNumMap
 }
 
-func GenerateStatusUnitNumMap(status v1alpha1.OBTenantStatus) map[string]int {
-	var unitNumMap = make(map[string]int, 0)
-	for _, zone := range status.Pools {
-		unitNumMap[zone.ZoneList] = zone.UnitNumber
-	}
-	return unitNumMap
-}
-
-func GenerateSpecLocalityMap(pools []v1alpha1.ResourcePoolSpec) map[string]v1alpha1.LocalityType {
+func(m *OBTenantManager) GenerateSpecLocalityMap(pools []v1alpha1.ResourcePoolSpec) map[string]v1alpha1.LocalityType {
 	localityMap := make(map[string]v1alpha1.LocalityType, 0)
 	for _, pool := range pools {
-		if pool.Type.Name != "" {
-			localityMap[pool.ZoneList] = v1alpha1.LocalityType{
-				Name:    strings.ToUpper(pool.Type.Name),
-				Replica: pool.Type.Replica,
-			}
+		localityMap[pool.ZoneList] = v1alpha1.LocalityType{
+			Name: strings.ToUpper(pool.Type.Name), // locality type in DB is Upper
+			Replica: pool.Type.Replica,
+			IsActive: pool.Type.IsActive,
 		}
 	}
 	return localityMap
 }
 
-func GenerateStatusLocalityMap(pools []v1alpha1.ResourcePoolStatus) map[string]v1alpha1.LocalityType {
+func (m *OBTenantManager) GenerateStatusLocalityMap(pools []v1alpha1.ResourcePoolStatus) map[string]v1alpha1.LocalityType {
 	localityMap := make(map[string]v1alpha1.LocalityType, 0)
 	for _, pool := range pools {
 		localityMap[pool.ZoneList] = pool.Type
@@ -689,7 +682,7 @@ func (m *OBTenantManager) GenerateLocalityList(localityMap map[string]v1alpha1.L
 	sort.Sort(sort.Reverse(sort.StringSlice(zoneSortList)))
 	for _, zoneList := range zoneSortList {
 		zoneType := localityMap[zoneList]
-		if zoneType.Name != "" {
+		if zoneType.IsActive {
 			locality = append(locality, fmt.Sprintf("%s{%d}@%s", zoneType.Name, zoneType.Replica, zoneList))
 		}
 	}
@@ -730,14 +723,16 @@ func (m *OBTenantManager) GenerateStatusPoolList(pools []v1alpha1.ResourcePoolSt
 	return poolList
 }
 
-func GenerateSpecPrimaryZone(pools []v1alpha1.ResourcePoolSpec) string {
+func(m *OBTenantManager) GenerateSpecPrimaryZone(pools []v1alpha1.ResourcePoolSpec) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int
 	for _, pool := range pools {
-		zones := zoneMap[pool.Priority]
-		zones = append(zones, pool.ZoneList)
-		zoneMap[pool.Priority] = zones
+		if pool.Type.IsActive {
+			zones := zoneMap[pool.Priority]
+			zones = append(zones, pool.ZoneList)
+			zoneMap[pool.Priority] = zones
+		}
 	}
 	for k := range zoneMap {
 		priorityList = append(priorityList, k)
@@ -750,14 +745,16 @@ func GenerateSpecPrimaryZone(pools []v1alpha1.ResourcePoolSpec) string {
 	return primaryZone
 }
 
-func GenerateStatusPrimaryZone(pools []v1alpha1.ResourcePoolStatus) string {
+func(m *OBTenantManager) GenerateStatusPrimaryZone(pools []v1alpha1.ResourcePoolStatus) string {
 	var primaryZone string
 	zoneMap := make(map[int][]string, 0)
 	var priorityList []int
-	for _, zone := range pools {
-		zones := zoneMap[zone.Priority]
-		zones = append(zones, zone.ZoneList)
-		zoneMap[zone.Priority] = zones
+	for _, pool := range pools {
+		if pool.Type.IsActive {
+			zones := zoneMap[pool.Priority]
+			zones = append(zones, pool.ZoneList)
+			zoneMap[pool.Priority] = zones
+		}
 	}
 	for k := range zoneMap {
 		priorityList = append(priorityList, k)
@@ -771,7 +768,7 @@ func GenerateStatusPrimaryZone(pools []v1alpha1.ResourcePoolStatus) string {
 }
 
 func (m *OBTenantManager) GenerateLocality(zones []v1alpha1.ResourcePoolSpec) string {
-	specLocalityMap := GenerateSpecLocalityMap(zones)
+	specLocalityMap := m.GenerateSpecLocalityMap(zones)
 	localityList := m.GenerateLocalityList(specLocalityMap)
 	return strings.Join(localityList, ",")
 }
@@ -784,7 +781,7 @@ func (m *OBTenantManager) GenerateWhiteListInVariableForm(whiteList string) stri
 	}
 }
 
-func GenerateTypeMap(locality string) map[string]v1alpha1.LocalityType {
+func (m *OBTenantManager) GenerateStatusTypeMapFromLocalityStr(locality string) map[string]v1alpha1.LocalityType {
 	typeMap := make(map[string]v1alpha1.LocalityType, 0)
 	typeList := strings.Split(locality, ", ")
 	for _, type1 := range typeList {
@@ -795,12 +792,13 @@ func GenerateTypeMap(locality string) map[string]v1alpha1.LocalityType {
 		typeMap[split1[1]] = v1alpha1.LocalityType{
 			Name:    typeName,
 			Replica: replicaInt,
+			IsActive: true,
 		}
 	}
 	return typeMap
 }
 
-func GeneratePriorityMap(primaryZone string) map[string]int {
+func (m *OBTenantManager) GenerateStatusPriorityMap(primaryZone string) map[string]int {
 	priorityMap := make(map[string]int, 0)
 	cutZones := strings.Split(primaryZone, ";")
 	priority := len(cutZones)
