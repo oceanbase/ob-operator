@@ -35,6 +35,7 @@ type OBTenantManager struct {
 	Logger   *logr.Logger
 }
 
+var GlobalWhiteList = tenant.DefaultOBTcpInvitedNodes
 
 func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
@@ -497,10 +498,13 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 
 	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(gvTenant.TenantID)
+
+	// TODO get whitelist from tenant account
 	//tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
 	//if err != nil {
 	//	return nil, err
 	//}
+	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = GlobalWhiteList
 
 	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
 	charset, err := m.GetCharset()

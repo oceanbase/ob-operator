@@ -197,7 +197,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 		}
 		// TODO get whitelist variable by tenant account
 		// Because getting a whitelist requires specifying a tenant , temporary use .Status.TenantRecordInfo.ConnectWhiteList as value in db
-		m.OBTenant.Status.TenantRecordInfo.ConnectWhiteList = specWhiteList
+		GlobalWhiteList = specWhiteList
 	}
 	return nil
 }
