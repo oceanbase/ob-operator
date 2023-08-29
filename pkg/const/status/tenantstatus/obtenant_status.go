@@ -1,8 +1,8 @@
 package tenantstatus
 
 const (
-	Creating = "creating"
-	Running  = "running"
+	CreatingTenant = "creating tenant"
+	Running        = "running"
 	MaintainingWhiteList="maintaining whitelist"
 	MaintainingCharset="maintaining charset"
 	MaintainingUnitNum="maintaining unit num"
@@ -10,8 +10,8 @@ const (
 	MaintainingLocality    ="maintaining locality"
 	AddingPool             ="adding pool"
 	DeletingPool="deleting pool"
-	MaintainingUnitConfig="maintaining unit config"
-	Deleting = "deleting"
-	FinalizerFinished = "finalizer finished"
+	MaintainingUnitConfig ="maintaining unit config"
+	DeletingTenant        = "deleting tenant"
+	FinalizerFinished     = "finalizer finished"
 	PausingReconcile  ="pausing reconcile"
 )

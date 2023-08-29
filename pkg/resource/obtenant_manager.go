@@ -35,6 +35,7 @@ type OBTenantManager struct {
 	Logger   *logr.Logger
 }
 
+// TODO add lock to be thread safe
 var GlobalWhiteList = tenant.DefaultOBTcpInvitedNodes
 
 func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
@@ -58,7 +59,7 @@ func (m *OBTenantManager) IsDeleting() bool {
 func (m *OBTenantManager) InitStatus() {
 	m.Logger.Info("newly created obtenant, init status")
 	status := v1alpha1.OBTenantStatus{
-		Status:           tenantstatus.Creating,
+		Status:           tenantstatus.CreatingTenant,
 		Pools:            make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
 	m.OBTenant.Status = status
@@ -108,9 +109,9 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.Logger.Info("OBTenant has remove Finalizer", "tenantName", obtenantName)
 		return nil
 	} else if m.IsDeleting() {
-		if m.OBTenant.Status.Status != tenantstatus.Deleting {
+		if m.OBTenant.Status.Status != tenantstatus.DeletingTenant {
 			m.Logger.Info("debug: income", "status", m.OBTenant.Status.Status)
-			m.OBTenant.Status.Status = tenantstatus.Deleting
+			m.OBTenant.Status.Status = tenantstatus.DeletingTenant
 			m.OBTenant.Status.OperationContext = nil
 			m.Logger.Info("OBTenant prepare deleting", "tenantName", obtenantName)
 		}
@@ -214,8 +215,8 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 
 	switch m.OBTenant.Status.Status {
-	case tenantstatus.Creating:
-		m.Logger.Info("Get task flow when obtenant creating")
+	case tenantstatus.CreatingTenant:
+		m.Logger.Info("Get task flow when creating tenant")
 		taskFlow, err = task.GetRegistry().Get(flowname.CreateTenant)
 	case tenantstatus.MaintainingWhiteList:
 		m.Logger.Info("Get task flow when obtenant maintaining white list")
@@ -241,8 +242,8 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case tenantstatus.MaintainingUnitConfig:
 		m.Logger.Info("Get task flow when obtenant maintaining unit config")
 		taskFlow,err  = task.GetRegistry().Get(flowname.MaintainUnitConfig)
-	case tenantstatus.Deleting:
-		m.Logger.Info("Get task flow when obtenant deleting")
+	case tenantstatus.DeletingTenant:
+		m.Logger.Info("Get task flow when deleting tenant")
 		taskFlow,err = task.GetRegistry().Get(flowname.DeleteTenant)
 	case tenantstatus.PausingReconcile:
 		m.Logger.Error(errors.New("obtenant pause reconcile"),
@@ -302,9 +303,11 @@ func (m *OBTenantManager) getObTenant() (*v1alpha1.OBTenant, error) {
 }
 
 // --------- compare spec and status ----------
+
 func (m *OBTenantManager) NextStatus() (string, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 
+	// note: change order of state check functions may cause bugs
 	hasModifiedResourcePool := m.hasToAddPool()
 	if hasModifiedResourcePool {
 		m.Logger.Info("Maintain Tenant ----- Resource Pool modified", "tenantName", tenantName)

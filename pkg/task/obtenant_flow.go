@@ -15,7 +15,7 @@ func CreateTenant() *TaskFlow {
 			Tasks:        []string{taskname.CheckTenant, taskname.CheckPoolAndUnitConfig,taskname.CreateTenant},
 			TargetStatus: tenantstatus.Running,
 			FailureRule: fail.FailureRule {
-				NextTryStatus: tenantstatus.Creating,
+				NextTryStatus: tenantstatus.CreatingTenant,
 			},
 		},
 	}
@@ -108,7 +108,7 @@ func DeleteTenant() *TaskFlow {
 			Tasks:        []string{taskname.DeleteTenant},
 			TargetStatus: tenantstatus.FinalizerFinished,
 			FailureRule: fail.FailureRule{
-				NextTryStatus: tenantstatus.Deleting,
+				NextTryStatus: tenantstatus.DeletingTenant,
 			},
 		},
 	}

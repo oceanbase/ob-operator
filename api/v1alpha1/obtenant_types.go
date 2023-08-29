@@ -54,6 +54,7 @@ type ResourcePoolSpec struct {
 type LocalityType struct {
 	Name    string `json:"name"`
 	Replica int    `json:"replica"`
+	// TODO move isActive to ResourcePoolSpec And ResourcePoolStatus
 	IsActive bool`json:"isActive"`
 }
 

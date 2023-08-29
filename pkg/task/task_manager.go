@@ -72,7 +72,6 @@ func (m *TaskManager) Submit(f func() error) string {
 	return TaskId
 }
 
-// TODO currently result is only available for once, need store until clean
 func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {

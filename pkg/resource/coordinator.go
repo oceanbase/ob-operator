@@ -89,6 +89,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 
 		if err != nil {
 			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
+			c.Manager.PrintErrEvent(err)
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
@@ -117,6 +118,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 	c.Logger.Info("Coordinate finished", "operation context", f.OperationContext)
 }
 
+// TODO clean task result map and cache map to free memory
 func (c *Coordinator) cleanTaskResultMap(f *task.TaskFlow) error {
 	if f == nil || f.OperationContext == nil {
 		return nil
