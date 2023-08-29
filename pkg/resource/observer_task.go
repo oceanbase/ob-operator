@@ -144,8 +144,7 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.Sto
 	requestsResources["storage"] = storageSpec.Size
 	storageClassName := storageSpec.StorageClass
 	pvcSpec.StorageClassName = &(storageClassName)
-	accessModes := make([]corev1.PersistentVolumeAccessMode, 0)
-	accessModes = append(accessModes, corev1.ReadWriteOnce)
+	accessModes := []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	pvcSpec.AccessModes = accessModes
 	pvcSpec.Resources.Requests = requestsResources
 	return *pvcSpec

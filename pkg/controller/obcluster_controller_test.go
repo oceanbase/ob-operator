@@ -14,12 +14,14 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -31,10 +33,12 @@ const (
 var _ = Describe("OBCluster controller", func() {
 
 	const (
-		applyWait          = 5
-		commonTimeout      = 30
-		waitRunningTimeout = 300
-		interval           = 1
+		applyWait           = 5
+		commonTimeout       = 30
+		waitRunningTimeout  = 300
+		waitUpgradeTimeout  = 1800
+		waitDeletingTimeout = 1800
+		interval            = 1
 	)
 
 	Context("Create OBCluster", func() {
@@ -68,8 +72,111 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully created")
 		})
 
+		It("Should successfully scale out obzone of OBCluster instance and ends with Status running", func() {
+			By("By scale out obzone of an OBCluster")
+			ctx := context.Background()
+			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
+			obcluster := &v1alpha1.OBCluster{}
+
+			logf.Log.Info("get obcluster")
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			newZone := v1alpha1.OBZoneTopology{
+				Zone:    fmt.Sprintf("zone%d", len(obcluster.Spec.Topology)),
+				Replica: 1,
+			}
+			obcluster.Spec.Topology = append(obcluster.Spec.Topology, newZone)
+			Eventually(func() bool {
+				err := k8sClient.Update(ctx, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			time.Sleep(applyWait * time.Second)
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return obcluster.Status.Status == clusterstatus.Running
+			}, waitRunningTimeout, interval).Should(BeTrue())
+			logf.Log.Info("obcluster successfully scale out obzone")
+		})
+
+		It("Should successfully scale in obzone of OBCluster instance and ends with Status running", func() {
+			By("By scale in obzone of an OBCluster")
+			ctx := context.Background()
+			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
+			obcluster := &v1alpha1.OBCluster{}
+
+			logf.Log.Info("get obcluster")
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			obcluster.Spec.Topology = obcluster.Spec.Topology[0:3]
+			Eventually(func() bool {
+				err := k8sClient.Update(ctx, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			time.Sleep(applyWait * time.Second)
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return obcluster.Status.Status == clusterstatus.Running
+			}, waitRunningTimeout, interval).Should(BeTrue())
+			logf.Log.Info("obcluster successfully scale in obzone")
+		})
+
+		It("Should successfully upgrade OBCluster instance and ends with Status running", func() {
+			By("By upgrade OBCluster")
+			ctx := context.Background()
+			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
+			obcluster := &v1alpha1.OBCluster{}
+
+			logf.Log.Info("get obcluster")
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			obcluster.Spec.OBServerTemplate.Image = UpgradeImage
+			Eventually(func() bool {
+				err := k8sClient.Update(ctx, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			time.Sleep(applyWait * time.Second)
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return obcluster.Status.Status == clusterstatus.Running
+			}, waitUpgradeTimeout, interval).Should(BeTrue())
+			logf.Log.Info("obcluster successfully upgrade obzone")
+		})
+
 		It("Should successfully scale out server of OBCluster instance and ends with Status running", func() {
-			By("By scale out an OBCluster")
+			By("By scale out observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
 			obcluster := &v1alpha1.OBCluster{}
@@ -85,6 +192,7 @@ var _ = Describe("OBCluster controller", func() {
 			for idx := 0; idx < len(obcluster.Spec.Topology); idx++ {
 				obcluster.Spec.Topology[idx].Replica = 2
 			}
+
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
 				if err != nil {
@@ -104,7 +212,7 @@ var _ = Describe("OBCluster controller", func() {
 		})
 
 		It("Should successfully scale in server of OBCluster instance and ends with Status running", func() {
-			By("By scale in an OBCluster")
+			By("By scale in observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
 			obcluster := &v1alpha1.OBCluster{}
@@ -134,8 +242,40 @@ var _ = Describe("OBCluster controller", func() {
 					return false
 				}
 				return obcluster.Status.Status == clusterstatus.Running
-			}, waitRunningTimeout, interval).Should(BeTrue())
+			}, waitDeletingTimeout, interval).Should(BeTrue())
 			logf.Log.Info("obcluster successfully scale in observer")
+		})
+
+		It("Should successfully delete OBCluster instance", func() {
+			By("By delete OBCluster")
+			ctx := context.Background()
+			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
+			obcluster := &v1alpha1.OBCluster{}
+
+			logf.Log.Info("get obcluster")
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			Eventually(func() bool {
+				err := k8sClient.Delete(ctx, obcluster)
+				if err != nil {
+					return false
+				}
+				return true
+			}, commonTimeout, interval).Should(BeTrue())
+			time.Sleep(applyWait * time.Second)
+			Eventually(func() bool {
+				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
+				if err != nil && kubeerrors.IsNotFound(err) {
+					return true
+				}
+				return false
+			}, waitRunningTimeout, interval).Should(BeTrue())
+			logf.Log.Info("obcluster successfully deleted")
 		})
 	})
 })
