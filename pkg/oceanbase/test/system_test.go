@@ -22,7 +22,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Backup Operation", func() {
+var _ = Describe("Test System Operation", func() {
 	var con *operation.OceanbaseOperationManager
 
 	var _ = BeforeEach(func() {

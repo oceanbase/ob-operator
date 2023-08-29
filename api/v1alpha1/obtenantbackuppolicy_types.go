@@ -36,15 +36,16 @@ type OBTenantBackupPolicySpec struct {
 
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
-	Status                       BackupPolicyStatusType `json:"status"`
-	LogArchiveDestDisabled       bool                   `json:"logArchiveDestDisabled"`
-	LastFullTypeBackupFinishedAt metav1.Time            `json:"lastFullTypeBackupFinishedAt,omitempty"`
-	TenantInfo                   *model.OBTenant        `json:"tenantInfo,omitempty"`
-	OperationContext             *OperationContext      `json:"operationContext,omitempty"`
+	Status                 BackupPolicyStatusType `json:"status"`
+	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
+	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
+	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+//+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
 
 // OBTenantBackupPolicy is the Schema for the obtenantbackuppolicies API
 type OBTenantBackupPolicy struct {

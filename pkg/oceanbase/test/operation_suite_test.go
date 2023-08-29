@@ -56,3 +56,10 @@ func printSlice[T any](s []T, extraMsg ...interface{}) {
 		GinkgoWriter.Printf("%d# object: %+v\n", i, v)
 	}
 }
+
+func printObject[T any](o T, extraMsg ...interface{}) {
+	for _, msg := range extraMsg {
+		GinkgoWriter.Println("[TEST INFO]", msg)
+	}
+	GinkgoWriter.Printf("object: %+v\n", o)
+}

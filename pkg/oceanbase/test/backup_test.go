@@ -13,9 +13,11 @@ See the Mulan PSL v2 for more details.
 package test
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	. "github.com/onsi/ginkgo/v2"
@@ -103,21 +105,38 @@ var _ = Describe("Test Backup Operation", func() {
 		printSlice(histories, "backup task history")
 	})
 
-	It("Parse Timestamp", func() {
-		timestamp := "2023-08-25 19:13:18.961907"
-		t, err := time.Parse(time.DateTime+".000000", timestamp)
+	It("Query BackupJob with correct ID", func() {
+		job, err := con.QueryBackupJobWithId(3)
 		Expect(err).To(BeNil())
-		GinkgoWriter.Println(t, t.UnixMilli())
+		Expect(job).NotTo(BeNil())
+		printObject(job, "BackupJob")
+	})
 
-		t1, err := time.Parse(time.DateTime, timestamp)
+	It("Query BackupJob with incorrect ID", func() {
+		job, err := con.QueryBackupJobWithId(time.Now().Unix())
 		Expect(err).To(BeNil())
-		Expect(t1.Equal(t)).To(BeTrue())
+		Expect(job).To(BeNil())
+	})
 
-		ts2 := "2023-08-25 19:13:18"
-		t2, err := time.Parse(time.DateTime, ts2)
+	It("Create and return full type BackupJob", func() {
+		var t v1alpha1.BackupJobType
+		timeNow := time.Now().Unix()
+		if timeNow%2 == 0 {
+			t = v1alpha1.BackupJobTypeFull
+		} else {
+			t = v1alpha1.BackupJobTypeIncr
+		}
+
+		By("Create BackupJob of type " + string(t))
+		job, err := con.CreateAndReturnBackupJob(t)
 		Expect(err).To(BeNil())
-		Expect(t2.Equal(t)).NotTo(BeTrue())
+		printObject(job, "BackupJob of type "+string(t))
 
-		GinkgoWriter.Println(t, t2, t.UnixMicro()-t2.UnixMicro(), t.Sub(t2))
+		// Query tasks at once will get empty result
+		time.Sleep(2 * time.Second)
+		By(fmt.Sprintf("Query BackupJob with ID %d", job.JobId))
+		tasks, err := con.QueryBackupTaskWithJobId(job.JobId)
+		Expect(err).To(BeNil())
+		printSlice(tasks, fmt.Sprintf("BackupTasks of Job %d", job.JobId))
 	})
 })

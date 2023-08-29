@@ -34,19 +34,50 @@ type OBTenantBackupSpec struct {
 	DataBackupDest string        `json:"dataBackupDest,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
 // OBTenantBackupStatus defines the observed state of OBTenantBackup
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           BackupJobStatus    `json:"status"`
-	Progress         string             `json:"progress"`
-	OperationContext *OperationContext  `json:"operationContext,omitempty"`
-	JobId            int64              `json:"jobId,omitempty"`
-	BackupJob        *model.OBBackupJob `json:"backupJob,omitempty"`
+	Status           BackupJobStatus         `json:"status"`
+	Progress         string                  `json:"progress"`
+	OperationContext *OperationContext       `json:"operationContext,omitempty"`
+	BackupJob        *model.OBBackupJob      `json:"backupJob,omitempty"`
+	ArchiveLogJob    *model.OBArchiveLogJob  `json:"archiveLogJob,omitempty"`
+	DataCleanJob     *model.OBBackupCleanJob `json:"dataCleanJob,omitempty"`
+}
+
+// fix: implementation of DeepCopyInto needed by zz_generated.deepcopy.go
+// controller-gen can not generate DeepCopyInto method for struct with pointer field
+func (in *OBTenantBackupStatus) DeepCopyInto(out *OBTenantBackupStatus) {
+	*out = *in
+	if in.OperationContext != nil {
+		in, out := &in.OperationContext, &out.OperationContext
+		*out = new(OperationContext)
+		(*in).DeepCopyInto(*out)
+	}
+	if in.BackupJob != nil {
+		in, out := &in.BackupJob, &out.BackupJob
+		*out = new(model.OBBackupJob)
+		**out = **in
+	}
+	if in.ArchiveLogJob != nil {
+		in, out := &in.ArchiveLogJob, &out.ArchiveLogJob
+		*out = new(model.OBArchiveLogJob)
+		**out = **in
+	}
+	if in.DataCleanJob != nil {
+		in, out := &in.DataCleanJob, &out.DataCleanJob
+		*out = new(model.OBBackupCleanJob)
+		**out = **in
+	}
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+//+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
 
 // OBTenantBackup is the Schema for the obtenantbackups API.
 // An instance of OBTenantBackup stands for a tenant backup job

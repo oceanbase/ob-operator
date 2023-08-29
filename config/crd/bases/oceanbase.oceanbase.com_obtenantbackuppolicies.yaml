@@ -15,7 +15,14 @@ spec:
     singular: obtenantbackuppolicy
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.tenantName
+      name: TenantName
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantBackupPolicy is the Schema for the obtenantbackuppolicies
@@ -100,9 +107,6 @@ spec:
             description: OBTenantBackupPolicyStatus defines the observed state of
               OBTenantBackupPolicy
             properties:
-              lastFullTypeBackupFinishedAt:
-                format: date-time
-                type: string
               logArchiveDestDisabled:
                 type: boolean
               operationContext:

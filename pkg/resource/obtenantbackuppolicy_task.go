@@ -144,7 +144,13 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
 	}
 	if latestFull.Status == "COMPLETED" {
-		lastFullBackupFinishedAt, err := time.Parse(time.DateTime, latestFull.EndTimestamp)
+		var lastFullBackupFinishedAt time.Time
+		if latestFull.EndTimestamp == nil {
+			// TODO: check if this is possible: COMPLETED job with nil end timestamp
+			lastFullBackupFinishedAt, err = time.Parse(time.DateTime, latestFull.StartTimestamp)
+		} else {
+			lastFullBackupFinishedAt, err = time.Parse(time.DateTime, *latestFull.EndTimestamp)
+		}
 		if err != nil {
 			m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
 		}
@@ -157,14 +163,13 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		}
 		nextFullTime := fullCron.Next(lastFullBackupFinishedAt)
 		if nextFullTime.Before(timeNow) {
-			err = m.createBackupJob(v1alpha1.BackupJobTypeFull)
-			if err != nil {
-				return err
-			}
+			// Full backup and incremental backup can not be executed at the same time
+			// create Full type backup job and return here
+			return m.createBackupJob(v1alpha1.BackupJobTypeFull)
 		}
 
 		// considering incremental backup
-		// create incremental backup if there is a full backup job or an incremental backup job
+		// create incremental backup if there is a completed full/incremental backup job
 		incrementalCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrCrontab)
 		if err != nil {
 			m.Logger.Error(err, "Failed to parse full backup crontab")
@@ -176,7 +181,13 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		}
 		if latestIncr != nil {
 			if latestIncr.Status == "COMPLETED" {
-				lastIncrBackupFinishedAt, err := time.Parse(time.DateTime, latestIncr.EndTimestamp)
+				var lastIncrBackupFinishedAt time.Time
+				if latestIncr.EndTimestamp == nil {
+					// TODO: check if this is possible
+					lastIncrBackupFinishedAt, err = time.Parse(time.DateTime, latestIncr.StartTimestamp)
+				} else {
+					lastIncrBackupFinishedAt, err = time.Parse(time.DateTime, *latestIncr.EndTimestamp)
+				}
 				if err != nil {
 					m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
 				}
@@ -188,7 +199,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 						return err
 					}
 				}
-			} else if latestIncr.Status == "DOING" {
+			} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
 				// do nothing
 			} else {
 				m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
@@ -202,7 +213,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				}
 			}
 		}
-	} else if latestFull.Status == "DOING" {
+	} else if latestFull.Status == "INIT" || latestFull.Status == "DOING" {
 		// do nothing
 	} else {
 		m.Logger.Info("BackupJob are in status " + latestFull.Status)
@@ -215,7 +226,7 @@ func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType v1alpha1.Backup
 	if err != nil {
 		return nil, err
 	}
-	jobs, err := con.QueryLatestBackupJobHistory(string(jobType))
+	jobs, err := con.QueryLatestBackupJob(jobType)
 	if err != nil {
 		return nil, err
 	}
@@ -281,7 +292,7 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJobType) error {
 	backupJob := &v1alpha1.OBTenantBackup{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.BackupPolicy.Name + "-" + string(jobType) + fmt.Sprintf("%d", time.Now().Unix()),
+			Name:      m.BackupPolicy.Name + "-" + string(jobType) + "-" + time.Now().Format("20060102150405"),
 			Namespace: m.BackupPolicy.Namespace,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion:         m.BackupPolicy.APIVersion,
@@ -291,6 +302,7 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJob
 				BlockOwnerDeletion: getRef(true),
 			}},
 			Labels: map[string]string{
+				oceanbaseconst.LabelRefOBCluster:    m.BackupPolicy.Labels[oceanbaseconst.LabelRefOBCluster],
 				oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
 				oceanbaseconst.LabelRefUID:          string(m.BackupPolicy.GetUID()),
 			},
@@ -323,6 +335,7 @@ func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType v1alpha1.BackupJobTy
 		},
 		client.MatchingFieldsSelector{
 			Selector: fields.AndSelectors(
+				fields.OneTermEqualSelector("spec.tenantName", m.BackupPolicy.Spec.TenantName),
 				fields.OneTermEqualSelector("spec.type", string(jobType)),
 				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusFailed)),
 				fields.OneTermNotEqualSelector("status.status", string(v1alpha1.BackupJobStatusSuccessful)),

@@ -52,18 +52,18 @@ type OBArchiveLogSummary struct {
 type OBArchiveLogJob OBArchiveLogSummary
 
 type JobCommon struct {
-	TenantId         int64  `json:"tenant_id" db:"tenant_id"`
-	JobId            int64  `json:"job_id" db:"job_id"`
-	ExecutorTenantId int64  `json:"executor_tenant_id" db:"executor_tenant_id"`
-	JobLevel         string `json:"job_level" db:"job_level"`
-	StartTimestamp   string `json:"start_timestamp" db:"start_timestamp"`
-	EndTimestamp     string `json:"end_timestamp" db:"end_timestamp"`
-	Status           string `json:"status" db:"status"`
-	Result           string `json:"result" db:"result"`
-	Comment          string `json:"comment" db:"comment"`
+	TenantId         int64   `json:"tenant_id" db:"tenant_id"`
+	JobId            int64   `json:"job_id" db:"job_id"`
+	ExecutorTenantId int64   `json:"executor_tenant_id" db:"executor_tenant_id"`
+	JobLevel         string  `json:"job_level" db:"job_level"`
+	StartTimestamp   string  `json:"start_timestamp" db:"start_timestamp"`
+	EndTimestamp     *string `json:"end_timestamp,omitempty" db:"end_timestamp"`
+	Status           string  `json:"status" db:"status"`
+	Result           string  `json:"result" db:"result"`
+	Comment          string  `json:"comment" db:"comment"`
 }
 
-// OBBackupJob matches view DBA_OB_BACKUP_JOB & DBA_OB_BACKUP_JOB_HISTORY
+// OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
 type OBBackupJob struct {
 	JobCommon `json:",inline" db:",inline"`
 
@@ -95,14 +95,14 @@ type OBBackupCleanJob struct {
 
 // OBBackupTask belonging to OBBackupJob, matches DBA_OB_BACKUP_TASKS
 type OBBackupTask struct {
-	TenantId       int64  `json:"tenant_id" db:"tenant_id"`
-	JobId          int64  `json:"job_id" db:"job_id"`
-	BackupSetId    int64  `json:"backup_set_id" db:"backup_set_id"`
-	StartTimestamp string `json:"start_timestamp" db:"start_timestamp"`
-	EndTimestamp   string `json:"end_timestamp" db:"end_timestamp"`
-	Status         string `json:"status" db:"status"`
-	Result         string `json:"result" db:"result"`
-	Comment        string `json:"comment" db:"comment"`
+	TenantId       int64   `json:"tenant_id" db:"tenant_id"`
+	JobId          int64   `json:"job_id" db:"job_id"`
+	BackupSetId    int64   `json:"backup_set_id" db:"backup_set_id"`
+	StartTimestamp string  `json:"start_timestamp" db:"start_timestamp"`
+	EndTimestamp   *string `json:"end_timestamp,omitempty" db:"end_timestamp"`
+	Status         string  `json:"status" db:"status"`
+	Result         string  `json:"result" db:"result"`
+	Comment        string  `json:"comment" db:"comment"`
 
 	TaskId                int64  `json:"task_id" db:"task_id"`
 	Incarnation           int64  `json:"incarnation" db:"incarnation"`
