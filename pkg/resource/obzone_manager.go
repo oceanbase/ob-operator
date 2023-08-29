@@ -227,22 +227,26 @@ func (m *OBZoneManager) ClearTaskInfo() {
 	m.OBZone.Status.OperationContext = nil
 }
 
-func (m *OBZoneManager) IsClearOperationContextIfFailed() bool {
-	return m.OBZone.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+func (m *OBZoneManager) ClearOperationContextIfFailed() {
+	if m.OBZone.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep{
+		m.OBZone.Status.OperationContext = nil
+	}
 }
 
 func (m *OBZoneManager) HandleFailure() {
-	operationContext := m.OBZone.Status.OperationContext
-	failureRule := operationContext.FailureRule
-	switch failureRule.Strategy {
-	case fail.RetryTask:
-		m.OBZone.Status.Status = failureRule.NextTryStatus
-	case fail.RetryCurrentStep:
-		operationContext.TaskStatus = taskstatus.Pending
-	}
-
-	if m.IsClearOperationContextIfFailed() {
+	if m.IsDeleting() {
+		m.OBZone.Status.Status = zonestatus.Deleting
 		m.OBZone.Status.OperationContext = nil
+	} else {
+		operationContext := m.OBZone.Status.OperationContext
+		failureRule := operationContext.FailureRule
+		switch failureRule.Strategy {
+		case fail.RetryTask:
+			m.OBZone.Status.Status = failureRule.NextTryStatus
+		case fail.RetryCurrentStep:
+			operationContext.TaskStatus = taskstatus.Pending
+		}
+		m.ClearOperationContextIfFailed()
 	}
 }
 

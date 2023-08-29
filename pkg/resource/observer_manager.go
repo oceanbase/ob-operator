@@ -260,8 +260,10 @@ func (m *OBServerManager) ClearTaskInfo() {
 }
 
 
-func (m *OBServerManager) IsClearOperationContextIfFailed() bool {
-	return  m.OBServer.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+func (m *OBServerManager) ClearOperationContextIfFailed() {
+	if m.OBServer.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep {
+		m.OBServer.Status.OperationContext = nil
+	}
 }
 
 func (m *OBServerManager) FinishTask() {
@@ -270,16 +272,19 @@ func (m *OBServerManager) FinishTask() {
 }
 
 func (m *OBServerManager) HandleFailure() {
-	operationContext := m.OBServer.Status.OperationContext
-	failureRule := operationContext.FailureRule
-	switch failureRule.Strategy {
-	case fail.RetryTask:
-		m.OBServer.Status.Status = failureRule.NextTryStatus
-	case fail.RetryCurrentStep:
-		operationContext.TaskStatus = taskstatus.Pending
-	}
-	if m.IsClearOperationContextIfFailed() {
+	if m.IsDeleting() {
+		m.OBServer.Status.Status = serverstatus.Deleting
 		m.OBServer.Status.OperationContext = nil
+	} else {
+		operationContext := m.OBServer.Status.OperationContext
+		failureRule := operationContext.FailureRule
+		switch failureRule.Strategy {
+		case fail.RetryTask:
+			m.OBServer.Status.Status = failureRule.NextTryStatus
+		case fail.RetryCurrentStep:
+			operationContext.TaskStatus = taskstatus.Pending
+		}
+		m.ClearOperationContextIfFailed()
 	}
 }
 

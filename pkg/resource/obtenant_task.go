@@ -197,7 +197,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 		}
 		// TODO get whitelist variable by tenant account
 		// Because getting a whitelist requires specifying a tenant , temporary use .Status.TenantRecordInfo.ConnectWhiteList as value in db
-		GlobalWhiteList = specWhiteList
+		GlobalWhiteListMap[tenantName] = specWhiteList
 	}
 	return nil
 }
@@ -356,7 +356,12 @@ func (m *OBTenantManager) CreateTenant() error {
 		tenantSQLParam.Charset = tenant.Charset
 	}
 
-	return oceanbaseOperationManager.AddTenant(tenantSQLParam)
+	err = oceanbaseOperationManager.AddTenant(tenantSQLParam)
+	if err != nil {
+		return err
+	}
+	GlobalWhiteListMap[tenantName] = m.OBTenant.Spec.ConnectWhiteList
+	return nil
 }
 
 func (m *OBTenantManager) CreateUnitConfigV4(unitName string, unitConfig v1alpha1.UnitConfig) error {

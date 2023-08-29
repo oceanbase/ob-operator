@@ -35,8 +35,8 @@ type OBTenantManager struct {
 	Logger   *logr.Logger
 }
 
-// TODO add lock to be thread safe
-var GlobalWhiteList = tenant.DefaultOBTcpInvitedNodes
+// TODO add lock to be thread safe, and read/write whitelist from/to DB
+var GlobalWhiteListMap = make(map[string]string, 0)
 
 func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
@@ -75,26 +75,28 @@ func (m *OBTenantManager) ClearTaskInfo() {
 }
 
 func (m *OBTenantManager) HandleFailure() {
-	operationContext := m.OBTenant.Status.OperationContext
-	failureRule := operationContext.FailureRule
-	switch failureRule.Strategy {
-	case fail.RetryTask:
-		m.OBTenant.Status.Status = failureRule.NextTryStatus
-	case fail.RetryCurrentStep:
-		operationContext.TaskStatus = taskstatus.Pending
-	case fail.PauseReconcile:
-		m.OBTenant.Status.Status = tenantstatus.PausingReconcile
-	}
-
-	if m.IsClearOperationContextIfFailed() {
+	if m.IsDeleting() {
+		m.OBTenant.Status.Status = tenantstatus.DeletingTenant
 		m.OBTenant.Status.OperationContext = nil
+	} else {
+		operationContext := m.OBTenant.Status.OperationContext
+		failureRule := operationContext.FailureRule
+		switch failureRule.Strategy {
+		case fail.RetryTask:
+			m.OBTenant.Status.Status = failureRule.NextTryStatus
+		case fail.RetryCurrentStep:
+			operationContext.TaskStatus = taskstatus.Pending
+		case fail.PauseReconcile:
+			m.OBTenant.Status.Status = tenantstatus.PausingReconcile
+		}
+		m.ClearOperationContextIfFailed()
 	}
-
 }
 
-func (m *OBTenantManager) IsClearOperationContextIfFailed() bool {
-	m.Logger.Info("debug:", "status", m.OBTenant.Status)
-	return  m.OBTenant.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+func (m *OBTenantManager) ClearOperationContextIfFailed() {
+	if m.OBTenant.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep {
+		m.OBTenant.Status.OperationContext = nil
+	}
 }
 
 func (m *OBTenantManager) FinishTask() {
@@ -109,12 +111,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.Logger.Info("OBTenant has remove Finalizer", "tenantName", obtenantName)
 		return nil
 	} else if m.IsDeleting() {
-		if m.OBTenant.Status.Status != tenantstatus.DeletingTenant {
-			m.Logger.Info("debug: income", "status", m.OBTenant.Status.Status)
-			m.OBTenant.Status.Status = tenantstatus.DeletingTenant
-			m.OBTenant.Status.OperationContext = nil
-			m.Logger.Info("OBTenant prepare deleting", "tenantName", obtenantName)
-		}
+		m.OBTenant.Status.Status = tenantstatus.DeletingTenant
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
 	} else {
@@ -503,11 +500,14 @@ func (m *OBTenantManager) BuildTenantStatus() (*v1alpha1.OBTenantStatus ,error) 
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(gvTenant.TenantID)
 
 	// TODO get whitelist from tenant account
-	//tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = m.GetVariable(tenant.OBTcpInvitedNodes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = GlobalWhiteList
+	whitelist, exists := GlobalWhiteListMap[gvTenant.TenantName]
+	if exists {
+		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist
+	} else {
+		// try update whitelist after the manager restart
+		GlobalWhiteListMap[gvTenant.TenantName] = tenant.DefaultOBTcpInvitedNodes
+		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = GlobalWhiteListMap[gvTenant.TenantName]
+	}
 
 	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
 	charset, err := m.GetCharset()

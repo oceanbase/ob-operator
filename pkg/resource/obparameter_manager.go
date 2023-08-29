@@ -148,8 +148,10 @@ func (m *OBParameterManager) ClearTaskInfo() {
 	m.OBParameter.Status.OperationContext = nil
 }
 
-func (m *OBParameterManager) IsClearOperationContextIfFailed() bool {
-	return  m.OBParameter.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+func (m *OBParameterManager) ClearOperationContextIfFailed() {
+	if m.OBParameter.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep{
+		m.OBParameter.Status.OperationContext = nil
+	}
 }
 
 func (m *OBParameterManager) FinishTask() {
@@ -166,9 +168,7 @@ func (m *OBParameterManager) HandleFailure() {
 	case fail.RetryCurrentStep:
 		operationContext.TaskStatus = taskstatus.Pending
 	}
-	if m.IsClearOperationContextIfFailed() {
-		m.OBParameter.Status.OperationContext = nil
-	}
+	m.ClearOperationContextIfFailed()
 }
 
 func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {

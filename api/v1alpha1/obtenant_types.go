@@ -37,8 +37,8 @@ type OBTenantSpec struct {
 	ForceDelete bool `json:"forceDelete,omitempty"`
 	//+kubebuilder:default=utf8mb4
 	Charset          string `json:"charset,omitempty"`
-	Collate          string `json:"collate,omitempty"`
-	Mode             string `json:"mode,omitempty"`
+	Collate          string `json:"collate,omitempty"` // DB fill collate automatically according to charset
+	//+kubebuilder:default=%
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 
 	Pools []ResourcePoolSpec `json:"pools"`
@@ -46,11 +46,13 @@ type OBTenantSpec struct {
 
 type ResourcePoolSpec struct {
 	ZoneList   string       `json:"zoneList"`
+	//+kubebuilder:default=1
 	Priority   int          `json:"priority,omitempty"`
 	Type       LocalityType `json:"type,omitempty"`
 	UnitConfig UnitConfig   `json:"resource"`
 }
 
+// TODO Split LocalityType struct to SpecLocalityType and StatusLocalityType
 type LocalityType struct {
 	Name    string `json:"name"`
 	Replica int    `json:"replica"`
@@ -58,6 +60,7 @@ type LocalityType struct {
 	IsActive bool`json:"isActive"`
 }
 
+// TODO Split UnitConfig struct to SpecUnitConfig and StatusUnitConfig
 type UnitConfig struct {
 	MaxCPU      resource.Quantity `json:"maxCPU"`
 	MemorySize  resource.Quantity `json:"memorySize"`

@@ -235,14 +235,17 @@ func (m *OBClusterManager) ClearTaskInfo() {
 	m.OBCluster.Status.OperationContext = nil
 }
 
-func (m *OBClusterManager) IsClearOperationContextIfFailed() bool {
-	return  m.OBCluster.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep
+func (m *OBClusterManager) ClearOperationContextIfFailed() {
+	if m.OBCluster.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep {
+		m.OBCluster.Status.OperationContext = nil
+	}
 }
 
 func (m *OBClusterManager) FinishTask() {
 	m.OBCluster.Status.Status = m.OBCluster.Status.OperationContext.TargetStatus
 	m.OBCluster.Status.OperationContext = nil
 }
+
 func (m *OBClusterManager) HandleFailure() {
 	operationContext := m.OBCluster.Status.OperationContext
 	failureRule := operationContext.FailureRule
@@ -254,9 +257,7 @@ func (m *OBClusterManager) HandleFailure() {
 	case fail.PauseReconcile:
 		m.OBCluster.Status.Status = clusterstatus.UpgradeFailed
 	}
-	if m.IsClearOperationContextIfFailed() {
-		m.OBCluster.Status.OperationContext = nil
-	}
+	m.ClearOperationContextIfFailed()
 }
 
 func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
