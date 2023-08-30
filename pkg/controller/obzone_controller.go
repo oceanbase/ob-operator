@@ -66,7 +66,7 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		}
 		return ctrl.Result{}, err
 	}
-	logger.Info("reconcile obzone:", "spec", obzone.Spec, "status", obzone.Status)
+	// logger.Info("reconcile obzone:", "spec", obzone.Spec, "status", obzone.Status)
 
 	// TODO add finalizers
 

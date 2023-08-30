@@ -12,12 +12,17 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-// OBArchiveDest 租户日志归档目标配置, match view DBA_OB_ARCHIVE_DEST
+// OBArchiveDest matches view DBA_OB_ARCHIVE_DEST
 type OBArchiveDest struct {
 	TenantId int64  `json:"tenant_id" db:"tenant_id"`
 	DestNo   int64  `json:"dest_no" db:"dest_no"`
 	Name     string `json:"name" db:"name"`
 	Value    string `json:"value" db:"value"`
+}
+
+type OBBackupParameter struct {
+	Name  string `json:"name" db:"name"`
+	Value string `json:"value" db:"value"`
 }
 
 // OBArchiveLogSummary matches view DBA_OB_ARCHIVELOG_SUMMARY

@@ -17,6 +17,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/robfig/cron/v3"
 )
 
 var _ = Describe("Test Miscellaneous Operation", func() {
@@ -26,7 +27,7 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 	var _ = AfterEach(func() {
 	})
 
-	It("Parse Timestamp", func() {
+	It("Parse Timestamp", Label("time"), func() {
 		timestamp := "2023-08-25 19:13:18.961907"
 		t, err := time.Parse(time.DateTime+".000000", timestamp)
 		Expect(err).To(BeNil())
@@ -42,5 +43,23 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(t2.Equal(t)).NotTo(BeTrue())
 
 		GinkgoWriter.Println(t, t2, t.UnixMicro()-t2.UnixMicro(), t.Sub(t2))
+	})
+
+	It("Parse time", Label("time"), func() {
+		timePast, err := time.Parse(time.DateTime, "2023-08-30 17:10:08.064041")
+		Expect(err).To(BeNil())
+		Expect(timePast.Before(time.Now()))
+	})
+
+	It("Crontab Parse", Label("time"), func() {
+		timeNow := time.Now()
+		timePast, err := time.Parse(time.DateTime, "2023-08-30 17:10:08.064041")
+		Expect(err).To(BeNil())
+		Expect(timePast.Before(timeNow))
+		sched, err := cron.ParseStandard("*/6 * * * *")
+		Expect(err).To(BeNil())
+		nextTime := sched.Next(time.Now())
+		printObject(nextTime)
+		Expect(timeNow.Before(nextTime)).To(BeTrue())
 	})
 })

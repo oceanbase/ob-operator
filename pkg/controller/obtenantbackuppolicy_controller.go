@@ -17,11 +17,11 @@ package controller
 import (
 	"context"
 
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -44,10 +44,6 @@ type OBTenantBackupPolicyReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the OBTenantBackupPolicy object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
@@ -56,14 +52,19 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	policy := &v1alpha1.OBTenantBackupPolicy{}
 	err := r.Client.Get(ctx, req.NamespacedName, policy)
 	if err != nil {
-		logger.Error(err, "get backup policy error")
-		if kubeerrors.IsNotFound(err) {
-			// backup policy not found, just return
-			return ctrl.Result{}, nil
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	logger.Info("reconcile backup policy:", "spec", policy.Spec, "status", policy.Status)
+
+	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
+	// examine DeletionTimestamp to determine if the policy is under deletion
+	if policy.ObjectMeta.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(policy, finalizerName) {
+			controllerutil.AddFinalizer(policy, finalizerName)
+			if err := r.Update(ctx, policy); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	}
 
 	// create backup policy manager
 	mgr := &resource.ObTenantBackupPolicyManager{
@@ -73,6 +74,7 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		Recorder:     r.Recorder,
 		Logger:       &logger,
 	}
+
 	coordinator := resource.NewCoordinator(mgr, &logger)
 	err = coordinator.Coordinate()
 	return ctrl.Result{}, err

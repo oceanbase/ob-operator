@@ -22,12 +22,12 @@ const logArchiveJobFields = "dest_id, round_id, dest_no, status, start_scn, star
 const logArchivePieceFileFields = "dest_id, round_id, piece_id, incarnation, dest_no, status, start_scn, start_scn_display, checkpoint_scn, checkpoint_scn_display, max_scn, end_scn, end_scn_display, compatible, unit_size, compression, input_bytes, input_bytes_display, output_bytes, output_bytes_display, compression_ratio, file_status, path"
 
 const (
-	EnableArchiveLog       = "ALTER SYSTEM ARCHIVELOG"
-	DisableArchiveLog      = "ALTER SYSTEM NOARCHIVELOG"
-	QueryPieceInfo         = "SELECT " + logArchivePieceFileFields + " FROM DBA_OB_ARCHIVELOG_PIECE_FILES"
-	QueryArchiveLog        = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG"
-	QueryArchiveLogSummary = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG_SUMMARY"
-	QueryArchiveLogConfigs = "SELECT dest_no, name, value FROM DBA_OB_ARCHIVE_DEST"
+	EnableArchiveLog           = "ALTER SYSTEM ARCHIVELOG"
+	DisableArchiveLog          = "ALTER SYSTEM NOARCHIVELOG"
+	QueryPieceInfo             = "SELECT " + logArchivePieceFileFields + " FROM DBA_OB_ARCHIVELOG_PIECE_FILES"
+	QueryArchiveLog            = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG"
+	QueryArchiveLogSummary     = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG_SUMMARY"
+	QueryArchiveLogDestConfigs = "SELECT dest_no, name, value FROM DBA_OB_ARCHIVE_DEST"
 
 	SetBackupPassword      = "SET ENCRYPTION ON IDENTIFIED BY ? ONLY"
 	CreateBackupFull       = "ALTER SYSTEM BACKUP DATABASE"
@@ -37,6 +37,7 @@ const (
 	QueryBackupHistory     = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY"
 	QueryBackupTasks       = "SELECT " + backupTaskFields + " FROM DBA_OB_BACKUP_TASKS"
 	QueryBackupTaskHistory = "SELECT " + backupTaskFields + " FROM DBA_OB_BACKUP_TASK_HISTORY"
+	QueryBackupParameter   = "SELECT name, value FROM DBA_OB_BACKUP_PARAMETER"
 
 	AddCleanBackupPolicy       = "ALTER SYSTEM ADD DELETE BACKUP POLICY ? RECOVERY_WINDOW ?"
 	RemoveCleanBackupPolicy    = "ALTER SYSTEM DROP DELETE BACKUP POLICY ?"
@@ -46,10 +47,13 @@ const (
 	QueryBackupCleanJobs       = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS"
 	QueryBackupCleanJobHistory = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY"
 
-	QueryLatestBackupJob        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE backup_type = ? order by job_id DESC LIMIT 1"
-	QueryLatestBackupJobHistory = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE backup_type = ? order by job_id DESC LIMIT 1"
-	QueryLatestCleanJob         = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS ORDER BY job_id DESC LIMIT 1 UNION ALL SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY ORDER BY job_id DESC LIMIT 1"
-	QueryLatestArchiveLogJob    = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG_SUMMARY ORDER BY round_id DESC LIMIT 1"
+	QueryLatestBackupJobOfType               = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE backup_type = ? order by job_id DESC LIMIT 1"
+	QueryLatestBackupJobHistoryOfType        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE backup_type = ? order by job_id DESC LIMIT 1"
+	QueryLatestBackupJobOfTypeAndPath        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE backup_type = ? and path = ? order by job_id DESC LIMIT 1"
+	QueryLatestBackupJobHistoryOfTypeAndPath = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE backup_type = ? and path = ? order by job_id DESC LIMIT 1"
+	QueryLatestRunningBackupJob              = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS order by job_id DESC LIMIT 1"
+	QueryLatestCleanJob                      = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS ORDER BY job_id DESC LIMIT 1 UNION ALL SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY ORDER BY job_id DESC LIMIT 1"
+	QueryLatestArchiveLogJob                 = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG_SUMMARY ORDER BY round_id DESC LIMIT 1"
 
 	QueryBackupJobWithId            = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE job_id = ?"
 	QueryBackupHistoryWithId        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE job_id = ?"

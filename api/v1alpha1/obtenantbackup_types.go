@@ -28,10 +28,9 @@ type OBTenantBackupSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
-	Type           BackupJobType `json:"type"`
-	TenantName     string        `json:"tenantName"`
-	LogArchiveDest string        `json:"logArchiveDest,omitempty"`
-	DataBackupDest string        `json:"dataBackupDest,omitempty"`
+	Type       BackupJobType `json:"type"`
+	TenantName string        `json:"tenantName"`
+	Path       string        `json:"path,omitempty"`
 }
 
 // +kubebuilder:object:generate=false
@@ -78,6 +77,8 @@ func (in *OBTenantBackupStatus) DeepCopyInto(out *OBTenantBackupStatus) {
 //+kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
+//+kubebuilder:printcolumn:name="Path",type=string,JSONPath=`.spec.path`
+//+kubebuilder:printcolumn:name="CreatedTime",type=string,JSONPath=`.metadata.creationTimestamp`,format=date-time
 
 // OBTenantBackup is the Schema for the obtenantbackups API.
 // An instance of OBTenantBackup stands for a tenant backup job
@@ -118,4 +119,6 @@ const (
 	BackupJobStatusInitializing BackupJobStatus = "INITIALIZING"
 	BackupJobStatusSuccessful   BackupJobStatus = "SUCCESSFUL"
 	BackupJobStatusFailed       BackupJobStatus = "FAILED"
+	BackupJobStatusCanceled     BackupJobStatus = "CANCELED"
+	BackupJobStatusStopped      BackupJobStatus = "STOPPED"
 )

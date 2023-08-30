@@ -23,3 +23,5 @@ spec:
     destination:
       type: "NFS"
       path: "data_backup_custom"
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"

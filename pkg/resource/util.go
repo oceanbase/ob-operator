@@ -202,3 +202,7 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 func getRef[T any](val T) *T {
 	return &val
 }
+
+func isZero[T comparable](val T) bool {
+	return val == *(new(T))
+}

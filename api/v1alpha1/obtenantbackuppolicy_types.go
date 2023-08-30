@@ -27,7 +27,6 @@ type OBTenantBackupPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBTenantBackupPolicy. Edit obtenantbackuppolicy_types.go to remove/update
 	TenantName string           `json:"tenantName"`
 	LogArchive LogArchiveConfig `json:"logArchive,omitempty"`
 	DataBackup DataBackupConfig `json:"dataBackup"`
@@ -40,12 +39,18 @@ type OBTenantBackupPolicyStatus struct {
 	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
 	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
 	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
+	NextFullBackupAt       metav1.Time            `json:"nextFullBackupAt,omitempty"`
+	NextIncrBackupAt       metav1.Time            `json:"nextIncrBackupAt,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
+//+kubebuilder:printcolumn:name="NextFullBackupAt",type=string,JSONPath=`.status.nextFullBackupAt`,format=date-time
+//+kubebuilder:printcolumn:name="NextIncrBackupAt",type=string,JSONPath=`.status.nextIncrBackupAt`,format=date-time
+//+kubebuilder:printcolumn:name="FullCrontab",type=string,JSONPath=`.spec.dataBackup.fullCrontab`
+//+kubebuilder:printcolumn:name="IncrementalCrontab",type=string,JSONPath=`.spec.dataBackup.incrementalCrontab`
 
 // OBTenantBackupPolicy is the Schema for the obtenantbackuppolicies API
 type OBTenantBackupPolicy struct {
@@ -73,15 +78,23 @@ func init() {
 type LogArchiveConfig struct {
 	Destination         BackupDestination `json:"destination"`
 	SwitchPieceInterval string            `json:"switchPieceInterval"`
+	Binding             ArchiveBinding    `json:"binding,omitempty"`
 	DestDisabled        bool              `json:"destDisabled,omitempty"`
 	Concurrency         int               `json:"concurrency,omitempty"`
 }
 
+type ArchiveBinding string
+
+const (
+	ArchiveBindingOptional  = "Optional"
+	ArchiveBindingMandatory = "Mandatory"
+)
+
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
-	Destination BackupDestination `json:"destination"`
-	FullCrontab string            `json:"fullCrontab,omitempty"`
-	IncrCrontab string            `json:"incrCrontab,omitempty"`
+	Destination        BackupDestination `json:"destination"`
+	FullCrontab        string            `json:"fullCrontab,omitempty"`
+	IncrementalCrontab string            `json:"incrementalCrontab,omitempty"`
 }
 
 type CleanPolicy struct {
@@ -102,7 +115,7 @@ const (
 )
 
 type BackupDestination struct {
-	Type BackupDestType `json:"type"`
+	Type BackupDestType `json:"type,omitempty"`
 	Path string         `json:"path,omitempty"`
 }
 

@@ -25,6 +25,13 @@ spec:
     - jsonPath: .spec.tenantName
       name: TenantName
       type: string
+    - jsonPath: .spec.path
+      name: Path
+      type: string
+    - format: date-time
+      jsonPath: .metadata.creationTimestamp
+      name: CreatedTime
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -46,9 +53,7 @@ spec:
           spec:
             description: OBTenantBackupSpec defines the desired state of OBTenantBackup
             properties:
-              dataBackupDest:
-                type: string
-              logArchiveDest:
+              path:
                 type: string
               tenantName:
                 type: string

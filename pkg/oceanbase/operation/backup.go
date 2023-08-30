@@ -63,14 +63,7 @@ func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType v1alpha1.Ba
 	if err != nil {
 		return nil, err
 	}
-	latest, err := m.QueryLatestBackupJob(jobType)
-	if err != nil {
-		return nil, err
-	}
-	if len(latest) != 1 {
-		return nil, errors.New("unexpected length of result")
-	}
-	return latest[0], nil
+	return m.QueryLatestBackupJobOfType(jobType)
 }
 
 func (m *OceanbaseOperationManager) StopBackupJobOfTenant() error {
@@ -163,7 +156,20 @@ func (m *OceanbaseOperationManager) QueryBackupCleanHistory() ([]*model.OBBackup
 
 func (m *OceanbaseOperationManager) QueryArchiveLogParameters() ([]*model.OBArchiveDest, error) {
 	configs := make([]*model.OBArchiveDest, 0)
-	err := m.QueryList(&configs, sql.QueryArchiveLogConfigs)
+	err := m.QueryList(&configs, sql.QueryArchiveLogDestConfigs)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query archive log configs")
+		return nil, errors.Wrap(err, "Query archive log configs")
+	}
+	if len(configs) == 0 {
+		return nil, errors.Errorf("No archive log configs found")
+	}
+	return configs, nil
+}
+
+func (m *OceanbaseOperationManager) QueryBackupParameters() ([]*model.OBBackupParameter, error) {
+	configs := make([]*model.OBBackupParameter, 0)
+	err := m.QueryList(&configs, sql.QueryBackupParameter)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query archive log configs")
 		return nil, errors.Wrap(err, "Query archive log configs")
@@ -192,21 +198,35 @@ func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) (
 	return tasks, nil
 }
 
-func (m *OceanbaseOperationManager) QueryLatestBackupJob(jobType v1alpha1.BackupJobType) ([]*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) QueryLatestBackupJobOfType(jobType v1alpha1.BackupJobType) (*model.OBBackupJob, error) {
+	return m.queryLatestBackupJob([]string{sql.QueryLatestBackupJobOfType, sql.QueryLatestBackupJobHistoryOfType}, jobType)
+}
+
+func (m *OceanbaseOperationManager) QueryLatestBackupJobOfTypeAndPath(jobType v1alpha1.BackupJobType, path string) (*model.OBBackupJob, error) {
+	return m.queryLatestBackupJob([]string{sql.QueryLatestBackupJobOfTypeAndPath, sql.QueryLatestBackupJobHistoryOfTypeAndPath}, jobType, path)
+}
+
+func (m *OceanbaseOperationManager) queryLatestBackupJob(statements []string, params ...interface{}) (*model.OBBackupJob, error) {
+	if len(statements) != 2 {
+		return nil, errors.New("unexpected # of statements, require exactly 2 statement")
+	}
 	jobs := make([]*model.OBBackupJob, 0)
-	err := m.QueryList(&jobs, sql.QueryLatestBackupJob, jobType)
+	err := m.QueryList(&jobs, statements[0], params...)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query latest running backup job")
 		return nil, errors.Wrap(err, "Query latest running backup job")
 	}
 	if len(jobs) == 0 {
-		err = m.QueryList(&jobs, sql.QueryLatestBackupJobHistory, jobType)
+		err = m.QueryList(&jobs, statements[1], params...)
 		if err != nil {
 			m.Logger.Error(err, "Failed to query latest backup job history")
 			return nil, errors.Wrap(err, "Query latest backup job history")
 		}
+		if len(jobs) == 0 {
+			return nil, nil
+		}
 	}
-	return jobs, nil
+	return jobs[0], nil
 }
 
 func (m *OceanbaseOperationManager) QueryBackupJobWithId(jobId int64) (*model.OBBackupJob, error) {
@@ -258,6 +278,18 @@ func (m *OceanbaseOperationManager) QueryLatestBackupCleanJob() (*model.OBBackup
 func (m *OceanbaseOperationManager) QueryLatestArchiveLogJob() (*model.OBArchiveLogJob, error) {
 	jobs := make([]*model.OBArchiveLogJob, 0)
 	err := m.QueryList(&jobs, sql.QueryLatestArchiveLogJob)
+	if err != nil {
+		return nil, err
+	}
+	if len(jobs) != 0 {
+		return jobs[0], nil
+	}
+	return nil, nil
+}
+
+func (m *OceanbaseOperationManager) QueryLatestRunningBackupJob() (*model.OBBackupJob, error) {
+	jobs := make([]*model.OBBackupJob, 0, 1)
+	err := m.QueryList(&jobs, sql.QueryLatestRunningBackupJob)
 	if err != nil {
 		return nil, err
 	}

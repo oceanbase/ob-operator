@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 type ObTenantBackupPolicyManager struct {
@@ -47,6 +48,19 @@ func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
 
 func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 	// Unnecessary by now
+	policy := m.BackupPolicy
+	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
+	if controllerutil.ContainsFinalizer(policy, finalizerName) {
+		err := m.StopBackup()
+		if err != nil {
+			return err
+		}
+		// remove our finalizer from the list and update it.
+		controllerutil.RemoveFinalizer(policy, finalizerName)
+		if err := m.Client.Update(m.Ctx, policy); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -72,7 +86,6 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
-	// TODO: check status of jobs to update BackupPolicy status
 	err := m.Client.Status().Update(m.Ctx, m.BackupPolicy)
 	if err != nil {
 		m.Logger.Error(err, "Got error when update status of backup policy")

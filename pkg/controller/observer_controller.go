@@ -72,7 +72,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 		return ctrl.Result{}, err
 	}
-	logger.Info("reconcile observer:", "spec", observer.Spec, "status", observer.Status)
+	// logger.Info("reconcile observer:", "spec", observer.Spec, "status", observer.Status)
 
 	// create observer manager
 	observerManager := &resource.OBServerManager{

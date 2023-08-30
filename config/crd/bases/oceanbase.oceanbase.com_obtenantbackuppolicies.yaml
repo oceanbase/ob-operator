@@ -22,6 +22,20 @@ spec:
     - jsonPath: .spec.tenantName
       name: TenantName
       type: string
+    - format: date-time
+      jsonPath: .status.nextFullBackupAt
+      name: NextFullBackupAt
+      type: string
+    - format: date-time
+      jsonPath: .status.nextIncrBackupAt
+      name: NextIncrBackupAt
+      type: string
+    - jsonPath: .spec.dataBackup.fullCrontab
+      name: FullCrontab
+      type: string
+    - jsonPath: .spec.dataBackup.incrementalCrontab
+      name: IncrementalCrontab
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -53,12 +67,10 @@ spec:
                         type: string
                       type:
                         type: string
-                    required:
-                    - type
                     type: object
                   fullCrontab:
                     type: string
-                  incrCrontab:
+                  incrementalCrontab:
                     type: string
                 required:
                 - destination
@@ -76,6 +88,8 @@ spec:
                 description: LogArchiveConfig contains the configuration for log archive
                   progress
                 properties:
+                  binding:
+                    type: string
                   concurrency:
                     type: integer
                   destDisabled:
@@ -86,8 +100,6 @@ spec:
                         type: string
                       type:
                         type: string
-                    required:
-                    - type
                     type: object
                   switchPieceInterval:
                     type: string
@@ -96,8 +108,6 @@ spec:
                 - switchPieceInterval
                 type: object
               tenantName:
-                description: Foo is an example field of OBTenantBackupPolicy. Edit
-                  obtenantbackuppolicy_types.go to remove/update
                 type: string
             required:
             - dataBackup
@@ -109,6 +119,12 @@ spec:
             properties:
               logArchiveDestDisabled:
                 type: boolean
+              nextFullBackupAt:
+                format: date-time
+                type: string
+              nextIncrBackupAt:
+                format: date-time
+                type: string
               operationContext:
                 properties:
                   idx:

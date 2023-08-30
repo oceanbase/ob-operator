@@ -102,3 +102,12 @@ const (
 	AllPrivilege    = "all"
 	SelectPrivilege = "select"
 )
+
+const (
+	LabelTenantName = "open.oceanbase.com/tenant-name"
+	LabelBackupType = "open.oceanbase.com/backup-type"
+)
+
+const (
+	AnnotationBackupJobStatus = "open.oceanbase.com/backup-job-type"
+)

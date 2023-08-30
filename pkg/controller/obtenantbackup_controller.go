@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
 )
@@ -53,11 +54,8 @@ type OBTenantBackupReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-
 	crJob := &v1alpha1.OBTenantBackup{}
 	if err := r.Get(ctx, req.NamespacedName, crJob); err != nil {
-		logger.Error(err, "unable to fetch OBTenantBackup")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 	switch crJob.Status.Status {
@@ -65,10 +63,6 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		fallthrough
 	case v1alpha1.BackupJobStatusInitializing:
 		crJob.Status.Status = v1alpha1.BackupJobStatusRunning
-		if err := r.Status().Update(ctx, crJob); err != nil {
-			logger.Error(err, "unable to update OBTenantBackup status")
-			return ctrl.Result{}, err
-		}
 
 		switch crJob.Spec.Type {
 		case v1alpha1.BackupJobTypeFull:
@@ -80,7 +74,7 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			fallthrough
 		case v1alpha1.BackupJobTypeClean:
 			// enter running state
-			return ctrl.Result{}, nil
+			return ctrl.Result{}, r.Status().Update(ctx, crJob)
 		}
 
 	case v1alpha1.BackupJobStatusRunning:
@@ -136,17 +130,18 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context,
 		logger.Error(err, "failed to get ob operation client")
 		return err
 	}
+	var targetJob *model.OBBackupJob
 	if job.Status.BackupJob == nil {
 		// occasionally happen, try to fetch the job from OB view
 		if job.Spec.Type == v1alpha1.BackupJobTypeFull || job.Spec.Type == v1alpha1.BackupJobTypeIncr {
-			latest, err := con.QueryLatestBackupJob(job.Spec.Type)
+			latest, err := con.QueryLatestBackupJobOfType(job.Spec.Type)
 			if err != nil {
 				return err
 			}
-			job.Status.BackupJob = latest[0]
-		} else {
-			// archive log and data clean
+			job.Status.BackupJob = latest
+			targetJob = latest
 		}
+		// archive log and data clean job should not be here
 	} else {
 		modelJob, err := con.QueryBackupJobWithId(job.Status.BackupJob.JobId)
 		if err != nil {
@@ -156,6 +151,15 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context,
 			return errors.New(fmt.Sprintf("backup job with id %d not found", job.Status.BackupJob.JobId))
 		}
 		job.Status.BackupJob = modelJob
+		targetJob = modelJob
+	}
+	switch targetJob.Status {
+	case "COMPLETED":
+		job.Status.Status = v1alpha1.BackupJobStatusSuccessful
+	case "FAILED":
+		job.Status.Status = v1alpha1.BackupJobStatusFailed
+	case "CANCELED":
+		job.Status.Status = v1alpha1.BackupJobStatusCanceled
 	}
 	return r.Client.Status().Update(ctx, job)
 }
@@ -175,6 +179,14 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Con
 	}
 	if latest != nil {
 		job.Status.DataCleanJob = latest
+		switch latest.Status {
+		case "COMPLETED":
+			job.Status.Status = v1alpha1.BackupJobStatusSuccessful
+		case "FAILED":
+			job.Status.Status = v1alpha1.BackupJobStatusFailed
+		case "CANCELED":
+			job.Status.Status = v1alpha1.BackupJobStatusCanceled
+		}
 		return r.Client.Status().Update(ctx, job)
 	}
 
@@ -196,6 +208,10 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 	}
 	if latest != nil {
 		job.Status.ArchiveLogJob = latest
+		switch latest.Status {
+		case "STOP":
+			job.Status.Status = v1alpha1.BackupJobStatusStopped
+		}
 		return r.Client.Status().Update(ctx, job)
 	}
 
