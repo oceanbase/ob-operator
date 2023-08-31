@@ -99,11 +99,13 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 
 func (r *OBTenantBackupPolicy) validateInterval() error {
 	var allErrs field.ErrorList
-	pattern := regexp.MustCompile(`^[1-7]d$`)
-	if !pattern.MatchString(r.Spec.LogArchive.SwitchPieceInterval) {
+	switchPiecePattern := regexp.MustCompile(`^[1-7]d$`)
+	if !switchPiecePattern.MatchString(r.Spec.LogArchive.SwitchPieceInterval) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("logArchive").Child("switchPieceInterval"), r.Spec.LogArchive.SwitchPieceInterval, "invalid switchPieceInterval"))
 	}
-	if !pattern.MatchString(r.Spec.DataClean.RecoveryWindow) {
+	// RecoveryWindow will be longer than SwitchPieceInterval
+	recoveryPattern := regexp.MustCompile(`^[1-9]\d*d$`)
+	if !recoveryPattern.MatchString(r.Spec.DataClean.RecoveryWindow) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("dataClean").Child("recoveryWindow"), r.Spec.DataClean.RecoveryWindow, "invalid recoveryWindow"))
 	}
 	if len(allErrs) == 0 {
