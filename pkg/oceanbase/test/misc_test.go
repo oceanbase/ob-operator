@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package test
 
 import (
+	"regexp"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -61,5 +62,19 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		nextTime := sched.Next(time.Now())
 		printObject(nextTime)
 		Expect(timeNow.Before(nextTime)).To(BeTrue())
+	})
+
+	It("Backup Interval Pattern Match", Label("pattern"), func() {
+		pattern := regexp.MustCompile(`^[1-7]d$`)
+		Expect(pattern.MatchString("1d")).To(BeTrue())
+		Expect(pattern.MatchString("7d")).To(BeTrue())
+		Expect(pattern.MatchString("8d")).To(BeFalse())
+		Expect(pattern.MatchString("0d")).To(BeFalse())
+		Expect(pattern.MatchString("d")).To(BeFalse())
+		Expect(pattern.MatchString("dd")).To(BeFalse())
+		Expect(pattern.MatchString("1")).To(BeFalse())
+		Expect(pattern.MatchString("1dd")).To(BeFalse())
+		Expect(pattern.MatchString("12h")).To(BeFalse())
+		Expect(pattern.MatchString("1d1")).To(BeFalse())
 	})
 })

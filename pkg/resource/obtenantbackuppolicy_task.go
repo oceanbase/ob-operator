@@ -189,6 +189,10 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
+	err = con.CancelCleanBackup()
+	if err != nil {
+		return err
+	}
 	cleanPolicyName := "default"
 	err = con.RemoveCleanBackupPolicy(cleanPolicyName)
 	if err != nil {

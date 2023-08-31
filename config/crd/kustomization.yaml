@@ -28,7 +28,7 @@ patchesStrategicMerge:
 #- patches/webhook_in_obtenantbackups.yaml
 #- patches/webhook_in_obclusterrestores.yaml
 #- patches/webhook_in_obtenantrestores.yaml
-#- path: patches/webhook_in_obtenantbackuppolicies.yaml
+- patches/webhook_in_obtenantbackuppolicies.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
