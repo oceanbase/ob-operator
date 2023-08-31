@@ -39,16 +39,16 @@ type OBTenantBackupPolicyStatus struct {
 	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
 	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
 	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
-	NextFullBackupAt       metav1.Time            `json:"nextFullBackupAt,omitempty"`
-	NextIncrBackupAt       metav1.Time            `json:"nextIncrBackupAt,omitempty"`
+	NextFull               string                 `json:"nextFull,omitempty"`
+	NextIncremental        string                 `json:"nextIncremental,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
-//+kubebuilder:printcolumn:name="NextFullBackupAt",type=string,JSONPath=`.status.nextFullBackupAt`,format=date-time
-//+kubebuilder:printcolumn:name="NextIncrBackupAt",type=string,JSONPath=`.status.nextIncrBackupAt`,format=date-time
+//+kubebuilder:printcolumn:name="NextFull",type=string,JSONPath=`.status.nextFull`
+//+kubebuilder:printcolumn:name="NextIncremental",type=string,JSONPath=`.status.nextIncremental`
 //+kubebuilder:printcolumn:name="FullCrontab",type=string,JSONPath=`.spec.dataBackup.fullCrontab`
 //+kubebuilder:printcolumn:name="IncrementalCrontab",type=string,JSONPath=`.spec.dataBackup.incrementalCrontab`
 

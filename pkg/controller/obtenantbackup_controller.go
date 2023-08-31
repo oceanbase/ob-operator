@@ -58,40 +58,27 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, crJob); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	switch crJob.Status.Status {
-	case "":
+	switch crJob.Spec.Type {
+	case v1alpha1.BackupJobTypeFull:
 		fallthrough
-	case v1alpha1.BackupJobStatusInitializing:
-		crJob.Status.Status = v1alpha1.BackupJobStatusRunning
-
-		switch crJob.Spec.Type {
-		case v1alpha1.BackupJobTypeFull:
+	case v1alpha1.BackupJobTypeIncr:
+		switch crJob.Status.Status {
+		case "":
 			fallthrough
-		case v1alpha1.BackupJobTypeIncr:
+		case v1alpha1.BackupJobStatusInitializing:
+			crJob.Status.Status = v1alpha1.BackupJobStatusRunning
 			return ctrl.Result{}, r.createBackupJobInOB(ctx, crJob)
-
-		case v1alpha1.BackupJobTypeArchive:
-			fallthrough
-		case v1alpha1.BackupJobTypeClean:
-			// enter running state
-			return ctrl.Result{}, r.Status().Update(ctx, crJob)
-		}
-
-	case v1alpha1.BackupJobStatusRunning:
-		// update progress
-		switch crJob.Spec.Type {
-		case v1alpha1.BackupJobTypeFull:
-			fallthrough
-		case v1alpha1.BackupJobTypeIncr:
+		case v1alpha1.BackupJobStatusRunning:
 			return ctrl.Result{}, r.maintainRunningBackupJob(ctx, crJob)
-
-		case v1alpha1.BackupJobTypeArchive:
-			return ctrl.Result{}, r.maintainRunningArchiveLogJob(ctx, crJob)
-		case v1alpha1.BackupJobTypeClean:
-			return ctrl.Result{}, r.maintainRunningBackupCleanJob(ctx, crJob)
+		default:
+			// Completed, Failed, Canceled, do nothing
+			return ctrl.Result{}, nil
 		}
-	default:
-		return ctrl.Result{}, nil
+
+	case v1alpha1.BackupJobTypeArchive:
+		return ctrl.Result{}, r.maintainRunningArchiveLogJob(ctx, crJob)
+	case v1alpha1.BackupJobTypeClean:
+		return ctrl.Result{}, r.maintainRunningBackupCleanJob(ctx, crJob)
 	}
 
 	return ctrl.Result{}, nil
@@ -153,6 +140,10 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context,
 		job.Status.BackupJob = modelJob
 		targetJob = modelJob
 	}
+	job.Status.StartedAt = targetJob.StartTimestamp
+	if targetJob.EndTimestamp != nil {
+		job.Status.EndedAt = *targetJob.EndTimestamp
+	}
 	switch targetJob.Status {
 	case "COMPLETED":
 		job.Status.Status = v1alpha1.BackupJobStatusSuccessful
@@ -179,6 +170,10 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Con
 	}
 	if latest != nil {
 		job.Status.DataCleanJob = latest
+		job.Status.StartedAt = latest.StartTimestamp
+		if latest.EndTimestamp != nil {
+			job.Status.EndedAt = *latest.EndTimestamp
+		}
 		switch latest.Status {
 		case "COMPLETED":
 			job.Status.Status = v1alpha1.BackupJobStatusSuccessful
@@ -186,6 +181,8 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Con
 			job.Status.Status = v1alpha1.BackupJobStatusFailed
 		case "CANCELED":
 			job.Status.Status = v1alpha1.BackupJobStatusCanceled
+		case "DOING":
+			job.Status.Status = v1alpha1.BackupJobStatusRunning
 		}
 		return r.Client.Status().Update(ctx, job)
 	}
@@ -208,9 +205,13 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 	}
 	if latest != nil {
 		job.Status.ArchiveLogJob = latest
+		job.Status.StartedAt = latest.StartScnDisplay
+		job.Status.EndedAt = latest.CheckpointScnDisplay
 		switch latest.Status {
 		case "STOP":
 			job.Status.Status = v1alpha1.BackupJobStatusStopped
+		case "DOING":
+			job.Status.Status = v1alpha1.BackupJobStatusRunning
 		}
 		return r.Client.Status().Update(ctx, job)
 	}

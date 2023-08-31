@@ -27,10 +27,15 @@ spec:
       type: string
     - jsonPath: .spec.path
       name: Path
+      priority: 100
       type: string
-    - format: date-time
-      jsonPath: .metadata.creationTimestamp
-      name: CreatedTime
+    - jsonPath: .status.startedAt
+      name: StartedAt
+      type: string
+    - description: In ArchiveLogJob, EndedAt is CheckpointScnDisplay field, in other
+        jobs, EndedAt is EndTimestamp field
+      jsonPath: .status.endedAt
+      name: EndedAt
       type: string
     name: v1alpha1
     schema:
@@ -257,6 +262,8 @@ spec:
                 - tenant_id
                 - type
                 type: object
+              endedAt:
+                type: string
               operationContext:
                 properties:
                   idx:
@@ -285,6 +292,8 @@ spec:
                 - tasks
                 type: object
               progress:
+                type: string
+              startedAt:
                 type: string
               status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state

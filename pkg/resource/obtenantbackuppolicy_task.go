@@ -233,7 +233,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			// create Full type backup job and return here
 			return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
 		} else {
-			m.BackupPolicy.Status.NextFullBackupAt = metav1.NewTime(nextFullTime)
+			m.BackupPolicy.Status.NextFull = nextFullTime.Format(time.DateTime)
 		}
 
 		// considering incremental backup
@@ -267,7 +267,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 						return err
 					}
 				} else {
-					m.BackupPolicy.Status.NextIncrBackupAt = metav1.NewTime(nextIncrTime)
+					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				}
 			} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
 				// do nothing
@@ -282,7 +282,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 					return err
 				}
 			} else {
-				m.BackupPolicy.Status.NextIncrBackupAt = metav1.NewTime(nextIncrTime)
+				m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 			}
 		}
 	} else if latestFull.Status == "INIT" || latestFull.Status == "DOING" {

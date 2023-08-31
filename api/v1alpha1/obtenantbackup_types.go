@@ -41,6 +41,8 @@ type OBTenantBackupStatus struct {
 	Status           BackupJobStatus         `json:"status"`
 	Progress         string                  `json:"progress"`
 	OperationContext *OperationContext       `json:"operationContext,omitempty"`
+	StartedAt        string                  `json:"startedAt,omitempty"`
+	EndedAt          string                  `json:"endedAt,omitempty"`
 	BackupJob        *model.OBBackupJob      `json:"backupJob,omitempty"`
 	ArchiveLogJob    *model.OBArchiveLogJob  `json:"archiveLogJob,omitempty"`
 	DataCleanJob     *model.OBBackupCleanJob `json:"dataCleanJob,omitempty"`
@@ -77,8 +79,9 @@ func (in *OBTenantBackupStatus) DeepCopyInto(out *OBTenantBackupStatus) {
 //+kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
-//+kubebuilder:printcolumn:name="Path",type=string,JSONPath=`.spec.path`
-//+kubebuilder:printcolumn:name="CreatedTime",type=string,JSONPath=`.metadata.creationTimestamp`,format=date-time
+//+kubebuilder:printcolumn:name="Path",type=string,JSONPath=`.spec.path`,priority=100
+//+kubebuilder:printcolumn:name="StartedAt",type=string,JSONPath=`.status.startedAt`
+//+kubebuilder:printcolumn:name="EndedAt",type=string,JSONPath=`.status.endedAt`,description="In ArchiveLogJob, EndedAt is CheckpointScnDisplay field, in other jobs, EndedAt is EndTimestamp field"
 
 // OBTenantBackup is the Schema for the obtenantbackups API.
 // An instance of OBTenantBackup stands for a tenant backup job
