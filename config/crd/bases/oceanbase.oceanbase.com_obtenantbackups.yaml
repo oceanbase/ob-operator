@@ -301,7 +301,6 @@ spec:
                   this file'
                 type: string
             required:
-            - progress
             - status
             type: object
         type: object

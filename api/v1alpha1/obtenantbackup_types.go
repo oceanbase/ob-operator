@@ -39,7 +39,7 @@ type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           BackupJobStatus         `json:"status"`
-	Progress         string                  `json:"progress"`
+	Progress         string                  `json:"progress,omitempty"`
 	OperationContext *OperationContext       `json:"operationContext,omitempty"`
 	StartedAt        string                  `json:"startedAt,omitempty"`
 	EndedAt          string                  `json:"endedAt,omitempty"`
