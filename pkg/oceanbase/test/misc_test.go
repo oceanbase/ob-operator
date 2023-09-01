@@ -16,9 +16,12 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/robfig/cron/v3"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 var _ = Describe("Test Miscellaneous Operation", func() {
@@ -92,5 +95,27 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(pattern.MatchString("0d")).To(BeFalse())
 		Expect(pattern.MatchString("d")).To(BeFalse())
 		Expect(pattern.MatchString("dd")).To(BeFalse())
+	})
+
+	It("Parse label selectors", Label("label"), func() {
+		_, err := labels.Parse("open.oceanbase.com/backup-job-status!=RUNNING")
+		Expect(err).To(BeNil())
+		_, err = labels.Parse("open.oceanbase.com/backup-job-status!=RUNNING,open.oceanbase.com/backup-job-status!=FAILED")
+		Expect(err).To(BeNil())
+		_, err = labels.Parse("open.oceanbase.com/backup-job-status!=RUNNING,open.oceanbase.com/backup-job-status!=FAILED,open.oceanbase.com/backup-job-status!=CANCELED")
+		Expect(err).To(BeNil())
+	})
+
+	It("Parse field selectors", Label("field"), func() {
+		_, err := labels.Parse("status.phase!=Running")
+		Expect(err).To(BeNil())
+		_, err = labels.Parse("status.phase!=Running,status.phase!=Failed")
+		Expect(err).To(BeNil())
+		_, err = labels.Parse("status.phase!=Running,status.phase!=Failed,status.phase!=Canceled")
+		Expect(err).To(BeNil())
+		_, err = fields.ParseSelector(".status.status!=" + string(v1alpha1.BackupJobStatusSuccessful) + ",.status.status!=" + string(v1alpha1.BackupJobStatusFailed) + ",.status.status!=" + string(v1alpha1.BackupJobStatusCanceled))
+		Expect(err).To(BeNil())
+		_, err = fields.ParseSelector("status.status!=" + string(v1alpha1.BackupJobStatusSuccessful) + ",status.status!=" + string(v1alpha1.BackupJobStatusFailed) + ",status.status!=" + string(v1alpha1.BackupJobStatusCanceled))
+		Expect(err).To(BeNil())
 	})
 })

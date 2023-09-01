@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/resource"
@@ -81,11 +82,21 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, r.maintainRunningBackupCleanJob(ctx, crJob)
 	}
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{
+		RequeueAfter: time.Second * 5,
+	}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBTenantBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	jobStatusKey := ".status.status"
+	if err := mgr.GetFieldIndexer().IndexField(context.Background(), &v1alpha1.OBTenantBackup{}, jobStatusKey, func(rawObj client.Object) []string {
+		job := rawObj.(*v1alpha1.OBTenantBackup)
+		return []string{string(job.Status.Status)}
+	}); err != nil {
+		return err
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBTenantBackup{}).
 		Complete(r)

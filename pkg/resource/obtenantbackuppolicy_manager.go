@@ -86,11 +86,7 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
-	err := m.Client.Status().Update(m.Ctx, m.BackupPolicy)
-	if err != nil {
-		m.Logger.Error(err, "Got error when update status of backup policy")
-	}
-	return err
+	return m.Client.Status().Update(m.Ctx, m.BackupPolicy)
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, error) {

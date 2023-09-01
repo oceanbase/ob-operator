@@ -25,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	cron "github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -232,12 +233,11 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			return nil
 		}
 		nextFullTime := fullCron.Next(lastFullBackupFinishedAt)
+		m.BackupPolicy.Status.NextFull = nextFullTime.Format(time.DateTime)
 		if nextFullTime.Before(timeNow) {
 			// Full backup and incremental backup can not be executed at the same time
 			// create Full type backup job and return here
 			return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
-		} else {
-			m.BackupPolicy.Status.NextFull = nextFullTime.Format(time.DateTime)
 		}
 
 		// considering incremental backup
@@ -265,13 +265,12 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				}
 
 				nextIncrTime := incrementalCron.Next(lastIncrBackupFinishedAt)
+				m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				if nextIncrTime.Before(timeNow) {
 					err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeIncr)
 					if err != nil {
 						return err
 					}
-				} else {
-					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				}
 			} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
 				// do nothing
@@ -280,13 +279,12 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			}
 		} else {
 			nextIncrTime := incrementalCron.Next(lastFullBackupFinishedAt)
+			m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 			if nextIncrTime.Before(timeNow) {
 				err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeIncr)
 				if err != nil {
 					return err
 				}
-			} else {
-				m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 			}
 		}
 	} else if latestFull.Status == "INIT" || latestFull.Status == "DOING" {
@@ -434,11 +432,15 @@ func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType v1alpha
 
 func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType v1alpha1.BackupJobType) (bool, error) {
 	var runningJobs v1alpha1.OBTenantBackupList
+	fieldSelector := fields.ParseSelectorOrDie(".status.status=" + string(v1alpha1.BackupJobStatusRunning))
 	err := m.Client.List(m.Ctx, &runningJobs,
 		client.MatchingLabels{
 			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
 			oceanbaseconst.LabelTenantName:      m.BackupPolicy.Spec.TenantName,
 			oceanbaseconst.LabelBackupType:      string(jobType),
+		},
+		client.MatchingFieldsSelector{
+			Selector: fieldSelector,
 		},
 		client.InNamespace(m.BackupPolicy.Namespace))
 	if err != nil {

@@ -61,7 +61,7 @@ func main() {
 	var syncPeriod *time.Duration
 	flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
 	flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
-	flag.StringVar(&syncPeriodStr, "sync-period", "5s", "Data sync period.")
+	flag.StringVar(&syncPeriodStr, "sync-period", "15s", "Data sync period.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
