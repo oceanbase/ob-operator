@@ -25,10 +25,11 @@ type OBTenantRestoreSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	RestoreTenantName string       `json:"restoreTenantName"`
-	Type              string       `json:"type"`
-	SourceUri         string       `json:"sourceUri"`
-	Until             *metav1.Time `json:"until,omitempty"`
+	ObClusterName     string `json:"obClusterName"`
+	RestoreTenantName string `json:"restoreTenantName"`
+	Type              string `json:"type"`
+	SourceUri         string `json:"sourceUri"`
+	Until             string `json:"until,omitempty"`
 }
 
 // OBTenantRestoreStatus defines the observed state of OBTenantRestore

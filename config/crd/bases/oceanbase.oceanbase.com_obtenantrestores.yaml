@@ -35,6 +35,8 @@ spec:
           spec:
             description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
             properties:
+              obClusterName:
+                type: string
               restoreTenantName:
                 type: string
               sourceUri:
@@ -42,9 +44,9 @@ spec:
               type:
                 type: string
               until:
-                format: date-time
                 type: string
             required:
+            - obClusterName
             - restoreTenantName
             - sourceUri
             - type

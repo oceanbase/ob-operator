@@ -16,6 +16,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -66,7 +67,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 
 func (m *ObTenantBackupPolicyManager) InitStatus() {
 	m.BackupPolicy.Status = v1alpha1.OBTenantBackupPolicyStatus{
-		Status:                 v1alpha1.BackupPolicyStatusPreparing,
+		Status:                 constants.BackupPolicyStatusPreparing,
 		LogArchiveDestDisabled: false,
 	}
 }
@@ -76,12 +77,12 @@ func (m *ObTenantBackupPolicyManager) SetOperationContext(c *v1alpha1.OperationC
 }
 
 func (m *ObTenantBackupPolicyManager) ClearTaskInfo() {
-	m.BackupPolicy.Status.Status = v1alpha1.BackupPolicyStatusRunning
+	m.BackupPolicy.Status.Status = constants.BackupPolicyStatusRunning
 	m.BackupPolicy.Status.OperationContext = nil
 }
 
 func (m *ObTenantBackupPolicyManager) FinishTask() {
-	m.BackupPolicy.Status.Status = v1alpha1.BackupPolicyStatusType(m.BackupPolicy.Status.OperationContext.TargetStatus)
+	m.BackupPolicy.Status.Status = constants.BackupPolicyStatusType(m.BackupPolicy.Status.OperationContext.TargetStatus)
 	m.BackupPolicy.Status.OperationContext = nil
 }
 
@@ -114,11 +115,11 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 	status := m.BackupPolicy.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
-	case v1alpha1.BackupPolicyStatusPreparing:
+	case constants.BackupPolicyStatusPreparing:
 		return task.GetRegistry().Get(flow.PrepareBackupPolicy)
-	case v1alpha1.BackupPolicyStatusPrepared:
+	case constants.BackupPolicyStatusPrepared:
 		return task.GetRegistry().Get(flow.StartBackupJob)
-	case v1alpha1.BackupPolicyStatusRunning:
+	case constants.BackupPolicyStatusRunning:
 		return task.GetRegistry().Get(flow.MaintainCrontab)
 	default:
 		return nil, nil

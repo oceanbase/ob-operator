@@ -16,7 +16,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/robfig/cron/v3"
@@ -113,9 +113,9 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(err).To(BeNil())
 		_, err = labels.Parse("status.phase!=Running,status.phase!=Failed,status.phase!=Canceled")
 		Expect(err).To(BeNil())
-		_, err = fields.ParseSelector(".status.status!=" + string(v1alpha1.BackupJobStatusSuccessful) + ",.status.status!=" + string(v1alpha1.BackupJobStatusFailed) + ",.status.status!=" + string(v1alpha1.BackupJobStatusCanceled))
+		_, err = fields.ParseSelector(".status.status!=" + string(constants.BackupJobStatusSuccessful) + ",.status.status!=" + string(constants.BackupJobStatusFailed) + ",.status.status!=" + string(constants.BackupJobStatusCanceled))
 		Expect(err).To(BeNil())
-		_, err = fields.ParseSelector("status.status!=" + string(v1alpha1.BackupJobStatusSuccessful) + ",status.status!=" + string(v1alpha1.BackupJobStatusFailed) + ",status.status!=" + string(v1alpha1.BackupJobStatusCanceled))
+		_, err = fields.ParseSelector("status.status!=" + string(constants.BackupJobStatusSuccessful) + ",status.status!=" + string(constants.BackupJobStatusFailed) + ",status.status!=" + string(constants.BackupJobStatusCanceled))
 		Expect(err).To(BeNil())
 	})
 })

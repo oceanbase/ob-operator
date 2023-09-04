@@ -20,6 +20,7 @@ import (
 	"errors"
 	"regexp"
 
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/robfig/cron/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,10 +49,10 @@ var _ webhook.Defaulter = &OBTenantBackupPolicy{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) Default() {
 	if r.Spec.DataBackup.Destination.Type == "" {
-		r.Spec.DataBackup.Destination.Type = BackupDestTypeNFS
+		r.Spec.DataBackup.Destination.Type = constants.BackupDestTypeNFS
 	}
 	if r.Spec.LogArchive.Destination.Type == "" {
-		r.Spec.LogArchive.Destination.Type = BackupDestTypeNFS
+		r.Spec.LogArchive.Destination.Type = constants.BackupDestTypeNFS
 	}
 	if r.Spec.LogArchive.SwitchPieceInterval == "" {
 		r.Spec.LogArchive.SwitchPieceInterval = "1d"
@@ -83,6 +84,12 @@ func (r *OBTenantBackupPolicy) ValidateDelete() (admission.Warnings, error) {
 
 // BackupPolicy Validation Entry
 func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
+	if r.Spec.ObClusterName == "" {
+		return errors.New("obClusterName is required")
+	}
+	if r.Spec.TenantName == "" {
+		return errors.New("tenantName is required")
+	}
 	err := r.validateBackupCrontab()
 	if err != nil {
 		return err
@@ -90,9 +97,6 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	err = r.validateInterval()
 	if err != nil {
 		return err
-	}
-	if r.Spec.TenantName == "" {
-		return errors.New("tenantName is required")
 	}
 	return nil
 }

@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
+	"github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
@@ -23,7 +24,7 @@ func PrepareBackupPolicy() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareBackupPolicy,
 			Tasks:        []string{taskname.GetTenantInfo, taskname.ConfigureServerForBackup},
-			TargetStatus: string(v1alpha1.BackupPolicyStatusPrepared),
+			TargetStatus: string(constants.BackupPolicyStatusPrepared),
 		},
 	}
 }
@@ -33,7 +34,7 @@ func StartBackupJob() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.StartBackupJob,
 			Tasks:        []string{taskname.StartBackupJob},
-			TargetStatus: string(v1alpha1.BackupPolicyStatusRunning),
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
 		},
 	}
 }
@@ -43,7 +44,7 @@ func StopBackupJob() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.StopBackupJob,
 			Tasks:        []string{taskname.StopBackupJob},
-			TargetStatus: string(v1alpha1.BackupPolicyStatusStopped),
+			TargetStatus: string(constants.BackupPolicyStatusStopped),
 		},
 	}
 }
@@ -53,7 +54,7 @@ func CheckAndSpawnJobs() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.MaintainCrontab,
 			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CheckAndSpawnJobs},
-			TargetStatus: string(v1alpha1.BackupPolicyStatusRunning),
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
 		},
 	}
 }

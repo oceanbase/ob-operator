@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
@@ -51,11 +51,11 @@ func (m *OceanbaseOperationManager) CreateBackupIncr() error {
 	return m.ExecWithDefaultTimeout(sql.CreateBackupIncr)
 }
 
-func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType v1alpha1.BackupJobType) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
 	var err error
-	if jobType == v1alpha1.BackupJobTypeFull {
+	if jobType == constants.BackupJobTypeFull {
 		err = m.ExecWithDefaultTimeout(sql.CreateBackupFull)
-	} else if jobType == v1alpha1.BackupJobTypeIncr {
+	} else if jobType == constants.BackupJobTypeIncr {
 		err = m.ExecWithDefaultTimeout(sql.CreateBackupIncr)
 	} else {
 		return nil, nil
@@ -63,7 +63,7 @@ func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType v1alpha1.Ba
 	if err != nil {
 		return nil, err
 	}
-	return m.QueryLatestBackupJobOfType(jobType)
+	return m.GetLatestBackupJobOfType(jobType)
 }
 
 func (m *OceanbaseOperationManager) StopBackupJobOfTenant() error {
@@ -86,7 +86,7 @@ func (m *OceanbaseOperationManager) CancelAllCleanBackup() error {
 	return m.ExecWithDefaultTimeout(sql.CancelAllCleanBackup)
 }
 
-func (m *OceanbaseOperationManager) QueryArchiveLog() ([]*model.OBArchiveLogJob, error) {
+func (m *OceanbaseOperationManager) ListArchiveLog() ([]*model.OBArchiveLogJob, error) {
 	summaries := make([]*model.OBArchiveLogJob, 0)
 	err := m.QueryList(&summaries, sql.QueryArchiveLog)
 	if err != nil {
@@ -96,7 +96,7 @@ func (m *OceanbaseOperationManager) QueryArchiveLog() ([]*model.OBArchiveLogJob,
 	return summaries, nil
 }
 
-func (m *OceanbaseOperationManager) QueryArchiveLogSummary() ([]*model.OBArchiveLogSummary, error) {
+func (m *OceanbaseOperationManager) ListArchiveLogSummary() ([]*model.OBArchiveLogSummary, error) {
 	summaries := make([]*model.OBArchiveLogSummary, 0)
 	err := m.QueryList(&summaries, sql.QueryArchiveLogSummary)
 	if err != nil {
@@ -106,15 +106,15 @@ func (m *OceanbaseOperationManager) QueryArchiveLogSummary() ([]*model.OBArchive
 	return summaries, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupJobs() ([]*model.OBBackupJob, error) {
-	return m.queryBackupJobOrHistory(sql.QueryBackupJobs)
+func (m *OceanbaseOperationManager) ListBackupJobs() ([]*model.OBBackupJob, error) {
+	return m.listBackupJobOrHistory(sql.QueryBackupJobs)
 }
 
-func (m *OceanbaseOperationManager) QueryBackupJobHistory() ([]*model.OBBackupJob, error) {
-	return m.queryBackupJobOrHistory(sql.QueryBackupHistory)
+func (m *OceanbaseOperationManager) ListBackupJobHistory() ([]*model.OBBackupJob, error) {
+	return m.listBackupJobOrHistory(sql.QueryBackupHistory)
 }
 
-func (m *OceanbaseOperationManager) queryBackupJobOrHistory(statement string) ([]*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) listBackupJobOrHistory(statement string) ([]*model.OBBackupJob, error) {
 	histories := make([]*model.OBBackupJob, 0)
 	err := m.QueryList(&histories, statement)
 	if err != nil {
@@ -124,7 +124,7 @@ func (m *OceanbaseOperationManager) queryBackupJobOrHistory(statement string) ([
 	return histories, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupCleanPolicy() ([]*model.OBBackupCleanPolicy, error) {
+func (m *OceanbaseOperationManager) ListBackupCleanPolicy() ([]*model.OBBackupCleanPolicy, error) {
 	policies := make([]*model.OBBackupCleanPolicy, 0)
 	err := m.QueryList(&policies, sql.QueryBackupCleanPolicy)
 	if err != nil {
@@ -134,7 +134,7 @@ func (m *OceanbaseOperationManager) QueryBackupCleanPolicy() ([]*model.OBBackupC
 	return policies, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupCleanJobs() ([]*model.OBBackupCleanJob, error) {
+func (m *OceanbaseOperationManager) ListBackupCleanJobs() ([]*model.OBBackupCleanJob, error) {
 	jobs := make([]*model.OBBackupCleanJob, 0)
 	err := m.QueryList(&jobs, sql.QueryBackupCleanJobs)
 	if err != nil {
@@ -144,7 +144,7 @@ func (m *OceanbaseOperationManager) QueryBackupCleanJobs() ([]*model.OBBackupCle
 	return jobs, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupCleanHistory() ([]*model.OBBackupCleanJob, error) {
+func (m *OceanbaseOperationManager) ListBackupCleanHistory() ([]*model.OBBackupCleanJob, error) {
 	histories := make([]*model.OBBackupCleanJob, 0)
 	err := m.QueryList(&histories, sql.QueryBackupCleanJobHistory)
 	if err != nil {
@@ -154,7 +154,7 @@ func (m *OceanbaseOperationManager) QueryBackupCleanHistory() ([]*model.OBBackup
 	return histories, nil
 }
 
-func (m *OceanbaseOperationManager) QueryArchiveLogParameters() ([]*model.OBArchiveDest, error) {
+func (m *OceanbaseOperationManager) ListArchiveLogParameters() ([]*model.OBArchiveDest, error) {
 	configs := make([]*model.OBArchiveDest, 0)
 	err := m.QueryList(&configs, sql.QueryArchiveLogDestConfigs)
 	if err != nil {
@@ -167,7 +167,7 @@ func (m *OceanbaseOperationManager) QueryArchiveLogParameters() ([]*model.OBArch
 	return configs, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupParameters() ([]*model.OBBackupParameter, error) {
+func (m *OceanbaseOperationManager) ListBackupParameters() ([]*model.OBBackupParameter, error) {
 	configs := make([]*model.OBBackupParameter, 0)
 	err := m.QueryList(&configs, sql.QueryBackupParameter)
 	if err != nil {
@@ -180,15 +180,15 @@ func (m *OceanbaseOperationManager) QueryBackupParameters() ([]*model.OBBackupPa
 	return configs, nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupTasks() ([]*model.OBBackupTask, error) {
-	return m.queryBackupTaskOrHistory(sql.QueryBackupTasks)
+func (m *OceanbaseOperationManager) ListBackupTasks() ([]*model.OBBackupTask, error) {
+	return m.listBackupTaskOrHistory(sql.QueryBackupTasks)
 }
 
-func (m *OceanbaseOperationManager) QueryBackupTaskHistory() ([]*model.OBBackupTask, error) {
-	return m.queryBackupTaskOrHistory(sql.QueryBackupTaskHistory)
+func (m *OceanbaseOperationManager) ListBackupTaskHistory() ([]*model.OBBackupTask, error) {
+	return m.listBackupTaskOrHistory(sql.QueryBackupTaskHistory)
 }
 
-func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) ([]*model.OBBackupTask, error) {
+func (m *OceanbaseOperationManager) listBackupTaskOrHistory(statement string) ([]*model.OBBackupTask, error) {
 	tasks := make([]*model.OBBackupTask, 0)
 	err := m.QueryList(&tasks, statement)
 	if err != nil {
@@ -198,15 +198,15 @@ func (m *OceanbaseOperationManager) queryBackupTaskOrHistory(statement string) (
 	return tasks, nil
 }
 
-func (m *OceanbaseOperationManager) QueryLatestBackupJobOfType(jobType v1alpha1.BackupJobType) (*model.OBBackupJob, error) {
-	return m.queryLatestBackupJob([]string{sql.QueryLatestBackupJobOfType, sql.QueryLatestBackupJobHistoryOfType}, jobType)
+func (m *OceanbaseOperationManager) GetLatestBackupJobOfType(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
+	return m.getLatestBackupJob([]string{sql.QueryLatestBackupJobOfType, sql.QueryLatestBackupJobHistoryOfType}, jobType)
 }
 
-func (m *OceanbaseOperationManager) QueryLatestBackupJobOfTypeAndPath(jobType v1alpha1.BackupJobType, path string) (*model.OBBackupJob, error) {
-	return m.queryLatestBackupJob([]string{sql.QueryLatestBackupJobOfTypeAndPath, sql.QueryLatestBackupJobHistoryOfTypeAndPath}, jobType, path)
+func (m *OceanbaseOperationManager) GetLatestBackupJobOfTypeAndPath(jobType constants.BackupJobType, path string) (*model.OBBackupJob, error) {
+	return m.getLatestBackupJob([]string{sql.QueryLatestBackupJobOfTypeAndPath, sql.QueryLatestBackupJobHistoryOfTypeAndPath}, jobType, path)
 }
 
-func (m *OceanbaseOperationManager) queryLatestBackupJob(statements []string, params ...interface{}) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) getLatestBackupJob(statements []string, params ...interface{}) (*model.OBBackupJob, error) {
 	if len(statements) != 2 {
 		return nil, errors.New("unexpected # of statements, require exactly 2 statement")
 	}
@@ -229,7 +229,7 @@ func (m *OceanbaseOperationManager) queryLatestBackupJob(statements []string, pa
 	return jobs[0], nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupJobWithId(jobId int64) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) GetBackupJobWithId(jobId int64) (*model.OBBackupJob, error) {
 	jobs := make([]*model.OBBackupJob, 0)
 	err := m.QueryList(&jobs, sql.QueryBackupJobWithId, jobId)
 	if err != nil {
@@ -248,7 +248,7 @@ func (m *OceanbaseOperationManager) QueryBackupJobWithId(jobId int64) (*model.OB
 	return jobs[0], nil
 }
 
-func (m *OceanbaseOperationManager) QueryBackupTaskWithJobId(jobId int64) ([]*model.OBBackupTask, error) {
+func (m *OceanbaseOperationManager) ListBackupTaskWithJobId(jobId int64) ([]*model.OBBackupTask, error) {
 	tasks := make([]*model.OBBackupTask, 0)
 	taskHistory := make([]*model.OBBackupTask, 0)
 	err := m.QueryList(&tasks, sql.QueryBackupTaskWithJobId, jobId)
@@ -263,7 +263,7 @@ func (m *OceanbaseOperationManager) QueryBackupTaskWithJobId(jobId int64) ([]*mo
 	return tasks, nil
 }
 
-func (m *OceanbaseOperationManager) QueryLatestBackupCleanJob() (*model.OBBackupCleanJob, error) {
+func (m *OceanbaseOperationManager) GetLatestBackupCleanJob() (*model.OBBackupCleanJob, error) {
 	jobs := make([]*model.OBBackupCleanJob, 0)
 	err := m.QueryList(&jobs, sql.QueryLatestCleanJob)
 	if err != nil {
@@ -275,7 +275,7 @@ func (m *OceanbaseOperationManager) QueryLatestBackupCleanJob() (*model.OBBackup
 	return nil, nil
 }
 
-func (m *OceanbaseOperationManager) QueryLatestArchiveLogJob() (*model.OBArchiveLogJob, error) {
+func (m *OceanbaseOperationManager) GetLatestArchiveLogJob() (*model.OBArchiveLogJob, error) {
 	jobs := make([]*model.OBArchiveLogJob, 0)
 	err := m.QueryList(&jobs, sql.QueryLatestArchiveLogJob)
 	if err != nil {
@@ -287,7 +287,7 @@ func (m *OceanbaseOperationManager) QueryLatestArchiveLogJob() (*model.OBArchive
 	return nil, nil
 }
 
-func (m *OceanbaseOperationManager) QueryLatestRunningBackupJob() (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) GetLatestRunningBackupJob() (*model.OBBackupJob, error) {
 	jobs := make([]*model.OBBackupJob, 0, 1)
 	err := m.QueryList(&jobs, sql.QueryLatestRunningBackupJob)
 	if err != nil {

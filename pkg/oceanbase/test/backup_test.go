@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	. "github.com/onsi/ginkgo/v2"
@@ -46,86 +46,86 @@ var _ = Describe("Test Backup Operation", func() {
 	})
 
 	It("Query Clean Policies", func() {
-		cleanPolicies, err := con.QueryBackupCleanPolicy()
+		cleanPolicies, err := con.ListBackupCleanPolicy()
 		Expect(err).To(BeNil())
 		printSlice(cleanPolicies, "clean policies")
 	})
 
 	It("Query ArchiveLogSummary", func() {
-		summaries, err := con.QueryArchiveLogSummary()
+		summaries, err := con.ListArchiveLogSummary()
 		Expect(err).To(BeNil())
 		printSlice(summaries, "archive log summary")
 	})
 
 	It("Query ArchiveLog", func() {
-		logs, err := con.QueryArchiveLog()
+		logs, err := con.ListArchiveLog()
 		Expect(err).To(BeNil())
 		printSlice(logs, "archive log")
 	})
 
 	It("Query ArchiveLogParameters", func() {
-		parameters, err := con.QueryArchiveLogParameters()
+		parameters, err := con.ListArchiveLogParameters()
 		Expect(err).To(BeNil())
 		printSlice(parameters, "archive log parameters")
 	})
 
 	It("Query BackupJobs", func() {
-		jobs, err := con.QueryBackupJobs()
+		jobs, err := con.ListBackupJobs()
 		Expect(err).To(BeNil())
 		printSlice(jobs, "backup jobs")
 	})
 
 	It("Query BackupJobHistory", func() {
-		histories, err := con.QueryBackupJobHistory()
+		histories, err := con.ListBackupJobHistory()
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup job history")
 	})
 
 	It("Query BackupCleanJobs", func() {
-		histories, err := con.QueryBackupCleanJobs()
+		histories, err := con.ListBackupCleanJobs()
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup clean jobs")
 	})
 
 	It("Query BackupCleanJobHistory", func() {
-		histories, err := con.QueryBackupCleanHistory()
+		histories, err := con.ListBackupCleanHistory()
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup clean jobs")
 	})
 
 	It("Query BackupTasks", func() {
-		tasks, err := con.QueryBackupTasks()
+		tasks, err := con.ListBackupTasks()
 		Expect(err).To(BeNil())
 		printSlice(tasks, "backup tasks")
 	})
 
 	It("Query BackupTaskHistory", func() {
-		histories, err := con.QueryBackupTaskHistory()
+		histories, err := con.ListBackupTaskHistory()
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup task history")
 	})
 
 	It("Query BackupJob with correct ID", func() {
-		job, err := con.QueryBackupJobWithId(3)
+		job, err := con.GetBackupJobWithId(3)
 		Expect(err).To(BeNil())
 		Expect(job).NotTo(BeNil())
 		printObject(job, "BackupJob")
 	})
 
 	It("Query BackupJob with incorrect ID", func() {
-		job, err := con.QueryBackupJobWithId(time.Now().Unix())
+		job, err := con.GetBackupJobWithId(time.Now().Unix())
 		Expect(err).To(BeNil())
 		Expect(job).To(BeNil())
 	})
 
 	It("Create and return full type BackupJob", func() {
 		Skip("This test will create a backup job, which will take a long time")
-		var t v1alpha1.BackupJobType
+		var t constants.BackupJobType
 		timeNow := time.Now().Unix()
 		if timeNow%2 == 0 {
-			t = v1alpha1.BackupJobTypeFull
+			t = constants.BackupJobTypeFull
 		} else {
-			t = v1alpha1.BackupJobTypeIncr
+			t = constants.BackupJobTypeIncr
 		}
 
 		By("Create BackupJob of type " + string(t))
@@ -136,13 +136,13 @@ var _ = Describe("Test Backup Operation", func() {
 		// Query tasks at once will get empty result
 		time.Sleep(time.Second)
 		By(fmt.Sprintf("Query BackupJob with ID %d", job.JobId))
-		tasks, err := con.QueryBackupTaskWithJobId(job.JobId)
+		tasks, err := con.ListBackupTaskWithJobId(job.JobId)
 		Expect(err).To(BeNil())
 		printSlice(tasks, fmt.Sprintf("BackupTasks of Job %d", job.JobId))
 	})
 
 	It("Get Log Archive dest info", func() {
-		dest, err := con.QueryArchiveLogParameters()
+		dest, err := con.ListArchiveLogParameters()
 		Expect(err).To(BeNil())
 		printSlice(dest, "Log Archive dest info")
 	})
@@ -161,7 +161,7 @@ var _ = Describe("Test Backup Operation", func() {
 		err = con.SetLogArchiveConcurrency(2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.QueryLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob()
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
@@ -184,7 +184,7 @@ var _ = Describe("Test Backup Operation", func() {
 		err = con.SetLogArchiveConcurrency(2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.QueryLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob()
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
@@ -209,7 +209,7 @@ var _ = Describe("Test Backup Operation", func() {
 		By("Set Log Archive Destination")
 		if tenantInfo.LogMode == "NOARCHIVELOG" {
 
-			latest, err := con.QueryLatestArchiveLogJob()
+			latest, err := con.GetLatestArchiveLogJob()
 			Expect(err).To(BeNil())
 			if latest != nil {
 				if latest.Status != "DOING" {
@@ -223,7 +223,7 @@ var _ = Describe("Test Backup Operation", func() {
 		err = con.SetLogArchiveConcurrency(2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.QueryLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob()
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
@@ -257,14 +257,14 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Stop Backup Job", func() {
 		By("Stop full job")
-		_, _ = con.CreateAndReturnBackupJob(v1alpha1.BackupJobTypeFull)
+		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeFull)
 		// ignore error
 		time.Sleep(time.Second)
 		err := con.StopBackupJobOfTenant()
 		Expect(err).To(BeNil())
 
 		By("Stop incremental job")
-		_, _ = con.CreateAndReturnBackupJob(v1alpha1.BackupJobTypeIncr)
+		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeIncr)
 		// ignore error
 		time.Sleep(time.Second)
 		err = con.StopBackupJobOfTenant()
@@ -272,10 +272,10 @@ var _ = Describe("Test Backup Operation", func() {
 	})
 
 	It("Create two backup jobs at the same time", Label("slow"), func() {
-		_, _ = con.CreateAndReturnBackupJob(v1alpha1.BackupJobTypeIncr)
+		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeIncr)
 		time.Sleep(time.Second)
 
-		_, err := con.CreateAndReturnBackupJob(v1alpha1.BackupJobTypeFull)
+		_, err := con.CreateAndReturnBackupJob(constants.BackupJobTypeFull)
 		Expect(err).NotTo(BeNil())
 		time.Sleep(time.Second)
 

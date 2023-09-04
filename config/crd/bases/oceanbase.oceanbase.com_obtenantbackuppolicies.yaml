@@ -104,10 +104,14 @@ spec:
                 - destination
                 - switchPieceInterval
                 type: object
+              obClusterName:
+                type: string
               tenantName:
                 type: string
             required:
             - dataBackup
+            - logArchive
+            - obClusterName
             - tenantName
             type: object
           status:

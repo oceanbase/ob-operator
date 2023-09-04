@@ -104,10 +104,6 @@ const (
 )
 
 const (
-	LabelTenantName = "open.oceanbase.com/tenant-name"
-	LabelBackupType = "open.oceanbase.com/backup-type"
-)
-
-const (
-	AnnotationBackupJobStatus = "open.oceanbase.com/backup-job-type"
+	LabelTenantName = "oceanbase.oceanbase.com/tenant-name"
+	LabelBackupType = "oceanbase.oceanbase.com/backup-type"
 )

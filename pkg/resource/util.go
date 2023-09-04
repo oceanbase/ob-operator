@@ -51,8 +51,8 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Log
 	return getOperationClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 }
 
-func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName string) (*operation.OceanbaseOperationManager, error) {
-	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, tenantName+"-credential")
+func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
+	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, credential)
 }
 
 func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
@@ -82,7 +82,6 @@ func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha
 				return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
 			}
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
-			// logger.Info("Get ob data source", "source", s, "password", password, "dsn", s.DataSourceName())
 		}
 		// if err is nil, db connection is already checked available
 		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)

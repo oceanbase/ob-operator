@@ -18,7 +18,8 @@ import (
 	"strings"
 	"time"
 
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	constants "github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
@@ -43,7 +44,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	}
 
 	// Maintain log archive parameters
-	configs, err := con.QueryArchiveLogParameters()
+	configs, err := con.ListArchiveLogParameters()
 	if err != nil {
 		return err
 	}
@@ -62,7 +63,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 					return err
 				}
 			} else {
-				latestArchiveJob, err := con.QueryLatestArchiveLogJob()
+				latestArchiveJob, err := con.GetLatestArchiveLogJob()
 				if err != nil {
 					return err
 				}
@@ -88,7 +89,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	}
 
 	// Maintain backup parameters
-	backupConfigs, err := con.QueryBackupParameters()
+	backupConfigs, err := con.ListBackupParameters()
 	if err != nil {
 		return err
 	}
@@ -96,7 +97,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	for _, config := range backupConfigs {
 		// Can not modify backup destination when there is a running backup job
 		if config.Name == "data_backup_dest" && config.Value != backupPath {
-			latestRunning, err := con.QueryLatestRunningBackupJob()
+			latestRunning, err := con.GetLatestRunningBackupJob()
 			if err != nil {
 				return err
 			}
@@ -140,7 +141,7 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 		}
 	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	cleanPolicy, err := con.QueryBackupCleanPolicy()
+	cleanPolicy, err := con.ListBackupCleanPolicy()
 	if err != nil {
 		return err
 	}
@@ -166,16 +167,16 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 			}
 		}
 	}
-	err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeArchive)
+	err = m.createBackupJobIfNotExists(constants.BackupJobTypeArchive)
 	if err != nil {
 		return err
 	}
-	err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeClean)
+	err = m.createBackupJobIfNotExists(constants.BackupJobTypeClean)
 	if err != nil {
 		return err
 	}
 	// create backup job of full type
-	return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
+	return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 }
 
 func (m *ObTenantBackupPolicyManager) StopBackup() error {
@@ -205,12 +206,12 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	backupPath := m.getBackupDestPath()
 	// Avoid backup failure due to destination modification
-	latestFull, err := m.getLatestBackupJobOfTypeAndPath(v1alpha1.BackupJobTypeFull, backupPath)
+	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
 		return err
 	}
 	if latestFull == nil || latestFull.Status == "CANCELED" {
-		return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
+		return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 	}
 	if latestFull.Status == "COMPLETED" {
 		var lastFullBackupFinishedAt time.Time
@@ -237,7 +238,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		if nextFullTime.Before(timeNow) {
 			// Full backup and incremental backup can not be executed at the same time
 			// create Full type backup job and return here
-			return m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeFull)
+			return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 		}
 
 		// considering incremental backup
@@ -247,7 +248,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			m.Logger.Error(err, "Failed to parse full backup crontab")
 			return nil
 		}
-		latestIncr, err := m.getLatestBackupJobOfTypeAndPath(v1alpha1.BackupJobTypeIncr, backupPath)
+		latestIncr, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeIncr, backupPath)
 		if err != nil {
 			return err
 		}
@@ -267,7 +268,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				nextIncrTime := incrementalCron.Next(lastIncrBackupFinishedAt)
 				m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				if nextIncrTime.Before(timeNow) {
-					err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeIncr)
+					err = m.createBackupJobIfNotExists(constants.BackupJobTypeIncr)
 					if err != nil {
 						return err
 					}
@@ -281,7 +282,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			nextIncrTime := incrementalCron.Next(lastFullBackupFinishedAt)
 			m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 			if nextIncrTime.Before(timeNow) {
-				err = m.createBackupJobIfNotExists(v1alpha1.BackupJobTypeIncr)
+				err = m.createBackupJobIfNotExists(constants.BackupJobTypeIncr)
 				if err != nil {
 					return err
 				}
@@ -295,20 +296,20 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType v1alpha1.BackupJobType) (*model.OBBackupJob, error) {
+func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
 	con, err := m.getOperationManager()
 	if err != nil {
 		return nil, err
 	}
-	return con.QueryLatestBackupJobOfType(jobType)
+	return con.GetLatestBackupJobOfType(jobType)
 }
 
-func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType v1alpha1.BackupJobType, path string) (*model.OBBackupJob, error) {
+func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType constants.BackupJobType, path string) (*model.OBBackupJob, error) {
 	con, err := m.getOperationManager()
 	if err != nil {
 		return nil, err
 	}
-	return con.QueryLatestBackupJobOfTypeAndPath(jobType, path)
+	return con.GetLatestBackupJobOfTypeAndPath(jobType, path)
 }
 
 // get operation manager to exec sql
@@ -316,16 +317,15 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if m.con != nil {
 		return m.con, nil
 	}
-	clusterName, _ := m.BackupPolicy.Labels[oceanbaseconst.LabelRefOBCluster]
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,
-		Name:      clusterName,
+		Name:      m.BackupPolicy.Spec.ObClusterName,
 	}, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName)
+	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantName+"-credential")
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -336,7 +336,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
 	archiveSpec := m.BackupPolicy.Spec.LogArchive
 	targetDest := archiveSpec.Destination
-	if targetDest.Type == v1alpha1.BackupDestTypeNFS || isZero(targetDest.Type) {
+	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
 		var dest string
 		if targetDest.Path == "" {
 			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
@@ -364,7 +364,7 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
 
 func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	targetDest := m.BackupPolicy.Spec.DataBackup.Destination
-	if targetDest.Type == v1alpha1.BackupDestTypeNFS || isZero(targetDest.Type) {
+	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
 		if targetDest.Path == "" {
 			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
 		} else {
@@ -375,18 +375,18 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	}
 }
 
-func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJobType) error {
+func (m *ObTenantBackupPolicyManager) createBackupJob(jobType constants.BackupJobType) error {
 	m.Logger.Info("Create Backup Job", "type", jobType)
 	var path string
 	switch jobType {
-	case v1alpha1.BackupJobTypeClean:
+	case constants.BackupJobTypeClean:
 		fallthrough
-	case v1alpha1.BackupJobTypeIncr:
+	case constants.BackupJobTypeIncr:
 		fallthrough
-	case v1alpha1.BackupJobTypeFull:
+	case constants.BackupJobTypeFull:
 		path = m.getBackupDestPath()
 
-	case v1alpha1.BackupJobTypeArchive:
+	case constants.BackupJobTypeArchive:
 		path = m.getArchiveDestPath()
 	}
 	backupJob := &v1alpha1.OBTenantBackup{
@@ -409,15 +409,16 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType v1alpha1.BackupJob
 			},
 		},
 		Spec: v1alpha1.OBTenantBackupSpec{
-			Path:       path,
-			Type:       jobType,
-			TenantName: m.BackupPolicy.Spec.TenantName,
+			Path:          path,
+			Type:          jobType,
+			TenantName:    m.BackupPolicy.Spec.TenantName,
+			ObClusterName: m.BackupPolicy.Spec.ObClusterName,
 		},
 	}
 	return m.Client.Create(m.Ctx, backupJob)
 }
 
-func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType v1alpha1.BackupJobType) error {
+func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType constants.BackupJobType) error {
 	noRunningJobs, err := m.noRunningJobs(jobType)
 	if err != nil {
 		m.Logger.Error(err, "Failed to check if there is running backup job")
@@ -430,9 +431,9 @@ func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType v1alpha
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType v1alpha1.BackupJobType) (bool, error) {
+func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType constants.BackupJobType) (bool, error) {
 	var runningJobs v1alpha1.OBTenantBackupList
-	fieldSelector := fields.ParseSelectorOrDie(".status.status=" + string(v1alpha1.BackupJobStatusRunning))
+	fieldSelector := fields.ParseSelectorOrDie(".status.status=" + string(constants.BackupJobStatusRunning))
 	err := m.Client.List(m.Ctx, &runningJobs,
 		client.MatchingLabels{
 			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
@@ -451,9 +452,9 @@ func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType v1alpha1.BackupJobTy
 			switch item.Status.Status {
 			case "":
 				fallthrough
-			case v1alpha1.BackupJobStatusInitializing:
+			case constants.BackupJobStatusInitializing:
 				fallthrough
-			case v1alpha1.BackupJobStatusRunning:
+			case constants.BackupJobStatusRunning:
 				return false, nil
 			}
 		}
@@ -477,5 +478,6 @@ func (m *ObTenantBackupPolicyManager) getTenantInfo() (*model.OBTenant, error) {
 	if len(tenants) == 0 {
 		return nil, errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
 	}
+	m.BackupPolicy.Status.TenantInfo = tenants[0]
 	return tenants[0], nil
 }

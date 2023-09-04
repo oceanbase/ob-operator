@@ -62,7 +62,6 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		}
 		return ctrl.Result{}, err
 	}
-	// logger.Info("reconcile obparameter:", "spec", obparameter.Spec, "status", obparameter.Status)
 
 	// TODO add finalizers
 

@@ -57,6 +57,8 @@ spec:
           spec:
             description: OBTenantBackupSpec defines the desired state of OBTenantBackup
             properties:
+              obClusterName:
+                type: string
               path:
                 type: string
               tenantName:
@@ -66,6 +68,7 @@ spec:
                   to remove/update
                 type: string
             required:
+            - obClusterName
             - tenantName
             - type
             type: object

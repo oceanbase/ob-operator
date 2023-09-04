@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	constants "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -27,20 +28,21 @@ type OBTenantBackupPolicySpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	TenantName string           `json:"tenantName"`
-	LogArchive LogArchiveConfig `json:"logArchive,omitempty"`
-	DataBackup DataBackupConfig `json:"dataBackup"`
-	DataClean  CleanPolicy      `json:"dataClean,omitempty"`
+	ObClusterName string           `json:"obClusterName"`
+	TenantName    string           `json:"tenantName"`
+	LogArchive    LogArchiveConfig `json:"logArchive"`
+	DataBackup    DataBackupConfig `json:"dataBackup"`
+	DataClean     CleanPolicy      `json:"dataClean,omitempty"`
 }
 
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
-	Status                 BackupPolicyStatusType `json:"status"`
-	LogArchiveDestDisabled bool                   `json:"logArchiveDestDisabled"`
-	TenantInfo             *model.OBTenant        `json:"tenantInfo,omitempty"`
-	OperationContext       *OperationContext      `json:"operationContext,omitempty"`
-	NextFull               string                 `json:"nextFull,omitempty"`
-	NextIncremental        string                 `json:"nextIncremental,omitempty"`
+	Status                 constants.BackupPolicyStatusType `json:"status"`
+	LogArchiveDestDisabled bool                             `json:"logArchiveDestDisabled"`
+	TenantInfo             *model.OBTenant                  `json:"tenantInfo,omitempty"`
+	OperationContext       *OperationContext                `json:"operationContext,omitempty"`
+	NextFull               string                           `json:"nextFull,omitempty"`
+	NextIncremental        string                           `json:"nextIncremental,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -76,11 +78,11 @@ func init() {
 
 // LogArchiveConfig contains the configuration for log archive progress
 type LogArchiveConfig struct {
-	Destination         BackupDestination `json:"destination"`
-	SwitchPieceInterval string            `json:"switchPieceInterval"`
-	Binding             ArchiveBinding    `json:"binding,omitempty"`
-	DestDisabled        bool              `json:"destDisabled,omitempty"`
-	Concurrency         int               `json:"concurrency,omitempty"`
+	Destination         constants.BackupDestination `json:"destination"`
+	SwitchPieceInterval string                      `json:"switchPieceInterval"`
+	Binding             ArchiveBinding              `json:"binding,omitempty"`
+	DestDisabled        bool                        `json:"destDisabled,omitempty"`
+	Concurrency         int                         `json:"concurrency,omitempty"`
 }
 
 type ArchiveBinding string
@@ -92,9 +94,9 @@ const (
 
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
-	Destination        BackupDestination `json:"destination"`
-	FullCrontab        string            `json:"fullCrontab,omitempty"`
-	IncrementalCrontab string            `json:"incrementalCrontab,omitempty"`
+	Destination        constants.BackupDestination `json:"destination"`
+	FullCrontab        string                      `json:"fullCrontab,omitempty"`
+	IncrementalCrontab string                      `json:"incrementalCrontab,omitempty"`
 }
 
 type CleanPolicy struct {
@@ -102,26 +104,3 @@ type CleanPolicy struct {
 	RecoveryWindow string `json:"recoveryWindow,omitempty"`
 	Disabled       string `json:"disabled,omitempty"`
 }
-
-type BackupPolicyStatusType string
-
-const (
-	BackupPolicyStatusPreparing BackupPolicyStatusType = "PREPARING"
-	BackupPolicyStatusPrepared  BackupPolicyStatusType = "PREPARED"
-	BackupPolicyStatusRunning   BackupPolicyStatusType = "RUNNING"
-	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
-	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
-	BackupPolicyStatusStopped   BackupPolicyStatusType = "STOPPED"
-)
-
-type BackupDestination struct {
-	Type BackupDestType `json:"type,omitempty"`
-	Path string         `json:"path,omitempty"`
-}
-
-type BackupDestType string
-
-const (
-	BackupDestTypeOSS BackupDestType = "OSS"
-	BackupDestTypeNFS BackupDestType = "NFS"
-)

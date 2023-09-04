@@ -70,7 +70,6 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		return ctrl.Result{}, err
 	}
-	// logger.Info("reconcile obcluster:", "spec", obcluster.Spec, "status", obcluster.Status)
 
 	// TODO add finalizers
 
