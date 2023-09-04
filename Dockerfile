@@ -3,11 +3,12 @@ FROM golang:1.20.4 as builder
 
 ARG GOPROXY
 ARG GOSUMDB
+ARG RACE
 
 WORKDIR /workspace
 # copy everything
 COPY . .
-RUN GO11MODULE=ON CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -race -o manager cmd/main.go
+RUN GO11MODULE=ON CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build ${RACE} -o manager cmd/main.go
 
 # start build docker image
 FROM openanolis/anolisos:8.4-x86_64

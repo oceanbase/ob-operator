@@ -12,6 +12,7 @@ GOBIN=$(shell go env GOBIN)
 endif
 GOPROXY ?= https://goproxy.io,direct
 GOSUMDB ?= sum.golang.org
+RACE ?= ''
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -75,7 +76,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} .
+	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
