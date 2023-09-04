@@ -170,7 +170,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
 	if m.IsDeleting() {
-		m.OBZone.Status.Status = serverstatus.Deleting
+		m.OBZone.Status.Status = zonestatus.Deleting
 	}
 	if m.OBZone.Status.Status != zonestatus.Running {
 		m.Logger.Info("OBZone status is not running, skip compare")

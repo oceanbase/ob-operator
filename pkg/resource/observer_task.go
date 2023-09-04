@@ -166,10 +166,12 @@ func (m *OBServerManager) CreateOBPVC() error {
 		OwnerReferences: ownerReferenceList,
 		Labels:          m.OBServer.Labels,
 	}
+	m.Logger.Info("generate pvc conf for data file")
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: objectMeta,
 		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
 	}
+	m.Logger.Info("create pvc data file")
 	err := m.Client.Create(m.Ctx, pvc)
 	if err != nil {
 		return errors.Wrap(err, "Create pvc of data file")
@@ -181,10 +183,12 @@ func (m *OBServerManager) CreateOBPVC() error {
 		OwnerReferences: ownerReferenceList,
 		Labels:          m.OBServer.Labels,
 	}
+	m.Logger.Info("generate pvc conf for data log")
 	pvc = &corev1.PersistentVolumeClaim{
 		ObjectMeta: objectMeta,
 		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
 	}
+	m.Logger.Info("create pvc data log")
 	err = m.Client.Create(m.Ctx, pvc)
 	if err != nil {
 		return errors.Wrap(err, "Create pvc of data log")
@@ -196,10 +200,12 @@ func (m *OBServerManager) CreateOBPVC() error {
 		OwnerReferences: ownerReferenceList,
 		Labels:          m.OBServer.Labels,
 	}
+	m.Logger.Info("generate pvc conf for log")
 	pvc = &corev1.PersistentVolumeClaim{
 		ObjectMeta: objectMeta,
 		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
 	}
+	m.Logger.Info("create pvc log")
 	err = m.Client.Create(m.Ctx, pvc)
 	if err != nil {
 		return errors.Wrap(err, "Create pvc of log")
@@ -212,10 +218,12 @@ func (m *OBServerManager) CreateOBPVC() error {
 			OwnerReferences: ownerReferenceList,
 			Labels:          m.OBServer.Labels,
 		}
+		m.Logger.Info("generate pvc conf for log")
 		pvc = &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
 			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix), m.OBServer.Spec.MonitorTemplate.Storage.ConfigStorage),
 		}
+		m.Logger.Info("create pvc monitor conf")
 		err = m.Client.Create(m.Ctx, pvc)
 		if err != nil {
 			return errors.Wrap(err, "Create pvc of monitor log")
