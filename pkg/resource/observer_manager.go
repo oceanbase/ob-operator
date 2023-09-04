@@ -149,7 +149,7 @@ func (m *OBServerManager) UpdateStatus() error {
 		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
-	err := m.Client.Status().Update(m.Ctx, m.OBServer)
+	err := m.Client.Status().Update(m.Ctx, m.OBServer.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}

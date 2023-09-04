@@ -122,7 +122,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 			m.OBParameter.Status.Status = parameterstatus.Matched
 		}
 	}
-	err = m.Client.Status().Update(m.Ctx, m.OBParameter)
+	err = m.Client.Status().Update(m.Ctx, m.OBParameter.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obparameter status")
 	}

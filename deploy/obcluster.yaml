@@ -14,18 +14,12 @@ spec:
   topology:
     - zone: zone1
       replica: 1
-      nodeSelector:
-        ob.zone1: zone1
     - zone: zone2
       replica: 1
-      nodeSelector:
-        ob.zone2: zone2
     - zone: zone3
       replica: 1
-      nodeSelector:
-        ob.zone3: zone3
   observer:
-    image: oceanbasedev/oceanbase-cn:4.2.0.0-100000072023071317
+    image: oceanbasedev/oceanbase-cn:4.2.0.0-test
     resource:
       cpu: 2
       memory: 10Gi

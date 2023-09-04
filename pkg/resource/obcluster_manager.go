@@ -203,7 +203,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBCluster)
+	err = m.Client.Status().Update(m.Ctx, m.OBCluster.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
 	}

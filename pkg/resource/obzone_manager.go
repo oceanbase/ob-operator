@@ -199,7 +199,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBZone)
+	err = m.Client.Status().Update(m.Ctx, m.OBZone.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")
 	}
