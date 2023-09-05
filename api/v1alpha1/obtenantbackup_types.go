@@ -31,6 +31,7 @@ type OBTenantBackupSpec struct {
 	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
 	Type          constants.BackupJobType `json:"type"`
 	TenantName    string                  `json:"tenantName"`
+	TenantSecret  string                  `json:"tenantSecret"`
 	ObClusterName string                  `json:"obClusterName"`
 	Path          string                  `json:"path,omitempty"`
 }

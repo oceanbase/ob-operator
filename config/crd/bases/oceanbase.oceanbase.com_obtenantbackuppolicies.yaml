@@ -81,6 +81,8 @@ spec:
                   recoveryWindow:
                     type: string
                 type: object
+              jobKeepWindow:
+                type: string
               logArchive:
                 description: LogArchiveConfig contains the configuration for log archive
                   progress
@@ -106,20 +108,262 @@ spec:
                 type: object
               obClusterName:
                 type: string
+              suspend:
+                type: boolean
               tenantName:
+                type: string
+              tenantSecret:
                 type: string
             required:
             - dataBackup
             - logArchive
             - obClusterName
             - tenantName
+            - tenantSecret
             type: object
           status:
             description: OBTenantBackupPolicyStatus defines the observed state of
               OBTenantBackupPolicy
             properties:
-              logArchiveDestDisabled:
-                type: boolean
+              latestArchiveLogJob:
+                description: OBArchiveLogJob is equal to OBArchiveLogSummary, but
+                  match view DBA_OB_ARCHIVELOG_JOBS
+                properties:
+                  base_piece_id:
+                    format: int64
+                    type: integer
+                  checkpoint_scn:
+                    format: int64
+                    type: integer
+                  checkpoint_scn_display:
+                    type: string
+                  comment:
+                    type: string
+                  compatible:
+                    type: string
+                  compression_ratio:
+                    type: string
+                  deleted_input_bytes:
+                    format: int64
+                    type: integer
+                  deleted_input_bytes_display:
+                    type: string
+                  deleted_output_bytes:
+                    format: int64
+                    type: integer
+                  deleted_output_bytes_display:
+                    type: string
+                  dest_id:
+                    format: int64
+                    type: integer
+                  dest_no:
+                    format: int64
+                    type: integer
+                  input_bytes:
+                    format: int64
+                    type: integer
+                  input_bytes_display:
+                    type: string
+                  output_bytes:
+                    format: int64
+                    type: integer
+                  output_bytes_display:
+                    type: string
+                  path:
+                    type: string
+                  piece_switch_interval:
+                    type: string
+                  round_id:
+                    format: int64
+                    type: integer
+                  start_scn:
+                    format: int64
+                    type: integer
+                  start_scn_display:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  used_piece_id:
+                    format: int64
+                    type: integer
+                required:
+                - base_piece_id
+                - checkpoint_scn
+                - checkpoint_scn_display
+                - comment
+                - compatible
+                - compression_ratio
+                - deleted_input_bytes
+                - deleted_input_bytes_display
+                - deleted_output_bytes
+                - deleted_output_bytes_display
+                - dest_id
+                - dest_no
+                - input_bytes
+                - input_bytes_display
+                - output_bytes
+                - output_bytes_display
+                - path
+                - piece_switch_interval
+                - round_id
+                - start_scn
+                - start_scn_display
+                - status
+                - tenant_id
+                - used_piece_id
+                type: object
+              latestBackupCleanJob:
+                description: OBBackupCleanJob matches view DBA_OB_BACKUP_DELETE_JOBS
+                  & DBA_OB_BACKUP_DELETE_JOB_HISTORY
+                properties:
+                  comment:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  parameter:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  success_task_count:
+                    format: int64
+                    type: integer
+                  task_count:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  type:
+                    type: string
+                required:
+                - comment
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - parameter
+                - result
+                - start_timestamp
+                - status
+                - success_task_count
+                - task_count
+                - tenant_id
+                - type
+                type: object
+              latestFullBackupJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
+              latestIncrementalJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
               nextFull:
                 type: string
               nextIncremental:
@@ -129,6 +373,8 @@ spec:
                   idx:
                     type: integer
                   name:
+                    type: string
+                  originalStatus:
                     type: string
                   targetStatus:
                     type: string
@@ -145,6 +391,7 @@ spec:
                 required:
                 - idx
                 - name
+                - originalStatus
                 - targetStatus
                 - task
                 - taskId
@@ -221,7 +468,6 @@ spec:
                 - tenant_type
                 type: object
             required:
-            - logArchiveDestDisabled
             - status
             type: object
         type: object

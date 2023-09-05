@@ -23,6 +23,10 @@ func (m *OceanbaseOperationManager) SetLogArchiveDestForTenant(uri string) error
 	return m.SetParameter("LOG_ARCHIVE_DEST", uri, nil)
 }
 
+func (m *OceanbaseOperationManager) SetLogArchiveDestState(state string) error {
+	return m.SetParameter("LOG_ARCHIVE_DEST_STATE", state, nil)
+}
+
 func (m *OceanbaseOperationManager) SetLogArchiveConcurrency(concurrency int) error {
 	return m.SetParameter("log_archive_concurrency", concurrency, nil)
 }

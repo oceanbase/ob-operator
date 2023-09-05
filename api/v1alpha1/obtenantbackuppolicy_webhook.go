@@ -57,6 +57,9 @@ func (r *OBTenantBackupPolicy) Default() {
 	if r.Spec.LogArchive.SwitchPieceInterval == "" {
 		r.Spec.LogArchive.SwitchPieceInterval = "1d"
 	}
+	if r.Spec.LogArchive.Binding == "" {
+		r.Spec.LogArchive.Binding = constants.ArchiveBindingOptional
+	}
 	// only "default" is permitted
 	r.Spec.DataClean.Name = "default"
 }
@@ -90,6 +93,9 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	if r.Spec.TenantName == "" {
 		return errors.New("tenantName is required")
 	}
+	if r.Spec.TenantSecret == "" {
+		return errors.New("tenantSecret is required")
+	}
 	err := r.validateBackupCrontab()
 	if err != nil {
 		return err
@@ -111,6 +117,12 @@ func (r *OBTenantBackupPolicy) validateInterval() error {
 	recoveryPattern := regexp.MustCompile(`^[1-9]\d*d$`)
 	if !recoveryPattern.MatchString(r.Spec.DataClean.RecoveryWindow) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("dataClean").Child("recoveryWindow"), r.Spec.DataClean.RecoveryWindow, "invalid recoveryWindow"))
+	}
+	if r.Spec.JobKeepWindow != "" {
+		jobKeepPattern := regexp.MustCompile(`^[1-9]\d*d$`)
+		if !jobKeepPattern.MatchString(r.Spec.JobKeepWindow) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("jobKeepWindow"), r.Spec.JobKeepWindow, "invalid jobKeepWindow"))
+		}
 	}
 	if len(allErrs) == 0 {
 		return nil

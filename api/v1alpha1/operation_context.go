@@ -13,11 +13,12 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 type OperationContext struct {
-	Name         string   `json:"name"`
-	Tasks        []string `json:"tasks"`
-	Task         string   `json:"task"`
-	Idx          int      `json:"idx"`
-	TaskStatus   string   `json:"taskStatus"`
-	TaskId       string   `json:"taskId"`
-	TargetStatus string   `json:"targetStatus"`
+	Name           string   `json:"name"`
+	Tasks          []string `json:"tasks"`
+	Task           string   `json:"task"`
+	Idx            int      `json:"idx"`
+	TaskStatus     string   `json:"taskStatus"`
+	TaskId         string   `json:"taskId"`
+	TargetStatus   string   `json:"targetStatus"`
+	OriginalStatus string   `json:"originalStatus"`
 }

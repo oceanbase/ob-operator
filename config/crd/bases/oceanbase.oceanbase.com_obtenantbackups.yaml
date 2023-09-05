@@ -63,6 +63,8 @@ spec:
                 type: string
               tenantName:
                 type: string
+              tenantSecret:
+                type: string
               type:
                 description: Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go
                   to remove/update
@@ -70,6 +72,7 @@ spec:
             required:
             - obClusterName
             - tenantName
+            - tenantSecret
             - type
             type: object
           status:
@@ -272,6 +275,8 @@ spec:
                     type: integer
                   name:
                     type: string
+                  originalStatus:
+                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -287,6 +292,7 @@ spec:
                 required:
                 - idx
                 - name
+                - originalStatus
                 - targetStatus
                 - task
                 - taskId

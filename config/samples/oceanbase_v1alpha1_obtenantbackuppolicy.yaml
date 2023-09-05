@@ -13,8 +13,10 @@ metadata:
 spec:
   obClusterName: "test"
   tenantName: "yuyi"
+  tenantSecret: "yuyi-credential"
+  jobKeepWindow: "1d"
   dataClean:
-    recoveryWindow: "4d"
+    recoveryWindow: "8d"
   logArchive:
     destination:
       type: "NFS"

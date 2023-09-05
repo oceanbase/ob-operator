@@ -30,6 +30,7 @@ const (
 	BackupJobStatusFailed       BackupJobStatus = "FAILED"
 	BackupJobStatusCanceled     BackupJobStatus = "CANCELED"
 	BackupJobStatusStopped      BackupJobStatus = "STOPPED"
+	BackupJobStatusSuspend      BackupJobStatus = "SUSPEND"
 )
 
 type BackupPolicyStatusType string
@@ -39,8 +40,10 @@ const (
 	BackupPolicyStatusPrepared  BackupPolicyStatusType = "PREPARED"
 	BackupPolicyStatusRunning   BackupPolicyStatusType = "RUNNING"
 	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
+	BackupPolicyStatusPausing   BackupPolicyStatusType = "PAUSING"
 	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
 	BackupPolicyStatusStopped   BackupPolicyStatusType = "STOPPED"
+	BackupPolicyStatusResuming  BackupPolicyStatusType = "RESUMING"
 )
 
 type BackupDestination struct {
@@ -53,4 +56,18 @@ type BackupDestType string
 const (
 	BackupDestTypeOSS BackupDestType = "OSS"
 	BackupDestTypeNFS BackupDestType = "NFS"
+)
+
+type LogArchiveDestState string
+
+const (
+	LogArchiveDestStateEnable LogArchiveDestState = "ENABLE"
+	LogArchiveDestStateDefer  LogArchiveDestState = "DEFER"
+)
+
+type ArchiveBinding string
+
+const (
+	ArchiveBindingOptional  = "Optional"
+	ArchiveBindingMandatory = "Mandatory"
 )

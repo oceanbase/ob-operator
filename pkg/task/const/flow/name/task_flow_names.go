@@ -54,8 +54,10 @@ const (
 
 // tenant-level backup
 const (
-	PrepareBackupPolicy = "prepare backup policy"
-	StartBackupJob      = "start backup job"
-	StopBackupJob       = "stop backup job"
-	MaintainCrontab     = "maintain crontab"
+	PrepareBackupPolicy   = "prepare backup policy"
+	StartBackupJob        = "start backup job"
+	StopBackupJob         = "stop backup job"
+	MaintainRunningPolicy = "maintain running policy"
+	PauseBackup           = "pause backup"
+	ResumeBackup          = "resume backup"
 )

@@ -223,6 +223,8 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 			job.Status.Status = constants.BackupJobStatusStopped
 		case "DOING":
 			job.Status.Status = constants.BackupJobStatusRunning
+		case "SUSPEND":
+			job.Status.Status = constants.BackupJobStatusSuspend
 		}
 		return r.Client.Status().Update(ctx, job)
 	}
@@ -243,7 +245,7 @@ func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := resource.GetTenantOperationClient(r.Client, &logger, obcluster, job.Spec.TenantName, job.Spec.TenantName+"-credential")
+	con, err := resource.GetTenantOperationClient(r.Client, &logger, obcluster, job.Spec.TenantName, job.Spec.TenantSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}

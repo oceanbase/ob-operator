@@ -23,7 +23,7 @@ func PrepareBackupPolicy() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareBackupPolicy,
-			Tasks:        []string{taskname.GetTenantInfo, taskname.ConfigureServerForBackup},
+			Tasks:        []string{taskname.ConfigureServerForBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPrepared),
 		},
 	}
@@ -49,11 +49,31 @@ func StopBackupJob() *TaskFlow {
 	}
 }
 
-func CheckAndSpawnJobs() *TaskFlow {
+func MaintainRunningPolicy() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.MaintainCrontab,
-			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CheckAndSpawnJobs},
+			Name:         flowname.MaintainRunningPolicy,
+			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CleanOldBackupJobs, taskname.CheckAndSpawnJobs},
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
+		},
+	}
+}
+
+func PauseBackup() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.PauseBackup,
+			Tasks:        []string{taskname.PauseBackup},
+			TargetStatus: string(constants.BackupPolicyStatusPaused),
+		},
+	}
+}
+
+func ResumeBackup() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.ResumeBackup,
+			Tasks:        []string{taskname.ResumeBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 		},
 	}

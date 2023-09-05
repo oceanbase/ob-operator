@@ -27,6 +27,7 @@ import (
 	cron "github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -116,11 +117,10 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 
 func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
 	// Admission Control
-	tenant, err := m.getTenantInfo()
+	_, err := m.getTenantInfo()
 	if err != nil {
 		return err
 	}
-	m.BackupPolicy.Status.TenantInfo = tenant
 	// update status ahead of regular task
 	return nil
 }
@@ -140,32 +140,9 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 			return err
 		}
 	}
-	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	cleanPolicy, err := con.ListBackupCleanPolicy()
+	err = m.configureBackupCleanPolicy()
 	if err != nil {
 		return err
-	}
-	policyName := "default"
-	if len(cleanPolicy) == 0 {
-		// the name of the policy can only be 'default', and the recovery window can only be 1d-7d
-		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
-		if err != nil {
-			return err
-		}
-	} else {
-		for _, policy := range cleanPolicy {
-			if policy.RecoveryWindow != cleanConfig.RecoveryWindow {
-				err = con.RemoveCleanBackupPolicy(policy.PolicyName)
-				if err != nil {
-					return err
-				}
-				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
-				if err != nil {
-					return err
-				}
-				break
-			}
-		}
 	}
 	err = m.createBackupJobIfNotExists(constants.BackupJobTypeArchive)
 	if err != nil {
@@ -175,6 +152,8 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
+	// Initialization: wait for archive log job to start
+	time.Sleep(20 * time.Second)
 	// create backup job of full type
 	return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 }
@@ -234,7 +213,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			return nil
 		}
 		nextFullTime := fullCron.Next(lastFullBackupFinishedAt)
-		m.BackupPolicy.Status.NextFull = nextFullTime.Format(time.DateTime)
 		if nextFullTime.Before(timeNow) {
 			// Full backup and incremental backup can not be executed at the same time
 			// create Full type backup job and return here
@@ -266,7 +244,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				}
 
 				nextIncrTime := incrementalCron.Next(lastIncrBackupFinishedAt)
-				m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				if nextIncrTime.Before(timeNow) {
 					err = m.createBackupJobIfNotExists(constants.BackupJobTypeIncr)
 					if err != nil {
@@ -280,7 +257,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 			}
 		} else {
 			nextIncrTime := incrementalCron.Next(lastFullBackupFinishedAt)
-			m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 			if nextIncrTime.Before(timeNow) {
 				err = m.createBackupJobIfNotExists(constants.BackupJobTypeIncr)
 				if err != nil {
@@ -293,6 +269,114 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	} else {
 		m.Logger.Info("BackupJob are in status " + latestFull.Status)
 	}
+	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) CleanOldBackupJobs() error {
+	// JobKeepWindow is not set, do nothing
+	if m.BackupPolicy.Spec.JobKeepWindow == "" {
+		return nil
+	}
+	var jobs v1alpha1.OBTenantBackupList
+	fieldSelector := fields.ParseSelectorOrDie(".status.status=" + string(constants.BackupJobStatusSuccessful))
+	labelSelector, err := labels.Parse(fmt.Sprintf("%s in (%s, %s)", oceanbaseconst.LabelBackupType, constants.BackupJobTypeFull, constants.BackupJobTypeIncr))
+	if err != nil {
+		return err
+	}
+	err = m.Client.List(m.Ctx, &jobs,
+		client.MatchingLabels{
+			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
+			oceanbaseconst.LabelTenantName:      m.BackupPolicy.Spec.TenantName,
+		},
+		client.MatchingLabelsSelector{
+			Selector: labelSelector,
+		},
+		client.MatchingFieldsSelector{
+			Selector: fieldSelector,
+		},
+		client.InNamespace(m.BackupPolicy.Namespace))
+	if len(jobs.Items) == 0 {
+		return nil
+	}
+	keepWindow, err := time.ParseDuration(m.BackupPolicy.Spec.DataClean.RecoveryWindow)
+	if err != nil {
+		return err
+	}
+	for i, job := range jobs.Items {
+		if job.Status.BackupJob.EndTimestamp != nil {
+			finishedAt, err := time.ParseInLocation(time.DateTime, *job.Status.BackupJob.EndTimestamp, time.Local)
+			if err != nil {
+				return err
+			}
+			if finishedAt.Add(keepWindow).Before(time.Now()) {
+				err = m.Client.Delete(m.Ctx, &jobs.Items[i])
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) PauseBackup() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	err = con.SetLogArchiveDestState(string(constants.LogArchiveDestStateDefer))
+	if err != nil {
+		return err
+	}
+
+	err = con.StopBackupJobOfTenant()
+	if err != nil {
+		return err
+	}
+	err = con.CancelCleanBackup()
+	if err != nil {
+		return err
+	}
+	cleanPolicyName := "default"
+	err = con.RemoveCleanBackupPolicy(cleanPolicyName)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) ResumeBackup() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	err = con.SetLogArchiveDestState(string(constants.LogArchiveDestStateEnable))
+	if err != nil {
+		return err
+	}
+	err = m.configureBackupCleanPolicy()
+	if err != nil {
+		m.Logger.Info("Failed to configure backup clean policy", "error", err)
+	}
+	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) syncLatestJobs() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	latestArchiveJob, err := con.GetLatestArchiveLogJob()
+	if err != nil {
+		return err
+	}
+	latestCleanJob, err := con.GetLatestBackupCleanJob()
+	if err != nil {
+		return err
+	}
+	m.BackupPolicy.Status.LatestArchiveLogJob = latestArchiveJob
+	m.BackupPolicy.Status.LatestBackupCleanJob = latestCleanJob
 	return nil
 }
 
@@ -325,7 +409,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantName+"-credential")
+	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -413,6 +497,7 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType constants.BackupJo
 			Type:          jobType,
 			TenantName:    m.BackupPolicy.Spec.TenantName,
 			ObClusterName: m.BackupPolicy.Spec.ObClusterName,
+			TenantSecret:  m.BackupPolicy.Spec.TenantSecret,
 		},
 	}
 	return m.Client.Create(m.Ctx, backupJob)
@@ -424,7 +509,6 @@ func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType constan
 		m.Logger.Error(err, "Failed to check if there is running backup job")
 		return nil
 	}
-	m.Logger.Info("runningJobs?", "type", noRunningJobs)
 	if noRunningJobs {
 		return m.createBackupJob(jobType)
 	}
@@ -433,15 +517,11 @@ func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType constan
 
 func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType constants.BackupJobType) (bool, error) {
 	var runningJobs v1alpha1.OBTenantBackupList
-	fieldSelector := fields.ParseSelectorOrDie(".status.status=" + string(constants.BackupJobStatusRunning))
 	err := m.Client.List(m.Ctx, &runningJobs,
 		client.MatchingLabels{
 			oceanbaseconst.LabelRefBackupPolicy: m.BackupPolicy.Name,
 			oceanbaseconst.LabelTenantName:      m.BackupPolicy.Spec.TenantName,
 			oceanbaseconst.LabelBackupType:      string(jobType),
-		},
-		client.MatchingFieldsSelector{
-			Selector: fieldSelector,
 		},
 		client.InNamespace(m.BackupPolicy.Namespace))
 	if err != nil {
@@ -478,6 +558,39 @@ func (m *ObTenantBackupPolicyManager) getTenantInfo() (*model.OBTenant, error) {
 	if len(tenants) == 0 {
 		return nil, errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
 	}
-	m.BackupPolicy.Status.TenantInfo = tenants[0]
 	return tenants[0], nil
+}
+
+func (m *ObTenantBackupPolicyManager) configureBackupCleanPolicy() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	cleanConfig := &m.BackupPolicy.Spec.DataClean
+	cleanPolicy, err := con.ListBackupCleanPolicy()
+	if err != nil {
+		return err
+	}
+	policyName := "default"
+	if len(cleanPolicy) == 0 {
+		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, policy := range cleanPolicy {
+			if policy.RecoveryWindow != cleanConfig.RecoveryWindow {
+				err = con.RemoveCleanBackupPolicy(policy.PolicyName)
+				if err != nil {
+					return err
+				}
+				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
+				if err != nil {
+					return err
+				}
+				break
+			}
+		}
+	}
+	return nil
 }

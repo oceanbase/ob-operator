@@ -67,6 +67,8 @@ spec:
                     type: integer
                   name:
                     type: string
+                  originalStatus:
+                    type: string
                   targetStatus:
                     type: string
                   task:
@@ -82,6 +84,7 @@ spec:
                 required:
                 - idx
                 - name
+                - originalStatus
                 - targetStatus
                 - task
                 - taskId

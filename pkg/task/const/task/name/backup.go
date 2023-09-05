@@ -18,6 +18,9 @@ const (
 	CheckAndSpawnJobs        = "check and spawn jobs"
 	StartBackupJob           = "start backup job"
 	StopBackupJob            = "stop backup job"
+	CleanOldBackupJobs       = "clean old backup jobs"
+	PauseBackup              = "pause backup"
+	ResumeBackup             = "resume backup"
 )
 
 const (
