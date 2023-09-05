@@ -15,6 +15,7 @@ package resource
 import (
 	"fmt"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -153,7 +154,17 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 		return err
 	}
 	// Initialization: wait for archive log job to start
-	time.Sleep(20 * time.Second)
+	archiveRunning := false
+	for !archiveRunning {
+		time.Sleep(10 * time.Second)
+		latestArchiveJob, err := con.GetLatestArchiveLogJob()
+		if err != nil {
+			return err
+		}
+		if latestArchiveJob != nil && latestArchiveJob.Status == "DOING" {
+			archiveRunning = true
+		}
+	}
 	// create backup job of full type
 	return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 }
@@ -208,7 +219,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		timeNow := time.Now()
 		fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
 		if err != nil {
-			// TODO: Check pattern of crontab with admission webhook
 			m.Logger.Error(err, "Failed to parse full backup crontab")
 			return nil
 		}
@@ -298,17 +308,18 @@ func (m *ObTenantBackupPolicyManager) CleanOldBackupJobs() error {
 	if len(jobs.Items) == 0 {
 		return nil
 	}
-	keepWindow, err := time.ParseDuration(m.BackupPolicy.Spec.DataClean.RecoveryWindow)
+	keepWindowDays, err := strconv.Atoi(strings.TrimRight(m.BackupPolicy.Spec.JobKeepWindow, "d"))
 	if err != nil {
 		return err
 	}
+	keepWindowDuration := time.Duration(keepWindowDays*24) * time.Hour
 	for i, job := range jobs.Items {
 		if job.Status.BackupJob.EndTimestamp != nil {
 			finishedAt, err := time.ParseInLocation(time.DateTime, *job.Status.BackupJob.EndTimestamp, time.Local)
 			if err != nil {
 				return err
 			}
-			if finishedAt.Add(keepWindow).Before(time.Now()) {
+			if finishedAt.Add(keepWindowDuration).Before(time.Now()) {
 				err = m.Client.Delete(m.Ctx, &jobs.Items[i])
 				if err != nil {
 					return err
@@ -358,6 +369,17 @@ func (m *ObTenantBackupPolicyManager) ResumeBackup() error {
 	err = m.configureBackupCleanPolicy()
 	if err != nil {
 		m.Logger.Info("Failed to configure backup clean policy", "error", err)
+	}
+	archiveRunning := false
+	for !archiveRunning {
+		time.Sleep(10 * time.Second)
+		latestArchiveJob, err := con.GetLatestArchiveLogJob()
+		if err != nil {
+			return err
+		}
+		if latestArchiveJob != nil && latestArchiveJob.Status == "DOING" {
+			archiveRunning = true
+		}
 	}
 	return nil
 }

@@ -14,6 +14,8 @@ package test
 
 import (
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/oceanbase/ob-operator/api/constants"
@@ -117,5 +119,17 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(err).To(BeNil())
 		_, err = fields.ParseSelector("status.status!=" + string(constants.BackupJobStatusSuccessful) + ",status.status!=" + string(constants.BackupJobStatusFailed) + ",status.status!=" + string(constants.BackupJobStatusCanceled))
 		Expect(err).To(BeNil())
+	})
+
+	It("Parse time window", Label("time"), func() {
+		pattern := regexp.MustCompile(`^[1-9]\d*d$`)
+		Expect(pattern.MatchString("2d")).To(BeTrue())
+		keepWindowDays, err := strconv.Atoi(strings.TrimRight("200d", "d"))
+		Expect(err).To(BeNil())
+		keepWindow := time.Duration(keepWindowDays*24) * time.Hour
+		printObject(keepWindow, "keepWindow")
+		TwoHundredDays, err := time.ParseDuration("4800h")
+		Expect(err).To(BeNil())
+		Expect(keepWindow).To(Equal(TwoHundredDays))
 	})
 })
