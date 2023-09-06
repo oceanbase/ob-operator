@@ -42,6 +42,7 @@ func (c *Coordinator) Coordinate() error {
 		} else if f == nil {
 			// No need to execute task flow
 		} else {
+			c.Logger.Info("set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
@@ -74,6 +75,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
 			taskId := task.GetTaskManager().Submit(taskFunc)
+			c.Logger.Info("Successfullly submit task", "taskid", taskId)
 			f.OperationContext.TaskId = taskId
 			f.OperationContext.TaskStatus = taskstatus.Running
 		}
@@ -85,6 +87,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
+				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult.Status)
 				f.OperationContext.TaskStatus = taskResult.Status
 			} else {
 				// Didn't get task result, task is still running"

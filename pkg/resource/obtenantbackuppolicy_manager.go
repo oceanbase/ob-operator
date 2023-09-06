@@ -52,7 +52,6 @@ func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
 }
 
 func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
-	// Unnecessary by now
 	policy := m.BackupPolicy
 	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
 	if controllerutil.ContainsFinalizer(policy, finalizerName) {
