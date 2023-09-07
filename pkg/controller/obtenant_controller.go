@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/util/codec"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -65,12 +66,12 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	if obtenant.ObjectMeta.DeletionTimestamp.IsZero() {
 		finalizerName := "finalizers.oceanbase.com.deleteobtenant"
-		if !containsString(obtenant.ObjectMeta.Finalizers, finalizerName){
+		if !codec.ContainsString(obtenant.ObjectMeta.Finalizers, finalizerName) {
 			finalizers := []string{finalizerName}
 			obtenant.ObjectMeta.Finalizers = finalizers
 			err := r.Client.Update(ctx, obtenant)
 			if err != nil {
-				logger.Error(err, "got erro when update finalizers")
+				logger.Error(err, "got error when update finalizers")
 			}
 			return ctrl.Result{}, err
 		}
@@ -102,15 +103,3 @@ func (r *OBTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha1.OBTenant{}).
 		Complete(r)
 }
-
-func containsString(slice []string, s string) bool {
-	for _, item := range slice {
-		if item == s {
-			return true
-		}
-	}
-	return false
-}
-
-
-

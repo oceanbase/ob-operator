@@ -15,7 +15,7 @@ package resource
 import (
 	"context"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/fail"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
@@ -87,10 +87,6 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.ModifyOBZoneReplica)
 	case clusterstatus.Upgrade:
 		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBCluster)
-	case clusterstatus.UpgradeFailed:
-		m.Logger.Error(errors.New("upgrade failed"),
-			"upgrade failed, please Set status to running after manually resolving the problem")
-		return nil, nil
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
@@ -102,10 +98,10 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return nil, err
 	}
 
-	if taskFlow.OperationContext.FailureRule.Strategy == "" {
-		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
-		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
-			taskFlow.OperationContext.FailureRule.NextTryStatus = clusterstatus.Running
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = clusterstatus.Running
 		}
 	}
 
@@ -235,12 +231,6 @@ func (m *OBClusterManager) ClearTaskInfo() {
 	m.OBCluster.Status.OperationContext = nil
 }
 
-func (m *OBClusterManager) ClearOperationContextIfFailed() {
-	if m.OBCluster.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep {
-		m.OBCluster.Status.OperationContext = nil
-	}
-}
-
 func (m *OBClusterManager) FinishTask() {
 	m.OBCluster.Status.Status = m.OBCluster.Status.OperationContext.TargetStatus
 	m.OBCluster.Status.OperationContext = nil
@@ -248,16 +238,15 @@ func (m *OBClusterManager) FinishTask() {
 
 func (m *OBClusterManager) HandleFailure() {
 	operationContext := m.OBCluster.Status.OperationContext
-	failureRule := operationContext.FailureRule
+	failureRule := operationContext.OnFailure
 	switch failureRule.Strategy {
-	case fail.RetryTask:
+	case strategy.StartOver:
 		m.OBCluster.Status.Status = failureRule.NextTryStatus
-	case fail.RetryCurrentStep:
+		m.OBCluster.Status.OperationContext = nil
+	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
-	case fail.PauseReconcile:
-		m.OBCluster.Status.Status = clusterstatus.UpgradeFailed
+	case strategy.Pause:
 	}
-	m.ClearOperationContextIfFailed()
 }
 
 func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
@@ -303,8 +292,8 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	}
 }
 
-func (m *OBClusterManager) PrintErrEvent(err error)  {
-	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning,"task exec failed", err.Error())
+func (m *OBClusterManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {

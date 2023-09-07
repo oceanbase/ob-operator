@@ -15,7 +15,6 @@ package operation
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -81,15 +80,7 @@ func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ..
 	err := m.Connector.GetClient().Get(count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)
-		m.Logger.Error(err, "Query count failed" )
+		m.Logger.Error(err, "Query count failed")
 	}
 	return err
-}
-
-func replaceAll(template string, replacers ...*strings.Replacer) string {
-	s := template
-	for _, replacer := range replacers {
-		s = replacer.Replace(s)
-	}
-	return s
 }

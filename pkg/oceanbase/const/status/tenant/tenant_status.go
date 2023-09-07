@@ -5,7 +5,6 @@ const (
 )
 
 const (
-	Version3 = "3"
 	Version4 = "4"
 )
 
@@ -16,11 +15,3 @@ const (
 const (
 	OBTcpInvitedNodes = "ob_tcp_invited_nodes"
 )
-
-const (
-	TypeFull     = "FULL"
-	TypeReadonly = "READONLY"
-	TypeLogonly  = "LOGONLY"
-)
-
-

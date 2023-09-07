@@ -10,11 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package config
+package codec
 
-import "time"
-
-const (
-	TenantSqlTimeout    = 600 * time.Second
-	PollingJobSleepTime = 1 * time.Second
-)
+func ContainsString(slice []string, s string) bool {
+	for _, item := range slice {
+		if item == s {
+			return true
+		}
+	}
+	return false
+}

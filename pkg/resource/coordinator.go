@@ -93,7 +93,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
-				c.Logger.Info("task finished, wait processing task result", "task id", f.OperationContext.TaskId, "task result", taskResult)
+				c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 				f.OperationContext.TaskStatus = taskResult.Status
 				if taskResult.Error != nil {
 					c.Manager.PrintErrEvent(taskResult.Error)
@@ -108,7 +108,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Info("No more task to run, task flow successfully finished")
 			c.Manager.FinishTask()
 		} else {
-			c.Logger.Info("Task succeed, set next task")
+			c.Logger.Info("Task finished successfully, set next task")
 			f.NextTask()
 		}
 	case taskstatus.Failed:

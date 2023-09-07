@@ -44,7 +44,7 @@ type TaskResult struct {
 }
 
 type TaskManager struct {
-	ResultMap map[string]chan *TaskResult
+	ResultMap       map[string]chan *TaskResult
 	Logger          *logr.Logger
 	TaskResultCache map[string]*TaskResult
 }
@@ -95,10 +95,6 @@ func (m *TaskManager) CleanTaskResult(taskId string) error {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {
 		return errors.Errorf("Task %s not exists", taskId)
-	}
-	_, exists = m.TaskResultCache[taskId]
-	if !exists {
-		return errors.Errorf("Task Result Cache %s not exists", taskId)
 	}
 	close(retCh)
 	delete(m.ResultMap, taskId)

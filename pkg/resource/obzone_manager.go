@@ -15,7 +15,7 @@ package resource
 import (
 	"context"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/fail"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
@@ -119,10 +119,10 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return nil, err
 	}
 
-	if taskFlow.OperationContext.FailureRule.Strategy == "" {
-		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
-		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
-			taskFlow.OperationContext.FailureRule.NextTryStatus = zonestatus.Running
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = zonestatus.Running
 		}
 	}
 	return taskFlow, nil
@@ -227,26 +227,21 @@ func (m *OBZoneManager) ClearTaskInfo() {
 	m.OBZone.Status.OperationContext = nil
 }
 
-func (m *OBZoneManager) ClearOperationContextIfFailed() {
-	if m.OBZone.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep{
-		m.OBZone.Status.OperationContext = nil
-	}
-}
-
 func (m *OBZoneManager) HandleFailure() {
 	if m.IsDeleting() {
 		m.OBZone.Status.Status = zonestatus.Deleting
 		m.OBZone.Status.OperationContext = nil
 	} else {
 		operationContext := m.OBZone.Status.OperationContext
-		failureRule := operationContext.FailureRule
+		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
-		case fail.RetryTask:
+		case strategy.StartOver:
 			m.OBZone.Status.Status = failureRule.NextTryStatus
-		case fail.RetryCurrentStep:
+			m.OBZone.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
 		}
-		m.ClearOperationContextIfFailed()
 	}
 }
 
@@ -292,7 +287,7 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 	}
 }
 
-func (m *OBZoneManager) PrintErrEvent(err error)  {
+func (m *OBZoneManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 

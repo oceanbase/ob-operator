@@ -19,7 +19,6 @@ const (
 	DeleteOBZone        = "delete obzone"
 	ModifyOBZoneReplica = "modify obzone replica"
 	Upgrade             = "upgrade"
-	UpgradeFailed = "upgrade failed"
 	ModifyOBParameter   = "modify parameter"
 	Bootstrapped        = "bootstrapped"
 	FinalizerFinished   = "finalizer finished"

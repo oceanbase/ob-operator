@@ -1,34 +1,46 @@
+/*
+Copyright (c) 2023 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
 package model
 
 import "database/sql"
 
 type Tenant struct {
-	TenantID    int64  `json:"tenant_id" db:"tenant_id"`
-	TenantName  string `json:"tenant_name" db:"tenant_name"`
-	PrimaryZone string `json:"primary_zone" db:"primary_zone"`
-	Locality    string `json:"locality" db:"locality"`
-	Status      string `json:"status" db:"status"`
-	GmtCreateTime  string `json:"gmt_create_time" db:"gmt_create"`
+	TenantID      int64  `json:"tenant_id" db:"tenant_id"`
+	TenantName    string `json:"tenant_name" db:"tenant_name"`
+	PrimaryZone   string `json:"primary_zone" db:"primary_zone"`
+	Locality      string `json:"locality" db:"locality"`
+	Status        string `json:"status" db:"status"`
+	GmtCreateTime string `json:"gmt_create_time" db:"gmt_create"`
 }
 
 type Pool struct {
-	ResourcePoolID int64  `json:"resource_pool_id" db:"resource_pool_id"`
-	Name         string `json:"name" db:"name"`
-	UnitNum      int64  `json:"unit_count" db:"unit_count"`
-	UnitConfigID int64  `json:"unit_config_id" db:"unit_config_id"`
-	ZoneList       string `json:"zone_list" db:"zone_list"`
-	TenantID       sql.NullInt64`json:"tenant_id" db:"tenant_id"`
+	ResourcePoolID int64         `json:"resource_pool_id" db:"resource_pool_id"`
+	Name           string        `json:"name" db:"name"`
+	UnitNum        int64         `json:"unit_count" db:"unit_count"`
+	UnitConfigID   int64         `json:"unit_config_id" db:"unit_config_id"`
+	ZoneList       string        `json:"zone_list" db:"zone_list"`
+	TenantID       sql.NullInt64 `json:"tenant_id" db:"tenant_id"`
 }
 
 type Unit struct {
-	UnitID             int64  `json:"unit_id" db:"unit_id"`
-	ResourcePoolID     int64  `json:"resource_pool_id" db:"resource_pool_id"`
-	Zone               string `json:"zone" db:"zone"`
-	SvrIP              string `json:"svr_ip" db:"svr_ip"`
-	SvrPort            int64  `json:"svr_port" db:"svr_port"`
+	UnitID             int64          `json:"unit_id" db:"unit_id"`
+	ResourcePoolID     int64          `json:"resource_pool_id" db:"resource_pool_id"`
+	Zone               string         `json:"zone" db:"zone"`
+	SvrIP              string         `json:"svr_ip" db:"svr_ip"`
+	SvrPort            int64          `json:"svr_port" db:"svr_port"`
 	MigrateFromSvrIP   sql.NullString `json:"migrate_from_svr_ip" db:"migrate_from_svr_ip"`
 	MigrateFromSvrPort sql.NullInt64  `json:"migrate_from_svr_port" db:"migrate_from_svr_port"`
-	Status             string `json:"status" db:"status"`
+	Status             string         `json:"status" db:"status"`
 }
 
 type UnitConfigV4 struct {
@@ -68,14 +80,14 @@ type RsJob struct {
 }
 
 type TenantSQLParam struct {
-	TenantName string
-	PrimaryZone string
-	Locality string
-	PoolList []string
-	Charset string
-	Collate string
+	TenantName   string
+	PrimaryZone  string
+	Locality     string
+	PoolList     []string
+	Charset      string
+	Collate      string
 	VariableList string
-	UnitNum int64
+	UnitNum      int64
 }
 
 type PoolSQLParam struct {
@@ -87,11 +99,11 @@ type PoolSQLParam struct {
 
 type UnitConfigV4SQLParam struct {
 	UnitConfigName string
-	MaxCPU       float64
-	MinCPU       float64
-	MemorySize   int64
-	MaxIops      int64
-	MinIops      int64
-	LogDiskSize  int64
-	IopsWeight   int64
+	MaxCPU         float64
+	MinCPU         float64
+	MemorySize     int64
+	MaxIops        int64
+	MinIops        int64
+	LogDiskSize    int64
+	IopsWeight     int64
 }

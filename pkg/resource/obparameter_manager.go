@@ -18,7 +18,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/fail"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -84,10 +84,10 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return nil, err
 	}
 
-	if taskFlow.OperationContext.FailureRule.Strategy == "" {
-		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
-		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
-			taskFlow.OperationContext.FailureRule.NextTryStatus = parameterstatus.Matched
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = parameterstatus.Matched
 		}
 	}
 	return taskFlow, err
@@ -148,12 +148,6 @@ func (m *OBParameterManager) ClearTaskInfo() {
 	m.OBParameter.Status.OperationContext = nil
 }
 
-func (m *OBParameterManager) ClearOperationContextIfFailed() {
-	if m.OBParameter.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep{
-		m.OBParameter.Status.OperationContext = nil
-	}
-}
-
 func (m *OBParameterManager) FinishTask() {
 	m.OBParameter.Status.Status = m.OBParameter.Status.OperationContext.TargetStatus
 	m.OBParameter.Status.OperationContext = nil
@@ -161,14 +155,15 @@ func (m *OBParameterManager) FinishTask() {
 
 func (m *OBParameterManager) HandleFailure() {
 	operationContext := m.OBParameter.Status.OperationContext
-	failureRule := operationContext.FailureRule
+	failureRule := operationContext.OnFailure
 	switch failureRule.Strategy {
-	case fail.RetryTask:
+	case strategy.StartOver:
 		m.OBParameter.Status.Status = failureRule.NextTryStatus
-	case fail.RetryCurrentStep:
+		m.OBParameter.Status.OperationContext = nil
+	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
+	case strategy.Pause:
 	}
-	m.ClearOperationContextIfFailed()
 }
 
 func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
@@ -180,7 +175,7 @@ func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
 	}
 }
 
-func (m *OBParameterManager) PrintErrEvent(err error)  {
+func (m *OBParameterManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 

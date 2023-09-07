@@ -55,7 +55,6 @@ func init() {
 	GetRegistry().Register(flowname.MaintainUnitConfig, MaintainUnitConfig)
 	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
 
-
 	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
 	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
 	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)

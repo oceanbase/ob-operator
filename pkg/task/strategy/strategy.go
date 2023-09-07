@@ -10,11 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package config
-
-import "time"
+package strategy
 
 const (
-	TenantSqlTimeout    = 600 * time.Second
-	PollingJobSleepTime = 1 * time.Second
+	StartOver        = "retry over"
+	RetryFromCurrent = "retry from current"
+	Pause            = "Pause"
 )

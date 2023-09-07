@@ -115,7 +115,7 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 
 func (m *OceanbaseOperationManager) DeleteTenant(tenantName string, force bool) error {
 	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
-	err := m.ExecWithTimeout(config.TenantSqlTimeout ,preparedSQL, params...)
+	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
 	}
@@ -199,7 +199,7 @@ func (m *OceanbaseOperationManager) AddPool(pool model.PoolSQLParam) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) error {
+func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) error {
 	preparedSQL, params := preparedSQLForAddUnitConfigV4(unitConfigV4)
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
@@ -220,7 +220,7 @@ func (m *OceanbaseOperationManager) SetTenantVariable(tenantName, variableList s
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) error {
+func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) error {
 	preparedSQL, params := preparedSQLForSetUnitConfigV4(unitConfigV4)
 	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
@@ -230,7 +230,7 @@ func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 model.UnitConfi
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetTenantUnitNum(tenantName string,unitNum int) error {
+func (m *OceanbaseOperationManager) SetTenantUnitNum(tenantName string, unitNum int) error {
 	preparedSQL, params := m.preparedSQLForSetTenantUnitNum(tenantName, unitNum)
 	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
@@ -252,7 +252,7 @@ func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLPara
 
 // ---------- replacer sql and collect params ----------
 
-func preparedSQLForAddUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (string,[]interface{}) {
+func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []interface{}) {
 	var optionSql string
 	params := make([]interface{}, 0)
 	params = append(params, unitConfigV4.MaxCPU, unitConfigV4.MemorySize)
@@ -276,17 +276,13 @@ func preparedSQLForAddUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (str
 		optionSql = fmt.Sprint(optionSql, ", iops_weight ?")
 		params = append(params, unitConfigV4.IopsWeight)
 	}
-	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigV4.UnitConfigName, "${OPTION}", optionSql)
-	return replaceAll(sql.AddUnitConfigV4, replacer), params
+	return fmt.Sprintf(sql.AddUnitConfigV4, unitConfigV4.UnitConfigName, optionSql), params
 }
-
-
 
 func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
 	params := make([]interface{}, 0)
 	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
-	replacer := strings.NewReplacer("${POOL_NAME}", poolSQLParam.PoolName)
- 	return replaceAll(sql.AddPool, replacer) , params
+	return fmt.Sprintf(sql.AddPool, poolSQLParam.PoolName), params
 }
 
 func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
@@ -300,7 +296,7 @@ func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 		symbols = append(symbols, "?")
 		params = append(params, tenantSQLParam.PoolList[i])
 	}
-	if tenantSQLParam.Locality!= "" {
+	if tenantSQLParam.Locality != "" {
 		option = fmt.Sprint(option, ", LOCALITY= ?")
 		params = append(params, tenantSQLParam.Locality)
 	}
@@ -309,9 +305,7 @@ func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 		params = append(params, tenantSQLParam.Collate)
 	}
 	variableList = fmt.Sprintf("SET VARIABLES %s", tenantSQLParam.VariableList)
-	replacer := strings.NewReplacer("${TENANT_NAME}", tenantSQLParam.TenantName, "${POOL_LIST}", strings.Join(symbols, ", "),
-		"${OPTION}", option, "${VARIABLE_LIST}", variableList)
-	return replaceAll(sql.AddTenant, replacer), params
+	return fmt.Sprintf(sql.AddTenant, tenantSQLParam.TenantName, strings.Join(symbols, ", "), option, variableList), params
 }
 
 func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
@@ -322,7 +316,7 @@ func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 		alterItemList = append(alterItemList, "PRIMARY_ZONE=?")
 		params = append(params, tenantSQLParam.PrimaryZone)
 	}
-	if tenantSQLParam.Charset!= "" {
+	if tenantSQLParam.Charset != "" {
 		alterItemList = append(alterItemList, "CHARSET=?")
 		params = append(params, tenantSQLParam.Charset)
 	}
@@ -334,24 +328,23 @@ func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 		}
 		alterItemList = append(alterItemList, fmt.Sprintf("RESOURCE_POOL_LIST=(%s)", strings.Join(symbols, ", ")))
 	}
-	if tenantSQLParam.Locality!= "" {
+	if tenantSQLParam.Locality != "" {
 		alterItemList = append(alterItemList, "LOCALITY=?")
 		params = append(params, tenantSQLParam.Locality)
 	}
 	alterItemStr = strings.Join(alterItemList, ",")
-	replacer := strings.NewReplacer("${TENANT_NAME}", tenantSQLParam.TenantName, "${ALTER_ITEM}", alterItemStr)
-	return replaceAll(sql.SetTenant, replacer), params
+	return fmt.Sprintf(sql.SetTenant, tenantSQLParam.TenantName, alterItemStr), params
 }
 
-func preparedSQLForSetUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (string,[]interface{}) {
+func preparedSQLForSetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []interface{}) {
 	var alterItemStr string
 	params := make([]interface{}, 0)
 	alterItemList := make([]string, 0)
-	if unitConfigV4.MaxCPU!= 0 {
+	if unitConfigV4.MaxCPU != 0 {
 		alterItemList = append(alterItemList, "max_cpu=?")
 		params = append(params, unitConfigV4.MaxCPU)
 	}
-	if unitConfigV4.MemorySize!= 0 {
+	if unitConfigV4.MemorySize != 0 {
 		alterItemList = append(alterItemList, "memory_size=?")
 		params = append(params, unitConfigV4.MemorySize)
 	}
@@ -381,43 +374,36 @@ func preparedSQLForSetUnitConfigV4(unitConfigV4 model.UnitConfigV4SQLParam) (str
 	}
 
 	alterItemStr = strings.Join(alterItemList, ",")
-	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigV4.UnitConfigName, "${ALTER_ITEM}", alterItemStr)
-	return replaceAll(sql.SetUnitConfigV4, replacer), params
+	return fmt.Sprintf(sql.SetUnitConfigV4, unitConfigV4.UnitConfigName, alterItemStr), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []interface{}) {
 	params := make([]interface{}, 0)
-	replacer := strings.NewReplacer("${TENANT_NAME}", tenantName, "${VARIABLE_LIST}", variableList)
-	return replaceAll(sql.SetTenantVariable, replacer), params
+	return fmt.Sprintf(sql.SetTenantVariable, tenantName, variableList), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum string, unitNum int) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum string, unitNum int) (string, []interface{}) {
 	params := make([]interface{}, 0)
 	params = append(params, unitNum)
-	replacer := strings.NewReplacer("${TENANT_NAME}", tenantNum)
-	return replaceAll(sql.SetTenantUnitNum, replacer), params
+	return fmt.Sprintf(sql.SetTenantUnitNum, tenantNum), params
 
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string, []interface{}) {
 	params := make([]interface{}, 0)
-	var replacer *strings.Replacer
 	if force {
-		replacer = strings.NewReplacer("${TENANT_NAME}", tenantName, "${FORCE}", "force")
+		return fmt.Sprintf(sql.DeleteTenant, tenantName, "force"), params
 	} else {
-		replacer = strings.NewReplacer("${TENANT_NAME}", tenantName, "${FORCE}", "")
+		return fmt.Sprintf(sql.DeleteTenant, tenantName, ""), params
 	}
-	return replaceAll(sql.DeleteTenant, replacer), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string, []interface{}) {
 	params := make([]interface{}, 0)
-	replacer := strings.NewReplacer("${POOL_NAME}", poolName)
-	return replaceAll(sql.DeletePool, replacer), params
+	return fmt.Sprintf(sql.DeletePool, poolName), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string,[]interface{}) {
+func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []interface{}) {
 	params := make([]interface{}, 0)
-	replacer := strings.NewReplacer("${UNIT_NAME}", unitConfigName)
-	return replaceAll(sql.DeleteUnitConfig, replacer), params
+	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
 }

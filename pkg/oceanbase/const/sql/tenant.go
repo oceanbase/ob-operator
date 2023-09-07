@@ -23,7 +23,7 @@ const (
 	GetTenantCountByName       = "SELECT count(*) FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
 	GetPoolCountByName         = "SELECT count(*) FROM oceanbase.DBA_OB_RESOURCE_POOLS WHERE name = ?;"
 	GetUnitConfigV4CountByName = "SELECT count(*) FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE name = ?;"
-	GetRsJobCount         = "select count(*) from DBA_OB_TENANT_JOBS where tenant_id=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
+	GetRsJobCount              = "select count(*) from DBA_OB_TENANT_JOBS where tenant_id=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 
 	GetResourceTotal = "SELECT cpu_capacity, mem_capacity, data_disk_capacity FROM oceanbase.GV$OB_SERVERS;"
 	GetCharset       = "SELECT CHARSET('oceanbase') as charset;"
@@ -31,17 +31,17 @@ const (
 	GetRsJob         = "select job_id, job_type, job_status, tenant_id from DBA_OB_TENANT_JOBS where tenant_name=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 	GetObVersion     = "SELECT ob_version() as version;"
 
-	AddUnitConfigV4 = "CREATE RESOURCE UNIT ${UNIT_NAME} max_cpu ?, memory_size ? ${OPTION};"
-	AddPool   = "CREATE RESOURCE POOL ${POOL_NAME} UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
-	AddTenant = "CREATE TENANT IF NOT EXISTS ${TENANT_NAME} CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(${POOL_LIST}) ${OPTION} ${VARIABLE_LIST};"
+	AddUnitConfigV4 = "CREATE RESOURCE UNIT %s max_cpu ?, memory_size ? %s;"
+	AddPool         = "CREATE RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
+	AddTenant       = "CREATE TENANT IF NOT EXISTS %s CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(%s) %s %s;"
 
-	SetTenantVariable = "ALTER TENANT ${TENANT_NAME} VARIABLES ${VARIABLE_LIST};"
-	SetUnitConfigV4  = "ALTER RESOURCE UNIT ${UNIT_NAME} ${ALTER_ITEM};"
-	SetTenantUnitNum = "ALTER RESOURCE TENANT ${TENANT_NAME} UNIT_NUM = ?;"
-	SetTenant        = "ALTER TENANT ${TENANT_NAME} ${ALTER_ITEM};"
-	SetTenantName = "ALTER TENANT ${TENANT_NAME} RENAME GLOBAL_NAME TO ?"
+	SetTenantVariable = "ALTER TENANT %s VARIABLES %s;"
+	SetUnitConfigV4   = "ALTER RESOURCE UNIT %s %s;"
+	SetTenantUnitNum  = "ALTER RESOURCE TENANT %s UNIT_NUM = ?;"
+	SetTenant         = "ALTER TENANT %s %s;"
+	SetTenantName     = "ALTER TENANT %s RENAME GLOBAL_NAME TO ?"
 
-	DeleteUnitConfig = "DROP RESOURCE UNIT ${UNIT_NAME};"
-	DeletePool       = "DROP RESOURCE POOL ${POOL_NAME};"
-	DeleteTenant = "DROP TENANT ${TENANT_NAME} ${FORCE};"
+	DeleteUnitConfig = "DROP RESOURCE UNIT %s;"
+	DeletePool       = "DROP RESOURCE POOL %s;"
+	DeleteTenant     = "DROP TENANT %s %s;"
 )

@@ -15,7 +15,7 @@ package resource
 import (
 	"context"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/fail"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	corev1 "k8s.io/api/core/v1"
@@ -223,7 +223,7 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		}
 	case serverstatus.BootstrapReady:
 		m.Logger.Info("Get task flow when bootstrap ready")
-		taskFlow,err = task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
 	case serverstatus.Deleting:
 		m.Logger.Info("Get task flow when observer deleting")
 		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
@@ -245,10 +245,10 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return nil, err
 	}
 
-	if taskFlow.OperationContext.FailureRule.Strategy == "" {
-		taskFlow.OperationContext.FailureRule.Strategy = fail.RetryTask
-		if taskFlow.OperationContext.FailureRule.NextTryStatus == "" {
-			taskFlow.OperationContext.FailureRule.NextTryStatus = serverstatus.Running
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = serverstatus.Running
 		}
 	}
 	return taskFlow, nil
@@ -257,13 +257,6 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 func (m *OBServerManager) ClearTaskInfo() {
 	m.OBServer.Status.Status = serverstatus.Running
 	m.OBServer.Status.OperationContext = nil
-}
-
-
-func (m *OBServerManager) ClearOperationContextIfFailed() {
-	if m.OBServer.Status.OperationContext.FailureRule.Strategy != fail.RetryCurrentStep {
-		m.OBServer.Status.OperationContext = nil
-	}
 }
 
 func (m *OBServerManager) FinishTask() {
@@ -277,19 +270,20 @@ func (m *OBServerManager) HandleFailure() {
 		m.OBServer.Status.OperationContext = nil
 	} else {
 		operationContext := m.OBServer.Status.OperationContext
-		failureRule := operationContext.FailureRule
+		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
-		case fail.RetryTask:
+		case strategy.StartOver:
 			m.OBServer.Status.Status = failureRule.NextTryStatus
-		case fail.RetryCurrentStep:
+			m.OBServer.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
 		}
-		m.ClearOperationContextIfFailed()
 	}
 }
 
-func (m *OBServerManager) PrintErrEvent(err error)  {
-	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning,"task exec failed", err.Error())
+func (m *OBServerManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {

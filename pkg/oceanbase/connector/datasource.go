@@ -91,5 +91,5 @@ func (s *OceanBaseDataSource) ID() string {
 }
 
 func (s *OceanBaseDataSource) String() string {
-	return fmt.Sprintf("address: %s, port: %d, user: %s, tenantconst: %s, database: %s", s.Address, s.Port, s.User, s.Tenant, s.Database)
+	return fmt.Sprintf("address: %s, port: %d, user: %s, tenant: %s, database: %s", s.Address, s.Port, s.User, s.Tenant, s.Database)
 }

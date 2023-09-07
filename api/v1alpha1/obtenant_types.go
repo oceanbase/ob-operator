@@ -29,15 +29,15 @@ type OBTenantSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName string `json:"clusterName"`
+	ClusterName string `json:"obcluster"`
 	TenantName  string `json:"tenantName"`
 	UnitNumber  int    `json:"unitNum"`
 
 	//+kubebuilder:default=false
 	ForceDelete bool `json:"forceDelete,omitempty"`
 	//+kubebuilder:default=utf8mb4
-	Charset          string `json:"charset,omitempty"`
-	Collate          string `json:"collate,omitempty"` // DB fill collate automatically according to charset
+	Charset string `json:"charset,omitempty"`
+	Collate string `json:"collate,omitempty"` // DB fill collate automatically according to charset
 	//+kubebuilder:default=%
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 
@@ -45,11 +45,11 @@ type OBTenantSpec struct {
 }
 
 type ResourcePoolSpec struct {
-	ZoneList   string       `json:"zoneList"`
+	Zone string `json:"zone"`
 	//+kubebuilder:default=1
-	Priority   int          `json:"priority,omitempty"`
-	Type       LocalityType `json:"type,omitempty"`
-	UnitConfig UnitConfig   `json:"resource"`
+	Priority   int           `json:"priority,omitempty"`
+	Type       *LocalityType `json:"type,omitempty"`
+	UnitConfig *UnitConfig   `json:"resource"`
 }
 
 // TODO Split LocalityType struct to SpecLocalityType and StatusLocalityType
@@ -57,7 +57,7 @@ type LocalityType struct {
 	Name    string `json:"name"`
 	Replica int    `json:"replica"`
 	// TODO move isActive to ResourcePoolSpec And ResourcePoolStatus
-	IsActive bool`json:"isActive"`
+	IsActive bool `json:"isActive"`
 }
 
 // TODO Split UnitConfig struct to SpecUnitConfig and StatusUnitConfig
@@ -82,12 +82,12 @@ type OBTenantStatus struct {
 }
 
 type ResourcePoolStatus struct {
-	ZoneList   string       `json:"zoneList"`
-	Units      []UnitStatus `json:"units"`
-	Priority   int          `json:"priority,omitempty"`
-	Type       LocalityType `json:"type"`
-	UnitConfig UnitConfig   `json:"unitConfig"`
-	UnitNumber int          `json:"unitNum"`
+	ZoneList   string        `json:"zoneList"`
+	Units      []UnitStatus  `json:"units"`
+	Priority   int           `json:"priority,omitempty"`
+	Type       *LocalityType `json:"type"`
+	UnitConfig *UnitConfig   `json:"unitConfig"`
+	UnitNumber int           `json:"unitNum"`
 }
 
 type UnitStatus struct {
@@ -112,19 +112,18 @@ type TenantRecordInfo struct {
 	Charset          string `json:"charset,omitempty"`
 	Collate          string `json:"collate,omitempty"`
 	UnitNumber       int    `json:"unitNum,omitempty"`
-	ZoneList string `json:"zoneList,omitempty"`
+	ZoneList         string `json:"zoneList,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-// +kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.status"
-// +kubebuilder:printcolumn:name="clusterName",type="string",JSONPath=".spec.clusterName"
-// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-// +kubebuilder:printcolumn:name="locality",type="string",JSONPath=".status.tenantRecordInfo.locality",priority=1
-// +kubebuilder:printcolumn:name="primaryZone",type="string",JSONPath=".status.tenantRecordInfo.primaryZone",priority=1
-// +kubebuilder:printcolumn:name="poolList",type="string",JSONPath=".status.tenantRecordInfo.poolList",priority=1
-// +kubebuilder:printcolumn:name="charset",type="string",JSONPath=".status.tenantRecordInfo.charset",priority=1
-// +kubebuilder:printcolumn:name="collate",type="string",JSONPath=".status.tenantRecordInfo.collate",priority=1
+//+kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="clusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="locality",type="string",JSONPath=".status.tenantRecordInfo.locality",priority=1
+//+kubebuilder:printcolumn:name="primaryZone",type="string",JSONPath=".status.tenantRecordInfo.primaryZone",priority=1
+//+kubebuilder:printcolumn:name="poolList",type="string",JSONPath=".status.tenantRecordInfo.poolList",priority=1
+//+kubebuilder:printcolumn:name="charset",type="string",JSONPath=".status.tenantRecordInfo.charset",priority=1d
 
 // OBTenant is the Schema for the obtenants API
 type OBTenant struct {
