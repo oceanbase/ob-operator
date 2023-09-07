@@ -15,10 +15,12 @@ package resource
 import (
 	"context"
 	"fmt"
-
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -75,6 +77,18 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
 	default:
 		m.Logger.Info("no need to run anything for obparameter")
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = parameterstatus.Matched
+		}
 	}
 	return taskFlow, err
 }
@@ -139,6 +153,19 @@ func (m *OBParameterManager) FinishTask() {
 	m.OBParameter.Status.OperationContext = nil
 }
 
+func (m *OBParameterManager) HandleFailure() {
+	operationContext := m.OBParameter.Status.OperationContext
+	failureRule := operationContext.OnFailure
+	switch failureRule.Strategy {
+	case strategy.StartOver:
+		m.OBParameter.Status.Status = failureRule.NextTryStatus
+		m.OBParameter.Status.OperationContext = nil
+	case strategy.RetryFromCurrent:
+		operationContext.TaskStatus = taskstatus.Pending
+	case strategy.Pause:
+	}
+}
+
 func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
 	switch name {
 	case taskname.SetOBParameter:
@@ -146,6 +173,10 @@ func (m *OBParameterManager) GetTaskFunc(name string) (func() error, error) {
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
+}
+
+func (m *OBParameterManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBParameterManager) SetOBParameter() error {
