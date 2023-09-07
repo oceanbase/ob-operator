@@ -1,8 +1,11 @@
-
+VERSION ?= 2.0.0
 # Image URL to use all building/pushing image targets
-IMG ?= oceanbasedev/ob-operator:2.0.0-snapshot
+IMG ?= oceanbasedev/ob-operator:${VERSION}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.26.1
+
+YQ_DOWNLOAD_URL = https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64
+SEMVER_DOWNLOAD_URL = https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
@@ -75,7 +78,7 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} .
+	sudo docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
@@ -145,10 +148,20 @@ $(LOCALBIN):
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
+YQ ?= $(LOCALBIN)/yq
+SEMVER ?= $(LOCALBIN)/semver
+
+$(YQ):
+	curl -o $(LOCALBIN)/yq ${YQ_DOWNLOAD_URL}
+	chmod +x $(LOCALBIN)/yq
+
+$(SEMVER):
+	curl -o $(LOCALBIN)/semver ${SEMVER_DOWNLOAD_URL}
+	chmod +x $(LOCALBIN)/semver
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.0
-CONTROLLER_TOOLS_VERSION ?= v0.11.3
+CONTROLLER_TOOLS_VERSION ?= v0.13.0 # v0.11.3 can not support webhook manifests' generation, update to v0.13.0
 
 KUSTOMIZE_INSTALL_SCRIPT ?= "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
 .PHONY: kustomize
@@ -170,3 +183,6 @@ $(CONTROLLER_GEN): $(LOCALBIN)
 envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+
+.PHONY: tools
+tools: $(YQ) $(SEMVER)

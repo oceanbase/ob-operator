@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenants.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -12,10 +11,36 @@ spec:
     kind: OBTenant
     listKind: OBTenantList
     plural: obtenants
-    singular: tenantstatus
+    singular: obtenant
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: status
+      type: string
+    - jsonPath: .spec.clusterName
+      name: clusterName
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.tenantRecordInfo.locality
+      name: locality
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.primaryZone
+      name: primaryZone
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.poolList
+      name: poolList
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.charset
+      name: charset
+      priority: 1
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenant is the Schema for the obtenants API
@@ -35,13 +60,273 @@ spec:
           spec:
             description: OBTenantSpec defines the desired state of OBTenant
             properties:
-              foo:
-                description: Foo is an example field of OBTenant. Edit obtenant_types.go
-                  to remove/update
+              charset:
+                default: utf8mb4
                 type: string
+              collate:
+                type: string
+              connectWhiteList:
+                default: '%'
+                type: string
+              forceDelete:
+                default: false
+                type: boolean
+              obcluster:
+                type: string
+              pools:
+                items:
+                  properties:
+                    priority:
+                      default: 1
+                      type: integer
+                    resource:
+                      description: TODO Split UnitConfig struct to SpecUnitConfig
+                        and StatusUnitConfig
+                      properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxIops:
+                          type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minIops:
+                          type: integer
+                      required:
+                      - maxCPU
+                      - memorySize
+                      type: object
+                    type:
+                      description: TODO Split LocalityType struct to SpecLocalityType
+                        and StatusLocalityType
+                      properties:
+                        isActive:
+                          description: TODO move isActive to ResourcePoolSpec And
+                            ResourcePoolStatus
+                          type: boolean
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - isActive
+                      - name
+                      - replica
+                      type: object
+                    zone:
+                      type: string
+                  required:
+                  - resource
+                  - zone
+                  type: object
+                type: array
+              tenantName:
+                type: string
+              unitNum:
+                type: integer
+            required:
+            - obcluster
+            - pools
+            - tenantName
+            - unitNum
             type: object
           status:
             description: OBTenantStatus defines the observed state of OBTenant
+            properties:
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - failureRule
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              resourcePool:
+                items:
+                  properties:
+                    priority:
+                      type: integer
+                    type:
+                      description: TODO Split LocalityType struct to SpecLocalityType
+                        and StatusLocalityType
+                      properties:
+                        isActive:
+                          description: TODO move isActive to ResourcePoolSpec And
+                            ResourcePoolStatus
+                          type: boolean
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - isActive
+                      - name
+                      - replica
+                      type: object
+                    unitConfig:
+                      description: TODO Split UnitConfig struct to SpecUnitConfig
+                        and StatusUnitConfig
+                      properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxIops:
+                          type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minIops:
+                          type: integer
+                      required:
+                      - maxCPU
+                      - memorySize
+                      type: object
+                    unitNum:
+                      type: integer
+                    units:
+                      items:
+                        properties:
+                          migrate:
+                            properties:
+                              serverIP:
+                                type: string
+                              serverPort:
+                                type: integer
+                            required:
+                            - serverIP
+                            - serverPort
+                            type: object
+                          serverIP:
+                            type: string
+                          serverPort:
+                            type: integer
+                          status:
+                            type: string
+                          unitId:
+                            type: integer
+                        required:
+                        - migrate
+                        - serverIP
+                        - serverPort
+                        - status
+                        - unitId
+                        type: object
+                      type: array
+                    zoneList:
+                      type: string
+                  required:
+                  - type
+                  - unitConfig
+                  - unitNum
+                  - units
+                  - zoneList
+                  type: object
+                type: array
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+              tenantRecordInfo:
+                properties:
+                  charset:
+                    type: string
+                  collate:
+                    type: string
+                  connectWhiteList:
+                    type: string
+                  locality:
+                    type: string
+                  poolList:
+                    type: string
+                  primaryZone:
+                    type: string
+                  tenantID:
+                    type: integer
+                  unitNum:
+                    type: integer
+                  zoneList:
+                    type: string
+                required:
+                - locality
+                - poolList
+                - primaryZone
+                - tenantID
+                type: object
+            required:
+            - resourcePool
+            - status
             type: object
         type: object
     served: true

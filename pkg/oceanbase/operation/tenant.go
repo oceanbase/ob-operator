@@ -14,12 +14,35 @@ package operation
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/pkg/errors"
-	"strings"
 )
+
+// Incompatible with model.Tenant struct which contains only essential fields for tenant management
+// TODO: align the two structs: model.Tenant and model.OBTenant
+func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*model.OBTenant, error) {
+	tenants := make([]*model.OBTenant, 0)
+	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query tenants")
+		return nil, errors.Wrap(err, "Query tenants")
+	}
+	return tenants, nil
+}
+
+func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
+	units := make([]*model.OBUnit, 0)
+	err := m.QueryList(&units, sql.QueryUnitsWithTenantId, tenantID)
+	if err != nil {
+		m.Logger.Error(err, "Failed to query units")
+		return nil, errors.Wrap(err, "Query units")
+	}
+	return units, nil
+}
 
 func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.Tenant, error) {
 	tenant := &model.Tenant{}

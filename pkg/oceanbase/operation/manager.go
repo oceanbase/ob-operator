@@ -84,3 +84,7 @@ func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ..
 	}
 	return err
 }
+
+func (m *OceanbaseOperationManager) Close() error {
+	return m.Connector.Close()
+}

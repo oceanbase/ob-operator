@@ -131,7 +131,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			if NeedAnnonation(pod, m.OBServer.Status.CNI) {
+			if NeedAnnotation(pod, m.OBServer.Status.CNI) {
 				m.OBServer.Status.Status = serverstatus.Annotate
 			} else {
 				for _, container := range pod.Spec.Containers {

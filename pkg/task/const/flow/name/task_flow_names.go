@@ -52,6 +52,16 @@ const (
 	SetOBParameter = "set ob parameter"
 )
 
+// tenant-level backup
+const (
+	PrepareBackupPolicy   = "prepare backup policy"
+	StartBackupJob        = "start backup job"
+	StopBackupJob         = "stop backup job"
+	MaintainRunningPolicy = "maintain running policy"
+	PauseBackup           = "pause backup"
+	ResumeBackup          = "resume backup"
+)
+
 const (
 	CreateTenant = "create tenant"
 
