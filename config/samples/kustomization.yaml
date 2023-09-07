@@ -10,4 +10,5 @@ resources:
 - oceanbase.oceanbase.com_v2alpha1_obtenantbackup.yaml
 - oceanbase.oceanbase.com_v2alpha1_obclusterrestore.yaml
 - oceanbase.oceanbase.com_v2alpha1_obtenantrestore.yaml
+- oceanbase_v1alpha1_obtenantbackuppolicy.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

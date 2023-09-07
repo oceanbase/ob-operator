@@ -42,9 +42,30 @@ func init() {
 	GetRegistry().Register(flowname.PrepareOBServerForBootstrap, PrepareOBServerForBootstrap)
 	GetRegistry().Register(flowname.MaintainOBServerAfterBootstrap, MaintainOBServerAfterBootstrap)
 	GetRegistry().Register(flowname.DeleteOBServerFinalizer, DeleteOBServerFinalizer)
+
+	// obtenant
+	GetRegistry().Register(flowname.CreateTenant, CreateTenant)
+	GetRegistry().Register(flowname.MaintainWhiteList, MaintainWhiteList)
+	GetRegistry().Register(flowname.MaintainCharset, MaintainCharset)
+	GetRegistry().Register(flowname.MaintainUnitNum, MaintainUnitNum)
+	GetRegistry().Register(flowname.MaintainPrimaryZone, MaintainPrimaryZone)
+	GetRegistry().Register(flowname.MaintainLocality, MaintainLocality)
+	GetRegistry().Register(flowname.AddPool, AddPool)
+	GetRegistry().Register(flowname.DeletePool, DeletePool)
+	GetRegistry().Register(flowname.MaintainUnitConfig, MaintainUnitConfig)
+	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
+
 	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
 	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
 	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)
+
+	// tenant-level backup
+	GetRegistry().Register(flowname.PrepareBackupPolicy, PrepareBackupPolicy)
+	GetRegistry().Register(flowname.StartBackupJob, StartBackupJob)
+	GetRegistry().Register(flowname.StopBackupJob, StopBackupJob)
+	GetRegistry().Register(flowname.MaintainRunningPolicy, MaintainRunningPolicy)
+	GetRegistry().Register(flowname.PauseBackup, PauseBackup)
+	GetRegistry().Register(flowname.ResumeBackup, ResumeBackup)
 
 	// obparameter
 	GetRegistry().Register(flowname.SetOBParameter, SetOBParameter)
