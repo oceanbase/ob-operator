@@ -123,7 +123,7 @@ type TenantRecordInfo struct {
 //+kubebuilder:printcolumn:name="locality",type="string",JSONPath=".status.tenantRecordInfo.locality",priority=1
 //+kubebuilder:printcolumn:name="primaryZone",type="string",JSONPath=".status.tenantRecordInfo.primaryZone",priority=1
 //+kubebuilder:printcolumn:name="poolList",type="string",JSONPath=".status.tenantRecordInfo.poolList",priority=1
-//+kubebuilder:printcolumn:name="charset",type="string",JSONPath=".status.tenantRecordInfo.charset",priority=1d
+//+kubebuilder:printcolumn:name="charset",type="string",JSONPath=".status.tenantRecordInfo.charset",priority=1
 
 // OBTenant is the Schema for the obtenants API
 type OBTenant struct {

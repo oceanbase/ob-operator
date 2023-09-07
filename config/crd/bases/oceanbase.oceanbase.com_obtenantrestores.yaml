@@ -177,11 +177,19 @@ spec:
                 type: object
               operationContext:
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
-                    type: string
-                  originalStatus:
                     type: string
                   targetStatus:
                     type: string
@@ -196,9 +204,9 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
-                - originalStatus
                 - targetStatus
                 - task
                 - taskId
