@@ -609,6 +609,26 @@ func (m *OBClusterManager) RollingUpgradeByZone() error {
 func (m *OBClusterManager) FinishUpgrade() error {
 	return ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
 }
+
+func (m *OBClusterManager) CreateServiceForMonitor() error {
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBCluster.APIVersion,
+		Kind:       m.OBCluster.Kind,
+		Name:       m.OBCluster.Name,
+		UID:        m.OBCluster.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	monitorService := corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:       m.OBCluster.Namespace,
+			Name:            fmt.Sprintf("svc-monitor-%s", m.OBCluster.Name),
+			OwnerReferences: ownerReferenceList,
+		},
+	}
+	return m.Client.Create(m.Ctx, &monitorService)
+}
+
 func (m *OBClusterManager) RestoreEssentialParameters() error {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {

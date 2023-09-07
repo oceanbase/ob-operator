@@ -33,7 +33,7 @@ func MaintainOBClusterAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.MaintainOBClusterAfterBootstrap,
-			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter},
+			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter, taskname.CreateServiceForMonitor},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
