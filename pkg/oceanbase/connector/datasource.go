@@ -72,7 +72,8 @@ func (s *OceanBaseDataSource) DataSourceName() string {
 		passwordPart = fmt.Sprintf(":%s", s.Password)
 	}
 	if !(s.Tenant == "" || s.Tenant == oceanbaseconst.SysTenant) {
-		tenantPart = fmt.Sprintf("@%s", s.Password)
+		// fix: bootstrap stage will fail if concat this part after v4.2.0
+		tenantPart = fmt.Sprintf("@%s", s.Tenant)
 	}
 	if s.Database != "" {
 		return fmt.Sprintf("%s%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", s.User, tenantPart, passwordPart, s.Address, s.Port, s.Database)

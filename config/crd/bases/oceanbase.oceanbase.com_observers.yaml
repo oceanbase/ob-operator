@@ -3,8 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: observers.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -1778,6 +1777,16 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
@@ -1795,6 +1804,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
                 - targetStatus
