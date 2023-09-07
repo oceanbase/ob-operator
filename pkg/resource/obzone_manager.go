@@ -14,6 +14,9 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -88,15 +91,14 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
-		return taskFlow, nil
 	case zonestatus.BootstrapReady:
-		return task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
 	case zonestatus.AddOBServer:
-		return task.GetRegistry().Get(flowname.AddOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.AddOBServer)
 	case zonestatus.DeleteOBServer:
-		return task.GetRegistry().Get(flowname.DeleteOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServer)
 	case zonestatus.Deleting:
-		return task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -108,8 +110,22 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 			return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		}
 		// TODO upgrade
+	default:
+		m.Logger.Info("no need to run anything for obzone")
+		return nil, nil
 	}
-	return nil, nil
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = zonestatus.Running
+		}
+	}
+	return taskFlow, nil
 }
 
 func (m *OBZoneManager) IsDeleting() bool {
@@ -131,7 +147,7 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
 		finalizerFinished = true
 	} else {
-		finalizerFinished = finalizerFinished || (m.OBZone.Status.Status == zonestatus.FinalizerFinished)
+		finalizerFinished = m.OBZone.Status.Status == zonestatus.FinalizerFinished
 	}
 	if finalizerFinished {
 		m.Logger.Info("Finalizer finished")
@@ -211,6 +227,24 @@ func (m *OBZoneManager) ClearTaskInfo() {
 	m.OBZone.Status.OperationContext = nil
 }
 
+func (m *OBZoneManager) HandleFailure() {
+	if m.IsDeleting() {
+		m.OBZone.Status.Status = zonestatus.Deleting
+		m.OBZone.Status.OperationContext = nil
+	} else {
+		operationContext := m.OBZone.Status.OperationContext
+		failureRule := operationContext.OnFailure
+		switch failureRule.Strategy {
+		case strategy.StartOver:
+			m.OBZone.Status.Status = failureRule.NextTryStatus
+			m.OBZone.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
+			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
+		}
+	}
+}
+
 func (m *OBZoneManager) FinishTask() {
 	m.OBZone.Status.Status = m.OBZone.Status.OperationContext.TargetStatus
 	m.OBZone.Status.OperationContext = nil
@@ -251,6 +285,10 @@ func (m *OBZoneManager) GetTaskFunc(name string) (func() error, error) {
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}
+}
+
+func (m *OBZoneManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {

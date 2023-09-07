@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
-
+	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/util/codec"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -38,6 +40,7 @@ type OBTenantReconciler struct {
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/finalizers,verbs=update
+//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -49,11 +52,49 @@ type OBTenantReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	obtenant := &v1alpha1.OBTenant{}
+	err := r.Client.Get(ctx, req.NamespacedName, obtenant)
+	if err != nil {
+		logger.Error(err, "get obtenant error")
+		if kubeerrors.IsNotFound(err) {
+			// observer not found, just return
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
 
-	// TODO(user): your logic here
+	if obtenant.ObjectMeta.DeletionTimestamp.IsZero() {
+		finalizerName := "finalizers.oceanbase.com.deleteobtenant"
+		if !codec.ContainsString(obtenant.ObjectMeta.Finalizers, finalizerName) {
+			finalizers := []string{finalizerName}
+			obtenant.ObjectMeta.Finalizers = finalizers
+			err := r.Client.Update(ctx, obtenant)
+			if err != nil {
+				logger.Error(err, "got error when update finalizers")
+			}
+			return ctrl.Result{}, err
+		}
+	}
 
-	return ctrl.Result{}, nil
+	logger.Info("reconcile obtenant begin:  >>>>>>>>>>>>>>> * <<<<<<<<<<<<<<<", "spec", obtenant.Spec, "status", obtenant.Status)
+
+	// create observer manager
+	obtenantManager := &resource.OBTenantManager{
+		Ctx:      ctx,
+		OBTenant: obtenant,
+		Client:   r.Client,
+		Recorder: r.Recorder,
+		Logger:   &logger,
+	}
+
+	coordinator := resource.NewCoordinator(obtenantManager, &logger)
+	err = coordinator.Coordinate()
+	if err != nil {
+		//r.Recorder.Event(obtenant, corev1.EventTypeWarning, "coordinate failed", err.Error())
+	}
+
+	return ctrl.Result{}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

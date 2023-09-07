@@ -14,6 +14,9 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
@@ -70,10 +73,10 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	var err error
 	m.Logger.Info("create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
-	// create obcluster, return taskflow to bootstrap obcluster
+	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.New:
 		taskFlow, err = task.GetRegistry().Get(flowname.BootstrapOBCluster)
-	// after obcluster bootstraped, return taskflow to maintain obcluster after bootstrap
+	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBClusterAfterBootstrap)
 	case clusterstatus.AddOBZone:
@@ -88,7 +91,20 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
 		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
+		return nil, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = clusterstatus.Running
+		}
+	}
+
 	return taskFlow, err
 }
 
@@ -220,6 +236,19 @@ func (m *OBClusterManager) FinishTask() {
 	m.OBCluster.Status.OperationContext = nil
 }
 
+func (m *OBClusterManager) HandleFailure() {
+	operationContext := m.OBCluster.Status.OperationContext
+	failureRule := operationContext.OnFailure
+	switch failureRule.Strategy {
+	case strategy.StartOver:
+		m.OBCluster.Status.Status = failureRule.NextTryStatus
+		m.OBCluster.Status.OperationContext = nil
+	case strategy.RetryFromCurrent:
+		operationContext.TaskStatus = taskstatus.Pending
+	case strategy.Pause:
+	}
+}
+
 func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	switch name {
 	case taskname.CreateOBZone:
@@ -263,6 +292,10 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
+}
+
+func (m *OBClusterManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
