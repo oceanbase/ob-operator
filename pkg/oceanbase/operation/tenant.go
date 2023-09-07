@@ -22,7 +22,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (m *OceanbaseOperationManager) QueryTenantWithName(tenantName string) ([]*model.OBTenant, error) {
+// Incompatible with model.Tenant struct which contains only essential fields for tenant management
+// TODO: align the two structs: model.Tenant and model.OBTenant
+func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*model.OBTenant, error) {
 	tenants := make([]*model.OBTenant, 0)
 	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
 	if err != nil {
@@ -32,7 +34,7 @@ func (m *OceanbaseOperationManager) QueryTenantWithName(tenantName string) ([]*m
 	return tenants, nil
 }
 
-func (m *OceanbaseOperationManager) QueryUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
+func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
 	units := make([]*model.OBUnit, 0)
 	err := m.QueryList(&units, sql.QueryUnitsWithTenantId, tenantID)
 	if err != nil {

@@ -573,7 +573,7 @@ func (m *ObTenantBackupPolicyManager) getTenantInfo() (*model.OBTenant, error) {
 	if err != nil {
 		return nil, err
 	}
-	tenants, err := con.QueryTenantWithName(m.BackupPolicy.Spec.TenantName)
+	tenants, err := con.ListTenantWithName(m.BackupPolicy.Spec.TenantName)
 	if err != nil {
 		return nil, err
 	}

@@ -149,7 +149,7 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Set Log Archive parameter when LogMode == ARCHIVELOG", func() {
 		By("Get tenant info")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -173,7 +173,7 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Set Log Archive parameter when LogMode == NOARCHIVELOG", func() {
 		By("Get tenant info")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -201,7 +201,7 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Configure server for backup", func() {
 		By("Get tenant info")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -236,7 +236,7 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Stop and restart archive log", func() {
 		By("Get tenant info")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -285,7 +285,7 @@ var _ = Describe("Test Backup Operation", func() {
 
 	It("Set ARCHIVELOG and check", func() {
 		By("Get tenant info")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -294,7 +294,7 @@ var _ = Describe("Test Backup Operation", func() {
 			err = con.EnableArchiveLogForTenant()
 			Expect(err).To(BeNil())
 			By("Check ARCHIVELOG")
-			tenants, err = con.QueryTenantWithName(tenant)
+			tenants, err = con.ListTenantWithName(tenant)
 			Expect(err).To(BeNil())
 			Expect(len(tenants)).To(BeEquivalentTo(1))
 			tenantInfo = tenants[0]
@@ -305,7 +305,7 @@ var _ = Describe("Test Backup Operation", func() {
 			err = con.DisableArchiveLogForTenant()
 			Expect(err).To(BeNil())
 			By("Check NOARCHIVELOG")
-			tenants, err = con.QueryTenantWithName(tenant)
+			tenants, err = con.ListTenantWithName(tenant)
 			Expect(err).To(BeNil())
 			Expect(len(tenants)).To(BeEquivalentTo(1))
 			tenantInfo = tenants[0]

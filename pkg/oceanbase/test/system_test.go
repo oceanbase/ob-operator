@@ -42,14 +42,14 @@ var _ = Describe("Test System Operation", func() {
 
 	It("Query Tenants and Units", func() {
 		By("Query tenants with name")
-		tenants, err := con.QueryTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(tenant)
 		Expect(err).To(BeNil())
 		printSlice(tenants, "tenants with name: "+tenant)
 		if len(tenants) == 0 {
 			Skip("no tenant found")
 		}
 		By("Query units with tenant id")
-		units, err := con.QueryUnitsWithTenantId(tenants[0].TenantId)
+		units, err := con.ListUnitsWithTenantId(tenants[0].TenantId)
 		Expect(err).To(BeNil())
 		printSlice(units, "units with tenant id: "+fmt.Sprint(tenants[0].TenantId))
 	})
