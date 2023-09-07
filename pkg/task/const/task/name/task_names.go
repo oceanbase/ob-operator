@@ -34,6 +34,7 @@ const (
 	RollingUpgradeByZone       = "rolling upgrade by zone"
 	FinishUpgrade              = "execute upgrade post script"
 	RestoreEssentialParameters = "restore essential parameters"
+	CreateServiceForMonitor    = "create service for monitor"
 )
 
 // obzone tasks
