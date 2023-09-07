@@ -51,3 +51,23 @@ const (
 const (
 	SetOBParameter = "set ob parameter"
 )
+
+const (
+	CreateTenant = "create tenant"
+
+	// maintain tenant
+	MaintainWhiteList   = "maintain white list"
+	MaintainCharset     = "maintain charset"
+	MaintainUnitNum     = "maintain unit num"
+	MaintainLocality    = "maintain locality"
+	MaintainPrimaryZone = "maintain primary zone"
+
+	// maintain resource pool
+	AddPool    = "add pool"
+	DeletePool = "delete pool"
+
+	// maintain unit config
+	MaintainUnitConfig = "maintain unit config"
+
+	DeleteTenant = "delete tenant"
+)

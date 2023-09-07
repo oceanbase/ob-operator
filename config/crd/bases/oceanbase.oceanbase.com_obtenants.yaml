@@ -12,7 +12,7 @@ spec:
     kind: OBTenant
     listKind: OBTenantList
     plural: obtenants
-    singular: obtenant
+    singular: tenantstatus
   scope: Namespaced
   versions:
   - name: v1alpha1
