@@ -27,6 +27,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/intstr"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -619,11 +620,25 @@ func (m *OBClusterManager) CreateServiceForMonitor() error {
 		UID:        m.OBCluster.GetUID(),
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	selector := make(map[string]string)
+	selector[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
 	monitorService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       m.OBCluster.Namespace,
 			Name:            fmt.Sprintf("svc-monitor-%s", m.OBCluster.Name),
 			OwnerReferences: ownerReferenceList,
+		},
+		Spec: corev1.ServiceSpec{
+			Ports: []corev1.ServicePort{
+				{
+					Name:       obagentconst.HttpPortName,
+					Protocol:   corev1.ProtocolTCP,
+					Port:       obagentconst.HttpPort,
+					TargetPort: intstr.FromInt(obagentconst.HttpPort),
+				},
+			},
+			Selector: selector,
+			Type:     corev1.ServiceTypeClusterIP,
 		},
 	}
 	return m.Client.Create(m.Ctx, &monitorService)
