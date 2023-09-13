@@ -15,6 +15,10 @@ package resource
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
+
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
@@ -32,10 +36,7 @@ import (
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"strings"
 )
 
 type OBTenantManager struct {
@@ -136,7 +137,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 	}
 
 	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBTenant)
+	err = m.Client.Status().Update(m.Ctx, m.OBTenant.DeepCopy())
 
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obtenant status")

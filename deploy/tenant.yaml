@@ -1,11 +1,11 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: obtenant-test
-  namespace: oceanbase-obcluster      
+  name: test
+  namespace: oceanbase
 spec:	
   obcluster: test
-  tenantName: obtenant_test
+  tenantName: t1
   unitNum: 1 
   charset: utf8mb4  
   collate:   
