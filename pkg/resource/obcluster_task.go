@@ -622,10 +622,12 @@ func (m *OBClusterManager) CreateServiceForMonitor() error {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	selector := make(map[string]string)
 	selector[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
 	monitorService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       m.OBCluster.Namespace,
-			Name:            fmt.Sprintf("svc-monitor-%s", m.OBCluster.Name),
+			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, suffix),
 			OwnerReferences: ownerReferenceList,
 		},
 		Spec: corev1.ServiceSpec{
