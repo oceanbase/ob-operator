@@ -2,7 +2,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
 - apiGroups:
@@ -282,6 +281,52 @@ rules:
   - oceanbase.oceanbase.com
   resources:
   - observers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackup
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackup/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies/status
   verbs:
   - get
   - patch

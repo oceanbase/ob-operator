@@ -32,6 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
@@ -60,7 +61,7 @@ func main() {
 	var syncPeriod *time.Duration
 	flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
 	flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
-	flag.StringVar(&syncPeriodStr, "sync-period", "5s", "Data sync period.")
+	flag.StringVar(&syncPeriodStr, "sync-period", "15s", "Data sync period.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -202,6 +203,17 @@ func main() {
 	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBServer")
 	// 	os.Exit(1)
 	// }
+	if err = (&controller.OBTenantBackupPolicyReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
+		os.Exit(1)
+	}
+	if err = (&oceanbasev1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

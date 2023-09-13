@@ -48,6 +48,14 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 }
 
 func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
+	return getOperationClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
+}
+
+func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
+	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, credential)
+}
+
+func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
 		oceanbaseconst.LabelRefOBCluster: obcluster.Name,
@@ -64,16 +72,16 @@ func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Log
 		address := observer.Status.PodIp
 		switch obcluster.Status.Status {
 		case clusterstatus.New:
-			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", "")
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, "", "")
 		case clusterstatus.Bootstrapped:
-			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, "", oceanbaseconst.DefaultDatabase)
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, "", oceanbaseconst.DefaultDatabase)
 		default:
 			// TODO use user operator and read password from secret
-			password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator)
+			password, err := ReadPassword(c, obcluster.Namespace, secretName)
 			if err != nil {
 				return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
 			}
-			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, password, oceanbaseconst.DefaultDatabase)
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
 		}
 		// if err is nil, db connection is already checked available
 		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)
@@ -180,7 +188,7 @@ func GetCNIFromAnnotation(pod *corev1.Pod) string {
 	return oceanbaseconst.CNIUnknown
 }
 
-func NeedAnnonation(pod *corev1.Pod, cni string) bool {
+func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	switch cni {
 	case oceanbaseconst.CNICalico:
 		_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs]
@@ -188,4 +196,12 @@ func NeedAnnonation(pod *corev1.Pod, cni string) bool {
 	default:
 		return false
 	}
+}
+
+func getRef[T any](val T) *T {
+	return &val
+}
+
+func isZero[T comparable](val T) bool {
+	return val == *(new(T))
 }

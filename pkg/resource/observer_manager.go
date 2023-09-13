@@ -14,6 +14,8 @@ package resource
 
 import (
 	"context"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	corev1 "k8s.io/api/core/v1"
@@ -129,7 +131,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			if NeedAnnonation(pod, m.OBServer.Status.CNI) {
+			if NeedAnnotation(pod, m.OBServer.Status.CNI) {
 				m.OBServer.Status.Status = serverstatus.Annotate
 			} else {
 				for _, container := range pod.Spec.Containers {
@@ -175,7 +177,7 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
 		finalizerFinished = true
 	} else {
-		finalizerFinished = finalizerFinished || (m.OBServer.Status.Status == serverstatus.FinalizerFinished)
+		finalizerFinished = m.OBServer.Status.Status == serverstatus.FinalizerFinished
 	}
 	if finalizerFinished {
 		m.Logger.Info("Finalizer finished")
@@ -219,25 +221,37 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
-		return taskFlow, nil
 	case serverstatus.BootstrapReady:
 		m.Logger.Info("Get task flow when bootstrap ready")
-		return task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
 	case serverstatus.Deleting:
 		m.Logger.Info("Get task flow when observer deleting")
-		return task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
 	case serverstatus.Upgrade:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.UpgradeOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBServer)
 	case serverstatus.Recover:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.RecoverOBServer)
+		taskFlow, err = task.GetRegistry().Get(flowname.RecoverOBServer)
 	case serverstatus.Annotate:
 		m.Logger.Info("Get task flow when observer upgrade")
-		return task.GetRegistry().Get(flowname.AnnotateOBServerPod)
+		taskFlow, err = task.GetRegistry().Get(flowname.AnnotateOBServerPod)
 	default:
+		m.Logger.Info("no need to run anything for observer")
 		return nil, nil
 	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = serverstatus.Running
+		}
+	}
+	return taskFlow, nil
 }
 
 func (m *OBServerManager) ClearTaskInfo() {
@@ -248,6 +262,28 @@ func (m *OBServerManager) ClearTaskInfo() {
 func (m *OBServerManager) FinishTask() {
 	m.OBServer.Status.Status = m.OBServer.Status.OperationContext.TargetStatus
 	m.OBServer.Status.OperationContext = nil
+}
+
+func (m *OBServerManager) HandleFailure() {
+	if m.IsDeleting() {
+		m.OBServer.Status.Status = serverstatus.Deleting
+		m.OBServer.Status.OperationContext = nil
+	} else {
+		operationContext := m.OBServer.Status.OperationContext
+		failureRule := operationContext.OnFailure
+		switch failureRule.Strategy {
+		case strategy.StartOver:
+			m.OBServer.Status.Status = failureRule.NextTryStatus
+			m.OBServer.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
+			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
+		}
+	}
+}
+
+func (m *OBServerManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {

@@ -14,10 +14,9 @@ package resource
 
 import (
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/pkg/errors"
 )
 
 type Coordinator struct {
@@ -33,24 +32,23 @@ func NewCoordinator(m ResourceManager, logger *logr.Logger) *Coordinator {
 }
 
 func (c *Coordinator) Coordinate() error {
+	var f *task.TaskFlow
+	var err error
 	if c.Manager.IsNewResource() {
-		c.Logger.Info("Need init status for resource")
 		c.Manager.InitStatus()
 	} else {
-		f, err := c.Manager.GetTaskFlow()
+		f, err = c.Manager.GetTaskFlow()
 		if err != nil {
 			return errors.Wrap(err, "Get task flow")
 		} else if f == nil {
-			c.Logger.Info("No need to execute task flow")
+			// No need to execute task flow
 		} else {
 			c.Logger.Info("set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
-			c.Logger.Info("Successfully got task flow")
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
 		}
 	}
-
 	// handle instance deletion
 	if c.Manager.IsDeleting() {
 		err := c.Manager.CheckAndUpdateFinalizers()
@@ -65,11 +63,9 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 	switch f.OperationContext.TaskStatus {
 	case taskstatus.Empty:
 		if !f.HasNext() {
-			c.Logger.Info("No task to execute")
 			// clean task info sets resource status to normal, and context to nil
 			c.Manager.ClearTaskInfo()
 		} else {
-			c.Logger.Info("Set first task to execute")
 			f.NextTask()
 		}
 	case taskstatus.Pending:
@@ -79,37 +75,53 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
 			taskId := task.GetTaskManager().Submit(taskFunc)
-			c.Logger.Info("Successfullly submit task", "taskid", taskId)
+			c.Logger.Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId
 			f.OperationContext.TaskStatus = taskstatus.Running
 		}
 	case taskstatus.Running:
 		// check task status and update cr status
 		taskResult, err := task.GetTaskManager().GetTaskResult(f.OperationContext.TaskId)
+
 		if err != nil {
 			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
+			c.Manager.PrintErrEvent(err)
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else {
 			if taskResult != nil {
-				c.Logger.Info("task finished", "task id", f.OperationContext.TaskId, "task result", taskResult.Status)
+				c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 				f.OperationContext.TaskStatus = taskResult.Status
+				if taskResult.Error != nil {
+					c.Manager.PrintErrEvent(taskResult.Error)
+				}
 			} else {
-				c.Logger.Info("Didn't get task result, task is still running", "task id", f.OperationContext.TaskId)
+				// Didn't get task result, task is still running"
 			}
 		}
 	case taskstatus.Successful:
 		// clean operation context and set status to target status
 		if !f.HasNext() {
-			c.Logger.Info("No more task to run, task flow successfully finished")
 			c.Manager.FinishTask()
 		} else {
-			c.Logger.Info("Task finished successfully, set next task")
 			f.NextTask()
 		}
 	case taskstatus.Failed:
-		// TODO handle failed task
 		c.Logger.Info("Task failed, back to initial status")
-		c.Manager.ClearTaskInfo()
+		c.Manager.HandleFailure()
 	}
-	c.Logger.Info("Coordinate finished", "operation context", f.OperationContext)
+	// Coordinate finished
+}
+
+// TODO clean task result map and cache map to free memory
+func (c *Coordinator) cleanTaskResultMap(f *task.TaskFlow) error {
+	if f == nil || f.OperationContext == nil {
+		return nil
+	}
+	if f.OperationContext.TaskStatus == taskstatus.Successful || f.OperationContext.TaskStatus == taskstatus.Failed {
+		err := task.GetTaskManager().CleanTaskResult(f.OperationContext.TaskId)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
