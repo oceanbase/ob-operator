@@ -17,6 +17,7 @@ import (
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 func PrepareBackupPolicy() *TaskFlow {
@@ -55,6 +56,9 @@ func MaintainRunningPolicy() *TaskFlow {
 			Name:         flowname.MaintainRunningPolicy,
 			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CleanOldBackupJobs, taskname.CheckAndSpawnJobs},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: string(constants.BackupPolicyStatusFailed),
+			},
 		},
 	}
 }

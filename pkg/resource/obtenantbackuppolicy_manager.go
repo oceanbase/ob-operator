@@ -213,3 +213,15 @@ func (m *ObTenantBackupPolicyManager) retryUpdateStatus() error {
 		return m.Client.Status().Update(m.Ctx, policy)
 	})
 }
+
+func (m *ObTenantBackupPolicyManager) HandleFailure() {
+
+}
+
+func (m *ObTenantBackupPolicyManager) PrintErrEvent(error) {
+
+}
+
+func (m *ObTenantBackupPolicyManager) ClearOperationContextIfFailed() {
+
+}
