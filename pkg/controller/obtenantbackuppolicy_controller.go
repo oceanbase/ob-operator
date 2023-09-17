@@ -16,6 +16,7 @@ package controller
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -77,7 +78,9 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 
 	coordinator := resource.NewCoordinator(mgr, &logger)
 	err = coordinator.Coordinate()
-	return ctrl.Result{}, err
+	return ctrl.Result{
+		RequeueAfter: 30 * time.Second,
+	}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

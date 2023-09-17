@@ -105,7 +105,7 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 			allMatched := true
 			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
 				if obzoneStatus.Status != status {
-					m.Logger.Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
+					// m.Logger.Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
 					allMatched = false
 					break
 				}
