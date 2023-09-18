@@ -61,10 +61,9 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 				if err != nil {
 					return err
 				}
-			} else {
-				// TODO: Stop running log archive job and modify destination?
-				// Log archive jobs won't terminate if no error happens
 			}
+			// TODO: Stop running log archive job and modify destination?
+			// Log archive jobs won't terminate if no error happens
 		}
 		return nil
 	}
@@ -113,9 +112,8 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 			if err != nil {
 				return err
 			}
-		} else {
-			// TODO: Stop running backup job and modify the destination?
 		}
+		// TODO: Stop running backup job and modify the destination?
 		return nil
 	}
 	// Maintain backup parameters
