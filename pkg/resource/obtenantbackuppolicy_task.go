@@ -39,31 +39,26 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	m.Logger.Info("Configure Server For Backup")
 	con, err := m.getOperationManager()
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	tenantInfo, err := m.getTenantInfo()
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	setArchiveDest := func() error {
 		if tenantInfo.LogMode == "NOARCHIVELOG" {
 			err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
 			if err != nil {
-				m.Logger.Info("[Policy Error]", "error", err)
 				return err
 			}
 		} else {
 			latestArchiveJob, err := con.GetLatestArchiveLogJob()
 			if err != nil {
-				m.Logger.Info("[Policy Error]", "error", err)
 				return err
 			}
 			if latestArchiveJob == nil || latestArchiveJob.Status != "DOING" {
 				err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
 				if err != nil {
-					m.Logger.Info("[Policy Error]", "error", err)
 					return err
 				}
 			} else {
@@ -76,7 +71,6 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	// Maintain log archive parameters
 	configs, err := con.ListArchiveLogParameters()
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	if len(configs) == 0 {
@@ -105,7 +99,6 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 		if archiveSpec.Concurrency != 0 {
 			err = con.SetLogArchiveConcurrency(archiveSpec.Concurrency)
 			if err != nil {
-				m.Logger.Info("[Policy Error]", "error", err)
 				return err
 			}
 		}
@@ -113,13 +106,11 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	setBackupDest := func() error {
 		latestRunning, err := con.GetLatestRunningBackupJob()
 		if err != nil {
-			m.Logger.Info("[Policy Error]", "error", err)
 			return err
 		}
 		if latestRunning == nil {
 			err = con.SetDataBackupDestForTenant(m.getBackupDestPath())
 			if err != nil {
-				m.Logger.Info("[Policy Error]", "error", err)
 				return err
 			}
 		} else {
@@ -130,7 +121,6 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	// Maintain backup parameters
 	backupConfigs, err := con.ListBackupParameters()
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	backupPath := m.getBackupDestPath()
@@ -152,7 +142,6 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	}
 	err = m.configureBackupCleanPolicy()
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	return nil
@@ -236,7 +225,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
-		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	if latestFull == nil || latestFull.Status == "CANCELED" {

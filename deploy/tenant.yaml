@@ -5,7 +5,7 @@ metadata:
   namespace: oceanbase      
 spec:	
   obcluster: test
-  tenantName: yuyi
+  tenantName: obtenant_test
   unitNum: 1 
   charset: utf8mb4  
   connectWhiteList: '%'

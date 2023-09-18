@@ -209,7 +209,7 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
 		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
 		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
-			taskFlow.OperationContext.OnFailure.NextTryStatus = string(constants.BackupPolicyStatusRunning)
+			taskFlow.OperationContext.OnFailure.NextTryStatus = string(status)
 		}
 	}
 	return taskFlow, nil
