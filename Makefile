@@ -13,7 +13,7 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
-GOPROXY ?= https://goproxy.io,direct
+GOPROXY=$(shell go env GOPROXY)
 GOSUMDB ?= sum.golang.org
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.

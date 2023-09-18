@@ -150,6 +150,11 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 			}
 		}
 	}
+	err = m.configureBackupCleanPolicy()
+	if err != nil {
+		m.Logger.Info("[Policy Error]", "error", err)
+		return err
+	}
 	return nil
 }
 
@@ -177,10 +182,6 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 		if err != nil {
 			return err
 		}
-	}
-	err = m.configureBackupCleanPolicy()
-	if err != nil {
-		return err
 	}
 	err = m.createBackupJobIfNotExists(constants.BackupJobTypeArchive)
 	if err != nil {
@@ -235,6 +236,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
+		m.Logger.Info("[Policy Error]", "error", err)
 		return err
 	}
 	if latestFull == nil || latestFull.Status == "CANCELED" {

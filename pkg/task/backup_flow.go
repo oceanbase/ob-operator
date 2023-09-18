@@ -57,7 +57,7 @@ func MaintainRunningPolicy() *TaskFlow {
 			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CleanOldBackupJobs, taskname.CheckAndSpawnJobs},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: strategy.FailureRule{
-				NextTryStatus: string(constants.BackupPolicyStatusFailed),
+				NextTryStatus: string(constants.BackupPolicyStatusRunning),
 			},
 		},
 	}

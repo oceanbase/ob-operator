@@ -23,8 +23,11 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -180,23 +183,36 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if m.BackupPolicy.Status.OperationContext != nil {
 		return task.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
 	}
+	var taskFlow *task.TaskFlow
+	var err error
 	status := m.BackupPolicy.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.BackupPolicyStatusPreparing:
-		return task.GetRegistry().Get(flow.PrepareBackupPolicy)
+		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
 	case constants.BackupPolicyStatusPrepared:
-		return task.GetRegistry().Get(flow.StartBackupJob)
+		taskFlow, err = task.GetRegistry().Get(flow.StartBackupJob)
 	case constants.BackupPolicyStatusRunning:
-		return task.GetRegistry().Get(flow.MaintainRunningPolicy)
+		taskFlow, err = task.GetRegistry().Get(flow.MaintainRunningPolicy)
 	case constants.BackupPolicyStatusPausing:
-		return task.GetRegistry().Get(flow.PauseBackup)
+		taskFlow, err = task.GetRegistry().Get(flow.PauseBackup)
 	case constants.BackupPolicyStatusResuming:
-		return task.GetRegistry().Get(flow.ResumeBackup)
+		taskFlow, err = task.GetRegistry().Get(flow.ResumeBackup)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	if taskFlow.OperationContext.OnFailure.Strategy == "" {
+		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
+		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+			taskFlow.OperationContext.OnFailure.NextTryStatus = string(constants.BackupPolicyStatusRunning)
+		}
+	}
+	return taskFlow, nil
 }
 
 func (m *ObTenantBackupPolicyManager) retryUpdateStatus() error {
@@ -215,11 +231,26 @@ func (m *ObTenantBackupPolicyManager) retryUpdateStatus() error {
 }
 
 func (m *ObTenantBackupPolicyManager) HandleFailure() {
-
+	if m.IsDeleting() {
+		m.BackupPolicy.Status.OperationContext = nil
+	} else {
+		operationContext := m.BackupPolicy.Status.OperationContext
+		failureRule := operationContext.OnFailure
+		switch failureRule.Strategy {
+		case "":
+			fallthrough
+		case strategy.StartOver:
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusType(failureRule.NextTryStatus)
+			m.BackupPolicy.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
+			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
+		}
+	}
 }
 
-func (m *ObTenantBackupPolicyManager) PrintErrEvent(error) {
-
+func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
+	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *ObTenantBackupPolicyManager) ClearOperationContextIfFailed() {
