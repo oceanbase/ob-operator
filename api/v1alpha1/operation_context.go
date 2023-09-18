@@ -22,5 +22,5 @@ type OperationContext struct {
 	TaskStatus   string               `json:"taskStatus"`
 	TaskId       string               `json:"taskId"`
 	TargetStatus string               `json:"targetStatus"`
-	OnFailure    strategy.FailureRule `json:"failureRule"`
+	OnFailure    strategy.FailureRule `json:"failureRule,omitempty"`
 }

@@ -36,6 +36,7 @@ import (
 const backupVolumePath = oceanbaseconst.BackupPath
 
 func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
+	m.Logger.Info("Configure Server For Backup")
 	con, err := m.getOperationManager()
 	if err != nil {
 		return err
@@ -44,74 +45,102 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-
+	setArchiveDest := func() error {
+		if tenantInfo.LogMode == "NOARCHIVELOG" {
+			err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
+			if err != nil {
+				return err
+			}
+		} else {
+			latestArchiveJob, err := con.GetLatestArchiveLogJob()
+			if err != nil {
+				return err
+			}
+			if latestArchiveJob == nil || latestArchiveJob.Status != "DOING" {
+				err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
+				if err != nil {
+					return err
+				}
+			}
+			// TODO: Stop running log archive job and modify destination?
+			// Log archive jobs won't terminate if no error happens
+		}
+		return nil
+	}
 	// Maintain log archive parameters
 	configs, err := con.ListArchiveLogParameters()
 	if err != nil {
 		return err
 	}
-	archiveSpec := m.BackupPolicy.Spec.LogArchive
-	archivePath := m.getArchiveDestPath()
-	for _, config := range configs {
-		switch {
-		case config.Name == "path" && config.Value != archivePath:
-			fallthrough
-		case config.Name == "piece_switch_interval" && config.Value != archiveSpec.SwitchPieceInterval:
-			fallthrough
-		case config.Name == "binding" && config.Value != strings.ToUpper(string(archiveSpec.Binding)):
-			if tenantInfo.LogMode == "NOARCHIVELOG" {
-				err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
-				if err != nil {
-					return err
-				}
-			} else {
-				latestArchiveJob, err := con.GetLatestArchiveLogJob()
-				if err != nil {
-					return err
-				}
-				if latestArchiveJob == nil || latestArchiveJob.Status != "DOING" {
-					err = con.SetLogArchiveDestForTenant(m.getArchiveDestSettingValue())
-					if err != nil {
-						return err
-					}
-				} else {
-					// TODO: Stop running log archive job and modify destination?
-					// Log archive jobs won't terminate if no error happens
-				}
-			}
-		default:
-			// configurations match, do nothing
-		}
-	}
-	if archiveSpec.Concurrency != 0 {
-		err = con.SetLogArchiveConcurrency(archiveSpec.Concurrency)
+	if len(configs) == 0 {
+		err = setArchiveDest()
 		if err != nil {
 			return err
 		}
+	} else {
+		archiveSpec := m.BackupPolicy.Spec.LogArchive
+		archivePath := m.getArchiveDestPath()
+		for _, config := range configs {
+			switch {
+			case config.Name == "path" && config.Value != archivePath:
+				fallthrough
+			case config.Name == "piece_switch_interval" && config.Value != archiveSpec.SwitchPieceInterval:
+				fallthrough
+			case config.Name == "binding" && config.Value != strings.ToUpper(string(archiveSpec.Binding)):
+				err = setArchiveDest()
+				if err != nil {
+					return err
+				}
+			default:
+				// configurations match, do nothing
+			}
+		}
+		if archiveSpec.Concurrency != 0 {
+			err = con.SetLogArchiveConcurrency(archiveSpec.Concurrency)
+			if err != nil {
+				return err
+			}
+		}
 	}
-
+	setBackupDest := func() error {
+		latestRunning, err := con.GetLatestRunningBackupJob()
+		if err != nil {
+			return err
+		}
+		if latestRunning == nil {
+			err = con.SetDataBackupDestForTenant(m.getBackupDestPath())
+			if err != nil {
+				return err
+			}
+		}
+		// TODO: Stop running backup job and modify the destination?
+		return nil
+	}
 	// Maintain backup parameters
 	backupConfigs, err := con.ListBackupParameters()
 	if err != nil {
 		return err
 	}
 	backupPath := m.getBackupDestPath()
-	for _, config := range backupConfigs {
-		// Can not modify backup destination when there is a running backup job
-		if config.Name == "data_backup_dest" && config.Value != backupPath {
-			latestRunning, err := con.GetLatestRunningBackupJob()
-			if err != nil {
-				return err
-			}
-			if latestRunning == nil {
-				err = con.SetDataBackupDestForTenant(m.getBackupDestPath())
+	if len(backupConfigs) == 0 {
+		err = setBackupDest()
+		if err != nil {
+			return err
+		}
+	} else {
+		for _, config := range backupConfigs {
+			// Can not modify backup destination when there is a running backup job
+			if config.Name == "data_backup_dest" && config.Value != backupPath {
+				err = setBackupDest()
 				if err != nil {
 					return err
 				}
-			} else {
-				// TODO: Stop running backup job and modify the destination?
 			}
 		}
+	}
+	err = m.configureBackupCleanPolicy()
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -140,10 +169,6 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 		if err != nil {
 			return err
 		}
-	}
-	err = m.configureBackupCleanPolicy()
-	if err != nil {
-		return err
 	}
 	err = m.createBackupJobIfNotExists(constants.BackupJobTypeArchive)
 	if err != nil {

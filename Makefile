@@ -13,6 +13,7 @@ GOBIN=$(shell go env GOPATH)/bin
 else
 GOBIN=$(shell go env GOBIN)
 endif
+GOPROXY=$(shell go env GOPROXY)
 GOPROXY ?= https://goproxy.io,direct
 GOSUMDB ?= sum.golang.org
 

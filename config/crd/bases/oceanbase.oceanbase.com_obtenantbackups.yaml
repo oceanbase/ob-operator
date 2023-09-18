@@ -298,7 +298,6 @@ spec:
                       type: string
                     type: array
                 required:
-                - failureRule
                 - idx
                 - name
                 - targetStatus
