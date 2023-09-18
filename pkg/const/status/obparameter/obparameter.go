@@ -13,7 +13,8 @@ See the Mulan PSL v2 for more details.
 package obparameter
 
 const (
-	New      = "new"
-	Matched  = "matched"
-	NotMatch = "not match"
+	New       = "new"
+	PendingOB = "pending ob"
+	Matched   = "matched"
+	NotMatch  = "not match"
 )

@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package model
 
 type BootstrapServerInfo struct {
-	Region string
 	Zone   string
 	Server *ServerInfo
 }

@@ -7967,7 +7967,7 @@ spec:
         - --leader-elect
         command:
         - /manager
-        image: oceanbasedev/ob-operator:2.0.0-snapshot
+        image: oceanbasedev/ob-operator:2.0.0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -7987,8 +7987,8 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
+            cpu: 1
+            memory: 1Gi
           requests:
             cpu: 10m
             memory: 64Mi
@@ -8014,8 +8014,8 @@ spec:
           protocol: TCP
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
+            cpu: 1
+            memory: 1Gi
           requests:
             cpu: 5m
             memory: 64Mi

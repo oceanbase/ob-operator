@@ -21,6 +21,7 @@ const (
 	CreateUsers              = "create users"
 	UpdateParameter          = "update parameter"
 	ModifyOBZoneReplica      = "modify obzone replica"
+	ModifySysTenantReplica   = "modify sys tenant replica"
 	WaitOBZoneRunning        = "wait obzone running"
 	WaitOBZoneTopologyMatch  = "wait obzone topology match"
 	WaitOBZoneDeleted        = "wait obzone deleted"

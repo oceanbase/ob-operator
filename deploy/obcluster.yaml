@@ -16,8 +16,6 @@ spec:
       replica: 2
     - zone: zone2
       replica: 2
-    - zone: zone3
-      replica: 2
   observer:
     image: oceanbasedev/oceanbase-cn:4.2.0.0-test
     resource:

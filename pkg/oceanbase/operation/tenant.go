@@ -15,6 +15,7 @@ package operation
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
@@ -263,6 +264,26 @@ func (m *OceanbaseOperationManager) SetTenantUnitNum(tenantName string, unitNum 
 	return nil
 }
 
+func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string, timeoutSeconds int) error {
+	finished := false
+	for i := 0; i < timeoutSeconds; i++ {
+		tenant, err := m.GetTenantByName(name)
+		if err != nil {
+			m.Logger.Error(err, "Failed to get tenant info")
+		}
+		if tenant.PreviousLocality == "" {
+			m.Logger.Info("tenant locality change finished", "tenant name", name)
+			finished = true
+			break
+		}
+		time.Sleep(1 * time.Second)
+	}
+	if !finished {
+		return errors.Errorf("tenant %s locality change still not finished after %d seconds", name, timeoutSeconds)
+	}
+	return nil
+}
+
 func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForSetTenant(tenantSQLParam)
 	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
@@ -300,6 +321,12 @@ func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (st
 		params = append(params, unitConfigV4.IopsWeight)
 	}
 	return fmt.Sprintf(sql.AddUnitConfigV4, unitConfigV4.UnitConfigName, optionSql), params
+}
+
+func preparedSQLForAlterPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
+	params := make([]interface{}, 0)
+	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
+	return fmt.Sprintf(sql.AddPool, poolSQLParam.PoolName), params
 }
 
 func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
@@ -398,6 +425,29 @@ func preparedSQLForSetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (st
 
 	alterItemStr = strings.Join(alterItemList, ",")
 	return fmt.Sprintf(sql.SetUnitConfigV4, unitConfigV4.UnitConfigName, alterItemStr), params
+}
+
+func (m *OceanbaseOperationManager) prepareSqlForSetPool(param *model.PoolParam) (string, []interface{}) {
+	poolProperties := make([]string, 0)
+	args := make([]interface{}, 0)
+	if len(param.ZoneList) > 0 {
+		poolProperties = append(poolProperties, fmt.Sprintf("zone_list = ('%s')", strings.Join(param.ZoneList, "', '")))
+	}
+	if len(poolProperties) > 0 {
+		return fmt.Sprintf(sql.SetPool, param.PoolName, strings.Join(poolProperties, ",")), args
+	} else {
+		return "", args
+	}
+}
+
+func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error {
+	sql, args := m.prepareSqlForSetPool(poolParam)
+	if sql != "" {
+		return m.ExecWithDefaultTimeout(sql, args...)
+	} else {
+		m.Logger.Info("Set pool need to execute nothing")
+		return nil
+	}
 }
 
 func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []interface{}) {

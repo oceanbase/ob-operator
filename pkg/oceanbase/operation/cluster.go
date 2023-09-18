@@ -26,7 +26,7 @@ import (
 func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.BootstrapServerInfo) error {
 	serverInfoList := make([]string, 0, len(bootstrapServerList))
 	for _, bootstrapServer := range bootstrapServerList {
-		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Region, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
+		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
 	}
 	bootstrapInfo := strings.Join(serverInfoList, ", ")
 	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapInfo)

@@ -33,6 +33,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
+	obutil "github.com/oceanbase/ob-operator/pkg/oceanbase/util"
 )
 
 func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
@@ -142,11 +143,12 @@ func (m *OBClusterManager) ModifyOBZoneReplica() error {
 	return nil
 }
 
-func (m *OBClusterManager) DeleteOBZone() error {
+func (m *OBClusterManager) getZonesToDelete() ([]v1alpha1.OBZone, error) {
+	deletedZones := make([]v1alpha1.OBZone, 0)
 	obzoneList, err := m.listOBZones()
 	if err != nil {
 		m.Logger.Error(err, "List obzone failed")
-		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+		return deletedZones, errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
 	}
 	for _, obzone := range obzoneList.Items {
 		reserve := false
@@ -158,10 +160,21 @@ func (m *OBClusterManager) DeleteOBZone() error {
 		}
 		if !reserve {
 			m.Logger.Info("Need to delete obzone", "obzone", obzone.Name)
-			err = m.Client.Delete(m.Ctx, &obzone)
-			if err != nil {
-				return errors.Wrapf(err, "Delete obzone %s", obzone.Name)
-			}
+			deletedZones = append(deletedZones, obzone)
+		}
+	}
+	return deletedZones, nil
+}
+
+func (m *OBClusterManager) DeleteOBZone() error {
+	zonesToDelete, err := m.getZonesToDelete()
+	if err != nil {
+		return errors.Wrap(err, "Failed to get obzones to delete")
+	}
+	for _, zone := range zonesToDelete {
+		err = m.Client.Delete(m.Ctx, &zone)
+		if err != nil {
+			return errors.Wrapf(err, "Delete obzone %s", zone.Name)
 		}
 	}
 	return nil
@@ -268,7 +281,6 @@ func (m *OBClusterManager) Bootstrap() error {
 			Port: oceanbaseconst.RpcPort,
 		}
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-			Region: oceanbaseconst.DefaultRegion,
 			Zone:   zone.Spec.Topology.Zone,
 			Server: serverInfo,
 		})
@@ -609,6 +621,126 @@ func (m *OBClusterManager) RollingUpgradeByZone() error {
 
 func (m *OBClusterManager) FinishUpgrade() error {
 	return ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
+}
+
+func (m *OBClusterManager) ModifySysTenantReplica() error {
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
+	}
+
+	desiredZones := make([]string, 0)
+	for _, obzone := range m.OBCluster.Spec.Topology {
+		desiredZones = append(desiredZones, obzone.Zone)
+	}
+	// add zone to pool zone list
+	sysPool, err := oceanbaseOperationManager.GetPoolByName(oceanbaseconst.SysTenantPool)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get sys pool info")
+	}
+	zoneList := strings.Split(sysPool.ZoneList, ";")
+	for _, zone := range desiredZones {
+		found := false
+		for _, z := range zoneList {
+			if zone == z {
+				found = true
+				break
+			}
+		}
+		if !found {
+			zoneList = append(zoneList, zone)
+		}
+	}
+	m.Logger.Info("modify sys pool's zone list when add zone", "zone list", zoneList)
+	err = oceanbaseOperationManager.AlterPool(&model.PoolParam{
+		PoolName: oceanbaseconst.SysTenantPool,
+		ZoneList: zoneList,
+	})
+	if err != nil {
+		return errors.Wrapf(err, "Failed to modify sys pool's zone list to  %v", zoneList)
+	}
+
+	// add locality one by one
+	sysTenant, err := oceanbaseOperationManager.GetTenantByName(oceanbaseconst.SysTenant)
+	locality := sysTenant.Locality
+	replicas := obutil.ConvertFromLocalityStr(locality)
+	for _, zone := range desiredZones {
+		found := false
+		for _, r := range replicas {
+			if zone == r.Zone {
+				found = true
+				break
+			}
+		}
+		if !found {
+			replicas = append(replicas, model.Replica{
+				Type: oceanbaseconst.FullType,
+				Num:  1,
+				Zone: zone,
+			})
+			locality = obutil.ConvertToLocalityStr(replicas)
+			m.Logger.Info("modify sys tenant's locality when add zone", "locality", locality)
+			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
+				TenantName: oceanbaseconst.SysTenant,
+				Locality:   locality,
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
+			}
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, oceanbaseconst.LocalityChangeTimeoutSeconds)
+			if err != nil {
+				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
+			}
+		}
+	}
+
+	// delete locality one by one
+	for _, r := range replicas {
+		found := false
+		for _, zone := range desiredZones {
+			if zone == r.Zone {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newReplicas := obutil.OmitZoneFromReplicas(replicas, r.Zone)
+			locality = obutil.ConvertToLocalityStr(newReplicas)
+			m.Logger.Info("modify sys tenant's locality when delete zone", "locality", locality)
+			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
+				TenantName: oceanbaseconst.SysTenant,
+				Locality:   locality,
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
+			}
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, oceanbaseconst.LocalityChangeTimeoutSeconds)
+			if err != nil {
+				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
+			}
+		}
+	}
+
+	// delete zone from pool zone list
+	newZoneList := make([]string, 0)
+	for _, zone := range zoneList {
+		found := false
+		for _, z := range desiredZones {
+			if zone == z {
+				found = true
+				break
+			}
+		}
+		if found {
+			newZoneList = append(newZoneList, zone)
+		}
+	}
+	m.Logger.Info("modify sys pool's zone list when delete zone", "zone list", newZoneList)
+	return oceanbaseOperationManager.AlterPool(&model.PoolParam{
+		PoolName: oceanbaseconst.SysTenantPool,
+		ZoneList: newZoneList,
+	})
+
 }
 
 func (m *OBClusterManager) CreateServiceForMonitor() error {
