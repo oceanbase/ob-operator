@@ -21,12 +21,17 @@ import (
 )
 
 func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBServer, error) {
-	observer := &model.OBServer{}
-	err := m.QueryRow(observer, sql.GetServer, s.Ip, s.Port)
+	observers, err := m.ListServers()
 	if err != nil {
-		return nil, errors.Wrap(err, "Get observer failed")
+		return nil, err
 	}
-	return observer, nil
+	for _, observer := range observers {
+		if s.Ip == observer.Ip && s.Port == observer.Port {
+			return &observer, nil
+		}
+	}
+	m.Logger.Info("observer not found", "identity", s)
+	return nil, nil
 }
 
 func (m *OceanbaseOperationManager) ListServers() ([]model.OBServer, error) {

@@ -42,6 +42,10 @@ func init() {
 	GetRegistry().Register(flowname.PrepareOBServerForBootstrap, PrepareOBServerForBootstrap)
 	GetRegistry().Register(flowname.MaintainOBServerAfterBootstrap, MaintainOBServerAfterBootstrap)
 	GetRegistry().Register(flowname.DeleteOBServerFinalizer, DeleteOBServerFinalizer)
+	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
+	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
+	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)
+	GetRegistry().Register(flowname.AddServerInOB, AddServerInOB)
 
 	// obtenant
 	GetRegistry().Register(flowname.CreateTenant, CreateTenant)
@@ -54,10 +58,6 @@ func init() {
 	GetRegistry().Register(flowname.DeletePool, DeletePool)
 	GetRegistry().Register(flowname.MaintainUnitConfig, MaintainUnitConfig)
 	GetRegistry().Register(flowname.DeleteTenant, DeleteTenant)
-
-	GetRegistry().Register(flowname.UpgradeOBServer, UpgradeOBServer)
-	GetRegistry().Register(flowname.RecoverOBServer, RecoverOBServer)
-	GetRegistry().Register(flowname.AnnotateOBServerPod, AnnotateOBServerPod)
 
 	// tenant-level backup
 	GetRegistry().Register(flowname.PrepareBackupPolicy, PrepareBackupPolicy)
