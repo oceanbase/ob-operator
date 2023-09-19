@@ -660,6 +660,9 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 	}
 	// add locality one by one
 	sysTenant, err := oceanbaseOperationManager.GetTenantByName(oceanbaseconst.SysTenant)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get sys tenant info")
+	}
 	locality := sysTenant.Locality
 	replicas := obutil.ConvertFromLocalityStr(locality)
 	for _, zone := range desiredZones {
