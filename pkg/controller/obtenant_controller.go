@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+
 	"github.com/oceanbase/ob-operator/pkg/resource"
 	"github.com/oceanbase/ob-operator/pkg/util/codec"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,10 +38,10 @@ type OBTenantReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenants/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

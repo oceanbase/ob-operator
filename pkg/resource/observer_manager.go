@@ -14,6 +14,8 @@ package resource
 
 import (
 	"context"
+
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 
@@ -100,6 +102,23 @@ func (m *OBServerManager) SupportStaticIp() bool {
 	}
 }
 
+func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
+	if m.OBServer.Status.PodIp == "" {
+		err := errors.New("pod ip is empty")
+		m.Logger.Error(err, "unable to get observer info")
+		return nil, err
+	}
+	observerInfo := &model.ServerInfo{
+		Ip:   m.OBServer.Status.PodIp,
+		Port: oceanbaseconst.RpcPort,
+	}
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
+	}
+	return operationManager.GetServer(observerInfo)
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -131,6 +150,14 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
+			observer, err := m.getCurrentOBServerFromOB()
+			if err != nil {
+				m.Logger.Info("Get observer failed, check next time")
+			} else if observer == nil {
+				m.OBServer.Status.Status = serverstatus.AddServer
+			}
+		}
+		if m.OBServer.Status.Status == serverstatus.Running {
 			if NeedAnnotation(pod, m.OBServer.Status.CNI) {
 				m.OBServer.Status.Status = serverstatus.Annotate
 			} else {
@@ -151,7 +178,7 @@ func (m *OBServerManager) UpdateStatus() error {
 		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
-	err := m.Client.Status().Update(m.Ctx, m.OBServer)
+	err := m.Client.Status().Update(m.Ctx, m.OBServer.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
@@ -231,11 +258,14 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		m.Logger.Info("Get task flow when observer upgrade")
 		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBServer)
 	case serverstatus.Recover:
-		m.Logger.Info("Get task flow when observer upgrade")
+		m.Logger.Info("Get task flow when observer need recover")
 		taskFlow, err = task.GetRegistry().Get(flowname.RecoverOBServer)
 	case serverstatus.Annotate:
-		m.Logger.Info("Get task flow when observer upgrade")
+		m.Logger.Info("Get task flow when observer need set annotation")
 		taskFlow, err = task.GetRegistry().Get(flowname.AnnotateOBServerPod)
+	case serverstatus.AddServer:
+		m.Logger.Info("Get task flow when observer need to be added to obcluster")
+		taskFlow, err = task.GetRegistry().Get(flowname.AddServerInOB)
 	default:
 		m.Logger.Info("no need to run anything for observer")
 		return nil, nil

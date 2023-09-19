@@ -14,6 +14,7 @@ package task
 
 import (
 	"context"
+	"runtime/debug"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -56,6 +57,14 @@ func (m *TaskManager) Submit(f func() error) string {
 	m.ResultMap[TaskId] = retCh
 	m.TaskResultCache[TaskId] = nil
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				retCh <- &TaskResult{
+					Status: taskstatus.Failed,
+					Error:  errors.Errorf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack())),
+				}
+			}
+		}()
 		err := f()
 		if err != nil {
 			m.Logger.Error(err, "Run task got error", "taskId", TaskId)

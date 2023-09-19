@@ -186,7 +186,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
 	if m.IsDeleting() {
-		m.OBZone.Status.Status = serverstatus.Deleting
+		m.OBZone.Status.Status = zonestatus.Deleting
 	}
 	if m.OBZone.Status.Status != zonestatus.Running {
 		m.Logger.Info("OBZone status is not running, skip compare")
@@ -215,7 +215,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBZone)
+	err = m.Client.Status().Update(m.Ctx, m.OBZone.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")
 	}

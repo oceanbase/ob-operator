@@ -38,16 +38,19 @@ type OBClusterReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="",resources=secrets/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups="",resources=secrets/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=events,verbs=create;patch
-//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusters/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=secrets,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=secrets/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=secrets/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=services,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.

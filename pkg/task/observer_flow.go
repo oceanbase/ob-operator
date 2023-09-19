@@ -33,7 +33,7 @@ func MaintainOBServerAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
-			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer},
+			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}
@@ -43,7 +43,7 @@ func CreateOBServer() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.CreateOBServer,
-			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.AddServer},
+			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}
@@ -74,6 +74,16 @@ func RecoverOBServer() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.RecoverOBServer,
 			Tasks:        []string{taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.WaitOBServerActiveInCluster},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
+
+func AddServerInOB() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.AddServerInOB,
+			Tasks:        []string{taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}

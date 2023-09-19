@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
+	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, previous_locality, status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
 	GetPoolByName         = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS WHERE name = ?;"
 	GetUnitConfigV4ByName = "SELECT max_cpu, min_cpu, memory_size, log_disk_size, max_iops, min_iops, iops_weight FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE name = ?;"
 	GetPoolList           = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS;"
@@ -33,6 +33,7 @@ const (
 
 	AddUnitConfigV4 = "CREATE RESOURCE UNIT %s max_cpu ?, memory_size ? %s;"
 	AddPool         = "CREATE RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
+	AlterPool       = "ALTER RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
 	AddTenant       = "CREATE TENANT IF NOT EXISTS %s CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(%s) %s %s;"
 
 	SetTenantVariable = "ALTER TENANT %s VARIABLES %s;"
@@ -40,6 +41,8 @@ const (
 	SetTenantUnitNum  = "ALTER RESOURCE TENANT %s UNIT_NUM = ?;"
 	SetTenant         = "ALTER TENANT %s %s;"
 	SetTenantName     = "ALTER TENANT %s RENAME GLOBAL_NAME TO ?"
+
+	SetPool = "ALTER RESOURCE POOL %s %s"
 
 	DeleteUnitConfig = "DROP RESOURCE UNIT %s;"
 	DeletePool       = "DROP RESOURCE POOL %s;"

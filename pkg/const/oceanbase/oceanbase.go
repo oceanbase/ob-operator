@@ -16,6 +16,7 @@ var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "e
 
 const (
 	BootstrapTimeoutSeconds       = 300
+	LocalityChangeTimeoutSeconds  = 3600
 	DefaultStateWaitTimeout       = 300
 	TimeConsumingStateWaitTimeout = 3600
 	ServerDeleteTimeoutSeconds    = 86400
@@ -79,7 +80,14 @@ const (
 )
 
 const (
+	FullType     = "Full"
+	ReadonlyType = "Readonly"
+	LogonlyType  = "Logonly"
+)
+
+const (
 	SysTenant       = "sys"
+	SysTenantPool   = "sys_pool"
 	DefaultDatabase = "oceanbase"
 	DefaultRegion   = "default"
 )

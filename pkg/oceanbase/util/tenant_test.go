@@ -10,11 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obparameter
+package util
 
-const (
-	New       = "new"
-	PendingOB = "pending ob"
-	Matched   = "matched"
-	NotMatch  = "not match"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestConvertFromLocalityStr(t *testing.T) {
+	locality := "FULL{1}@zone1, FULL{1}@zone2, FULL{1}@zone3"
+	replicas := ConvertFromLocalityStr(locality)
+	require.Equal(t, 3, len(replicas))
+}

@@ -15,6 +15,7 @@ package resource
 import (
 	"context"
 	"fmt"
+
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
@@ -27,6 +28,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	parameterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obparameter"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -102,41 +104,48 @@ func (m *OBParameterManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBParameterManager) UpdateStatus() error {
-	operationManager, err := m.getOceanbaseOperationManager()
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster from K8s")
+	}
+	operationManager, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
 	if err != nil {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
 	}
-	parameterInfoList, err := operationManager.GetParameter(m.OBParameter.Spec.Parameter.Name, nil)
-	if err != nil {
-		m.Logger.Error(err, "Get parameter info failed")
-		return errors.Wrapf(err, "Get parameter info")
-	}
-	parameterMatched := true
-	parameterValues := make([]v1alpha1.ParameterValue, 0)
-	for _, parameterInfo := range parameterInfoList {
-		parameterValue := v1alpha1.ParameterValue{
-			Name:   parameterInfo.Name,
-			Value:  parameterInfo.Value,
-			Zone:   parameterInfo.Zone,
-			Server: fmt.Sprintf("%s:%d", parameterInfo.SvrIp, parameterInfo.SvrPort),
+	if obcluster.Status.Status != clusterstatus.Running {
+		m.OBParameter.Status.Status = parameterstatus.PendingOB
+		m.Logger.Info("obcluster not in running status, skip compare parameters")
+	} else {
+		parameterInfoList, err := operationManager.GetParameter(m.OBParameter.Spec.Parameter.Name, nil)
+		if err != nil {
+			m.Logger.Error(err, "Get parameter info failed")
+			return errors.Wrapf(err, "Get parameter info")
 		}
-		parameterValues = append(parameterValues, parameterValue)
-		if parameterInfo.Value != m.OBParameter.Spec.Parameter.Value {
-			parameterMatched = false
+		parameterMatched := true
+		parameterValues := make([]v1alpha1.ParameterValue, 0)
+		for _, parameterInfo := range parameterInfoList {
+			parameterValue := v1alpha1.ParameterValue{
+				Name:   parameterInfo.Name,
+				Value:  parameterInfo.Value,
+				Zone:   parameterInfo.Zone,
+				Server: fmt.Sprintf("%s:%d", parameterInfo.SvrIp, parameterInfo.SvrPort),
+			}
+			parameterValues = append(parameterValues, parameterValue)
+			if parameterInfo.Value != m.OBParameter.Spec.Parameter.Value {
+				parameterMatched = false
+			}
+		}
+		m.OBParameter.Status.Parameter = parameterValues
+		if m.OBParameter.Status.Status != parameterstatus.NotMatch {
+			if !parameterMatched {
+				m.OBParameter.Status.Status = parameterstatus.NotMatch
+			} else {
+				m.OBParameter.Status.Status = parameterstatus.Matched
+			}
 		}
 	}
-	m.Logger.Info("check parameter", "matched", parameterMatched)
-	m.OBParameter.Status.Parameter = parameterValues
-
-	if m.OBParameter.Status.Status != parameterstatus.NotMatch {
-		if !parameterMatched {
-			m.OBParameter.Status.Status = parameterstatus.NotMatch
-		} else {
-			m.OBParameter.Status.Status = parameterstatus.Matched
-		}
-	}
-	err = m.Client.Status().Update(m.Ctx, m.OBParameter)
+	err = m.Client.Status().Update(m.Ctx, m.OBParameter.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obparameter status")
 	}

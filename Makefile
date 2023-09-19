@@ -16,6 +16,7 @@ endif
 GOPROXY=$(shell go env GOPROXY)
 GOPROXY ?= https://goproxy.io,direct
 GOSUMDB ?= sum.golang.org
+RACE ?= ''
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
@@ -62,7 +63,7 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -v ./... -coverprofile cover.out
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 60m  -v ./... -coverprofile cover.out
 
 ##@ Build
 
@@ -79,11 +80,11 @@ run: manifests generate fmt vet ## Run a controller from your host.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: ## Build docker image with the manager.
-	sudo docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} .
+	sudo docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
-	docker push ${IMG}
+	sudo docker push ${IMG}
 
 # PLATFORMS defines the target platforms for  the manager image be build to provide support to multiple
 # architectures. (i.e. make docker-buildx IMG=myregistry/mypoperator:0.0.1). To use this option you need to:

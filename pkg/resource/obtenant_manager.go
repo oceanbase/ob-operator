@@ -137,7 +137,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 	}
 
 	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBTenant)
+	err = m.Client.Status().Update(m.Ctx, m.OBTenant.DeepCopy())
 
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obtenant status")

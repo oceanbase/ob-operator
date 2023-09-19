@@ -65,12 +65,14 @@ func (m *OBServerManager) AddServer() error {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
-	_, err = oceanbaseOperationManager.GetServer(serverInfo)
-	if err != nil {
-		m.Logger.Error(err, "Get observer failed, observer not in obcluster")
-	} else {
+	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
+	if obs != nil {
 		m.Logger.Info("Observer already exists in obcluster")
 		return nil
+	}
+	if err != nil {
+		m.Logger.Error(err, "Get observer failed")
+		return errors.Wrap(err, "Failed to get observer")
 	}
 	return oceanbaseOperationManager.AddServer(serverInfo)
 }
@@ -144,8 +146,7 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.Sto
 	requestsResources["storage"] = storageSpec.Size
 	storageClassName := storageSpec.StorageClass
 	pvcSpec.StorageClassName = &(storageClassName)
-	accessModes := make([]corev1.PersistentVolumeAccessMode, 0)
-	accessModes = append(accessModes, corev1.ReadWriteOnce)
+	accessModes := []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
 	pvcSpec.AccessModes = accessModes
 	pvcSpec.Resources.Requests = requestsResources
 	return *pvcSpec
@@ -600,15 +601,15 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(observerInfo)
-		if err != nil {
-			m.Logger.Error(err, "Failed to get observer in cluster")
-		} else {
+		observer, _ := operationManager.GetServer(observerInfo)
+		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
 				m.Logger.Info("Observer active")
 				active = true
 				break
 			}
+		} else {
+			m.Logger.Info("OBServer is nil, check next time")
 		}
 		time.Sleep(time.Second)
 	}
@@ -634,10 +635,12 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
 		observer, err := operationManager.GetServer(observerInfo)
-		if observer == nil {
+		if observer == nil && err == nil {
 			m.Logger.Info("Observer deleted")
 			deleted = true
 			break
+		} else if err != nil {
+			m.Logger.Error(err, "Query observer info failed")
 		}
 		time.Sleep(time.Second)
 	}

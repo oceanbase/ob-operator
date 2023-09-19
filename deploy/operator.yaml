@@ -15,8 +15,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusterbackups.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -65,8 +65,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusterrestores.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -115,8 +115,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusters.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -1934,6 +1934,16 @@ spec:
                 type: array
               operationContext:
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
@@ -1951,6 +1961,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
                 - targetStatus
@@ -1989,8 +2000,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obparameters.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -2050,6 +2061,16 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
@@ -2067,6 +2088,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
                 - targetStatus
@@ -2109,8 +2131,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: observers.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -3884,6 +3906,16 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
@@ -3901,6 +3933,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
                 - targetStatus
@@ -3940,8 +3973,504 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: obtenantbackuppolicies.oceanbase.oceanbase.com
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: oceanbase-webhook-service
+          namespace: oceanbase-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
+  group: oceanbase.oceanbase.com
+  names:
+    kind: OBTenantBackupPolicy
+    listKind: OBTenantBackupPolicyList
+    plural: obtenantbackuppolicies
+    singular: obtenantbackuppolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.tenantName
+      name: TenantName
+      type: string
+    - jsonPath: .status.nextFull
+      name: NextFull
+      type: string
+    - jsonPath: .status.nextIncremental
+      name: NextIncremental
+      type: string
+    - jsonPath: .spec.dataBackup.fullCrontab
+      name: FullCrontab
+      type: string
+    - jsonPath: .spec.dataBackup.incrementalCrontab
+      name: IncrementalCrontab
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OBTenantBackupPolicy is the Schema for the obtenantbackuppolicies
+          API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OBTenantBackupPolicySpec defines the desired state of OBTenantBackupPolicy
+            properties:
+              dataBackup:
+                description: DataBackupConfig contains the configuration for data
+                  backup progress
+                properties:
+                  destination:
+                    properties:
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    type: object
+                  fullCrontab:
+                    type: string
+                  incrementalCrontab:
+                    type: string
+                required:
+                - destination
+                type: object
+              dataClean:
+                properties:
+                  disabled:
+                    type: string
+                  name:
+                    type: string
+                  recoveryWindow:
+                    type: string
+                type: object
+              jobKeepWindow:
+                type: string
+              logArchive:
+                description: LogArchiveConfig contains the configuration for log archive
+                  progress
+                properties:
+                  binding:
+                    type: string
+                  concurrency:
+                    type: integer
+                  destDisabled:
+                    type: boolean
+                  destination:
+                    properties:
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    type: object
+                  switchPieceInterval:
+                    type: string
+                required:
+                - destination
+                - switchPieceInterval
+                type: object
+              obClusterName:
+                type: string
+              suspend:
+                type: boolean
+              tenantName:
+                type: string
+              tenantSecret:
+                type: string
+            required:
+            - dataBackup
+            - logArchive
+            - obClusterName
+            - tenantName
+            - tenantSecret
+            type: object
+          status:
+            description: OBTenantBackupPolicyStatus defines the observed state of
+              OBTenantBackupPolicy
+            properties:
+              latestArchiveLogJob:
+                description: OBArchiveLogJob is equal to OBArchiveLogSummary, but
+                  match view DBA_OB_ARCHIVELOG_JOBS
+                properties:
+                  base_piece_id:
+                    format: int64
+                    type: integer
+                  checkpoint_scn:
+                    format: int64
+                    type: integer
+                  checkpoint_scn_display:
+                    type: string
+                  comment:
+                    type: string
+                  compatible:
+                    type: string
+                  compression_ratio:
+                    type: string
+                  deleted_input_bytes:
+                    format: int64
+                    type: integer
+                  deleted_input_bytes_display:
+                    type: string
+                  deleted_output_bytes:
+                    format: int64
+                    type: integer
+                  deleted_output_bytes_display:
+                    type: string
+                  dest_id:
+                    format: int64
+                    type: integer
+                  dest_no:
+                    format: int64
+                    type: integer
+                  input_bytes:
+                    format: int64
+                    type: integer
+                  input_bytes_display:
+                    type: string
+                  output_bytes:
+                    format: int64
+                    type: integer
+                  output_bytes_display:
+                    type: string
+                  path:
+                    type: string
+                  piece_switch_interval:
+                    type: string
+                  round_id:
+                    format: int64
+                    type: integer
+                  start_scn:
+                    format: int64
+                    type: integer
+                  start_scn_display:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  used_piece_id:
+                    format: int64
+                    type: integer
+                required:
+                - base_piece_id
+                - checkpoint_scn
+                - checkpoint_scn_display
+                - comment
+                - compatible
+                - compression_ratio
+                - deleted_input_bytes
+                - deleted_input_bytes_display
+                - deleted_output_bytes
+                - deleted_output_bytes_display
+                - dest_id
+                - dest_no
+                - input_bytes
+                - input_bytes_display
+                - output_bytes
+                - output_bytes_display
+                - path
+                - piece_switch_interval
+                - round_id
+                - start_scn
+                - start_scn_display
+                - status
+                - tenant_id
+                - used_piece_id
+                type: object
+              latestBackupCleanJob:
+                description: OBBackupCleanJob matches view DBA_OB_BACKUP_DELETE_JOBS
+                  & DBA_OB_BACKUP_DELETE_JOB_HISTORY
+                properties:
+                  comment:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  parameter:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  success_task_count:
+                    format: int64
+                    type: integer
+                  task_count:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  type:
+                    type: string
+                required:
+                - comment
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - parameter
+                - result
+                - start_timestamp
+                - status
+                - success_task_count
+                - task_count
+                - tenant_id
+                - type
+                type: object
+              latestFullBackupJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
+              latestIncrementalJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
+              nextFull:
+                type: string
+              nextIncremental:
+                type: string
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - failureRule
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              status:
+                type: string
+              tenantInfo:
+                description: OBTenant is the tenant model of OB system
+                properties:
+                  arbitration_service_status:
+                    type: string
+                  compatibility_mode:
+                    type: string
+                  create_time:
+                    type: string
+                  in_recyclebin:
+                    type: string
+                  locality:
+                    type: string
+                  locked:
+                    type: string
+                  log_mode:
+                    type: string
+                  modify_time:
+                    type: string
+                  previous_locality:
+                    type: string
+                  primary_zone:
+                    type: string
+                  readable_scn:
+                    format: int64
+                    type: integer
+                  recovery_until_scn:
+                    format: int64
+                    type: integer
+                  replayable_scn:
+                    format: int64
+                    type: integer
+                  status:
+                    type: string
+                  sync_scn:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  tenant_name:
+                    type: string
+                  tenant_role:
+                    type: string
+                  tenant_type:
+                    type: string
+                required:
+                - arbitration_service_status
+                - compatibility_mode
+                - create_time
+                - in_recyclebin
+                - locality
+                - locked
+                - log_mode
+                - modify_time
+                - previous_locality
+                - primary_zone
+                - readable_scn
+                - recovery_until_scn
+                - replayable_scn
+                - status
+                - sync_scn
+                - tenant_id
+                - tenant_name
+                - tenant_role
+                - tenant_type
+                type: object
+            required:
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenantbackups.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -3952,10 +4481,33 @@ spec:
     singular: obtenantbackup
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.tenantName
+      name: TenantName
+      type: string
+    - jsonPath: .spec.path
+      name: Path
+      priority: 100
+      type: string
+    - jsonPath: .status.startedAt
+      name: StartedAt
+      type: string
+    - description: In ArchiveLogJob, EndedAt is CheckpointScnDisplay field, in other
+        jobs, EndedAt is EndTimestamp field
+      jsonPath: .status.endedAt
+      name: EndedAt
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OBTenantBackup is the Schema for the obtenantbackups API
+        description: OBTenantBackup is the Schema for the obtenantbackups API. An
+          instance of OBTenantBackup stands for a tenant backup job
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -3972,13 +4524,267 @@ spec:
           spec:
             description: OBTenantBackupSpec defines the desired state of OBTenantBackup
             properties:
-              foo:
+              obClusterName:
+                type: string
+              path:
+                type: string
+              tenantName:
+                type: string
+              tenantSecret:
+                type: string
+              type:
                 description: Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go
                   to remove/update
                 type: string
+            required:
+            - obClusterName
+            - tenantName
+            - tenantSecret
+            - type
             type: object
           status:
             description: OBTenantBackupStatus defines the observed state of OBTenantBackup
+            properties:
+              archiveLogJob:
+                description: OBArchiveLogJob is equal to OBArchiveLogSummary, but
+                  match view DBA_OB_ARCHIVELOG_JOBS
+                properties:
+                  base_piece_id:
+                    format: int64
+                    type: integer
+                  checkpoint_scn:
+                    format: int64
+                    type: integer
+                  checkpoint_scn_display:
+                    type: string
+                  comment:
+                    type: string
+                  compatible:
+                    type: string
+                  compression_ratio:
+                    type: string
+                  deleted_input_bytes:
+                    format: int64
+                    type: integer
+                  deleted_input_bytes_display:
+                    type: string
+                  deleted_output_bytes:
+                    format: int64
+                    type: integer
+                  deleted_output_bytes_display:
+                    type: string
+                  dest_id:
+                    format: int64
+                    type: integer
+                  dest_no:
+                    format: int64
+                    type: integer
+                  input_bytes:
+                    format: int64
+                    type: integer
+                  input_bytes_display:
+                    type: string
+                  output_bytes:
+                    format: int64
+                    type: integer
+                  output_bytes_display:
+                    type: string
+                  path:
+                    type: string
+                  piece_switch_interval:
+                    type: string
+                  round_id:
+                    format: int64
+                    type: integer
+                  start_scn:
+                    format: int64
+                    type: integer
+                  start_scn_display:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  used_piece_id:
+                    format: int64
+                    type: integer
+                required:
+                - base_piece_id
+                - checkpoint_scn
+                - checkpoint_scn_display
+                - comment
+                - compatible
+                - compression_ratio
+                - deleted_input_bytes
+                - deleted_input_bytes_display
+                - deleted_output_bytes
+                - deleted_output_bytes_display
+                - dest_id
+                - dest_no
+                - input_bytes
+                - input_bytes_display
+                - output_bytes
+                - output_bytes_display
+                - path
+                - piece_switch_interval
+                - round_id
+                - start_scn
+                - start_scn_display
+                - status
+                - tenant_id
+                - used_piece_id
+                type: object
+              backupJob:
+                description: OBBackupJob matches view DBA_OB_BACKUP_JOBS & DBA_OB_BACKUP_JOB_HISTORY
+                properties:
+                  backup_set_id:
+                    format: int64
+                    type: integer
+                  backup_type:
+                    type: string
+                  comment:
+                    type: string
+                  encryption_mode:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  passwd:
+                    type: string
+                  plus_archivelog:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tenant_id:
+                    format: int64
+                    type: integer
+                required:
+                - backup_set_id
+                - backup_type
+                - comment
+                - encryption_mode
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - passwd
+                - plus_archivelog
+                - result
+                - start_timestamp
+                - status
+                - tenant_id
+                type: object
+              dataCleanJob:
+                description: OBBackupCleanJob matches view DBA_OB_BACKUP_DELETE_JOBS
+                  & DBA_OB_BACKUP_DELETE_JOB_HISTORY
+                properties:
+                  comment:
+                    type: string
+                  end_timestamp:
+                    type: string
+                  executor_tenant_id:
+                    format: int64
+                    type: integer
+                  job_id:
+                    format: int64
+                    type: integer
+                  job_level:
+                    type: string
+                  parameter:
+                    type: string
+                  result:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  success_task_count:
+                    format: int64
+                    type: integer
+                  task_count:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  type:
+                    type: string
+                required:
+                - comment
+                - executor_tenant_id
+                - job_id
+                - job_level
+                - parameter
+                - result
+                - start_timestamp
+                - status
+                - success_task_count
+                - task_count
+                - tenant_id
+                - type
+                type: object
+              endedAt:
+                type: string
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - failureRule
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              progress:
+                type: string
+              startedAt:
+                type: string
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+            required:
+            - status
             type: object
         type: object
     served: true
@@ -3990,8 +4796,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenantrestores.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -4005,7 +4811,8 @@ spec:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OBTenantRestore is the Schema for the obtenantrestores API
+        description: OBTenantRestore is the Schema for the obtenantrestores API An
+          instance of OBTenantRestore stands for a tenant restore job
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -4022,13 +4829,195 @@ spec:
           spec:
             description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
             properties:
-              foo:
-                description: Foo is an example field of OBTenantRestore. Edit obtenantrestore_types.go
-                  to remove/update
+              obClusterName:
                 type: string
+              restoreTenantName:
+                type: string
+              sourceUri:
+                type: string
+              type:
+                type: string
+              until:
+                type: string
+            required:
+            - obClusterName
+            - restoreTenantName
+            - sourceUri
+            - type
             type: object
           status:
             description: OBTenantRestoreStatus defines the observed state of OBTenantRestore
+            properties:
+              jobStatus:
+                description: JobStatus represents the current state of a Job.
+                properties:
+                  active:
+                    description: The number of pending and running pods.
+                    format: int32
+                    type: integer
+                  completedIndexes:
+                    description: completedIndexes holds the completed indexes when
+                      .spec.completionMode = "Indexed" in a text format. The indexes
+                      are represented as decimal integers separated by commas. The
+                      numbers are listed in increasing order. Three or more consecutive
+                      numbers are compressed and represented by the first and last
+                      element of the series, separated by a hyphen. For example, if
+                      the completed indexes are 1, 3, 4, 5 and 7, they are represented
+                      as "1,3-5,7".
+                    type: string
+                  completionTime:
+                    description: Represents time when the job was completed. It is
+                      not guaranteed to be set in happens-before order across separate
+                      operations. It is represented in RFC3339 form and is in UTC.
+                      The completion time is only set when the job finishes successfully.
+                    format: date-time
+                    type: string
+                  conditions:
+                    description: 'The latest available observations of an object''s
+                      current state. When a Job fails, one of the conditions will
+                      have type "Failed" and status true. When a Job is suspended,
+                      one of the conditions will have type "Suspended" and status
+                      true; when the Job is resumed, the status of this condition
+                      will become false. When a Job is completed, one of the conditions
+                      will have type "Complete" and status true. More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/'
+                    items:
+                      description: JobCondition describes current state of a job.
+                      properties:
+                        lastProbeTime:
+                          description: Last time the condition was checked.
+                          format: date-time
+                          type: string
+                        lastTransitionTime:
+                          description: Last time the condition transit from one status
+                            to another.
+                          format: date-time
+                          type: string
+                        message:
+                          description: Human readable message indicating details about
+                            last transition.
+                          type: string
+                        reason:
+                          description: (brief) reason for the condition's last transition.
+                          type: string
+                        status:
+                          description: Status of the condition, one of True, False,
+                            Unknown.
+                          type: string
+                        type:
+                          description: Type of job condition, Complete or Failed.
+                          type: string
+                      required:
+                      - status
+                      - type
+                      type: object
+                    type: array
+                    x-kubernetes-list-type: atomic
+                  failed:
+                    description: The number of pods which reached phase Failed.
+                    format: int32
+                    type: integer
+                  ready:
+                    description: "The number of pods which have a Ready condition.
+                      \n This field is beta-level. The job controller populates the
+                      field when the feature gate JobReadyPods is enabled (enabled
+                      by default)."
+                    format: int32
+                    type: integer
+                  startTime:
+                    description: Represents time when the job controller started processing
+                      a job. When a Job is created in the suspended state, this field
+                      is not set until the first time it is resumed. This field is
+                      reset every time a Job is resumed from suspension. It is represented
+                      in RFC3339 form and is in UTC.
+                    format: date-time
+                    type: string
+                  succeeded:
+                    description: The number of pods which reached phase Succeeded.
+                    format: int32
+                    type: integer
+                  uncountedTerminatedPods:
+                    description: "uncountedTerminatedPods holds the UIDs of Pods that
+                      have terminated but the job controller hasn't yet accounted
+                      for in the status counters. \n The job controller creates pods
+                      with a finalizer. When a pod terminates (succeeded or failed),
+                      the controller does three steps to account for it in the job
+                      status: \n 1. Add the pod UID to the arrays in this field. 2.
+                      Remove the pod finalizer. 3. Remove the pod UID from the arrays
+                      while increasing the corresponding counter. \n Old jobs might
+                      not be tracked using this field, in which case the field remains
+                      null."
+                    properties:
+                      failed:
+                        description: failed holds UIDs of failed Pods.
+                        items:
+                          description: UID is a type that holds unique ID values,
+                            including UUIDs.  Because we don't ONLY use UUIDs, this
+                            is an alias to string.  Being a type captures intent and
+                            helps make sure that UIDs and names do not get conflated.
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
+                      succeeded:
+                        description: succeeded holds UIDs of succeeded Pods.
+                        items:
+                          description: UID is a type that holds unique ID values,
+                            including UUIDs.  Because we don't ONLY use UUIDs, this
+                            is an alias to string.  Being a type captures intent and
+                            helps make sure that UIDs and names do not get conflated.
+                          type: string
+                        type: array
+                        x-kubernetes-list-type: set
+                    type: object
+                type: object
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - failureRule
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              progress:
+                type: string
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+            required:
+            - jobStatus
+            - progress
+            - status
             type: object
         type: object
     served: true
@@ -4040,8 +5029,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenants.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -4049,10 +5038,36 @@ spec:
     kind: OBTenant
     listKind: OBTenantList
     plural: obtenants
-    singular: tenantstatus
+    singular: obtenant
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: status
+      type: string
+    - jsonPath: .spec.clusterName
+      name: clusterName
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.tenantRecordInfo.locality
+      name: locality
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.primaryZone
+      name: primaryZone
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.poolList
+      name: poolList
+      priority: 1
+      type: string
+    - jsonPath: .status.tenantRecordInfo.charset
+      name: charset
+      priority: 1
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenant is the Schema for the obtenants API
@@ -4072,13 +5087,273 @@ spec:
           spec:
             description: OBTenantSpec defines the desired state of OBTenant
             properties:
-              foo:
-                description: Foo is an example field of OBTenant. Edit obtenant_types.go
-                  to remove/update
+              charset:
+                default: utf8mb4
                 type: string
+              collate:
+                type: string
+              connectWhiteList:
+                default: '%'
+                type: string
+              forceDelete:
+                default: false
+                type: boolean
+              obcluster:
+                type: string
+              pools:
+                items:
+                  properties:
+                    priority:
+                      default: 1
+                      type: integer
+                    resource:
+                      description: TODO Split UnitConfig struct to SpecUnitConfig
+                        and StatusUnitConfig
+                      properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxIops:
+                          type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minIops:
+                          type: integer
+                      required:
+                      - maxCPU
+                      - memorySize
+                      type: object
+                    type:
+                      description: TODO Split LocalityType struct to SpecLocalityType
+                        and StatusLocalityType
+                      properties:
+                        isActive:
+                          description: TODO move isActive to ResourcePoolSpec And
+                            ResourcePoolStatus
+                          type: boolean
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - isActive
+                      - name
+                      - replica
+                      type: object
+                    zone:
+                      type: string
+                  required:
+                  - resource
+                  - zone
+                  type: object
+                type: array
+              tenantName:
+                type: string
+              unitNum:
+                type: integer
+            required:
+            - obcluster
+            - pools
+            - tenantName
+            - unitNum
             type: object
           status:
             description: OBTenantStatus defines the observed state of OBTenant
+            properties:
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - failureRule
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              resourcePool:
+                items:
+                  properties:
+                    priority:
+                      type: integer
+                    type:
+                      description: TODO Split LocalityType struct to SpecLocalityType
+                        and StatusLocalityType
+                      properties:
+                        isActive:
+                          description: TODO move isActive to ResourcePoolSpec And
+                            ResourcePoolStatus
+                          type: boolean
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - isActive
+                      - name
+                      - replica
+                      type: object
+                    unitConfig:
+                      description: TODO Split UnitConfig struct to SpecUnitConfig
+                        and StatusUnitConfig
+                      properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxIops:
+                          type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minIops:
+                          type: integer
+                      required:
+                      - maxCPU
+                      - memorySize
+                      type: object
+                    unitNum:
+                      type: integer
+                    units:
+                      items:
+                        properties:
+                          migrate:
+                            properties:
+                              serverIP:
+                                type: string
+                              serverPort:
+                                type: integer
+                            required:
+                            - serverIP
+                            - serverPort
+                            type: object
+                          serverIP:
+                            type: string
+                          serverPort:
+                            type: integer
+                          status:
+                            type: string
+                          unitId:
+                            type: integer
+                        required:
+                        - migrate
+                        - serverIP
+                        - serverPort
+                        - status
+                        - unitId
+                        type: object
+                      type: array
+                    zoneList:
+                      type: string
+                  required:
+                  - type
+                  - unitConfig
+                  - unitNum
+                  - units
+                  - zoneList
+                  type: object
+                type: array
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+              tenantRecordInfo:
+                properties:
+                  charset:
+                    type: string
+                  collate:
+                    type: string
+                  connectWhiteList:
+                    type: string
+                  locality:
+                    type: string
+                  poolList:
+                    type: string
+                  primaryZone:
+                    type: string
+                  tenantID:
+                    type: integer
+                  unitNum:
+                    type: integer
+                  zoneList:
+                    type: string
+                required:
+                - locality
+                - poolList
+                - primaryZone
+                - tenantID
+                type: object
+            required:
+            - resourcePool
+            - status
             type: object
         type: object
     served: true
@@ -4090,8 +5365,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obunits.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -4140,8 +5415,8 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.11.3
-  creationTimestamp: null
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
   name: obzones.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -5929,6 +7204,16 @@ spec:
                 type: array
               operationContext:
                 properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
                   idx:
                     type: integer
                   name:
@@ -5946,6 +7231,7 @@ spec:
                       type: string
                     type: array
                 required:
+                - failureRule
                 - idx
                 - name
                 - targetStatus
@@ -6028,7 +7314,6 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: oceanbase-manager-role
 rules:
 - apiGroups:
@@ -6060,6 +7345,32 @@ rules:
   - ""
   resources:
   - secrets/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - services/status
   verbs:
   - get
   - patch
@@ -6282,6 +7593,52 @@ rules:
   - oceanbase.oceanbase.com
   resources:
   - observers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackup
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackup/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantbackuppolicies/status
   verbs:
   - get
   - patch
@@ -6542,6 +7899,26 @@ spec:
   selector:
     control-plane: controller-manager
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: webhook
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: webhook-service
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: service
+    app.kubernetes.io/part-of: ob-operator-generate
+  name: oceanbase-webhook-service
+  namespace: oceanbase-system
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 9443
+  selector:
+    control-plane: controller-manager
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -6585,6 +7962,46 @@ spec:
                 - linux
       containers:
       - args:
+        - --health-probe-bind-address=:8081
+        - --metrics-bind-address=127.0.0.1:8080
+        - --leader-elect
+        command:
+        - /manager
+        image: oceanbasedev/ob-operator:2.0.0
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 1
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      - args:
         - --secure-listen-address=0.0.0.0:8443
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
@@ -6607,39 +8024,118 @@ spec:
           capabilities:
             drop:
             - ALL
-      - args:
-        - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
-        - --leader-elect
-        command:
-        - /manager
-        image: oceanbasedev/ob-operator:2.0.0-snapshot
-        livenessProbe:
-          httpGet:
-            path: /healthz
-            port: 8081
-          initialDelaySeconds: 15
-          periodSeconds: 20
-        name: manager
-        readinessProbe:
-          httpGet:
-            path: /readyz
-            port: 8081
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        resources:
-          limits:
-            cpu: 500m
-            memory: 128Mi
-          requests:
-            cpu: 10m
-            memory: 64Mi
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
       securityContext:
         runAsNonRoot: true
       serviceAccountName: oceanbase-controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  labels:
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: serving-cert
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: certificate
+    app.kubernetes.io/part-of: ob-operator-generate
+  name: oceanbase-serving-cert
+  namespace: oceanbase-system
+spec:
+  dnsNames:
+  - oceanbase-webhook-service.oceanbase-system.svc
+  - oceanbase-webhook-service.oceanbase-system.svc.cluster.local
+  issuerRef:
+    kind: Issuer
+    name: oceanbase-selfsigned-issuer
+  secretName: webhook-server-cert
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  labels:
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: serving-cert
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: certificate
+    app.kubernetes.io/part-of: ob-operator-generate
+  name: oceanbase-selfsigned-issuer
+  namespace: oceanbase-system
+spec:
+  selfSigned: {}
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+  labels:
+    app.kubernetes.io/component: webhook
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: mutating-webhook-configuration
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: mutatingwebhookconfiguration
+    app.kubernetes.io/part-of: ob-operator-generate
+  name: oceanbase-mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
+  failurePolicy: Fail
+  name: mobtenantbackuppolicy.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenantbackuppolicies
+  sideEffects: None
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+  labels:
+    app.kubernetes.io/component: webhook
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: validating-webhook-configuration
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: validatingwebhookconfiguration
+    app.kubernetes.io/part-of: ob-operator-generate
+  name: oceanbase-validating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
+  failurePolicy: Fail
+  name: vobtenantbackuppolicy.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenantbackuppolicies
+  sideEffects: None

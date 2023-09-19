@@ -15,12 +15,19 @@ package model
 import "database/sql"
 
 type Tenant struct {
-	TenantID      int64  `json:"tenant_id" db:"tenant_id"`
-	TenantName    string `json:"tenant_name" db:"tenant_name"`
-	PrimaryZone   string `json:"primary_zone" db:"primary_zone"`
-	Locality      string `json:"locality" db:"locality"`
-	Status        string `json:"status" db:"status"`
-	GmtCreateTime string `json:"gmt_create_time" db:"gmt_create"`
+	TenantID         int64  `json:"tenant_id" db:"tenant_id"`
+	TenantName       string `json:"tenant_name" db:"tenant_name"`
+	PrimaryZone      string `json:"primary_zone" db:"primary_zone"`
+	Locality         string `json:"locality" db:"locality"`
+	PreviousLocality string `json:"previous_locality" db:"previous_locality"`
+	Status           string `json:"status" db:"status"`
+	GmtCreateTime    string `json:"gmt_create_time" db:"gmt_create"`
+}
+
+type Replica struct {
+	Type string `json:"type"`
+	Num  int    `json:"num"`
+	Zone string `json:"zone"`
 }
 
 type Pool struct {
@@ -77,6 +84,12 @@ type RsJob struct {
 	JobStatus  string `json:"job_status" db:"job_status"`
 	TenantID   int64  `json:"tenant_id" db:"tenant_id"`
 	TenantName string `json:"tenant_name" db:"tenant_name"`
+}
+
+type PoolParam struct {
+	PoolName string
+	ZoneList []string
+	// add more properties if needed
 }
 
 type TenantSQLParam struct {

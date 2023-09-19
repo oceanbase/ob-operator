@@ -14,22 +14,22 @@ package resource
 
 import (
 	"context"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
-	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 type OBClusterManager struct {
@@ -219,7 +219,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBCluster)
+	err = m.Client.Status().Update(m.Ctx, m.OBCluster.DeepCopy())
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
 	}
@@ -287,6 +287,10 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.FinishUpgrade, nil
 	case taskname.RestoreEssentialParameters:
 		return m.RestoreEssentialParameters, nil
+	case taskname.CreateServiceForMonitor:
+		return m.CreateServiceForMonitor, nil
+	case taskname.ModifySysTenantReplica:
+		return m.ModifySysTenantReplica, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
