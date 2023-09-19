@@ -35,13 +35,12 @@ type Registry struct {
 	Store map[string]func() *TaskFlow
 }
 
-func (r *Registry) Register(name string, f func() *TaskFlow) error {
+func (r *Registry) Register(name string, f func() *TaskFlow) {
 	_, exists := r.Store[name]
 	if exists {
 		panic(fmt.Sprintf("Task flow %s already registered", name))
 	}
 	r.Store[name] = f
-	return nil
 }
 
 func (r *Registry) Get(name string) (*TaskFlow, error) {

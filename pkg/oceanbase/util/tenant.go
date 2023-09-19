@@ -26,8 +26,8 @@ const (
 )
 
 func ConvertFromReplicaStr(replica string) *model.Replica {
-	m, _ := regexp.Compile(ReplicaPattern)
-	replicaParts := m.FindStringSubmatch(replica)
+	p := regexp.MustCompile(ReplicaPattern)
+	replicaParts := p.FindStringSubmatch(replica)
 	num, _ := strconv.Atoi(replicaParts[2])
 	if len(replicaParts) == 4 {
 		return &model.Replica{

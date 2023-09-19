@@ -15,22 +15,21 @@ package resource
 import (
 	"context"
 
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/go-logr/logr"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 type OBClusterManager struct {

@@ -435,19 +435,17 @@ func (m *OceanbaseOperationManager) prepareSqlForSetPool(param *model.PoolParam)
 	}
 	if len(poolProperties) > 0 {
 		return fmt.Sprintf(sql.SetPool, param.PoolName, strings.Join(poolProperties, ",")), args
-	} else {
-		return "", args
 	}
+	return "", args
 }
 
 func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error {
 	sql, args := m.prepareSqlForSetPool(poolParam)
 	if sql != "" {
 		return m.ExecWithDefaultTimeout(sql, args...)
-	} else {
-		m.Logger.Info("Set pool need to execute nothing")
-		return nil
 	}
+	m.Logger.Info("Set pool need to execute nothing")
+	return nil
 }
 
 func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []interface{}) {

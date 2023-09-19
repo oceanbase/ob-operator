@@ -628,7 +628,6 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
 	}
-
 	desiredZones := make([]string, 0)
 	for _, obzone := range m.OBCluster.Spec.Topology {
 		desiredZones = append(desiredZones, obzone.Zone)
@@ -659,7 +658,6 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to modify sys pool's zone list to  %v", zoneList)
 	}
-
 	// add locality one by one
 	sysTenant, err := oceanbaseOperationManager.GetTenantByName(oceanbaseconst.SysTenant)
 	locality := sysTenant.Locality
@@ -693,7 +691,6 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 			}
 		}
 	}
-
 	// delete locality one by one
 	for _, r := range replicas {
 		found := false
@@ -720,7 +717,6 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 			}
 		}
 	}
-
 	// delete zone from pool zone list
 	newZoneList := make([]string, 0)
 	for _, zone := range zoneList {
@@ -740,7 +736,6 @@ func (m *OBClusterManager) ModifySysTenantReplica() error {
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: newZoneList,
 	})
-
 }
 
 func (m *OBClusterManager) CreateServiceForMonitor() error {

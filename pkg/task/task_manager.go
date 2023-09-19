@@ -62,7 +62,7 @@ func (m *TaskManager) Submit(f func() error) string {
 			if r := recover(); r != nil {
 				retCh <- &TaskResult{
 					Status: taskstatus.Failed,
-					Error:  errors.New(fmt.Sprintf("Observered a panic: %v, stacktrace: %s", r, string(debug.Stack()))),
+					Error:  errors.New(fmt.Sprintf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack()))),
 				}
 			}
 		}()

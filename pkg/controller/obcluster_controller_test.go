@@ -81,10 +81,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("get obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			newZone := v1alpha1.OBZoneTopology{
 				Zone:    fmt.Sprintf("zone%d", len(obcluster.Spec.Topology)),
@@ -93,10 +90,7 @@ var _ = Describe("OBCluster controller", func() {
 			obcluster.Spec.Topology = append(obcluster.Spec.Topology, newZone)
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {

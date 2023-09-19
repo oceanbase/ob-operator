@@ -153,10 +153,8 @@ func (m *OBServerManager) UpdateStatus() error {
 			observer, err := m.getCurrentOBServerFromOB()
 			if err != nil {
 				m.Logger.Info("Get observer failed, check next time")
-			} else {
-				if observer == nil {
-					m.OBServer.Status.Status = serverstatus.AddServer
-				}
+			} else if observer == nil {
+				m.OBServer.Status.Status = serverstatus.AddServer
 			}
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
