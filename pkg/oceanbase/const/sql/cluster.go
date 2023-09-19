@@ -13,6 +13,6 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	BootstrapServer = "REGION '%s' ZONE '%s' SERVER '%s:%d'"
+	BootstrapServer = "ZONE '%s' SERVER '%s:%d'"
 	Bootstrap       = "ALTER SYSTEM BOOTSTRAP %s"
 )

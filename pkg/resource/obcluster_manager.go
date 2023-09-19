@@ -14,6 +14,7 @@ package resource
 
 import (
 	"context"
+
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	corev1 "k8s.io/api/core/v1"
@@ -287,6 +288,10 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 		return m.FinishUpgrade, nil
 	case taskname.RestoreEssentialParameters:
 		return m.RestoreEssentialParameters, nil
+	case taskname.CreateServiceForMonitor:
+		return m.CreateServiceForMonitor, nil
+	case taskname.ModifySysTenantReplica:
+		return m.ModifySysTenantReplica, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

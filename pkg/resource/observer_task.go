@@ -65,12 +65,14 @@ func (m *OBServerManager) AddServer() error {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
-	_, err = oceanbaseOperationManager.GetServer(serverInfo)
-	if err != nil {
-		m.Logger.Error(err, "Get observer failed, observer not in obcluster")
-	} else {
+	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
+	if obs != nil {
 		m.Logger.Info("Observer already exists in obcluster")
 		return nil
+	}
+	if err != nil {
+		m.Logger.Error(err, "Get observer failed")
+		return errors.Wrap(err, "Failed to get observer")
 	}
 	return oceanbaseOperationManager.AddServer(serverInfo)
 }
@@ -599,15 +601,15 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(observerInfo)
-		if err != nil {
-			m.Logger.Error(err, "Failed to get observer in cluster")
-		} else {
+		observer, _ := operationManager.GetServer(observerInfo)
+		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
 				m.Logger.Info("Observer active")
 				active = true
 				break
 			}
+		} else {
+			m.Logger.Info("OBServer is nil, check next time")
 		}
 		time.Sleep(time.Second)
 	}
@@ -633,7 +635,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
 		observer, err := operationManager.GetServer(observerInfo)
-		if observer == nil {
+		if observer == nil && err == nil {
 			m.Logger.Info("Observer deleted")
 			deleted = true
 			break

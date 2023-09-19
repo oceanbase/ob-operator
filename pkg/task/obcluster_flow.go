@@ -34,7 +34,7 @@ func MaintainOBClusterAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.MaintainOBClusterAfterBootstrap,
-			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter},
+			Tasks:        []string{taskname.WaitOBZoneRunning, taskname.CreateUsers, taskname.MaintainOBParameter, taskname.CreateServiceForMonitor},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -44,7 +44,7 @@ func AddOBZone() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.AddOBZone,
-			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneRunning},
+			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneRunning, taskname.ModifySysTenantReplica},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -54,7 +54,7 @@ func DeleteOBZone() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.DeleteOBZone,
-			Tasks:        []string{taskname.DeleteOBZone, taskname.WaitOBZoneDeleted},
+			Tasks:        []string{taskname.ModifySysTenantReplica, taskname.DeleteOBZone, taskname.WaitOBZoneDeleted},
 			TargetStatus: clusterstatus.Running,
 		},
 	}

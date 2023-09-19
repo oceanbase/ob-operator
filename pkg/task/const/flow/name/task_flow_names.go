@@ -44,6 +44,7 @@ const (
 	DeleteOBServerFinalizer        = "delete observer finalizer"
 	UpgradeOBServer                = "upgrade observer"
 	RecoverOBServer                = "recover observer"
+	AddServerInOB                  = "add observer in ob"
 	AnnotateOBServerPod            = "annotate observer pod"
 )
 
