@@ -112,18 +112,12 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("get obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			obcluster.Spec.Topology = obcluster.Spec.Topology[0:3]
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {
@@ -145,18 +139,12 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("get obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			obcluster.Spec.OBServerTemplate.Image = UpgradeImage
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {
@@ -178,10 +166,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("check obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			for idx := 0; idx < len(obcluster.Spec.Topology); idx++ {
 				obcluster.Spec.Topology[idx].Replica = 2
@@ -189,10 +174,7 @@ var _ = Describe("OBCluster controller", func() {
 
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {
@@ -214,20 +196,14 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("get obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			for idx := 0; idx < len(obcluster.Spec.Topology); idx++ {
 				obcluster.Spec.Topology[idx].Replica = 1
 			}
 			Eventually(func() bool {
 				err := k8sClient.Update(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {
@@ -249,17 +225,11 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("get obcluster")
 			Eventually(func() bool {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			Eventually(func() bool {
 				err := k8sClient.Delete(ctx, obcluster)
-				if err != nil {
-					return false
-				}
-				return true
+				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
 			time.Sleep(applyWait * time.Second)
 			Eventually(func() bool {
