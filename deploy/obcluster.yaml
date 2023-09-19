@@ -22,7 +22,7 @@ spec:
     image: oceanbasedev/oceanbase-cn:4.2.0.0-test
     resource:
       cpu: 2
-      memory: 20Gi
+      memory: 10Gi
     storage:
       dataStorage:
         storageClass: local-path
