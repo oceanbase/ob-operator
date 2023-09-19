@@ -323,12 +323,6 @@ func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (st
 	return fmt.Sprintf(sql.AddUnitConfigV4, unitConfigV4.UnitConfigName, optionSql), params
 }
 
-func preparedSQLForAlterPool(poolSQLParam model.PoolSQLParam) (string, []any) {
-	params := make([]any, 0)
-	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
-	return fmt.Sprintf(sql.AddPool, poolSQLParam.PoolName), params
-}
-
 func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
 	params := make([]interface{}, 0)
 	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
@@ -427,7 +421,7 @@ func preparedSQLForSetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (st
 	return fmt.Sprintf(sql.SetUnitConfigV4, unitConfigV4.UnitConfigName, alterItemStr), params
 }
 
-func prepareSqlForSetPool(param *model.PoolParam) (string, []any) {
+func prepareSQLForAlterPool(param *model.PoolParam) (string, []any) {
 	poolProperties := make([]string, 0)
 	args := make([]any, 0)
 	if len(param.ZoneList) > 0 {
@@ -440,7 +434,7 @@ func prepareSqlForSetPool(param *model.PoolParam) (string, []any) {
 }
 
 func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error {
-	sql, args := prepareSqlForSetPool(poolParam)
+	sql, args := prepareSQLForAlterPool(poolParam)
 	if sql != "" {
 		return m.ExecWithDefaultTimeout(sql, args...)
 	}
