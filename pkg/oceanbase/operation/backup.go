@@ -165,9 +165,6 @@ func (m *OceanbaseOperationManager) ListArchiveLogParameters() ([]*model.OBArchi
 		m.Logger.Error(err, "Failed to query archive log configs")
 		return nil, errors.Wrap(err, "Query archive log configs")
 	}
-	if len(configs) == 0 {
-		return nil, errors.Errorf("No archive log configs found")
-	}
 	return configs, nil
 }
 
@@ -177,9 +174,6 @@ func (m *OceanbaseOperationManager) ListBackupParameters() ([]*model.OBBackupPar
 	if err != nil {
 		m.Logger.Error(err, "Failed to query archive log configs")
 		return nil, errors.Wrap(err, "Query archive log configs")
-	}
-	if len(configs) == 0 {
-		return nil, errors.Errorf("No archive log configs found")
 	}
 	return configs, nil
 }

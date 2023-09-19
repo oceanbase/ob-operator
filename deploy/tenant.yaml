@@ -2,13 +2,12 @@ apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenant		
 metadata:		
   name: obtenant-test
-  namespace: oceanbase-obcluster      
+  namespace: oceanbase      
 spec:	
   obcluster: test
   tenantName: obtenant_test
   unitNum: 1 
   charset: utf8mb4  
-  collate:   
   connectWhiteList: '%'
   forceDelete: true
   pools:
@@ -52,4 +51,3 @@ spec:
         minIops: 1024
         iopsWeight: 2
         logDiskSize: 4Gi 
-
