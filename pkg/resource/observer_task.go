@@ -639,6 +639,8 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 			m.Logger.Info("Observer deleted")
 			deleted = true
 			break
+		} else if err != nil {
+			m.Logger.Error(err, "Query observer info failed")
 		}
 		time.Sleep(time.Second)
 	}
