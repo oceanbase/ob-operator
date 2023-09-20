@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, previous_locality, status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
+	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, COALESCE(previous_locality, '') as previous_locality, status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
 	GetPoolByName         = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS WHERE name = ?;"
 	GetUnitConfigV4ByName = "SELECT max_cpu, min_cpu, memory_size, log_disk_size, max_iops, min_iops, iops_weight FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE name = ?;"
 	GetPoolList           = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS;"
