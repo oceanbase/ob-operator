@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	NormalRequeueDuration    = 10 * time.Second
+	NormalRequeueDuration    = 60 * time.Second
 	ExecutionRequeueDuration = 5 * time.Second
 )
 
