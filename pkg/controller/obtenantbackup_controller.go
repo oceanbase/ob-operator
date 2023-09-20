@@ -216,7 +216,9 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 	}
 	if latest != nil {
 		job.Status.ArchiveLogJob = latest
-		job.Status.StartedAt = latest.StartScnDisplay
+		if latest.StartScnDisplay != nil {
+			job.Status.StartedAt = *latest.StartScnDisplay
+		}
 		job.Status.EndedAt = latest.CheckpointScnDisplay
 		switch latest.Status {
 		case "STOP":

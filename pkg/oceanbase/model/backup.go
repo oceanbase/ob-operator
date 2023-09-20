@@ -27,30 +27,30 @@ type OBBackupParameter struct {
 
 // OBArchiveLogSummary matches view DBA_OB_ARCHIVELOG_SUMMARY
 type OBArchiveLogSummary struct {
-	TenantId                  int64  `json:"tenant_id" db:"tenant_id"`
-	DestId                    int64  `json:"dest_id" db:"dest_id"`
-	RoundId                   int64  `json:"round_id" db:"round_id"`
-	DestNo                    int64  `json:"dest_no" db:"dest_no"`
-	Status                    string `json:"status" db:"status"`
-	StartScn                  int64  `json:"start_scn" db:"start_scn"`
-	StartScnDisplay           string `json:"start_scn_display" db:"start_scn_display"`
-	CheckpointScn             int64  `json:"checkpoint_scn" db:"checkpoint_scn"`
-	CheckpointScnDisplay      string `json:"checkpoint_scn_display" db:"checkpoint_scn_display"`
-	Compatible                string `json:"compatible" db:"compatible"`
-	BasePieceId               int64  `json:"base_piece_id" db:"base_piece_id"`
-	UsedPieceId               int64  `json:"used_piece_id" db:"used_piece_id"`
-	PieceSwitchInterval       string `json:"piece_switch_interval" db:"piece_switch_interval"`
-	InputBytes                int64  `json:"input_bytes" db:"input_bytes"`
-	InputBytesDisplay         string `json:"input_bytes_display" db:"input_bytes_display"`
-	OutputBytes               int64  `json:"output_bytes" db:"output_bytes"`
-	OutputBytesDisplay        string `json:"output_bytes_display" db:"output_bytes_display"`
-	CompressionRatio          string `json:"compression_ratio" db:"compression_ratio"`
-	DeletedInputBytes         int64  `json:"deleted_input_bytes" db:"deleted_input_bytes"`
-	DeletedInputBytesDisplay  string `json:"deleted_input_bytes_display" db:"deleted_input_bytes_display"`
-	DeletedOutputBytes        int64  `json:"deleted_output_bytes" db:"deleted_output_bytes"`
-	DeletedOutputBytesDisplay string `json:"deleted_output_bytes_display" db:"deleted_output_bytes_display"`
-	Comment                   string `json:"comment" db:"comment"`
-	Path                      string `json:"path" db:"path"`
+	TenantId                  int64   `json:"tenant_id" db:"tenant_id"`
+	DestId                    int64   `json:"dest_id" db:"dest_id"`
+	RoundId                   int64   `json:"round_id" db:"round_id"`
+	DestNo                    int64   `json:"dest_no" db:"dest_no"`
+	Status                    string  `json:"status" db:"status"`
+	StartScn                  int64   `json:"start_scn" db:"start_scn"`
+	StartScnDisplay           *string `json:"start_scn_display,omitempty" db:"start_scn_display"`
+	CheckpointScn             int64   `json:"checkpoint_scn" db:"checkpoint_scn"`
+	CheckpointScnDisplay      string  `json:"checkpoint_scn_display" db:"checkpoint_scn_display"`
+	Compatible                string  `json:"compatible" db:"compatible"`
+	BasePieceId               int64   `json:"base_piece_id" db:"base_piece_id"`
+	UsedPieceId               int64   `json:"used_piece_id" db:"used_piece_id"`
+	PieceSwitchInterval       string  `json:"piece_switch_interval" db:"piece_switch_interval"`
+	InputBytes                int64   `json:"input_bytes" db:"input_bytes"`
+	InputBytesDisplay         string  `json:"input_bytes_display" db:"input_bytes_display"`
+	OutputBytes               int64   `json:"output_bytes" db:"output_bytes"`
+	OutputBytesDisplay        string  `json:"output_bytes_display" db:"output_bytes_display"`
+	CompressionRatio          string  `json:"compression_ratio" db:"compression_ratio"`
+	DeletedInputBytes         int64   `json:"deleted_input_bytes" db:"deleted_input_bytes"`
+	DeletedInputBytesDisplay  string  `json:"deleted_input_bytes_display" db:"deleted_input_bytes_display"`
+	DeletedOutputBytes        int64   `json:"deleted_output_bytes" db:"deleted_output_bytes"`
+	DeletedOutputBytesDisplay string  `json:"deleted_output_bytes_display" db:"deleted_output_bytes_display"`
+	Comment                   string  `json:"comment" db:"comment"`
+	Path                      string  `json:"path" db:"path"`
 }
 
 // OBArchiveLogJob is equal to OBArchiveLogSummary, but match view DBA_OB_ARCHIVELOG_JOBS

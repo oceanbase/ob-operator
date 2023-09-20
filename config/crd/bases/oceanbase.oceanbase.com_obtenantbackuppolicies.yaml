@@ -210,7 +210,6 @@ spec:
                 - piece_switch_interval
                 - round_id
                 - start_scn
-                - start_scn_display
                 - status
                 - tenant_id
                 - used_piece_id

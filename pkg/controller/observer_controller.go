@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -102,7 +103,9 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 	coordinator := resource.NewCoordinator(observerManager, &logger)
 	err = coordinator.Coordinate()
-	return ctrl.Result{}, err
+	return ctrl.Result{
+		RequeueAfter: 5 * time.Second,
+	}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.

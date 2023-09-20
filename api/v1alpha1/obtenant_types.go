@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -42,6 +45,24 @@ type OBTenantSpec struct {
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 
 	Pools []ResourcePoolSpec `json:"pools"`
+
+	//+kubebuilder:default=PRIMARY
+	TenantRole  constants.TenantRole     `json:"tenantRole,omitempty"`
+	Source      *TenantSourceSpec        `json:"source,omitempty"`
+	Credentials []corev1.SecretReference `json:"credentials,omitempty"`
+}
+
+// Source for restoring or creating standby
+type TenantSourceSpec struct {
+	Tenant  *string        `json:"tenant,omitempty"`
+	Restore *RestoreSource `json:"restore,omitempty"`
+}
+
+type RestoreSource struct {
+	SourceUri      string  `json:"sourceUri"`
+	Until          string  `json:"until"`
+	Description    *string `json:"description,omitempty"`
+	ReplayLogUntil *string `json:"replayLogUntil,omitempty"`
 }
 
 type ResourcePoolSpec struct {
@@ -71,6 +92,7 @@ type UnitConfig struct {
 	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
 // OBTenantStatus defines the observed state of OBTenant
 type OBTenantStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -79,6 +101,51 @@ type OBTenantStatus struct {
 	Pools            []ResourcePoolStatus `json:"resourcePool"`
 	OperationContext *OperationContext    `json:"operationContext,omitempty"`
 	TenantRecordInfo TenantRecordInfo     `json:"tenantRecordInfo,omitempty"`
+
+	TenantRole constants.TenantRole `json:"tenantRole,omitempty"`
+	Source     *TenantSourceStatus  `json:"source,omitempty"`
+}
+
+// +kubebuilder:object:generate=false
+type TenantSourceStatus struct {
+	Tenant  *string               `json:"tenant,omitempty"`
+	Restore *model.RestoreHistory `json:"restore,omitempty"`
+}
+
+func (in *OBTenantStatus) DeepCopyInto(out *OBTenantStatus) {
+	*out = *in
+	if in.Pools != nil {
+		in, out := &in.Pools, &out.Pools
+		*out = make([]ResourcePoolStatus, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.OperationContext != nil {
+		in, out := &in.OperationContext, &out.OperationContext
+		*out = new(OperationContext)
+		(*in).DeepCopyInto(*out)
+	}
+	out.TenantRecordInfo = in.TenantRecordInfo
+	if in.Source != nil {
+		in, out := &in.Source, &out.Source
+		*out = new(TenantSourceStatus)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *TenantSourceStatus) DeepCopyInto(out *TenantSourceStatus) {
+	*out = *in
+	if in.Tenant != nil {
+		in, out := &in.Tenant, &out.Tenant
+		*out = new(string)
+		**out = **in
+	}
+	if in.Restore != nil {
+		in, out := &in.Restore, &out.Restore
+		*out = new(model.RestoreHistory)
+		**out = **in
+	}
 }
 
 type ResourcePoolStatus struct {

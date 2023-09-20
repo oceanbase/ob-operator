@@ -14,16 +14,17 @@ package resource
 
 import (
 	"fmt"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/pkg/errors"
 )
 
 // ---------- task entry point ----------

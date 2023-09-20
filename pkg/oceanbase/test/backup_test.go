@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Backup Operation", func() {
+var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	var con *operation.OceanbaseOperationManager
 
