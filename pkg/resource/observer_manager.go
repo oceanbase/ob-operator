@@ -24,6 +24,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -119,6 +120,17 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	return operationManager.GetServer(observerInfo)
 }
 
+func (m *OBServerManager) retryUpdateStatus() error {
+	observer, err := m.getOBServer()
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		observer.Status = *m.OBServer.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, observer)
+	})
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -178,7 +190,7 @@ func (m *OBServerManager) UpdateStatus() error {
 		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
-	err := m.Client.Status().Update(m.Ctx, m.OBServer.DeepCopy())
+	err := m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
