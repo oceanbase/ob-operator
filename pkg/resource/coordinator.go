@@ -18,12 +18,13 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 const (
-	NormalRequeDuration    = 10 * time.Second
-	ExecutionRequeDuration = 5 * time.Second
+	NormalRequeueDuration    = 10 * time.Second
+	ExecutionRequeueDuration = 5 * time.Second
 )
 
 type Coordinator struct {
@@ -40,7 +41,7 @@ func NewCoordinator(m ResourceManager, logger *logr.Logger) *Coordinator {
 
 func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	result := ctrl.Result{
-		RequeueAfter: ExecutionRequeDuration,
+		RequeueAfter: ExecutionRequeueDuration,
 	}
 	var f *task.TaskFlow
 	var err error
@@ -49,13 +50,12 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	} else {
 		f, err = c.Manager.GetTaskFlow()
 		if err != nil {
-			// return result, errors.Wrap(err, "Get task flow")
-			return result, nil
+			return result, errors.Wrap(err, "Get task flow")
 		} else if f == nil {
 			// No need to execute task flow
-			result.RequeueAfter = NormalRequeDuration
+			result.RequeueAfter = NormalRequeueDuration
 		} else {
-			c.Logger.Info("set operation context", "operation context", f.OperationContext)
+			c.Logger.Info("Set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
@@ -65,12 +65,14 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	if c.Manager.IsDeleting() {
 		err := c.Manager.CheckAndUpdateFinalizers()
 		if err != nil {
-			return result, nil
-			// return result, errors.Wrapf(err, "Check and update finalizer failed")
+			return result, errors.Wrapf(err, "Check and update finalizer failed")
 		}
 	}
 	err = c.Manager.UpdateStatus()
-	return result, nil
+	if err != nil {
+		c.Logger.Error(err, "Failed to update status")
+	}
+	return result, err
 }
 
 func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
