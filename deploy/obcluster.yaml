@@ -13,11 +13,11 @@ spec:
     operator: test-user-operator
   topology:
     - zone: zone1
-      replica: 1
+      replica: 2
     - zone: zone2
-      replica: 1
+      replica: 2
     - zone: zone3
-      replica: 1
+      replica: 2
   observer:
     image: oceanbasedev/oceanbase-cn:4.2.0.0-test
     resource:

@@ -74,8 +74,7 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		Logger:      &logger,
 	}
 	coordinator := resource.NewCoordinator(obparameterManager, &logger)
-	err = coordinator.Coordinate()
-	return ctrl.Result{}, err
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.
