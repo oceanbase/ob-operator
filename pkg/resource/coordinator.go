@@ -13,10 +13,17 @@ See the Mulan PSL v2 for more details.
 package resource
 
 import (
+	"time"
+
 	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/pkg/errors"
+	ctrl "sigs.k8s.io/controller-runtime"
+)
+
+const (
+	NormalRequeDuration    = 10 * time.Second
+	ExecutionRequeDuration = 5 * time.Second
 )
 
 type Coordinator struct {
@@ -31,7 +38,10 @@ func NewCoordinator(m ResourceManager, logger *logr.Logger) *Coordinator {
 	}
 }
 
-func (c *Coordinator) Coordinate() error {
+func (c *Coordinator) Coordinate() (ctrl.Result, error) {
+	result := ctrl.Result{
+		RequeueAfter: ExecutionRequeDuration,
+	}
 	var f *task.TaskFlow
 	var err error
 	if c.Manager.IsNewResource() {
@@ -39,9 +49,11 @@ func (c *Coordinator) Coordinate() error {
 	} else {
 		f, err = c.Manager.GetTaskFlow()
 		if err != nil {
-			return errors.Wrap(err, "Get task flow")
+			// return result, errors.Wrap(err, "Get task flow")
+			return result, nil
 		} else if f == nil {
 			// No need to execute task flow
+			result.RequeueAfter = NormalRequeDuration
 		} else {
 			c.Logger.Info("set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
@@ -53,10 +65,12 @@ func (c *Coordinator) Coordinate() error {
 	if c.Manager.IsDeleting() {
 		err := c.Manager.CheckAndUpdateFinalizers()
 		if err != nil {
-			return errors.Wrapf(err, "Check and update finalizer failed")
+			return result, nil
+			// return result, errors.Wrapf(err, "Check and update finalizer failed")
 		}
 	}
-	return c.Manager.UpdateStatus()
+	err = c.Manager.UpdateStatus()
+	return result, nil
 }
 
 func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
@@ -74,6 +88,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 		if err != nil {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
+			c.Logger.Info("Successfully get task flow")
 			taskId := task.GetTaskManager().Submit(taskFunc)
 			c.Logger.Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId

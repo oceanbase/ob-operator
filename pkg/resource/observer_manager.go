@@ -143,7 +143,7 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.Logger.Info("pod not found")
 				if m.OBServer.Status.Status == serverstatus.Running {
 					if m.SupportStaticIp() {
-						m.Logger.Info("recreate observer")
+						m.Logger.Info("current cni supports specific static ip address, recover by recreate pod")
 						m.OBServer.Status.Status = serverstatus.Recover
 					} else {
 						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
@@ -151,6 +151,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					}
 				}
 			} else {
+				m.Logger.Info("observer status is not running, wait task finish")
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
@@ -162,6 +163,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
+			m.Logger.Info("check observer in obcluster")
 			observer, err := m.getCurrentOBServerFromOB()
 			if err != nil {
 				m.Logger.Info("Get observer failed, check next time")
@@ -194,6 +196,7 @@ func (m *OBServerManager) UpdateStatus() error {
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
+	m.Logger.Info("update status finished")
 	return err
 }
 
