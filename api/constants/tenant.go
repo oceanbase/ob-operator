@@ -23,15 +23,15 @@ type TenantOperationType string
 
 const (
 	TenantOpSwitchover TenantOperationType = "SWITCHOVER"
-	TenantOpFailover                       = "FAILOVER"
-	TenantOpChangePwd                      = "CHANGE_PASSWORD"
+	TenantOpFailover   TenantOperationType = "FAILOVER"
+	TenantOpChangePwd  TenantOperationType = "CHANGE_PASSWORD"
 )
 
 type TenantOperationStatus string
 
 const (
 	TenantOpStarting   TenantOperationStatus = "STARTING"
-	TenantOpRunning                          = "RUNNING"
-	TenantOpSuccessful                       = "SUCCESSFUL"
-	TenantOpFailed                           = "FAILED"
+	TenantOpRunning    TenantOperationStatus = "RUNNING"
+	TenantOpSuccessful TenantOperationStatus = "SUCCESSFUL"
+	TenantOpFailed     TenantOperationStatus = "FAILED"
 )
