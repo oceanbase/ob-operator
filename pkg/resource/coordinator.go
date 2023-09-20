@@ -16,10 +16,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/oceanbase/ob-operator/pkg/task"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/oceanbase/ob-operator/pkg/task"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 )
 
 const (

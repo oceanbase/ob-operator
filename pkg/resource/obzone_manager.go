@@ -15,8 +15,6 @@ package resource
 import (
 	"context"
 
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
@@ -35,6 +33,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 type OBZoneManager struct {
