@@ -14,8 +14,7 @@ package resource
 
 import (
 	"context"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
@@ -23,6 +22,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -33,6 +33,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 type OBZoneManager struct {
@@ -161,6 +163,17 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
+func (m *OBZoneManager) retryUpdateStatus() error {
+	obzone, err := m.getOBZone()
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obzone.Status = *m.OBZone.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, obzone)
+	})
+}
+
 func (m *OBZoneManager) UpdateStatus() error {
 	observerList, err := m.listOBServers()
 	if err != nil {
@@ -215,7 +228,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
 	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBZone.DeepCopy())
+	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")
 	}

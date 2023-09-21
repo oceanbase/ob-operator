@@ -78,7 +78,7 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)
-	err = coordinator.Coordinate()
+	_, err = coordinator.Coordinate()
 	return ctrl.Result{
 		RequeueAfter: 10 * time.Second,
 	}, err

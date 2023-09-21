@@ -78,8 +78,7 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		Logger:   &logger,
 	}
 	coordinator := resource.NewCoordinator(obzoneManager, &logger)
-	err = coordinator.Coordinate()
-	return ctrl.Result{}, err
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -120,6 +121,17 @@ func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
+func (m *OBClusterManager) retryUpdateStatus() error {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obcluster.Status = *m.OBCluster.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, obcluster)
+	})
+}
+
 func (m *OBClusterManager) UpdateStatus() error {
 	// update obzone status
 	obzoneList, err := m.listOBZones()
@@ -219,7 +231,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 	}
 	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
 	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBCluster.DeepCopy())
+	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
 	}

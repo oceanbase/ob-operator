@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -103,6 +104,21 @@ func (m *OBParameterManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
+func (m *OBParameterManager) retryUpdateStatus() error {
+	parameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBParameter.GetNamespace(),
+		Name:      m.OBParameter.GetName(),
+	}, parameter)
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		parameter.Status = *m.OBParameter.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, parameter)
+	})
+}
+
 func (m *OBParameterManager) UpdateStatus() error {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
@@ -145,7 +161,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 			}
 		}
 	}
-	err = m.Client.Status().Update(m.Ctx, m.OBParameter.DeepCopy())
+	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obparameter status")
 	}
