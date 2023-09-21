@@ -54,15 +54,21 @@ type OBTenantSpec struct {
 
 // Source for restoring or creating standby
 type TenantSourceSpec struct {
-	Tenant  *string        `json:"tenant,omitempty"`
-	Restore *RestoreSource `json:"restore,omitempty"`
+	Tenant  *string            `json:"tenant,omitempty"`
+	Restore *RestoreSourceSpec `json:"restore,omitempty"`
 }
 
-type RestoreSource struct {
-	SourceUri      string  `json:"sourceUri"`
-	Until          string  `json:"until"`
-	Description    *string `json:"description,omitempty"`
-	ReplayLogUntil *string `json:"replayLogUntil,omitempty"`
+type RestoreSourceSpec struct {
+	SourceUri      string              `json:"sourceUri"`
+	Until          RestoreUntilConfig  `json:"until"`
+	Description    *string             `json:"description,omitempty"`
+	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
+}
+
+type RestoreUntilConfig struct {
+	Timestamp *string `json:"timestamp,omitempty"`
+	Scn       *string `json:"scn,omitempty"`
+	Unlimited bool    `json:"unlimited,omitempty"`
 }
 
 type ResourcePoolSpec struct {
