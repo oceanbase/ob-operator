@@ -288,6 +288,26 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obtenant
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenant/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - obtenantbackup
   verbs:
   - create
@@ -379,6 +399,26 @@ rules:
   - oceanbase.oceanbase.com
   resources:
   - obtenantoperations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestore
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestore/status
   verbs:
   - get
   - patch

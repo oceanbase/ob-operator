@@ -45,11 +45,25 @@ spec:
                       description:
                         type: string
                       replayLogUntil:
-                        type: string
+                        properties:
+                          scn:
+                            type: string
+                          timestamp:
+                            type: string
+                          unlimited:
+                            type: boolean
+                        type: object
                       sourceUri:
                         type: string
                       until:
-                        type: string
+                        properties:
+                          scn:
+                            type: string
+                          timestamp:
+                            type: string
+                          unlimited:
+                            type: boolean
+                        type: object
                     required:
                     - sourceUri
                     - until
@@ -57,11 +71,14 @@ spec:
                   tenant:
                     type: string
                 type: object
+              targetCluster:
+                type: string
               targetTenant:
                 type: string
             required:
             - restoreRole
             - source
+            - targetCluster
             - targetTenant
             type: object
           status:

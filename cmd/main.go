@@ -32,7 +32,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
@@ -48,7 +47,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
-	utilruntime.Must(oceanbasev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -211,7 +209,7 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
 	}
-	if err = (&oceanbasev1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
 		os.Exit(1)
 	}

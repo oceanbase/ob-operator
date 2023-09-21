@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
@@ -70,12 +71,14 @@ func (m *OBTenantManager) IsDeleting() bool {
 }
 
 func (m *OBTenantManager) InitStatus() {
-	m.Logger.Info("newly created obtenant, init status")
-	status := v1alpha1.OBTenantStatus{
-		Status: tenantstatus.CreatingTenant,
-		Pools:  make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
+	m.OBTenant.Status = v1alpha1.OBTenantStatus{
+		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
-	m.OBTenant.Status = status
+	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
+		m.OBTenant.Status.Status = tenantstatus.Restoring
+	} else {
+		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
+	}
 }
 
 func (m *OBTenantManager) SetOperationContext(ctx *v1alpha1.OperationContext) {

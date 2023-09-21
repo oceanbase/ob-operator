@@ -26,9 +26,10 @@ type OBTenantRestoreSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	TargetTenant string               `json:"targetTenant"`
-	RestoreRole  constants.TenantRole `json:"restoreRole"`
-	Source       TenantSourceSpec     `json:"source"`
+	TargetTenant  string               `json:"targetTenant"`
+	TargetCluster string               `json:"targetCluster"`
+	RestoreRole   constants.TenantRole `json:"restoreRole"`
+	Source        TenantSourceSpec     `json:"source"`
 }
 
 // +kubebuilder:object:generate=false
