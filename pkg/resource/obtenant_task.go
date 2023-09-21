@@ -20,11 +20,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 // ---------- task entry point ----------
@@ -162,8 +163,7 @@ func (m *OBTenantManager) MaintainUnitConfigTask() error {
 		m.Logger.Error(err, "maintain tenant failed, check and apply unitConfigV4", "tenantName", tenantName)
 		return err
 	}
-	switch string(version[0]) {
-	case tenant.Version4:
+	if string(version[0]) == tenant.Version4 {
 		return m.CheckAndApplyUnitConfigV4()
 	}
 	return errors.New("no match version for check and set unit config")
@@ -464,8 +464,8 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 		Type:       poolAdd.Type,
 		UnitNumber: m.OBTenant.Spec.UnitNumber,
 	}
-
-	resourcePoolStatusList := append(m.OBTenant.Status.Pools, poolStatusAdd)
+	resourcePoolStatusList := m.OBTenant.Status.Pools
+	resourcePoolStatusList = append(resourcePoolStatusList, poolStatusAdd)
 	statusLocalityMap := m.generateStatusLocalityMap(resourcePoolStatusList)
 	localityList := m.generateLocalityList(statusLocalityMap)
 	poolList := m.generateStatusPoolList(resourcePoolStatusList)
@@ -501,7 +501,6 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 }
 
 func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatus) error {
-
 	tenantName := m.OBTenant.Spec.TenantName
 	poolName := m.generatePoolName(poolDelete.ZoneList)
 	unitName := m.generateUnitName(poolDelete.ZoneList)
@@ -815,9 +814,8 @@ func (m *OBTenantManager) generateLocality(zones []v1alpha1.ResourcePoolSpec) st
 func (m *OBTenantManager) generateWhiteListInVariableForm(whiteList string) string {
 	if whiteList == "" {
 		return fmt.Sprintf("%s = '%s'", tenant.OBTcpInvitedNodes, tenant.DefaultOBTcpInvitedNodes)
-	} else {
-		return fmt.Sprintf("%s = '%s'", tenant.OBTcpInvitedNodes, whiteList)
 	}
+	return fmt.Sprintf("%s = '%s'", tenant.OBTcpInvitedNodes, whiteList)
 }
 
 func (m *OBTenantManager) generateStatusTypeMapFromLocalityStr(locality string) map[string]v1alpha1.LocalityType {
@@ -846,7 +844,7 @@ func (m *OBTenantManager) generateStatusPriorityMap(primaryZone string) map[stri
 		for _, zone := range zoneList {
 			priorityMap[zone] = priority
 		}
-		priority -= 1
+		priority--
 	}
 	return priorityMap
 }

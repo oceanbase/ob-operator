@@ -105,16 +105,14 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
 			c.Manager.PrintErrEvent(err)
 			f.OperationContext.TaskStatus = taskstatus.Failed
-		} else {
-			if taskResult != nil {
-				c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
-				f.OperationContext.TaskStatus = taskResult.Status
-				if taskResult.Error != nil {
-					c.Manager.PrintErrEvent(taskResult.Error)
-				}
-			} else {
-				// Didn't get task result, task is still running"
+		} else if taskResult != nil {
+			c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
+			f.OperationContext.TaskStatus = taskResult.Status
+			if taskResult.Error != nil {
+				c.Manager.PrintErrEvent(taskResult.Error)
 			}
+
+			// Didn't get task result, task is still running"
 		}
 	case taskstatus.Successful:
 		// clean operation context and set status to target status

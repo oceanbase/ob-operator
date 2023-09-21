@@ -10,15 +10,15 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package name
+package constants
+
+type RestoreJobStatus string
 
 const (
-	GetTenantInfo            = "get tenant info"
-	ConfigureServerForBackup = "configure server for backup"
-	CheckAndSpawnJobs        = "check and spawn jobs"
-	StartBackupJob           = "start backup job"
-	StopBackupJob            = "stop backup job"
-	CleanOldBackupJobs       = "clean old backup jobs"
-	PauseBackup              = "pause backup"
-	ResumeBackup             = "resume backup"
+	RestoreJobStarting   RestoreJobStatus = "STARTING"
+	RestoreJobRunning    RestoreJobStatus = "RUNNING"
+	RestoreJobFailed     RestoreJobStatus = "FAILED"
+	RestoreJobCanceling  RestoreJobStatus = "CANCELING"
+	RestoreJobSuccessful RestoreJobStatus = "SUCCESSFUL"
+	RestoreJobCanceled   RestoreJobStatus = "CANCELED"
 )

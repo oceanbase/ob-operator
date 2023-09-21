@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -47,9 +46,14 @@ type OBTenantSpec struct {
 	Pools []ResourcePoolSpec `json:"pools"`
 
 	//+kubebuilder:default=PRIMARY
-	TenantRole  constants.TenantRole     `json:"tenantRole,omitempty"`
-	Source      *TenantSourceSpec        `json:"source,omitempty"`
-	Credentials []corev1.SecretReference `json:"credentials,omitempty"`
+	TenantRole  constants.TenantRole `json:"tenantRole,omitempty"`
+	Source      *TenantSourceSpec    `json:"source,omitempty"`
+	Credentials TenantCredentials    `json:"credentials,omitempty"`
+}
+
+type TenantCredentials struct {
+	Root      string `json:"root,omitempty"`
+	StandbyRO string `json:"standbyRo,omitempty"`
 }
 
 // Source for restoring or creating standby

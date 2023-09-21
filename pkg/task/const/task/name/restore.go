@@ -13,12 +13,9 @@ See the Mulan PSL v2 for more details.
 package name
 
 const (
-	GetTenantInfo            = "get tenant info"
-	ConfigureServerForBackup = "configure server for backup"
-	CheckAndSpawnJobs        = "check and spawn jobs"
-	StartBackupJob           = "start backup job"
-	StopBackupJob            = "stop backup job"
-	CleanOldBackupJobs       = "clean old backup jobs"
-	PauseBackup              = "pause backup"
-	ResumeBackup             = "resume backup"
+	StartRestoreJob      = "start restore job"
+	StartLogReplay       = "start log replay"
+	CancelRestoreJob     = "cancel restore job"
+	ActivateStandby      = "activate standby"
+	CheckRestoreProgress = "check restore progress"
 )

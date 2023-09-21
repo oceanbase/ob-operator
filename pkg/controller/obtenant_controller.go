@@ -19,14 +19,15 @@ package controller
 import (
 	"context"
 
-	"github.com/oceanbase/ob-operator/pkg/resource"
-	"github.com/oceanbase/ob-operator/pkg/util/codec"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/util/codec"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )

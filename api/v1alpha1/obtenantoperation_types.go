@@ -17,7 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/constants"
@@ -47,8 +46,8 @@ type OBTenantOpFailoverSpec struct {
 }
 
 type OBTenantOpChangePwdSpec struct {
-	Tenant    string                 `json:"tenant"`
-	SecretRef corev1.SecretReference `json:"secretRef"`
+	Tenant    string `json:"tenant"`
+	SecretRef string `json:"secretRef"`
 }
 
 // OBTenantOperationStatus defines the observed state of OBTenantOperation

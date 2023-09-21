@@ -20,7 +20,6 @@ import (
 	"errors"
 	"regexp"
 
-	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/robfig/cron/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -29,10 +28,12 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/oceanbase/ob-operator/api/constants"
 )
 
 // log is for logging in this package.
-var obtenantbackuppolicylog = logf.Log.WithName("obtenantbackuppolicy-resource")
+var _ = logf.Log.WithName("obtenantbackuppolicy-resource")
 
 func (r *OBTenantBackupPolicy) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -76,6 +77,7 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	_ = old
 	return nil, r.validateBackupPolicy()
 }
 

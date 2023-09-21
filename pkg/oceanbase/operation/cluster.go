@@ -16,10 +16,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 // TODO
@@ -54,9 +55,8 @@ func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
 		}
 		if version != nil && version.Compare(v) != 0 {
 			return nil, errors.Errorf("Version %s of observer %s:%d is not consistent with other observer", observer.BuildVersion, observer.Ip, observer.Port)
-		} else {
-			version = v
 		}
+		version = v
 	}
 	return version, nil
 }

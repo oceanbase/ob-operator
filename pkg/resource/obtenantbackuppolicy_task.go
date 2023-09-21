@@ -19,11 +19,6 @@ import (
 	"strings"
 	"time"
 
-	constants "github.com/oceanbase/ob-operator/api/constants"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
 	cron "github.com/robfig/cron/v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,6 +26,12 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	constants "github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 )
 
 const backupVolumePath = oceanbaseconst.BackupPath
@@ -41,7 +42,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantInfo()
+	tenantInfo, err := m.getTenantRecord()
 	if err != nil {
 		return err
 	}
@@ -147,7 +148,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 
 func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
 	// Admission Control
-	_, err := m.getTenantInfo()
+	_, err := m.getTenantRecord()
 	if err != nil {
 		return err
 	}
@@ -160,7 +161,7 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantInfo()
+	tenantInfo, err := m.getTenantRecord()
 	if err != nil {
 		return err
 	}
@@ -287,6 +288,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				}
 			} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
 				// do nothing
+				_ = latestIncr
 			} else {
 				m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
 			}
@@ -301,6 +303,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		}
 	} else if latestFull.Status == "INIT" || latestFull.Status == "DOING" {
 		// do nothing
+		_ = latestFull
 	} else {
 		m.Logger.Info("BackupJob are in status " + latestFull.Status)
 	}
@@ -330,6 +333,9 @@ func (m *ObTenantBackupPolicyManager) CleanOldBackupJobs() error {
 			Selector: fieldSelector,
 		},
 		client.InNamespace(m.BackupPolicy.Namespace))
+	if err != nil {
+		return err
+	}
 	if len(jobs.Items) == 0 {
 		return nil
 	}
@@ -475,10 +481,8 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
 			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
 		}
 		return dest
-
-	} else {
-		return targetDest.Path
 	}
+	return targetDest.Path
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
@@ -498,12 +502,10 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
 		if targetDest.Path == "" {
 			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
-		} else {
-			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
 		}
-	} else {
-		return targetDest.Path
+		return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
 	}
+	return targetDest.Path
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType constants.BackupJobType) error {
@@ -589,8 +591,8 @@ func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType constants.BackupJobT
 	return true, nil
 }
 
-// getTenantInfo return tenant info from status if exists, otherwise query from database view
-func (m *ObTenantBackupPolicyManager) getTenantInfo() (*model.OBTenant, error) {
+// getTenantRecord return tenant info from status if exists, otherwise query from database view
+func (m *ObTenantBackupPolicyManager) getTenantRecord() (*model.OBTenant, error) {
 	if m.BackupPolicy.Status.TenantInfo != nil {
 		return m.BackupPolicy.Status.TenantInfo, nil
 	}

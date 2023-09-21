@@ -81,4 +81,15 @@ const (
 	MaintainUnitConfig = "maintain unit config"
 
 	DeleteTenant = "delete tenant"
+
+	// tenant restore
+	RestoreTenant = "Restore tenant"
+)
+
+// tenant-level restore
+const (
+	StartRestoreFlow     = "start restore"
+	RestoreAsStandbyFlow = "restore as standby"
+	RestoreAsPrimaryFlow = "restore as primary"
+	CancelRestoreFlow    = "cancel restore"
 )

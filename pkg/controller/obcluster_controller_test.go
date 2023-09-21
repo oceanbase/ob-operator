@@ -17,13 +17,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 )
 
 const (

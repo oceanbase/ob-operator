@@ -69,21 +69,12 @@ spec:
                 default: '%'
                 type: string
               credentials:
-                items:
-                  description: SecretReference represents a Secret Reference. It has
-                    enough information to retrieve secret in any namespace
-                  properties:
-                    name:
-                      description: name is unique within a namespace to reference
-                        a secret resource.
-                      type: string
-                    namespace:
-                      description: namespace defines the space within which the secret
-                        name must be unique.
-                      type: string
-                  type: object
-                  x-kubernetes-map-type: atomic
-                type: array
+                properties:
+                  root:
+                    type: string
+                  standbyRo:
+                    type: string
+                type: object
               forceDelete:
                 default: false
                 type: boolean
@@ -348,94 +339,143 @@ spec:
               source:
                 properties:
                   restore:
-                    description: RestoreHistory is the history of restore job, matches
-                      view CDB_OB_RESTORE_HISTORY
+                    description: OBTenantRestoreStatus defines the observed state
+                      of OBTenantRestore
                     properties:
-                      backup_cluster_name:
-                        type: string
-                      backup_cluster_version:
-                        type: string
-                      backup_dest:
-                        type: string
-                      backup_piece_list:
-                        type: string
-                      backup_set_list:
-                        type: string
-                      backup_tenant_id:
-                        format: int64
-                        type: integer
-                      backup_tenant_name:
-                        type: string
-                      description:
-                        type: string
-                      finish_bytes:
-                        format: int64
-                        type: integer
-                      finish_bytes_display:
-                        type: string
-                      finish_ls_count:
-                        format: int64
-                        type: integer
-                      finish_tablet_count:
-                        format: int64
-                        type: integer
-                      finish_timestamp:
-                        type: string
-                      job_id:
-                        format: int64
-                        type: integer
-                      ls_count:
-                        format: int64
-                        type: integer
-                      restore_option:
-                        type: string
-                      restore_scn:
-                        format: int64
-                        type: integer
-                      restore_scn_display:
-                        type: string
-                      restore_tenant_id:
-                        format: int64
-                        type: integer
-                      restore_tenant_name:
-                        type: string
-                      start_timestamp:
-                        type: string
+                      operationContext:
+                        properties:
+                          failureRule:
+                            properties:
+                              failureStatus:
+                                type: string
+                              failureStrategy:
+                                type: string
+                            required:
+                            - failureStatus
+                            - failureStrategy
+                            type: object
+                          idx:
+                            type: integer
+                          name:
+                            type: string
+                          targetStatus:
+                            type: string
+                          task:
+                            type: string
+                          taskId:
+                            type: string
+                          taskStatus:
+                            type: string
+                          tasks:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - idx
+                        - name
+                        - targetStatus
+                        - task
+                        - taskId
+                        - taskStatus
+                        - tasks
+                        type: object
+                      restoreProgress:
+                        description: RestoreHistory is the history of restore job,
+                          matches view CDB_OB_RESTORE_HISTORY
+                        properties:
+                          backup_cluster_name:
+                            type: string
+                          backup_cluster_version:
+                            type: string
+                          backup_dest:
+                            type: string
+                          backup_piece_list:
+                            type: string
+                          backup_set_list:
+                            type: string
+                          backup_tenant_id:
+                            format: int64
+                            type: integer
+                          backup_tenant_name:
+                            type: string
+                          description:
+                            type: string
+                          finish_bytes:
+                            format: int64
+                            type: integer
+                          finish_bytes_display:
+                            type: string
+                          finish_ls_count:
+                            format: int64
+                            type: integer
+                          finish_tablet_count:
+                            format: int64
+                            type: integer
+                          finish_timestamp:
+                            type: string
+                          job_id:
+                            format: int64
+                            type: integer
+                          ls_count:
+                            format: int64
+                            type: integer
+                          restore_option:
+                            type: string
+                          restore_scn:
+                            format: int64
+                            type: integer
+                          restore_scn_display:
+                            type: string
+                          restore_tenant_id:
+                            format: int64
+                            type: integer
+                          restore_tenant_name:
+                            type: string
+                          start_timestamp:
+                            type: string
+                          status:
+                            type: string
+                          tablet_count:
+                            format: int64
+                            type: integer
+                          tenant_id:
+                            format: int64
+                            type: integer
+                          total_bytes:
+                            format: int64
+                            type: integer
+                          total_bytes_display:
+                            type: string
+                        required:
+                        - backup_cluster_name
+                        - backup_cluster_version
+                        - backup_dest
+                        - backup_piece_list
+                        - backup_set_list
+                        - backup_tenant_id
+                        - backup_tenant_name
+                        - finish_ls_count
+                        - finish_tablet_count
+                        - finish_timestamp
+                        - job_id
+                        - ls_count
+                        - restore_option
+                        - restore_scn
+                        - restore_scn_display
+                        - restore_tenant_id
+                        - restore_tenant_name
+                        - start_timestamp
+                        - status
+                        - tablet_count
+                        - tenant_id
+                        type: object
                       status:
-                        type: string
-                      tablet_count:
-                        format: int64
-                        type: integer
-                      tenant_id:
-                        format: int64
-                        type: integer
-                      total_bytes:
-                        format: int64
-                        type: integer
-                      total_bytes_display:
+                        description: 'INSERT ADDITIONAL STATUS FIELD - define observed
+                          state of cluster Important: Run "make" to regenerate code
+                          after modifying this file'
                         type: string
                     required:
-                    - backup_cluster_name
-                    - backup_cluster_version
-                    - backup_dest
-                    - backup_piece_list
-                    - backup_set_list
-                    - backup_tenant_id
-                    - backup_tenant_name
-                    - finish_ls_count
-                    - finish_tablet_count
-                    - finish_timestamp
-                    - job_id
-                    - ls_count
-                    - restore_option
-                    - restore_scn
-                    - restore_scn_display
-                    - restore_tenant_id
-                    - restore_tenant_name
-                    - start_timestamp
                     - status
-                    - tablet_count
-                    - tenant_id
                     type: object
                   tenant:
                     type: string

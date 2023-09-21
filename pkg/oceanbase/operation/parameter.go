@@ -32,7 +32,7 @@ func (m *OceanbaseOperationManager) GetParameter(name string, scope *param.Scope
 	return parameters, err
 }
 
-func (m *OceanbaseOperationManager) SetParameter(name string, value interface{}, scope *param.Scope) error {
+func (m *OceanbaseOperationManager) SetParameter(name string, value any, scope *param.Scope) error {
 	if scope == nil {
 		setParameterSql := fmt.Sprintf(sql.SetParameter, name)
 		return m.ExecWithDefaultTimeout(setParameterSql, value)

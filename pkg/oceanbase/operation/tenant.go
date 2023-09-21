@@ -17,10 +17,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 // Incompatible with model.Tenant struct which contains only essential fields for tenant management
@@ -205,7 +206,6 @@ func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(tenantName int) (b
 // ------------ add ------------
 
 func (m *OceanbaseOperationManager) AddTenant(tenantSQLParam model.TenantSQLParam) error {
-
 	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam)
 	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
@@ -296,9 +296,9 @@ func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLPara
 
 // ---------- replacer sql and collect params ----------
 
-func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []interface{}) {
+func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []any) {
 	var optionSql string
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	params = append(params, unitConfigV4.MaxCPU, unitConfigV4.MemorySize)
 	if unitConfigV4.MinCPU != 0 {
 		optionSql = fmt.Sprint(optionSql, ", min_cpu ?")
@@ -323,16 +323,16 @@ func preparedSQLForAddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (st
 	return fmt.Sprintf(sql.AddUnitConfigV4, unitConfigV4.UnitConfigName, optionSql), params
 }
 
-func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []any) {
+	params := make([]any, 0)
 	params = append(params, poolSQLParam.UnitName, poolSQLParam.UnitNum, poolSQLParam.ZoneList)
 	return fmt.Sprintf(sql.AddPool, poolSQLParam.PoolName), params
 }
 
-func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
+func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []any) {
 	var option string
 	var variableList string
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	params = append(params, tenantSQLParam.Charset, tenantSQLParam.PrimaryZone)
 
 	symbols := make([]string, 0)
@@ -352,9 +352,9 @@ func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 	return fmt.Sprintf(sql.AddTenant, tenantSQLParam.TenantName, strings.Join(symbols, ", "), option, variableList), params
 }
 
-func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []interface{}) {
+func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []any) {
 	var alterItemStr string
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	alterItemList := make([]string, 0)
 	if tenantSQLParam.PrimaryZone != "" {
 		alterItemList = append(alterItemList, "PRIMARY_ZONE=?")
@@ -380,9 +380,9 @@ func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []int
 	return fmt.Sprintf(sql.SetTenant, tenantSQLParam.TenantName, alterItemStr), params
 }
 
-func preparedSQLForSetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []interface{}) {
+func preparedSQLForSetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) (string, []any) {
 	var alterItemStr string
-	params := make([]interface{}, 0)
+	params := make([]any, 0)
 	alterItemList := make([]string, 0)
 	if unitConfigV4.MaxCPU != 0 {
 		alterItemList = append(alterItemList, "max_cpu=?")
@@ -442,33 +442,31 @@ func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error 
 	return nil
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []any) {
+	params := make([]any, 0)
 	return fmt.Sprintf(sql.SetTenantVariable, tenantName, variableList), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum string, unitNum int) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum string, unitNum int) (string, []any) {
+	params := make([]any, 0)
 	params = append(params, unitNum)
 	return fmt.Sprintf(sql.SetTenantUnitNum, tenantNum), params
-
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string, []any) {
+	params := make([]any, 0)
 	if force {
 		return fmt.Sprintf(sql.DeleteTenant, tenantName, "force"), params
-	} else {
-		return fmt.Sprintf(sql.DeleteTenant, tenantName, ""), params
 	}
+	return fmt.Sprintf(sql.DeleteTenant, tenantName, ""), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string, []any) {
+	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeletePool, poolName), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []interface{}) {
-	params := make([]interface{}, 0)
+func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []any) {
+	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
 }

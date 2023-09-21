@@ -15,9 +15,10 @@ package controller
 import (
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 const (
@@ -64,7 +65,6 @@ func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
 			Replica: serverNum,
 		}
 		topology[i] = zoneTopology
-
 	}
 
 	userSecrets := &v1alpha1.OBUserSecrets{

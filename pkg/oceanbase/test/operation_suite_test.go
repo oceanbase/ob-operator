@@ -48,7 +48,7 @@ func TestOperation(t *testing.T) {
 	RunSpecs(t, "Operation Suite")
 }
 
-func printSlice[T any](s []T, extraMsg ...interface{}) {
+func printSlice[T any](s []T, extraMsg ...any) {
 	for _, msg := range extraMsg {
 		GinkgoWriter.Println("[TEST INFO]", msg)
 	}
@@ -57,7 +57,7 @@ func printSlice[T any](s []T, extraMsg ...interface{}) {
 	}
 }
 
-func printObject[T any](o T, extraMsg ...interface{}) {
+func printObject[T any](o T, extraMsg ...any) {
 	for _, msg := range extraMsg {
 		GinkgoWriter.Println("[TEST INFO]", msg)
 	}

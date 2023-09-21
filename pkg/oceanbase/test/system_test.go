@@ -16,10 +16,11 @@ import (
 	"fmt"
 
 	"github.com/go-logr/logr"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 )
 
 var _ = Describe("Test System Operation", func() {

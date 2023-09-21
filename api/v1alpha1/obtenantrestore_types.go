@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -37,9 +38,9 @@ type OBTenantRestoreSpec struct {
 type OBTenantRestoreStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           RestoreJobStatus      `json:"status"`
-	RestoreProgress  *model.RestoreHistory `json:"restoreProgress,omitempty"`
-	OperationContext *OperationContext     `json:"operationContext,omitempty"`
+	Status           constants.RestoreJobStatus `json:"status"`
+	RestoreProgress  *model.RestoreHistory      `json:"restoreProgress,omitempty"`
+	OperationContext *OperationContext          `json:"operationContext,omitempty"`
 }
 
 func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
@@ -81,19 +82,3 @@ type OBTenantRestoreList struct {
 func init() {
 	SchemeBuilder.Register(&OBTenantRestore{}, &OBTenantRestoreList{})
 }
-
-type RestoreJobType string
-
-const (
-	RestoreJobRestore  RestoreJobType = "RESTORE"
-	RestoreJobActivate RestoreJobType = "ACTIVATE"
-)
-
-type RestoreJobStatus string
-
-const (
-	RestoreJobRunning    RestoreJobStatus = "RUNNING"
-	RestoreJobFailed     RestoreJobStatus = "FAILED"
-	RestoreJobSuccessful RestoreJobStatus = "SUCCESSFUL"
-	RestoreJobCanceled   RestoreJobStatus = "CANCELED"
-)

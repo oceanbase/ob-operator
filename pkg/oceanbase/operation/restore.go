@@ -16,9 +16,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
@@ -30,7 +31,7 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue interface{}) error {
+func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue any) error {
 	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
 	err := m.ExecWithDefaultTimeout(sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {

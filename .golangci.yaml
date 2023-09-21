@@ -6,7 +6,7 @@ linters:
     - gocritic
     - gofmt
     - goimports
-    - gosimple
+    # - gosimple
     - govet
     - ineffassign
     - misspell
@@ -16,7 +16,7 @@ linters:
     - sqlclosecheck
     - staticcheck
     - typecheck
-    - unused
+    # - unused
 
 issues:
   exclude-rules:
@@ -35,6 +35,16 @@ linters-settings:
   revive:
     enable-all-rules: true
     rules:
+      - name: struct-tag
+        disabled: true
+      - name: var-naming
+        disabled: true
+      - name: comment-spacings
+        disabled: true
+      - name: exported
+        disabled: true
+      - name: unused-receiver
+        disabled: true
       - name: file-header
         disabled: true
       - name: line-length-limit

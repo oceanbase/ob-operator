@@ -108,9 +108,8 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		}
 		if len(obcluster.Status.OBZoneStatus) >= 3 {
 			return task.GetRegistry().Get(flowname.UpgradeOBZone)
-		} else {
-			return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		}
+		return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		// TODO upgrade
 	default:
 		m.Logger.Info("no need to run anything for obzone")
@@ -190,7 +189,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			Status: observer.Status.Status,
 		})
 		if observer.Status.Status != serverstatus.Unrecoverable {
-			availableReplica = availableReplica + 1
+			availableReplica++
 		}
 		if observer.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
 			m.Logger.Info("Found observer image not match")
@@ -215,9 +214,9 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need delete observer")
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
-		} else {
-			// do nothing when observer match topology replica
 		}
+		// do nothing when observer match topology replica
+
 		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
 		if m.OBZone.Status.Status == zonestatus.Running {
 			if m.OBZone.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {

@@ -33,7 +33,7 @@ func (f *TaskFlow) NextTask() string {
 	} else {
 		f.OperationContext.TaskStatus = taskstatus.Pending
 		f.OperationContext.Task = f.OperationContext.Tasks[f.OperationContext.Idx]
-		f.OperationContext.Idx = f.OperationContext.Idx + 1
+		f.OperationContext.Idx++
 		f.OperationContext.TaskId = ""
 	}
 	return f.OperationContext.Task
