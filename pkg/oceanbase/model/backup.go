@@ -14,7 +14,7 @@ package model
 
 // OBArchiveDest matches view DBA_OB_ARCHIVE_DEST
 type OBArchiveDest struct {
-	TenantId int64  `json:"tenant_id" db:"tenant_id"`
+	TenantID int64  `json:"tenant_id" db:"tenant_id"`
 	DestNo   int64  `json:"dest_no" db:"dest_no"`
 	Name     string `json:"name" db:"name"`
 	Value    string `json:"value" db:"value"`
@@ -27,9 +27,9 @@ type OBBackupParameter struct {
 
 // OBArchiveLogSummary matches view DBA_OB_ARCHIVELOG_SUMMARY
 type OBArchiveLogSummary struct {
-	TenantId                  int64   `json:"tenant_id" db:"tenant_id"`
-	DestId                    int64   `json:"dest_id" db:"dest_id"`
-	RoundId                   int64   `json:"round_id" db:"round_id"`
+	TenantID                  int64   `json:"tenant_id" db:"tenant_id"`
+	DestID                    int64   `json:"dest_id" db:"dest_id"`
+	RoundID                   int64   `json:"round_id" db:"round_id"`
 	DestNo                    int64   `json:"dest_no" db:"dest_no"`
 	Status                    string  `json:"status" db:"status"`
 	StartScn                  int64   `json:"start_scn" db:"start_scn"`
@@ -37,8 +37,8 @@ type OBArchiveLogSummary struct {
 	CheckpointScn             int64   `json:"checkpoint_scn" db:"checkpoint_scn"`
 	CheckpointScnDisplay      string  `json:"checkpoint_scn_display" db:"checkpoint_scn_display"`
 	Compatible                string  `json:"compatible" db:"compatible"`
-	BasePieceId               int64   `json:"base_piece_id" db:"base_piece_id"`
-	UsedPieceId               int64   `json:"used_piece_id" db:"used_piece_id"`
+	BasePieceID               int64   `json:"base_piece_id" db:"base_piece_id"`
+	UsedPieceID               int64   `json:"used_piece_id" db:"used_piece_id"`
 	PieceSwitchInterval       string  `json:"piece_switch_interval" db:"piece_switch_interval"`
 	InputBytes                int64   `json:"input_bytes" db:"input_bytes"`
 	InputBytesDisplay         string  `json:"input_bytes_display" db:"input_bytes_display"`
@@ -57,9 +57,9 @@ type OBArchiveLogSummary struct {
 type OBArchiveLogJob OBArchiveLogSummary
 
 type JobCommon struct {
-	TenantId         int64   `json:"tenant_id" db:"tenant_id"`
-	JobId            int64   `json:"job_id" db:"job_id"`
-	ExecutorTenantId int64   `json:"executor_tenant_id" db:"executor_tenant_id"`
+	TenantID         int64   `json:"tenant_id" db:"tenant_id"`
+	JobID            int64   `json:"job_id" db:"job_id"`
+	ExecutorTenantID int64   `json:"executor_tenant_id" db:"executor_tenant_id"`
 	JobLevel         string  `json:"job_level" db:"job_level"`
 	StartTimestamp   string  `json:"start_timestamp" db:"start_timestamp"`
 	EndTimestamp     *string `json:"end_timestamp,omitempty" db:"end_timestamp"`
@@ -72,7 +72,7 @@ type JobCommon struct {
 type OBBackupJob struct {
 	JobCommon `json:",inline" db:",inline"`
 
-	BackupSetId    int64  `json:"backup_set_id" db:"backup_set_id"`
+	BackupSetID    int64  `json:"backup_set_id" db:"backup_set_id"`
 	PlusArchiveLog string `json:"plus_archivelog" db:"plus_archivelog"`
 	BackupType     string `json:"backup_type" db:"backup_type"`
 	EncryptionMode string `json:"encryption_mode" db:"encryption_mode"`
@@ -83,7 +83,7 @@ type OBBackupJobHistory OBBackupJob
 
 // OBBackupCleanPolicy matches view DBA_OB_BACKUP_DELETE_POLICY
 type OBBackupCleanPolicy struct {
-	TenantId       int64  `json:"tenant_id" db:"tenant_id"`
+	TenantID       int64  `json:"tenant_id" db:"tenant_id"`
 	PolicyName     string `json:"policy_name" db:"policy_name"`
 	RecoveryWindow string `json:"recovery_window" db:"recovery_window"`
 }
@@ -100,16 +100,16 @@ type OBBackupCleanJob struct {
 
 // OBBackupTask belonging to OBBackupJob, matches DBA_OB_BACKUP_TASKS
 type OBBackupTask struct {
-	TenantId       int64   `json:"tenant_id" db:"tenant_id"`
-	JobId          int64   `json:"job_id" db:"job_id"`
-	BackupSetId    int64   `json:"backup_set_id" db:"backup_set_id"`
+	TenantID       int64   `json:"tenant_id" db:"tenant_id"`
+	JobID          int64   `json:"job_id" db:"job_id"`
+	BackupSetID    int64   `json:"backup_set_id" db:"backup_set_id"`
 	StartTimestamp string  `json:"start_timestamp" db:"start_timestamp"`
 	EndTimestamp   *string `json:"end_timestamp,omitempty" db:"end_timestamp"`
 	Status         string  `json:"status" db:"status"`
 	Result         string  `json:"result" db:"result"`
 	Comment        string  `json:"comment" db:"comment"`
 
-	TaskId                int64  `json:"task_id" db:"task_id"`
+	TaskID                int64  `json:"task_id" db:"task_id"`
 	Incarnation           int64  `json:"incarnation" db:"incarnation"`
 	StartScn              int64  `json:"start_scn" db:"start_scn"`
 	EndScn                int64  `json:"end_scn" db:"end_scn"`
@@ -125,16 +125,16 @@ type OBBackupTask struct {
 	MacroBlockCount       int64  `json:"macro_block_count" db:"macro_block_count"`
 	FinishMacroBlockCount int64  `json:"finish_macro_block_count" db:"finish_macro_block_count"`
 	FileCount             int64  `json:"file_count" db:"file_count"`
-	MetaTurnId            int64  `json:"meta_turn_id" db:"meta_turn_id"`
-	DataTurnId            int64  `json:"data_turn_id" db:"data_turn_id"`
+	MetaTurnID            int64  `json:"meta_turn_id" db:"meta_turn_id"`
+	DataTurnID            int64  `json:"data_turn_id" db:"data_turn_id"`
 	Path                  string `json:"path" db:"path"`
 }
 
 // OBArchiveLogPieceFile matches DBA_OB_ARCHIVELOG_PIECE_FILES
 type OBArchiveLogPieceFile struct {
-	DestId               int64  `json:"dest_id" db:"dest_id"`
-	RoundId              int64  `json:"round_id" db:"round_id"`
-	PieceId              int64  `json:"piece_id" db:"piece_id"`
+	DestID               int64  `json:"dest_id" db:"dest_id"`
+	RoundID              int64  `json:"round_id" db:"round_id"`
+	PieceID              int64  `json:"piece_id" db:"piece_id"`
 	Incarnation          int64  `json:"incarnation" db:"incarnation"`
 	DestNo               int64  `json:"dest_no" db:"dest_no"`
 	Status               string `json:"status" db:"status"`

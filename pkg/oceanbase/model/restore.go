@@ -14,12 +14,12 @@ package model
 
 // RestoreProgress is the progress of restore job, matches view CDB_OB_RESTORE_PROGRESS
 type RestoreProgress struct {
-	TenantId           int64   `json:"tenant_id" db:"tenant_id"`
-	JobId              int64   `json:"job_id" db:"job_id"`
+	TenantID           int64   `json:"tenant_id" db:"tenant_id"`
+	JobID              int64   `json:"job_id" db:"job_id"`
 	RestoreTenantName  string  `json:"restore_tenant_name" db:"restore_tenant_name"`
-	RestoreTenantId    int64   `json:"restore_tenant_id" db:"restore_tenant_id"`
+	RestoreTenantID    int64   `json:"restore_tenant_id" db:"restore_tenant_id"`
 	BackupTenantName   string  `json:"backup_tenant_name" db:"backup_tenant_name"`
-	BackupTenantId     int64   `json:"backup_tenant_id" db:"backup_tenant_id"`
+	BackupTenantID     int64   `json:"backup_tenant_id" db:"backup_tenant_id"`
 	BackupClusterName  string  `json:"backup_cluster_name" db:"backup_cluster_name"`
 	BackupDest         string  `json:"backup_dest" db:"backup_dest"`
 	RestoreOption      string  `json:"restore_option" db:"restore_option"`
