@@ -17,11 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"github.com/oceanbase/ob-operator/api/constants"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/oceanbase/ob-operator/api/constants"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -112,10 +112,9 @@ type OBTenantStatus struct {
 	Source     *TenantSourceStatus  `json:"source,omitempty"`
 }
 
-// +kubebuilder:object:generate=false
 type TenantSourceStatus struct {
-	Tenant  *string               `json:"tenant,omitempty"`
-	Restore *model.RestoreHistory `json:"restore,omitempty"`
+	Tenant  *string                `json:"tenant,omitempty"`
+	Restore *OBTenantRestoreStatus `json:"restore,omitempty"`
 }
 
 func (in *OBTenantStatus) DeepCopyInto(out *OBTenantStatus) {
@@ -149,7 +148,7 @@ func (in *TenantSourceStatus) DeepCopyInto(out *TenantSourceStatus) {
 	}
 	if in.Restore != nil {
 		in, out := &in.Restore, &out.Restore
-		*out = new(model.RestoreHistory)
+		*out = new(OBTenantRestoreStatus)
 		**out = **in
 	}
 }
