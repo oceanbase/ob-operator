@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oceanbase/ob-operator/pkg/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -29,11 +28,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	"github.com/oceanbase/ob-operator/pkg/resource"
+
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	"github.com/pkg/errors"
 )
 
 // OBTenantBackupReconciler reconciles a OBTenantBackup object
@@ -141,12 +143,12 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context,
 		}
 		// archive log and data clean job should not be here
 	} else {
-		modelJob, err := con.GetBackupJobWithId(job.Status.BackupJob.JobId)
+		modelJob, err := con.GetBackupJobWithId(job.Status.BackupJob.JobID)
 		if err != nil {
 			return err
 		}
 		if modelJob == nil {
-			return errors.New(fmt.Sprintf("backup job with id %d not found", job.Status.BackupJob.JobId))
+			return fmt.Errorf("backup job with id %d not found", job.Status.BackupJob.JobID)
 		}
 		job.Status.BackupJob = modelJob
 		targetJob = modelJob
@@ -216,7 +218,9 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 	}
 	if latest != nil {
 		job.Status.ArchiveLogJob = latest
-		job.Status.StartedAt = latest.StartScnDisplay
+		if latest.StartScnDisplay != nil {
+			job.Status.StartedAt = *latest.StartScnDisplay
+		}
 		job.Status.EndedAt = latest.CheckpointScnDisplay
 		switch latest.Status {
 		case "STOP":

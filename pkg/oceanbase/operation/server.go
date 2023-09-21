@@ -15,9 +15,10 @@ package operation
 import (
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBServer, error) {

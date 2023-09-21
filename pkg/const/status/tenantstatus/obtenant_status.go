@@ -26,4 +26,7 @@ const (
 	DeletingTenant         = "deleting"
 	FinalizerFinished      = "finalizer finished"
 	PausingReconcile       = "pausing reconcile"
+
+	Restoring     = "restoring"
+	SwitchingRole = "switching role"
 )

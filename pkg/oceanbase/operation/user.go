@@ -15,8 +15,9 @@ package operation
 import (
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/pkg/errors"
+
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 )
 
 func (m *OceanbaseOperationManager) CreateUser(userName string) error {

@@ -18,11 +18,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )
@@ -99,7 +100,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 	currentReplica := 0
 	for _, observerStatus := range m.OBZone.Status.OBServerStatus {
 		if observerStatus.Status != serverstatus.Unrecoverable {
-			currentReplica = currentReplica + 1
+			currentReplica++
 		}
 	}
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
@@ -156,7 +157,7 @@ func (m *OBZoneManager) DeleteOBServer() error {
 			}
 			continue
 		}
-		observerCount += 1
+		observerCount++
 	}
 	return nil
 }
@@ -237,7 +238,7 @@ func (m *OBZoneManager) OBClusterHealthCheck() error {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
-	ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, "")
+	_ = ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, "")
 	return nil
 }
 
@@ -247,7 +248,7 @@ func (m *OBZoneManager) OBZoneHealthCheck() error {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
 	zoneOpt := fmt.Sprintf("-z '%s'", m.OBZone.Spec.Topology.Zone)
-	ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, zoneOpt)
+	_ = ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, zoneOpt)
 	return nil
 }
 

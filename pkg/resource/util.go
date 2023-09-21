@@ -20,6 +20,13 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	secretconst "github.com/oceanbase/ob-operator/pkg/const/secret"
@@ -27,12 +34,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	"github.com/pkg/errors"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func ReadPassword(c client.Client, namespace, secretName string) (string, error) {
@@ -63,7 +64,7 @@ func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha
 	if err != nil {
 		return nil, errors.Wrap(err, "Get observer list")
 	}
-	if len(observerList.Items) <= 0 {
+	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
 
@@ -127,7 +128,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	parts := strings.Split(uuid.New().String(), "-")
 	suffix := parts[len(parts)-1]
 	jobName := fmt.Sprintf("%s-%s", "script-runner", suffix)
-	var backoffLimit int32 = 0
+	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{
 		Name:    "script-runner",

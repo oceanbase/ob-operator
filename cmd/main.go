@@ -31,7 +31,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
@@ -196,8 +195,19 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
 	}
-	if err = (&oceanbasev1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+	if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
+		os.Exit(1)
+	}
+	if err = (&controller.OBTenantOperationReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OBTenantOperation")
+		os.Exit(1)
+	}
+	if err = (&v1alpha1.OBTenant{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenant")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -17,14 +17,15 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Test Backup Operation", func() {
+var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	var con *operation.OceanbaseOperationManager
 
@@ -135,10 +136,10 @@ var _ = Describe("Test Backup Operation", func() {
 
 		// Query tasks at once will get empty result
 		time.Sleep(time.Second)
-		By(fmt.Sprintf("Query BackupJob with ID %d", job.JobId))
-		tasks, err := con.ListBackupTaskWithJobId(job.JobId)
+		By(fmt.Sprintf("Query BackupJob with ID %d", job.JobID))
+		tasks, err := con.ListBackupTaskWithJobId(job.JobID)
 		Expect(err).To(BeNil())
-		printSlice(tasks, fmt.Sprintf("BackupTasks of Job %d", job.JobId))
+		printSlice(tasks, fmt.Sprintf("BackupTasks of Job %d", job.JobID))
 	})
 
 	It("Get Log Archive dest info", func() {

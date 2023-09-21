@@ -102,6 +102,9 @@ var _ = BeforeSuite(func() {
 	err = (&OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = (&OBTenant{}).SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:webhook
 
 	go func() {

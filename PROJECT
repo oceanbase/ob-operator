@@ -65,6 +65,10 @@ resources:
   kind: OBTenant
   path: github.com/oceanbase/ob-operator/api/v1alpha1
   version: v1alpha1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 - api:
     crdVersion: v1
     namespaced: true
@@ -123,4 +127,13 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oceanbase.com
+  group: oceanbase
+  kind: OBTenantOperation
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

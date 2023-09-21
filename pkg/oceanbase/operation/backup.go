@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 func (m *OceanbaseOperationManager) SetLogArchiveDestForTenant(uri string) error {
@@ -204,7 +205,7 @@ func (m *OceanbaseOperationManager) GetLatestBackupJobOfTypeAndPath(jobType cons
 	return m.getLatestBackupJob([]string{sql.QueryLatestBackupJobOfTypeAndPath, sql.QueryLatestBackupJobHistoryOfTypeAndPath}, jobType, path)
 }
 
-func (m *OceanbaseOperationManager) getLatestBackupJob(statements []string, params ...interface{}) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) getLatestBackupJob(statements []string, params ...any) (*model.OBBackupJob, error) {
 	if len(statements) != 2 {
 		return nil, errors.New("unexpected # of statements, require exactly 2 statement")
 	}

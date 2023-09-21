@@ -10,6 +10,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenant
+  failurePolicy: Fail
+  name: mobtenant.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenants
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
   failurePolicy: Fail
   name: mobtenantbackuppolicy.kb.io
@@ -30,6 +50,26 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obtenant
+  failurePolicy: Fail
+  name: vobtenant.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenants
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

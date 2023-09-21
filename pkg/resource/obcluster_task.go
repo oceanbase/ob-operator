@@ -19,15 +19,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
-	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -53,7 +54,7 @@ func (m *OBClusterManager) generateZoneName(zone string) string {
 }
 
 func (m *OBClusterManager) generateParameterName(name string) string {
-	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, strings.Replace(name, "_", "-", -1))
+	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, strings.ReplaceAll(name, "_", "-"))
 }
 
 func (m *OBClusterManager) WaitOBZoneTopologyMatch() error {
@@ -92,9 +93,8 @@ func (m *OBClusterManager) WaitOBZoneDeleted() error {
 	}
 	if waitSuccess {
 		return nil
-	} else {
-		return errors.Errorf("OBCluster %s zone still not deleted when timeout", m.OBCluster.Name)
 	}
+	return errors.Errorf("OBCluster %s zone still not deleted when timeout", m.OBCluster.Name)
 }
 
 func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() error {
@@ -248,7 +248,7 @@ func (m *OBClusterManager) Bootstrap() error {
 		return errors.Wrap(err, "list obzones")
 	}
 	m.Logger.Info("successfully get obzone list", "obzone list", obzoneList)
-	if len(obzoneList.Items) <= 0 {
+	if len(obzoneList.Items) == 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
 	var manager *operation.OceanbaseOperationManager
@@ -466,7 +466,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
 	}
-	//version, err := oceanbaseOperationManager.GetVersion()
+	// version, err := oceanbaseOperationManager.GetVersion()
 	version, err := oceanbaseOperationManager.GetVersion()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
@@ -812,6 +812,6 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 			return errors.Wrapf(err, "Failed to set parameter %s to %s:%d", parameter.Name, parameter.SvrIp, parameter.SvrPort)
 		}
 	}
-	m.Client.Delete(m.Ctx, contextSecret)
+	_ = m.Client.Delete(m.Ctx, contextSecret)
 	return nil
 }

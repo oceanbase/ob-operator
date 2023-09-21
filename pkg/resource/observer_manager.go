@@ -19,7 +19,6 @@ import (
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -27,6 +26,8 @@ import (
 	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"

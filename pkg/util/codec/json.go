@@ -16,13 +16,13 @@ import (
 	"encoding/json"
 )
 
-func EncodeToJSON(element interface{}) string {
+func EncodeToJSON(element any) string {
 	tempJSON, _ := json.Marshal(element)
 	return string(tempJSON)
 }
 
-func ParseFromJSON(content string) (map[string]interface{}, error) {
-	ret := make(map[string]interface{})
+func ParseFromJSON(content string) (map[string]any, error) {
+	ret := make(map[string]any)
 	err := json.Unmarshal([]byte(content), &ret)
 	return ret, err
 }
