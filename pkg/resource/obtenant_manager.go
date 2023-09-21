@@ -37,6 +37,7 @@ import (
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -113,6 +114,21 @@ func (m *OBTenantManager) FinishTask() {
 	m.OBTenant.Status.OperationContext = nil
 }
 
+func (m *OBTenantManager) retryUpdateStatus() error {
+	obtenant := &v1alpha1.OBTenant{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBTenant.GetNamespace(),
+		Name:      m.OBTenant.GetName(),
+	}, obtenant)
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obtenant.Status = *m.OBTenant.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, obtenant)
+	})
+}
+
 func (m *OBTenantManager) UpdateStatus() error {
 	obtenantName := m.OBTenant.Spec.TenantName
 	var err error
@@ -138,15 +154,12 @@ func (m *OBTenantManager) UpdateStatus() error {
 		}
 		m.OBTenant.Status.Status = nextStatus
 	}
-
 	m.Logger.Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
-	err = m.Client.Status().Update(m.Ctx, m.OBTenant.DeepCopy())
-
+	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obtenant status")
 		return err
 	}
-
 	return nil
 }
 

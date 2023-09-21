@@ -93,12 +93,7 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	coordinator := resource.NewCoordinator(obtenantManager, &logger)
-	err = coordinator.Coordinate()
-	if err != nil {
-		//r.Recorder.Event(obtenant, corev1.EventTypeWarning, "coordinate failed", err.Error())
-	}
-
-	return ctrl.Result{}, err
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.

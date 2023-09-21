@@ -19,7 +19,6 @@ package main
 import (
 	"flag"
 	"os"
-	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -56,11 +55,8 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	var syncPeriodStr string
-	var syncPeriod *time.Duration
 	flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
 	flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
-	flag.StringVar(&syncPeriodStr, "sync-period", "15s", "Data sync period.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -74,15 +70,6 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	if syncPeriodStr != "" {
-		duration, err := time.ParseDuration(syncPeriodStr)
-		if err != nil {
-			setupLog.Error(err, "failed to parse sync period")
-		} else {
-			syncPeriod = &duration
-		}
-	}
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                  scheme,
 		Namespace:               namespace,
@@ -92,7 +79,6 @@ func main() {
 		LeaderElection:          enableLeaderElection,
 		LeaderElectionNamespace: managerNamespace,
 		LeaderElectionID:        "operator.oceanbase.com",
-		SyncPeriod:              syncPeriod,
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly

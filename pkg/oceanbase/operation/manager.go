@@ -43,7 +43,7 @@ func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseO
 	return NewOceanbaseOperationManager(connector), nil
 }
 
-func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql string, params ...interface{}) error {
+func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql string, params ...any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	m.Logger.Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
@@ -55,20 +55,27 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(timeout time.Duration, sql s
 	return err
 }
 
-func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ...interface{}) error {
+func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(sql string, params ...any) error {
 	return m.ExecWithTimeout(config.DefaultSqlTimeout, sql, params...)
 }
 
-func (m *OceanbaseOperationManager) QueryRow(ret interface{}, sql string, params ...interface{}) error {
-	err := m.Connector.GetClient().Get(ret, sql, params...)
+func (m *OceanbaseOperationManager) QueryRowWithTimeout(timeout time.Duration, ret any, sql string, params ...any) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	err := m.Connector.GetClient().GetContext(ctx, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query row, sql %s, param %v", sql, params)
 	}
 	return err
 }
+func (m *OceanbaseOperationManager) QueryRow(ret any, sql string, params ...any) error {
+	return m.QueryRowWithTimeout(config.DefaultSqlTimeout, ret, sql, params)
+}
 
-func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, params ...interface{}) error {
-	err := m.Connector.GetClient().Select(ret, sql, params...)
+func (m *OceanbaseOperationManager) QueryListWithTimeout(timeout time.Duration, ret any, sql string, params ...any) error {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	err := m.Connector.GetClient().SelectContext(ctx, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query list failed")
@@ -76,7 +83,11 @@ func (m *OceanbaseOperationManager) QueryList(ret interface{}, sql string, param
 	return err
 }
 
-func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ...interface{}) error {
+func (m *OceanbaseOperationManager) QueryList(ret any, sql string, params ...any) error {
+	return m.QueryListWithTimeout(config.DefaultSqlTimeout, ret, sql, params...)
+}
+
+func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ...any) error {
 	err := m.Connector.GetClient().Get(count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)

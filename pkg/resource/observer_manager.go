@@ -24,6 +24,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -119,6 +120,17 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	return operationManager.GetServer(observerInfo)
 }
 
+func (m *OBServerManager) retryUpdateStatus() error {
+	observer, err := m.getOBServer()
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		observer.Status = *m.OBServer.Status.DeepCopy()
+		return m.Client.Status().Update(m.Ctx, observer)
+	})
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -131,7 +143,7 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.Logger.Info("pod not found")
 				if m.OBServer.Status.Status == serverstatus.Running {
 					if m.SupportStaticIp() {
-						m.Logger.Info("recreate observer")
+						m.Logger.Info("current cni supports specific static ip address, recover by recreate pod")
 						m.OBServer.Status.Status = serverstatus.Recover
 					} else {
 						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
@@ -139,6 +151,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					}
 				}
 			} else {
+				m.Logger.Info("observer status is not running, wait task finish")
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
@@ -150,6 +163,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
+			m.Logger.Info("check observer in obcluster")
 			observer, err := m.getCurrentOBServerFromOB()
 			if err != nil {
 				m.Logger.Info("Get observer failed, check next time")
@@ -178,10 +192,11 @@ func (m *OBServerManager) UpdateStatus() error {
 		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
-	err := m.Client.Status().Update(m.Ctx, m.OBServer.DeepCopy())
+	err := m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
+	m.Logger.Info("update status finished")
 	return err
 }
 

@@ -85,8 +85,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Logger:    &logger,
 	}
 	coordinator := resource.NewCoordinator(obclusterManager, &logger)
-	err = coordinator.Coordinate()
-	return ctrl.Result{}, err
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.
