@@ -103,13 +103,14 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 
 		if err != nil {
 			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
-			c.Manager.PrintErrEvent(err)
+			// c.Manager.PrintErrEvent(err)
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else if taskResult != nil {
 			c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 			f.OperationContext.TaskStatus = taskResult.Status
 			if taskResult.Error != nil {
-				c.Manager.PrintErrEvent(taskResult.Error)
+				// c.Manager.PrintErrEvent(taskResult.Error)
+				c.Logger.Error(err, "Task result error", "task id", f.OperationContext.TaskId, "task name", f.OperationContext.Name)
 			}
 
 			// Didn't get task result, task is still running"

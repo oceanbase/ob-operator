@@ -1,0 +1,60 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1		
+kind: OBTenant		
+metadata:		
+  name: test-standby-restore
+  namespace: oceanbase
+spec:	
+  obcluster: test
+  tenantName: t1s
+  unitNum: 1 
+  charset: utf8mb4  
+  connectWhiteList: '%'
+  forceDelete: true
+  tenantRole: PRIMARY
+  source:
+    restore:
+      sourceUri: "file:///ob-backup/t1/backup,file://ob-backup/t1/archive"
+      until: 
+        unlimited: true
+      replayLogUntil:
+        unlimited: true
+  pools:
+    - zone: zone1
+      type: 
+        name: FUll 
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 2500m 
+        memorySize: 5Gi 
+        minCPU: 2 
+        maxIops: 1024 
+        minIops: 1024
+        logDiskSize: 
+    - zone: zone2
+      type: 
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 2500m 
+        memorySize: 5Gi
+        minCPU: 2 
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 4Gi 
+    - zone: zone3
+      type: 
+        name: Full
+        replica: 1
+        isActive: true
+      priority: 3
+      resource:
+        maxCPU: 2500m 
+        memorySize: 5Gi
+        minCPU: 2
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 4Gi 
