@@ -122,11 +122,11 @@ func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBClusterManager) retryUpdateStatus() error {
-	obcluster, err := m.getOBCluster()
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obcluster, err := m.getOBCluster()
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		obcluster.Status = *m.OBCluster.Status.DeepCopy()
 		return m.Client.Status().Update(m.Ctx, obcluster)
 	})

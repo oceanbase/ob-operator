@@ -90,6 +90,9 @@ func AddPool() *TaskFlow {
 			Name:         flowname.AddPool,
 			Tasks:        []string{taskname.CheckPoolAndUnitConfig, taskname.AddResourcePool},
 			TargetStatus: tenantstatus.Running,
+			OnFailure: strategy.FailureRule{
+				Strategy: strategy.RetryFromCurrent,
+			},
 		},
 	}
 }

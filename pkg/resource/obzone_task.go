@@ -23,6 +23,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )
@@ -252,20 +253,22 @@ func (m *OBZoneManager) OBZoneHealthCheck() error {
 }
 
 func (m *OBZoneManager) UpgradeOBServer() error {
-	observerList, err := m.listOBServers()
-	if err != nil {
-		m.Logger.Error(err, "List observers failed")
-		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
-	}
-	for _, observer := range observerList.Items {
-		m.Logger.Info("upgrade observer", "observer", observer.Name)
-		observer.Spec.OBServerTemplate.Image = m.OBZone.Spec.OBServerTemplate.Image
-		err = m.Client.Update(m.Ctx, &observer)
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		observerList, err := m.listOBServers()
 		if err != nil {
-			return errors.Wrapf(err, "Upgrade observer %s failed", observer.Name)
+			m.Logger.Error(err, "List observers failed")
+			return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
 		}
-	}
-	return nil
+		for _, observer := range observerList.Items {
+			m.Logger.Info("upgrade observer", "observer", observer.Name)
+			observer.Spec.OBServerTemplate.Image = m.OBZone.Spec.OBServerTemplate.Image
+			err = m.Client.Update(m.Ctx, &observer)
+			if err != nil {
+				return errors.Wrapf(err, "Upgrade observer %s failed", observer.Name)
+			}
+		}
+		return nil
+	})
 }
 
 func (m *OBZoneManager) WaitOBServerUpgraded() error {

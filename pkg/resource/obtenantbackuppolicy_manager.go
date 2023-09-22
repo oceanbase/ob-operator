@@ -216,15 +216,15 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 }
 
 func (m *ObTenantBackupPolicyManager) retryUpdateStatus() error {
-	policy := &v1alpha1.OBTenantBackupPolicy{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.BackupPolicy.GetNamespace(),
-		Name:      m.BackupPolicy.GetName(),
-	}, policy)
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		policy := &v1alpha1.OBTenantBackupPolicy{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.BackupPolicy.GetNamespace(),
+			Name:      m.BackupPolicy.GetName(),
+		}, policy)
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		policy.Status = m.BackupPolicy.Status
 		return m.Client.Status().Update(m.Ctx, policy)
 	})
@@ -250,5 +250,6 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 }
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
+	m.Logger.Error(err, "Print event")
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
