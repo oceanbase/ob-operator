@@ -257,5 +257,6 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 }
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
+	m.Logger.Error(err, "Print event")
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
