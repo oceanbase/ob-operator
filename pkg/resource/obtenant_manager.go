@@ -112,15 +112,15 @@ func (m *OBTenantManager) FinishTask() {
 }
 
 func (m *OBTenantManager) retryUpdateStatus() error {
-	obtenant := &v1alpha1.OBTenant{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBTenant.GetNamespace(),
-		Name:      m.OBTenant.GetName(),
-	}, obtenant)
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obtenant := &v1alpha1.OBTenant{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBTenant.GetNamespace(),
+			Name:      m.OBTenant.GetName(),
+		}, obtenant)
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		obtenant.Status = *m.OBTenant.Status.DeepCopy()
 		return m.Client.Status().Update(m.Ctx, obtenant)
 	})

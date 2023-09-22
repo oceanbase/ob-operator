@@ -31,8 +31,8 @@ const (
 	GetRsJob         = "select job_id, job_type, job_status, tenant_id from DBA_OB_TENANT_JOBS where tenant_name=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 	GetObVersion     = "SELECT ob_version() as version;"
 
-	AddUnitConfigV4 = "CREATE RESOURCE UNIT %s max_cpu ?, memory_size ? %s;"
-	AddPool         = "CREATE RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
+	AddUnitConfigV4 = "CREATE RESOURCE UNIT IF NOT EXISTS %s max_cpu ?, memory_size ? %s;"
+	AddPool         = "CREATE RESOURCE POOL IF NOT EXISTS %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
 	AlterPool       = "ALTER RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
 	AddTenant       = "CREATE TENANT IF NOT EXISTS %s CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(%s) %s %s;"
 

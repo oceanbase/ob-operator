@@ -121,11 +121,11 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 }
 
 func (m *OBServerManager) retryUpdateStatus() error {
-	observer, err := m.getOBServer()
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		observer, err := m.getOBServer()
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		observer.Status = *m.OBServer.Status.DeepCopy()
 		return m.Client.Status().Update(m.Ctx, observer)
 	})

@@ -164,11 +164,11 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBZoneManager) retryUpdateStatus() error {
-	obzone, err := m.getOBZone()
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obzone, err := m.getOBZone()
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		obzone.Status = *m.OBZone.Status.DeepCopy()
 		return m.Client.Status().Update(m.Ctx, obzone)
 	})
