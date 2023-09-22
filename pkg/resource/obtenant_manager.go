@@ -29,7 +29,6 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
@@ -76,7 +75,7 @@ func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
-	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
+	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
 	} else {
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
@@ -138,6 +137,11 @@ func (m *OBTenantManager) UpdateStatus() error {
 		return nil
 	} else if m.IsDeleting() {
 		m.OBTenant.Status.Status = tenantstatus.DeletingTenant
+	} else if m.OBTenant.Status.Status == tenantstatus.Restoring &&
+		m.OBTenant.Spec.Source != nil &&
+		m.OBTenant.Spec.Source.Restore != nil &&
+		m.OBTenant.Spec.Source.Restore.Cancel {
+		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
 	} else {
@@ -221,6 +225,12 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 		return m.MaintainUnitConfigTask, nil
 	case taskname.DeleteTenant:
 		return m.DeleteTenantTask, nil
+	case taskname.CreateRestoreJobCR:
+		return m.CreateTenantRestoreJobCR, nil
+	case taskname.WatchRestoreJobToFinish:
+		return m.WatchRestoreJobToFinish, nil
+	case taskname.CancelRestoreJob:
+		return m.CancelTenantRestoreJob, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", taskName)
 	}
@@ -272,6 +282,10 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 		m.Logger.Error(errors.New("obtenant pause reconcile"),
 			"obtenant pause reconcile, please set status to running after manually resolving problem")
 		return nil, nil
+	case tenantstatus.Restoring:
+		taskFlow, err = task.GetRegistry().Get(flowname.RestoreTenant)
+	case tenantstatus.CancelingRestore:
+		taskFlow, err = task.GetRegistry().Get(flowname.CancelRestoreFlow)
 	default:
 		m.Logger.Info("no need to run anything for obtenant")
 		return nil, nil

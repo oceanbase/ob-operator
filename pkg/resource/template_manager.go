@@ -17,7 +17,6 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -26,12 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
-type Resource interface {
-	client.Object
-	runtime.Object
-}
-
-type ObResourceManager[T Resource] struct {
+type ObResourceManager[T client.Object] struct {
 	ResourceManager
 
 	Ctx      context.Context

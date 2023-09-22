@@ -31,9 +31,9 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue any) error {
+func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, restoreOption string, limitKey, limitValue any) error {
 	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithDefaultTimeout(sqlStatement, uri, limitValue, restoreOption)
+	err := m.ExecWithTimeout(600*time.Second, sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")

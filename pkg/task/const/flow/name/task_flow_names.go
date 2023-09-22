@@ -83,7 +83,8 @@ const (
 	DeleteTenant = "delete tenant"
 
 	// tenant restore
-	RestoreTenant = "Restore tenant"
+	RestoreTenant     = "Restore tenant"
+	CancelRestoreFlow = "cancel restore"
 )
 
 // tenant-level restore
@@ -91,5 +92,4 @@ const (
 	StartRestoreFlow     = "start restore"
 	RestoreAsStandbyFlow = "restore as standby"
 	RestoreAsPrimaryFlow = "restore as primary"
-	CancelRestoreFlow    = "cancel restore"
 )

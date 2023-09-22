@@ -69,4 +69,10 @@ func init() {
 
 	// obparameter
 	GetRegistry().Register(flowname.SetOBParameter, SetOBParameter)
+
+	// tenant-level restore
+	GetRegistry().Register(flowname.StartRestoreFlow, StartRestoreJob)
+	GetRegistry().Register(flowname.CancelRestoreFlow, CancelRestoreJob) // handle by tenant-manager
+	GetRegistry().Register(flowname.RestoreAsPrimaryFlow, RestoreAsPrimary)
+	GetRegistry().Register(flowname.RestoreAsStandbyFlow, RestoreAsStandby)
 }

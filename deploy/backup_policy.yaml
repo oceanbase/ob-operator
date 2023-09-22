@@ -12,8 +12,8 @@ metadata:
   namespace: oceanbase
 spec:
   obClusterName: "test"
-  tenantName: "obtenant_test"
-  tenantSecret: "obtenant_test-credential"
+  tenantName: "t1"
+  tenantSecret: "t1-credential"
   jobKeepWindow: "1d"
   dataClean:
     recoveryWindow: "8d"

@@ -17,15 +17,19 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
@@ -54,7 +58,7 @@ func (m ObTenantRestoreManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m ObTenantRestoreManager) InitStatus() {
-	m.Resource.Status.Status = constants.RestoreJobRunning
+	m.Resource.Status.Status = constants.RestoreJobStarting
 }
 
 func (m ObTenantRestoreManager) SetOperationContext(c *v1alpha1.OperationContext) {
@@ -72,11 +76,71 @@ func (m ObTenantRestoreManager) FinishTask() {
 }
 
 func (m ObTenantRestoreManager) HandleFailure() {
+	if m.IsDeleting() {
+		m.Resource.Status.OperationContext = nil
+	} else {
+		operationContext := m.Resource.Status.OperationContext
+		failureRule := operationContext.OnFailure
+		switch failureRule.Strategy {
+		case "":
+			fallthrough
+		case strategy.StartOver:
+			m.Resource.Status.Status = constants.RestoreJobStatus(failureRule.NextTryStatus)
+			m.Resource.Status.OperationContext = nil
+		case strategy.RetryFromCurrent:
+			operationContext.TaskStatus = taskstatus.Pending
+		case strategy.Pause:
+		}
+	}
+}
 
+func (m *ObTenantRestoreManager) checkRestoreProgress() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	restoreJob, err := con.GetLatestRestoreProgressOfTenant(m.Resource.Spec.TargetTenant)
+	if err != nil {
+		return err
+	}
+	if restoreJob != nil {
+		m.Resource.Status.RestoreProgress = &model.RestoreHistory{RestoreProgress: *restoreJob}
+		if restoreJob.Status == "SUCCESS" {
+			m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
+			if m.Resource.Spec.RestoreRole == constants.TenantRoleStandby {
+				m.Resource.Status.Status = constants.RestoreJobStatusReplaying
+			} else {
+				m.Resource.Status.Status = constants.RestoreJobStatusActivating
+			}
+		}
+	}
+	if restoreJob == nil {
+		restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(m.Resource.Spec.TargetTenant)
+		if err != nil {
+			return err
+		}
+		m.Resource.Status.RestoreProgress = restoreHistory
+		if restoreHistory != nil && restoreHistory.Status == "SUCCESS" {
+			m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
+			if m.Resource.Spec.RestoreRole == constants.TenantRoleStandby {
+				m.Resource.Status.Status = constants.RestoreJobStatusReplaying
+			} else {
+				m.Resource.Status.Status = constants.RestoreJobStatusActivating
+			}
+		}
+	}
+	return nil
 }
 
 func (m ObTenantRestoreManager) UpdateStatus() error {
-	return m.Client.Status().Update(m.Ctx, m.Resource)
+	var err error
+	if m.Resource.Status.Status == constants.RestoreJobRunning {
+		err = m.checkRestoreProgress()
+		if err != nil {
+			return err
+		}
+	}
+	return m.retryUpdateStatus()
 }
 
 func (m ObTenantRestoreManager) GetTaskFunc(name string) (func() error, error) {
@@ -85,12 +149,8 @@ func (m ObTenantRestoreManager) GetTaskFunc(name string) (func() error, error) {
 		return m.StartRestoreJobInOB, nil
 	case taskname.StartLogReplay:
 		return m.StartLogReplay, nil
-	case taskname.CancelRestoreJob:
-		return m.CancelRestoreJob, nil
 	case taskname.ActivateStandby:
 		return m.ActivateStandby, nil
-	case taskname.CheckRestoreProgress:
-		return m.CheckRestoreProgress, nil
 	}
 	return nil, nil
 }
@@ -105,11 +165,13 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.RestoreJobStarting:
-		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
+		taskFlow, err = task.GetRegistry().Get(flow.StartRestoreFlow)
+	case constants.RestoreJobStatusActivating:
+		taskFlow, err = task.GetRegistry().Get(flow.RestoreAsPrimaryFlow)
+	case constants.RestoreJobStatusReplaying:
+		taskFlow, err = task.GetRegistry().Get(flow.RestoreAsStandbyFlow)
 	case constants.RestoreJobRunning:
-		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
-	case constants.RestoreJobCanceling:
-		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
+		fallthrough
 	case constants.RestoreJobCanceled:
 		fallthrough
 	case constants.RestoreJobSuccessful:
@@ -136,4 +198,19 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*task.TaskFlow, error) {
 
 func (m ObTenantRestoreManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *ObTenantRestoreManager) retryUpdateStatus() error {
+	resource := &v1alpha1.OBTenantRestore{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.Resource.GetNamespace(),
+		Name:      m.Resource.GetName(),
+	}, resource)
+	if err != nil {
+		return client.IgnoreNotFound(err)
+	}
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		resource.Status = m.Resource.Status
+		return m.Client.Status().Update(m.Ctx, resource)
+	})
 }

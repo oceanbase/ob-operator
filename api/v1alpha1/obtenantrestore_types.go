@@ -30,7 +30,8 @@ type OBTenantRestoreSpec struct {
 	TargetTenant  string               `json:"targetTenant"`
 	TargetCluster string               `json:"targetCluster"`
 	RestoreRole   constants.TenantRole `json:"restoreRole"`
-	Source        TenantSourceSpec     `json:"source"`
+	Source        RestoreSourceSpec    `json:"source"`
+	Option        string               `json:"restoreOption"`
 }
 
 // +kubebuilder:object:generate=false

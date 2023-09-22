@@ -18,7 +18,10 @@ spec:
     - jsonPath: .status.status
       name: status
       type: string
-    - jsonPath: .spec.clusterName
+    - jsonPath: .spec.tenantName
+      name: tenantName
+      type: string
+    - jsonPath: .spec.obcluster
       name: clusterName
       type: string
     - jsonPath: .metadata.creationTimestamp
@@ -153,6 +156,8 @@ spec:
                 properties:
                   restore:
                     properties:
+                      cancel:
+                        type: boolean
                       description:
                         type: string
                       replayLogUntil:

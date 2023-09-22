@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package resource
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -36,7 +38,14 @@ import (
 
 // OBTenantManager tasks completion
 
-func (m *OBTenantManager) CreateTenantRestoreJob() error {
+func (m *OBTenantManager) generateRestoreOption() string {
+	poolList := m.generateSpecPoolList(m.OBTenant.Spec.Pools)
+	primaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	locality := m.generateLocality(m.OBTenant.Spec.Pools)
+	return fmt.Sprintf("pool_list=%s&primary_zone=%s&locality=%s", strings.Join(poolList, ","), primaryZone, locality)
+}
+
+func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 	var existingJobs v1alpha1.OBTenantRestoreList
 	var err error
 
@@ -73,7 +82,8 @@ func (m *OBTenantManager) CreateTenantRestoreJob() error {
 			TargetTenant:  m.OBTenant.Spec.TenantName,
 			TargetCluster: m.OBTenant.Spec.ClusterName,
 			RestoreRole:   m.OBTenant.Spec.TenantRole,
-			Source:        *m.OBTenant.Spec.Source,
+			Source:        *m.OBTenant.Spec.Source.Restore,
+			Option:        m.generateRestoreOption(),
 		},
 	}
 	err = m.Client.Create(m.Ctx, restoreJob)
@@ -104,26 +114,91 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 	return nil
 }
 
-// OBTenantRestore tasks
-
-func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
+func (m *OBTenantManager) CancelTenantRestoreJob() error {
+	con, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return err
+	}
+	err = con.CancelRestoreOfTenant(m.OBTenant.Spec.TenantName)
+	if err != nil {
+		return err
+	}
+	err = m.deletePool()
+	if err != nil {
+		return err
+	}
+	err = m.deleteUnitConfig()
+	if err != nil {
+		return err
+	}
+	err = m.Client.Delete(m.Ctx, &v1alpha1.OBTenantRestore{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.OBTenant.Spec.TenantName + "-restore",
+			Namespace: m.OBTenant.GetNamespace(),
+		},
+	})
+	if err != nil {
+		m.Logger.Error(err, "delete restore job CR")
+		return err
+	}
 	return nil
 }
 
-func (m *ObTenantRestoreManager) CheckRestoreProgress() error {
+// OBTenantRestore tasks
+
+func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	restoreSpec := m.Resource.Spec.Source
+	if restoreSpec.Until.Unlimited {
+		err = con.StartRestoreUnlimited(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option)
+		if err != nil {
+			return err
+		}
+	} else {
+		if restoreSpec.Until.Timestamp != nil {
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option, "timestamp", *restoreSpec.Until.Timestamp)
+			if err != nil {
+				return err
+			}
+		} else if restoreSpec.Until.Scn != nil {
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option, "scn", *restoreSpec.Until.Scn)
+			if err != nil {
+				return err
+			}
+		} else {
+			return errors.New("Restore until must have a limit key, scn and timestamp are both nil now")
+		}
+	}
 	return nil
 }
 
 func (m *ObTenantRestoreManager) StartLogReplay() error {
-	return nil
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	replayUntil := m.Resource.Spec.Source.ReplayLogUntil
+	if replayUntil == nil || replayUntil.Unlimited {
+		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, "UNLIMITED")
+	} else if replayUntil.Timestamp != nil {
+		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
+	} else if replayUntil.Scn != nil {
+		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
+	} else {
+		return errors.New("Replay until with limit must have a limit key, scn and timestamp are both nil now")
+	}
+	return err
 }
 
 func (m *ObTenantRestoreManager) ActivateStandby() error {
-	return nil
-}
-
-func (m *ObTenantRestoreManager) CancelRestoreJob() error {
-	return nil
+	con, err := m.getOperationManager()
+	if err != nil {
+		return err
+	}
+	return con.ActivateStandby(m.Resource.Spec.TargetTenant)
 }
 
 // get operation manager to exec sql

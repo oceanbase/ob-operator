@@ -67,6 +67,7 @@ type RestoreSourceSpec struct {
 	Until          RestoreUntilConfig  `json:"until"`
 	Description    *string             `json:"description,omitempty"`
 	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
+	Cancel         bool                `json:"cancel,omitempty"`
 }
 
 type RestoreUntilConfig struct {
@@ -194,7 +195,8 @@ type TenantRecordInfo struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.status"
-//+kubebuilder:printcolumn:name="clusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="tenantName",type="string",JSONPath=".spec.tenantName"
+//+kubebuilder:printcolumn:name="clusterName",type="string",JSONPath=".spec.obcluster"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="locality",type="string",JSONPath=".status.tenantRecordInfo.locality",priority=1
 //+kubebuilder:printcolumn:name="primaryZone",type="string",JSONPath=".status.tenantRecordInfo.primaryZone",priority=1

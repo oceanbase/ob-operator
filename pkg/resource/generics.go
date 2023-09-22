@@ -10,10 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package name
+package resource
 
-const (
-	StartRestoreJob = "start restore job"
-	StartLogReplay  = "start log replay"
-	ActivateStandby = "activate standby"
-)
+func getRef[T any](val T) *T {
+	return &val
+}
+
+func isZero[T comparable](val T) bool {
+	return val == *(new(T))
+}

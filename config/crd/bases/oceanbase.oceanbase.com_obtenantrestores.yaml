@@ -35,47 +35,46 @@ spec:
           spec:
             description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
             properties:
+              restoreOption:
+                type: string
               restoreRole:
                 type: string
               source:
-                description: Source for restoring or creating standby
                 properties:
-                  restore:
-                    properties:
-                      description:
-                        type: string
-                      replayLogUntil:
-                        properties:
-                          scn:
-                            type: string
-                          timestamp:
-                            type: string
-                          unlimited:
-                            type: boolean
-                        type: object
-                      sourceUri:
-                        type: string
-                      until:
-                        properties:
-                          scn:
-                            type: string
-                          timestamp:
-                            type: string
-                          unlimited:
-                            type: boolean
-                        type: object
-                    required:
-                    - sourceUri
-                    - until
-                    type: object
-                  tenant:
+                  cancel:
+                    type: boolean
+                  description:
                     type: string
+                  replayLogUntil:
+                    properties:
+                      scn:
+                        type: string
+                      timestamp:
+                        type: string
+                      unlimited:
+                        type: boolean
+                    type: object
+                  sourceUri:
+                    type: string
+                  until:
+                    properties:
+                      scn:
+                        type: string
+                      timestamp:
+                        type: string
+                      unlimited:
+                        type: boolean
+                    type: object
+                required:
+                - sourceUri
+                - until
                 type: object
               targetCluster:
                 type: string
               targetTenant:
                 type: string
             required:
+            - restoreOption
             - restoreRole
             - source
             - targetCluster

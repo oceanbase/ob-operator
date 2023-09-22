@@ -27,6 +27,8 @@ const (
 	FinalizerFinished      = "finalizer finished"
 	PausingReconcile       = "pausing reconcile"
 
-	Restoring     = "restoring"
-	SwitchingRole = "switching role"
+	Restoring        = "restoring"
+	SwitchingRole    = "switching role"
+	RestoreCanceled  = "restore canceled"
+	CancelingRestore = "canceling restore"
 )
