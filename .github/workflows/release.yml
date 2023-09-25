@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - *_release
+    - '*_release'
 
 jobs:
   release:
