@@ -1651,28 +1651,8 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  storage:
-                    properties:
-                      configStorage:
-                        properties:
-                          size:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        - storageClass
-                        type: object
-                    required:
-                    - configStorage
-                    type: object
                 required:
                 - image
-                - storage
                 type: object
               nodeSelector:
                 additionalProperties:
