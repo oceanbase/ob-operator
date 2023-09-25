@@ -39,7 +39,7 @@ const (
 const (
 	EnvClusterName     = "CLUSTER_NAME"
 	EnvClusterId       = "CLUSTER_ID"
-	EnvZoneName        = "Zone_NAME"
+	EnvZoneName        = "ZONE_NAME"
 	EnvMonitorUser     = "MONITOR_USER"
 	EnvMonitorPASSWORD = "MONITOR_PASSWORD"
 	EnvOBMonitorStatus = "OB_MONITOR_STATUS"
