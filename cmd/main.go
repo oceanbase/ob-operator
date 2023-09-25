@@ -189,8 +189,9 @@ func main() {
 	// 	os.Exit(1)
 	// }
 	if err = (&controller.OBTenantBackupPolicyReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupPolicyControllerName),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
@@ -200,8 +201,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantOperationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: mgr.GetEventRecorderFor(config.OBTenantOperationControllerName),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantOperation")
 		os.Exit(1)
