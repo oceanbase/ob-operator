@@ -138,7 +138,9 @@ export-operator: manifests kustomize ## Deploy controller to the K8s cluster spe
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > deploy/operator.yaml
 
-
+.PHONY: export-charts
+export-charts: # export-operator
+	sed -e 's/oceanbase-system/{{ .Release.Namespace }}/g' deploy/operator.yaml | sed '1,/---/d' > charts/ob-operator/templates/operator.yaml
 ##@ Build Dependencies
 
 ## Location to install dependencies to
