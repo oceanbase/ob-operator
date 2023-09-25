@@ -406,6 +406,7 @@ var _ = Describe("Test canceling restore", Serial, Label("canceling"), func() {
 		archiveDest := "file:///ob-backup/" + tenant + "/log_archive_custom1"
 		err = con.StartRestoreUnlimited(standbyName, strings.Join([]string{backupDest, archiveDest}, ","), "pool_list=pool_test_standby1,pool_test_standby2,pool_test_standby3")
 		Expect(err).To(BeNil())
+		time.Sleep(5 * time.Second)
 
 		By("Cancel restoration of tenant")
 		err = con.CancelRestoreOfTenant(standbyName)
