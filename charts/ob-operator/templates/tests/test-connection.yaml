@@ -11,5 +11,5 @@ spec:
     - name: wget
       image: busybox
       command: ['wget']
-      args: ['{{ include "ob-operator.fullname" . }}:8443']
+      args: ['{{ include "ob-operator.fullname" . }}:8081']
   restartPolicy: Never
