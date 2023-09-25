@@ -1,4 +1,4 @@
-name: "release helm chart"
+name: release-helm-chart
 on:
   push:
     tags:
