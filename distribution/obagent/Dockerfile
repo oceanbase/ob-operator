@@ -5,4 +5,4 @@ RUN yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86
 ADD replace_properties.sh /home/admin/obagent
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-ENTRYPOINT [ "bash", "-c", "if [ -e conf/started ]; then echo 'already started'; else echo 'start for the first time' && ./replace_properties.sh && touch conf/started; fi && bin/ob_monagent -c conf/monagent.yaml" ]
+ENTRYPOINT [ "bash", "-c", "./replace_properties.sh && bin/ob_monagent -c conf/monagent.yaml" ]

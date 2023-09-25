@@ -28,12 +28,11 @@ const (
 )
 
 const (
-	ContainerName      = "obagent"
-	InstallPath        = "/home/admin/obagent"
-	ConfigPath         = "/home/admin/obagent/conf"
-	StatUrl            = "/metrics/stat"
-	MonitorUser        = "monitor"
-	ConfigVolumeSuffix = "monitor-conf"
+	ContainerName = "obagent"
+	InstallPath   = "/home/admin/obagent"
+	ConfigPath    = "/home/admin/obagent/conf"
+	StatUrl       = "/metrics/stat"
+	MonitorUser   = "monitor"
 )
 
 const (
