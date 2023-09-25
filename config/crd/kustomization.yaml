@@ -23,7 +23,7 @@ patchesStrategicMerge:
 # - patches/webhook_in_obzones.yaml
 # - patches/webhook_in_observers.yaml
 # - patches/webhook_in_obparameters.yaml
-# - patches/webhook_in_obtenants.yaml
+- patches/webhook_in_obtenants.yaml
 # - patches/webhook_in_obunits.yaml
 # - patches/webhook_in_obclusterbackups.yaml
 # - patches/webhook_in_obtenantbackups.yaml
@@ -39,7 +39,7 @@ patchesStrategicMerge:
 # - patches/cainjection_in_obzones.yaml
 # - patches/cainjection_in_observers.yaml
 # - patches/cainjection_in_obparameters.yaml
-# - patches/cainjection_in_obtenants.yaml
+- patches/cainjection_in_obtenants.yaml
 # - patches/cainjection_in_obunits.yaml
 # - patches/cainjection_in_obclusterbackups.yaml
 # - patches/cainjection_in_obtenantbackups.yaml
