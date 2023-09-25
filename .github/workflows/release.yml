@@ -1,9 +1,9 @@
-name: Release
+name: release helm chart
 
 on:
   push:
     tags:
-      - *_release
+      - "*_release"
 
 jobs:
   release:
