@@ -141,6 +141,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Spec.Source != nil &&
 		m.OBTenant.Spec.Source.Restore != nil &&
 		m.OBTenant.Spec.Source.Restore.Cancel {
+		m.OBTenant.Status.OperationContext = nil
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))

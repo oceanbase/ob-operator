@@ -51,7 +51,7 @@ func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, resto
 }
 
 func (m *OceanbaseOperationManager) CancelRestoreOfTenant(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(sql.CancelRestore, tenantName)
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.CancelRestore, tenantName))
 	if err != nil {
 		m.Logger.Error(err, "Got exception when cancel restore of tenant")
 		return errors.Wrap(err, "Cancel restore of tenant")

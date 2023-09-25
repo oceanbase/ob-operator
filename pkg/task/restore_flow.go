@@ -24,10 +24,10 @@ func StartRestoreJob() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name:         flowname.StartRestoreFlow,
-			Tasks:        []string{taskname.StartBackupJob},
+			Tasks:        []string{taskname.StartRestoreJob},
 			TargetStatus: string(constants.RestoreJobRunning),
 			OnFailure: strategy.FailureRule{
-				NextTryStatus: string(constants.RestoreJobStarting),
+				NextTryStatus: string(constants.RestoreJobFailed),
 			},
 		},
 	}

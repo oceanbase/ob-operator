@@ -143,7 +143,7 @@ func RestoreTenant() *TaskFlow {
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: strategy.FailureRule{
-				NextTryStatus: tenantstatus.Restoring,
+				NextTryStatus: tenantstatus.RestoreFailed,
 			},
 		},
 	}

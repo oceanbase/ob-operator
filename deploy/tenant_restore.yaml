@@ -13,7 +13,7 @@ spec:
   tenantRole: PRIMARY
   source:
     restore:
-      sourceUri: "file:///ob-backup/t1/backup,file://ob-backup/t1/archive"
+      sourceUri: "file:///ob-backup/t1/data_backup_custom1,file:///ob-backup/t1/log_archive_custom1"
       until: 
         unlimited: true
       replayLogUntil:
@@ -21,7 +21,7 @@ spec:
   pools:
     - zone: zone1
       type: 
-        name: FUll 
+        name: Full 
         replica: 1
         isActive: true
       resource:

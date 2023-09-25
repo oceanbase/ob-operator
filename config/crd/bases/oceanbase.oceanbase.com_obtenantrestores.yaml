@@ -14,7 +14,23 @@ spec:
     singular: obtenantrestore
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.targetTenant
+      name: TargetTenant
+      type: string
+    - jsonPath: .spec.targetCluster
+      name: TargetCluster
+      type: string
+    - jsonPath: .spec.restoreRole
+      name: RestoreRole
+      type: string
+    - jsonPath: .status.restoreProgress.status
+      name: StatusInDB
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantRestore is the Schema for the obtenantrestores API An

@@ -141,6 +141,10 @@ func (m *OBTenantManager) CancelTenantRestoreJob() error {
 		m.Logger.Error(err, "delete restore job CR")
 		return err
 	}
+	err = m.Client.Delete(m.Ctx, m.OBTenant)
+	if err != nil {
+		m.Logger.Error(err, "delete tenant CR")
+	}
 	return nil
 }
 

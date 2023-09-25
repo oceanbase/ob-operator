@@ -31,4 +31,5 @@ const (
 	SwitchingRole    = "switching role"
 	RestoreCanceled  = "restore canceled"
 	CancelingRestore = "canceling restore"
+	RestoreFailed    = "restore failed"
 )

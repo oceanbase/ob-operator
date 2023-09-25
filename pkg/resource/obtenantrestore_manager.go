@@ -16,6 +16,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
@@ -112,6 +113,9 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 			} else {
 				m.Resource.Status.Status = constants.RestoreJobStatusActivating
 			}
+		} else if restoreJob.Status == "FAIL" {
+			m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job is failed", "Restore job is failed")
+			m.Resource.Status.Status = constants.RestoreJobFailed
 		}
 	}
 	if restoreJob == nil {
@@ -127,6 +131,9 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 			} else {
 				m.Resource.Status.Status = constants.RestoreJobStatusActivating
 			}
+		} else if restoreHistory != nil && restoreHistory.Status == "FAIL" {
+			m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job is failed", "Restore job is failed")
+			m.Resource.Status.Status = constants.RestoreJobFailed
 		}
 	}
 	return nil
@@ -151,8 +158,9 @@ func (m ObTenantRestoreManager) GetTaskFunc(name string) (func() error, error) {
 		return m.StartLogReplay, nil
 	case taskname.ActivateStandby:
 		return m.ActivateStandby, nil
+	default:
+		return nil, errors.New("Task name not registered")
 	}
-	return nil, nil
 }
 
 func (m ObTenantRestoreManager) GetTaskFlow() (*task.TaskFlow, error) {
@@ -201,15 +209,15 @@ func (m ObTenantRestoreManager) PrintErrEvent(err error) {
 }
 
 func (m *ObTenantRestoreManager) retryUpdateStatus() error {
-	resource := &v1alpha1.OBTenantRestore{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.Resource.GetNamespace(),
-		Name:      m.Resource.GetName(),
-	}, resource)
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		resource := &v1alpha1.OBTenantRestore{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.GetNamespace(),
+			Name:      m.Resource.GetName(),
+		}, resource)
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		resource.Status = m.Resource.Status
 		return m.Client.Status().Update(m.Ctx, resource)
 	})
