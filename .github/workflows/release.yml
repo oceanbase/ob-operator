@@ -1,8 +1,8 @@
-name: release
+name: "release helm chart"
 on:
   push:
     tags:
-    - '*_release'
+    - "*_release"
 jobs:
   release:
     runs-on: ubuntu-latest
