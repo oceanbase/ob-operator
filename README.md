@@ -34,6 +34,12 @@ Using the following command to deploy OceanBase Cluster
 ```
 kubectl apply -f deploy/obcluster.yaml
 ```
+It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished
+```
+kubectl get obclusters -A -o yaml
+```
+wait until the status of obclster resource turns into running.
+
 
 ### Connect to OceanBase Cluster
 After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip.
