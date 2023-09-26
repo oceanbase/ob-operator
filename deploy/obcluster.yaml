@@ -19,7 +19,7 @@ spec:
     - zone: zone3
       replica: 1
   observer:
-    image: oceanbase/oceanbase-cn:4.2.0.0-101000032023091319
+    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
     resource:
       cpu: 2
       memory: 10Gi
