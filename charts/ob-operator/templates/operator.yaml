@@ -1,21 +1,8 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  labels:
-    app.kubernetes.io/component: manager
-    app.kubernetes.io/created-by: ob-operator-generate
-    app.kubernetes.io/instance: system
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/name: namespace
-    app.kubernetes.io/part-of: ob-operator-generate
-    control-plane: controller-manager
-  name: oceanbase-system
----
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusterbackups.oceanbase.oceanbase.com
 spec:
@@ -65,7 +52,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusterrestores.oceanbase.oceanbase.com
 spec:
@@ -115,7 +102,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusters.oceanbase.oceanbase.com
 spec:
@@ -1979,7 +1966,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obparameters.oceanbase.oceanbase.com
 spec:
@@ -2109,7 +2096,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: observers.oceanbase.oceanbase.com
 spec:
@@ -3930,7 +3917,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenantbackuppolicies.oceanbase.oceanbase.com
 spec:
@@ -3940,7 +3927,7 @@ spec:
       clientConfig:
         service:
           name: oceanbase-webhook-service
-          namespace: oceanbase-system
+          namespace: {{ .Release.Namespace }}
           path: /convert
       conversionReviewVersions:
       - v1
@@ -4425,7 +4412,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenantbackups.oceanbase.oceanbase.com
 spec:
@@ -4751,7 +4738,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenantrestores.oceanbase.oceanbase.com
 spec:
@@ -4983,7 +4970,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obtenants.oceanbase.oceanbase.com
 spec:
@@ -5318,7 +5305,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obunits.oceanbase.oceanbase.com
 spec:
@@ -5368,7 +5355,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obzones.oceanbase.oceanbase.com
 spec:
@@ -7196,7 +7183,7 @@ metadata:
     app.kubernetes.io/name: serviceaccount
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -7209,7 +7196,7 @@ metadata:
     app.kubernetes.io/name: role
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-leader-election-role
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 rules:
 - apiGroups:
   - ""
@@ -7759,7 +7746,7 @@ metadata:
     app.kubernetes.io/name: rolebinding
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-leader-election-rolebinding
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -7767,7 +7754,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: oceanbase-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -7787,7 +7774,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: oceanbase-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -7807,7 +7794,7 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: oceanbase-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 ---
 apiVersion: v1
 kind: Service
@@ -7821,7 +7808,7 @@ metadata:
     app.kubernetes.io/part-of: ob-operator-generate
     control-plane: controller-manager
   name: oceanbase-controller-manager-metrics-service
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - name: https
@@ -7842,7 +7829,7 @@ metadata:
     app.kubernetes.io/name: service
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-webhook-service
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 spec:
   ports:
   - port: 443
@@ -7863,7 +7850,7 @@ metadata:
     app.kubernetes.io/part-of: ob-operator-generate
     control-plane: controller-manager
   name: oceanbase-controller-manager
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 spec:
   replicas: 1
   selector:
@@ -7897,7 +7884,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
-        - --manager-namespace=oceanbase-system
+        - --manager-namespace={{ .Release.Namespace }}
         command:
         - /manager
         image: oceanbase/ob-operator:2.0.0
@@ -7978,11 +7965,11 @@ metadata:
     app.kubernetes.io/name: certificate
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-serving-cert
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 spec:
   dnsNames:
-  - oceanbase-webhook-service.oceanbase-system.svc
-  - oceanbase-webhook-service.oceanbase-system.svc.cluster.local
+  - oceanbase-webhook-service.{{ .Release.Namespace }}.svc
+  - oceanbase-webhook-service.{{ .Release.Namespace }}.svc.cluster.local
   issuerRef:
     kind: Issuer
     name: oceanbase-selfsigned-issuer
@@ -7999,7 +7986,7 @@ metadata:
     app.kubernetes.io/name: certificate
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-selfsigned-issuer
-  namespace: oceanbase-system
+  namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
 ---
@@ -8007,7 +7994,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
   labels:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/created-by: ob-operator-generate
@@ -8022,7 +8009,7 @@ webhooks:
   clientConfig:
     service:
       name: oceanbase-webhook-service
-      namespace: oceanbase-system
+      namespace: {{ .Release.Namespace }}
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
   failurePolicy: Fail
   name: mobtenantbackuppolicy.kb.io
@@ -8042,7 +8029,7 @@ apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
   annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
   labels:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/created-by: ob-operator-generate
@@ -8057,7 +8044,7 @@ webhooks:
   clientConfig:
     service:
       name: oceanbase-webhook-service
-      namespace: oceanbase-system
+      namespace: {{ .Release.Namespace }}
       path: /validate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
   failurePolicy: Fail
   name: vobtenantbackuppolicy.kb.io

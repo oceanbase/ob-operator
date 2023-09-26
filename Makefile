@@ -1,6 +1,6 @@
 VERSION ?= 2.0.0
 # Image URL to use all building/pushing image targets
-IMG ?= oceanbasedev/ob-operator:${VERSION}
+IMG ?= oceanbase/ob-operator:${VERSION}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
 ENVTEST_K8S_VERSION = 1.26.1
 
@@ -138,7 +138,9 @@ export-operator: manifests kustomize ## Deploy controller to the K8s cluster spe
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > deploy/operator.yaml
 
-
+.PHONY: export-charts
+export-charts: # export-operator
+	sed -e 's/oceanbase-system/{{ .Release.Namespace }}/g' deploy/operator.yaml | sed '1,/---/d' > charts/ob-operator/templates/operator.yaml
 ##@ Build Dependencies
 
 ## Location to install dependencies to

@@ -19,7 +19,7 @@ spec:
     - zone: zone3
       replica: 1
   observer:
-    image: oceanbasedev/oceanbase-cn:4.2.0.0-test
+    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
     resource:
       cpu: 2
       memory: 10Gi
@@ -34,17 +34,17 @@ spec:
         storageClass: local-path
         size: 20Gi
   monitor:
-    image: oceanbasedev/obagent:4.2.0-100000062023080210
+    image: oceanbase/obagent:4.2.0-100000062023080210
     resource:
       cpu: 1
       memory: 1Gi
   parameters:
     - name: system_memory
       value: 2G
-  backupVolume:
-    volume:
-      name: backup
-      nfs:
-        server: 11.124.9.57
-        path: /opt/nfs
-        readOnly: false
+  # backupVolume:
+  #   volume:
+  #     name: backup
+  #     nfs:
+  #       server: 1.1.1.1
+  #       path: /opt/nfs
+  #       readOnly: false
