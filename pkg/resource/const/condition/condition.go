@@ -16,7 +16,7 @@ type Condition string
 
 const (
 	New       Condition = "new"
-	Modified            = "modified"
-	Operating           = "operating"
-	Satisfied           = "satisfied"
+	Modified  Condition = "modified"
+	Operating Condition = "operating"
+	Satisfied Condition = "satisfied"
 )

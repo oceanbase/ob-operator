@@ -17,14 +17,6 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/oceanbase/ob-operator/api/constants"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
-	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
@@ -33,6 +25,15 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/oceanbase/ob-operator/api/constants"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	"github.com/oceanbase/ob-operator/pkg/task"
+	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
+	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 type ObTenantBackupPolicyManager struct {
@@ -99,7 +100,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		if m.BackupPolicy.Status.TenantInfo == nil {
-			tenant, err := m.getTenantInfo()
+			tenant, err := m.getTenantRecord()
 			if err != nil {
 				return err
 			}
@@ -131,6 +132,9 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 			var lastFullBackupFinishedAt time.Time
 			if latestFull.EndTimestamp != nil {
 				lastFullBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestFull.EndTimestamp, time.Local)
+				if err != nil {
+					return err
+				}
 			}
 			nextFull := fullCron.Next(lastFullBackupFinishedAt)
 			m.BackupPolicy.Status.NextFull = nextFull.Format(time.DateTime)
@@ -145,6 +149,9 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 					var lastIncrBackupFinishedAt time.Time
 					if latestIncr.EndTimestamp != nil {
 						lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
+						if err != nil {
+							return err
+						}
 					}
 					m.BackupPolicy.Status.NextIncremental = incrCron.Next(lastIncrBackupFinishedAt).Format(time.DateTime)
 				}

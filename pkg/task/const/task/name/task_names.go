@@ -83,7 +83,7 @@ const (
 	CheckPoolAndUnitConfig          = "create pool and unit config check"
 	CreateTenant                    = "create tenant"
 	CreateResourcePoolAndUnitConfig = "create resource pool and unit config"
-	//AddFinalizer = "add finalizer"
+	// AddFinalizer = "add finalizer"
 
 	// maintain tenant
 	MaintainWhiteList   = "maintain white list"
@@ -100,4 +100,8 @@ const (
 	MaintainUnitConfig = "maintain unit config"
 
 	DeleteTenant = "delete tenant"
+
+	// tenant restore
+	CreateRestoreJob        = "create restore job"
+	WatchRestoreJobToFinish = "watch restore job to finish"
 )

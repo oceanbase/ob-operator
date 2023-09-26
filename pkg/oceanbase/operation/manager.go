@@ -18,10 +18,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
-	"github.com/pkg/errors"
 )
 
 type OceanbaseOperationManager struct {

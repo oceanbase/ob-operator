@@ -14,10 +14,12 @@ package operation
 
 import (
 	"fmt"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
@@ -29,9 +31,9 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue interface{}) error {
-	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, limitKey)
-	err := m.ExecWithDefaultTimeout(sqlStatement, tenantName, uri, limitValue, restoreOption)
+func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue any) error {
+	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
+	err := m.ExecWithDefaultTimeout(sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")
@@ -40,7 +42,7 @@ func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limit
 }
 
 func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, restoreOption string) error {
-	err := m.ExecWithDefaultTimeout(sql.StartRestoreUnlimited, tenantName, uri, restoreOption)
+	err := m.ExecWithTimeout(600*time.Second, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore unlimited")
 		return errors.Wrap(err, "Start restore unlimited")
@@ -76,28 +78,48 @@ func (m *OceanbaseOperationManager) ActivateStandby(tenantName string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) QueryRestoreProgress() ([]*model.RestoreProgress, error) {
+func (m *OceanbaseOperationManager) ListRestoreProgress() ([]*model.RestoreProgress, error) {
 	progressInfos := make([]*model.RestoreProgress, 0)
-	err := m.QueryList(&progressInfos, sql.QueryBackupCleanJobs)
+	err := m.QueryList(&progressInfos, sql.QueryRestoreProgress)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query restore progress")
-		return nil, errors.Wrap(err, "Query restore progress")
-	}
-	if len(progressInfos) == 0 {
-		return nil, errors.Errorf("No restore progress found")
+		return nil, errors.Wrap(err, "List restore progress")
 	}
 	return progressInfos, nil
 }
 
-func (m *OceanbaseOperationManager) QueryRestoreHistory() ([]*model.RestoreHistory, error) {
+func (m *OceanbaseOperationManager) ListRestoreHistory() ([]*model.RestoreHistory, error) {
 	restoreHistory := make([]*model.RestoreHistory, 0)
 	err := m.QueryList(&restoreHistory, sql.QueryRestoreHistory)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query restore history")
-		return nil, errors.Wrap(err, "Query restore history")
-	}
-	if len(restoreHistory) == 0 {
-		return nil, errors.Errorf("No restore history found")
+		return nil, errors.Wrap(err, "List restore history")
 	}
 	return restoreHistory, nil
+}
+
+func (m *OceanbaseOperationManager) GetLatestRestoreProgressOfTenant(tenant string) (*model.RestoreProgress, error) {
+	latest := make([]*model.RestoreProgress, 0)
+	err := m.QueryList(&latest, sql.GetLatestRestoreProgress, tenant)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when query latest restore progress")
+		return nil, errors.Wrap(err, "Get latest restore progress")
+	}
+	if len(latest) == 0 {
+		return nil, nil
+	}
+	return latest[0], nil
+}
+
+func (m *OceanbaseOperationManager) GetLatestRestoreHistoryOfTenant(tenant string) (*model.RestoreHistory, error) {
+	latest := make([]*model.RestoreHistory, 0)
+	err := m.QueryList(&latest, sql.GetLatestRestoreHistory, tenant)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when query latest restore history")
+		return nil, errors.Wrap(err, "Get latest restore history")
+	}
+	if len(latest) == 0 {
+		return nil, nil
+	}
+	return latest[0], nil
 }

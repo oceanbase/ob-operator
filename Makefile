@@ -7,6 +7,8 @@ ENVTEST_K8S_VERSION = 1.26.1
 YQ_DOWNLOAD_URL = https://github.com/mikefarah/yq/releases/download/v4.35.1/yq_linux_amd64
 SEMVER_DOWNLOAD_URL = https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver
 
+GOLANG_CI_VERSION ?= v1.54.2
+
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)
 ifeq (,$(shell go env GOBIN))
 GOBIN=$(shell go env GOPATH)/bin
@@ -190,3 +192,19 @@ $(ENVTEST): $(LOCALBIN)
 
 .PHONY: tools
 tools: $(YQ) $(SEMVER)
+
+.PHONY: GOLANGCI_LINT
+GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
+$(GOLANG_LINT):
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANG_CI_VERSION}
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT) ## Run linting.
+	$(GOLANGCI_LINT) run -v --timeout=10m
+
+.PHONY: commit-hook
+commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
+	touch .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
+	echo "#!/bin/sh" > .git/hooks/pre-commit
+	echo "make lint" >> .git/hooks/pre-commit

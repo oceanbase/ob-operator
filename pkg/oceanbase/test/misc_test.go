@@ -18,12 +18,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oceanbase/ob-operator/api/constants"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/robfig/cron/v3"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+
+	"github.com/oceanbase/ob-operator/api/constants"
 )
 
 var _ = Describe("Test Miscellaneous Operation", func() {

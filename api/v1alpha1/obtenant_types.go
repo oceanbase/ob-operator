@@ -19,6 +19,8 @@ package v1alpha1
 import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/oceanbase/ob-operator/api/constants"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -42,6 +44,35 @@ type OBTenantSpec struct {
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 
 	Pools []ResourcePoolSpec `json:"pools"`
+
+	//+kubebuilder:default=PRIMARY
+	TenantRole  constants.TenantRole `json:"tenantRole,omitempty"`
+	Source      *TenantSourceSpec    `json:"source,omitempty"`
+	Credentials TenantCredentials    `json:"credentials,omitempty"`
+}
+
+type TenantCredentials struct {
+	Root      string `json:"root,omitempty"`
+	StandbyRO string `json:"standbyRo,omitempty"`
+}
+
+// Source for restoring or creating standby
+type TenantSourceSpec struct {
+	Tenant  *string            `json:"tenant,omitempty"`
+	Restore *RestoreSourceSpec `json:"restore,omitempty"`
+}
+
+type RestoreSourceSpec struct {
+	SourceUri      string              `json:"sourceUri"`
+	Until          RestoreUntilConfig  `json:"until"`
+	Description    *string             `json:"description,omitempty"`
+	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
+}
+
+type RestoreUntilConfig struct {
+	Timestamp *string `json:"timestamp,omitempty"`
+	Scn       *string `json:"scn,omitempty"`
+	Unlimited bool    `json:"unlimited,omitempty"`
 }
 
 type ResourcePoolSpec struct {
@@ -71,6 +102,7 @@ type UnitConfig struct {
 	LogDiskSize resource.Quantity `json:"logDiskSize,omitempty"`
 }
 
+// +kubebuilder:object:generate=false
 // OBTenantStatus defines the observed state of OBTenant
 type OBTenantStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
@@ -79,6 +111,50 @@ type OBTenantStatus struct {
 	Pools            []ResourcePoolStatus `json:"resourcePool"`
 	OperationContext *OperationContext    `json:"operationContext,omitempty"`
 	TenantRecordInfo TenantRecordInfo     `json:"tenantRecordInfo,omitempty"`
+
+	TenantRole constants.TenantRole `json:"tenantRole,omitempty"`
+	Source     *TenantSourceStatus  `json:"source,omitempty"`
+}
+
+type TenantSourceStatus struct {
+	Tenant  *string                `json:"tenant,omitempty"`
+	Restore *OBTenantRestoreStatus `json:"restore,omitempty"`
+}
+
+func (in *OBTenantStatus) DeepCopyInto(out *OBTenantStatus) {
+	*out = *in
+	if in.Pools != nil {
+		in, out := &in.Pools, &out.Pools
+		*out = make([]ResourcePoolStatus, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.OperationContext != nil {
+		in, out := &in.OperationContext, &out.OperationContext
+		*out = new(OperationContext)
+		(*in).DeepCopyInto(*out)
+	}
+	out.TenantRecordInfo = in.TenantRecordInfo
+	if in.Source != nil {
+		in, out := &in.Source, &out.Source
+		*out = new(TenantSourceStatus)
+		(*in).DeepCopyInto(*out)
+	}
+}
+
+func (in *TenantSourceStatus) DeepCopyInto(out *TenantSourceStatus) {
+	*out = *in
+	if in.Tenant != nil {
+		in, out := &in.Tenant, &out.Tenant
+		*out = new(string)
+		**out = **in
+	}
+	if in.Restore != nil {
+		in, out := &in.Restore, &out.Restore
+		*out = new(OBTenantRestoreStatus)
+		**out = **in
+	}
 }
 
 type ResourcePoolStatus struct {

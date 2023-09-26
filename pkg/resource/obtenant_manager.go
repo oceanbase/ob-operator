@@ -20,6 +20,16 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	kuberesource "k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
@@ -30,14 +40,6 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	kuberesource "k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
-	"k8s.io/client-go/util/retry"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type OBTenantManager struct {
@@ -71,12 +73,14 @@ func (m *OBTenantManager) IsDeleting() bool {
 }
 
 func (m *OBTenantManager) InitStatus() {
-	m.Logger.Info("newly created obtenant, init status")
-	status := v1alpha1.OBTenantStatus{
-		Status: tenantstatus.CreatingTenant,
-		Pools:  make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
+	m.OBTenant.Status = v1alpha1.OBTenantStatus{
+		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
-	m.OBTenant.Status = status
+	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
+		m.OBTenant.Status.Status = tenantstatus.Restoring
+	} else {
+		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
+	}
 }
 
 func (m *OBTenantManager) SetOperationContext(ctx *v1alpha1.OperationContext) {
@@ -121,7 +125,7 @@ func (m *OBTenantManager) retryUpdateStatus() error {
 		if err != nil {
 			return client.IgnoreNotFound(err)
 		}
-		obtenant.Status = *m.OBTenant.Status.DeepCopy()
+		m.OBTenant.Status.DeepCopyInto(&obtenant.Status)
 		return m.Client.Status().Update(m.Ctx, obtenant)
 	})
 }
@@ -395,8 +399,7 @@ func (m *OBTenantManager) hasModifiedUnitConfig() (bool, error) {
 		m.Logger.Error(err, "maintain tenant failed, check and apply unitConfigV4", "tenantName", tenantName)
 		return false, err
 	}
-	switch string(version[0]) {
-	case tenant.Version4:
+	if string(version[0]) == tenant.Version4 {
 		return m.hasModifiedUnitConfigV4(), nil
 	}
 	return false, errors.New("no match version for check and set unit config")
@@ -489,7 +492,7 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 		return nil, err
 	}
 	if !tenantExist {
-		return nil, errors.New(fmt.Sprintf("Tenant not exist, Tenant name: %s", tenantName))
+		return nil, fmt.Errorf("Tenant not exist, Tenant name: %s", tenantName)
 	}
 	obtenant, err := m.getTenantByName(tenantName)
 	if err != nil {
@@ -540,7 +543,6 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 }
 
 func (m *OBTenantManager) buildPoolStatusList(obTenant *model.Tenant) ([]v1alpha1.ResourcePoolStatus, error) {
-
 	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var locality string
 	var primaryZone string
@@ -615,7 +617,7 @@ func (m *OBTenantManager) generateStatusZone(tenantID int64) ([]string, error) {
 			zoneMap[unit.Zone] = unit.Zone
 		}
 	}
-	for k, _ := range zoneMap {
+	for k := range zoneMap {
 		zoneList = append(zoneList, k)
 	}
 	return zoneList, nil

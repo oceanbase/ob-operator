@@ -22,10 +22,3 @@ const (
 	PauseBackup              = "pause backup"
 	ResumeBackup             = "resume backup"
 )
-
-const (
-	StartRestoreJob  = "start restore job"
-	StartLogReplay   = "start log replay"
-	CancelRestoreJob = "cancel restore job"
-	ActivateStandby  = "activate standby"
-)

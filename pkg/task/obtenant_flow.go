@@ -129,3 +129,22 @@ func DeleteTenant() *TaskFlow {
 		},
 	}
 }
+
+func RestoreTenant() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.RestoreTenant,
+			Tasks: []string{
+				taskname.CheckTenant,
+				taskname.CheckPoolAndUnitConfig,
+				taskname.CreateResourcePoolAndUnitConfig,
+				taskname.CreateRestoreJob,
+				taskname.WatchRestoreJobToFinish,
+			},
+			TargetStatus: tenantstatus.Running,
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: tenantstatus.Restoring,
+			},
+		},
+	}
+}

@@ -24,7 +24,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/oceanbase/ob-operator/pkg/controller/config"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -32,6 +31,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	"github.com/oceanbase/ob-operator/pkg/controller/config"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports

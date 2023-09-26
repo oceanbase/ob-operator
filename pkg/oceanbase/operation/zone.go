@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/zone"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/pkg/errors"
 )
 
 func (m *OceanbaseOperationManager) AddZone(zoneName string) error {

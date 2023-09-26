@@ -16,6 +16,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
+
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/pkg/const/pod"
@@ -24,10 +29,6 @@ import (
 	observerstatus "github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/server"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
@@ -141,6 +142,7 @@ func (m *OBServerManager) CreateOBPod() error {
 }
 
 func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.StorageSpec) corev1.PersistentVolumeClaimSpec {
+	_ = name
 	pvcSpec := &corev1.PersistentVolumeClaimSpec{}
 	requestsResources := corev1.ResourceList{}
 	requestsResources["storage"] = storageSpec.Size
@@ -479,6 +481,9 @@ func (m *OBServerManager) DeleteOBServerInCluster() error {
 		Port: oceanbaseconst.RpcPort,
 	}
 	observer, err := operationManager.GetServer(observerInfo)
+	if err != nil {
+		return err
+	}
 	if observer != nil && observer.Status != "deleting" {
 		if observer.Status == "deleting" {
 			m.Logger.Info("observer is deleting", "observer", observerInfo.Ip)
@@ -500,8 +505,7 @@ func (m *OBServerManager) AnnotateOBServerPod() error {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
 	}
-	switch m.OBServer.Status.CNI {
-	case oceanbaseconst.CNICalico:
+	if m.OBServer.Status.CNI == oceanbaseconst.CNICalico {
 		m.Logger.Info("Update pod annotation, cni is calico")
 		observerPod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 	}
@@ -584,9 +588,8 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 	if !active {
 		m.Logger.Info("Wait observer active timeout")
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
-	} else {
-		m.Logger.Info("observer active", "observer", observerInfo)
 	}
+	m.Logger.Info("observer active", "observer", observerInfo)
 	return nil
 }
 
@@ -615,8 +618,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 	if !deleted {
 		m.Logger.Info("Wait observer deleted timeout")
 		return errors.Errorf("Wait observer %s deleted timeout", observerInfo.Ip)
-	} else {
-		m.Logger.Info("observer deleted", "observer", observerInfo)
 	}
+	m.Logger.Info("observer deleted", "observer", observerInfo)
 	return nil
 }

@@ -19,9 +19,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/google/uuid"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 )
 
 var taskManager *TaskManager
@@ -52,10 +53,10 @@ type TaskManager struct {
 
 func (m *TaskManager) Submit(f func() error) string {
 	retCh := make(chan *TaskResult, 1)
-	TaskId := uuid.New().String()
+	taskId := uuid.New().String()
 	// TODO add lock to keep ResultMap safe
-	m.ResultMap[TaskId] = retCh
-	m.TaskResultCache[TaskId] = nil
+	m.ResultMap[taskId] = retCh
+	m.TaskResultCache[taskId] = nil
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -67,7 +68,7 @@ func (m *TaskManager) Submit(f func() error) string {
 		}()
 		err := f()
 		if err != nil {
-			m.Logger.Error(err, "Run task got error", "taskId", TaskId)
+			m.Logger.Error(err, "Run task got error", "taskId", taskId)
 			retCh <- &TaskResult{
 				Status: taskstatus.Failed,
 				Error:  err,
@@ -78,7 +79,7 @@ func (m *TaskManager) Submit(f func() error) string {
 			Error:  nil,
 		}
 	}()
-	return TaskId
+	return taskId
 }
 
 func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {

@@ -65,25 +65,25 @@ func (ds *OceanBaseDataSource) GetDatabase() string {
 	return ds.Database
 }
 
-func (s *OceanBaseDataSource) DataSourceName() string {
+func (ds *OceanBaseDataSource) DataSourceName() string {
 	passwordPart := ""
 	tenantPart := ""
-	if s.Password != "" {
-		passwordPart = fmt.Sprintf(":%s", s.Password)
+	if ds.Password != "" {
+		passwordPart = fmt.Sprintf(":%s", ds.Password)
 	}
-	if !(s.Tenant == "" || s.Tenant == oceanbaseconst.SysTenant) {
+	if !(ds.Tenant == "" || ds.Tenant == oceanbaseconst.SysTenant) {
 		// fix: bootstrap stage will fail if concat this part after v4.2.0
-		tenantPart = fmt.Sprintf("@%s", s.Tenant)
+		tenantPart = fmt.Sprintf("@%s", ds.Tenant)
 	}
-	if s.Database != "" {
-		return fmt.Sprintf("%s%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", s.User, tenantPart, passwordPart, s.Address, s.Port, s.Database)
+	if ds.Database != "" {
+		return fmt.Sprintf("%s%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", ds.User, tenantPart, passwordPart, ds.Address, ds.Port, ds.Database)
 	}
-	return fmt.Sprintf("%s%s%s@tcp(%s:%d)/", s.User, tenantPart, passwordPart, s.Address, s.Port)
+	return fmt.Sprintf("%s%s%s@tcp(%s:%d)/", ds.User, tenantPart, passwordPart, ds.Address, ds.Port)
 }
 
-func (s *OceanBaseDataSource) ID() string {
+func (ds *OceanBaseDataSource) ID() string {
 	h := md5.New()
-	key := fmt.Sprintf("%s@%s@%s:%d/%s", s.User, s.Tenant, s.Address, s.Port, s.Database)
+	key := fmt.Sprintf("%s@%s@%s:%d/%s", ds.User, ds.Tenant, ds.Address, ds.Port, ds.Database)
 	_, err := h.Write([]byte(key))
 	if err != nil {
 		return key
@@ -91,6 +91,6 @@ func (s *OceanBaseDataSource) ID() string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func (s *OceanBaseDataSource) String() string {
-	return fmt.Sprintf("address: %s, port: %d, user: %s, tenant: %s, database: %s", s.Address, s.Port, s.User, s.Tenant, s.Database)
+func (ds *OceanBaseDataSource) String() string {
+	return fmt.Sprintf("address: %s, port: %d, user: %s, tenant: %s, database: %s", ds.Address, ds.Port, ds.User, ds.Tenant, ds.Database)
 }
