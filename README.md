@@ -1,11 +1,11 @@
 # What is ob-operator
-The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase clusters on Kubernetes.
+The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
 
 # Quick Start
-## Deploy ob-operator
-### Requirement
-In order to run ob-operator properly, [cert-manager](https://github.com/cert-manager/cert-manager) needs to be deployed as a dependency, for more details about how to install it, please refer to the [installation](https://cert-manager.io/docs/installation/) document.
+## Requirement
+In order to run ob-operator properly, [cert-manager](https://cert-manager.io/docs) needs to be deployed as its dependency, for more details about how to install it, please refer to the [installation](https://cert-manager.io/docs/installation/) document.
 
+## Deploy ob-operator
 ### Using helm
 [Helm](https://github.com/helm/helm) is a package management tool for Kubernetes, please refer to the helm documentation to install the helm client.
 
