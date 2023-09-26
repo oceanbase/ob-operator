@@ -2,10 +2,8 @@ name: release helm chart
 
 on:
   push:
-    branches:
-      - '*release'
     tags:
-      - '*release'
+      - '.*release'
 
 jobs:
   release:
