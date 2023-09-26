@@ -34,14 +34,10 @@ spec:
         storageClass: local-path
         size: 20Gi
   monitor:
-    image: oceanbasedev/obagent:1.2.1-snapshot
+    image: oceanbasedev/obagent:4.2.0-100000062023080210
     resource:
       cpu: 1
       memory: 1Gi
-    storage:
-      configStorage:
-        storageClass: local-path
-        size: 1Gi
   parameters:
     - name: system_memory
       value: 2G
