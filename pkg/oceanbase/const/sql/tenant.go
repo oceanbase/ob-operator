@@ -48,3 +48,7 @@ const (
 	DeletePool       = "DROP RESOURCE POOL %s;"
 	DeleteTenant     = "DROP TENANT %s %s;"
 )
+
+const (
+	ChangeTenantUserPassword = "ALTER USER %s IDENTIFIED BY ?;"
+)

@@ -24,8 +24,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
-// Incompatible with model.Tenant struct which contains only essential fields for tenant management
-// TODO: align the two structs: model.Tenant and model.OBTenant
 func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*model.OBTenant, error) {
 	tenants := make([]*model.OBTenant, 0)
 	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
@@ -46,8 +44,8 @@ func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*mo
 	return units, nil
 }
 
-func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.Tenant, error) {
-	tenant := &model.Tenant{}
+func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.OBTenant, error) {
+	tenant := &model.OBTenant{}
 	err := m.QueryRow(tenant, sql.GetTenantByName, tenantName)
 	if err != nil {
 		return tenant, errors.Wrap(err, "Get tenantconst by tenantName")
@@ -469,4 +467,12 @@ func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (s
 func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []any) {
 	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
+}
+
+func (m *OceanbaseOperationManager) ChangeTenantUserPassword(username, password string) error {
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.ChangeTenantUserPassword, username), password)
+	if err != nil {
+		return errors.Wrap(err, "Change tenant user password")
+	}
+	return nil
 }

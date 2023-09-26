@@ -50,8 +50,8 @@ var _ = Describe("Test System Operation", func() {
 			Skip("no tenant found")
 		}
 		By("Query units with tenant id")
-		units, err := con.ListUnitsWithTenantId(tenants[0].TenantId)
+		units, err := con.ListUnitsWithTenantId(tenants[0].TenantID)
 		Expect(err).To(BeNil())
-		printSlice(units, "units with tenant id: "+fmt.Sprint(tenants[0].TenantId))
+		printSlice(units, "units with tenant id: "+fmt.Sprint(tenants[0].TenantID))
 	})
 })

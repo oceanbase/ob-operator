@@ -56,6 +56,8 @@ type OBTenantOperationStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           constants.TenantOperationStatus `json:"status"`
 	OperationContext *OperationContext               `json:"operationContext,omitempty"`
+	PrimaryTenant    *OBTenant                       `json:"primaryTenant,omitempty"`
+	SecondaryTenant  *OBTenant                       `json:"secondaryTenant,omitempty"`
 }
 
 //+kubebuilder:object:root=true
@@ -71,6 +73,11 @@ type OBTenantOperation struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.spec.status`
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="PrimaryTenant",type=string,JSONPath=".status.primaryTenant"
+//+kubebuilder:printcolumn:name="SecondaryTenant",type=string,JSONPath=".status.secondaryTenant",priority=1
 
 // OBTenantOperationList contains a list of OBTenantOperation
 type OBTenantOperationList struct {

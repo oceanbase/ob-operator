@@ -67,6 +67,11 @@ type OBServer struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:printcolumn:name="NodeIP",type="string",JSONPath=".status.nodeIp"
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="OBStatus",type="string",JSONPath=".status.obStatus"
 
 // OBServerList contains a list of OBServer
 type OBServerList struct {

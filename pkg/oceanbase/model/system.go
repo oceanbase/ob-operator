@@ -14,7 +14,7 @@ package model
 
 // OBTenant is the tenant model of OB system
 type OBTenant struct {
-	TenantId                 int64  `json:"tenant_id" db:"tenant_id"`
+	TenantID                 int64  `json:"tenant_id" db:"tenant_id"`
 	TenantName               string `json:"tenant_name" db:"tenant_name"`
 	TenantType               string `json:"tenant_type" db:"tenant_type"`
 	CreateTime               string `json:"create_time" db:"create_time"`
@@ -33,6 +33,7 @@ type OBTenant struct {
 	RecoveryUntilScn         int64  `json:"recovery_until_scn" db:"recovery_until_scn"`
 	LogMode                  string `json:"log_mode" db:"log_mode"`
 	ArbitrationServiceStatus string `json:"arbitration_service_status" db:"arbitration_service_status"`
+	GmtCreateTime            string `json:"gmt_create_time" db:"gmt_create"`
 }
 
 // OBUnit is the unit model of OB system

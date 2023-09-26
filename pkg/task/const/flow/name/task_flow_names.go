@@ -93,3 +93,9 @@ const (
 	RestoreAsStandbyFlow = "restore as standby"
 	RestoreAsPrimaryFlow = "restore as primary"
 )
+
+// tenant operation flows
+const (
+	ChangeTenantRootPasswordFlow = "change tenant root password"
+	CheckTenantCRExistenceFlow   = "check tenant cr existence"
+)

@@ -557,7 +557,7 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	return tenantCurrentStatus, nil
 }
 
-func (m *OBTenantManager) buildPoolStatusList(obTenant *model.Tenant) ([]v1alpha1.ResourcePoolStatus, error) {
+func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
 	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var locality string
 	var primaryZone string

@@ -21,6 +21,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
@@ -383,6 +385,26 @@ func (m *OBTenantManager) createTenant() error {
 		return err
 	}
 	GlobalWhiteListMap[tenantName] = m.OBTenant.Spec.ConnectWhiteList
+	// Create a default credential secret for new tenant's root user
+	err = m.Client.Create(m.Ctx, &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: m.OBTenant.Namespace,
+			Name:      m.OBTenant.Spec.TenantName + "-credential",
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion:         m.OBTenant.APIVersion,
+				Kind:               m.OBTenant.Kind,
+				Name:               m.OBTenant.Name,
+				UID:                m.OBTenant.UID,
+				BlockOwnerDeletion: getRef(true),
+			}},
+		},
+		Data: map[string][]byte{
+			"password": []byte(""),
+		},
+	})
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -902,7 +924,7 @@ func (m *OBTenantManager) getVariable(variableName string) (string, error) {
 	return variable.Value, nil
 }
 
-func (m *OBTenantManager) getTenantByName(tenantName string) (*model.Tenant, error) {
+func (m *OBTenantManager) getTenantByName(tenantName string) (*model.OBTenant, error) {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant")

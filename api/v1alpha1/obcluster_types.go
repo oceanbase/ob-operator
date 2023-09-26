@@ -62,6 +62,9 @@ type OBCluster struct {
 }
 
 //+kubebuilder:object:root=true
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Task",type="date",JSONPath=".status.operationContext.task"
 
 // OBClusterList contains a list of OBCluster
 type OBClusterList struct {

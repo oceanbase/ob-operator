@@ -82,8 +82,6 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}
 
-	logger.Info("reconcile obtenant begin:  >>>>>>>>>>>>>>> * <<<<<<<<<<<<<<<", "spec", obtenant.Spec, "status", obtenant.Status)
-
 	// create observer manager
 	obtenantManager := &resource.OBTenantManager{
 		Ctx:      ctx,
