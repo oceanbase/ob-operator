@@ -210,7 +210,7 @@ commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 .PHONY: connect
 connect:
 ifdef TENANT
-	mysq -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT}
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT}
 else
 	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot -p
 endif
@@ -218,7 +218,7 @@ endif
 .PHONY: connectob
 connectob:
 ifdef TENANT
-	mysq -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT} -Doceanbase
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT} -Doceanbase
 else
 	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot -p -Doceanbase
 endif

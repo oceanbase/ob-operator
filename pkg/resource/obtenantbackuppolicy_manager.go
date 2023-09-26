@@ -20,6 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -58,15 +59,35 @@ func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
 func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 	policy := m.BackupPolicy
 	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
+	finalizerFinished := false
 	if controllerutil.ContainsFinalizer(policy, finalizerName) {
-		err := m.StopBackup()
+		obcluster, err := m.getOBCluster()
 		if err != nil {
-			return err
+			if kubeerrors.IsNotFound(err) {
+				m.Logger.Info("OBCluster is deleted, no need to wait finalizer")
+				finalizerFinished = true
+			} else {
+				m.Logger.Error(err, "query obcluster failed")
+				return errors.Wrap(err, "Get obcluster failed")
+			}
+		} else if !obcluster.ObjectMeta.DeletionTimestamp.IsZero() {
+			m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
+			finalizerFinished = true
 		}
-		// remove our finalizer from the list and update it.
-		controllerutil.RemoveFinalizer(policy, finalizerName)
-		if err := m.Client.Update(m.Ctx, policy); err != nil {
-			return err
+
+		if !finalizerFinished {
+			err := m.StopBackup()
+			if err != nil {
+				return err
+			}
+			finalizerFinished = true
+		}
+		if finalizerFinished {
+			// remove our finalizer from the list and update it.
+			controllerutil.RemoveFinalizer(policy, finalizerName)
+			if err := m.Client.Update(m.Ctx, policy); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -259,4 +280,18 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
 	m.Logger.Error(err, "Print event")
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error) {
+	clusterName := m.BackupPolicy.Spec.ObClusterName
+	obcluster := &v1alpha1.OBCluster{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.Namespace,
+		Name:      clusterName,
+	}, obcluster)
+	if err != nil {
+		m.Logger.Error(err, "get obcluster failed", "clusterName", clusterName, "namespaced", m.BackupPolicy.Namespace)
+		return nil, errors.Wrap(err, "get obcluster failed")
+	}
+	return obcluster, nil
 }
