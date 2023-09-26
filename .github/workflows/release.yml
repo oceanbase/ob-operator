@@ -2,8 +2,10 @@ name: release helm chart
 
 on:
   push:
-    tags:
+    branches:
+      - 'master'
       - '*release'
+      - 'helm-chart'
 
 jobs:
   release:
