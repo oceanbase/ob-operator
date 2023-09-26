@@ -7900,7 +7900,7 @@ spec:
         - --manager-namespace=oceanbase-system
         command:
         - /manager
-        image: oceanbasedev/ob-operator:2.0.0
+        image: oceanbase/ob-operator:2.0.0
         livenessProbe:
           httpGet:
             path: /healthz
