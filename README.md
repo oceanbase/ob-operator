@@ -1,94 +1,47 @@
-# ob-operator-generate
-// TODO(user): Add simple overview of use/purpose
+# What is ob-operator
+The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase clusters on Kubernetes.
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+# Quick Start
+## Deploy ob-operator
+### Requirement
+In order to run ob-operator properly, [cert-manager](https://github.com/cert-manager/cert-manager) needs to be deployed as a dependency, for more details about how to install it, please refer to the [installation](https://cert-manager.io/docs/installation/) document.
 
-## Getting Started
-You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
-**Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
+### Using helm
+[Helm](https://github.com/helm/helm) is a package management tool for Kubernetes, please refer to the helm documentation to install the helm client.
 
-### Running on the cluster
-1. Install Instances of Custom Resources:
-
-```sh
-kubectl apply -f config/samples/
+```
+helm repo add ob-operator https://oceanbase.github.io/ob-operator/
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace  --version=2.0.0
 ```
 
-2. Build and push your image to the location specified by `IMG`:
-
-```sh
-make docker-build docker-push IMG=<some-registry>/ob-operator-generate:tag
+### Using configuration file
+The configuration files are located under deploy directory, using the following commands to deploy ob-operator.
+```
+# Deploy ob-operator
+kubectl apply -f deploy/operator.yaml
 ```
 
-3. Deploy the controller to the cluster with the image specified by `IMG`:
+## Deploy OceanBase cluster
+### Customize configuration file
+`deploy/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources, storages etc. You can configure your own OceanBase based on this file.
 
-```sh
-make deploy IMG=<some-registry>/ob-operator-generate:tag
+### Deploy OceanBase
+Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
+```
+kubectl create namespace ${namespace_name}
+```
+Using the following command to deploy OceanBase Cluster
+```
+kubectl apply -f deploy/obcluster.yaml
 ```
 
-### Uninstall CRDs
-To delete the CRDs from the cluster:
+### Connect to OceanBase Cluster
+After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip.
 
-```sh
-make uninstall
-```
+# Contributing
+Contributions are warmly welcomed and greatly appreciated. Here are a few ways you can contribute:
+- Raise us an [Issue](https://github.com/oceanbase/ob-operator/issues).
+- Create a [Pull Request](https://github.com/oceanbase/ob-operator/pulls).
 
-### Undeploy controller
-UnDeploy the controller from the cluster:
-
-```sh
-make undeploy
-```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
-
-### How it works
-This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/).
-
-It uses [Controllers](https://kubernetes.io/docs/concepts/architecture/controller/),
-which provide a reconcile function responsible for synchronizing resources until the desired state is reached on the cluster.
-
-### Test It Out
-1. Install the CRDs into the cluster:
-
-```sh
-make install
-```
-
-2. Run your controller (this will run in the foreground, so switch to a new terminal if you want to leave it running):
-
-```sh
-make run
-```
-
-**NOTE:** You can also run this in one step by running: `make install run`
-
-### Modifying the API definitions
-If you are editing the API definitions, generate the manifests such as CRs or CRDs using:
-
-```sh
-make manifests
-```
-
-**NOTE:** Run `make --help` for more information on all potential `make` targets
-
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
-
-## License
-
-Copyright 2023.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-
+# License
+Ob-operator is licensed under the [MulanPSL - 2.0](http://license.coscl.org.cn/MulanPSL2) license. You can copy and use the source code freely. When you modify or distribute the source code, please follow the MulanPSL - 2.0 license.
