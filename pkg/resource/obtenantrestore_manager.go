@@ -96,7 +96,7 @@ func (m ObTenantRestoreManager) HandleFailure() {
 }
 
 func (m *ObTenantRestoreManager) checkRestoreProgress() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}

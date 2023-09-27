@@ -120,3 +120,10 @@ type UnitConfigV4SQLParam struct {
 	LogDiskSize    int64
 	IopsWeight     int64
 }
+
+type TenantAccessPoint struct {
+	TenantID   int64  `json:"tenant_id" db:"tenant_id"`
+	TenantName string `json:"tenant_name" db:"tenant_name"`
+	SvrIP      string `json:"svr_ip" db:"svr_ip"`
+	SqlPort    int64  `json:"sql_port" db:"sql_port"`
+}

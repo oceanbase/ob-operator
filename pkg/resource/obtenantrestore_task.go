@@ -27,6 +27,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
 
 // Restore progress:
@@ -84,6 +85,7 @@ func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 			RestoreRole:   m.OBTenant.Spec.TenantRole,
 			Source:        *m.OBTenant.Spec.Source.Restore,
 			Option:        m.generateRestoreOption(),
+			PrimaryTenant: m.OBTenant.Spec.Source.Tenant,
 		},
 	}
 	err = m.Client.Create(m.Ctx, restoreJob)
@@ -115,7 +117,7 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 }
 
 func (m *OBTenantManager) CancelTenantRestoreJob() error {
-	con, err := m.getOceanbaseOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
@@ -151,7 +153,7 @@ func (m *OBTenantManager) CancelTenantRestoreJob() error {
 // OBTenantRestore tasks
 
 func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
@@ -180,9 +182,47 @@ func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
 }
 
 func (m *ObTenantRestoreManager) StartLogReplay() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
+	}
+	if m.Resource.Spec.PrimaryTenant != nil {
+		// Check if the tenant exists
+		primary := &v1alpha1.OBTenant{}
+		err = m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.Namespace,
+			Name:      *m.Resource.Spec.PrimaryTenant,
+		}, primary)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				return err
+			}
+		} else {
+			// Get ip_list from primary tenant
+			aps, err := con.ListTenantAccessPoints(*m.Resource.Spec.PrimaryTenant)
+			if err != nil {
+				return err
+			}
+			ipList := make([]string, 0)
+			for _, ap := range aps {
+				ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
+			}
+			standbyRoPwd, err := ReadPassword(m.Client, m.Resource.Namespace, primary.Status.Credentials.StandbyRO)
+			if err != nil {
+				m.Logger.Error(err, "Failed to read standby ro password")
+				return err
+			}
+			// Set restore source
+			logRestoreSource := fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), "standby_ro", primary.Spec.TenantName, standbyRoPwd)
+			err = con.SetParameter("LOG_RESTORE_SOURCE", logRestoreSource, &param.Scope{
+				Name:  "TENANT",
+				Value: m.Resource.Spec.TargetTenant,
+			})
+			if err != nil {
+				m.Logger.Error(err, "Failed to set log restore source")
+				return err
+			}
+		}
 	}
 	replayUntil := m.Resource.Spec.Source.ReplayLogUntil
 	if replayUntil == nil || replayUntil.Unlimited {
@@ -198,15 +238,14 @@ func (m *ObTenantRestoreManager) StartLogReplay() error {
 }
 
 func (m *ObTenantRestoreManager) ActivateStandby() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
 	return con.ActivateStandby(m.Resource.Spec.TargetTenant)
 }
 
-// get operation manager to exec sql
-func (m *ObTenantRestoreManager) getOperationManager() (*operation.OceanbaseOperationManager, error) {
+func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
 	if m.con != nil {
 		return m.con, nil
 	}

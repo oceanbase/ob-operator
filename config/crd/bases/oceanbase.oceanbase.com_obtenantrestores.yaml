@@ -51,6 +51,8 @@ spec:
           spec:
             description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
             properties:
+              primaryTenant:
+                type: string
               restoreOption:
                 type: string
               restoreRole:

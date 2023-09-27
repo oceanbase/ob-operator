@@ -77,4 +77,7 @@ func init() {
 	GetRegistry().Register(flowname.StartRestoreFlow, StartRestoreJob)
 	GetRegistry().Register(flowname.RestoreAsPrimaryFlow, RestoreAsPrimary)
 	GetRegistry().Register(flowname.RestoreAsStandbyFlow, RestoreAsStandby)
+
+	GetRegistry().Register(flowname.ChangeTenantRootPasswordFlow, FlowChangeTenantRootPassword)
+	GetRegistry().Register(flowname.ActivateStandbyTenantFlow, FlowActivateStandbyTenantOp)
 }

@@ -50,5 +50,8 @@ const (
 )
 
 const (
-	ChangeTenantUserPassword = "ALTER USER %s IDENTIFIED BY ?;"
+	ChangeTenantUserPassword     = "ALTER USER %s IDENTIFIED BY ?;"
+	CreateTenantUserWithPwd      = "CREATE USER IF NOT EXISTS %s IDENTIFIED BY ?;"
+	GrantOBROPrivilege           = "GRANT SELECT ON oceanbase.* TO %s;"
+	QueryTenantAccessPointByName = "SELECT tenant_id, tenant_name, svr_ip, sql_port from oceanbase.CDB_OB_ACCESS_POINT WHERE tenant_name = ?;"
 )

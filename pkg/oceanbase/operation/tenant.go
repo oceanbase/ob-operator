@@ -476,3 +476,13 @@ func (m *OceanbaseOperationManager) ChangeTenantUserPassword(username, password 
 	}
 	return nil
 }
+
+func (m OceanbaseOperationManager) ListTenantAccessPoints(tenantName string) ([]*model.TenantAccessPoint, error) {
+	aps := make([]*model.TenantAccessPoint, 0)
+	err := m.QueryList(&aps, sql.QueryTenantAccessPointByName, tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list tenant access points")
+		return nil, errors.Wrap(err, "List tenant access points")
+	}
+	return aps, nil
+}

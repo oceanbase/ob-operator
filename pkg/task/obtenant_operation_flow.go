@@ -33,12 +33,12 @@ func FlowChangeTenantRootPassword() *TaskFlow {
 	}
 }
 
-func FlowCheckTenantCRExistence() *TaskFlow {
+func FlowActivateStandbyTenantOp() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.CheckTenantCRExistenceFlow,
-			Tasks:        []string{taskname.OpCheckTenantCRExistence},
-			TargetStatus: string(constants.TenantOpRunning),
+			Name:         flowname.ActivateStandbyTenantFlow,
+			Tasks:        []string{taskname.OpActivateStandby},
+			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: strategy.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
 			},

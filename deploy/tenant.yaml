@@ -1,7 +1,7 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: test
+  name: t1
   namespace: oceanbase
 spec:	
   obcluster: test
@@ -10,6 +10,9 @@ spec:
   charset: utf8mb4  
   connectWhiteList: '%'
   forceDelete: true
+  credentials:
+    root: t1-root
+    standbyRo: t1-ro
   pools:
     - zone: zone1
       type: 

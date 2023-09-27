@@ -14,7 +14,24 @@ spec:
     singular: obtenantoperation
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.primaryTenant.spec.tenantName
+      name: PrimaryTenant
+      type: string
+    - jsonPath: .status.secondaryTenant.spec.tenantName
+      name: SecondaryTenant
+      priority: 1
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantOperation is the Schema for the obtenantoperations API
@@ -266,6 +283,13 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      credentials:
+                        properties:
+                          root:
+                            type: string
+                          standbyRo:
+                            type: string
+                        type: object
                       operationContext:
                         properties:
                           failureRule:
@@ -746,6 +770,13 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      credentials:
+                        properties:
+                          root:
+                            type: string
+                          standbyRo:
+                            type: string
+                        type: object
                       operationContext:
                         properties:
                           failureRule:

@@ -21,6 +21,9 @@ spec:
     - jsonPath: .spec.tenantName
       name: tenantName
       type: string
+    - jsonPath: .status.tenantRole
+      name: tenantRole
+      type: string
     - jsonPath: .spec.obcluster
       name: clusterName
       type: string
@@ -203,6 +206,13 @@ spec:
           status:
             description: OBTenantStatus defines the observed state of OBTenant
             properties:
+              credentials:
+                properties:
+                  root:
+                    type: string
+                  standbyRo:
+                    type: string
+                type: object
               operationContext:
                 properties:
                   failureRule:

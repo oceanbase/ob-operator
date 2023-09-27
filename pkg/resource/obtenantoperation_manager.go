@@ -18,6 +18,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -58,32 +59,54 @@ func (m *ObTenantOperationManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *ObTenantOperationManager) InitStatus() {
+	var err error
 	switch m.Resource.Spec.Type {
 	case constants.TenantOpChangePwd:
 		tenant, err := m.getTenantCR(m.Resource.Spec.ChangePwd.Tenant)
 		if err != nil {
-			return
+			m.Logger.Error(err, "Failed to find tenant")
+			break
 		}
 		m.Resource.Status.PrimaryTenant = tenant
+		m.appendOwnerTenantReference(tenant)
 	case constants.TenantOpFailover:
 		tenant, err := m.getTenantCR(m.Resource.Spec.Failover.StandbyTenant)
 		if err != nil {
-			return
+			m.Logger.Error(err, "Failed to find activating tenant")
+			break
+		}
+		if tenant.Status.TenantRole == constants.TenantRolePrimary {
+			err = errors.New("activating tenant is not a standby tenant")
+			m.Logger.Error(err, "Failed to find standby tenant")
+			break
 		}
 		m.Resource.Status.PrimaryTenant = tenant
+		m.appendOwnerTenantReference(tenant)
 	case constants.TenantOpSwitchover:
-		primaryTenant, err := m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)
+		tenant, err := m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)
 		if err != nil {
-			return
+			m.Logger.Error(err, "Failed to find primary tenant")
+			break
 		}
 		standbyTenant, err := m.getTenantCR(m.Resource.Spec.Switchover.StandbyTenant)
 		if err != nil {
-			return
+			m.Logger.Error(err, "Failed to find standby tenant")
+			break
 		}
-		m.Resource.Status.PrimaryTenant = primaryTenant
+		m.Resource.Status.PrimaryTenant = tenant
 		m.Resource.Status.SecondaryTenant = standbyTenant
+		m.appendOwnerTenantReference(tenant)
+		m.appendOwnerTenantReference(standbyTenant)
+	default:
+		err = errors.New("unknown tenant operation type")
+		m.Logger.Error(err, "InitStatus")
 	}
-	m.Resource.Status.Status = constants.TenantOpStarting
+	if err != nil {
+		m.PrintErrEvent(err)
+		m.Resource.Status.Status = constants.TenantOpFailed
+	} else {
+		m.Resource.Status.Status = constants.TenantOpRunning
+	}
 }
 
 func (m *ObTenantOperationManager) SetOperationContext(c *v1alpha1.OperationContext) {
@@ -128,11 +151,9 @@ func (m *ObTenantOperationManager) GetTaskFunc(name string) (func() error, error
 	case taskname.OpChangeTenantRootPassword:
 		return m.ChangeTenantRootPassword, nil
 	case taskname.OpActivateStandby:
-		return nil, errors.New("NOT IMPLEMENTED")
+		return m.ActivateStandbyTenant, nil
 	case taskname.OpSwitchoverTenants:
 		return nil, errors.New("NOT IMPLEMENTED")
-	case taskname.OpCheckTenantCRExistence:
-		return m.CheckTenantCRExistence, nil
 	default:
 		return nil, errors.New("Task name not registered")
 	}
@@ -147,13 +168,13 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 	status := m.Resource.Status.Status
 	switch status {
 	case constants.TenantOpStarting:
-		taskFlow, err = task.GetRegistry().Get(flow.CheckTenantCRExistenceFlow)
+		// taskFlow, err = task.GetRegistry().Get(flow.CheckTenantCRExistenceFlow)
 	case constants.TenantOpRunning:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpChangePwd:
 			taskFlow, err = task.GetRegistry().Get(flow.ChangeTenantRootPasswordFlow)
 		case constants.TenantOpFailover:
-			// taskFlow, err = task.GetRegistry().Get(flow.FailoverTenantFlow)
+			taskFlow, err = task.GetRegistry().Get(flow.ActivateStandbyTenantFlow)
 		case constants.TenantOpSwitchover:
 			// taskFlow, err = task.GetRegistry().Get(flow.SwitchoverTenantFlow)
 		}
@@ -205,4 +226,18 @@ func (m *ObTenantOperationManager) getTenantCR(tenantCRName string) (*v1alpha1.O
 		return nil, errors.Wrap(err, "get tenant")
 	}
 	return tenant, nil
+}
+
+func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.OBTenant) {
+	owners := make([]metav1.OwnerReference, 0)
+	if m.Resource.OwnerReferences != nil {
+		owners = append(owners, m.Resource.OwnerReferences...)
+	}
+	owners = append(owners, metav1.OwnerReference{
+		APIVersion: tenant.APIVersion,
+		Kind:       tenant.Kind,
+		Name:       tenant.Name,
+		UID:        tenant.UID,
+	})
+	tenant.SetOwnerReferences(owners)
 }

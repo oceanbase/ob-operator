@@ -1,7 +1,7 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: test-standby-restore
+  name: t1s
   namespace: oceanbase
 spec:	
   obcluster: test
@@ -10,7 +10,10 @@ spec:
   charset: utf8mb4  
   connectWhiteList: '%'
   forceDelete: true
-  tenantRole: PRIMARY
+  tenantRole: STANDBY
+  credentials:
+    root: t1s-root
+    standbyRo: t1s-ro
   source:
     restore:
       sourceUri: "file:///ob-backup/t1/data_backup_custom1,file:///ob-backup/t1/log_archive_custom1"

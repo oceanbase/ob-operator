@@ -97,5 +97,5 @@ const (
 // tenant operation flows
 const (
 	ChangeTenantRootPasswordFlow = "change tenant root password"
-	CheckTenantCRExistenceFlow   = "check tenant cr existence"
+	ActivateStandbyTenantFlow    = "activate standby tenant"
 )

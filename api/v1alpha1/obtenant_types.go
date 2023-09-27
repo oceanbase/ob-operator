@@ -113,8 +113,9 @@ type OBTenantStatus struct {
 	OperationContext *OperationContext    `json:"operationContext,omitempty"`
 	TenantRecordInfo TenantRecordInfo     `json:"tenantRecordInfo,omitempty"`
 
-	TenantRole constants.TenantRole `json:"tenantRole,omitempty"`
-	Source     *TenantSourceStatus  `json:"source,omitempty"`
+	TenantRole  constants.TenantRole `json:"tenantRole,omitempty"`
+	Source      *TenantSourceStatus  `json:"source,omitempty"`
+	Credentials TenantCredentials    `json:"credentials,omitempty"`
 }
 
 type TenantSourceStatus struct {
@@ -196,6 +197,7 @@ type TenantRecordInfo struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="tenantName",type="string",JSONPath=".spec.tenantName"
+//+kubebuilder:printcolumn:name="tenantRole",type="string",JSONPath=".status.tenantRole"
 //+kubebuilder:printcolumn:name="clusterName",type="string",JSONPath=".spec.obcluster"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="locality",type="string",JSONPath=".status.tenantRecordInfo.locality",priority=1

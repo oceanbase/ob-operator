@@ -218,7 +218,11 @@ endif
 .PHONY: connectob
 connectob:
 ifdef TENANT
+ifdef PASSWD
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT} -Doceanbase -p${PASSWD}
+else
 	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT} -Doceanbase
+endif
 else
 	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot -p -Doceanbase
 endif
