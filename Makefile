@@ -193,7 +193,7 @@ tools: $(YQ) $(SEMVER)
 
 .PHONY: GOLANGCI_LINT
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
-$(GOLANG_LINT):
+$(GOLANGCI_LINT):
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANG_CI_VERSION}
 
 .PHONY: lint
