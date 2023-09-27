@@ -13,9 +13,7 @@ See the Mulan PSL v2 for more details.
 package name
 
 const (
-	StartRestoreJob      = "start restore job"
-	StartLogReplay       = "start log replay"
-	CancelRestoreJob     = "cancel restore job"
-	ActivateStandby      = "activate standby"
-	CheckRestoreProgress = "check restore progress"
+	StartRestoreJob = "start restore job"
+	StartLogReplay  = "start log replay"
+	ActivateStandby = "activate standby"
 )

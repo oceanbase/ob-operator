@@ -70,18 +70,26 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 			fallthrough
 		case constants.BackupJobStatusInitializing:
 			crJob.Status.Status = constants.BackupJobStatusRunning
-			return ctrl.Result{}, r.createBackupJobInOB(ctx, crJob)
+			return ctrl.Result{
+				RequeueAfter: time.Second * 5,
+			}, r.createBackupJobInOB(ctx, crJob)
 		case constants.BackupJobStatusRunning:
-			return ctrl.Result{}, r.maintainRunningBackupJob(ctx, crJob)
+			return ctrl.Result{
+				RequeueAfter: time.Second * 5,
+			}, r.maintainRunningBackupJob(ctx, crJob)
 		default:
 			// Completed, Failed, Canceled, do nothing
 			return ctrl.Result{}, nil
 		}
 
 	case constants.BackupJobTypeArchive:
-		return ctrl.Result{}, r.maintainRunningArchiveLogJob(ctx, crJob)
+		return ctrl.Result{
+			RequeueAfter: time.Second * 5,
+		}, r.maintainRunningArchiveLogJob(ctx, crJob)
 	case constants.BackupJobTypeClean:
-		return ctrl.Result{}, r.maintainRunningBackupCleanJob(ctx, crJob)
+		return ctrl.Result{
+			RequeueAfter: time.Second * 5,
+		}, r.maintainRunningBackupCleanJob(ctx, crJob)
 	}
 
 	return ctrl.Result{

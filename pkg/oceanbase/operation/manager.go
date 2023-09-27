@@ -69,6 +69,7 @@ func (m *OceanbaseOperationManager) QueryRowWithTimeout(timeout time.Duration, r
 	}
 	return err
 }
+
 func (m *OceanbaseOperationManager) QueryRow(ret any, sql string, params ...any) error {
 	return m.QueryRowWithTimeout(config.DefaultSqlTimeout, ret, sql, params...)
 }

@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/util/retry"
 
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
@@ -123,24 +124,26 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 }
 
 func (m *OBClusterManager) ModifyOBZoneReplica() error {
-	obzoneList, err := m.listOBZones()
-	if err != nil {
-		m.Logger.Error(err, "List obzone failed")
-		return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
-	}
-	for _, zone := range m.OBCluster.Spec.Topology {
-		for _, obzone := range obzoneList.Items {
-			if zone.Zone == obzone.Spec.Topology.Zone && zone.Replica != obzone.Spec.Topology.Replica {
-				m.Logger.Info("Modify obzone replica", "obzone", zone.Zone)
-				obzone.Spec.Topology.Replica = zone.Replica
-				err = m.Client.Update(m.Ctx, &obzone)
-				if err != nil {
-					return errors.Wrapf(err, "Modify obzone %s replica failed", zone.Zone)
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obzoneList, err := m.listOBZones()
+		if err != nil {
+			m.Logger.Error(err, "List obzone failed")
+			return errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
+		}
+		for _, zone := range m.OBCluster.Spec.Topology {
+			for _, obzone := range obzoneList.Items {
+				if zone.Zone == obzone.Spec.Topology.Zone && zone.Replica != obzone.Spec.Topology.Replica {
+					m.Logger.Info("Modify obzone replica", "obzone", zone.Zone)
+					obzone.Spec.Topology.Replica = zone.Replica
+					err = m.Client.Update(m.Ctx, &obzone)
+					if err != nil {
+						return errors.Wrapf(err, "Modify obzone %s replica failed", zone.Zone)
+					}
 				}
 			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (m *OBClusterManager) getZonesToDelete() ([]v1alpha1.OBZone, error) {
@@ -427,20 +430,22 @@ func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) erro
 }
 
 func (m *OBClusterManager) UpdateOBParameter(parameter *v1alpha1.Parameter) error {
-	obparameter := &v1alpha1.OBParameter{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBCluster.Namespace,
-		Name:      m.generateParameterName(parameter.Name),
-	}, obparameter)
-	if err != nil {
-		return errors.Wrap(err, "Get obparameter")
-	}
-	obparameter.Spec.Parameter.Value = parameter.Value
-	err = m.Client.Update(m.Ctx, obparameter)
-	if err != nil {
-		return errors.Wrap(err, "Update obparameter")
-	}
-	return nil
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obparameter := &v1alpha1.OBParameter{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBCluster.Namespace,
+			Name:      m.generateParameterName(parameter.Name),
+		}, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Get obparameter")
+		}
+		obparameter.Spec.Parameter.Value = parameter.Value
+		err = m.Client.Update(m.Ctx, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Update obparameter")
+		}
+		return nil
+	})
 }
 
 func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) error {
@@ -600,23 +605,25 @@ func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
 
 // TODO: add timeout
 func (m *OBClusterManager) RollingUpgradeByZone() error {
-	zones, err := m.listOBZones()
-	if err != nil {
-		return errors.Wrap(err, "Failed to get obzone list")
-	}
-	for _, zone := range zones.Items {
-		// update image and tag
-		zone.Spec.OBServerTemplate.Image = m.OBCluster.Spec.OBServerTemplate.Image
-		err = m.Client.Update(m.Ctx, &zone)
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		zones, err := m.listOBZones()
 		if err != nil {
-			return errors.Wrap(err, "Failed to update obzone image")
+			return errors.Wrap(err, "Failed to get obzone list")
 		}
-		err = m.WaitOBZoneUpgradeFinished(zone.Name)
-		if err != nil {
-			return errors.Wrapf(err, "Wait obzone %s upgrade finish failed", zone.Name)
+		for _, zone := range zones.Items {
+			// update image and tag
+			zone.Spec.OBServerTemplate.Image = m.OBCluster.Spec.OBServerTemplate.Image
+			err = m.Client.Update(m.Ctx, &zone)
+			if err != nil {
+				return errors.Wrap(err, "Failed to update obzone image")
+			}
+			err = m.WaitOBZoneUpgradeFinished(zone.Name)
+			if err != nil {
+				return errors.Wrapf(err, "Wait obzone %s upgrade finish failed", zone.Name)
+			}
 		}
-	}
-	return nil
+		return nil
+	})
 }
 
 func (m *OBClusterManager) FinishUpgrade() error {

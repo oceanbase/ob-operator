@@ -23,7 +23,7 @@ const (
 	StartRestoreWithLimit = "ALTER SYSTEM RESTORE %s FROM ? UNTIL %s=? WITH ?"
 	// tenant_name, uri, restore_option
 	StartRestoreUnlimited = "ALTER SYSTEM RESTORE %s FROM ? WITH ?"
-	CancelRestore         = "ALTER SYSTEM CANCEL RESTORE ?"
+	CancelRestore         = "ALTER SYSTEM CANCEL RESTORE %s"
 	ReplayStandbyLog      = "ALTER SYSTEM RECOVER STANDBY TENANT ? UNTIL %s"
 	ActivateStandby       = "ALTER SYSTEM ACTIVATE STANDBY TENANT ?"
 	QueryRestoreProgress  = "SELECT " + restoreProgressFields + " FROM CDB_OB_RESTORE_PROGRESS"

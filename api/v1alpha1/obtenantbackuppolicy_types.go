@@ -184,3 +184,7 @@ func (in *JobOverview) DeepCopy() *JobOverview {
 	in.DeepCopyInto(out)
 	return out
 }
+
+func (in *OBTenantBackupPolicy) CopyStatus(out *OBTenantBackupPolicy) {
+	in.Status = out.Status
+}

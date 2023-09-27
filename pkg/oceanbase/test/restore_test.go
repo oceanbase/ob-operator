@@ -333,3 +333,108 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 		}
 	})
 })
+
+var _ = Describe("Test canceling restore", Serial, Label("canceling"), func() {
+	var con *operation.OceanbaseOperationManager
+	var standbyName string
+	var _ = BeforeEach(func() {
+		var err error
+		logger := logr.Discard()
+		ds := connector.NewOceanBaseDataSource(host, port, sysUser, "sys", sysPassword, database)
+		con, err = operation.GetOceanbaseOperationManager(ds)
+		Expect(err).To(BeNil())
+		con.Logger = &logger
+		standbyName = tenant + "_standby"
+	})
+	It("Create units", func() {
+		By("Create unit")
+		unitList, err := con.GetUnitConfigV4List()
+		Expect(err).To(BeNil())
+		exists := false
+		for _, unit := range unitList {
+			if unit.Name == "unit_test" {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			err = con.AddUnitConfigV4(&model.UnitConfigV4SQLParam{
+				UnitConfigName: "unit_test",
+				MinCPU:         2,
+				MaxCPU:         2,
+				MemorySize:     2147483648,
+				MaxIops:        1024,
+				LogDiskSize:    2147483648,
+				MinIops:        1024,
+			})
+			Expect(err).To(BeNil())
+		}
+
+	})
+	It("Start and cancel the restore", func() {
+		By("Check target tenant's existence")
+		exists, err := con.CheckTenantExistByName(standbyName)
+		Expect(err).To(BeNil())
+		if exists {
+			Skip("Target standby tenant exists")
+		}
+
+		By("Create resource pool")
+		poolList, err := con.GetPoolList()
+		Expect(err).To(BeNil())
+		exists = false
+		for _, pool := range poolList {
+			if pool.Name == "pool_test_standby1" {
+				exists = true
+				break
+			}
+		}
+		if !exists {
+			for _, v := range []int{1, 2, 3} {
+				err = con.AddPool(model.PoolSQLParam{
+					UnitNum:  1,
+					PoolName: fmt.Sprintf("pool_test_standby%d", v),
+					ZoneList: fmt.Sprintf("zone%d", v),
+					UnitName: "unit_test",
+				})
+				Expect(err).To(BeNil())
+			}
+		}
+
+		By("Trigger restoration of standby tenant")
+		backupDest := "file:///ob-backup/" + tenant + "/data_backup_custom1"
+		archiveDest := "file:///ob-backup/" + tenant + "/log_archive_custom1"
+		err = con.StartRestoreUnlimited(standbyName, strings.Join([]string{backupDest, archiveDest}, ","), "pool_list=pool_test_standby1,pool_test_standby2,pool_test_standby3")
+		Expect(err).To(BeNil())
+		time.Sleep(5 * time.Second)
+
+		By("Cancel restoration of tenant")
+		err = con.CancelRestoreOfTenant(standbyName)
+		Expect(err).To(BeNil())
+	})
+
+	It("Delete Tenants", Label("delete_tenants"), func() {
+		By("Deleting primary tenant")
+		exists, err := con.CheckTenantExistByName(tenant)
+		Expect(err).To(BeNil())
+		if exists {
+			Expect(con.DeleteTenant(tenant, true)).To(BeNil())
+		}
+
+		By("Deleting standby tenants")
+		exists, err = con.CheckTenantExistByName(standbyName)
+		Expect(err).To(BeNil())
+		if exists {
+			Expect(con.DeleteTenant(standbyName, true)).To(BeNil())
+		}
+
+		By("Deleting resource pools")
+		for _, pool := range []string{"pool_test1", "pool_test2", "pool_test3", "pool_test_standby1", "pool_test_standby2", "pool_test_standby3"} {
+			exists, err = con.CheckPoolExistByName(pool)
+			Expect(err).To(BeNil())
+			if exists {
+				Expect(con.DeletePool(pool)).To(BeNil())
+			}
+		}
+	})
+})

@@ -13,14 +13,16 @@ See the Mulan PSL v2 for more details.
 package config
 
 const (
-	OBClusterControllerName        = "obcluster-controller"
-	OBZoneControllerName           = "obzone-controller"
-	OBServerControllerName         = "observer-controller"
-	OBParameterControllerName      = "obparameter-controller"
-	OBTenantControllerName         = "obtenant-controller"
-	OBUnitControllerName           = "obunit-controller"
-	OBClusterBackupControllerName  = "obclusterbackup-controller"
-	OBTenantBackupControllerName   = "obtenantbackup-controller"
-	OBClusterRestoreControllerName = "obclusterrestore-controller"
-	OBTenantRestoreControllerName  = "obtenantrestore-controller"
+	OBClusterControllerName            = "obcluster-controller"
+	OBZoneControllerName               = "obzone-controller"
+	OBServerControllerName             = "observer-controller"
+	OBParameterControllerName          = "obparameter-controller"
+	OBTenantControllerName             = "obtenant-controller"
+	OBUnitControllerName               = "obunit-controller"
+	OBClusterBackupControllerName      = "obclusterbackup-controller"
+	OBTenantBackupControllerName       = "obtenantbackup-controller"
+	OBClusterRestoreControllerName     = "obclusterrestore-controller"
+	OBTenantRestoreControllerName      = "obtenantrestore-controller"
+	OBTenantBackupPolicyControllerName = "obtenantbackuppolicy-controller"
+	OBTenantOperationControllerName    = "obtenantoperation-controller"
 )

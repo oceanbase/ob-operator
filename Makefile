@@ -193,7 +193,7 @@ tools: $(YQ) $(SEMVER)
 
 .PHONY: GOLANGCI_LINT
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint
-$(GOLANG_LINT):
+$(GOLANGCI_LINT):
 	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@${GOLANG_CI_VERSION}
 
 .PHONY: lint
@@ -206,3 +206,19 @@ commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 	chmod +x .git/hooks/pre-commit
 	echo "#!/bin/sh" > .git/hooks/pre-commit
 	echo "make lint" >> .git/hooks/pre-commit
+
+.PHONY: connect
+connect:
+ifdef TENANT
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT}
+else
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot -p
+endif
+
+.PHONY: connectob
+connectob:
+ifdef TENANT
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot@${TENANT} -Doceanbase
+else
+	mysql -h$(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}') -P2881 -A -uroot -p -Doceanbase
+endif

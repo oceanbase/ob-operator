@@ -10,12 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package config
+package resource
 
-import "time"
+func getRef[T any](val T) *T {
+	return &val
+}
 
-const (
-	TenantSqlTimeout     = 600 * time.Second
-	PollingJobSleepTime  = 1 * time.Second
-	TenantRestoreTimeOut = 600 * time.Second
-)
+func isZero[T comparable](val T) bool {
+	return val == *(new(T))
+}

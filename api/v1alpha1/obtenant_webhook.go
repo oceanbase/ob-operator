@@ -77,6 +77,13 @@ func (r *OBTenant) validateMutation() error {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "Standby must have a source option, but both restore and tenantRef are nil now"))
 		}
 	}
+	// 2. Restore until with some limit must have a limit key
+	if r.Spec.Source != nil && r.Spec.Source.Restore != nil {
+		untilSpec := r.Spec.Source.Restore.Until
+		if !untilSpec.Unlimited && untilSpec.Scn == nil && untilSpec.Timestamp == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("until"), untilSpec, "Restore until must have a limit key, scn and timestamp are both nil now"))
+		}
+	}
 
 	if len(allErrs) == 0 {
 		return nil

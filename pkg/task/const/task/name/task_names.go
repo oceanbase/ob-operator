@@ -102,6 +102,7 @@ const (
 	DeleteTenant = "delete tenant"
 
 	// tenant restore
-	CreateRestoreJob        = "create restore job"
+	CreateRestoreJobCR      = "create restore job CR"
 	WatchRestoreJobToFinish = "watch restore job to finish"
+	CancelRestoreJob        = "cancel restore job"
 )

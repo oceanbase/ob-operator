@@ -90,6 +90,9 @@ func AddPool() *TaskFlow {
 			Name:         flowname.AddPool,
 			Tasks:        []string{taskname.CheckPoolAndUnitConfig, taskname.AddResourcePool},
 			TargetStatus: tenantstatus.Running,
+			OnFailure: strategy.FailureRule{
+				Strategy: strategy.RetryFromCurrent,
+			},
 		},
 	}
 }
@@ -135,13 +138,25 @@ func RestoreTenant() *TaskFlow {
 				taskname.CheckTenant,
 				taskname.CheckPoolAndUnitConfig,
 				taskname.CreateResourcePoolAndUnitConfig,
-				taskname.CreateRestoreJob,
+				taskname.CreateRestoreJobCR,
 				taskname.WatchRestoreJobToFinish,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: strategy.FailureRule{
-				NextTryStatus: tenantstatus.Restoring,
+				NextTryStatus: tenantstatus.RestoreFailed,
 			},
+		},
+	}
+}
+
+func CancelRestoreJob() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.CancelRestoreFlow,
+			Tasks: []string{
+				taskname.CancelRestoreJob,
+			},
+			TargetStatus: tenantstatus.RestoreCanceled,
 		},
 	}
 }

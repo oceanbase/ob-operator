@@ -14,10 +14,10 @@ package operation
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
@@ -31,9 +31,9 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limitKey, restoreOption string, limitValue any) error {
+func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, restoreOption string, limitKey, limitValue any) error {
 	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithDefaultTimeout(sqlStatement, uri, limitValue, restoreOption)
+	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")
@@ -42,7 +42,7 @@ func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, limit
 }
 
 func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, restoreOption string) error {
-	err := m.ExecWithTimeout(600*time.Second, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
+	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore unlimited")
 		return errors.Wrap(err, "Start restore unlimited")
@@ -51,7 +51,7 @@ func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, resto
 }
 
 func (m *OceanbaseOperationManager) CancelRestoreOfTenant(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(sql.CancelRestore, tenantName)
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.CancelRestore, tenantName))
 	if err != nil {
 		m.Logger.Error(err, "Got exception when cancel restore of tenant")
 		return errors.Wrap(err, "Cancel restore of tenant")

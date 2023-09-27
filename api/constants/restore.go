@@ -18,7 +18,9 @@ const (
 	RestoreJobStarting   RestoreJobStatus = "STARTING"
 	RestoreJobRunning    RestoreJobStatus = "RUNNING"
 	RestoreJobFailed     RestoreJobStatus = "FAILED"
-	RestoreJobCanceling  RestoreJobStatus = "CANCELING"
 	RestoreJobSuccessful RestoreJobStatus = "SUCCESSFUL"
 	RestoreJobCanceled   RestoreJobStatus = "CANCELED"
+
+	RestoreJobStatusActivating RestoreJobStatus = "ACTIVATING"
+	RestoreJobStatusReplaying  RestoreJobStatus = "REPLAYING"
 )

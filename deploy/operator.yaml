@@ -4188,7 +4188,6 @@ spec:
                 - piece_switch_interval
                 - round_id
                 - start_scn
-                - start_scn_display
                 - status
                 - tenant_id
                 - used_piece_id
@@ -4626,7 +4625,6 @@ spec:
                 - piece_switch_interval
                 - round_id
                 - start_scn
-                - start_scn_display
                 - status
                 - tenant_id
                 - used_piece_id
@@ -4793,21 +4791,20 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: obtenantrestores.oceanbase.oceanbase.com
+  name: obtenantoperations.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
   names:
-    kind: OBTenantRestore
-    listKind: OBTenantRestoreList
-    plural: obtenantrestores
-    singular: obtenantrestore
+    kind: OBTenantOperation
+    listKind: OBTenantOperationList
+    plural: obtenantoperations
+    singular: obtenantoperation
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: OBTenantRestore is the Schema for the obtenantrestores API An
-          instance of OBTenantRestore stands for a tenant restore job
+        description: OBTenantOperation is the Schema for the obtenantoperations API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -4822,148 +4819,43 @@ spec:
           metadata:
             type: object
           spec:
-            description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
+            description: OBTenantOperationSpec defines the desired state of OBTenantOperation
             properties:
-              obClusterName:
-                type: string
-              restoreTenantName:
-                type: string
-              sourceUri:
-                type: string
+              changePwd:
+                properties:
+                  secretRef:
+                    type: string
+                  tenant:
+                    type: string
+                required:
+                - secretRef
+                - tenant
+                type: object
+              failover:
+                properties:
+                  standbyTenant:
+                    type: string
+                required:
+                - standbyTenant
+                type: object
+              switchover:
+                properties:
+                  primaryTenant:
+                    type: string
+                  standbyTenant:
+                    type: string
+                required:
+                - primaryTenant
+                - standbyTenant
+                type: object
               type:
                 type: string
-              until:
-                type: string
             required:
-            - obClusterName
-            - restoreTenantName
-            - sourceUri
             - type
             type: object
           status:
-            description: OBTenantRestoreStatus defines the observed state of OBTenantRestore
+            description: OBTenantOperationStatus defines the observed state of OBTenantOperation
             properties:
-              jobStatus:
-                description: JobStatus represents the current state of a Job.
-                properties:
-                  active:
-                    description: The number of pending and running pods.
-                    format: int32
-                    type: integer
-                  completedIndexes:
-                    description: completedIndexes holds the completed indexes when
-                      .spec.completionMode = "Indexed" in a text format. The indexes
-                      are represented as decimal integers separated by commas. The
-                      numbers are listed in increasing order. Three or more consecutive
-                      numbers are compressed and represented by the first and last
-                      element of the series, separated by a hyphen. For example, if
-                      the completed indexes are 1, 3, 4, 5 and 7, they are represented
-                      as "1,3-5,7".
-                    type: string
-                  completionTime:
-                    description: Represents time when the job was completed. It is
-                      not guaranteed to be set in happens-before order across separate
-                      operations. It is represented in RFC3339 form and is in UTC.
-                      The completion time is only set when the job finishes successfully.
-                    format: date-time
-                    type: string
-                  conditions:
-                    description: 'The latest available observations of an object''s
-                      current state. When a Job fails, one of the conditions will
-                      have type "Failed" and status true. When a Job is suspended,
-                      one of the conditions will have type "Suspended" and status
-                      true; when the Job is resumed, the status of this condition
-                      will become false. When a Job is completed, one of the conditions
-                      will have type "Complete" and status true. More info: https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/'
-                    items:
-                      description: JobCondition describes current state of a job.
-                      properties:
-                        lastProbeTime:
-                          description: Last time the condition was checked.
-                          format: date-time
-                          type: string
-                        lastTransitionTime:
-                          description: Last time the condition transit from one status
-                            to another.
-                          format: date-time
-                          type: string
-                        message:
-                          description: Human readable message indicating details about
-                            last transition.
-                          type: string
-                        reason:
-                          description: (brief) reason for the condition's last transition.
-                          type: string
-                        status:
-                          description: Status of the condition, one of True, False,
-                            Unknown.
-                          type: string
-                        type:
-                          description: Type of job condition, Complete or Failed.
-                          type: string
-                      required:
-                      - status
-                      - type
-                      type: object
-                    type: array
-                    x-kubernetes-list-type: atomic
-                  failed:
-                    description: The number of pods which reached phase Failed.
-                    format: int32
-                    type: integer
-                  ready:
-                    description: "The number of pods which have a Ready condition.
-                      \n This field is beta-level. The job controller populates the
-                      field when the feature gate JobReadyPods is enabled (enabled
-                      by default)."
-                    format: int32
-                    type: integer
-                  startTime:
-                    description: Represents time when the job controller started processing
-                      a job. When a Job is created in the suspended state, this field
-                      is not set until the first time it is resumed. This field is
-                      reset every time a Job is resumed from suspension. It is represented
-                      in RFC3339 form and is in UTC.
-                    format: date-time
-                    type: string
-                  succeeded:
-                    description: The number of pods which reached phase Succeeded.
-                    format: int32
-                    type: integer
-                  uncountedTerminatedPods:
-                    description: "uncountedTerminatedPods holds the UIDs of Pods that
-                      have terminated but the job controller hasn't yet accounted
-                      for in the status counters. \n The job controller creates pods
-                      with a finalizer. When a pod terminates (succeeded or failed),
-                      the controller does three steps to account for it in the job
-                      status: \n 1. Add the pod UID to the arrays in this field. 2.
-                      Remove the pod finalizer. 3. Remove the pod UID from the arrays
-                      while increasing the corresponding counter. \n Old jobs might
-                      not be tracked using this field, in which case the field remains
-                      null."
-                    properties:
-                      failed:
-                        description: failed holds UIDs of failed Pods.
-                        items:
-                          description: UID is a type that holds unique ID values,
-                            including UUIDs.  Because we don't ONLY use UUIDs, this
-                            is an alias to string.  Being a type captures intent and
-                            helps make sure that UIDs and names do not get conflated.
-                          type: string
-                        type: array
-                        x-kubernetes-list-type: set
-                      succeeded:
-                        description: succeeded holds UIDs of succeeded Pods.
-                        items:
-                          description: UID is a type that holds unique ID values,
-                            including UUIDs.  Because we don't ONLY use UUIDs, this
-                            is an alias to string.  Being a type captures intent and
-                            helps make sure that UIDs and names do not get conflated.
-                          type: string
-                        type: array
-                        x-kubernetes-list-type: set
-                    type: object
-                type: object
               operationContext:
                 properties:
                   failureRule:
@@ -5001,16 +4893,238 @@ spec:
                 - taskStatus
                 - tasks
                 type: object
-              progress:
-                type: string
               status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: string
             required:
-            - jobStatus
-            - progress
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: obtenantrestores.oceanbase.oceanbase.com
+spec:
+  group: oceanbase.oceanbase.com
+  names:
+    kind: OBTenantRestore
+    listKind: OBTenantRestoreList
+    plural: obtenantrestores
+    singular: obtenantrestore
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OBTenantRestore is the Schema for the obtenantrestores API An
+          instance of OBTenantRestore stands for a tenant restore job
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OBTenantRestoreSpec defines the desired state of OBTenantRestore
+            properties:
+              restoreOption:
+                type: string
+              restoreRole:
+                type: string
+              source:
+                properties:
+                  cancel:
+                    type: boolean
+                  description:
+                    type: string
+                  replayLogUntil:
+                    properties:
+                      scn:
+                        type: string
+                      timestamp:
+                        type: string
+                      unlimited:
+                        type: boolean
+                    type: object
+                  sourceUri:
+                    type: string
+                  until:
+                    properties:
+                      scn:
+                        type: string
+                      timestamp:
+                        type: string
+                      unlimited:
+                        type: boolean
+                    type: object
+                required:
+                - sourceUri
+                - until
+                type: object
+              targetCluster:
+                type: string
+              targetTenant:
+                type: string
+            required:
+            - restoreOption
+            - restoreRole
+            - source
+            - targetCluster
+            - targetTenant
+            type: object
+          status:
+            description: OBTenantRestoreStatus defines the observed state of OBTenantRestore
+            properties:
+              operationContext:
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              restoreProgress:
+                description: RestoreHistory is the history of restore job, matches
+                  view CDB_OB_RESTORE_HISTORY
+                properties:
+                  backup_cluster_name:
+                    type: string
+                  backup_cluster_version:
+                    type: string
+                  backup_dest:
+                    type: string
+                  backup_piece_list:
+                    type: string
+                  backup_set_list:
+                    type: string
+                  backup_tenant_id:
+                    format: int64
+                    type: integer
+                  backup_tenant_name:
+                    type: string
+                  description:
+                    type: string
+                  finish_bytes:
+                    format: int64
+                    type: integer
+                  finish_bytes_display:
+                    type: string
+                  finish_ls_count:
+                    format: int64
+                    type: integer
+                  finish_tablet_count:
+                    format: int64
+                    type: integer
+                  finish_timestamp:
+                    type: string
+                  job_id:
+                    format: int64
+                    type: integer
+                  ls_count:
+                    format: int64
+                    type: integer
+                  restore_option:
+                    type: string
+                  restore_scn:
+                    format: int64
+                    type: integer
+                  restore_scn_display:
+                    type: string
+                  restore_tenant_id:
+                    format: int64
+                    type: integer
+                  restore_tenant_name:
+                    type: string
+                  start_timestamp:
+                    type: string
+                  status:
+                    type: string
+                  tablet_count:
+                    format: int64
+                    type: integer
+                  tenant_id:
+                    format: int64
+                    type: integer
+                  total_bytes:
+                    format: int64
+                    type: integer
+                  total_bytes_display:
+                    type: string
+                required:
+                - backup_cluster_name
+                - backup_cluster_version
+                - backup_dest
+                - backup_piece_list
+                - backup_set_list
+                - backup_tenant_id
+                - backup_tenant_name
+                - finish_ls_count
+                - finish_tablet_count
+                - finish_timestamp
+                - job_id
+                - ls_count
+                - restore_option
+                - restore_scn
+                - restore_scn_display
+                - restore_tenant_id
+                - restore_tenant_name
+                - start_timestamp
+                - status
+                - tablet_count
+                - tenant_id
+                type: object
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+            required:
             - status
             type: object
         type: object
@@ -5039,7 +5153,10 @@ spec:
     - jsonPath: .status.status
       name: status
       type: string
-    - jsonPath: .spec.clusterName
+    - jsonPath: .spec.tenantName
+      name: tenantName
+      type: string
+    - jsonPath: .spec.obcluster
       name: clusterName
       type: string
     - jsonPath: .metadata.creationTimestamp
@@ -5089,6 +5206,13 @@ spec:
               connectWhiteList:
                 default: '%'
                 type: string
+              credentials:
+                properties:
+                  root:
+                    type: string
+                  standbyRo:
+                    type: string
+                type: object
               forceDelete:
                 default: false
                 type: boolean
@@ -5162,7 +5286,46 @@ spec:
                   - zone
                   type: object
                 type: array
+              source:
+                description: Source for restoring or creating standby
+                properties:
+                  restore:
+                    properties:
+                      cancel:
+                        type: boolean
+                      description:
+                        type: string
+                      replayLogUntil:
+                        properties:
+                          scn:
+                            type: string
+                          timestamp:
+                            type: string
+                          unlimited:
+                            type: boolean
+                        type: object
+                      sourceUri:
+                        type: string
+                      until:
+                        properties:
+                          scn:
+                            type: string
+                          timestamp:
+                            type: string
+                          unlimited:
+                            type: boolean
+                        type: object
+                    required:
+                    - sourceUri
+                    - until
+                    type: object
+                  tenant:
+                    type: string
+                type: object
               tenantName:
+                type: string
+              tenantRole:
+                default: PRIMARY
                 type: string
               unitNum:
                 type: integer
@@ -5313,6 +5476,150 @@ spec:
                   - zoneList
                   type: object
                 type: array
+              source:
+                properties:
+                  restore:
+                    description: OBTenantRestoreStatus defines the observed state
+                      of OBTenantRestore
+                    properties:
+                      operationContext:
+                        properties:
+                          failureRule:
+                            properties:
+                              failureStatus:
+                                type: string
+                              failureStrategy:
+                                type: string
+                            required:
+                            - failureStatus
+                            - failureStrategy
+                            type: object
+                          idx:
+                            type: integer
+                          name:
+                            type: string
+                          targetStatus:
+                            type: string
+                          task:
+                            type: string
+                          taskId:
+                            type: string
+                          taskStatus:
+                            type: string
+                          tasks:
+                            items:
+                              type: string
+                            type: array
+                        required:
+                        - idx
+                        - name
+                        - targetStatus
+                        - task
+                        - taskId
+                        - taskStatus
+                        - tasks
+                        type: object
+                      restoreProgress:
+                        description: RestoreHistory is the history of restore job,
+                          matches view CDB_OB_RESTORE_HISTORY
+                        properties:
+                          backup_cluster_name:
+                            type: string
+                          backup_cluster_version:
+                            type: string
+                          backup_dest:
+                            type: string
+                          backup_piece_list:
+                            type: string
+                          backup_set_list:
+                            type: string
+                          backup_tenant_id:
+                            format: int64
+                            type: integer
+                          backup_tenant_name:
+                            type: string
+                          description:
+                            type: string
+                          finish_bytes:
+                            format: int64
+                            type: integer
+                          finish_bytes_display:
+                            type: string
+                          finish_ls_count:
+                            format: int64
+                            type: integer
+                          finish_tablet_count:
+                            format: int64
+                            type: integer
+                          finish_timestamp:
+                            type: string
+                          job_id:
+                            format: int64
+                            type: integer
+                          ls_count:
+                            format: int64
+                            type: integer
+                          restore_option:
+                            type: string
+                          restore_scn:
+                            format: int64
+                            type: integer
+                          restore_scn_display:
+                            type: string
+                          restore_tenant_id:
+                            format: int64
+                            type: integer
+                          restore_tenant_name:
+                            type: string
+                          start_timestamp:
+                            type: string
+                          status:
+                            type: string
+                          tablet_count:
+                            format: int64
+                            type: integer
+                          tenant_id:
+                            format: int64
+                            type: integer
+                          total_bytes:
+                            format: int64
+                            type: integer
+                          total_bytes_display:
+                            type: string
+                        required:
+                        - backup_cluster_name
+                        - backup_cluster_version
+                        - backup_dest
+                        - backup_piece_list
+                        - backup_set_list
+                        - backup_tenant_id
+                        - backup_tenant_name
+                        - finish_ls_count
+                        - finish_tablet_count
+                        - finish_timestamp
+                        - job_id
+                        - ls_count
+                        - restore_option
+                        - restore_scn
+                        - restore_scn_display
+                        - restore_tenant_id
+                        - restore_tenant_name
+                        - start_timestamp
+                        - status
+                        - tablet_count
+                        - tenant_id
+                        type: object
+                      status:
+                        description: 'INSERT ADDITIONAL STATUS FIELD - define observed
+                          state of cluster Important: Run "make" to regenerate code
+                          after modifying this file'
+                        type: string
+                    required:
+                    - status
+                    type: object
+                  tenant:
+                    type: string
+                type: object
               status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
@@ -5344,6 +5651,8 @@ spec:
                 - primaryZone
                 - tenantID
                 type: object
+              tenantRole:
+                type: string
             required:
             - resourcePool
             - status
@@ -7592,6 +7901,26 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obtenant
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenant/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - obtenantbackup
   verbs:
   - create
@@ -7657,6 +7986,52 @@ rules:
   - oceanbase.oceanbase.com
   resources:
   - obtenantbackups/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantoperations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantoperations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantoperations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestore
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantrestore/status
   verbs:
   - get
   - patch
@@ -7957,6 +8332,7 @@ spec:
         - --health-probe-bind-address=:8081
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
+        - --manager-namespace=oceanbase-system
         command:
         - /manager
         image: oceanbasedev/ob-operator:2.0.0
@@ -8082,6 +8458,26 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenant
+  failurePolicy: Fail
+  name: mobtenant.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenants
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenantbackuppolicy
   failurePolicy: Fail
   name: mobtenantbackuppolicy.kb.io
@@ -8111,6 +8507,26 @@ metadata:
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obtenant
+  failurePolicy: Fail
+  name: vobtenant.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenants
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

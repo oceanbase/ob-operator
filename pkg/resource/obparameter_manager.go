@@ -106,15 +106,15 @@ func (m *OBParameterManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBParameterManager) retryUpdateStatus() error {
-	parameter := &v1alpha1.OBParameter{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBParameter.GetNamespace(),
-		Name:      m.OBParameter.GetName(),
-	}, parameter)
-	if err != nil {
-		return client.IgnoreNotFound(err)
-	}
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		parameter := &v1alpha1.OBParameter{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBParameter.GetNamespace(),
+			Name:      m.OBParameter.GetName(),
+		}, parameter)
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
 		parameter.Status = *m.OBParameter.Status.DeepCopy()
 		return m.Client.Status().Update(m.Ctx, parameter)
 	})
