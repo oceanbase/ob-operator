@@ -117,8 +117,7 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 			m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job is failed", "Restore job is failed")
 			m.Resource.Status.Status = constants.RestoreJobFailed
 		}
-	}
-	if restoreJob == nil {
+	} else {
 		restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(m.Resource.Spec.TargetTenant)
 		if err != nil {
 			return err

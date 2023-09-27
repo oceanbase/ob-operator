@@ -14,10 +14,10 @@ package operation
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
@@ -33,7 +33,7 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 
 func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, restoreOption string, limitKey, limitValue any) error {
 	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithTimeout(600*time.Second, sqlStatement, uri, limitValue, restoreOption)
+	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")
@@ -42,7 +42,7 @@ func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, resto
 }
 
 func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, restoreOption string) error {
-	err := m.ExecWithTimeout(600*time.Second, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
+	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore unlimited")
 		return errors.Wrap(err, "Start restore unlimited")
