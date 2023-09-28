@@ -34,10 +34,13 @@ Create secret for users, secret name must be the same as these configed in deplo
 ```
 # create secret to hold password for user root
 kubectl create secret -n oceanbase generic test-user-root --from-literal=password='******'
+
 # create secret to hold password for user proxyro, proxyro is a readonly user for obproxy to query meta info
 kubectl create secret -n oceanbase generic test-user-proxyro --from-literal=password='******'
+
 # create secret to hold password for user monitor, monitor is a readonly user for obagent to query metric data
 kubectl create secret -n oceanbase generic test-user-monitor --from-literal=password='******'
+
 # create secret to hold password for user operator, operator is the admin user for obproxy to maintain obcluster
 kubectl create secret -n oceanbase generic test-user-operator --from-literal=password='******'
 ```
