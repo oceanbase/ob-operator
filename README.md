@@ -28,7 +28,18 @@ kubectl apply -f deploy/operator.yaml
 ### Deploy OceanBase
 Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
 ```
-kubectl create namespace ${namespace_name}
+kubectl create namespace oceanbase
+```
+Create secret for users, secret name must be the same as these configed in deploy/obcluster.yaml under spec.userSecrets
+```
+# create secret to hold password for user root
+kubectl create secret -n oceanbase generic test-user-root --from-literal=password='******'
+# create secret to hold password for user proxyro, proxyro is a readonly user for obproxy to query meta info
+kubectl create secret -n oceanbase generic test-user-proxyro --from-literal=password='******'
+# create secret to hold password for user monitor, monitor is a readonly user for obagent to query metric data
+kubectl create secret -n oceanbase generic test-user-monitor --from-literal=password='******'
+# create secret to hold password for user operator, operator is the admin user for obproxy to maintain obcluster
+kubectl create secret -n oceanbase generic test-user-operator --from-literal=password='******'
 ```
 Using the following command to deploy OceanBase Cluster
 ```
@@ -36,7 +47,7 @@ kubectl apply -f deploy/obcluster.yaml
 ```
 It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished
 ```
-kubectl get obclusters ${name} -n ${namespace} -o yaml
+kubectl get obclusters test -n oceanbase -o yaml
 ```
 wait until the status of obclster resource turns into running.
 
