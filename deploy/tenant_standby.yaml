@@ -1,31 +1,25 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: t1s
+  name: t1ss
   namespace: oceanbase
 spec:	
   obcluster: test
-  tenantName: t1s
+  tenantName: t1ss
   unitNum: 1 
   charset: utf8mb4  
   connectWhiteList: '%'
   forceDelete: true
-  tenantRole: STANDBY
   credentials:
     root: t1s-root
     standbyRo: t1s-ro
   source:
-    restore:
-      sourceUri: "file:///ob-backup/t1/data_backup_custom1,file:///ob-backup/t1/log_archive_custom1"
-      until: 
-        unlimited: true
-      replayLogUntil:
-        unlimited: true
     tenant: t1
+  tenantRole: STANDBY
   pools:
     - zone: zone1
       type: 
-        name: Full 
+        name: FUll 
         replica: 1
         isActive: true
       resource:
@@ -34,6 +28,7 @@ spec:
         minCPU: 1 
         maxIops: 1024 
         minIops: 1024
+        iopsWeight:
         logDiskSize: 
     - zone: zone2
       type: 

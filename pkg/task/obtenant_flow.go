@@ -24,8 +24,13 @@ func CreateTenant() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.CreateTenant,
-			Tasks: []string{taskname.CheckTenant, taskname.CheckPoolAndUnitConfig,
-				taskname.CreateResourcePoolAndUnitConfig, taskname.CreateTenant},
+			Tasks: []string{
+				taskname.CheckTenant,
+				taskname.CheckPoolAndUnitConfig,
+				taskname.CreateResourcePoolAndUnitConfig,
+				taskname.CreateTenant,
+				taskname.CreateUsersByCredentials,
+			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: strategy.FailureRule{
 				NextTryStatus: tenantstatus.CreatingTenant,
@@ -140,6 +145,8 @@ func RestoreTenant() *TaskFlow {
 				taskname.CreateResourcePoolAndUnitConfig,
 				taskname.CreateRestoreJobCR,
 				taskname.WatchRestoreJobToFinish,
+				taskname.MaintainWhiteList,
+				taskname.CreateUsersByCredentials,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: strategy.FailureRule{
@@ -157,6 +164,25 @@ func CancelRestoreJob() *TaskFlow {
 				taskname.CancelRestoreJob,
 			},
 			TargetStatus: tenantstatus.RestoreCanceled,
+		},
+	}
+}
+
+func CreateEmptyStandbyTenant() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.CreateEmptyStandbyTenant,
+			Tasks: []string{
+				taskname.CheckTenant,
+				taskname.CheckPoolAndUnitConfig,
+				taskname.CreateResourcePoolAndUnitConfig,
+				taskname.CreateEmptyStandbyTenant,
+				taskname.MaintainWhiteList,
+			},
+			TargetStatus: tenantstatus.Running,
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: tenantstatus.CreatingEmptyStandby,
+			},
 		},
 	}
 }

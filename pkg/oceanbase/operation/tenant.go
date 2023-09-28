@@ -486,3 +486,25 @@ func (m OceanbaseOperationManager) ListTenantAccessPoints(tenantName string) ([]
 	}
 	return aps, nil
 }
+
+func (m OceanbaseOperationManager) CreateEmptyStandbyTenant(params *model.CreateEmptyStandbyTenantParam) error {
+	sqlStatement := fmt.Sprintf(sql.CreateEmptyStandbyTenant, params.TenantName, "'"+strings.Join(params.PoolList, "','")+"'")
+	err := m.ExecWithTimeout(config.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
+	if err != nil {
+		m.Logger.Error(err, "Failed to create empty standby tenant")
+		return errors.Wrap(err, "Create empty standby tenant")
+	}
+	return nil
+}
+
+func (m OceanbaseOperationManager) SwitchTenantRole(tenant, role string) error {
+	if role != "PRIMARY" && role != "STANDBY" {
+		return errors.New("invalid tenant role")
+	}
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.SwitchTenantRole, role, tenant))
+	if err != nil {
+		m.Logger.Error(err, "Failed to switch tenant's role")
+		return err
+	}
+	return nil
+}

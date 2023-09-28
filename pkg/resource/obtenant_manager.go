@@ -89,7 +89,7 @@ func (m *OBTenantManager) InitStatus() {
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
 	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
-		m.OBTenant.Status.Status = "CreatingEmptyStandby"
+		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
@@ -245,6 +245,10 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 		return m.WatchRestoreJobToFinish, nil
 	case taskname.CancelRestoreJob:
 		return m.CancelTenantRestoreJob, nil
+	case taskname.CreateEmptyStandbyTenant:
+		return m.CreateEmptyStandbyTenant, nil
+	case taskname.CreateUsersByCredentials:
+		return m.CreateUserByCredentialSec, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", taskName)
 	}
@@ -300,6 +304,8 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.RestoreTenant)
 	case tenantstatus.CancelingRestore:
 		taskFlow, err = task.GetRegistry().Get(flowname.CancelRestoreFlow)
+	case tenantstatus.CreatingEmptyStandby:
+		taskFlow, err = task.GetRegistry().Get(flowname.CreateEmptyStandbyTenant)
 	default:
 		m.Logger.Info("no need to run anything for obtenant")
 		return nil, nil

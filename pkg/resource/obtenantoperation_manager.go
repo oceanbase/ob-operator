@@ -152,8 +152,12 @@ func (m *ObTenantOperationManager) GetTaskFunc(name string) (func() error, error
 		return m.ChangeTenantRootPassword, nil
 	case taskname.OpActivateStandby:
 		return m.ActivateStandbyTenant, nil
-	case taskname.OpSwitchoverTenants:
-		return nil, errors.New("NOT IMPLEMENTED")
+	case taskname.OpCreateUsersForActivatedStandby:
+		return m.CreateUsersForActivatedStandby, nil
+	case taskname.OpSwitchTenantsRole:
+		return m.SwitchTenantsRole, nil
+	case taskname.OpSetTenantLogRestoreSource:
+		return m.SetTenantLogRestoreSource, nil
 	default:
 		return nil, errors.New("Task name not registered")
 	}
@@ -176,7 +180,14 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 		case constants.TenantOpFailover:
 			taskFlow, err = task.GetRegistry().Get(flow.ActivateStandbyTenantFlow)
 		case constants.TenantOpSwitchover:
-			// taskFlow, err = task.GetRegistry().Get(flow.SwitchoverTenantFlow)
+			taskFlow, err = task.GetRegistry().Get(flow.SwitchoverTenantsFlow)
+		}
+	case constants.TenantOpReverting:
+		switch m.Resource.Spec.Type {
+		case constants.TenantOpSwitchover:
+			taskFlow, err = task.GetRegistry().Get(flow.RevertSwitchoverTenantsFlow)
+		default:
+			err = errors.New("unsupported operation type")
 		}
 	case constants.TenantOpSuccessful:
 		fallthrough
@@ -239,5 +250,5 @@ func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.O
 		Name:       tenant.Name,
 		UID:        tenant.UID,
 	})
-	tenant.SetOwnerReferences(owners)
+	m.Resource.SetOwnerReferences(owners)
 }

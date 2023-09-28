@@ -34,4 +34,5 @@ const (
 	TenantOpRunning    TenantOperationStatus = "RUNNING"
 	TenantOpSuccessful TenantOperationStatus = "SUCCESSFUL"
 	TenantOpFailed     TenantOperationStatus = "FAILED"
+	TenantOpReverting  TenantOperationStatus = "REVERTING"
 )

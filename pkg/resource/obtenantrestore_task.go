@@ -113,6 +113,7 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 		}
 		time.Sleep(5 * time.Second)
 	}
+	GlobalWhiteListMap[m.OBTenant.Spec.TenantName] = m.OBTenant.Spec.ConnectWhiteList
 	return nil
 }
 
@@ -187,41 +188,17 @@ func (m *ObTenantRestoreManager) StartLogReplay() error {
 		return err
 	}
 	if m.Resource.Spec.PrimaryTenant != nil {
-		// Check if the tenant exists
-		primary := &v1alpha1.OBTenant{}
-		err = m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.Resource.Namespace,
-			Name:      *m.Resource.Spec.PrimaryTenant,
-		}, primary)
+		restoreSource, err := getTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.Resource.Namespace, *m.Resource.Spec.PrimaryTenant)
 		if err != nil {
-			if client.IgnoreNotFound(err) != nil {
-				return err
-			}
-		} else {
-			// Get ip_list from primary tenant
-			aps, err := con.ListTenantAccessPoints(*m.Resource.Spec.PrimaryTenant)
-			if err != nil {
-				return err
-			}
-			ipList := make([]string, 0)
-			for _, ap := range aps {
-				ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
-			}
-			standbyRoPwd, err := ReadPassword(m.Client, m.Resource.Namespace, primary.Status.Credentials.StandbyRO)
-			if err != nil {
-				m.Logger.Error(err, "Failed to read standby ro password")
-				return err
-			}
-			// Set restore source
-			logRestoreSource := fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), "standby_ro", primary.Spec.TenantName, standbyRoPwd)
-			err = con.SetParameter("LOG_RESTORE_SOURCE", logRestoreSource, &param.Scope{
-				Name:  "TENANT",
-				Value: m.Resource.Spec.TargetTenant,
-			})
-			if err != nil {
-				m.Logger.Error(err, "Failed to set log restore source")
-				return err
-			}
+			return err
+		}
+		err = con.SetParameter("LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
+			Name:  "TENANT",
+			Value: m.Resource.Spec.TargetTenant,
+		})
+		if err != nil {
+			m.Logger.Error(err, "Failed to set log restore source")
+			return err
 		}
 	}
 	replayUntil := m.Resource.Spec.Source.ReplayLogUntil

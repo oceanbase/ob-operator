@@ -49,10 +49,12 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 }
 
 func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
+	logger.Info("Get cluster root client", "obCluster", obcluster)
 	return getOperationClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 }
 
 func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
+	logger.Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
 	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, credential)
 }
 
@@ -197,4 +199,39 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	default:
 		return false
 	}
+}
+
+func getTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, con *operation.OceanbaseOperationManager, ns, tenant string) (string, error) {
+	var restoreSource string
+	var err error
+
+	primary := &v1alpha1.OBTenant{}
+	err = clt.Get(ctx, types.NamespacedName{
+		Namespace: ns,
+		Name:      tenant,
+	}, primary)
+	if err != nil {
+		if client.IgnoreNotFound(err) != nil {
+			return "", err
+		}
+	} else {
+		// Get ip_list from primary tenant
+		aps, err := con.ListTenantAccessPoints(tenant)
+		if err != nil {
+			return "", err
+		}
+		ipList := make([]string, 0)
+		for _, ap := range aps {
+			ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
+		}
+		standbyRoPwd, err := ReadPassword(clt, ns, primary.Status.Credentials.StandbyRO)
+		if err != nil {
+			logger.Error(err, "Failed to read standby ro password")
+			return "", err
+		}
+		// Set restore source
+		restoreSource = fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), "standby_ro", primary.Spec.TenantName, standbyRoPwd)
+	}
+
+	return restoreSource, nil
 }

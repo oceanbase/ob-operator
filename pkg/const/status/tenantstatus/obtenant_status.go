@@ -27,9 +27,10 @@ const (
 	FinalizerFinished      = "finalizer finished"
 	PausingReconcile       = "pausing reconcile"
 
-	Restoring        = "restoring"
-	SwitchingRole    = "switching role"
-	RestoreCanceled  = "restore canceled"
-	CancelingRestore = "canceling restore"
-	RestoreFailed    = "restore failed"
+	Restoring            = "restoring"
+	SwitchingRole        = "switching role"
+	RestoreCanceled      = "restore canceled"
+	CancelingRestore     = "canceling restore"
+	RestoreFailed        = "restore failed"
+	CreatingEmptyStandby = "creating empty standby"
 )

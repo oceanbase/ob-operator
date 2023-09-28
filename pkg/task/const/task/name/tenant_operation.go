@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 package name
 
 const (
-	OpChangeTenantRootPassword string = "change tenant root password"
-	OpActivateStandby          string = "activate standby"
-	OpSwitchoverTenants        string = "switchover tenants"
-	OpCheckTenantCRExistence   string = "check tenant cr existence"
+	OpChangeTenantRootPassword       string = "change tenant root password"
+	OpActivateStandby                string = "activate standby"
+	OpCreateUsersForActivatedStandby string = "create users for activated standby"
+	OpSwitchTenantsRole              string = "switch tenants role"
+	OpSetTenantLogRestoreSource      string = "set tenant log restore source"
 )

@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package resource
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 
 	"k8s.io/apimachinery/pkg/types"
@@ -74,11 +76,86 @@ func (m *ObTenantOperationManager) ActivateStandbyTenant() error {
 	})
 }
 
+func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
+	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
+	if err != nil {
+		return err
+	}
+	maxRetry := 9
+	counter := 0
+	for counter < maxRetry {
+		tenants, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
+		if err != nil {
+			return err
+		}
+		if len(tenants) == 0 {
+			return errors.New("tenant not found")
+		}
+		t := tenants[0]
+		if t.TenantType == "USER" && t.TenantRole == "PRIMARY" && t.Status == "NORMAL" {
+			break
+		}
+		time.Sleep(9 * time.Second)
+	}
+	if counter >= maxRetry {
+		return errors.New("wait for tenant status ready timeout")
+	}
+
+	tenantManager := &OBTenantManager{
+		Ctx:      m.Ctx,
+		Client:   m.Client,
+		Recorder: m.Recorder,
+		Logger:   m.Logger,
+	}
+	if m.Resource.Spec.Type == constants.TenantOpSwitchover {
+		tenantManager.OBTenant = m.Resource.Status.SecondaryTenant
+	} else {
+		tenantManager.OBTenant = m.Resource.Status.PrimaryTenant
+	}
+	// Hack:
+	tenantManager.OBTenant.ObjectMeta.SetNamespace(m.Resource.Namespace)
+	// Just reuse the logic of creating users for new coming tenant
+	err = tenantManager.createUserByCredentials()
+	if err != nil {
+		m.PrintErrEvent(err)
+	}
+	return nil
+}
+
+func (m *ObTenantOperationManager) SwitchTenantsRole() error {
+	// TODO: check whether the two tenants are in the same cluster
+	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
+	if err != nil {
+		return err
+	}
+	if m.Resource.Status.Status == constants.TenantOpRunning {
+		err = con.SwitchTenantRole(m.Resource.Status.PrimaryTenant.Spec.TenantName, "STANDBY")
+		if err != nil {
+			return err
+		}
+		err = con.SwitchTenantRole(m.Resource.Status.SecondaryTenant.Spec.TenantName, "PRIMARY")
+		if err != nil {
+			return err
+		}
+	} else if m.Resource.Status.Status == constants.TenantOpReverting {
+		err = con.SwitchTenantRole(m.Resource.Status.PrimaryTenant.Spec.TenantName, "PRIMARY")
+		if err != nil {
+			return err
+		}
+		err = con.SwitchTenantRole(m.Resource.Status.SecondaryTenant.Spec.TenantName, "STANDBY")
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *ObTenantOperationManager) SetTenantLogRestoreSource() error {
+	return nil
+}
+
 // get operation manager to exec sql
 func (m *ObTenantOperationManager) getTenantSysClient(tenantName string) (*operation.OceanbaseOperationManager, error) {
-	if m.con != nil {
-		return m.con, nil
-	}
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.Resource.Namespace,
@@ -99,7 +176,6 @@ func (m *ObTenantOperationManager) getTenantSysClient(tenantName string) (*opera
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
-	m.con = con
 	return con, nil
 }
 

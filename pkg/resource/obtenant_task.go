@@ -22,9 +22,9 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
@@ -386,33 +386,7 @@ func (m *OBTenantManager) createTenant() error {
 		return err
 	}
 	GlobalWhiteListMap[tenantName] = m.OBTenant.Spec.ConnectWhiteList
-	// Create a default credential secret for new tenant's root user
-	// TODO: remove
-	err = m.Client.Create(m.Ctx, &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: m.OBTenant.Namespace,
-			Name:      m.OBTenant.Spec.TenantName + "-credential",
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion:         m.OBTenant.APIVersion,
-				Kind:               m.OBTenant.Kind,
-				Name:               m.OBTenant.Name,
-				UID:                m.OBTenant.UID,
-				BlockOwnerDeletion: getRef(true),
-			}},
-		},
-		Data: map[string][]byte{
-			"password": []byte(""),
-		},
-	})
-	if err != nil {
-		return err
-	}
 	// Create user or change password of root, do not return error
-	err = m.createUserByCredentialSec()
-	if err != nil {
-		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
-		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
-	}
 	return nil
 }
 
@@ -1102,7 +1076,21 @@ func (m *OBTenantManager) deleteUnitConfig() error {
 	return nil
 }
 
-func (m *OBTenantManager) createUserByCredentialSec() error {
+func (m *OBTenantManager) CreateUserByCredentialSec() error {
+	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
+		// standby tenant can not need to create user
+		return nil
+	}
+	err := m.createUserByCredentials()
+	if err != nil {
+		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
+		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
+	}
+
+	return nil
+}
+
+func (m *OBTenantManager) createUserByCredentials() error {
 	con, err := m.getTenantClient()
 	if err != nil {
 		return err
@@ -1151,6 +1139,34 @@ func (m *OBTenantManager) createUserByCredentialSec() error {
 				return err
 			}
 		}
+	}
+	return nil
+}
+
+func (m *OBTenantManager) CreateEmptyStandbyTenant() error {
+	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
+		return errors.New("")
+	}
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return err
+	}
+	restoreSource, err := getTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.OBTenant.Namespace, *m.OBTenant.Spec.Source.Tenant)
+	if err != nil {
+		return err
+	}
+	poolList := m.generateSpecPoolList(m.OBTenant.Spec.Pools)
+	primaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	locality := m.generateLocality(m.OBTenant.Spec.Pools)
+	err = con.CreateEmptyStandbyTenant(&model.CreateEmptyStandbyTenantParam{
+		TenantName:    m.OBTenant.Spec.TenantName,
+		RestoreSource: restoreSource,
+		PrimaryZone:   primaryZone,
+		Locality:      locality,
+		PoolList:      poolList,
+	})
+	if err != nil {
+		return err
 	}
 	return nil
 }

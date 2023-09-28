@@ -61,11 +61,11 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	obtenant := &v1alpha1.OBTenant{}
 	err := r.Client.Get(ctx, req.NamespacedName, obtenant)
 	if err != nil {
-		logger.Error(err, "get obtenant error")
 		if kubeerrors.IsNotFound(err) {
 			// observer not found, just return
 			return ctrl.Result{}, nil
 		}
+		logger.Error(err, "get obtenant error")
 		return ctrl.Result{}, err
 	}
 

@@ -54,4 +54,6 @@ const (
 	CreateTenantUserWithPwd      = "CREATE USER IF NOT EXISTS %s IDENTIFIED BY ?;"
 	GrantOBROPrivilege           = "GRANT SELECT ON oceanbase.* TO %s;"
 	QueryTenantAccessPointByName = "SELECT tenant_id, tenant_name, svr_ip, sql_port from oceanbase.CDB_OB_ACCESS_POINT WHERE tenant_name = ?;"
+	CreateEmptyStandbyTenant     = "CREATE STANDBY TENANT IF NOT EXISTS %s LOG_RESTORE_SOURCE=?, PRIMARY_ZONE=?, LOCALITY=?, RESOURCE_POOL_LIST=(%s);"
+	SwitchTenantRole             = "ALTER SYSTEM SWITCHOVER TO %s TENANT = %s"
 )

@@ -61,6 +61,7 @@ func init() {
 
 	GetRegistry().Register(flowname.RestoreTenant, RestoreTenant)
 	GetRegistry().Register(flowname.CancelRestoreFlow, CancelRestoreJob)
+	GetRegistry().Register(flowname.CreateEmptyStandbyTenant, CreateEmptyStandbyTenant)
 
 	// tenant-level backup
 	GetRegistry().Register(flowname.PrepareBackupPolicy, PrepareBackupPolicy)
@@ -78,6 +79,9 @@ func init() {
 	GetRegistry().Register(flowname.RestoreAsPrimaryFlow, RestoreAsPrimary)
 	GetRegistry().Register(flowname.RestoreAsStandbyFlow, RestoreAsStandby)
 
+	// tenant operation
 	GetRegistry().Register(flowname.ChangeTenantRootPasswordFlow, FlowChangeTenantRootPassword)
 	GetRegistry().Register(flowname.ActivateStandbyTenantFlow, FlowActivateStandbyTenantOp)
+	GetRegistry().Register(flowname.SwitchoverTenantsFlow, FlowSwitchoverTenants)
+	GetRegistry().Register(flowname.RevertSwitchoverTenantsFlow, FlowRevertSwitchoverTenants)
 }

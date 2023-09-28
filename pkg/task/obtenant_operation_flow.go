@@ -23,8 +23,10 @@ import (
 func FlowChangeTenantRootPassword() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.ChangeTenantRootPasswordFlow,
-			Tasks:        []string{taskname.OpChangeTenantRootPassword},
+			Name: flowname.ChangeTenantRootPasswordFlow,
+			Tasks: []string{
+				taskname.OpChangeTenantRootPassword,
+			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: strategy.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
@@ -36,11 +38,45 @@ func FlowChangeTenantRootPassword() *TaskFlow {
 func FlowActivateStandbyTenantOp() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.ActivateStandbyTenantFlow,
-			Tasks:        []string{taskname.OpActivateStandby},
+			Name: flowname.ActivateStandbyTenantFlow,
+			Tasks: []string{
+				taskname.OpActivateStandby,
+				taskname.OpCreateUsersForActivatedStandby,
+			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: strategy.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
+			},
+		},
+	}
+}
+
+func FlowSwitchoverTenants() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.SwitchoverTenantsFlow,
+			Tasks: []string{
+				taskname.OpSwitchTenantsRole,
+				taskname.OpSetTenantLogRestoreSource,
+			},
+			TargetStatus: string(constants.TenantOpSuccessful),
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: string(constants.TenantOpReverting),
+			},
+		},
+	}
+}
+
+func FlowRevertSwitchoverTenants() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.RevertSwitchoverTenantsFlow,
+			Tasks: []string{
+				taskname.OpSwitchTenantsRole,
+			},
+			TargetStatus: string(constants.TenantOpFailed),
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: string(constants.TenantOpReverting),
 			},
 		},
 	}
