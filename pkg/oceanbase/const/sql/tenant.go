@@ -56,4 +56,6 @@ const (
 	QueryTenantAccessPointByName = "SELECT tenant_id, tenant_name, svr_ip, sql_port from oceanbase.CDB_OB_ACCESS_POINT WHERE tenant_name = ?;"
 	CreateEmptyStandbyTenant     = "CREATE STANDBY TENANT IF NOT EXISTS %s LOG_RESTORE_SOURCE=?, PRIMARY_ZONE=?, LOCALITY=?, RESOURCE_POOL_LIST=(%s);"
 	SwitchTenantRole             = "ALTER SYSTEM SWITCHOVER TO %s TENANT = %s"
+	QueryLSDeletion              = "(SELECT ls_id FROM oceanbase.CDB_OB_LS_HISTORY WHERE TENANT_ID = ?) EXCEPT (SELECT ls_id FROM oceanbase.CDB_OB_LS WHERE TENANT_ID = ?);"
+	QueryLogStats                = "SELECT ls_id, begin_lsn FROM oceanbase.GV$OB_LOG_STAT WHERE TENANT_ID = ? AND ROLE = 'LEADER';"
 )

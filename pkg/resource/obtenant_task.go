@@ -22,6 +22,7 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
@@ -1145,7 +1146,7 @@ func (m *OBTenantManager) createUserByCredentials() error {
 
 func (m *OBTenantManager) CreateEmptyStandbyTenant() error {
 	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
-		return errors.New("")
+		return errors.New("Empty standby tenant must have source tenant")
 	}
 	con, err := m.getClusterSysClient()
 	if err != nil {
@@ -1168,5 +1169,46 @@ func (m *OBTenantManager) CreateEmptyStandbyTenant() error {
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (m *OBTenantManager) CheckPrimaryTenantLSIntegrity() error {
+	var err error
+	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
+		return errors.New("Primary tenant must have source tenant")
+	}
+	tenantCR := &v1alpha1.OBTenant{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBTenant.Namespace,
+		Name:      *m.OBTenant.Spec.Source.Tenant,
+	}, tenantCR)
+	if err != nil {
+		return err
+	}
+
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return err
+	}
+	lsDeletion, err := con.ListLSDeletion(int64(tenantCR.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(lsDeletion) > 0 {
+		return errors.New("LS deletion set is not empty, log is of not integrity")
+	}
+	logStats, err := con.ListLogStats(int64(tenantCR.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(logStats) == 0 {
+		return errors.New("Log stats is empty, out of expectation")
+	}
+	for _, ls := range logStats {
+		if ls.BeginLSN != 0 {
+			return errors.New("Log stats begin SCN is not 0, log is of not integrity")
+		}
+	}
+
 	return nil
 }

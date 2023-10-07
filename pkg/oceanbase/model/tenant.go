@@ -135,3 +135,14 @@ type CreateEmptyStandbyTenantParam struct {
 	Locality      string
 	PoolList      []string
 }
+
+// Match CDB_OB_LS and CDB_OB_LS_HISTORY
+type LSInfo struct {
+	LSID int64 `json:"ls_id" db:"ls_id"`
+}
+
+// Match GV$OB_LOG_STAT
+type LogStat struct {
+	LSID     int64 `json:"ls_id" db:"ls_id"`
+	BeginLSN int64 `json:"begin_lsn" db:"begin_lsn"`
+}

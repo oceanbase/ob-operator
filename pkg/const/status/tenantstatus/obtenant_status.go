@@ -33,4 +33,5 @@ const (
 	CancelingRestore     = "canceling restore"
 	RestoreFailed        = "restore failed"
 	CreatingEmptyStandby = "creating empty standby"
+	Failed               = "failed"
 )

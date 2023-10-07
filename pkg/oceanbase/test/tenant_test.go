@@ -199,3 +199,40 @@ var _ = Describe("Test Operation Manager get", Label("get-client"), func() {
 	})
 
 })
+
+var _ = Describe("Test Operation Manager get", Label("log-integrity"), func() {
+	var con *operation.OceanbaseOperationManager
+
+	var _ = BeforeEach(func() {
+		var err error
+		logger := logr.Discard()
+		ds := connector.NewOceanBaseDataSource(host, port, sysUser, "sys", sysPassword, database)
+		con, err = operation.GetOceanbaseOperationManager(ds)
+		Expect(err).To(BeNil())
+		con.Logger = &logger
+	})
+
+	var _ = AfterEach(func() {
+		Expect(con).NotTo(BeNil())
+		err := con.Close()
+		Expect(err).To(BeNil())
+	})
+
+	It("List LS deletion and logStats", func() {
+		By("Get Tenant by name")
+		tenantRow, err := con.GetTenantByName(tenant)
+		Expect(err).To(BeNil())
+		Expect(tenantRow).NotTo(BeNil())
+		printObject(tenantRow)
+
+		By("Get LS deletion")
+		deletion, err := con.ListLSDeletion(tenantRow.TenantID)
+		Expect(err).To(BeNil())
+		printSlice(deletion, "[LS deletion]")
+
+		By("Get logstats")
+		logstats, err := con.ListLogStats(tenantRow.TenantID)
+		Expect(err).To(BeNil())
+		printSlice(logstats, "[Log stats]")
+	})
+})

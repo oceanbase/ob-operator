@@ -173,6 +173,7 @@ func CreateEmptyStandbyTenant() *TaskFlow {
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.CreateEmptyStandbyTenant,
 			Tasks: []string{
+				taskname.CheckPrimaryTenantLSIntegrity,
 				taskname.CheckTenant,
 				taskname.CheckPoolAndUnitConfig,
 				taskname.CreateResourcePoolAndUnitConfig,
@@ -181,7 +182,7 @@ func CreateEmptyStandbyTenant() *TaskFlow {
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: strategy.FailureRule{
-				NextTryStatus: tenantstatus.CreatingEmptyStandby,
+				NextTryStatus: tenantstatus.Failed,
 			},
 		},
 	}

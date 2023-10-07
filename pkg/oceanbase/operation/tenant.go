@@ -508,3 +508,23 @@ func (m OceanbaseOperationManager) SwitchTenantRole(tenant, role string) error {
 	}
 	return nil
 }
+
+func (m OceanbaseOperationManager) ListLSDeletion(tenantId int64) ([]*model.LSInfo, error) {
+	lsDeletions := make([]*model.LSInfo, 0)
+	err := m.QueryList(&lsDeletions, sql.QueryLSDeletion, tenantId, tenantId)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list ls deletion")
+		return nil, errors.Wrap(err, "List ls deletion")
+	}
+	return lsDeletions, nil
+}
+
+func (m OceanbaseOperationManager) ListLogStats(tenantId int64) ([]*model.LogStat, error) {
+	logStats := make([]*model.LogStat, 0)
+	err := m.QueryList(&logStats, sql.QueryLogStats, tenantId)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list log stats")
+		return nil, errors.Wrap(err, "List log stats")
+	}
+	return logStats, nil
+}

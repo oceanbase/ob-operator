@@ -84,7 +84,8 @@ func (m *OBTenantManager) InitStatus() {
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
 	m.OBTenant.Status.Credentials = v1alpha1.TenantCredentials{
-		Root: "obtenant-default-pwd",
+		Root:      "obtenant-default-pwd",
+		StandbyRO: m.OBTenant.Spec.Credentials.StandbyRO,
 	}
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
 
@@ -251,6 +252,8 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 		return m.CreateEmptyStandbyTenant, nil
 	case taskname.CreateUsersByCredentials:
 		return m.CreateUserByCredentialSec, nil
+	case taskname.CheckPrimaryTenantLSIntegrity:
+		return m.CheckPrimaryTenantLSIntegrity, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", taskName)
 	}
