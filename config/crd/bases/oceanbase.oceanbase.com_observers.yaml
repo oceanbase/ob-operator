@@ -14,7 +14,23 @@ spec:
     singular: observer
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.nodeIp
+      name: NodeIP
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .status.obStatus
+      name: OBStatus
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBServer is the Schema for the observers API

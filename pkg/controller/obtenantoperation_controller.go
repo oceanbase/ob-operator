@@ -56,17 +56,6 @@ func (r *OBTenantOperationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// finalizerName := "obtenantrestore.finalizers.oceanbase.com"
-	// // examine DeletionTimestamp to determine if the policy is under deletion
-	// if restore.ObjectMeta.DeletionTimestamp.IsZero() {
-	// 	if !controllerutil.ContainsFinalizer(restore, finalizerName) {
-	// 		controllerutil.AddFinalizer(restore, finalizerName)
-	// 		if err := r.Update(ctx, restore); err != nil {
-	// 			return ctrl.Result{}, err
-	// 		}
-	// 	}
-	// }
-
 	mgr := &resource.ObTenantOperationManager{
 		Ctx:      ctx,
 		Resource: operation,

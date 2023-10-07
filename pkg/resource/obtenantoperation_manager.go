@@ -74,12 +74,11 @@ func (m *ObTenantOperationManager) InitStatus() {
 			m.Logger.Error(err, "Failed to find activating tenant")
 			break
 		}
-		// TODO: remove the comment
-		// if tenant.Status.TenantRole == constants.TenantRolePrimary {
-		// 	err = errors.New("activating tenant is not a standby tenant")
-		// 	m.Logger.Error(err, "Failed to find standby tenant")
-		// 	break
-		// }
+		if tenant.Status.TenantRole == constants.TenantRolePrimary {
+			err = errors.New("activating tenant is not a standby tenant")
+			m.Logger.Error(err, "Failed to find standby tenant")
+			break
+		}
 		m.Resource.Status.PrimaryTenant = tenant
 	case constants.TenantOpSwitchover:
 		tenant, err := m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)

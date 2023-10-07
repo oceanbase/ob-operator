@@ -120,3 +120,7 @@ const (
 const (
 	OceanbaseAllScope = "oceanbase.*"
 )
+
+const (
+	DefaultTenantRootSecret = "obtenant-default-pwd"
+)

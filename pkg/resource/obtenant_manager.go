@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -84,7 +85,7 @@ func (m *OBTenantManager) InitStatus() {
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
 	m.OBTenant.Status.Credentials = v1alpha1.TenantCredentials{
-		Root:      "obtenant-default-pwd",
+		Root:      oceanbaseconst.DefaultTenantRootSecret,
 		StandbyRO: m.OBTenant.Spec.Credentials.StandbyRO,
 	}
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
