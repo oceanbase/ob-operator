@@ -75,11 +75,12 @@ func (m *ObTenantOperationManager) InitStatus() {
 			m.Logger.Error(err, "Failed to find activating tenant")
 			break
 		}
-		if tenant.Status.TenantRole == constants.TenantRolePrimary {
-			err = errors.New("activating tenant is not a standby tenant")
-			m.Logger.Error(err, "Failed to find standby tenant")
-			break
-		}
+		// TODO: remove the comment
+		// if tenant.Status.TenantRole == constants.TenantRolePrimary {
+		// 	err = errors.New("activating tenant is not a standby tenant")
+		// 	m.Logger.Error(err, "Failed to find standby tenant")
+		// 	break
+		// }
 		m.Resource.Status.PrimaryTenant = tenant
 		m.appendOwnerTenantReference(tenant)
 	case constants.TenantOpSwitchover:
@@ -106,6 +107,25 @@ func (m *ObTenantOperationManager) InitStatus() {
 		m.Resource.Status.Status = constants.TenantOpFailed
 	} else {
 		m.Resource.Status.Status = constants.TenantOpRunning
+	}
+
+	// Update ownerReferences
+	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		resource := &v1alpha1.OBTenantOperation{}
+		err = m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.GetNamespace(),
+			Name:      m.Resource.GetName(),
+		}, resource)
+		if err != nil {
+			return err
+		}
+		resource.SetOwnerReferences(m.Resource.GetOwnerReferences())
+		return m.Client.Update(m.Ctx, resource)
+	})
+
+	if err != nil {
+		m.Logger.Error(err, "Failed to update ObtenantOperation object")
+		m.PrintErrEvent(err)
 	}
 }
 
@@ -240,6 +260,8 @@ func (m *ObTenantOperationManager) getTenantCR(tenantCRName string) (*v1alpha1.O
 }
 
 func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.OBTenant) {
+	meta := tenant.GetObjectMeta()
+	m.Logger.Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
 	owners := make([]metav1.OwnerReference, 0)
 	if m.Resource.OwnerReferences != nil {
 		owners = append(owners, m.Resource.OwnerReferences...)
@@ -247,8 +269,8 @@ func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.O
 	owners = append(owners, metav1.OwnerReference{
 		APIVersion: tenant.APIVersion,
 		Kind:       tenant.Kind,
-		Name:       tenant.Name,
-		UID:        tenant.UID,
+		Name:       meta.GetName(),
+		UID:        meta.GetUID(),
 	})
 	m.Resource.SetOwnerReferences(owners)
 }

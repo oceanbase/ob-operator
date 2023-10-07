@@ -83,7 +83,9 @@ func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
-	m.OBTenant.Status.Credentials = m.OBTenant.Spec.Credentials
+	m.OBTenant.Status.Credentials = v1alpha1.TenantCredentials{
+		Root: "obtenant-default-pwd",
+	}
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
@@ -576,6 +578,11 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo.PoolList = strings.Join(poolList, ",")
 	tenantCurrentStatus.TenantRecordInfo.ZoneList = strings.Join(zoneList, ",")
 	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
+
+	// Root password changed
+	if _, err = m.getTenantClient(); err != nil {
+		tenantCurrentStatus.Credentials.Root = m.OBTenant.Spec.Credentials.Root
+	}
 
 	return tenantCurrentStatus, nil
 }

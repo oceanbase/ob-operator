@@ -79,8 +79,11 @@ func (m *ObTenantOperationManager) ActivateStandbyTenant() error {
 func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
 	if err != nil {
+		m.Recorder.Event(m.Resource, "Warning", "Can not get cluster operation client", err.Error())
 		return err
 	}
+
+	// Wait for the tenant to be ready
 	maxRetry := 9
 	counter := 0
 	for counter < maxRetry {
@@ -96,6 +99,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 			break
 		}
 		time.Sleep(9 * time.Second)
+		counter++
 	}
 	if counter >= maxRetry {
 		return errors.New("wait for tenant status ready timeout")
@@ -109,16 +113,15 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 	}
 	if m.Resource.Spec.Type == constants.TenantOpSwitchover {
 		tenantManager.OBTenant = m.Resource.Status.SecondaryTenant
+		tenantManager.OBTenant.ObjectMeta.SetName(m.Resource.Spec.Switchover.StandbyTenant)
 	} else {
 		tenantManager.OBTenant = m.Resource.Status.PrimaryTenant
+		tenantManager.OBTenant.ObjectMeta.SetName(m.Resource.Spec.Failover.StandbyTenant)
 	}
 	// Hack:
 	tenantManager.OBTenant.ObjectMeta.SetNamespace(m.Resource.Namespace)
 	// Just reuse the logic of creating users for new coming tenant
-	err = tenantManager.createUserByCredentials()
-	if err != nil {
-		m.PrintErrEvent(err)
-	}
+	_ = tenantManager.createUserByCredentials()
 	return nil
 }
 
@@ -172,7 +175,8 @@ func (m *ObTenantOperationManager) getTenantSysClient(tenantName string) (*opera
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, tenant.Spec.TenantName, tenant.Status.Credentials.Root)
+	var con *operation.OceanbaseOperationManager
+	con, err = GetTenantOperationClient(m.Client, m.Logger, obcluster, tenant.Spec.TenantName, tenant.Status.Credentials.Root)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}

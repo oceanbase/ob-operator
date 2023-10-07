@@ -172,3 +172,30 @@ var _ = Describe("Test Tenant Operation", Label("tenant-operation"), Serial, fun
 		}
 	})
 })
+
+var _ = Describe("Test Operation Manager get", Label("get-client"), func() {
+	var con *operation.OceanbaseOperationManager
+
+	var _ = BeforeEach(func() {
+		var err error
+		logger := logr.Discard()
+		ds := connector.NewOceanBaseDataSource(host, port, user, tenant, password, database)
+		con, err = operation.GetOceanbaseOperationManager(ds)
+		Expect(err).To(BeNil())
+		con.Logger = &logger
+	})
+
+	var _ = AfterEach(func() {
+		Expect(con).NotTo(BeNil())
+		err := con.Close()
+		Expect(err).To(BeNil())
+	})
+
+	It("Get operation manager", func() {
+		tenants, err := con.ListTenantWithName(tenant)
+		Expect(err).To(BeNil())
+		Expect(len(tenants)).To(Equal(1))
+		printSlice(tenants, "[Tenants]")
+	})
+
+})

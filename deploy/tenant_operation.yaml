@@ -13,7 +13,7 @@ metadata:
 spec:
   type: "CHANGE_PASSWORD"
   changePwd:
-    tenant: "t1"
+    tenant: "t1s"
     secretRef: "t1-credential-new"
 # ---
 # apiVersion: oceanbase.oceanbase.com/v1alpha1
