@@ -201,14 +201,14 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	}
 }
 
-func getTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, con *operation.OceanbaseOperationManager, ns, tenant string) (string, error) {
+func getTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, con *operation.OceanbaseOperationManager, ns, tenantCR string) (string, error) {
 	var restoreSource string
 	var err error
 
 	primary := &v1alpha1.OBTenant{}
 	err = clt.Get(ctx, types.NamespacedName{
 		Namespace: ns,
-		Name:      tenant,
+		Name:      tenantCR,
 	}, primary)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {
@@ -216,7 +216,7 @@ func getTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		}
 	} else {
 		// Get ip_list from primary tenant
-		aps, err := con.ListTenantAccessPoints(tenant)
+		aps, err := con.ListTenantAccessPoints(tenantCR)
 		if err != nil {
 			return "", err
 		}

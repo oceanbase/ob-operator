@@ -104,25 +104,6 @@ func (m *ObTenantOperationManager) InitStatus() {
 	} else {
 		m.Resource.Status.Status = constants.TenantOpRunning
 	}
-
-	// // Update ownerReferences
-	// err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-	// 	resource := &v1alpha1.OBTenantOperation{}
-	// 	err = m.Client.Get(m.Ctx, types.NamespacedName{
-	// 		Namespace: m.Resource.GetNamespace(),
-	// 		Name:      m.Resource.GetName(),
-	// 	}, resource)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	resource.SetOwnerReferences(m.Resource.GetOwnerReferences())
-	// 	return m.Client.Update(m.Ctx, resource)
-	// })
-
-	if err != nil {
-		m.Logger.Error(err, "Failed to update ObtenantOperation object")
-		m.PrintErrEvent(err)
-	}
 }
 
 func (m *ObTenantOperationManager) SetOperationContext(c *v1alpha1.OperationContext) {

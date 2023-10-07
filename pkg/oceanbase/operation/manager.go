@@ -77,7 +77,7 @@ func (m *OceanbaseOperationManager) QueryRow(ret any, sql string, params ...any)
 func (m *OceanbaseOperationManager) QueryListWithTimeout(timeout time.Duration, ret any, sql string, params ...any) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	m.Logger.Info(fmt.Sprintf("Execute query list %s with param %v", sql, params))
+	// m.Logger.Info(fmt.Sprintf("Execute query list %s with param %v", sql, params))
 	err := m.Connector.GetClient().SelectContext(ctx, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
@@ -91,7 +91,7 @@ func (m *OceanbaseOperationManager) QueryList(ret any, sql string, params ...any
 }
 
 func (m *OceanbaseOperationManager) QueryCount(count *int, sql string, params ...any) error {
-	m.Logger.Info(fmt.Sprintf("Execute query count %s with param %v", sql, params))
+	// m.Logger.Info(fmt.Sprintf("Execute query count %s with param %v", sql, params))
 	err := m.Connector.GetClient().Get(count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)

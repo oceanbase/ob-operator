@@ -34,6 +34,9 @@ type OBTenant struct {
 	LogMode                  string `json:"log_mode" db:"log_mode"`
 	ArbitrationServiceStatus string `json:"arbitration_service_status" db:"arbitration_service_status"`
 	GmtCreateTime            string `json:"gmt_create_time" db:"gmt_create"`
+	SwitchoverStatus         string `json:"switchover_status" db:"switchover_status"`
+	SwitchoverEpoch          int64  `json:"switchover_epoch" db:"switchover_epoch"`
+	UnitNum                  int64  `json:"unit_num" db:"unit_num"`
 }
 
 // OBUnit is the unit model of OB system
