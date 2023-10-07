@@ -17,9 +17,14 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -29,8 +34,10 @@ import (
 
 // log is for logging in this package.
 var obtenantoperationlog = logf.Log.WithName("obtenantoperation-resource")
+var clt client.Client
 
 func (r *OBTenantOperation) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	clt = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -44,6 +51,53 @@ var _ webhook.Defaulter = &OBTenantOperation{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenantOperation) Default() {
+	obtenantoperationlog.Info("default", "name", r.Name)
+	tenant := &OBTenant{}
+	var targetTenantName string
+	var secondaryTenantName string
+	if r.Spec.Type == constants.TenantOpChangePwd {
+		targetTenantName = r.Spec.ChangePwd.Tenant
+	} else if r.Spec.Type == constants.TenantOpFailover {
+		targetTenantName = r.Spec.Failover.StandbyTenant
+	} else if r.Spec.Type == constants.TenantOpSwitchover {
+		targetTenantName = r.Spec.Switchover.PrimaryTenant
+		secondaryTenantName = r.Spec.Switchover.StandbyTenant
+	}
+	err := clt.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      targetTenantName,
+	}, tenant)
+	if err != nil {
+		obtenantoperationlog.Error(err, "get tenant")
+	}
+	references := r.GetOwnerReferences()
+	firstMeta := tenant.GetObjectMeta()
+	references = append(references, metav1.OwnerReference{
+		APIVersion: tenant.APIVersion,
+		Kind:       tenant.Kind,
+		Name:       firstMeta.GetName(),
+		UID:        firstMeta.GetUID(),
+	})
+
+	if secondaryTenantName != "" {
+		secondaryTenant := &OBTenant{}
+		err := clt.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      secondaryTenantName,
+		}, secondaryTenant)
+		if err != nil {
+			obtenantoperationlog.Error(err, "get tenant")
+		}
+		secondMeta := secondaryTenant.GetObjectMeta()
+		references = append(references, metav1.OwnerReference{
+			APIVersion: secondaryTenant.APIVersion,
+			Kind:       secondaryTenant.Kind,
+			Name:       secondMeta.GetName(),
+			UID:        secondMeta.GetUID(),
+		})
+	}
+
+	r.SetOwnerReferences(references)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

@@ -68,7 +68,6 @@ func (m *ObTenantOperationManager) InitStatus() {
 			break
 		}
 		m.Resource.Status.PrimaryTenant = tenant
-		m.appendOwnerTenantReference(tenant)
 	case constants.TenantOpFailover:
 		tenant, err := m.getTenantCR(m.Resource.Spec.Failover.StandbyTenant)
 		if err != nil {
@@ -82,7 +81,6 @@ func (m *ObTenantOperationManager) InitStatus() {
 		// 	break
 		// }
 		m.Resource.Status.PrimaryTenant = tenant
-		m.appendOwnerTenantReference(tenant)
 	case constants.TenantOpSwitchover:
 		tenant, err := m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)
 		if err != nil {
@@ -96,8 +94,6 @@ func (m *ObTenantOperationManager) InitStatus() {
 		}
 		m.Resource.Status.PrimaryTenant = tenant
 		m.Resource.Status.SecondaryTenant = standbyTenant
-		m.appendOwnerTenantReference(tenant)
-		m.appendOwnerTenantReference(standbyTenant)
 	default:
 		err = errors.New("unknown tenant operation type")
 		m.Logger.Error(err, "InitStatus")
@@ -109,19 +105,19 @@ func (m *ObTenantOperationManager) InitStatus() {
 		m.Resource.Status.Status = constants.TenantOpRunning
 	}
 
-	// Update ownerReferences
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		resource := &v1alpha1.OBTenantOperation{}
-		err = m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.Resource.GetNamespace(),
-			Name:      m.Resource.GetName(),
-		}, resource)
-		if err != nil {
-			return err
-		}
-		resource.SetOwnerReferences(m.Resource.GetOwnerReferences())
-		return m.Client.Update(m.Ctx, resource)
-	})
+	// // Update ownerReferences
+	// err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+	// 	resource := &v1alpha1.OBTenantOperation{}
+	// 	err = m.Client.Get(m.Ctx, types.NamespacedName{
+	// 		Namespace: m.Resource.GetNamespace(),
+	// 		Name:      m.Resource.GetName(),
+	// 	}, resource)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	resource.SetOwnerReferences(m.Resource.GetOwnerReferences())
+	// 	return m.Client.Update(m.Ctx, resource)
+	// })
 
 	if err != nil {
 		m.Logger.Error(err, "Failed to update ObtenantOperation object")

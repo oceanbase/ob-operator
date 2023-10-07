@@ -51,6 +51,9 @@ type OBClusterStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Task",type="string",JSONPath=".status.operationContext.task"
 
 // OBCluster is the Schema for the obclusters API
 type OBCluster struct {
@@ -62,9 +65,6 @@ type OBCluster struct {
 }
 
 //+kubebuilder:object:root=true
-//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-//+kubebuilder:printcolumn:name="Task",type="date",JSONPath=".status.operationContext.task"
 
 // OBClusterList contains a list of OBCluster
 type OBClusterList struct {
