@@ -230,7 +230,7 @@ func getTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 			return "", err
 		}
 		// Set restore source
-		restoreSource = fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), "standby_ro", primary.Spec.TenantName, standbyRoPwd)
+		restoreSource = fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), oceanbaseconst.StandbyROUser, primary.Spec.TenantName, standbyRoPwd)
 	}
 
 	return restoreSource, nil

@@ -191,12 +191,25 @@ func (m *ObTenantOperationManager) SwitchTenantsRole() error {
 			return err
 		}
 	} else if m.Resource.Status.Status == constants.TenantOpReverting {
-		// TODO: reverting switchover
 		err = con.SwitchTenantRole(m.Resource.Status.PrimaryTenant.Spec.TenantName, "PRIMARY")
 		if err != nil {
 			return err
 		}
+		primary := m.Resource.Status.PrimaryTenant.DeepCopy()
+		primary.Status.TenantRole = constants.TenantRolePrimary
+		primary.SetName(m.Resource.Spec.Switchover.PrimaryTenant)
+		err = m.retryUpdateTenant(primary)
+		if err != nil {
+			return err
+		}
 		err = con.SwitchTenantRole(m.Resource.Status.SecondaryTenant.Spec.TenantName, "STANDBY")
+		if err != nil {
+			return err
+		}
+		standby := m.Resource.Status.SecondaryTenant.DeepCopy()
+		standby.Status.TenantRole = constants.TenantRoleStandby
+		standby.SetName(m.Resource.Spec.Switchover.StandbyTenant)
+		err = m.retryUpdateTenant(standby)
 		if err != nil {
 			return err
 		}

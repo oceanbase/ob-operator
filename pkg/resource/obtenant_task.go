@@ -27,6 +27,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -1077,7 +1078,7 @@ func (m *OBTenantManager) deleteUnitConfig() error {
 	return nil
 }
 
-func (m *OBTenantManager) CreateUserByCredentialSec() error {
+func (m *OBTenantManager) CreateUserByCredentialSecrets() error {
 	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
 		// standby tenant can not need to create user
 		return nil
@@ -1122,19 +1123,19 @@ func (m *OBTenantManager) createUserByCredentials() error {
 			}
 		} else {
 			if standbyROPwd != "" {
-				err = con.CreateUserWithPwd("standby_ro", standbyROPwd)
+				err = con.CreateUserWithPwd(obconst.StandbyROUser, standbyROPwd)
 				if err != nil {
 					m.Logger.Error(err, "Failed to create standbyRO user with password")
 					return err
 				}
 			} else {
-				err = con.CreateUser("standby_ro")
+				err = con.CreateUser(obconst.StandbyROUser)
 				if err != nil {
 					m.Logger.Error(err, "Failed to create standbyRO user")
 					return err
 				}
 			}
-			err = con.GrantPrivilege("SELECT", "oceanbase.*", "standby_ro")
+			err = con.GrantPrivilege(obconst.SelectPrivilege, obconst.OceanbaseAllScope, obconst.StandbyROUser)
 			if err != nil {
 				m.Logger.Error(err, "Failed to grant privilege to standbyRO")
 				return err
