@@ -27,7 +27,7 @@ import (
 )
 
 func (m *ObTenantOperationManager) ChangeTenantRootPassword() error {
-	con, err := m.getTenantSysClient(m.Resource.Spec.ChangePwd.Tenant)
+	con, err := m.getTenantRootClient(m.Resource.Spec.ChangePwd.Tenant)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 	// Hack:
 	tenantManager.OBTenant.ObjectMeta.SetNamespace(m.Resource.Namespace)
 	// Just reuse the logic of creating users for new coming tenant
-	_ = tenantManager.createUserByCredentials()
+	_ = tenantManager.createUserWithCredentials()
 	return nil
 }
 
@@ -230,7 +230,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() error {
 			Logger:   m.Logger,
 			OBTenant: originStandby,
 		}
-		err = tenantManager.createUserByCredentials()
+		err = tenantManager.createUserWithCredentials()
 		if err != nil {
 			return err
 		}
@@ -256,7 +256,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() error {
 }
 
 // get operation manager to exec sql
-func (m *ObTenantOperationManager) getTenantSysClient(tenantName string) (*operation.OceanbaseOperationManager, error) {
+func (m *ObTenantOperationManager) getTenantRootClient(tenantName string) (*operation.OceanbaseOperationManager, error) {
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.Resource.Namespace,

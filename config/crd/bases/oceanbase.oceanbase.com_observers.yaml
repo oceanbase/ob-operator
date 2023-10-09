@@ -15,14 +15,11 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .status.nodeIp
-      name: NodeIP
+    - jsonPath: .status.podIp
+      name: PodIP
       type: string
     - jsonPath: .status.status
       name: Status
-      type: string
-    - jsonPath: .spec.clusterName
-      name: ClusterName
       type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age

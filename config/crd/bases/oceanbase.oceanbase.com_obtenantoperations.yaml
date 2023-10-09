@@ -24,6 +24,9 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .status.primaryTenant.spec.obcluster
+      name: Cluster
+      type: string
     - jsonPath: .status.primaryTenant.spec.tenantName
       name: PrimaryTenant
       type: string

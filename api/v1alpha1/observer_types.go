@@ -56,9 +56,8 @@ type OBServerStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="NodeIP",type="string",JSONPath=".status.nodeIp"
+//+kubebuilder:printcolumn:name="PodIP",type="string",JSONPath=".status.podIp"
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
-//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="OBStatus",type="string",JSONPath=".status.obStatus"
 

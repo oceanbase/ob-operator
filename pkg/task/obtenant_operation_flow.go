@@ -20,7 +20,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
-func FlowChangeTenantRootPassword() *TaskFlow {
+func ChangeTenantRootPassword() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.ChangeTenantRootPasswordFlow,
@@ -35,7 +35,7 @@ func FlowChangeTenantRootPassword() *TaskFlow {
 	}
 }
 
-func FlowActivateStandbyTenantOp() *TaskFlow {
+func ActivateStandbyTenantOp() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.ActivateStandbyTenantFlow,
@@ -51,7 +51,7 @@ func FlowActivateStandbyTenantOp() *TaskFlow {
 	}
 }
 
-func FlowSwitchoverTenants() *TaskFlow {
+func SwitchoverTenants() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.SwitchoverTenantsFlow,
@@ -67,7 +67,7 @@ func FlowSwitchoverTenants() *TaskFlow {
 	}
 }
 
-func FlowRevertSwitchoverTenants() *TaskFlow {
+func RevertSwitchoverTenants() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
 			Name: flowname.RevertSwitchoverTenantsFlow,

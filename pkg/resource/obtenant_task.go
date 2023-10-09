@@ -1078,12 +1078,12 @@ func (m *OBTenantManager) deleteUnitConfig() error {
 	return nil
 }
 
-func (m *OBTenantManager) CreateUserByCredentialSecrets() error {
+func (m *OBTenantManager) CreateUserWithCredentialSecrets() error {
 	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
 		// standby tenant can not need to create user
 		return nil
 	}
-	err := m.createUserByCredentials()
+	err := m.createUserWithCredentials()
 	if err != nil {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
 		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
@@ -1092,7 +1092,7 @@ func (m *OBTenantManager) CreateUserByCredentialSecrets() error {
 	return nil
 }
 
-func (m *OBTenantManager) createUserByCredentials() error {
+func (m *OBTenantManager) createUserWithCredentials() error {
 	con, err := m.getTenantClient()
 	if err != nil {
 		return err

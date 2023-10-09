@@ -65,6 +65,7 @@ type OBTenantOperationStatus struct {
 //+kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=".status.primaryTenant.spec.obcluster"
 //+kubebuilder:printcolumn:name="PrimaryTenant",type=string,JSONPath=".status.primaryTenant.spec.tenantName"
 //+kubebuilder:printcolumn:name="SecondaryTenant",type=string,JSONPath=".status.secondaryTenant.spec.tenantName",priority=1
 

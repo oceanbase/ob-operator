@@ -80,8 +80,8 @@ func init() {
 	GetRegistry().Register(flowname.RestoreAsStandbyFlow, RestoreAsStandby)
 
 	// tenant operation
-	GetRegistry().Register(flowname.ChangeTenantRootPasswordFlow, FlowChangeTenantRootPassword)
-	GetRegistry().Register(flowname.ActivateStandbyTenantFlow, FlowActivateStandbyTenantOp)
-	GetRegistry().Register(flowname.SwitchoverTenantsFlow, FlowSwitchoverTenants)
-	GetRegistry().Register(flowname.RevertSwitchoverTenantsFlow, FlowRevertSwitchoverTenants)
+	GetRegistry().Register(flowname.ChangeTenantRootPasswordFlow, ChangeTenantRootPassword)
+	GetRegistry().Register(flowname.ActivateStandbyTenantFlow, ActivateStandbyTenantOp)
+	GetRegistry().Register(flowname.SwitchoverTenantsFlow, SwitchoverTenants)
+	GetRegistry().Register(flowname.RevertSwitchoverTenantsFlow, RevertSwitchoverTenants)
 }

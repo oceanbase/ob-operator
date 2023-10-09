@@ -252,7 +252,7 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 	case taskname.CreateEmptyStandbyTenant:
 		return m.CreateEmptyStandbyTenant, nil
 	case taskname.CreateUsersByCredentials:
-		return m.CreateUserByCredentialSecrets, nil
+		return m.CreateUserWithCredentialSecrets, nil
 	case taskname.CheckPrimaryTenantLSIntegrity:
 		return m.CheckPrimaryTenantLSIntegrity, nil
 	default:
