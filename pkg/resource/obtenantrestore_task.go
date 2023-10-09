@@ -234,7 +234,7 @@ func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOper
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	con, err := GetSysOperationClient(m.Client, m.Logger, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}

@@ -462,7 +462,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
+	con, err := GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}

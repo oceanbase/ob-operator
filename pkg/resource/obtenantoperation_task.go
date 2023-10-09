@@ -274,7 +274,7 @@ func (m *ObTenantOperationManager) getTenantRootClient(tenantName string) (*oper
 		return nil, errors.Wrap(err, "get obcluster")
 	}
 	var con *operation.OceanbaseOperationManager
-	con, err = GetTenantOperationClient(m.Client, m.Logger, obcluster, tenant.Spec.TenantName, tenant.Status.Credentials.Root)
+	con, err = GetTenantRootOperationClient(m.Client, m.Logger, obcluster, tenant.Spec.TenantName, tenant.Status.Credentials.Root)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -291,7 +291,7 @@ func (m *ObTenantOperationManager) getClusterSysClient(clusterName string) (*ope
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	con, err := GetSysOperationClient(m.Client, m.Logger, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get cluster sys client")
 	}

@@ -1107,7 +1107,7 @@ func (m *OBTenantManager) createUserWithCredentials() error {
 				return err
 			}
 		} else if rootPwd != "" {
-			err = con.ChangeTenantUserPassword("root", rootPwd)
+			err = con.ChangeTenantUserPassword(obconst.RootUser, rootPwd)
 			if err != nil {
 				m.Logger.Error(err, "Failed to change root password")
 				return err

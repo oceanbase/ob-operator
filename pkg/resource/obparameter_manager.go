@@ -125,7 +125,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
-	operationManager, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	operationManager, err := GetSysOperationClient(m.Client, m.Logger, obcluster)
 	if err != nil {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
@@ -242,5 +242,5 @@ func (m *OBParameterManager) getOceanbaseOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	return GetSysOperationClient(m.Client, m.Logger, obcluster)
 }

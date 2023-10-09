@@ -30,7 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -61,7 +60,7 @@ func (m *OBTenantManager) getClusterSysClient() (*operation.OceanbaseOperationMa
 			"clusterName", m.OBTenant.Spec.ClusterName, "tenantName", m.OBTenant.Spec.TenantName)
 		return nil, errors.Wrap(err, "Get obcluster from K8s failed")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	return GetSysOperationClient(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBTenantManager) getTenantClient() (*operation.OceanbaseOperationManager, error) {
@@ -69,7 +68,7 @@ func (m *OBTenantManager) getTenantClient() (*operation.OceanbaseOperationManage
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetTenantOperationClient(m.Client, m.Logger, obcluster, m.OBTenant.Spec.TenantName, m.OBTenant.Status.Credentials.Root)
+	return GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.OBTenant.Spec.TenantName, m.OBTenant.Status.Credentials.Root)
 }
 
 func (m *OBTenantManager) IsNewResource() bool {
@@ -84,10 +83,7 @@ func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
-	m.OBTenant.Status.Credentials = v1alpha1.TenantCredentials{
-		Root:      oceanbaseconst.DefaultTenantRootSecret,
-		StandbyRO: m.OBTenant.Spec.Credentials.StandbyRO,
-	}
+	m.OBTenant.Status.Credentials = m.OBTenant.Spec.Credentials
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {

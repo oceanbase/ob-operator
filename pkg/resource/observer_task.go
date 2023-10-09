@@ -53,7 +53,7 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	return GetSysOperationClient(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBServerManager) AddServer() error {

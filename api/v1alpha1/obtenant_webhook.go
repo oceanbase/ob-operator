@@ -50,7 +50,6 @@ var _ webhook.Defaulter = &OBTenant{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenant) Default() {
-	tenantlog.Info("default", "name", r.Name)
 	cluster := &OBCluster{}
 	err := tenantClt.Get(context.Background(), types.NamespacedName{
 		Namespace: r.GetNamespace(),

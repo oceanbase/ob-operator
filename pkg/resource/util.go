@@ -48,17 +48,58 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 	return string(secret.Data[secretconst.PasswordKeyName]), err
 }
 
-func GetOceanbaseOperationManagerFromOBCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
-	logger.Info("Get cluster root client", "obCluster", obcluster)
-	return getOperationClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
+func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
+	logger.Info("Get cluster sys client", "obCluster", obcluster)
+	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 }
 
-func GetTenantOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
+func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
 	logger.Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
-	return getOperationClient(c, logger, obcluster, oceanbaseconst.RootUser, tenantName, credential)
+
+	observerList := &v1alpha1.OBServerList{}
+	err := c.List(context.Background(), observerList, client.MatchingLabels{
+		oceanbaseconst.LabelRefOBCluster: obcluster.Name,
+	}, client.InNamespace(obcluster.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "Get observer list")
+	}
+	if len(observerList.Items) == 0 {
+		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
+	}
+	password, err := ReadPassword(c, obcluster.Namespace, credential)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
+	}
+
+	var s *connector.OceanBaseDataSource
+	for _, observer := range observerList.Items {
+		address := observer.Status.PodIp
+		switch obcluster.Status.Status {
+		case clusterstatus.New:
+			return nil, errors.New("Cluster is not bootstrapped")
+		case clusterstatus.Bootstrapped:
+			return nil, errors.New("Cluster is not initialized")
+		default:
+			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, password, oceanbaseconst.DefaultDatabase)
+		}
+		// if err is nil, db connection is already checked available
+		rootClient, err := operation.GetOceanbaseOperationManager(s)
+		if err == nil && rootClient != nil {
+			rootClient.Logger = logger
+			return rootClient, nil
+		}
+		// err is not nil, try to use empty password
+		s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, "", oceanbaseconst.DefaultDatabase)
+		rootClient, err = operation.GetOceanbaseOperationManager(s)
+		if err == nil && rootClient != nil {
+			rootClient.Logger = logger
+			return rootClient, nil
+		}
+	}
+	return nil, errors.Errorf("Can not get root operation client of tenant %s in obcluster %s after checked all server", tenantName, obcluster.Name)
 }
 
-func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
+func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
 		oceanbaseconst.LabelRefOBCluster: obcluster.Name,
@@ -87,10 +128,10 @@ func getOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
 		}
 		// if err is nil, db connection is already checked available
-		oceanbaseOperationManager, err := operation.GetOceanbaseOperationManager(s)
-		if err == nil && oceanbaseOperationManager != nil {
-			oceanbaseOperationManager.Logger = logger
-			return oceanbaseOperationManager, nil
+		sysClient, err := operation.GetOceanbaseOperationManager(s)
+		if err == nil && sysClient != nil {
+			sysClient.Logger = logger
+			return sysClient, nil
 		}
 	}
 	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all server", obcluster.Name)
@@ -110,7 +151,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get root password")
 	}
-	oceanbaseOperationManager, err := GetOceanbaseOperationManagerFromOBCluster(c, logger, obcluster)
+	oceanbaseOperationManager, err := GetSysOperationClient(c, logger, obcluster)
 	if err != nil {
 		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
 	}
