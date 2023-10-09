@@ -15,7 +15,8 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
@@ -27,12 +28,12 @@ type OBTenantRestoreSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	TargetTenant  string               `json:"targetTenant"`
-	TargetCluster string               `json:"targetCluster"`
-	RestoreRole   constants.TenantRole `json:"restoreRole"`
-	Source        RestoreSourceSpec    `json:"source"`
-	Option        string               `json:"restoreOption"`
-	PrimaryTenant *string              `json:"primaryTenant,omitempty"`
+	TargetTenant  string              `json:"targetTenant"`
+	TargetCluster string              `json:"targetCluster"`
+	RestoreRole   apitypes.TenantRole `json:"restoreRole"`
+	Source        RestoreSourceSpec   `json:"source"`
+	Option        string              `json:"restoreOption"`
+	PrimaryTenant *string             `json:"primaryTenant,omitempty"`
 }
 
 // +kubebuilder:object:generate=false
@@ -40,9 +41,9 @@ type OBTenantRestoreSpec struct {
 type OBTenantRestoreStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           constants.RestoreJobStatus `json:"status"`
-	RestoreProgress  *model.RestoreHistory      `json:"restoreProgress,omitempty"`
-	OperationContext *OperationContext          `json:"operationContext,omitempty"`
+	Status           apitypes.RestoreJobStatus `json:"status"`
+	RestoreProgress  *model.RestoreHistory     `json:"restoreProgress,omitempty"`
+	OperationContext *OperationContext         `json:"operationContext,omitempty"`
 }
 
 func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {

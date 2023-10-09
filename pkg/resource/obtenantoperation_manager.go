@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -124,7 +125,7 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		case "":
 			fallthrough
 		case strategy.StartOver:
-			m.Resource.Status.Status = constants.TenantOperationStatus(failureRule.NextTryStatus)
+			m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
 			m.Resource.Status.OperationContext = nil
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
@@ -134,7 +135,7 @@ func (m *ObTenantOperationManager) HandleFailure() {
 }
 
 func (m *ObTenantOperationManager) FinishTask() {
-	m.Resource.Status.Status = constants.TenantOperationStatus(m.Resource.Status.OperationContext.TargetStatus)
+	m.Resource.Status.Status = apitypes.TenantOperationStatus(m.Resource.Status.OperationContext.TargetStatus)
 	m.Resource.Status.OperationContext = nil
 }
 

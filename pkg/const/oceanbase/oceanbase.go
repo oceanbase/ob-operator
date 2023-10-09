@@ -120,3 +120,8 @@ const (
 const (
 	OceanbaseAllScope = "oceanbase.*"
 )
+
+const (
+	TenantOpRetryTimes      = 9
+	TenantOpRetryGapSeconds = 9
+)

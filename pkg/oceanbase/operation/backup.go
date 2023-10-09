@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
@@ -56,7 +57,7 @@ func (m *OceanbaseOperationManager) CreateBackupIncr() error {
 	return m.ExecWithDefaultTimeout(sql.CreateBackupIncr)
 }
 
-func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) CreateAndReturnBackupJob(jobType apitypes.BackupJobType) (*model.OBBackupJob, error) {
 	var err error
 	if jobType == constants.BackupJobTypeFull {
 		err = m.ExecWithDefaultTimeout(sql.CreateBackupFull)
@@ -197,11 +198,11 @@ func (m *OceanbaseOperationManager) listBackupTaskOrHistory(statement string) ([
 	return tasks, nil
 }
 
-func (m *OceanbaseOperationManager) GetLatestBackupJobOfType(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) GetLatestBackupJobOfType(jobType apitypes.BackupJobType) (*model.OBBackupJob, error) {
 	return m.getLatestBackupJob([]string{sql.QueryLatestBackupJobOfType, sql.QueryLatestBackupJobHistoryOfType}, jobType)
 }
 
-func (m *OceanbaseOperationManager) GetLatestBackupJobOfTypeAndPath(jobType constants.BackupJobType, path string) (*model.OBBackupJob, error) {
+func (m *OceanbaseOperationManager) GetLatestBackupJobOfTypeAndPath(jobType apitypes.BackupJobType, path string) (*model.OBBackupJob, error) {
 	return m.getLatestBackupJob([]string{sql.QueryLatestBackupJobOfTypeAndPath, sql.QueryLatestBackupJobHistoryOfTypeAndPath}, jobType, path)
 }
 

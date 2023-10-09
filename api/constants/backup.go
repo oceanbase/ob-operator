@@ -12,62 +12,47 @@ See the Mulan PSL v2 for more details.
 
 package constants
 
-type BackupJobType string
+import "github.com/oceanbase/ob-operator/api/types"
 
 const (
-	BackupJobTypeFull    BackupJobType = "FULL"
-	BackupJobTypeIncr    BackupJobType = "INC"
-	BackupJobTypeClean   BackupJobType = "CLEAN"
-	BackupJobTypeArchive BackupJobType = "ARCHIVE"
+	BackupJobTypeFull    types.BackupJobType = "FULL"
+	BackupJobTypeIncr    types.BackupJobType = "INC"
+	BackupJobTypeClean   types.BackupJobType = "CLEAN"
+	BackupJobTypeArchive types.BackupJobType = "ARCHIVE"
 )
 
-type BackupJobStatus string
-
 const (
-	BackupJobStatusRunning      BackupJobStatus = "RUNNING"
-	BackupJobStatusInitializing BackupJobStatus = "INITIALIZING"
-	BackupJobStatusSuccessful   BackupJobStatus = "SUCCESSFUL"
-	BackupJobStatusFailed       BackupJobStatus = "FAILED"
-	BackupJobStatusCanceled     BackupJobStatus = "CANCELED"
-	BackupJobStatusStopped      BackupJobStatus = "STOPPED"
-	BackupJobStatusSuspend      BackupJobStatus = "SUSPEND"
+	BackupJobStatusRunning      types.BackupJobStatus = "RUNNING"
+	BackupJobStatusInitializing types.BackupJobStatus = "INITIALIZING"
+	BackupJobStatusSuccessful   types.BackupJobStatus = "SUCCESSFUL"
+	BackupJobStatusFailed       types.BackupJobStatus = "FAILED"
+	BackupJobStatusCanceled     types.BackupJobStatus = "CANCELED"
+	BackupJobStatusStopped      types.BackupJobStatus = "STOPPED"
+	BackupJobStatusSuspend      types.BackupJobStatus = "SUSPEND"
 )
 
-type BackupPolicyStatusType string
-
 const (
-	BackupPolicyStatusPreparing BackupPolicyStatusType = "PREPARING"
-	BackupPolicyStatusPrepared  BackupPolicyStatusType = "PREPARED"
-	BackupPolicyStatusRunning   BackupPolicyStatusType = "RUNNING"
-	BackupPolicyStatusFailed    BackupPolicyStatusType = "FAILED"
-	BackupPolicyStatusPausing   BackupPolicyStatusType = "PAUSING"
-	BackupPolicyStatusPaused    BackupPolicyStatusType = "PAUSED"
-	BackupPolicyStatusStopped   BackupPolicyStatusType = "STOPPED"
-	BackupPolicyStatusResuming  BackupPolicyStatusType = "RESUMING"
+	BackupPolicyStatusPreparing types.BackupPolicyStatusType = "PREPARING"
+	BackupPolicyStatusPrepared  types.BackupPolicyStatusType = "PREPARED"
+	BackupPolicyStatusRunning   types.BackupPolicyStatusType = "RUNNING"
+	BackupPolicyStatusFailed    types.BackupPolicyStatusType = "FAILED"
+	BackupPolicyStatusPausing   types.BackupPolicyStatusType = "PAUSING"
+	BackupPolicyStatusPaused    types.BackupPolicyStatusType = "PAUSED"
+	BackupPolicyStatusStopped   types.BackupPolicyStatusType = "STOPPED"
+	BackupPolicyStatusResuming  types.BackupPolicyStatusType = "RESUMING"
 )
 
-type BackupDestination struct {
-	Type BackupDestType `json:"type,omitempty"`
-	Path string         `json:"path,omitempty"`
-}
-
-type BackupDestType string
-
 const (
-	BackupDestTypeOSS BackupDestType = "OSS"
-	BackupDestTypeNFS BackupDestType = "NFS"
+	BackupDestTypeOSS types.BackupDestType = "OSS"
+	BackupDestTypeNFS types.BackupDestType = "NFS"
 )
 
-type LogArchiveDestState string
-
 const (
-	LogArchiveDestStateEnable LogArchiveDestState = "ENABLE"
-	LogArchiveDestStateDefer  LogArchiveDestState = "DEFER"
+	LogArchiveDestStateEnable types.LogArchiveDestState = "ENABLE"
+	LogArchiveDestStateDefer  types.LogArchiveDestState = "DEFER"
 )
 
-type ArchiveBinding string
-
 const (
-	ArchiveBindingOptional  = "Optional"
-	ArchiveBindingMandatory = "Mandatory"
+	ArchiveBindingOptional  types.ArchiveBinding = "Optional"
+	ArchiveBindingMandatory types.ArchiveBinding = "Mandatory"
 )

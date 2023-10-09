@@ -17,7 +17,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	constants "github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
@@ -30,11 +30,11 @@ type OBTenantBackupSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
-	Type          constants.BackupJobType `json:"type"`
-	TenantName    string                  `json:"tenantName"`
-	TenantSecret  string                  `json:"tenantSecret"`
-	ObClusterName string                  `json:"obClusterName"`
-	Path          string                  `json:"path,omitempty"`
+	Type          apitypes.BackupJobType `json:"type"`
+	TenantName    string                 `json:"tenantName"`
+	TenantSecret  string                 `json:"tenantSecret"`
+	ObClusterName string                 `json:"obClusterName"`
+	Path          string                 `json:"path,omitempty"`
 }
 
 // +kubebuilder:object:generate=false
@@ -42,14 +42,14 @@ type OBTenantBackupSpec struct {
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           constants.BackupJobStatus `json:"status"`
-	Progress         string                    `json:"progress,omitempty"`
-	OperationContext *OperationContext         `json:"operationContext,omitempty"`
-	StartedAt        string                    `json:"startedAt,omitempty"`
-	EndedAt          string                    `json:"endedAt,omitempty"`
-	BackupJob        *model.OBBackupJob        `json:"backupJob,omitempty"`
-	ArchiveLogJob    *model.OBArchiveLogJob    `json:"archiveLogJob,omitempty"`
-	DataCleanJob     *model.OBBackupCleanJob   `json:"dataCleanJob,omitempty"`
+	Status           apitypes.BackupJobStatus `json:"status"`
+	Progress         string                   `json:"progress,omitempty"`
+	OperationContext *OperationContext        `json:"operationContext,omitempty"`
+	StartedAt        string                   `json:"startedAt,omitempty"`
+	EndedAt          string                   `json:"endedAt,omitempty"`
+	BackupJob        *model.OBBackupJob       `json:"backupJob,omitempty"`
+	ArchiveLogJob    *model.OBArchiveLogJob   `json:"archiveLogJob,omitempty"`
+	DataCleanJob     *model.OBBackupCleanJob  `json:"dataCleanJob,omitempty"`
 }
 
 // fix: implementation of DeepCopyInto needed by zz_generated.deepcopy.go

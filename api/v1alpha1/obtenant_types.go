@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -46,9 +46,9 @@ type OBTenantSpec struct {
 	Pools []ResourcePoolSpec `json:"pools"`
 
 	//+kubebuilder:default=PRIMARY
-	TenantRole  constants.TenantRole `json:"tenantRole,omitempty"`
-	Source      *TenantSourceSpec    `json:"source,omitempty"`
-	Credentials TenantCredentials    `json:"credentials"`
+	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
+	Source      *TenantSourceSpec   `json:"source,omitempty"`
+	Credentials TenantCredentials   `json:"credentials"`
 }
 
 type TenantCredentials struct {
@@ -113,9 +113,9 @@ type OBTenantStatus struct {
 	OperationContext *OperationContext    `json:"operationContext,omitempty"`
 	TenantRecordInfo TenantRecordInfo     `json:"tenantRecordInfo,omitempty"`
 
-	TenantRole  constants.TenantRole `json:"tenantRole,omitempty"`
-	Source      *TenantSourceStatus  `json:"source,omitempty"`
-	Credentials TenantCredentials    `json:"credentials,omitempty"`
+	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
+	Source      *TenantSourceStatus `json:"source,omitempty"`
+	Credentials TenantCredentials   `json:"credentials,omitempty"`
 }
 
 type TenantSourceStatus struct {

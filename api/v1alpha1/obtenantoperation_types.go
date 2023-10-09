@@ -19,7 +19,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -30,10 +30,10 @@ type OBTenantOperationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Type       constants.TenantOperationType `json:"type"`
-	Switchover *OBTenantOpSwitchoverSpec     `json:"switchover,omitempty"`
-	Failover   *OBTenantOpFailoverSpec       `json:"failover,omitempty"`
-	ChangePwd  *OBTenantOpChangePwdSpec      `json:"changePwd,omitempty"`
+	Type       apitypes.TenantOperationType `json:"type"`
+	Switchover *OBTenantOpSwitchoverSpec    `json:"switchover,omitempty"`
+	Failover   *OBTenantOpFailoverSpec      `json:"failover,omitempty"`
+	ChangePwd  *OBTenantOpChangePwdSpec     `json:"changePwd,omitempty"`
 }
 
 type OBTenantOpSwitchoverSpec struct {
@@ -54,10 +54,10 @@ type OBTenantOpChangePwdSpec struct {
 type OBTenantOperationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           constants.TenantOperationStatus `json:"status"`
-	OperationContext *OperationContext               `json:"operationContext,omitempty"`
-	PrimaryTenant    *OBTenant                       `json:"primaryTenant,omitempty"`
-	SecondaryTenant  *OBTenant                       `json:"secondaryTenant,omitempty"`
+	Status           apitypes.TenantOperationStatus `json:"status"`
+	OperationContext *OperationContext              `json:"operationContext,omitempty"`
+	PrimaryTenant    *OBTenant                      `json:"primaryTenant,omitempty"`
+	SecondaryTenant  *OBTenant                      `json:"secondaryTenant,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -12,27 +12,23 @@ See the Mulan PSL v2 for more details.
 
 package constants
 
-type TenantRole string
+import "github.com/oceanbase/ob-operator/api/types"
 
 const (
-	TenantRolePrimary TenantRole = "PRIMARY"
-	TenantRoleStandby TenantRole = "STANDBY"
+	TenantRolePrimary types.TenantRole = "PRIMARY"
+	TenantRoleStandby types.TenantRole = "STANDBY"
 )
 
-type TenantOperationType string
-
 const (
-	TenantOpSwitchover TenantOperationType = "SWITCHOVER"
-	TenantOpFailover   TenantOperationType = "FAILOVER"
-	TenantOpChangePwd  TenantOperationType = "CHANGE_PASSWORD"
+	TenantOpSwitchover types.TenantOperationType = "SWITCHOVER"
+	TenantOpFailover   types.TenantOperationType = "FAILOVER"
+	TenantOpChangePwd  types.TenantOperationType = "CHANGE_PASSWORD"
 )
 
-type TenantOperationStatus string
-
 const (
-	TenantOpStarting   TenantOperationStatus = "STARTING"
-	TenantOpRunning    TenantOperationStatus = "RUNNING"
-	TenantOpSuccessful TenantOperationStatus = "SUCCESSFUL"
-	TenantOpFailed     TenantOperationStatus = "FAILED"
-	TenantOpReverting  TenantOperationStatus = "REVERTING"
+	TenantOpStarting   types.TenantOperationStatus = "STARTING"
+	TenantOpRunning    types.TenantOperationStatus = "RUNNING"
+	TenantOpSuccessful types.TenantOperationStatus = "SUCCESSFUL"
+	TenantOpFailed     types.TenantOperationStatus = "FAILED"
+	TenantOpReverting  types.TenantOperationStatus = "REVERTING"
 )

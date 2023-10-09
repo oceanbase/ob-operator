@@ -22,6 +22,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
@@ -35,7 +36,7 @@ func (m *ObTenantOperationManager) ChangeTenantRootPassword() error {
 	if err != nil {
 		return err
 	}
-	err = con.ChangeTenantUserPassword("root", pwd)
+	err = con.ChangeTenantUserPassword(oceanbaseconst.RootUser, pwd)
 	if err != nil {
 		return err
 	}
@@ -85,7 +86,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 	}
 
 	// Wait for the tenant to be ready
-	maxRetry := 9
+	maxRetry := oceanbaseconst.TenantOpRetryTimes
 	counter := 0
 	for counter < maxRetry {
 		tenants, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
@@ -99,7 +100,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() error {
 		if t.TenantType == "USER" && t.TenantRole == "PRIMARY" && t.SwitchoverStatus == "NORMAL" {
 			break
 		}
-		time.Sleep(9 * time.Second)
+		time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
 		counter++
 	}
 	if counter >= maxRetry {
@@ -137,7 +138,7 @@ func (m *ObTenantOperationManager) SwitchTenantsRole() error {
 		if err != nil {
 			return err
 		}
-		maxRetry := 5
+		maxRetry := oceanbaseconst.TenantOpRetryTimes
 		counter := 0
 		for counter < maxRetry {
 			primary, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
@@ -149,7 +150,7 @@ func (m *ObTenantOperationManager) SwitchTenantsRole() error {
 			}
 			p := primary[0]
 			if p.TenantRole != "STANDBY" || p.SwitchoverStatus != "NORMAL" {
-				time.Sleep(9 * time.Second)
+				time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
 				counter++
 			} else {
 				break
@@ -177,7 +178,7 @@ func (m *ObTenantOperationManager) SwitchTenantsRole() error {
 			}
 			s := standby[0]
 			if s.TenantRole != "PRIMARY" || s.SwitchoverStatus != "NORMAL" {
-				time.Sleep(9 * time.Second)
+				time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
 				counter++
 			} else {
 				break

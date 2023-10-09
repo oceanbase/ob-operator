@@ -12,15 +12,15 @@ See the Mulan PSL v2 for more details.
 
 package constants
 
-type RestoreJobStatus string
+import "github.com/oceanbase/ob-operator/api/types"
 
 const (
-	RestoreJobStarting   RestoreJobStatus = "STARTING"
-	RestoreJobRunning    RestoreJobStatus = "RUNNING"
-	RestoreJobFailed     RestoreJobStatus = "FAILED"
-	RestoreJobSuccessful RestoreJobStatus = "SUCCESSFUL"
-	RestoreJobCanceled   RestoreJobStatus = "CANCELED"
+	RestoreJobStarting   types.RestoreJobStatus = "STARTING"
+	RestoreJobRunning    types.RestoreJobStatus = "RUNNING"
+	RestoreJobFailed     types.RestoreJobStatus = "FAILED"
+	RestoreJobSuccessful types.RestoreJobStatus = "SUCCESSFUL"
+	RestoreJobCanceled   types.RestoreJobStatus = "CANCELED"
 
-	RestoreJobStatusActivating RestoreJobStatus = "ACTIVATING"
-	RestoreJobStatusReplaying  RestoreJobStatus = "REPLAYING"
+	RestoreJobStatusActivating types.RestoreJobStatus = "ACTIVATING"
+	RestoreJobStatusReplaying  types.RestoreJobStatus = "REPLAYING"
 )

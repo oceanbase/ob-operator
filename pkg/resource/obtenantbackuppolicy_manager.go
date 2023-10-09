@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -109,7 +110,7 @@ func (m *ObTenantBackupPolicyManager) ClearTaskInfo() {
 }
 
 func (m *ObTenantBackupPolicyManager) FinishTask() {
-	m.BackupPolicy.Status.Status = constants.BackupPolicyStatusType(m.BackupPolicy.Status.OperationContext.TargetStatus)
+	m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(m.BackupPolicy.Status.OperationContext.TargetStatus)
 	m.BackupPolicy.Status.OperationContext = nil
 }
 
@@ -268,7 +269,7 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 		case "":
 			fallthrough
 		case strategy.StartOver:
-			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusType(failureRule.NextTryStatus)
+			m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(failureRule.NextTryStatus)
 			m.BackupPolicy.Status.OperationContext = nil
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
