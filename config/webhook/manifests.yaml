@@ -44,6 +44,26 @@ webhooks:
     resources:
     - obtenantbackuppolicies
   sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenantoperation
+  failurePolicy: Fail
+  name: mobtenantoperation.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenantoperations
+  sideEffects: None
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
@@ -89,4 +109,24 @@ webhooks:
     - UPDATE
     resources:
     - obtenantbackuppolicies
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obtenantoperation
+  failurePolicy: Fail
+  name: vobtenantoperation.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obtenantoperations
   sideEffects: None

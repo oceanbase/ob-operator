@@ -74,9 +74,10 @@ const (
 )
 
 const (
-	RootUser     = "root"
-	ProxyUser    = "proxyro"
-	OperatorUser = "operator"
+	RootUser      = "root"
+	ProxyUser     = "proxyro"
+	OperatorUser  = "operator"
+	StandbyROUser = "standbyro"
 )
 
 const (
@@ -114,4 +115,13 @@ const (
 const (
 	LabelTenantName = "oceanbase.oceanbase.com/tenant-name"
 	LabelBackupType = "oceanbase.oceanbase.com/backup-type"
+)
+
+const (
+	OceanbaseAllScope = "oceanbase.*"
+)
+
+const (
+	TenantOpRetryTimes      = 9
+	TenantOpRetryGapSeconds = 9
 )

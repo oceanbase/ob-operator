@@ -24,8 +24,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
-// Incompatible with model.Tenant struct which contains only essential fields for tenant management
-// TODO: align the two structs: model.Tenant and model.OBTenant
 func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*model.OBTenant, error) {
 	tenants := make([]*model.OBTenant, 0)
 	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
@@ -46,8 +44,8 @@ func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*mo
 	return units, nil
 }
 
-func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.Tenant, error) {
-	tenant := &model.Tenant{}
+func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.OBTenant, error) {
+	tenant := &model.OBTenant{}
 	err := m.QueryRow(tenant, sql.GetTenantByName, tenantName)
 	if err != nil {
 		return tenant, errors.Wrap(err, "Get tenantconst by tenantName")
@@ -469,4 +467,64 @@ func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (s
 func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []any) {
 	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
+}
+
+func (m *OceanbaseOperationManager) ChangeTenantUserPassword(username, password string) error {
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.ChangeTenantUserPassword, username), password)
+	if err != nil {
+		return errors.Wrap(err, "Change tenant user password")
+	}
+	return nil
+}
+
+func (m OceanbaseOperationManager) ListTenantAccessPoints(tenantName string) ([]*model.TenantAccessPoint, error) {
+	aps := make([]*model.TenantAccessPoint, 0)
+	err := m.QueryList(&aps, sql.QueryTenantAccessPointByName, tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list tenant access points")
+		return nil, errors.Wrap(err, "List tenant access points")
+	}
+	return aps, nil
+}
+
+func (m OceanbaseOperationManager) CreateEmptyStandbyTenant(params *model.CreateEmptyStandbyTenantParam) error {
+	sqlStatement := fmt.Sprintf(sql.CreateEmptyStandbyTenant, params.TenantName, "'"+strings.Join(params.PoolList, "','")+"'")
+	err := m.ExecWithTimeout(config.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
+	if err != nil {
+		m.Logger.Error(err, "Failed to create empty standby tenant")
+		return errors.Wrap(err, "Create empty standby tenant")
+	}
+	return nil
+}
+
+func (m OceanbaseOperationManager) SwitchTenantRole(tenant, role string) error {
+	if role != "PRIMARY" && role != "STANDBY" {
+		return errors.New("invalid tenant role")
+	}
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.SwitchTenantRole, role, tenant))
+	if err != nil {
+		m.Logger.Error(err, "Failed to switch tenant's role")
+		return err
+	}
+	return nil
+}
+
+func (m OceanbaseOperationManager) ListLSDeletion(tenantId int64) ([]*model.LSInfo, error) {
+	lsDeletions := make([]*model.LSInfo, 0)
+	err := m.QueryList(&lsDeletions, sql.QueryLSDeletion, tenantId, tenantId)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list ls deletion")
+		return nil, errors.Wrap(err, "List ls deletion")
+	}
+	return lsDeletions, nil
+}
+
+func (m OceanbaseOperationManager) ListLogStats(tenantId int64) ([]*model.LogStat, error) {
+	logStats := make([]*model.LogStat, 0)
+	err := m.QueryList(&logStats, sql.QueryLogStats, tenantId)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list log stats")
+		return nil, errors.Wrap(err, "List log stats")
+	}
+	return logStats, nil
 }

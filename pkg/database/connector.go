@@ -63,6 +63,7 @@ func (c *Connector) Init() error {
 	}
 	err = db.Ping()
 	if err != nil {
+		_ = db.Close()
 		return errors.Wrapf(err, "Ping datasource %s", c.ds.String())
 	}
 	c.client = &Client{db}

@@ -120,3 +120,29 @@ type UnitConfigV4SQLParam struct {
 	LogDiskSize    int64
 	IopsWeight     int64
 }
+
+type TenantAccessPoint struct {
+	TenantID   int64  `json:"tenant_id" db:"tenant_id"`
+	TenantName string `json:"tenant_name" db:"tenant_name"`
+	SvrIP      string `json:"svr_ip" db:"svr_ip"`
+	SqlPort    int64  `json:"sql_port" db:"sql_port"`
+}
+
+type CreateEmptyStandbyTenantParam struct {
+	TenantName    string
+	RestoreSource string
+	PrimaryZone   string
+	Locality      string
+	PoolList      []string
+}
+
+// Match CDB_OB_LS and CDB_OB_LS_HISTORY
+type LSInfo struct {
+	LSID int64 `json:"ls_id" db:"ls_id"`
+}
+
+// Match GV$OB_LOG_STAT
+type LogStat struct {
+	LSID     int64 `json:"ls_id" db:"ls_id"`
+	BeginLSN int64 `json:"begin_lsn" db:"begin_lsn"`
+}

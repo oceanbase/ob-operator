@@ -27,6 +27,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/param"
 )
 
 // Restore progress:
@@ -84,6 +85,7 @@ func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 			RestoreRole:   m.OBTenant.Spec.TenantRole,
 			Source:        *m.OBTenant.Spec.Source.Restore,
 			Option:        m.generateRestoreOption(),
+			PrimaryTenant: m.OBTenant.Spec.Source.Tenant,
 		},
 	}
 	err = m.Client.Create(m.Ctx, restoreJob)
@@ -111,11 +113,12 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 		}
 		time.Sleep(5 * time.Second)
 	}
+	GlobalWhiteListMap[m.OBTenant.Spec.TenantName] = m.OBTenant.Spec.ConnectWhiteList
 	return nil
 }
 
 func (m *OBTenantManager) CancelTenantRestoreJob() error {
-	con, err := m.getOceanbaseOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
@@ -151,7 +154,7 @@ func (m *OBTenantManager) CancelTenantRestoreJob() error {
 // OBTenantRestore tasks
 
 func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
@@ -180,9 +183,23 @@ func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
 }
 
 func (m *ObTenantRestoreManager) StartLogReplay() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
+	}
+	if m.Resource.Spec.PrimaryTenant != nil {
+		restoreSource, err := getTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.Resource.Namespace, *m.Resource.Spec.PrimaryTenant)
+		if err != nil {
+			return err
+		}
+		err = con.SetParameter("LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
+			Name:  "TENANT",
+			Value: m.Resource.Spec.TargetTenant,
+		})
+		if err != nil {
+			m.Logger.Error(err, "Failed to set log restore source")
+			return err
+		}
 	}
 	replayUntil := m.Resource.Spec.Source.ReplayLogUntil
 	if replayUntil == nil || replayUntil.Unlimited {
@@ -198,15 +215,14 @@ func (m *ObTenantRestoreManager) StartLogReplay() error {
 }
 
 func (m *ObTenantRestoreManager) ActivateStandby() error {
-	con, err := m.getOperationManager()
+	con, err := m.getClusterSysClient()
 	if err != nil {
 		return err
 	}
 	return con.ActivateStandby(m.Resource.Spec.TargetTenant)
 }
 
-// get operation manager to exec sql
-func (m *ObTenantRestoreManager) getOperationManager() (*operation.OceanbaseOperationManager, error) {
+func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
 	if m.con != nil {
 		return m.con, nil
 	}
@@ -218,7 +234,7 @@ func (m *ObTenantRestoreManager) getOperationManager() (*operation.OceanbaseOper
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	con, err := GetSysOperationClient(m.Client, m.Logger, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}

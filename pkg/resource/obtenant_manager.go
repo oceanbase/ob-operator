@@ -53,14 +53,22 @@ type OBTenantManager struct {
 // TODO add lock to be thread safe, and read/write whitelist from/to DB
 var GlobalWhiteListMap = make(map[string]string, 0)
 
-func (m *OBTenantManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
+func (m *OBTenantManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		m.Logger.Error(err, "get obcluster from k8s failed",
 			"clusterName", m.OBTenant.Spec.ClusterName, "tenantName", m.OBTenant.Spec.TenantName)
 		return nil, errors.Wrap(err, "Get obcluster from K8s failed")
 	}
-	return GetOceanbaseOperationManagerFromOBCluster(m.Client, m.Logger, obcluster)
+	return GetSysOperationClient(m.Client, m.Logger, obcluster)
+}
+
+func (m *OBTenantManager) getTenantClient() (*operation.OceanbaseOperationManager, error) {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return nil, errors.Wrap(err, "Get obcluster from K8s")
+	}
+	return GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.OBTenant.Spec.TenantName, m.OBTenant.Status.Credentials.Root)
 }
 
 func (m *OBTenantManager) IsNewResource() bool {
@@ -75,8 +83,13 @@ func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
+	m.OBTenant.Status.Credentials = m.OBTenant.Spec.Credentials
+	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
+
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
+	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
+		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
@@ -232,6 +245,12 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 		return m.WatchRestoreJobToFinish, nil
 	case taskname.CancelRestoreJob:
 		return m.CancelTenantRestoreJob, nil
+	case taskname.CreateEmptyStandbyTenant:
+		return m.CreateEmptyStandbyTenant, nil
+	case taskname.CreateUsersByCredentials:
+		return m.CreateUserWithCredentialSecrets, nil
+	case taskname.CheckPrimaryTenantLSIntegrity:
+		return m.CheckPrimaryTenantLSIntegrity, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", taskName)
 	}
@@ -287,6 +306,8 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flowname.RestoreTenant)
 	case tenantstatus.CancelingRestore:
 		taskFlow, err = task.GetRegistry().Get(flowname.CancelRestoreFlow)
+	case tenantstatus.CreatingEmptyStandby:
+		taskFlow, err = task.GetRegistry().Get(flowname.CreateEmptyStandbyTenant)
 	default:
 		m.Logger.Info("no need to run anything for obtenant")
 		return nil, nil
@@ -500,7 +521,11 @@ func (m *OBTenantManager) hasModifiedCharset() bool {
 
 func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) {
 	tenantName := m.OBTenant.Spec.TenantName
-	tenantCurrentStatus := &v1alpha1.OBTenantStatus{}
+	tenantCurrentStatus := &v1alpha1.OBTenantStatus{
+		Credentials: m.OBTenant.Status.Credentials,
+		TenantRole:  m.OBTenant.Status.TenantRole,
+		Source:      m.OBTenant.Status.Source,
+	}
 
 	tenantExist, err := m.tenantExist(tenantName)
 	if err != nil {
@@ -554,10 +579,15 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo.ZoneList = strings.Join(zoneList, ",")
 	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
 
+	// Root password changed
+	if _, err = m.getTenantClient(); err != nil {
+		tenantCurrentStatus.Credentials.Root = m.OBTenant.Spec.Credentials.Root
+	}
+
 	return tenantCurrentStatus, nil
 }
 
-func (m *OBTenantManager) buildPoolStatusList(obTenant *model.Tenant) ([]v1alpha1.ResourcePoolStatus, error) {
+func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
 	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var locality string
 	var primaryZone string
@@ -607,7 +637,7 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.Tenant) ([]v1alpha
 
 func (m *OBTenantManager) generateStatusZone(tenantID int64) ([]string, error) {
 	var zoneList []string
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return zoneList, errors.Wrap(err, "Get Sql Operator Error When Generating Zone For Tenant CR Status")
 	}
@@ -640,7 +670,7 @@ func (m *OBTenantManager) generateStatusZone(tenantID int64) ([]string, error) {
 
 func (m *OBTenantManager) buildUnitConfigV4FromDB(zone string, tenantID int64) (*v1alpha1.UnitConfig, error) {
 	unitConfig := &v1alpha1.UnitConfig{}
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
@@ -690,7 +720,7 @@ func (m *OBTenantManager) buildUnitConfigV4FromDB(zone string, tenantID int64) (
 
 func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]v1alpha1.UnitStatus, error) {
 	var unitList []v1alpha1.UnitStatus
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}

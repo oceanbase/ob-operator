@@ -10,17 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constants
-
-import "github.com/oceanbase/ob-operator/api/types"
+package name
 
 const (
-	RestoreJobStarting   types.RestoreJobStatus = "STARTING"
-	RestoreJobRunning    types.RestoreJobStatus = "RUNNING"
-	RestoreJobFailed     types.RestoreJobStatus = "FAILED"
-	RestoreJobSuccessful types.RestoreJobStatus = "SUCCESSFUL"
-	RestoreJobCanceled   types.RestoreJobStatus = "CANCELED"
-
-	RestoreJobStatusActivating types.RestoreJobStatus = "ACTIVATING"
-	RestoreJobStatusReplaying  types.RestoreJobStatus = "REPLAYING"
+	OpChangeTenantRootPassword       string = "change tenant root password"
+	OpActivateStandby                string = "activate standby"
+	OpCreateUsersForActivatedStandby string = "create users for activated standby"
+	OpSwitchTenantsRole              string = "switch tenants role"
+	OpSetTenantLogRestoreSource      string = "set tenant log restore source"
 )

@@ -83,8 +83,9 @@ const (
 	DeleteTenant = "delete tenant"
 
 	// tenant restore
-	RestoreTenant     = "Restore tenant"
-	CancelRestoreFlow = "cancel restore"
+	RestoreTenant            = "Restore tenant"
+	CancelRestoreFlow        = "cancel restore"
+	CreateEmptyStandbyTenant = "create empty standby tenant"
 )
 
 // tenant-level restore
@@ -92,4 +93,12 @@ const (
 	StartRestoreFlow     = "start restore"
 	RestoreAsStandbyFlow = "restore as standby"
 	RestoreAsPrimaryFlow = "restore as primary"
+)
+
+// tenant operation flows
+const (
+	ChangeTenantRootPasswordFlow = "change tenant root password"
+	ActivateStandbyTenantFlow    = "activate standby tenant"
+	SwitchoverTenantsFlow        = "switchover tenants"
+	RevertSwitchoverTenantsFlow  = "revert switchover tenants"
 )

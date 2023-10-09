@@ -21,6 +21,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 )
@@ -121,7 +122,7 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	It("Create and return full type BackupJob", func() {
 		Skip("This test will create a backup job, which will take a long time")
-		var t constants.BackupJobType
+		var t apitypes.BackupJobType
 		timeNow := time.Now().Unix()
 		if timeNow%2 == 0 {
 			t = constants.BackupJobTypeFull

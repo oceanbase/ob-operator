@@ -212,6 +212,10 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenant")
 		os.Exit(1)
 	}
+	if err = (&v1alpha1.OBTenantOperation{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {

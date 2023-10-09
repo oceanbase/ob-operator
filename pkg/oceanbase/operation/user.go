@@ -29,6 +29,15 @@ func (m *OceanbaseOperationManager) CreateUser(userName string) error {
 	return nil
 }
 
+func (m *OceanbaseOperationManager) CreateUserWithPwd(username, password string) error {
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.CreateTenantUserWithPwd, username), password)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when create user with password")
+		return errors.Wrap(err, "Create user with password")
+	}
+	return nil
+}
+
 func (m *OceanbaseOperationManager) SetUserPassword(userName, password string) error {
 	err := m.ExecWithDefaultTimeout(sql.SetUserPassword, userName, password)
 	if err != nil {

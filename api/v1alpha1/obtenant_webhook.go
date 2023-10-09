@@ -17,10 +17,15 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -29,9 +34,11 @@ import (
 )
 
 // log is for logging in this package.
-var _ = logf.Log.WithName("obtenant-resource")
+var tenantlog = logf.Log.WithName("obtenant-resource")
+var tenantClt client.Client
 
 func (r *OBTenant) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	tenantClt = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -43,6 +50,23 @@ var _ webhook.Defaulter = &OBTenant{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenant) Default() {
+	cluster := &OBCluster{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      r.Spec.ClusterName,
+	}, cluster)
+	if err != nil {
+		tenantlog.Error(err, "Failed to get cluster")
+	} else {
+		tenantlog.Info("Get cluster", "cluster", cluster)
+		r.SetOwnerReferences([]metav1.OwnerReference{{
+			APIVersion: cluster.APIVersion,
+			Kind:       cluster.Kind,
+			Name:       cluster.GetObjectMeta().GetName(),
+			UID:        cluster.GetObjectMeta().GetUID(),
+		}})
+	}
+
 	if r.Spec.TenantRole == "" {
 		r.Spec.TenantRole = constants.TenantRolePrimary
 	}
@@ -69,6 +93,13 @@ func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error
 func (r *OBTenant) validateMutation() error {
 	var allErrs field.ErrorList
 
+	if r.Spec.Credentials.Root == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("root"), r.Spec.Credentials.Root, "Root password user secretref must be set"))
+	}
+	if r.Spec.Credentials.StandbyRO == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "Standby read-only user password secretref must be set"))
+	}
+
 	// 1. Standby tenant must have a source
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {
@@ -77,6 +108,7 @@ func (r *OBTenant) validateMutation() error {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "Standby must have a source option, but both restore and tenantRef are nil now"))
 		}
 	}
+
 	// 2. Restore until with some limit must have a limit key
 	if r.Spec.Source != nil && r.Spec.Source.Restore != nil {
 		untilSpec := r.Spec.Source.Restore.Until

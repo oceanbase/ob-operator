@@ -17,7 +17,7 @@ package v1alpha1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	constants "github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
@@ -42,8 +42,8 @@ type OBTenantBackupPolicySpec struct {
 // +kubebuilder:object:generate=false
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
-	Status           constants.BackupPolicyStatusType `json:"status"`
-	OperationContext *OperationContext                `json:"operationContext,omitempty"`
+	Status           apitypes.BackupPolicyStatusType `json:"status"`
+	OperationContext *OperationContext               `json:"operationContext,omitempty"`
 
 	NextFull             string                  `json:"nextFull,omitempty"`
 	NextIncremental      string                  `json:"nextIncremental,omitempty"`
@@ -127,18 +127,18 @@ func init() {
 
 // LogArchiveConfig contains the configuration for log archive progress
 type LogArchiveConfig struct {
-	Destination         constants.BackupDestination `json:"destination"`
-	SwitchPieceInterval string                      `json:"switchPieceInterval"`
-	Binding             constants.ArchiveBinding    `json:"binding,omitempty"`
-	DestDisabled        bool                        `json:"destDisabled,omitempty"`
-	Concurrency         int                         `json:"concurrency,omitempty"`
+	Destination         apitypes.BackupDestination `json:"destination"`
+	SwitchPieceInterval string                     `json:"switchPieceInterval"`
+	Binding             apitypes.ArchiveBinding    `json:"binding,omitempty"`
+	DestDisabled        bool                       `json:"destDisabled,omitempty"`
+	Concurrency         int                        `json:"concurrency,omitempty"`
 }
 
 // DataBackupConfig contains the configuration for data backup progress
 type DataBackupConfig struct {
-	Destination        constants.BackupDestination `json:"destination"`
-	FullCrontab        string                      `json:"fullCrontab,omitempty"`
-	IncrementalCrontab string                      `json:"incrementalCrontab,omitempty"`
+	Destination        apitypes.BackupDestination `json:"destination"`
+	FullCrontab        string                     `json:"fullCrontab,omitempty"`
+	IncrementalCrontab string                     `json:"incrementalCrontab,omitempty"`
 }
 
 type CleanPolicy struct {

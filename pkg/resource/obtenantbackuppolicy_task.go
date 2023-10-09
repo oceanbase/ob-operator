@@ -27,6 +27,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	constants "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
@@ -433,7 +435,7 @@ func (m *ObTenantBackupPolicyManager) syncLatestJobs() error {
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType constants.BackupJobType) (*model.OBBackupJob, error) {
+func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType apitypes.BackupJobType) (*model.OBBackupJob, error) {
 	con, err := m.getOperationManager()
 	if err != nil {
 		return nil, err
@@ -441,7 +443,7 @@ func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType constants.Backu
 	return con.GetLatestBackupJobOfType(jobType)
 }
 
-func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType constants.BackupJobType, path string) (*model.OBBackupJob, error) {
+func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType apitypes.BackupJobType, path string) (*model.OBBackupJob, error) {
 	con, err := m.getOperationManager()
 	if err != nil {
 		return nil, err
@@ -462,7 +464,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
+	con, err := GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -508,7 +510,7 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	return targetDest.Path
 }
 
-func (m *ObTenantBackupPolicyManager) createBackupJob(jobType constants.BackupJobType) error {
+func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {
 	m.Logger.Info("Create Backup Job", "type", jobType)
 	var path string
 	switch jobType {
@@ -552,7 +554,7 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType constants.BackupJo
 	return m.Client.Create(m.Ctx, backupJob)
 }
 
-func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType constants.BackupJobType) error {
+func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType apitypes.BackupJobType) error {
 	noRunningJobs, err := m.noRunningJobs(jobType)
 	if err != nil {
 		m.Logger.Error(err, "Failed to check if there is running backup job")
@@ -564,7 +566,7 @@ func (m *ObTenantBackupPolicyManager) createBackupJobIfNotExists(jobType constan
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType constants.BackupJobType) (bool, error) {
+func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType apitypes.BackupJobType) (bool, error) {
 	var runningJobs v1alpha1.OBTenantBackupList
 	err := m.Client.List(m.Ctx, &runningJobs,
 		client.MatchingLabels{

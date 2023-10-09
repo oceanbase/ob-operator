@@ -21,8 +21,13 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -199,7 +204,7 @@ func (m *OBTenantManager) AddFinalizerTask() error {
 
 func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying ob_tcp_invited_nodes For Tenant ", tenantName))
 	}
@@ -259,7 +264,7 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() error {
 
 func (m *OBTenantManager) CheckAndApplyUnitNum() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying Tenant UnitNum", tenantName))
 	}
@@ -275,7 +280,7 @@ func (m *OBTenantManager) CheckAndApplyUnitNum() error {
 
 func (m *OBTenantManager) CheckAndApplyPrimaryZone() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Priority ", tenantName))
 	}
@@ -299,7 +304,7 @@ func (m *OBTenantManager) CheckAndApplyPrimaryZone() error {
 
 func (m *OBTenantManager) CheckAndApplyLocality() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Locality ", tenantName))
 	}
@@ -333,7 +338,7 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 
 func (m *OBTenantManager) CheckAndApplyCharset() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Checking and Applying Tenant '%s' Charset ", tenantName))
 	}
@@ -360,7 +365,7 @@ func (m *OBTenantManager) createTenant() error {
 	tenantName := m.OBTenant.Spec.TenantName
 	pools := m.OBTenant.Spec.Pools
 	m.Logger.Info("Create Tenant", "tenantName", tenantName)
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Tenant")
 	}
@@ -383,6 +388,7 @@ func (m *OBTenantManager) createTenant() error {
 		return err
 	}
 	GlobalWhiteListMap[tenantName] = m.OBTenant.Spec.ConnectWhiteList
+	// Create user or change password of root, do not return error
 	return nil
 }
 
@@ -395,7 +401,7 @@ func (m *OBTenantManager) createUnitConfigV4(unitName string, unitConfig *v1alph
 		m.Logger.Error(err, "unit memorySize cannot be zero", "tenantName", tenantName, "unitName", unitName)
 		return err
 	}
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource UnitConfigV4")
 	}
@@ -405,7 +411,7 @@ func (m *OBTenantManager) createUnitConfigV4(unitName string, unitConfig *v1alph
 
 func (m *OBTenantManager) setUnitConfigV4(unitName string, unitConfig *model.UnitConfigV4) error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	unitModel := m.generateModelUnitConfigV4SQLParam(unitName, unitConfig)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", tenantName))
@@ -447,7 +453,7 @@ func (m *OBTenantManager) getPoolsForDelete() []v1alpha1.ResourcePoolStatus {
 
 func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' -- Add Pool", tenantName))
 	}
@@ -505,7 +511,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 	poolName := m.generatePoolName(poolDelete.ZoneList)
 	unitName := m.generateUnitName(poolDelete.ZoneList)
 
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' -- Delete Pool ", tenantName))
 	}
@@ -692,7 +698,7 @@ func (m *OBTenantManager) generateStatusLocalityMap(pools []v1alpha1.ResourcePoo
 
 func (m *OBTenantManager) generateStatusUnitNumMap(zones []v1alpha1.ResourcePoolSpec) (map[string]int, error) {
 	unitNumMap := make(map[string]int, 0)
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return unitNumMap, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
@@ -865,7 +871,7 @@ func (m *OBTenantManager) generatePoolName(zoneList string) string {
 
 func (m *OBTenantManager) getOBVersion() (string, error) {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
 	}
@@ -879,7 +885,7 @@ func (m *OBTenantManager) getOBVersion() (string, error) {
 // sql wrap function
 
 func (m *OBTenantManager) getCharset() (string, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Getting Charset")
 	}
@@ -891,7 +897,7 @@ func (m *OBTenantManager) getCharset() (string, error) {
 }
 
 func (m *OBTenantManager) getVariable(variableName string) (string, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Getting Variable")
 	}
@@ -902,8 +908,8 @@ func (m *OBTenantManager) getVariable(variableName string) (string, error) {
 	return variable.Value, nil
 }
 
-func (m *OBTenantManager) getTenantByName(tenantName string) (*model.Tenant, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+func (m *OBTenantManager) getTenantByName(tenantName string) (*model.OBTenant, error) {
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant")
 	}
@@ -915,7 +921,7 @@ func (m *OBTenantManager) getTenantByName(tenantName string) (*model.Tenant, err
 }
 
 func (m *OBTenantManager) getPoolByName(poolName string) (*model.Pool, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Pool by poolName")
 	}
@@ -927,7 +933,7 @@ func (m *OBTenantManager) getPoolByName(poolName string) (*model.Pool, error) {
 }
 
 func (m *OBTenantManager) getUnitConfigV4ByName(unitName string) (*model.UnitConfigV4, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting UnitConfigV4 By unitConfig name")
 	}
@@ -939,7 +945,7 @@ func (m *OBTenantManager) getUnitConfigV4ByName(unitName string) (*model.UnitCon
 }
 
 func (m *OBTenantManager) tenantExist(tenantName string) (bool, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether tenant exist")
 	}
@@ -951,7 +957,7 @@ func (m *OBTenantManager) tenantExist(tenantName string) (bool, error) {
 }
 
 func (m *OBTenantManager) poolExist(poolName string) (bool, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether pool exist")
 	}
@@ -963,7 +969,7 @@ func (m *OBTenantManager) poolExist(poolName string) (bool, error) {
 }
 
 func (m *OBTenantManager) unitConfigV4Exist(unitConfigName string) (bool, error) {
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether UnitConfigV4 exist")
 	}
@@ -977,7 +983,7 @@ func (m *OBTenantManager) unitConfigV4Exist(unitConfigName string) (bool, error)
 func (m *OBTenantManager) createPool(poolName, unitName string, pool v1alpha1.ResourcePoolSpec) error {
 	tenantName := m.OBTenant.Spec.TenantName
 	m.Logger.Info("Create Resource Pool", "tenantName", tenantName, "poolName", poolName)
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource Pool")
 	}
@@ -1010,7 +1016,7 @@ func (m *OBTenantManager) createUnitAndPoolV4(pool v1alpha1.ResourcePoolSpec) er
 
 func (m *OBTenantManager) deleteTenant() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Tenant ", tenantName))
 	}
@@ -1028,7 +1034,7 @@ func (m *OBTenantManager) deleteTenant() error {
 
 func (m *OBTenantManager) deletePool() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Pool", tenantName))
 	}
@@ -1051,7 +1057,7 @@ func (m *OBTenantManager) deletePool() error {
 
 func (m *OBTenantManager) deleteUnitConfig() error {
 	tenantName := m.OBTenant.Spec.TenantName
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Deleting Unit", tenantName))
 	}
@@ -1069,5 +1075,141 @@ func (m *OBTenantManager) deleteUnitConfig() error {
 			}
 		}
 	}
+	return nil
+}
+
+func (m *OBTenantManager) CreateUserWithCredentialSecrets() error {
+	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
+		// standby tenant can not need to create user
+		return nil
+	}
+	err := m.createUserWithCredentials()
+	if err != nil {
+		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
+		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
+	}
+
+	return nil
+}
+
+func (m *OBTenantManager) createUserWithCredentials() error {
+	con, err := m.getTenantClient()
+	if err != nil {
+		return err
+	}
+
+	creds := m.OBTenant.Spec.Credentials
+	if creds.Root != "" {
+		rootPwd, err := ReadPassword(m.Client, m.OBTenant.Namespace, creds.Root)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				m.Logger.Error(err, "Failed to get root password secret")
+				return err
+			}
+		} else if rootPwd != "" {
+			err = con.ChangeTenantUserPassword(obconst.RootUser, rootPwd)
+			if err != nil {
+				m.Logger.Error(err, "Failed to change root password")
+				return err
+			}
+		}
+	}
+	if creds.StandbyRO != "" {
+		standbyROPwd, err := ReadPassword(m.Client, m.OBTenant.Namespace, creds.StandbyRO)
+		if err != nil {
+			if client.IgnoreNotFound(err) != nil {
+				m.Logger.Error(err, "Failed to get standbyRO password secret")
+				return err
+			}
+		} else {
+			if standbyROPwd != "" {
+				err = con.CreateUserWithPwd(obconst.StandbyROUser, standbyROPwd)
+				if err != nil {
+					m.Logger.Error(err, "Failed to create standbyRO user with password")
+					return err
+				}
+			} else {
+				err = con.CreateUser(obconst.StandbyROUser)
+				if err != nil {
+					m.Logger.Error(err, "Failed to create standbyRO user")
+					return err
+				}
+			}
+			err = con.GrantPrivilege(obconst.SelectPrivilege, obconst.OceanbaseAllScope, obconst.StandbyROUser)
+			if err != nil {
+				m.Logger.Error(err, "Failed to grant privilege to standbyRO")
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBTenantManager) CreateEmptyStandbyTenant() error {
+	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
+		return errors.New("Empty standby tenant must have source tenant")
+	}
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return err
+	}
+	restoreSource, err := getTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.OBTenant.Namespace, *m.OBTenant.Spec.Source.Tenant)
+	if err != nil {
+		return err
+	}
+	poolList := m.generateSpecPoolList(m.OBTenant.Spec.Pools)
+	primaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
+	locality := m.generateLocality(m.OBTenant.Spec.Pools)
+	err = con.CreateEmptyStandbyTenant(&model.CreateEmptyStandbyTenantParam{
+		TenantName:    m.OBTenant.Spec.TenantName,
+		RestoreSource: restoreSource,
+		PrimaryZone:   primaryZone,
+		Locality:      locality,
+		PoolList:      poolList,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *OBTenantManager) CheckPrimaryTenantLSIntegrity() error {
+	var err error
+	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
+		return errors.New("Primary tenant must have source tenant")
+	}
+	tenantCR := &v1alpha1.OBTenant{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBTenant.Namespace,
+		Name:      *m.OBTenant.Spec.Source.Tenant,
+	}, tenantCR)
+	if err != nil {
+		return err
+	}
+
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return err
+	}
+	lsDeletion, err := con.ListLSDeletion(int64(tenantCR.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(lsDeletion) > 0 {
+		return errors.New("LS deletion set is not empty, log is of not integrity")
+	}
+	logStats, err := con.ListLogStats(int64(tenantCR.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(logStats) == 0 {
+		return errors.New("Log stats is empty, out of expectation")
+	}
+	for _, ls := range logStats {
+		if ls.BeginLSN != 0 {
+			return errors.New("Log stats begin SCN is not 0, log is of not integrity")
+		}
+	}
+
 	return nil
 }

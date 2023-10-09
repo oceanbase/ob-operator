@@ -25,7 +25,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/resource"
 )
 
 // OBTenantOperationReconciler reconciles a OBTenantOperation object
@@ -48,17 +49,28 @@ type OBTenantOperationReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *OBTenantOperationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = req
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	operation := &v1alpha1.OBTenantOperation{}
+	err := r.Client.Get(ctx, req.NamespacedName, operation)
+	if err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
 
-	// TODO(user): your logic here
+	mgr := &resource.ObTenantOperationManager{
+		Ctx:      ctx,
+		Resource: operation,
+		Client:   r.Client,
+		Recorder: r.Recorder,
+		Logger:   &logger,
+	}
 
-	return ctrl.Result{}, nil
+	coordinator := resource.NewCoordinator(mgr, &logger)
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBTenantOperationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&oceanbasev1alpha1.OBTenantOperation{}).
+		For(&v1alpha1.OBTenantOperation{}).
 		Complete(r)
 }

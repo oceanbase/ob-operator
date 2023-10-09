@@ -1,18 +1,21 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: t1
+  name: t1ss
   namespace: oceanbase
 spec:	
   obcluster: test
-  tenantName: t1
+  tenantName: t1ss
   unitNum: 1 
   charset: utf8mb4  
   connectWhiteList: '%'
   forceDelete: true
   credentials:
-    root: t1-ro
-    standbyRo: t1-ro
+    root: t1s-root
+    standbyRo: t1s-ro
+  source:
+    tenant: t1
+  tenantRole: STANDBY
   pools:
     - zone: zone1
       type: 
@@ -20,12 +23,12 @@ spec:
         replica: 1
         isActive: true
       resource:
-        maxCPU: 1 
+        maxCPU: 1000m 
         memorySize: 2Gi 
         minCPU: 1 
         maxIops: 1024 
         minIops: 1024
-        iopsWeight:
+        iopsWeight: 2
         logDiskSize: 
     - zone: zone2
       type: 
@@ -33,7 +36,7 @@ spec:
         replica: 1
         isActive: true
       resource:
-        maxCPU: 1 
+        maxCPU: 1000m 
         memorySize: 2Gi
         minCPU: 1 
         maxIops: 1024
@@ -47,7 +50,7 @@ spec:
         isActive: true
       priority: 3
       resource:
-        maxCPU: 1 
+        maxCPU: 1000m 
         memorySize: 2Gi
         minCPU: 1
         maxIops: 1024
