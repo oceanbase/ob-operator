@@ -48,7 +48,7 @@ type OBTenantSpec struct {
 	//+kubebuilder:default=PRIMARY
 	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
 	Source      *TenantSourceSpec   `json:"source,omitempty"`
-	Credentials TenantCredentials   `json:"credentials"`
+	Credentials TenantCredentials   `json:"credentials,omitempty"`
 }
 
 type TenantCredentials struct {

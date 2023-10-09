@@ -198,7 +198,6 @@ spec:
               unitNum:
                 type: integer
             required:
-            - credentials
             - obcluster
             - pools
             - tenantName

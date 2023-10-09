@@ -30,7 +30,7 @@ func (m *OceanbaseOperationManager) SetLogArchiveDestState(state string) error {
 }
 
 func (m *OceanbaseOperationManager) SetLogArchiveConcurrency(concurrency int) error {
-	return m.SetParameter("log_archive_concurrency", concurrency, nil)
+	return m.SetParameter("LOG_ARCHIVE_CONCURRENCY", concurrency, nil)
 }
 
 func (m *OceanbaseOperationManager) SetDataBackupDestForTenant(uri string) error {

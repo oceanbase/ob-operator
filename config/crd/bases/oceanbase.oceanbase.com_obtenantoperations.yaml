@@ -278,7 +278,6 @@ spec:
                       unitNum:
                         type: integer
                     required:
-                    - credentials
                     - obcluster
                     - pools
                     - tenantName
@@ -766,7 +765,6 @@ spec:
                       unitNum:
                         type: integer
                     required:
-                    - credentials
                     - obcluster
                     - pools
                     - tenantName
