@@ -93,13 +93,6 @@ func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error
 func (r *OBTenant) validateMutation() error {
 	var allErrs field.ErrorList
 
-	if r.Spec.Credentials.Root == "" {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("root"), r.Spec.Credentials.Root, "Root password user secretref must be set"))
-	}
-	if r.Spec.Credentials.StandbyRO == "" {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "Standby read-only user password secretref must be set"))
-	}
-
 	// 1. Standby tenant must have a source
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {
