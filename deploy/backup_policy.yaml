@@ -20,11 +20,11 @@ spec:
   logArchive:
     destination:
       type: "NFS"
-      path: "log_archive_custom1"
+      path: "log_archive_custom"
     switchPieceInterval: "1d"
   dataBackup:
     destination:
       type: "NFS"
-      path: "data_backup_custom1"
+      path: "data_backup_custom"
     fullCrontab: "30 0 * * 6"
     incrementalCrontab: "30 1 * * *"

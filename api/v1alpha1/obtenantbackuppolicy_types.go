@@ -47,6 +47,7 @@ type OBTenantBackupPolicyStatus struct {
 
 	NextFull             string                  `json:"nextFull,omitempty"`
 	NextIncremental      string                  `json:"nextIncremental,omitempty"`
+	TenantCR             *OBTenant               `json:"tenantCR,omitempty"`
 	TenantInfo           *model.OBTenant         `json:"tenantInfo,omitempty"`
 	LatestFullBackupJob  *model.OBBackupJob      `json:"latestFullBackupJob,omitempty"`
 	LatestIncrementalJob *model.OBBackupJob      `json:"latestIncrementalJob,omitempty"`

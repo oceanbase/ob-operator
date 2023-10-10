@@ -17,25 +17,33 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	"errors"
 	"regexp"
 
 	"github.com/robfig/cron/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 )
 
 // log is for logging in this package.
-var _ = logf.Log.WithName("obtenantbackuppolicy-resource")
+var backupLog = logf.Log.WithName("obtenantbackuppolicy-resource")
+var bakCtl client.Client
 
 func (r *OBTenantBackupPolicy) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	bakCtl = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -63,6 +71,30 @@ func (r *OBTenantBackupPolicy) Default() {
 	}
 	// only "default" is permitted
 	r.Spec.DataClean.Name = "default"
+
+	tenant := &OBTenant{}
+	err := bakCtl.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      r.Spec.TenantName,
+	}, tenant)
+	if err != nil {
+		backupLog.Error(err, "Failed to get tenant")
+		return
+	}
+
+	if tenant.Status.Status != tenantstatus.Running {
+		backupLog.Error(errors.New("tenant is not running"), "status not matching")
+		return
+	}
+
+	blockOwnerDeletion := true
+	r.SetOwnerReferences([]metav1.OwnerReference{{
+		APIVersion:         tenant.APIVersion,
+		Kind:               tenant.Kind,
+		Name:               tenant.GetObjectMeta().GetName(),
+		UID:                tenant.GetObjectMeta().GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}})
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -72,7 +104,24 @@ var _ webhook.Validator = &OBTenantBackupPolicy{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
-	return nil, r.validateBackupPolicy()
+	err := r.validateBackupPolicy()
+	if err != nil {
+		return nil, err
+	}
+	tenant := &OBTenant{}
+	err = bakCtl.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      r.Spec.TenantName,
+	}, tenant)
+	if err != nil {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenants"}, r.Spec.TenantName)
+	}
+
+	if tenant.Status.Status != tenantstatus.Running {
+		return nil, errors.New("tenant is not running")
+	}
+
+	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
@@ -95,9 +144,10 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	if r.Spec.TenantName == "" {
 		return errors.New("tenantName is required")
 	}
-	if r.Spec.TenantSecret == "" {
-		return errors.New("tenantSecret is required")
-	}
+	// Deprecated
+	// if r.Spec.TenantSecret == "" {
+	// 	return errors.New("tenantSecret is required")
+	// }
 	err := r.validateBackupCrontab()
 	if err != nil {
 		return err

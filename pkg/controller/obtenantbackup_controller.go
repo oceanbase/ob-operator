@@ -61,6 +61,7 @@ func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if err := r.Get(ctx, req.NamespacedName, crJob); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
+
 	switch crJob.Spec.Type {
 	case constants.BackupJobTypeFull:
 		fallthrough
@@ -248,16 +249,27 @@ func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job
 	if r.con != nil {
 		return r.con, nil
 	}
+
+	obtenant := &v1alpha1.OBTenant{}
+	err := r.Get(ctx, types.NamespacedName{
+		Namespace: job.Namespace,
+		Name:      job.Spec.TenantName,
+	}, obtenant)
+
+	if err != nil {
+		return nil, err
+	}
+
 	logger := log.FromContext(ctx)
 	obcluster := &v1alpha1.OBCluster{}
-	err := r.Client.Get(ctx, types.NamespacedName{
+	err = r.Client.Get(ctx, types.NamespacedName{
 		Namespace: job.Namespace,
 		Name:      job.Spec.ObClusterName,
 	}, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := resource.GetTenantRootOperationClient(r.Client, &logger, obcluster, job.Spec.TenantName, job.Spec.TenantSecret)
+	con, err := resource.GetTenantRootOperationClient(r.Client, &logger, obcluster, obtenant.Spec.TenantName, obtenant.Status.Credentials.Root)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
