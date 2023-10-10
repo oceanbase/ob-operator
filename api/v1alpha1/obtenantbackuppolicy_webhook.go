@@ -35,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 )
 
@@ -77,13 +78,11 @@ func (r *OBTenantBackupPolicy) Default() {
 		Namespace: r.GetNamespace(),
 		Name:      r.Spec.TenantName,
 	}, tenant)
+	// throw error in validator webhook
 	if err != nil {
-		backupLog.Error(err, "Failed to get tenant")
 		return
 	}
-
 	if tenant.Status.Status != tenantstatus.Running {
-		backupLog.Error(errors.New("tenant is not running"), "status not matching")
 		return
 	}
 
@@ -95,6 +94,12 @@ func (r *OBTenantBackupPolicy) Default() {
 		UID:                tenant.GetObjectMeta().GetUID(),
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}})
+
+	r.SetLabels(map[string]string{
+		oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
+		oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
+		oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
+	})
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -108,8 +113,9 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 	if err != nil {
 		return nil, err
 	}
+	ctx := context.TODO()
 	tenant := &OBTenant{}
-	err = bakCtl.Get(context.Background(), types.NamespacedName{
+	err = bakCtl.Get(ctx, types.NamespacedName{
 		Namespace: r.GetNamespace(),
 		Name:      r.Spec.TenantName,
 	}, tenant)
@@ -119,6 +125,19 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 
 	if tenant.Status.Status != tenantstatus.Running {
 		return nil, errors.New("tenant is not running")
+	}
+
+	policyList := &OBTenantBackupPolicyList{}
+	err = bakCtl.List(ctx, policyList, client.MatchingLabels{
+		oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
+		oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
+		oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
+	})
+	if err != nil {
+		return nil, apierrors.NewInternalError(err)
+	}
+	if len(policyList.Items) > 0 {
+		return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenantbackuppolicies"}, policyList.Items[0].GetObjectMeta().GetName())
 	}
 
 	return nil, nil
