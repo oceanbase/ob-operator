@@ -14,7 +14,6 @@ package resource
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -176,11 +175,13 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 			m.Logger.Error(err, "Failed to get tenant record name")
 			return err
 		}
-		backupPath := m.getBackupDestPath(tenantRecordName)
+		var backupPath string
 		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-			// remove ak & sk from backup path
-			backupPath = strings.Split(backupPath, "&")[0]
+			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+		} else {
+			backupPath = m.getBackupDestPath(tenantRecordName)
 		}
+
 		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 		if err != nil {
 			return err
@@ -213,17 +214,30 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 				if err != nil {
 					return err
 				}
-				if latestIncr == nil || latestIncr.Status == "CANCELED" {
-					m.BackupPolicy.Status.NextIncremental = time.Now().Format(time.DateTime)
-				} else if latestIncr.Status == "COMPLETED" {
-					var lastIncrBackupFinishedAt time.Time
-					if latestIncr.EndTimestamp != nil {
-						lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
-						if err != nil {
-							return err
+				if latestIncr != nil {
+					if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
+						var lastIncrBackupFinishedAt time.Time
+						if latestIncr.EndTimestamp == nil {
+							// TODO: check if this is possible
+							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
+						} else {
+							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
 						}
+						if err != nil {
+							m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+						}
+
+						nextIncrTime := incrCron.Next(lastIncrBackupFinishedAt)
+						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+					} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
+						// do nothing
+						_ = latestIncr
+					} else {
+						m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
 					}
-					m.BackupPolicy.Status.NextIncremental = incrCron.Next(lastIncrBackupFinishedAt).Format(time.DateTime)
+				} else {
+					nextIncrTime := incrCron.Next(lastFullBackupFinishedAt)
+					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				}
 			}
 		}

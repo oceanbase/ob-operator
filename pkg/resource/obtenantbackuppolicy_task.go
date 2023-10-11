@@ -21,6 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	cron "github.com/robfig/cron/v3"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -222,10 +223,11 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		m.Logger.Error(err, "Failed to get tenant record name")
 		return err
 	}
-	backupPath := m.getBackupDestPath(tenantRecordName)
+	var backupPath string
 	if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-		// remove ak & sk from backup path
-		backupPath = strings.Split(backupPath, "&")[0]
+		backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+	} else {
+		backupPath = m.getBackupDestPath(tenantRecordName)
 	}
 	m.Logger.Info("CheckAndSpawnJobs", "backupPath after split", backupPath)
 	// Avoid backup failure due to destination modification
@@ -500,7 +502,16 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestPath(tenantRecordName string
 		}
 		return dest
 	}
-	return targetDest.Path
+	secret := &v1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.GetNamespace(),
+		Name:      targetDest.OSSAccessSecret,
+	}, secret)
+	if err != nil {
+		m.PrintErrEvent(err)
+		return ""
+	}
+	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
@@ -528,7 +539,16 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath(tenantRecordName string)
 		}
 		return "file://" + path.Join(backupVolumePath, tenantRecordName, targetDest.Path)
 	}
-	return targetDest.Path
+	secret := &v1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.GetNamespace(),
+		Name:      targetDest.OSSAccessSecret,
+	}, secret)
+	if err != nil {
+		m.PrintErrEvent(err)
+		return ""
+	}
+	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {

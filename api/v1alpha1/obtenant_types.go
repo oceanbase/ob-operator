@@ -63,7 +63,10 @@ type TenantSourceSpec struct {
 }
 
 type RestoreSourceSpec struct {
-	SourceUri      string              `json:"sourceUri"`
+	ArchiveSource *apitypes.BackupDestination `json:"archiveSource,omitempty"`
+	BakDataSource *apitypes.BackupDestination `json:"bakDataSource,omitempty"`
+
+	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
 	Until          RestoreUntilConfig  `json:"until"`
 	Description    *string             `json:"description,omitempty"`
 	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`

@@ -239,6 +239,24 @@ spec:
                         properties:
                           restore:
                             properties:
+                              archiveSource:
+                                properties:
+                                  ossAccessSecret:
+                                    type: string
+                                  path:
+                                    type: string
+                                  type:
+                                    type: string
+                                type: object
+                              bakDataSource:
+                                properties:
+                                  ossAccessSecret:
+                                    type: string
+                                  path:
+                                    type: string
+                                  type:
+                                    type: string
+                                type: object
                               cancel:
                                 type: boolean
                               description:
@@ -264,7 +282,6 @@ spec:
                                     type: boolean
                                 type: object
                             required:
-                            - sourceUri
                             - until
                             type: object
                           tenant:
@@ -726,6 +743,24 @@ spec:
                         properties:
                           restore:
                             properties:
+                              archiveSource:
+                                properties:
+                                  ossAccessSecret:
+                                    type: string
+                                  path:
+                                    type: string
+                                  type:
+                                    type: string
+                                type: object
+                              bakDataSource:
+                                properties:
+                                  ossAccessSecret:
+                                    type: string
+                                  path:
+                                    type: string
+                                  type:
+                                    type: string
+                                type: object
                               cancel:
                                 type: boolean
                               description:
@@ -751,7 +786,6 @@ spec:
                                     type: boolean
                                 type: object
                             required:
-                            - sourceUri
                             - until
                             type: object
                           tenant:

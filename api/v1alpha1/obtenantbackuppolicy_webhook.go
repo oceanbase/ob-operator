@@ -20,8 +20,10 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 
 	"github.com/robfig/cron/v3"
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -84,6 +86,13 @@ func (r *OBTenantBackupPolicy) Default() {
 	}
 	if tenant.Status.Status != tenantstatus.Running {
 		return
+	}
+
+	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+		r.Spec.DataBackup.Destination.Path = strings.ReplaceAll(r.Spec.DataBackup.Destination.Path, "/?", "?")
+	}
+	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
+		r.Spec.LogArchive.Destination.Path = strings.ReplaceAll(r.Spec.LogArchive.Destination.Path, "/?", "?")
 	}
 
 	blockOwnerDeletion := true
@@ -157,16 +166,106 @@ func (r *OBTenantBackupPolicy) ValidateDelete() (admission.Warnings, error) {
 
 // BackupPolicy Validation Entry
 func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
+	// Ignore deletion requests
+	if r.GetDeletionTimestamp() != nil {
+		return nil
+	}
+
 	if r.Spec.ObClusterName == "" {
 		return errors.New("obClusterName is required")
 	}
 	if r.Spec.TenantName == "" {
 		return errors.New("tenantName is required")
 	}
-	// Deprecated
-	// if r.Spec.TenantSecret == "" {
-	// 	return errors.New("tenantSecret is required")
-	// }
+	ossPathPattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
+	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
+			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
+		}
+
+		if r.Spec.DataBackup.Destination.OSSAccessSecret == "" {
+			return field.Invalid(
+				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
+				r.Spec.DataBackup.Destination.OSSAccessSecret,
+				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
+			)
+		}
+		secret := &v1.Secret{}
+		err := bakCtl.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.DataBackup.Destination.OSSAccessSecret,
+		}, secret)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return field.Invalid(
+					field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
+					r.Spec.DataBackup.Destination.OSSAccessSecret,
+					"Given OSSAccessSecret not found",
+				)
+			}
+			return err
+		}
+
+		if _, ok := secret.Data["accessId"]; !ok {
+			return field.Invalid(
+				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
+				r.Spec.DataBackup.Destination.OSSAccessSecret,
+				"accessId field not found in given OSSAccessSecret",
+			)
+		}
+		if _, ok := secret.Data["accessKey"]; !ok {
+			return field.Invalid(
+				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
+				r.Spec.DataBackup.Destination.OSSAccessSecret,
+				"accessKey field not found in given OSSAccessSecret",
+			)
+		}
+	}
+
+	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
+		if !ossPathPattern.MatchString(r.Spec.LogArchive.Destination.Path) {
+			return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("path"), r.Spec.LogArchive.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
+		}
+
+		if r.Spec.LogArchive.Destination.OSSAccessSecret == "" {
+			return field.Invalid(
+				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
+				r.Spec.LogArchive.Destination.OSSAccessSecret,
+				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
+			)
+		}
+		secret := &v1.Secret{}
+		err := bakCtl.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.LogArchive.Destination.OSSAccessSecret,
+		}, secret)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return field.Invalid(
+					field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
+					r.Spec.LogArchive.Destination.OSSAccessSecret,
+					"Given OSSAccessSecret not found",
+				)
+			}
+			return err
+		}
+
+		if _, ok := secret.Data["accessId"]; !ok {
+			return field.Invalid(
+				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
+				r.Spec.LogArchive.Destination.OSSAccessSecret,
+				"accessId field not found in given OSSAccessSecret",
+			)
+		}
+		if _, ok := secret.Data["accessKey"]; !ok {
+			return field.Invalid(
+				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
+				r.Spec.LogArchive.Destination.OSSAccessSecret,
+				"accessKey field not found in given OSSAccessSecret",
+			)
+		}
+	}
+
 	err := r.validateBackupCrontab()
 	if err != nil {
 		return err

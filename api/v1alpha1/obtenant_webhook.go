@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"context"
 
+	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -91,6 +92,10 @@ func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error
 }
 
 func (r *OBTenant) validateMutation() error {
+	// Ignore deleted object
+	if r.GetDeletionTimestamp() != nil {
+		return nil
+	}
 	var allErrs field.ErrorList
 
 	// 1. Standby tenant must have a source
@@ -107,6 +112,63 @@ func (r *OBTenant) validateMutation() error {
 		untilSpec := r.Spec.Source.Restore.Until
 		if !untilSpec.Unlimited && untilSpec.Scn == nil && untilSpec.Timestamp == nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("until"), untilSpec, "Restore until must have a limit key, scn and timestamp are both nil now"))
+		}
+	}
+
+	// 3. Tenant restoring from OSS type Backup Data must have a OSSAccessSecret
+	if r.Spec.Source != nil && r.Spec.Source.Restore != nil {
+		res := r.Spec.Source.Restore
+
+		if res.ArchiveSource == nil && res.BakDataSource == nil && res.SourceUri == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore"), res, "Restore must have a source option, but both archiveSource, bakDataSource and sourceUri are nil now"))
+		}
+
+		if res.ArchiveSource != nil && res.ArchiveSource.Type == constants.BackupDestTypeOSS {
+			if res.ArchiveSource.OSSAccessSecret == "" {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "Tenant restoring from OSS type backup data must have a OSSAccessSecret"))
+			}
+			secret := &v1.Secret{}
+			err := tenantClt.Get(context.Background(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      res.ArchiveSource.OSSAccessSecret,
+			}, secret)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+				}
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), err))
+			}
+
+			if _, ok := secret.Data["accessId"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
+			}
+			if _, ok := secret.Data["accessKey"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
+			}
+		}
+
+		if res.BakDataSource != nil && res.BakDataSource.Type == constants.BackupDestTypeOSS {
+			if res.BakDataSource.OSSAccessSecret == "" {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "Tenant restoring from OSS type backup data must have a OSSAccessSecret"))
+			}
+			secret := &v1.Secret{}
+			err := tenantClt.Get(context.Background(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      res.BakDataSource.OSSAccessSecret,
+			}, secret)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+				}
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), err))
+			}
+
+			if _, ok := secret.Data["accessId"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
+			}
+			if _, ok := secret.Data["accessKey"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
+			}
 		}
 	}
 
