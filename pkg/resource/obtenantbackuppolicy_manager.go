@@ -14,6 +14,7 @@ package resource
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -131,7 +132,7 @@ func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
 	}
 	m.BackupPolicy.Status.TenantCR = tenant
 
-	tenantRecord, err := m.getTenantRecord()
+	tenantRecord, err := m.getTenantRecord(false)
 	if err != nil {
 		return err
 	}
@@ -160,8 +161,14 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
-		err := m.syncLatestJobs()
+		err := m.syncTenantInformation()
 		if err != nil {
+			m.PrintErrEvent(err)
+			return err
+		}
+		err = m.syncLatestJobs()
+		if err != nil {
+			m.PrintErrEvent(err)
 			return err
 		}
 		tenantRecordName, err := m.getTenantRecordName()
@@ -170,6 +177,10 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 			return err
 		}
 		backupPath := m.getBackupDestPath(tenantRecordName)
+		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+			// remove ak & sk from backup path
+			backupPath = strings.Split(backupPath, "&")[0]
+		}
 		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 		if err != nil {
 			return err
@@ -314,7 +325,6 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 }
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
-	m.Logger.Error(err, "Print event")
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 

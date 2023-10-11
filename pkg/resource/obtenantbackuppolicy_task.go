@@ -44,7 +44,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantRecord()
+	tenantInfo, err := m.getTenantRecord(true)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantRecord()
+	tenantInfo, err := m.getTenantRecord(true)
 	if err != nil {
 		return err
 	}
@@ -223,6 +223,11 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		return err
 	}
 	backupPath := m.getBackupDestPath(tenantRecordName)
+	if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+		// remove ak & sk from backup path
+		backupPath = strings.Split(backupPath, "&")[0]
+	}
+	m.Logger.Info("CheckAndSpawnJobs", "backupPath after split", backupPath)
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
@@ -614,8 +619,8 @@ func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType apitypes.BackupJobTy
 }
 
 // getTenantRecord return tenant info from status if exists, otherwise query from database view
-func (m *ObTenantBackupPolicyManager) getTenantRecord() (*model.OBTenant, error) {
-	if m.BackupPolicy.Status.TenantInfo != nil {
+func (m *ObTenantBackupPolicyManager) getTenantRecord(useCache bool) (*model.OBTenant, error) {
+	if useCache && m.BackupPolicy.Status.TenantInfo != nil {
 		return m.BackupPolicy.Status.TenantInfo, nil
 	}
 	con, err := m.getOperationManager()

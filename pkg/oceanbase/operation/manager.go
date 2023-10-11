@@ -86,6 +86,7 @@ func (m *OceanbaseOperationManager) QueryListWithTimeout(timeout time.Duration, 
 }
 
 func (m *OceanbaseOperationManager) QueryList(ret any, sql string, params ...any) error {
+	m.Logger.Info(fmt.Sprintf("Execute <select list> %s with param %v", sql, params))
 	return m.QueryListWithTimeout(config.DefaultSqlTimeout, ret, sql, params...)
 }
 

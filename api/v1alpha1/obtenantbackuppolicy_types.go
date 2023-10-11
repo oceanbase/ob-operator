@@ -98,11 +98,13 @@ func (in *OBTenantBackupPolicyStatus) DeepCopy() *OBTenantBackupPolicyStatus {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
 //+kubebuilder:printcolumn:name="NextFull",type=string,JSONPath=`.status.nextFull`
 //+kubebuilder:printcolumn:name="NextIncremental",type=string,JSONPath=`.status.nextIncremental`
 //+kubebuilder:printcolumn:name="FullCrontab",type=string,JSONPath=`.spec.dataBackup.fullCrontab`
 //+kubebuilder:printcolumn:name="IncrementalCrontab",type=string,JSONPath=`.spec.dataBackup.incrementalCrontab`
+//+kubebuilder:resource:shortName=obtbp
 
 // OBTenantBackupPolicy is the Schema for the obtenantbackuppolicies API
 type OBTenantBackupPolicy struct {

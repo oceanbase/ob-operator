@@ -133,4 +133,7 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(err).To(BeNil())
 		Expect(keepWindow).To(Equal(TwoHundredDays))
 	})
+
+	It("Split uri", Label("strings"), func() {
+	})
 })

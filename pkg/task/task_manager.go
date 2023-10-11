@@ -104,7 +104,7 @@ func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 func (m *TaskManager) CleanTaskResult(taskId string) error {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {
-		return errors.Errorf("Task %s not exists", taskId)
+		return nil
 	}
 	close(retCh)
 	delete(m.ResultMap, taskId)

@@ -63,6 +63,7 @@ func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="TargetTenant",type=string,JSONPath=`.spec.targetTenant`
 //+kubebuilder:printcolumn:name="TargetCluster",type=string,JSONPath=`.spec.targetCluster`
 //+kubebuilder:printcolumn:name="RestoreRole",type=string,JSONPath=`.spec.restoreRole`

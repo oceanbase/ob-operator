@@ -31,6 +31,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 )
 
 // ---------- task entry point ----------
@@ -1093,13 +1094,15 @@ func (m *OBTenantManager) CreateUserWithCredentialSecrets() error {
 }
 
 func (m *OBTenantManager) createUserWithCredentials() error {
-	con, err := m.getTenantClient()
-	if err != nil {
-		return err
-	}
+	var con *operation.OceanbaseOperationManager
+	var err error
 
 	creds := m.OBTenant.Spec.Credentials
 	if creds.Root != "" {
+		con, err = m.getTenantClient()
+		if err != nil {
+			return err
+		}
 		rootPwd, err := ReadPassword(m.Client, m.OBTenant.Namespace, creds.Root)
 		if err != nil {
 			if client.IgnoreNotFound(err) != nil {
@@ -1115,6 +1118,12 @@ func (m *OBTenantManager) createUserWithCredentials() error {
 		}
 	}
 	if creds.StandbyRO != "" {
+		if con == nil {
+			con, err = m.getTenantClient()
+			if err != nil {
+				return err
+			}
+		}
 		standbyROPwd, err := ReadPassword(m.Client, m.OBTenant.Namespace, creds.StandbyRO)
 		if err != nil {
 			if client.IgnoreNotFound(err) != nil {

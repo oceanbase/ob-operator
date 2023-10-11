@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     - jsonPath: .spec.targetTenant
       name: TargetTenant
       type: string

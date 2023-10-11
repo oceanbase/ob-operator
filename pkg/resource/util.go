@@ -66,9 +66,12 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
-	password, err := ReadPassword(c, obcluster.Namespace, credential)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
+	var password string
+	if credential != "" {
+		password, err = ReadPassword(c, obcluster.Namespace, credential)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
+		}
 	}
 
 	var s *connector.OceanBaseDataSource
