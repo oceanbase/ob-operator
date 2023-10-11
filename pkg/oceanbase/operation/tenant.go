@@ -234,7 +234,6 @@ func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 *model.UnitConf
 
 func (m *OceanbaseOperationManager) SetTenantVariable(tenantName, variableList string) error {
 	preparedSQL, params := m.preparedSQLForSetTenantVariable(tenantName, variableList)
-	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set Tenant Variable")
@@ -244,7 +243,6 @@ func (m *OceanbaseOperationManager) SetTenantVariable(tenantName, variableList s
 
 func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) error {
 	preparedSQL, params := preparedSQLForSetUnitConfigV4(unitConfigV4)
-	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set UnitConfig")
@@ -254,7 +252,6 @@ func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 *model.UnitConf
 
 func (m *OceanbaseOperationManager) SetTenantUnitNum(tenantName string, unitNum int) error {
 	preparedSQL, params := m.preparedSQLForSetTenantUnitNum(tenantName, unitNum)
-	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set pool UnitNum")
@@ -436,7 +433,6 @@ func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error 
 	if sql != "" {
 		return m.ExecWithDefaultTimeout(sql, args...)
 	}
-	m.Logger.Info("Set pool need to execute nothing")
 	return nil
 }
 

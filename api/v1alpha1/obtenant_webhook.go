@@ -59,7 +59,6 @@ func (r *OBTenant) Default() {
 	if err != nil {
 		tenantlog.Error(err, "Failed to get cluster")
 	} else {
-		tenantlog.Info("Get cluster", "cluster", cluster)
 		r.SetOwnerReferences([]metav1.OwnerReference{{
 			APIVersion: cluster.APIVersion,
 			Kind:       cluster.Kind,

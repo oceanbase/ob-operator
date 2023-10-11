@@ -28,7 +28,6 @@ func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBSer
 		return nil, err
 	}
 	if len(observers) == 0 {
-		m.Logger.Info("observer not found", "server identity", s)
 		return nil, nil
 	}
 	return &observers[0], nil

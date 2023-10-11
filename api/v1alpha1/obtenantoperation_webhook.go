@@ -107,14 +107,11 @@ var _ webhook.Validator = &OBTenantOperation{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantOperation) ValidateCreate() (admission.Warnings, error) {
-	obtenantoperationlog.Info("validate create", "name", r.Name)
-
 	return nil, r.validateMutation()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantOperation) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	obtenantoperationlog.Info("validate update", "name", r.Name)
 	_ = old
 	return nil, r.validateMutation()
 }

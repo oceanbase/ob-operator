@@ -229,7 +229,6 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	} else {
 		backupPath = m.getBackupDestPath(tenantRecordName)
 	}
-	m.Logger.Info("CheckAndSpawnJobs", "backupPath after split", backupPath)
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
