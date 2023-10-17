@@ -57,6 +57,8 @@ spec:
           spec:
             description: OBTenantBackupSpec defines the desired state of OBTenantBackup
             properties:
+              encryptionSecret:
+                type: string
               obClusterName:
                 type: string
               path:
@@ -66,8 +68,6 @@ spec:
               tenantSecret:
                 type: string
               type:
-                description: Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go
-                  to remove/update
                 type: string
             required:
             - obClusterName

@@ -177,6 +177,8 @@ spec:
                           type:
                             type: string
                         type: object
+                      bakEncryptionSecret:
+                        type: string
                       cancel:
                         type: boolean
                       description:
