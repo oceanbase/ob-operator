@@ -178,6 +178,20 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		return errors.New("tenantName is required")
 	}
 	ossPathPattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
+
+	if r.Spec.DataBackup.EncryptionSecret != "" {
+		sec := &v1.Secret{}
+		err := bakCtl.Get(context.Background(), types.NamespacedName{
+			Namespace: r.Namespace,
+			Name:      r.Spec.DataBackup.EncryptionSecret,
+		}, sec)
+		if err != nil {
+			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"), r.Spec.DataBackup.EncryptionSecret, "encryptionSecret not found")
+		}
+		if _, ok := sec.Data["password"]; !ok {
+			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"), r.Spec.DataBackup.EncryptionSecret, "'password' field not found in encryptionSecret")
+		}
+	}
 	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
 		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")

@@ -142,6 +142,7 @@ type DataBackupConfig struct {
 	Destination        apitypes.BackupDestination `json:"destination"`
 	FullCrontab        string                     `json:"fullCrontab,omitempty"`
 	IncrementalCrontab string                     `json:"incrementalCrontab,omitempty"`
+	EncryptionSecret   string                     `json:"encryptionSecret,omitempty"`
 }
 
 type CleanPolicy struct {

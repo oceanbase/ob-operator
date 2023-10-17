@@ -165,6 +165,20 @@ func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
 	if err != nil {
 		return err
 	}
+
+	if restoreSpec.BakEncryptionSecret != "" {
+		password, err := ReadPassword(m.Client, m.Resource.Namespace, restoreSpec.BakEncryptionSecret)
+		if err != nil {
+			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "ReadRestorePasswordFailed", err.Error())
+			return err
+		}
+		err = con.SetRestorePassword(password)
+		if err != nil {
+			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "SetRestorePasswordFailed", err.Error())
+			return err
+		}
+	}
+
 	if restoreSpec.Until.Unlimited {
 		err = con.StartRestoreUnlimited(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option)
 		if err != nil {

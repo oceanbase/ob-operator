@@ -62,23 +62,6 @@ type TenantSourceSpec struct {
 	Restore *RestoreSourceSpec `json:"restore,omitempty"`
 }
 
-type RestoreSourceSpec struct {
-	ArchiveSource *apitypes.BackupDestination `json:"archiveSource,omitempty"`
-	BakDataSource *apitypes.BackupDestination `json:"bakDataSource,omitempty"`
-
-	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
-	Until          RestoreUntilConfig  `json:"until"`
-	Description    *string             `json:"description,omitempty"`
-	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
-	Cancel         bool                `json:"cancel,omitempty"`
-}
-
-type RestoreUntilConfig struct {
-	Timestamp *string `json:"timestamp,omitempty"`
-	Scn       *string `json:"scn,omitempty"`
-	Unlimited bool    `json:"unlimited,omitempty"`
-}
-
 type ResourcePoolSpec struct {
 	Zone string `json:"zone"`
 	//+kubebuilder:default=1

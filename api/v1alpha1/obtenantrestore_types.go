@@ -36,6 +36,24 @@ type OBTenantRestoreSpec struct {
 	PrimaryTenant *string             `json:"primaryTenant,omitempty"`
 }
 
+type RestoreSourceSpec struct {
+	ArchiveSource       *apitypes.BackupDestination `json:"archiveSource,omitempty"`
+	BakDataSource       *apitypes.BackupDestination `json:"bakDataSource,omitempty"`
+	BakEncryptionSecret string                      `json:"bakEncryptionSecret,omitempty"`
+
+	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
+	Until          RestoreUntilConfig  `json:"until"`
+	Description    *string             `json:"description,omitempty"`
+	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
+	Cancel         bool                `json:"cancel,omitempty"`
+}
+
+type RestoreUntilConfig struct {
+	Timestamp *string `json:"timestamp,omitempty"`
+	Scn       *string `json:"scn,omitempty"`
+	Unlimited bool    `json:"unlimited,omitempty"`
+}
+
 // +kubebuilder:object:generate=false
 // OBTenantRestoreStatus defines the observed state of OBTenantRestore
 type OBTenantRestoreStatus struct {

@@ -120,6 +120,19 @@ func (r *OBTenantBackupReconciler) createBackupJobInOB(ctx context.Context, job 
 		logger.Error(err, "failed to get ob operation client")
 		return err
 	}
+	if job.Spec.EncryptionSecret != "" {
+		password, err := resource.ReadPassword(r.Client, job.Namespace, job.Spec.EncryptionSecret)
+		if err != nil {
+			logger.Error(err, "failed to read backup encryption secret")
+			r.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
+		} else if password != "" {
+			err = con.SetBackupPassword(password)
+			if err != nil {
+				logger.Error(err, "failed to set backup password")
+				r.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
+			}
+		}
+	}
 	latest, err := con.CreateAndReturnBackupJob(job.Spec.Type)
 	if err != nil {
 		logger.Error(err, "failed to create and return backup job")
