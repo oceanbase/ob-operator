@@ -21,6 +21,7 @@ import (
 
 	"github.com/pkg/errors"
 	cron "github.com/robfig/cron/v3"
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -44,7 +45,7 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantRecord()
+	tenantInfo, err := m.getTenantRecord(true)
 	if err != nil {
 		return err
 	}
@@ -148,22 +149,12 @@ func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) GetTenantInfo() error {
-	// Admission Control
-	_, err := m.getTenantRecord()
-	if err != nil {
-		return err
-	}
-	// update status ahead of regular task
-	return nil
-}
-
 func (m *ObTenantBackupPolicyManager) StartBackup() error {
 	con, err := m.getOperationManager()
 	if err != nil {
 		return err
 	}
-	tenantInfo, err := m.getTenantRecord()
+	tenantInfo, err := m.getTenantRecord(true)
 	if err != nil {
 		return err
 	}
@@ -222,7 +213,12 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 }
 
 func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
-	backupPath := m.getBackupDestPath()
+	var backupPath string
+	if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+		backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+	} else {
+		backupPath = m.getBackupDestPath()
+	}
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
@@ -456,15 +452,26 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	if m.con != nil {
 		return m.con, nil
 	}
+	var err error
+	tenantCR := &v1alpha1.OBTenant{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.Namespace,
+		Name:      m.BackupPolicy.Spec.TenantName,
+	}, tenantCR)
+
+	if err != nil {
+		return nil, err
+	}
+
 	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,
 		Name:      m.BackupPolicy.Spec.ObClusterName,
 	}, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "get obcluster")
 	}
-	con, err := GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.BackupPolicy.Spec.TenantName, m.BackupPolicy.Spec.TenantSecret)
+	con, err := GetTenantRootOperationClient(m.Client, m.Logger, obcluster, tenantCR.Spec.TenantName, tenantCR.Status.Credentials.Root)
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
@@ -476,15 +483,18 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
 	archiveSpec := m.BackupPolicy.Spec.LogArchive
 	targetDest := archiveSpec.Destination
 	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
-		var dest string
-		if targetDest.Path == "" {
-			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "log_archive")
-		} else {
-			dest = "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
-		}
-		return dest
+		return "file://" + path.Join(backupVolumePath, targetDest.Path)
 	}
-	return targetDest.Path
+	secret := &v1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.GetNamespace(),
+		Name:      targetDest.OSSAccessSecret,
+	}, secret)
+	if err != nil {
+		m.PrintErrEvent(err)
+		return ""
+	}
+	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
@@ -502,16 +512,21 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
 func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	targetDest := m.BackupPolicy.Spec.DataBackup.Destination
 	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
-		if targetDest.Path == "" {
-			return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, "data_backup")
-		}
-		return "file://" + path.Join(backupVolumePath, m.BackupPolicy.Spec.TenantName, targetDest.Path)
+		return "file://" + path.Join(backupVolumePath, targetDest.Path)
 	}
-	return targetDest.Path
+	secret := &v1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.GetNamespace(),
+		Name:      targetDest.OSSAccessSecret,
+	}, secret)
+	if err != nil {
+		m.PrintErrEvent(err)
+		return ""
+	}
+	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {
-	m.Logger.Info("Create Backup Job", "type", jobType)
 	var path string
 	switch jobType {
 	case constants.BackupJobTypeClean:
@@ -544,11 +559,12 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJob
 			},
 		},
 		Spec: v1alpha1.OBTenantBackupSpec{
-			Path:          path,
-			Type:          jobType,
-			TenantName:    m.BackupPolicy.Spec.TenantName,
-			ObClusterName: m.BackupPolicy.Spec.ObClusterName,
-			TenantSecret:  m.BackupPolicy.Spec.TenantSecret,
+			Path:             path,
+			Type:             jobType,
+			TenantName:       m.BackupPolicy.Spec.TenantName,
+			ObClusterName:    m.BackupPolicy.Spec.ObClusterName,
+			TenantSecret:     m.BackupPolicy.Spec.TenantSecret,
+			EncryptionSecret: m.BackupPolicy.Spec.DataBackup.EncryptionSecret,
 		},
 	}
 	return m.Client.Create(m.Ctx, backupJob)
@@ -594,20 +610,24 @@ func (m *ObTenantBackupPolicyManager) noRunningJobs(jobType apitypes.BackupJobTy
 }
 
 // getTenantRecord return tenant info from status if exists, otherwise query from database view
-func (m *ObTenantBackupPolicyManager) getTenantRecord() (*model.OBTenant, error) {
-	if m.BackupPolicy.Status.TenantInfo != nil {
+func (m *ObTenantBackupPolicyManager) getTenantRecord(useCache bool) (*model.OBTenant, error) {
+	if useCache && m.BackupPolicy.Status.TenantInfo != nil {
 		return m.BackupPolicy.Status.TenantInfo, nil
 	}
 	con, err := m.getOperationManager()
 	if err != nil {
 		return nil, err
 	}
-	tenants, err := con.ListTenantWithName(m.BackupPolicy.Spec.TenantName)
+	tenantRecordName, err := m.getTenantRecordName()
+	if err != nil {
+		return nil, err
+	}
+	tenants, err := con.ListTenantWithName(tenantRecordName)
 	if err != nil {
 		return nil, err
 	}
 	if len(tenants) == 0 {
-		return nil, errors.Errorf("tenant %s not found", m.BackupPolicy.Spec.TenantName)
+		return nil, errors.Errorf("tenant %s not found", tenantRecordName)
 	}
 	return tenants[0], nil
 }
@@ -644,4 +664,19 @@ func (m *ObTenantBackupPolicyManager) configureBackupCleanPolicy() error {
 		}
 	}
 	return nil
+}
+
+func (m *ObTenantBackupPolicyManager) getTenantRecordName() (string, error) {
+	if m.BackupPolicy.Status.TenantCR != nil {
+		return m.BackupPolicy.Status.TenantCR.Spec.TenantName, nil
+	}
+	tenant := &v1alpha1.OBTenant{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.Namespace,
+		Name:      m.BackupPolicy.Spec.TenantName,
+	}, tenant)
+	if err != nil {
+		return "", err
+	}
+	return tenant.Spec.TenantName, nil
 }

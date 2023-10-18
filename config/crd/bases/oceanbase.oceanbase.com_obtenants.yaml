@@ -159,6 +159,30 @@ spec:
                 properties:
                   restore:
                     properties:
+                      archiveSource:
+                        properties:
+                          ossAccessSecret:
+                            type: string
+                          path:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - path
+                        type: object
+                      bakDataSource:
+                        properties:
+                          ossAccessSecret:
+                            type: string
+                          path:
+                            type: string
+                          type:
+                            type: string
+                        required:
+                        - path
+                        type: object
+                      bakEncryptionSecret:
+                        type: string
                       cancel:
                         type: boolean
                       description:
@@ -184,7 +208,6 @@ spec:
                             type: boolean
                         type: object
                     required:
-                    - sourceUri
                     - until
                     type: object
                   tenant:

@@ -47,6 +47,12 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		Expect(err).To(BeNil())
 	})
 
+	It("Query Log Archive Parameters", Label("check-params"), func() {
+		configs, err := con.ListArchiveLogParameters()
+		Expect(err).To(BeNil())
+		printSlice(configs, "Log Archive Parameters")
+	})
+
 	It("Query Clean Policies", func() {
 		cleanPolicies, err := con.ListBackupCleanPolicy()
 		Expect(err).To(BeNil())

@@ -77,12 +77,27 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 		}
 
 		if !finalizerFinished {
-			err := m.StopBackup()
+			tenant, err := m.getOBTenant()
 			if err != nil {
-				return err
+				// the tenant is deleted, no need to wait finalizer
+				if kubeerrors.IsNotFound(err) {
+					finalizerFinished = true
+				} else {
+					return errors.Wrap(err, "Get obtenant failed")
+				}
+			} else if !tenant.GetDeletionTimestamp().IsZero() {
+				// the tenant is being deleted
+				finalizerFinished = true
+			} else {
+				err := m.StopBackup()
+				// the policy is being deleted, connection still exists, stop backup
+				if err != nil {
+					return err
+				}
+				finalizerFinished = true
 			}
-			finalizerFinished = true
 		}
+
 		if finalizerFinished {
 			// remove our finalizer from the list and update it.
 			controllerutil.RemoveFinalizer(policy, finalizerName)
@@ -95,9 +110,33 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *ObTenantBackupPolicyManager) InitStatus() {
+	var err error
 	m.BackupPolicy.Status = v1alpha1.OBTenantBackupPolicyStatus{
 		Status: constants.BackupPolicyStatusPreparing,
 	}
+	err = m.syncTenantInformation()
+	if err != nil {
+		m.PrintErrEvent(err)
+	}
+}
+
+func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
+	tenant := &v1alpha1.OBTenant{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.Namespace,
+		Name:      m.BackupPolicy.Spec.TenantName,
+	}, tenant)
+	if err != nil {
+		return err
+	}
+	m.BackupPolicy.Status.TenantCR = tenant
+
+	tenantRecord, err := m.getTenantRecord(false)
+	if err != nil {
+		return err
+	}
+	m.BackupPolicy.Status.TenantInfo = tenantRecord
+	return nil
 }
 
 func (m *ObTenantBackupPolicyManager) SetOperationContext(c *v1alpha1.OperationContext) {
@@ -121,18 +160,23 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
-		if m.BackupPolicy.Status.TenantInfo == nil {
-			tenant, err := m.getTenantRecord()
-			if err != nil {
-				return err
-			}
-			m.BackupPolicy.Status.TenantInfo = tenant
-		}
-		err := m.syncLatestJobs()
+		err := m.syncTenantInformation()
 		if err != nil {
+			m.PrintErrEvent(err)
 			return err
 		}
-		backupPath := m.getBackupDestPath()
+		err = m.syncLatestJobs()
+		if err != nil {
+			m.PrintErrEvent(err)
+			return err
+		}
+		var backupPath string
+		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+		} else {
+			backupPath = m.getBackupDestPath()
+		}
+
 		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 		if err != nil {
 			return err
@@ -165,17 +209,30 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 				if err != nil {
 					return err
 				}
-				if latestIncr == nil || latestIncr.Status == "CANCELED" {
-					m.BackupPolicy.Status.NextIncremental = time.Now().Format(time.DateTime)
-				} else if latestIncr.Status == "COMPLETED" {
-					var lastIncrBackupFinishedAt time.Time
-					if latestIncr.EndTimestamp != nil {
-						lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
-						if err != nil {
-							return err
+				if latestIncr != nil {
+					if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
+						var lastIncrBackupFinishedAt time.Time
+						if latestIncr.EndTimestamp == nil {
+							// TODO: check if this is possible
+							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
+						} else {
+							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
 						}
+						if err != nil {
+							m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+						}
+
+						nextIncrTime := incrCron.Next(lastIncrBackupFinishedAt)
+						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+					} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
+						// do nothing
+						_ = latestIncr
+					} else {
+						m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
 					}
-					m.BackupPolicy.Status.NextIncremental = incrCron.Next(lastIncrBackupFinishedAt).Format(time.DateTime)
+				} else {
+					nextIncrTime := incrCron.Next(lastFullBackupFinishedAt)
+					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				}
 			}
 		}
@@ -188,8 +245,6 @@ func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, er
 	switch name {
 	case taskname.ConfigureServerForBackup:
 		return m.ConfigureServerForBackup, nil
-	case taskname.GetTenantInfo:
-		return m.GetTenantInfo, nil
 	case taskname.StartBackupJob:
 		return m.StartBackup, nil
 	case taskname.StopBackupJob:
@@ -279,7 +334,6 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 }
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
-	m.Logger.Error(err, "Print event")
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
@@ -295,4 +349,20 @@ func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error
 		return nil, errors.Wrap(err, "get obcluster failed")
 	}
 	return obcluster, nil
+}
+
+func (m *ObTenantBackupPolicyManager) getOBTenant() (*v1alpha1.OBTenant, error) {
+	tenantName := m.BackupPolicy.Spec.TenantName
+	tenant := &v1alpha1.OBTenant{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.Namespace,
+		Name:      tenantName,
+	}, tenant)
+	if err != nil {
+		if !kubeerrors.IsNotFound(err) {
+			m.Logger.Error(err, "get obtenant failed", "tenantName", tenantName, "namespaced", m.BackupPolicy.Namespace)
+		}
+		return nil, err
+	}
+	return tenant, nil
 }

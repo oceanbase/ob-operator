@@ -69,6 +69,10 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 			return result, errors.Wrapf(err, "Check and update finalizer failed")
 		}
 	}
+	err = c.cleanTaskResultMap(f)
+	if err != nil {
+		return result, errors.Wrap(err, "Clean task result map")
+	}
 	err = c.Manager.UpdateStatus()
 	if err != nil {
 		c.Logger.Error(err, "Failed to update status")

@@ -29,12 +29,13 @@ type OBTenantBackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go to remove/update
 	Type          apitypes.BackupJobType `json:"type"`
 	TenantName    string                 `json:"tenantName"`
 	TenantSecret  string                 `json:"tenantSecret"`
 	ObClusterName string                 `json:"obClusterName"`
 	Path          string                 `json:"path,omitempty"`
+
+	EncryptionSecret string `json:"encryptionSecret,omitempty"`
 }
 
 // +kubebuilder:object:generate=false

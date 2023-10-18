@@ -18,9 +18,11 @@ type BackupPolicyStatusType string
 type BackupDestType string
 type LogArchiveDestState string
 type ArchiveBinding string
+
 type BackupDestination struct {
-	Type BackupDestType `json:"type,omitempty"`
-	Path string         `json:"path,omitempty"`
+	Path            string         `json:"path"`
+	Type            BackupDestType `json:"type,omitempty"`
+	OSSAccessSecret string         `json:"ossAccessSecret,omitempty"`
 }
 
 type RestoreJobStatus string

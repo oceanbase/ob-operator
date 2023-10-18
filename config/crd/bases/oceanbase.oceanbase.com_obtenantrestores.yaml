@@ -18,6 +18,9 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
     - jsonPath: .spec.targetTenant
       name: TargetTenant
       type: string
@@ -59,6 +62,30 @@ spec:
                 type: string
               source:
                 properties:
+                  archiveSource:
+                    properties:
+                      ossAccessSecret:
+                        type: string
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - path
+                    type: object
+                  bakDataSource:
+                    properties:
+                      ossAccessSecret:
+                        type: string
+                      path:
+                        type: string
+                      type:
+                        type: string
+                    required:
+                    - path
+                    type: object
+                  bakEncryptionSecret:
+                    type: string
                   cancel:
                     type: boolean
                   description:
@@ -84,7 +111,6 @@ spec:
                         type: boolean
                     type: object
                 required:
-                - sourceUri
                 - until
                 type: object
               targetCluster:

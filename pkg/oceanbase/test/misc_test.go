@@ -133,4 +133,21 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(err).To(BeNil())
 		Expect(keepWindow).To(Equal(TwoHundredDays))
 	})
+
+	It("Split uri", Label("strings"), func() {
+	})
+
+	It("OSS path", Label("pattern"), func() {
+		pattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
+		Expect(pattern.MatchString("oss://bucket/backup?host=oss-cn-hangzhou.aliyuncs.com")).To(BeTrue())
+		Expect(pattern.MatchString("oss://bucket/backup/?host=oss-cn-hangzhou.aliyuncs.com")).To(BeTrue())
+		Expect(pattern.MatchString("oss://operator-backup-data/backup-t1?host=oss-cn-hangzhou.aliyuncs.com")).To(BeTrue())
+
+		Expect(pattern.MatchString("oss://bucket?host=oss-cn-hangzhou.aliyuncs.com")).To(BeFalse())
+		Expect(pattern.MatchString("oss://bucket/backup?host=")).To(BeFalse())
+		Expect(pattern.MatchString("soss://bucket/backup?host=oss-cn-hangzhou.aliyuncs.com")).To(BeFalse())
+		Expect(pattern.MatchString("oss:///bucket/backup/?host=oss-cn-hangzhou.aliyuncs.com")).To(BeFalse())
+		Expect(pattern.MatchString("oss://?host=oss-cn-hangzhou.aliyuncs.com")).To(BeFalse())
+		Expect(pattern.MatchString("bucket/backup/?host=oss-cn-hangzhou.aliyuncs.com")).To(BeFalse())
+	})
 })

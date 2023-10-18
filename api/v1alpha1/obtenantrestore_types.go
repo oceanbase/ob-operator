@@ -36,6 +36,24 @@ type OBTenantRestoreSpec struct {
 	PrimaryTenant *string             `json:"primaryTenant,omitempty"`
 }
 
+type RestoreSourceSpec struct {
+	ArchiveSource       *apitypes.BackupDestination `json:"archiveSource,omitempty"`
+	BakDataSource       *apitypes.BackupDestination `json:"bakDataSource,omitempty"`
+	BakEncryptionSecret string                      `json:"bakEncryptionSecret,omitempty"`
+
+	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
+	Until          RestoreUntilConfig  `json:"until"`
+	Description    *string             `json:"description,omitempty"`
+	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
+	Cancel         bool                `json:"cancel,omitempty"`
+}
+
+type RestoreUntilConfig struct {
+	Timestamp *string `json:"timestamp,omitempty"`
+	Scn       *string `json:"scn,omitempty"`
+	Unlimited bool    `json:"unlimited,omitempty"`
+}
+
 // +kubebuilder:object:generate=false
 // OBTenantRestoreStatus defines the observed state of OBTenantRestore
 type OBTenantRestoreStatus struct {
@@ -63,6 +81,7 @@ func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="TargetTenant",type=string,JSONPath=`.spec.targetTenant`
 //+kubebuilder:printcolumn:name="TargetCluster",type=string,JSONPath=`.spec.targetCluster`
 //+kubebuilder:printcolumn:name="RestoreRole",type=string,JSONPath=`.spec.restoreRole`

@@ -14,11 +14,13 @@ package resource
 
 import (
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -54,6 +56,7 @@ func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 		client.MatchingLabels{
 			oceanbaseconst.LabelRefOBCluster: m.OBTenant.Spec.ClusterName,
 			oceanbaseconst.LabelTenantName:   m.OBTenant.Spec.TenantName,
+			oceanbaseconst.LabelRefUID:       string(m.OBTenant.GetUID()),
 		},
 		client.InNamespace(m.OBTenant.Namespace))
 	if err != nil {
@@ -66,7 +69,7 @@ func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 
 	restoreJob := &v1alpha1.OBTenantRestore{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.OBTenant.Spec.TenantName + "-restore",
+			Name:      m.OBTenant.Name + "-restore",
 			Namespace: m.OBTenant.GetNamespace(),
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion:         m.OBTenant.APIVersion,
@@ -159,19 +162,37 @@ func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
 		return err
 	}
 	restoreSpec := m.Resource.Spec.Source
+	sourceUri, err := m.getSourceUri()
+	if err != nil {
+		return err
+	}
+
+	if restoreSpec.BakEncryptionSecret != "" {
+		password, err := ReadPassword(m.Client, m.Resource.Namespace, restoreSpec.BakEncryptionSecret)
+		if err != nil {
+			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "ReadRestorePasswordFailed", err.Error())
+			return err
+		}
+		err = con.SetRestorePassword(password)
+		if err != nil {
+			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "SetRestorePasswordFailed", err.Error())
+			return err
+		}
+	}
+
 	if restoreSpec.Until.Unlimited {
-		err = con.StartRestoreUnlimited(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option)
+		err = con.StartRestoreUnlimited(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option)
 		if err != nil {
 			return err
 		}
 	} else {
 		if restoreSpec.Until.Timestamp != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option, "timestamp", *restoreSpec.Until.Timestamp)
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "timestamp", *restoreSpec.Until.Timestamp)
 			if err != nil {
 				return err
 			}
 		} else if restoreSpec.Until.Scn != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, restoreSpec.SourceUri, m.Resource.Spec.Option, "scn", *restoreSpec.Until.Scn)
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "scn", *restoreSpec.Until.Scn)
 			if err != nil {
 				return err
 			}
@@ -240,4 +261,51 @@ func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOper
 	}
 	m.con = con
 	return con, nil
+}
+
+func (m *ObTenantRestoreManager) getSourceUri() (string, error) {
+	source := m.Resource.Spec.Source
+	if source.SourceUri != "" {
+		return source.SourceUri, nil
+	}
+	var bakPath, archivePath string
+	if source.BakDataSource != nil && source.BakDataSource.Type == constants.BackupDestTypeOSS {
+		accessId, accessKey, err := m.readAccessCredentials(source.BakDataSource.OSSAccessSecret)
+		if err != nil {
+			return "", err
+		}
+		bakPath = strings.Join([]string{source.BakDataSource.Path, "access_id=" + accessId, "access_key=" + accessKey}, "&")
+	} else {
+		bakPath = "file://" + path.Join(backupVolumePath, source.BakDataSource.Path)
+	}
+
+	if source.ArchiveSource != nil && source.ArchiveSource.Type == constants.BackupDestTypeOSS {
+		accessId, accessKey, err := m.readAccessCredentials(source.ArchiveSource.OSSAccessSecret)
+		if err != nil {
+			return "", err
+		}
+		archivePath = strings.Join([]string{source.ArchiveSource.Path, "access_id=" + accessId, "access_key=" + accessKey}, "&")
+	} else {
+		archivePath = "file://" + path.Join(backupVolumePath, source.ArchiveSource.Path)
+	}
+
+	if bakPath == "" || archivePath == "" {
+		return "", errors.New("Unexpected error: both bakPath and archivePath must be set")
+	}
+
+	return strings.Join([]string{bakPath, archivePath}, ","), nil
+}
+
+func (m *ObTenantRestoreManager) readAccessCredentials(secretName string) (accessId, accessKey string, err error) {
+	secret := &v1.Secret{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.Resource.Namespace,
+		Name:      secretName,
+	}, secret)
+	if err != nil {
+		return "", "", err
+	}
+	accessId = string(secret.Data["accessId"])
+	accessKey = string(secret.Data["accessKey"])
+	return accessId, accessKey, nil
 }

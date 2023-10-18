@@ -1,11 +1,11 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1		
 kind: OBTenant		
 metadata:		
-  name: t1s
+  name: t1s-wrong
   namespace: oceanbase
 spec:	
   obcluster: test
-  tenantName: t1s
+  tenantName: t1s_wrong
   unitNum: 1 
   charset: utf8mb4  
   connectWhiteList: '%'
@@ -17,14 +17,12 @@ spec:
   source:
     restore:
       # sourceUri: "file:///ob-backup/t1/data_backup_custom1,file:///ob-backup/t1/log_archive_custom1"
-      # path in xxxSource should 
       archiveSource:
         type: NFS
         path: "t1/log_archive_custom"
       bakDataSource:
         type: NFS
         path: "t1/data_backup_custom_enc"
-      bakEncryptionSecret: t1-ro
       until: 
         unlimited: true
       replayLogUntil:
