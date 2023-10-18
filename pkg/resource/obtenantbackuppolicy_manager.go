@@ -170,16 +170,11 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 			m.PrintErrEvent(err)
 			return err
 		}
-		tenantRecordName, err := m.getTenantRecordName()
-		if err != nil {
-			m.Logger.Error(err, "Failed to get tenant record name")
-			return err
-		}
 		var backupPath string
 		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
 			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 		} else {
-			backupPath = m.getBackupDestPath(tenantRecordName)
+			backupPath = m.getBackupDestPath()
 		}
 
 		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)

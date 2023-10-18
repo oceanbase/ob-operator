@@ -20,8 +20,8 @@ type LogArchiveDestState string
 type ArchiveBinding string
 
 type BackupDestination struct {
+	Path            string         `json:"path"`
 	Type            BackupDestType `json:"type,omitempty"`
-	Path            string         `json:"path,omitempty"`
 	OSSAccessSecret string         `json:"ossAccessSecret,omitempty"`
 }
 

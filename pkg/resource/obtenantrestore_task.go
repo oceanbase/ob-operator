@@ -14,6 +14,7 @@ package resource
 
 import (
 	"fmt"
+	"path"
 	"strings"
 	"time"
 
@@ -68,7 +69,7 @@ func (m *OBTenantManager) CreateTenantRestoreJobCR() error {
 
 	restoreJob := &v1alpha1.OBTenantRestore{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.OBTenant.Spec.TenantName + "-restore",
+			Name:      m.OBTenant.Name + "-restore",
 			Namespace: m.OBTenant.GetNamespace(),
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion:         m.OBTenant.APIVersion,
@@ -268,19 +269,24 @@ func (m *ObTenantRestoreManager) getSourceUri() (string, error) {
 		return source.SourceUri, nil
 	}
 	var bakPath, archivePath string
-	if source.BakDataSource != nil {
+	if source.BakDataSource != nil && source.BakDataSource.Type == constants.BackupDestTypeOSS {
 		accessId, accessKey, err := m.readAccessCredentials(source.BakDataSource.OSSAccessSecret)
 		if err != nil {
 			return "", err
 		}
 		bakPath = strings.Join([]string{source.BakDataSource.Path, "access_id=" + accessId, "access_key=" + accessKey}, "&")
+	} else {
+		bakPath = "file://" + path.Join(backupVolumePath, source.BakDataSource.Path)
 	}
-	if source.ArchiveSource != nil {
+
+	if source.ArchiveSource != nil && source.ArchiveSource.Type == constants.BackupDestTypeOSS {
 		accessId, accessKey, err := m.readAccessCredentials(source.ArchiveSource.OSSAccessSecret)
 		if err != nil {
 			return "", err
 		}
 		archivePath = strings.Join([]string{source.ArchiveSource.Path, "access_id=" + accessId, "access_key=" + accessKey}, "&")
+	} else {
+		archivePath = "file://" + path.Join(backupVolumePath, source.ArchiveSource.Path)
 	}
 
 	if bakPath == "" || archivePath == "" {

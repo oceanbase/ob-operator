@@ -167,6 +167,8 @@ spec:
                             type: string
                           type:
                             type: string
+                        required:
+                        - path
                         type: object
                       bakDataSource:
                         properties:
@@ -176,6 +178,8 @@ spec:
                             type: string
                           type:
                             type: string
+                        required:
+                        - path
                         type: object
                       bakEncryptionSecret:
                         type: string
