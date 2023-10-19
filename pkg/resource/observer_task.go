@@ -209,22 +209,6 @@ func (m *OBServerManager) CreateOBPVC() error {
 		return errors.Wrap(err, "Create pvc of log")
 	}
 
-	if m.OBServer.Spec.MonitorTemplate != nil {
-		objectMeta = metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
-		}
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix), m.OBServer.Spec.MonitorTemplate.Storage.ConfigStorage),
-		}
-		err = m.Client.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of monitor log")
-		}
-	}
 	return nil
 }
 
@@ -428,6 +412,7 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
+	readinessProbe.FailureThreshold = 10
 
 	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
 

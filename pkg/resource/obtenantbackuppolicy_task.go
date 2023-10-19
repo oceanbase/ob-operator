@@ -381,7 +381,7 @@ func (m *ObTenantBackupPolicyManager) PauseBackup() error {
 	if err != nil {
 		return err
 	}
-
+	m.Recorder.Event(m.BackupPolicy, v1.EventTypeNormal, "PauseBackup", "Pause backup policy")
 	return nil
 }
 
@@ -409,7 +409,8 @@ func (m *ObTenantBackupPolicyManager) ResumeBackup() error {
 			archiveRunning = true
 		}
 	}
-	return nil
+	m.Recorder.Event(m.BackupPolicy, v1.EventTypeNormal, "ResumeBackup", "Resume backup policy")
+	return m.createBackupJobIfNotExists(constants.BackupJobTypeFull)
 }
 
 func (m *ObTenantBackupPolicyManager) syncLatestJobs() error {
@@ -486,21 +487,22 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
-	archiveSpec := m.BackupPolicy.Spec.LogArchive
-	targetDest := archiveSpec.Destination
+	targetDest := m.BackupPolicy.Spec.LogArchive.Destination
 	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
 		return "file://" + path.Join(backupVolumePath, targetDest.Path)
+	} else if targetDest.Type == constants.BackupDestTypeOSS && targetDest.OSSAccessSecret != "" {
+		secret := &v1.Secret{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.BackupPolicy.GetNamespace(),
+			Name:      targetDest.OSSAccessSecret,
+		}, secret)
+		if err != nil {
+			m.PrintErrEvent(err)
+			return ""
+		}
+		return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 	}
-	secret := &v1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.BackupPolicy.GetNamespace(),
-		Name:      targetDest.OSSAccessSecret,
-	}, secret)
-	if err != nil {
-		m.PrintErrEvent(err)
-		return ""
-	}
-	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
+	return targetDest.Path
 }
 
 func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
@@ -519,17 +521,19 @@ func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
 	targetDest := m.BackupPolicy.Spec.DataBackup.Destination
 	if targetDest.Type == constants.BackupDestTypeNFS || isZero(targetDest.Type) {
 		return "file://" + path.Join(backupVolumePath, targetDest.Path)
+	} else if targetDest.Type == constants.BackupDestTypeOSS && targetDest.OSSAccessSecret != "" {
+		secret := &v1.Secret{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.BackupPolicy.GetNamespace(),
+			Name:      targetDest.OSSAccessSecret,
+		}, secret)
+		if err != nil {
+			m.PrintErrEvent(err)
+			return ""
+		}
+		return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 	}
-	secret := &v1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.BackupPolicy.GetNamespace(),
-		Name:      targetDest.OSSAccessSecret,
-	}, secret)
-	if err != nil {
-		m.PrintErrEvent(err)
-		return ""
-	}
-	return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
+	return targetDest.Path
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {

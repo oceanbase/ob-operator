@@ -156,7 +156,16 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	_ = old
+	currentResource := old.(*OBTenantBackupPolicy)
+	if currentResource.Status.Status == constants.BackupPolicyStatusRunning {
+		if r.Spec.DataBackup.EncryptionSecret != currentResource.Spec.DataBackup.EncryptionSecret {
+			return nil, field.Invalid(
+				field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"),
+				r.Spec.DataBackup.EncryptionSecret,
+				"encryptionSecret can not be changed when backup policy is running, please pause the backup policy first",
+			)
+		}
+	}
 	return nil, r.validateBackupPolicy()
 }
 
@@ -197,18 +206,12 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"), r.Spec.DataBackup.EncryptionSecret, "'password' field not found in encryptionSecret")
 		}
 	}
-	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+
+	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS && r.Spec.DataBackup.Destination.OSSAccessSecret != "" {
 		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
 		}
 
-		if r.Spec.DataBackup.Destination.OSSAccessSecret == "" {
-			return field.Invalid(
-				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
-				r.Spec.DataBackup.Destination.OSSAccessSecret,
-				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
-			)
-		}
 		secret := &v1.Secret{}
 		err := bakCtl.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
@@ -241,18 +244,11 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 	}
 
-	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
+	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS && r.Spec.LogArchive.Destination.OSSAccessSecret != "" {
 		if !ossPathPattern.MatchString(r.Spec.LogArchive.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("path"), r.Spec.LogArchive.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
 		}
 
-		if r.Spec.LogArchive.Destination.OSSAccessSecret == "" {
-			return field.Invalid(
-				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
-				r.Spec.LogArchive.Destination.OSSAccessSecret,
-				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
-			)
-		}
 		secret := &v1.Secret{}
 		err := bakCtl.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),

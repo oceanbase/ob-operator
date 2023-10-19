@@ -991,7 +991,6 @@ spec:
                 - arbitration_service_status
                 - compatibility_mode
                 - create_time
-                - gmt_create_time
                 - in_recyclebin
                 - locality
                 - locked
@@ -1003,14 +1002,11 @@ spec:
                 - recovery_until_scn
                 - replayable_scn
                 - status
-                - switchover_epoch
-                - switchover_status
                 - sync_scn
                 - tenant_id
                 - tenant_name
                 - tenant_role
                 - tenant_type
-                - unit_num
                 type: object
             required:
             - status
