@@ -21,6 +21,7 @@ import (
 	"github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
@@ -77,7 +78,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 		}
 
 		if !finalizerFinished {
-			tenant, err := m.getOBTenant()
+			tenant, err := m.getOBTenantCR()
 			if err != nil {
 				// the tenant is deleted, no need to wait finalizer
 				if kubeerrors.IsNotFound(err) {
@@ -351,8 +352,15 @@ func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error
 	return obcluster, nil
 }
 
-func (m *ObTenantBackupPolicyManager) getOBTenant() (*v1alpha1.OBTenant, error) {
-	tenantName := m.BackupPolicy.Spec.TenantName
+func (m *ObTenantBackupPolicyManager) getOBTenantCR() (*v1alpha1.OBTenant, error) {
+	// Guard that tenantCRName is not empty
+	if m.BackupPolicy.Spec.TenantCRName == "" {
+		return nil, kubeerrors.NewNotFound(schema.GroupResource{
+			Group:    "oceanbase.oceanbase.com",
+			Resource: "obtenantbackuppolicies",
+		}, m.BackupPolicy.Spec.TenantCRName)
+	}
+	tenantName := m.BackupPolicy.Spec.TenantCRName
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,

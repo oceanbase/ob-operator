@@ -125,6 +125,8 @@ spec:
                 type: string
               suspend:
                 type: boolean
+              tenantCRName:
+                type: string
               tenantName:
                 type: string
               tenantSecret:
@@ -133,7 +135,6 @@ spec:
             - dataBackup
             - logArchive
             - obClusterName
-            - tenantName
             type: object
           status:
             description: OBTenantBackupPolicyStatus defines the observed state of

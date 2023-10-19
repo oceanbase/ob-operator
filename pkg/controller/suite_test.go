@@ -131,24 +131,10 @@ var _ = BeforeSuite(func() {
 		}).SetupWithManager(k8sManager)
 		Expect(err).NotTo(HaveOccurred())
 
-		err = (&OBClusterBackupReconciler{
-			Client:   k8sManager.GetClient(),
-			Scheme:   k8sManager.GetScheme(),
-			Recorder: k8sManager.GetEventRecorderFor(config.OBClusterBackupControllerName),
-		}).SetupWithManager(k8sManager)
-		Expect(err).NotTo(HaveOccurred())
-
 		err = (&OBTenantBackupReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
 			Recorder: k8sManager.GetEventRecorderFor(config.OBTenantBackupControllerName),
-		}).SetupWithManager(k8sManager)
-		Expect(err).NotTo(HaveOccurred())
-
-		err = (&OBClusterRestoreReconciler{
-			Client:   k8sManager.GetClient(),
-			Scheme:   k8sManager.GetScheme(),
-			Recorder: k8sManager.GetEventRecorderFor(config.OBClusterRestoreControllerName),
 		}).SetupWithManager(k8sManager)
 		Expect(err).NotTo(HaveOccurred())
 

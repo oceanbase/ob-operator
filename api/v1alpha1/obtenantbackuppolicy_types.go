@@ -30,8 +30,9 @@ type OBTenantBackupPolicySpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	ObClusterName string           `json:"obClusterName"`
-	TenantName    string           `json:"tenantName"`             // Name of obtenant resource
-	TenantSecret  string           `json:"tenantSecret,omitempty"` // Deprecated
+	TenantName    string           `json:"tenantName,omitempty"`   // Name of tenant in database
+	TenantSecret  string           `json:"tenantSecret,omitempty"` // Recommend to use 'credentials' of OBTenant instead
+	TenantCRName  string           `json:"tenantCRName,omitempty"` // Name of obtenant resource
 	JobKeepWindow string           `json:"jobKeepWindow,omitempty"`
 	Suspend       bool             `json:"suspend,omitempty"`
 	LogArchive    LogArchiveConfig `json:"logArchive"`
