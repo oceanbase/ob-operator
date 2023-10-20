@@ -251,14 +251,6 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	if m.OBServer.Spec.MonitorTemplate != nil {
 		monitorContainer := m.createMonitorContainer(obcluster)
 		containers = append(containers, monitorContainer)
-
-		volumeMonitorConf := corev1.Volume{}
-		volumeMonitorConf.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix)
-		volumeMonitorConfSource := &corev1.PersistentVolumeClaimVolumeSource{
-			ClaimName: fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix),
-		}
-		volumeMonitorConf.VolumeSource.PersistentVolumeClaim = volumeMonitorConfSource
-		volumes = append(volumes, volumeMonitorConf)
 	}
 
 	podSpec := corev1.PodSpec{
@@ -290,13 +282,6 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 	resources := corev1.ResourceRequirements{
 		Limits: monagentResource,
 	}
-
-	// volume mounts
-	volumeMountMonitorConf := corev1.VolumeMount{}
-	volumeMountMonitorConf.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix)
-	volumeMountMonitorConf.MountPath = obagentconst.ConfigPath
-	volumeMounts := make([]corev1.VolumeMount, 0)
-	volumeMounts = append(volumeMounts, volumeMountMonitorConf)
 
 	readinessProbeHTTP := corev1.HTTPGetAction{}
 	readinessProbeHTTP.Port = intstr.FromInt(obagentconst.HttpPort)
@@ -351,7 +336,6 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		ImagePullPolicy: "IfNotPresent",
 		Ports:           ports,
 		Resources:       resources,
-		VolumeMounts:    volumeMounts,
 		ReadinessProbe:  &readinessProbe,
 		WorkingDir:      obagentconst.InstallPath,
 		Env:             env,

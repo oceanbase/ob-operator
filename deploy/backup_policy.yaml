@@ -20,7 +20,7 @@ spec:
   logArchive:
     destination:
       type: "NFS"
-      path: "t1/log_archive_custom"
+      path: "t1/log_archive_custom_1019"
     switchPieceInterval: "1d"
   dataBackup:
     destination:

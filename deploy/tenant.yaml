@@ -25,8 +25,8 @@ spec:
         minCPU: 1 
         maxIops: 1024 
         minIops: 1024
-        iopsWeight:
-        logDiskSize: 
+        iopsWeight: 2
+        logDiskSize: 4Gi
     - zone: zone2
       type: 
         name: Full
