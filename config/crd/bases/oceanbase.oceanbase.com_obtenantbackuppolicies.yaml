@@ -562,6 +562,8 @@ spec:
                                 type: boolean
                               description:
                                 type: string
+                              replayEnabled:
+                                type: boolean
                               replayLogUntil:
                                 properties:
                                   scn:

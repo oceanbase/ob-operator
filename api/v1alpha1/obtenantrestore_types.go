@@ -41,9 +41,10 @@ type RestoreSourceSpec struct {
 	BakDataSource       *apitypes.BackupDestination `json:"bakDataSource,omitempty"`
 	BakEncryptionSecret string                      `json:"bakEncryptionSecret,omitempty"`
 
-	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
+	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated, use ArchiveSource and BakDataSource instead
 	Until          RestoreUntilConfig  `json:"until"`
 	Description    *string             `json:"description,omitempty"`
+	ReplayEnabled  bool                `json:"replayEnabled,omitempty"`
 	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
 	Cancel         bool                `json:"cancel,omitempty"`
 }
