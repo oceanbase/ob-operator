@@ -125,6 +125,8 @@ func (m *OBZoneManager) CreateOBServer() error {
 				ClusterId:        m.OBZone.Spec.ClusterId,
 				Zone:             m.OBZone.Spec.Topology.Zone,
 				NodeSelector:     m.OBZone.Spec.Topology.NodeSelector,
+				Affinity:         m.OBZone.Spec.Topology.Affinity,
+				Tolerations:      m.OBZone.Spec.Topology.Tolerations,
 				OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
 				MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
 				BackupVolume:     m.OBZone.Spec.BackupVolume,

@@ -257,6 +257,8 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		Volumes:      volumes,
 		Containers:   containers,
 		NodeSelector: m.OBServer.Spec.NodeSelector,
+		Affinity:     m.OBServer.Spec.Affinity,
+		Tolerations:  m.OBServer.Spec.Tolerations,
 	}
 	return podSpec
 }
