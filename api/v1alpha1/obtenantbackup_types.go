@@ -29,13 +29,13 @@ type OBTenantBackupSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Type          apitypes.BackupJobType `json:"type"`
-	TenantName    string                 `json:"tenantName"`
-	TenantSecret  string                 `json:"tenantSecret"`
-	ObClusterName string                 `json:"obClusterName"`
-	Path          string                 `json:"path,omitempty"`
+	Type          apitypes.BackupJobType `json:"type"`           // Type of backup job
+	TenantName    string                 `json:"tenantName"`     // Name of tenant in database
+	TenantSecret  string                 `json:"tenantSecret"`   // Secret that stores root password of tenant
+	ObClusterName string                 `json:"obClusterName"`  // Name of obcluster resource
+	Path          string                 `json:"path,omitempty"` // Path to store backup files
 
-	EncryptionSecret string `json:"encryptionSecret,omitempty"`
+	EncryptionSecret string `json:"encryptionSecret,omitempty"` // Secret that stores backup encryption key
 }
 
 // +kubebuilder:object:generate=false
@@ -44,7 +44,7 @@ type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           apitypes.BackupJobStatus `json:"status"`
-	Progress         string                   `json:"progress,omitempty"`
+	Progress         string                   `json:"progress,omitempty"` // Not support yet
 	OperationContext *OperationContext        `json:"operationContext,omitempty"`
 	StartedAt        string                   `json:"startedAt,omitempty"`
 	EndedAt          string                   `json:"endedAt,omitempty"`

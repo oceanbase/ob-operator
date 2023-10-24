@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 type MonitorTemplate struct {
-	Image    string              `json:"image"`
-	Resource *ResourceSpec       `json:"resource,omitempty"`
-	Storage  *ObagentStorageSpec `json:"storage"`
+	Image    string        `json:"image"`
+	Resource *ResourceSpec `json:"resource,omitempty"`
 }

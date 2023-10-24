@@ -209,22 +209,6 @@ func (m *OBServerManager) CreateOBPVC() error {
 		return errors.Wrap(err, "Create pvc of log")
 	}
 
-	if m.OBServer.Spec.MonitorTemplate != nil {
-		objectMeta = metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
-		}
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix), m.OBServer.Spec.MonitorTemplate.Storage.ConfigStorage),
-		}
-		err = m.Client.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of monitor log")
-		}
-	}
 	return nil
 }
 
@@ -267,14 +251,6 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	if m.OBServer.Spec.MonitorTemplate != nil {
 		monitorContainer := m.createMonitorContainer(obcluster)
 		containers = append(containers, monitorContainer)
-
-		volumeMonitorConf := corev1.Volume{}
-		volumeMonitorConf.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix)
-		volumeMonitorConfSource := &corev1.PersistentVolumeClaimVolumeSource{
-			ClaimName: fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix),
-		}
-		volumeMonitorConf.VolumeSource.PersistentVolumeClaim = volumeMonitorConfSource
-		volumes = append(volumes, volumeMonitorConf)
 	}
 
 	podSpec := corev1.PodSpec{
@@ -306,13 +282,6 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 	resources := corev1.ResourceRequirements{
 		Limits: monagentResource,
 	}
-
-	// volume mounts
-	volumeMountMonitorConf := corev1.VolumeMount{}
-	volumeMountMonitorConf.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, obagentconst.ConfigVolumeSuffix)
-	volumeMountMonitorConf.MountPath = obagentconst.ConfigPath
-	volumeMounts := make([]corev1.VolumeMount, 0)
-	volumeMounts = append(volumeMounts, volumeMountMonitorConf)
 
 	readinessProbeHTTP := corev1.HTTPGetAction{}
 	readinessProbeHTTP.Port = intstr.FromInt(obagentconst.HttpPort)
@@ -367,7 +336,6 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		ImagePullPolicy: "IfNotPresent",
 		Ports:           ports,
 		Resources:       resources,
-		VolumeMounts:    volumeMounts,
 		ReadinessProbe:  &readinessProbe,
 		WorkingDir:      obagentconst.InstallPath,
 		Env:             env,
@@ -428,6 +396,7 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
+	readinessProbe.FailureThreshold = 10
 
 	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
 

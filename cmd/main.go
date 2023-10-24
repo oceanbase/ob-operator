@@ -144,28 +144,12 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBUnit")
 		os.Exit(1)
 	}
-	if err = (&controller.OBClusterBackupReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBClusterBackupControllerName),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBClusterBackup")
-		os.Exit(1)
-	}
 	if err = (&controller.OBTenantBackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupControllerName),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackup")
-		os.Exit(1)
-	}
-	if err = (&controller.OBClusterRestoreReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBClusterRestoreControllerName),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBClusterRestore")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantRestoreReconciler{

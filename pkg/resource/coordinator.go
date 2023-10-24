@@ -129,6 +129,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 		c.Logger.Info("Task failed, back to initial status")
 		c.Manager.HandleFailure()
 	}
+	_ = c.cleanTaskResultMap(f)
 	// Coordinate finished
 }
 

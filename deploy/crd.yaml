@@ -1755,28 +1755,8 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  storage:
-                    properties:
-                      configStorage:
-                        properties:
-                          size:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        - storageClass
-                        type: object
-                    required:
-                    - configStorage
-                    type: object
                 required:
                 - image
-                - storage
                 type: object
               observer:
                 properties:
@@ -3780,28 +3760,8 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  storage:
-                    properties:
-                      configStorage:
-                        properties:
-                          size:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        - storageClass
-                        type: object
-                    required:
-                    - configStorage
-                    type: object
                 required:
                 - image
-                - storage
                 type: object
               nodeSelector:
                 additionalProperties:
@@ -4051,7 +4011,11 @@ spec:
                         type: string
                       type:
                         type: string
+                    required:
+                    - path
                     type: object
+                  encryptionSecret:
+                    type: string
                   fullCrontab:
                     type: string
                   incrementalCrontab:
@@ -4088,6 +4052,8 @@ spec:
                         type: string
                       type:
                         type: string
+                    required:
+                    - path
                     type: object
                   switchPieceInterval:
                     type: string
@@ -4099,6 +4065,8 @@ spec:
                 type: string
               suspend:
                 type: boolean
+              tenantCRName:
+                type: string
               tenantName:
                 type: string
               tenantSecret:
@@ -4107,7 +4075,6 @@ spec:
             - dataBackup
             - logArchive
             - obClusterName
-            - tenantName
             type: object
           status:
             description: OBTenantBackupPolicyStatus defines the observed state of
@@ -4515,6 +4482,8 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
                               bakDataSource:
                                 properties:
@@ -4524,7 +4493,11 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
+                              bakEncryptionSecret:
+                                type: string
                               cancel:
                                 type: boolean
                               description:
@@ -4958,7 +4931,6 @@ spec:
                 - arbitration_service_status
                 - compatibility_mode
                 - create_time
-                - gmt_create_time
                 - in_recyclebin
                 - locality
                 - locked
@@ -4970,14 +4942,11 @@ spec:
                 - recovery_until_scn
                 - replayable_scn
                 - status
-                - switchover_epoch
-                - switchover_status
                 - sync_scn
                 - tenant_id
                 - tenant_name
                 - tenant_role
                 - tenant_type
-                - unit_num
                 type: object
             required:
             - status
@@ -5046,6 +5015,8 @@ spec:
           spec:
             description: OBTenantBackupSpec defines the desired state of OBTenantBackup
             properties:
+              encryptionSecret:
+                type: string
               obClusterName:
                 type: string
               path:
@@ -5055,8 +5026,6 @@ spec:
               tenantSecret:
                 type: string
               type:
-                description: Foo is an example field of OBTenantBackup. Edit obtenantbackup_types.go
-                  to remove/update
                 type: string
             required:
             - obClusterName
@@ -5571,6 +5540,8 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
                               bakDataSource:
                                 properties:
@@ -5580,7 +5551,11 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
+                              bakEncryptionSecret:
+                                type: string
                               cancel:
                                 type: boolean
                               description:
@@ -6075,6 +6050,8 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
                               bakDataSource:
                                 properties:
@@ -6084,7 +6061,11 @@ spec:
                                     type: string
                                   type:
                                     type: string
+                                required:
+                                - path
                                 type: object
+                              bakEncryptionSecret:
+                                type: string
                               cancel:
                                 type: boolean
                               description:
@@ -6543,6 +6524,8 @@ spec:
                         type: string
                       type:
                         type: string
+                    required:
+                    - path
                     type: object
                   bakDataSource:
                     properties:
@@ -6552,7 +6535,11 @@ spec:
                         type: string
                       type:
                         type: string
+                    required:
+                    - path
                     type: object
+                  bakEncryptionSecret:
+                    type: string
                   cancel:
                     type: boolean
                   description:
@@ -6914,6 +6901,8 @@ spec:
                             type: string
                           type:
                             type: string
+                        required:
+                        - path
                         type: object
                       bakDataSource:
                         properties:
@@ -6923,7 +6912,11 @@ spec:
                             type: string
                           type:
                             type: string
+                        required:
+                        - path
                         type: object
+                      bakEncryptionSecret:
+                        type: string
                       cancel:
                         type: boolean
                       description:
@@ -9003,28 +8996,8 @@ spec:
                     - cpu
                     - memory
                     type: object
-                  storage:
-                    properties:
-                      configStorage:
-                        properties:
-                          size:
-                            anyOf:
-                            - type: integer
-                            - type: string
-                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                            x-kubernetes-int-or-string: true
-                          storageClass:
-                            type: string
-                        required:
-                        - size
-                        - storageClass
-                        type: object
-                    required:
-                    - configStorage
-                    type: object
                 required:
                 - image
-                - storage
                 type: object
               observerTemplate:
                 properties:

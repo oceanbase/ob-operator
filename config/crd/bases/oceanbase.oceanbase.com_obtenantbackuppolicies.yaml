@@ -125,6 +125,8 @@ spec:
                 type: string
               suspend:
                 type: boolean
+              tenantCRName:
+                type: string
               tenantName:
                 type: string
               tenantSecret:
@@ -133,7 +135,6 @@ spec:
             - dataBackup
             - logArchive
             - obClusterName
-            - tenantName
             type: object
           status:
             description: OBTenantBackupPolicyStatus defines the observed state of
@@ -561,6 +562,8 @@ spec:
                                 type: boolean
                               description:
                                 type: string
+                              replayEnabled:
+                                type: boolean
                               replayLogUntil:
                                 properties:
                                   scn:
@@ -939,7 +942,7 @@ spec:
                     type: string
                   create_time:
                     type: string
-                  gmt_create_time:
+                  gmt_create:
                     type: string
                   in_recyclebin:
                     type: string
@@ -990,7 +993,6 @@ spec:
                 - arbitration_service_status
                 - compatibility_mode
                 - create_time
-                - gmt_create_time
                 - in_recyclebin
                 - locality
                 - locked
@@ -1002,14 +1004,11 @@ spec:
                 - recovery_until_scn
                 - replayable_scn
                 - status
-                - switchover_epoch
-                - switchover_status
                 - sync_scn
                 - tenant_id
                 - tenant_name
                 - tenant_role
                 - tenant_type
-                - unit_num
                 type: object
             required:
             - status

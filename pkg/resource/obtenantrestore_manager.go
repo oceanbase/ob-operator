@@ -127,7 +127,12 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 		if restoreHistory != nil && restoreHistory.Status == "SUCCESS" {
 			m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
 			if m.Resource.Spec.RestoreRole == constants.TenantRoleStandby {
-				m.Resource.Status.Status = constants.RestoreJobStatusReplaying
+				if m.Resource.Spec.Source.ReplayEnabled && !m.Resource.Spec.Source.Until.Unlimited {
+					// Only if replay is enabled and restore until is not unlimited, start log replay
+					m.Resource.Status.Status = constants.RestoreJobStatusReplaying
+				} else {
+					m.Resource.Status.Status = constants.RestoreJobSuccessful
+				}
 			} else {
 				m.Resource.Status.Status = constants.RestoreJobStatusActivating
 			}

@@ -75,40 +75,41 @@ func (r *OBTenantBackupPolicy) Default() {
 	// only "default" is permitted
 	r.Spec.DataClean.Name = "default"
 
-	tenant := &OBTenant{}
-	err := bakCtl.Get(context.Background(), types.NamespacedName{
-		Namespace: r.GetNamespace(),
-		Name:      r.Spec.TenantName,
-	}, tenant)
-	// throw error in validator webhook
-	if err != nil {
-		return
-	}
-	if tenant.Status.Status != tenantstatus.Running {
-		return
-	}
-
 	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
 		r.Spec.DataBackup.Destination.Path = strings.ReplaceAll(r.Spec.DataBackup.Destination.Path, "/?", "?")
 	}
 	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
 		r.Spec.LogArchive.Destination.Path = strings.ReplaceAll(r.Spec.LogArchive.Destination.Path, "/?", "?")
 	}
+	if r.Spec.TenantCRName != "" {
+		tenant := &OBTenant{}
+		err := bakCtl.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.TenantCRName,
+		}, tenant)
+		// throw error in validator webhook
+		if err != nil {
+			return
+		}
+		if tenant.Status.Status != tenantstatus.Running {
+			return
+		}
 
-	blockOwnerDeletion := true
-	r.SetOwnerReferences([]metav1.OwnerReference{{
-		APIVersion:         tenant.APIVersion,
-		Kind:               tenant.Kind,
-		Name:               tenant.GetObjectMeta().GetName(),
-		UID:                tenant.GetObjectMeta().GetUID(),
-		BlockOwnerDeletion: &blockOwnerDeletion,
-	}})
+		blockOwnerDeletion := true
+		r.SetOwnerReferences([]metav1.OwnerReference{{
+			APIVersion:         tenant.APIVersion,
+			Kind:               tenant.Kind,
+			Name:               tenant.GetObjectMeta().GetName(),
+			UID:                tenant.GetObjectMeta().GetUID(),
+			BlockOwnerDeletion: &blockOwnerDeletion,
+		}})
 
-	r.SetLabels(map[string]string{
-		oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
-		oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
-		oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
-	})
+		r.SetLabels(map[string]string{
+			oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
+			oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
+			oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
+		})
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -123,30 +124,31 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 		return nil, err
 	}
 	ctx := context.TODO()
-	tenant := &OBTenant{}
-	err = bakCtl.Get(ctx, types.NamespacedName{
-		Namespace: r.GetNamespace(),
-		Name:      r.Spec.TenantName,
-	}, tenant)
-	if err != nil {
-		return nil, apierrors.NewNotFound(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenants"}, r.Spec.TenantName)
-	}
+	if r.Spec.TenantCRName != "" {
+		tenant := &OBTenant{}
+		err = bakCtl.Get(ctx, types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.TenantCRName,
+		}, tenant)
+		if err != nil {
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenants"}, r.Spec.TenantName)
+		}
 
-	if tenant.Status.Status != tenantstatus.Running {
-		return nil, errors.New("tenant is not running")
-	}
-
-	policyList := &OBTenantBackupPolicyList{}
-	err = bakCtl.List(ctx, policyList, client.MatchingLabels{
-		oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
-		oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
-		oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
-	})
-	if err != nil {
-		return nil, apierrors.NewInternalError(err)
-	}
-	if len(policyList.Items) > 0 {
-		return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenantbackuppolicies"}, policyList.Items[0].GetObjectMeta().GetName())
+		if tenant.Status.Status != tenantstatus.Running {
+			return nil, errors.New("tenant is not running")
+		}
+		policyList := &OBTenantBackupPolicyList{}
+		err = bakCtl.List(ctx, policyList, client.MatchingLabels{
+			oceanbaseconst.LabelTenantName:   r.Spec.TenantCRName,
+			oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
+			oceanbaseconst.LabelRefUID:       string(tenant.GetUID()),
+		})
+		if err != nil {
+			return nil, apierrors.NewInternalError(err)
+		}
+		if len(policyList.Items) > 0 {
+			return nil, apierrors.NewAlreadyExists(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenantbackuppolicies"}, policyList.Items[0].GetObjectMeta().GetName())
+		}
 	}
 
 	return nil, nil
@@ -154,7 +156,16 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	_ = old
+	currentResource := old.(*OBTenantBackupPolicy)
+	if currentResource.Status.Status == constants.BackupPolicyStatusRunning {
+		if r.Spec.DataBackup.EncryptionSecret != currentResource.Spec.DataBackup.EncryptionSecret {
+			return nil, field.Invalid(
+				field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"),
+				r.Spec.DataBackup.EncryptionSecret,
+				"encryptionSecret can not be changed when backup policy is running, please pause the backup policy first",
+			)
+		}
+	}
 	return nil, r.validateBackupPolicy()
 }
 
@@ -174,8 +185,11 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	if r.Spec.ObClusterName == "" {
 		return errors.New("obClusterName is required")
 	}
-	if r.Spec.TenantName == "" {
-		return errors.New("tenantName is required")
+	if r.Spec.TenantName == "" && r.Spec.TenantCRName == "" {
+		return field.Invalid(field.NewPath("spec").Child("[tenantName | tenantCRName]"), r.Spec.TenantName, "tenantName and tenantCRName are both empty")
+	}
+	if r.Spec.TenantCRName == "" && r.Spec.TenantSecret == "" {
+		return field.Invalid(field.NewPath("spec").Child("tenantSecret"), r.Spec.TenantSecret, "tenantSecret is required when using tenantName")
 	}
 	ossPathPattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
 
@@ -192,18 +206,12 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("encryptionSecret"), r.Spec.DataBackup.EncryptionSecret, "'password' field not found in encryptionSecret")
 		}
 	}
-	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+
+	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS && r.Spec.DataBackup.Destination.OSSAccessSecret != "" {
 		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
 		}
 
-		if r.Spec.DataBackup.Destination.OSSAccessSecret == "" {
-			return field.Invalid(
-				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
-				r.Spec.DataBackup.Destination.OSSAccessSecret,
-				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
-			)
-		}
 		secret := &v1.Secret{}
 		err := bakCtl.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
@@ -236,18 +244,11 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 	}
 
-	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
+	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS && r.Spec.LogArchive.Destination.OSSAccessSecret != "" {
 		if !ossPathPattern.MatchString(r.Spec.LogArchive.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("path"), r.Spec.LogArchive.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
 		}
 
-		if r.Spec.LogArchive.Destination.OSSAccessSecret == "" {
-			return field.Invalid(
-				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
-				r.Spec.LogArchive.Destination.OSSAccessSecret,
-				"Backup tenant log to OSS type destination must have a OSSAccessSecret",
-			)
-		}
 		secret := &v1.Secret{}
 		err := bakCtl.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
