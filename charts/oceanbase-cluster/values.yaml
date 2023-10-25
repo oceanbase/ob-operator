@@ -1,0 +1,46 @@
+clusterName: obcluster
+clusterId: 1025
+
+storageClass: local-path
+
+observerConfig:
+  resource:
+    cpu: 2
+    memory: 12Gi
+  storages:
+    dataStorage: 50Gi
+    redoLogStorage: 50Gi
+    logStorage: 20Gi
+
+monitorResource:
+  cpu: 1
+  memory: 2Gi
+
+parameters:
+  - name: system_memory
+    value: 3
+
+nfsBackupEnabled: false # set true and config volume if you want to enable backup with NFS
+nfsBackup:
+  server: 1.1.1.1
+  path: /opt/nfs
+  readOnly: false
+
+generateUserSecrets: true # if set true, all system user secrets will be generated automatically
+userSecrets:
+  root: ob-user-root
+  proxyro: ob-user-proxyro
+  monitor: ob-user-monitor
+  operator: ob-user-operator
+
+topology:
+  - zone: zone1
+    replica: 1
+  - zone: zone2
+    replica: 1
+  - zone: zone3
+    replica: 1
+    tolerations:
+      - key: obtopo
+        value: zone
+        effect: NoSchedule

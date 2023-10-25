@@ -1,0 +1,44 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+  {{- include "oceanbase-cluster.labels" . | nindent 4 }}
+spec:
+  clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
+  clusterId: {{ .Values.clusterId | default 1 }}
+  userSecrets:
+  {{- range $key, $value := .Values.userSecrets }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  topology: 
+    {{- toYaml .Values.topology | nindent 4 }}
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
+    {{- with .Values.observerConfig }}
+    resource:
+      {{- toYaml .resource | nindent 6 }}
+    storage:
+     {{- range $key, $size := .storages }} 
+      {{ $key }}:
+        storageClass: {{ $.Values.storageClass }}
+        size: {{ $size }}
+     {{- end }}
+    {{- end }}
+  monitor:
+    image: oceanbase/obagent:4.2.0-100000062023080210
+    resource:
+      {{- toYaml .Values.monitorResource | nindent 6 }}
+  parameters:
+  {{- range $param := .Values.parameters }}
+    - name: {{ $param.name }}
+      value: {{ $param.value | quote }}
+  {{- end }}
+  {{- if .Values.nfsBackupEnabled }}
+  backupVolume:
+    volume: 
+      name: backup
+      nfs:
+      {{- toYaml .Values.nfsBackup | nindent 8 }}
+  {{- end }}
