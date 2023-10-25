@@ -12,8 +12,12 @@ See the Mulan PSL v2 for more details.
 
 package v1alpha1
 
+import corev1 "k8s.io/api/core/v1"
+
 type OBZoneTopology struct {
-	Zone         string            `json:"zone"`
-	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
-	Replica      int               `json:"replica"`
+	Zone         string              `json:"zone"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Affinity     *corev1.Affinity    `json:"affinity,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	Replica      int                 `json:"replica"`
 }

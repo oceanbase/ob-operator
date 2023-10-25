@@ -29,13 +29,15 @@ type OBServerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string            `json:"clusterName"`
-	ClusterId        int64             `json:"clusterId,omitempty"`
-	Zone             string            `json:"zone"`
-	NodeSelector     map[string]string `json:"nodeSelector,omitempty"`
-	OBServerTemplate *OBServerTemplate `json:"observerTemplate"`
-	MonitorTemplate  *MonitorTemplate  `json:"monitorTemplate,omitempty"`
-	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
+	ClusterName      string              `json:"clusterName"`
+	ClusterId        int64               `json:"clusterId,omitempty"`
+	Zone             string              `json:"zone"`
+	NodeSelector     map[string]string   `json:"nodeSelector,omitempty"`
+	Affinity         *corev1.Affinity    `json:"affinity,omitempty"`
+	Tolerations      []corev1.Toleration `json:"tolerations,omitempty"`
+	OBServerTemplate *OBServerTemplate   `json:"observerTemplate"`
+	MonitorTemplate  *MonitorTemplate    `json:"monitorTemplate,omitempty"`
+	BackupVolume     *BackupVolumeSpec   `json:"backupVolume,omitempty"`
 }
 
 // OBServerStatus defines the observed state of OBServer
