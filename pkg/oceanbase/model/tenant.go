@@ -21,7 +21,7 @@ type Tenant struct {
 	Locality         string `json:"locality" db:"locality"`
 	PreviousLocality string `json:"previous_locality" db:"previous_locality"`
 	Status           string `json:"status" db:"status"`
-	GmtCreateTime    string `json:"gmt_create_time" db:"gmt_create"`
+	GmtCreate        string `json:"gmt_create" db:"gmt_create"`
 }
 
 type Replica struct {
