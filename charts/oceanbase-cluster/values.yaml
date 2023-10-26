@@ -12,6 +12,7 @@ observerConfig:
     redoLogStorage: 50Gi
     logStorage: 20Gi
 
+monitorEnabled: true
 monitorResource:
   cpu: 1
   memory: 2Gi

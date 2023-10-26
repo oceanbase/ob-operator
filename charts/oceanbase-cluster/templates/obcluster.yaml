@@ -26,10 +26,12 @@ spec:
         size: {{ $size }}
      {{- end }}
     {{- end }}
+  {{- if .Values.monitorEnabled }}
   monitor:
     image: oceanbase/obagent:4.2.0-100000062023080210
     resource:
       {{- toYaml .Values.monitorResource | nindent 6 }}
+  {{- end }}
   parameters:
   {{- range $param := .Values.parameters }}
     - name: {{ $param.name }}
