@@ -18,7 +18,7 @@ monitorResource:
 
 parameters:
   - name: system_memory
-    value: 3
+    value: 3G
 
 nfsBackupEnabled: false # set true and config volume if you want to enable backup with NFS
 nfsBackup:
