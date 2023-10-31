@@ -187,12 +187,12 @@ func (m *ObTenantRestoreManager) StartRestoreJobInOB() error {
 		}
 	} else {
 		if restoreSpec.Until.Timestamp != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "timestamp", *restoreSpec.Until.Timestamp)
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "TIME", *restoreSpec.Until.Timestamp)
 			if err != nil {
 				return err
 			}
 		} else if restoreSpec.Until.Scn != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "scn", *restoreSpec.Until.Scn)
+			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "SCN", *restoreSpec.Until.Scn)
 			if err != nil {
 				return err
 			}

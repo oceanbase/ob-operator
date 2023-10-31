@@ -1,5 +1,5 @@
 FROM golang:1.20.4 as builder
-ARG GOPROXY
+ARG GOPROXY=https://goproxy.io,direct
 WORKDIR /workspace
 COPY ./oceanbase-helper .
 RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o oceanbase-helper main.go

@@ -6,7 +6,7 @@ storageClass: local-path
 observerConfig:
   resource:
     cpu: 2
-    memory: 12Gi
+    memory: 10Gi
   storages:
     dataStorage: 50Gi
     redoLogStorage: 50Gi
@@ -14,12 +14,12 @@ observerConfig:
 
 monitorEnabled: true
 monitorResource:
-  cpu: 1
+  cpu: 500m
   memory: 2Gi
 
 parameters:
   - name: system_memory
-    value: 3G
+    value: 2G
 
 nfsBackupEnabled: false # set true and config volume if you want to enable backup with NFS
 nfsBackup:
