@@ -4,7 +4,7 @@
 .PHONY: connect gettenants getpolicy getbackupjobs getcluster getobserver getrestorejobs getpods
 
 connect:
-	$(eval nodeHost = $(shell kubectl get pods -o jsonpath='{.items[1].status.podIP}'))
+	$(eval nodeHost = $(shell kubectl get pods -o jsonpath='{.items[0].status.podIP}'))
 ifdef TENANT
 	$(eval secretName = $(shell kubectl get obtenant ${TENANT} -o jsonpath='{.status.credentials.root}'))
 	$(eval tenantName = $(shell kubectl get obtenant ${TENANT} -o jsonpath='{.spec.tenantName}'))

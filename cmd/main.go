@@ -160,18 +160,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantRestore")
 		os.Exit(1)
 	}
-	// if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
-	// 	os.Exit(1)
-	// }
-	// if err = (&v1alpha1.OBZone{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBZone")
-	// 	os.Exit(1)
-	// }
-	// if err = (&v1alpha1.OBServer{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBServer")
-	// 	os.Exit(1)
-	// }
 	if err = (&controller.OBTenantBackupPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
