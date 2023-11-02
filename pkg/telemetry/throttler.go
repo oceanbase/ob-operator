@@ -87,28 +87,28 @@ func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.R
 
 func (t *throttler) startWorkers() {
 	for i := 0; i < DefaultThrottlerWorkerCount; i++ {
-		go func(ctx context.Context, ch <-chan *models.TelemetryRecord) error {
+		go func(ctx context.Context, ch <-chan *models.TelemetryRecord) {
 			for {
 				select {
 				case record, ok := <-ch:
 					if !ok {
 						// channel closed
-						return nil
+						return
 					}
 					res, err := t.sendTelemetryRecord(record)
 					if t.debug {
 						if err != nil {
-							fmt.Printf("send telemetry record error: %v\n", err)
+							_, _ = fmt.Printf("send telemetry record error: %v\n", err)
 						}
 						bts, err := io.ReadAll(res.Body)
 						if err != nil {
-							fmt.Printf("read response body error: %v\n", err)
+							_, _ = fmt.Printf("read response body error: %v\n", err)
 						}
-						fmt.Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
+						_, _ = fmt.Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
 					}
 				case <-ctx.Done():
-					return ctx.Err()
-				default:
+					_, _ = fmt.Println(ctx.Err())
+					return
 				}
 			}
 		}(t.ctx, t.chanOut())

@@ -14,9 +14,7 @@ package telemetry
 
 import "os"
 
-var (
-	TelemetryRequestSignature string = os.Getenv(TelemetrySignatureEnvName)
-)
+var TelemetryRequestSignature = os.Getenv(TelemetrySignatureEnvName)
 
 const (
 	DefaultThrottlerBufferSize  = 30

@@ -15,13 +15,12 @@ package telemetry
 import (
 	"time"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
-
 	. "github.com/onsi/gomega"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 type fakeEventRecorder struct{}

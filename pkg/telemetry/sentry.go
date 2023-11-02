@@ -22,51 +22,34 @@ func objectSentry(object any) {
 	if object == nil {
 		return
 	}
-	switch object.(type) {
-	case *v1alpha1.OBCluster:
-		cluster, ok := object.(*v1alpha1.OBCluster)
-		if !ok {
-			return
-		}
+	if cluster, ok := object.(*v1alpha1.OBCluster); ok {
 		processOBCluster(cluster)
-	case *v1alpha1.OBTenant:
-		tenant, ok := object.(*v1alpha1.OBTenant)
-		if !ok {
-			return
-		}
+	} else if tenant, ok := object.(*v1alpha1.OBTenant); ok {
 		processOBTenant(tenant)
-	case *v1alpha1.OBServer:
-		server, ok := object.(*v1alpha1.OBServer)
-		if !ok {
-			return
-		}
+	} else if server, ok := object.(*v1alpha1.OBServer); ok {
 		processOBServer(server)
-	case *v1alpha1.OBZone:
-		zone, ok := object.(*v1alpha1.OBZone)
-		if !ok {
-			return
-		}
+	} else if zone, ok := object.(*v1alpha1.OBZone); ok {
 		processOBZone(zone)
 	}
 }
 
 func processOBCluster(cluster *v1alpha1.OBCluster) {
-	fmt.Printf("[OBCluster Before] %+v\n", cluster)
+	_, _ = fmt.Printf("[OBCluster Before] %+v\n", cluster)
 	if cluster.Spec.BackupVolume != nil && cluster.Spec.BackupVolume.Volume != nil && cluster.Spec.BackupVolume.Volume.NFS != nil {
 		cluster.Spec.BackupVolume.Volume.NFS.Server = md5Hash(cluster.Spec.BackupVolume.Volume.NFS.Server)
 	}
-	fmt.Printf("[OBCluster After] %+v\n", cluster)
+	_, _ = fmt.Printf("[OBCluster After] %+v\n", cluster)
 }
 
 func processOBServer(server *v1alpha1.OBServer) {
-	fmt.Printf("[OBServer Before] %+v\n", server)
+	_, _ = fmt.Printf("[OBServer Before] %+v\n", server)
 	server.Status.PodIp = md5Hash(server.Status.PodIp)
 	server.Status.NodeIp = md5Hash(server.Status.NodeIp)
-	fmt.Printf("[OBServer After] %+v\n", server)
+	_, _ = fmt.Printf("[OBServer After] %+v\n", server)
 }
 
 func processOBTenant(tenant *v1alpha1.OBTenant) {
-	fmt.Printf("[OBTenant After] %+v\n", tenant)
+	_, _ = fmt.Printf("[OBTenant After] %+v\n", tenant)
 	for i := range tenant.Status.Pools {
 		for j := range tenant.Status.Pools[i].Units {
 			tenant.Status.Pools[i].Units[j].ServerIP = md5Hash(tenant.Status.Pools[i].Units[j].ServerIP)
@@ -75,16 +58,16 @@ func processOBTenant(tenant *v1alpha1.OBTenant) {
 			}
 		}
 	}
-	fmt.Printf("[OBTenant After] %+v\n", tenant)
+	_, _ = fmt.Printf("[OBTenant After] %+v\n", tenant)
 }
 
 func processOBZone(zone *v1alpha1.OBZone) {
-	fmt.Printf("[OBZone Before] %+v\n", zone)
+	_, _ = fmt.Printf("[OBZone Before] %+v\n", zone)
 	for i := range zone.Status.OBServerStatus {
 		zone.Status.OBServerStatus[i].Server = md5Hash(zone.Status.OBServerStatus[i].Server)
 	}
 	if zone.Spec.BackupVolume != nil && zone.Spec.BackupVolume.Volume != nil && zone.Spec.BackupVolume.Volume.NFS != nil {
 		zone.Spec.BackupVolume.Volume.NFS.Server = md5Hash(zone.Spec.BackupVolume.Volume.NFS.Server)
 	}
-	fmt.Printf("[OBZone After] %+v\n", zone)
+	_, _ = fmt.Printf("[OBZone After] %+v\n", zone)
 }

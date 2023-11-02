@@ -18,9 +18,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 	"k8s.io/apimachinery/pkg/runtime"
 	record "k8s.io/client-go/tools/record"
+
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
 type Telemetry interface {
@@ -65,13 +66,13 @@ func (t *telemetry) Event(object runtime.Object, eventType, reason, message stri
 }
 
 // Implement record.EventRecorder interface
-func (t *telemetry) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...interface{}) {
+func (t *telemetry) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...any) {
 	t.EventRecorder.Eventf(object, eventType, reason, messageFmt, args...)
 	t.generateFromEvent(object, nil, eventType, reason, messageFmt, args...)
 }
 
 // Implement record.EventRecorder interface
-func (t *telemetry) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...interface{}) {
+func (t *telemetry) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
 	t.EventRecorder.AnnotatedEventf(object, annotations, eventType, reason, messageFmt, args...)
 	t.generateFromEvent(object, annotations, eventType, reason, messageFmt, args...)
 }
@@ -104,7 +105,7 @@ func (t *telemetry) GetHostMetrics() *hostMetrics {
 	return t.hostMetrics
 }
 
-func (t *telemetry) generateFromEvent(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...interface{}) {
+func (t *telemetry) generateFromEvent(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
 	if object == nil {
 		t.GenerateTelemetryRecord(nil, "Unknown", eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	} else {

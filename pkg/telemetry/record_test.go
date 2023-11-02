@@ -17,10 +17,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
 var _ = Describe("Telemetry record", func() {

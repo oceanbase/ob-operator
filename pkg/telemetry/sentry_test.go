@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 var _ = Describe("Telemetry sentry", Label("sentry"), func() {

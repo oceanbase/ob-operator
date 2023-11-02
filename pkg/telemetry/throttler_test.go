@@ -17,9 +17,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
 var _ = Describe("Telemetry throttler", Ordered, Label("throttler"), func() {
