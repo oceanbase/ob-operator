@@ -1,0 +1,113 @@
+/*
+Copyright (c) 2023 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
+package telemetry
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
+	"k8s.io/apimachinery/pkg/runtime"
+	record "k8s.io/client-go/tools/record"
+)
+
+type Telemetry interface {
+	record.EventRecorder
+	GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField)
+	GetHostMetrics() *hostMetrics
+	Done()
+}
+
+type telemetry struct {
+	*throttler
+	*hostMetrics
+	record.EventRecorder
+
+	telemetryDisabled bool
+}
+
+func NewTelemetry(recorder record.EventRecorder) Telemetry {
+	clt := &telemetry{
+		EventRecorder: recorder,
+	}
+
+	// if telemetry is disabled, return a dummy telemetry as original event recorder
+	if os.Getenv(DisableTelemetryEnvName) == "true" {
+		clt.telemetryDisabled = true
+		return clt
+	}
+	// no signature means telemetry is disabled
+	if TelemetryRequestSignature == "" {
+		clt.telemetryDisabled = true
+		return clt
+	}
+	clt.hostMetrics = getHostMetrics()
+	clt.throttler = getThrottler()
+	return clt
+}
+
+// Implement record.EventRecorder interface
+func (t *telemetry) Event(object runtime.Object, eventType, reason, message string) {
+	t.EventRecorder.Event(object, eventType, reason, message)
+	t.generateFromEvent(object, nil, eventType, reason, message)
+}
+
+// Implement record.EventRecorder interface
+func (t *telemetry) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...interface{}) {
+	t.EventRecorder.Eventf(object, eventType, reason, messageFmt, args...)
+	t.generateFromEvent(object, nil, eventType, reason, messageFmt, args...)
+}
+
+// Implement record.EventRecorder interface
+func (t *telemetry) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...interface{}) {
+	t.EventRecorder.AnnotatedEventf(object, annotations, eventType, reason, messageFmt, args...)
+	t.generateFromEvent(object, annotations, eventType, reason, messageFmt, args...)
+}
+
+// Use Event, Eventf, AnnotatedEventf first
+func (t *telemetry) GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) {
+	if t.telemetryDisabled {
+		return
+	}
+	go func(ctx context.Context, ch chan<- *models.TelemetryRecord) {
+		// TODO: guard here to mask IP address
+		objectSentry(object)
+		record := newRecordFromEvent(object, objectType, eventType, reason, message, annotations, extra...)
+		record.IpHashes = t.hostMetrics.IPHashes
+		select {
+		case <-ctx.Done():
+			return
+		case ch <- record:
+		case <-time.After(DefaultWaitThrottlerSeconds * time.Second):
+		default:
+		}
+	}(t.ctx, t.chanIn())
+}
+
+func (t *telemetry) Done() {
+	t.throttler.close()
+}
+
+func (t *telemetry) GetHostMetrics() *hostMetrics {
+	return t.hostMetrics
+}
+
+func (t *telemetry) generateFromEvent(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...interface{}) {
+	if object == nil {
+		t.GenerateTelemetryRecord(nil, "Unknown", eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+	} else {
+		t.GenerateTelemetryRecord(object.DeepCopyObject(), object.GetObjectKind().GroupVersionKind().Kind, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+	}
+}

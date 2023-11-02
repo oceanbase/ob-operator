@@ -14,18 +14,22 @@ package telemetry
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"sync"
+
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
 type throttler struct {
-	http.Client
-
-	metrics    *TelemetryEnvMetrics
+	debug      bool
+	client     http.Client
 	ctx        context.Context
 	cancel     context.CancelFunc
-	recordChan chan *TelemetryRecord
+	recordChan chan *models.TelemetryRecord
 }
 
 var throttlerSingleton *throttler
@@ -34,54 +38,56 @@ var throttlerOnce sync.Once
 func getThrottler() *throttler {
 	throttlerOnce.Do(func() {
 		throttlerSingleton = &throttler{
-			recordChan: make(chan *TelemetryRecord, DefaultThrottlerBufferSize),
+			recordChan: make(chan *models.TelemetryRecord, DefaultThrottlerBufferSize),
 		}
-		if metrics, err := GetHostMetrics(); err == nil {
-			throttlerSingleton.metrics = metrics
-		}
+
+		throttlerSingleton.debug = os.Getenv(TelemetryDebugEnvName) == "true"
 		ctx, cancel := context.WithCancel(context.Background())
 		throttlerSingleton.ctx = ctx
 		throttlerSingleton.cancel = cancel
-		throttlerSingleton.Client = *http.DefaultClient
+		throttlerSingleton.client = *http.DefaultClient
 
 		throttlerSingleton.startWorkers()
 	})
 	return throttlerSingleton
 }
 
-func (t *throttler) chanOut() <-chan *TelemetryRecord {
+func (t *throttler) chanOut() <-chan *models.TelemetryRecord {
 	return t.recordChan
 }
 
-func (t *throttler) chanIn() chan<- *TelemetryRecord {
+func (t *throttler) chanIn() chan<- *models.TelemetryRecord {
 	return t.recordChan
 }
 
 func (t *throttler) close() {
-	if _, ok := <-t.recordChan; ok {
-		close(t.recordChan)
-	}
+	t.cancel()
 }
 
-func (t *throttler) sendTelemetryRecord(record *TelemetryRecord) error {
-	record.IpHashes = t.metrics.IPHashes
-	body, err := encodeTelemetryRecord(record)
+func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.Response, error) {
+	body, err := encodeRecord(record)
+	if err != nil {
+		return nil, err
+	}
 	req := &http.Request{
 		Method: http.MethodPost,
-		URL:    &url.URL{Host: TelemetryReportDevHost, Path: TelemetryReportPath},
+		URL: &url.URL{
+			Scheme: SchemeHttp,
+			Host:   TelemetryReportTestHost,
+			Path:   TelemetryReportPath,
+		},
 		Header: http.Header{
-			"content-type": []string{"application/json"},
+			"content-type": []string{ContentTypeJson},
 			"sig":          []string{TelemetryRequestSignature},
 		},
 		Body: body,
 	}
-	_, err = t.Client.Do(req)
-	return err
+	return t.client.Do(req)
 }
 
 func (t *throttler) startWorkers() {
-	for i := 0; i < DefaultWorkerCount; i++ {
-		go func(ctx context.Context, ch <-chan *TelemetryRecord) error {
+	for i := 0; i < DefaultThrottlerWorkerCount; i++ {
+		go func(ctx context.Context, ch <-chan *models.TelemetryRecord) error {
 			for {
 				select {
 				case record, ok := <-ch:
@@ -89,7 +95,17 @@ func (t *throttler) startWorkers() {
 						// channel closed
 						return nil
 					}
-					_ = t.sendTelemetryRecord(record)
+					res, err := t.sendTelemetryRecord(record)
+					if t.debug {
+						if err != nil {
+							fmt.Printf("send telemetry record error: %v\n", err)
+						}
+						bts, err := io.ReadAll(res.Body)
+						if err != nil {
+							fmt.Printf("read response body error: %v\n", err)
+						}
+						fmt.Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
+					}
 				case <-ctx.Done():
 					return ctx.Err()
 				default:

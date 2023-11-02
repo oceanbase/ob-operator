@@ -48,6 +48,7 @@ type OBClusterReconciler struct {
 // +kubebuilder:rbac:groups="",resources=services/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=services/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
+// +kubebuilder:rbac:groups="",resources=nodes,verbs=get;list;watch
 // +kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=batch,resources=jobs/finalizers,verbs=update
@@ -66,11 +67,11 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	obcluster := &v1alpha1.OBCluster{}
 	err := r.Client.Get(ctx, req.NamespacedName, obcluster)
 	if err != nil {
-		logger.Error(err, "get obcluster error")
 		if kubeerrors.IsNotFound(err) {
 			// obcluster not found, just return
 			return ctrl.Result{}, nil
 		}
+		logger.Error(err, "get obcluster error")
 		return ctrl.Result{}, err
 	}
 

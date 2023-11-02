@@ -19,7 +19,9 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"sync"
 
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -28,12 +30,15 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-type TelemetryEnvMetrics struct {
-	IPHashes []string  `json:"ipHashes"`
-	K8sNodes []K8sNode `json:"k8sNodes"`
+type hostMetrics struct {
+	IPHashes []string         `json:"ipHashes"`
+	K8sNodes []models.K8sNode `json:"k8sNodes"`
 }
 
-func LocalIP() ([]net.IP, error) {
+var telemetryEnvMetrics *hostMetrics
+var telemetryEnvMetricsOnce sync.Once
+
+func getLocalIPs() ([]net.IP, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
 		return nil, err
@@ -62,7 +67,7 @@ func LocalIP() ([]net.IP, error) {
 	return ips, nil
 }
 
-func K8sNodes() ([]corev1.Node, error) {
+func getK8sNodes() ([]corev1.Node, error) {
 	var err error
 	var config *rest.Config
 
@@ -91,33 +96,33 @@ func K8sNodes() ([]corev1.Node, error) {
 	return nodes.Items, nil
 }
 
-func GetHostMetrics() (*TelemetryEnvMetrics, error) {
-	metrics := &TelemetryEnvMetrics{
+func getHostMetrics() *hostMetrics {
+	telemetryEnvMetrics = &hostMetrics{
 		IPHashes: []string{},
-		K8sNodes: []K8sNode{},
+		K8sNodes: []models.K8sNode{},
 	}
-	ips, err := LocalIP()
-	if err != nil {
-		return nil, err
-	}
-	for _, ip := range ips {
-		md5Hash := md5.Sum([]byte(ip.String()))
-		metrics.IPHashes = append(metrics.IPHashes, hex.EncodeToString(md5Hash[:]))
-	}
-	k8sNodes, err := K8sNodes()
-	if err != nil {
-		return nil, err
-	}
-	for _, node := range k8sNodes {
-		metrics.K8sNodes = append(metrics.K8sNodes, K8sNode{
-			KernelVersion:           node.Status.NodeInfo.KernelVersion,
-			OsImage:                 node.Status.NodeInfo.OSImage,
-			ContainerRuntimeVersion: node.Status.NodeInfo.ContainerRuntimeVersion,
-			KubeletVersion:          node.Status.NodeInfo.KubeletVersion,
-			KubeProxyVersion:        node.Status.NodeInfo.KubeProxyVersion,
-			OperatingSystem:         node.Status.NodeInfo.OperatingSystem,
-			Architecture:            node.Status.NodeInfo.Architecture,
-		})
-	}
-	return metrics, nil
+	telemetryEnvMetricsOnce.Do(func() {
+		ips, err := getLocalIPs()
+		if err == nil {
+			for _, ip := range ips {
+				md5Hash := md5.Sum([]byte(ip.String()))
+				telemetryEnvMetrics.IPHashes = append(telemetryEnvMetrics.IPHashes, hex.EncodeToString(md5Hash[:]))
+			}
+		}
+		k8sNodes, err := getK8sNodes()
+		if err == nil {
+			for _, node := range k8sNodes {
+				telemetryEnvMetrics.K8sNodes = append(telemetryEnvMetrics.K8sNodes, models.K8sNode{
+					KernelVersion:           node.Status.NodeInfo.KernelVersion,
+					OsImage:                 node.Status.NodeInfo.OSImage,
+					ContainerRuntimeVersion: node.Status.NodeInfo.ContainerRuntimeVersion,
+					KubeletVersion:          node.Status.NodeInfo.KubeletVersion,
+					KubeProxyVersion:        node.Status.NodeInfo.KubeProxyVersion,
+					OperatingSystem:         node.Status.NodeInfo.OperatingSystem,
+					Architecture:            node.Status.NodeInfo.Architecture,
+				})
+			}
+		}
+	})
+	return telemetryEnvMetrics
 }

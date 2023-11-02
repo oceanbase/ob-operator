@@ -17,42 +17,11 @@ import (
 	"encoding/json"
 	"io"
 	"time"
+
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
-type TelemetryRecord struct {
-	IpHashes     []string `json:"ipHashes"`
-	Timestamp    int64    `json:"timestamp"`
-	Message      string   `json:"message"`
-	ResourceType string   `json:"resourceType"`
-	EventType    string   `json:"eventType"`
-	Resource     any      `json:"resource,omitempty"`
-	Extra        any      `json:"extra,omitempty"`
-
-	K8sNodes []K8sNode `json:"k8sNodes,omitempty"`
-}
-
-type ExtraField struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
-}
-
-type K8sNode struct {
-	KernelVersion           string `json:"kernelVersion,omitempty"`
-	OsImage                 string `json:"osImage,omitempty"`
-	ContainerRuntimeVersion string `json:"containerRuntimeVersion,omitempty"`
-	KubeletVersion          string `json:"kubeletVersion,omitempty"`
-	KubeProxyVersion        string `json:"kubeProxyVersion,omitempty"`
-	OperatingSystem         string `json:"operatingSystem,omitempty"`
-	Architecture            string `json:"architecture,omitempty"`
-}
-
-type TelemetryUploadBody struct {
-	Content   TelemetryRecord `json:"content"`
-	Time      string          `json:"time"`
-	Component string          `json:"component"`
-}
-
-func newTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...ExtraField) *TelemetryRecord {
+func newRecordFromEvent(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) *models.TelemetryRecord {
 	anno := annotations
 	if len(extra) > 0 {
 		if anno == nil {
@@ -62,9 +31,10 @@ func newTelemetryRecord(object any, objectType, eventType, reason, message strin
 			anno[field.Key] = field.Value
 		}
 	}
-	return &TelemetryRecord{
+	return &models.TelemetryRecord{
 		Timestamp:    time.Now().Unix(),
 		Message:      message,
+		Reason:       reason,
 		ResourceType: objectType,
 		EventType:    eventType,
 		Resource:     object,
@@ -73,8 +43,8 @@ func newTelemetryRecord(object any, objectType, eventType, reason, message strin
 }
 
 // Encode a TelemetryRecord into a io.ReadCloser
-func encodeTelemetryRecord(record *TelemetryRecord) (io.ReadCloser, error) {
-	body := TelemetryUploadBody{
+func encodeRecord(record *models.TelemetryRecord) (io.ReadCloser, error) {
+	body := models.TelemetryUploadBody{
 		Content:   *record,
 		Time:      time.Unix(record.Timestamp, 0).Format(time.DateTime),
 		Component: TelemetryComponent,

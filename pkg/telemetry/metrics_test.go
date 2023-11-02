@@ -22,21 +22,20 @@ import (
 
 var _ = Describe("Telemetry", func() {
 	Context("Test Telemetry", Label("metrics"), func() {
-		It("Test LocalIP", func() {
-			ips, err := LocalIP()
+		It("Test getLocalIP", func() {
+			ips, err := getLocalIPs()
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(ips).ShouldNot(BeNil())
 		})
 
-		It("Test K8sNodes", func() {
-			nodes, err := K8sNodes()
+		It("Test getK8sNodes", func() {
+			nodes, err := getK8sNodes()
 			Expect(err).ShouldNot(HaveOccurred())
 			Expect(nodes).ShouldNot(BeNil())
 		})
 
-		It("Test TelemetryEnvMetrics", func() {
-			metrics, err := GetHostMetrics()
-			Expect(err).ShouldNot(HaveOccurred())
+		It("Test getHostMetrics", func() {
+			metrics := getHostMetrics()
 			Expect(metrics).ShouldNot(BeNil())
 			fmt.Printf("%+v\n", metrics)
 		})

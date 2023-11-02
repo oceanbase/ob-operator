@@ -18,13 +18,14 @@ import (
 	"time"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Telemetry record", func() {
 	It("Marshal TelemetryBody", func() {
-		record := &TelemetryRecord{
+		record := &models.TelemetryRecord{
 			IpHashes:     []string{},
 			Timestamp:    time.Now().Unix(),
 			Message:      "",
@@ -32,9 +33,8 @@ var _ = Describe("Telemetry record", func() {
 			EventType:    "",
 			Resource:     nil,
 			Extra:        nil,
-			K8sNodes:     []K8sNode{},
 		}
-		body := TelemetryUploadBody{
+		body := models.TelemetryUploadBody{
 			Content:   *record,
 			Time:      time.Unix(record.Timestamp, 0).Format(time.DateTime),
 			Component: TelemetryComponent,
@@ -46,7 +46,7 @@ var _ = Describe("Telemetry record", func() {
 	It("Marshal TelemetryRecord", func() {
 		var err error
 		var body []byte
-		record := &TelemetryRecord{
+		record := &models.TelemetryRecord{
 			IpHashes:     []string{},
 			Timestamp:    time.Now().Unix(),
 			Message:      "",
@@ -54,7 +54,6 @@ var _ = Describe("Telemetry record", func() {
 			EventType:    "",
 			Resource:     nil,
 			Extra:        nil,
-			K8sNodes:     []K8sNode{},
 		}
 		_, err = json.Marshal(record)
 		Expect(err).ShouldNot(HaveOccurred())
@@ -75,7 +74,7 @@ var _ = Describe("Telemetry record", func() {
 		_, err = json.Marshal(record)
 		Expect(err).ShouldNot(HaveOccurred())
 
-		record.Extra = []ExtraField{
+		record.Extra = []models.ExtraField{
 			{
 				Key:   "test",
 				Value: "value",
@@ -94,9 +93,5 @@ var _ = Describe("Telemetry record", func() {
 		body, err = json.Marshal(record)
 		Expect(err).ShouldNot(HaveOccurred())
 		fmt.Printf("%s\n", string(body))
-
-		record.K8sNodes = []K8sNode{{}, {}}
-		_, err = json.Marshal(record)
-		Expect(err).ShouldNot(HaveOccurred())
 	})
 })
