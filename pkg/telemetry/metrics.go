@@ -98,11 +98,11 @@ func getK8sNodes() ([]corev1.Node, error) {
 }
 
 func getHostMetrics() *hostMetrics {
-	telemetryEnvMetrics = &hostMetrics{
-		IPHashes: []string{},
-		K8sNodes: []models.K8sNode{},
-	}
 	telemetryEnvMetricsOnce.Do(func() {
+		telemetryEnvMetrics = &hostMetrics{
+			IPHashes: []string{},
+			K8sNodes: []models.K8sNode{},
+		}
 		ips, err := getLocalIPs()
 		if err == nil {
 			for _, ip := range ips {
