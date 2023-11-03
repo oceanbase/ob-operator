@@ -12622,7 +12622,7 @@ spec:
         - --manager-namespace=oceanbase-system
         command:
         - /manager
-        image: oceanbase/ob-operator:2.0.0
+        image: oceanbasedev/ob-operator:2.0.1-alpha.1
         livenessProbe:
           httpGet:
             path: /healthz
