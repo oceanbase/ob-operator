@@ -43,8 +43,6 @@ type OBTenantBackupReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
-
-	con *operation.OceanbaseOperationManager
 }
 
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantbackups,verbs=get;list;watch;create;update;patch;delete
@@ -259,9 +257,6 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 }
 
 func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job *v1alpha1.OBTenantBackup) (*operation.OceanbaseOperationManager, error) {
-	if r.con != nil {
-		return r.con, nil
-	}
 	var err error
 	logger := log.FromContext(ctx)
 	obcluster := &v1alpha1.OBCluster{}
@@ -276,6 +271,5 @@ func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
-	r.con = con
 	return con, nil
 }
