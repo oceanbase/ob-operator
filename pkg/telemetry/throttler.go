@@ -14,18 +14,15 @@ package telemetry
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 
 	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
 type throttler struct {
-	debug      bool
 	client     http.Client
 	ctx        context.Context
 	cancel     context.CancelFunc
@@ -41,13 +38,13 @@ func getThrottler() *throttler {
 			recordChan: make(chan *models.TelemetryRecord, DefaultThrottlerBufferSize),
 		}
 
-		throttlerSingleton.debug = os.Getenv(TelemetryDebugEnvName) == "true"
 		ctx, cancel := context.WithCancel(context.Background())
 		throttlerSingleton.ctx = ctx
 		throttlerSingleton.cancel = cancel
 		throttlerSingleton.client = *http.DefaultClient
 
 		throttlerSingleton.startWorkers()
+		getLogger().Println("telemetry throttler started", "#worker:", DefaultThrottlerWorkerCount)
 	})
 	return throttlerSingleton
 }
@@ -96,18 +93,18 @@ func (t *throttler) startWorkers() {
 						return
 					}
 					res, err := t.sendTelemetryRecord(record)
-					if t.debug {
+					if debugMode {
 						if err != nil {
-							_, _ = fmt.Printf("send telemetry record error: %v\n", err)
+							getLogger().Printf("send telemetry record error: %v\n", err)
 						}
 						bts, err := io.ReadAll(res.Body)
 						if err != nil {
-							_, _ = fmt.Printf("read response body error: %v\n", err)
+							getLogger().Printf("read response body error: %v\n", err)
 						}
-						_, _ = fmt.Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
+						getLogger().Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
 					}
 				case <-ctx.Done():
-					_, _ = fmt.Println(ctx.Err())
+					getLogger().Println(ctx.Err())
 					return
 				}
 			}

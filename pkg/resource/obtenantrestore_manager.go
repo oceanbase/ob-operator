@@ -33,16 +33,18 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type ObTenantRestoreManager struct {
 	ResourceManager
 
-	Ctx      context.Context
-	Resource *v1alpha1.OBTenantRestore
-	Client   client.Client
-	Recorder record.EventRecorder
-	Logger   *logr.Logger
+	Ctx       context.Context
+	Resource  *v1alpha1.OBTenantRestore
+	Client    client.Client
+	Recorder  record.EventRecorder
+	Telemetry telemetry.Telemetry
+	Logger    *logr.Logger
 
 	con *operation.OceanbaseOperationManager
 }

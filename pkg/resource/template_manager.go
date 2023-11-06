@@ -23,16 +23,18 @@ import (
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type ObResourceManager[T client.Object] struct {
 	ResourceManager
 
-	Ctx      context.Context
-	Resource T
-	Client   client.Client
-	Recorder record.EventRecorder
-	Logger   *logr.Logger
+	Ctx       context.Context
+	Resource  T
+	Client    client.Client
+	Recorder  record.EventRecorder
+	Logger    *logr.Logger
+	Telemetry telemetry.Telemetry
 
 	con *operation.OceanbaseOperationManager
 }

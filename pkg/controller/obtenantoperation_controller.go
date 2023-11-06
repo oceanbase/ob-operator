@@ -27,6 +27,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBTenantOperationReconciler reconciles a OBTenantOperation object
@@ -57,11 +58,12 @@ func (r *OBTenantOperationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	mgr := &resource.ObTenantOperationManager{
-		Ctx:      ctx,
-		Resource: operation,
-		Client:   r.Client,
-		Recorder: r.Recorder,
-		Logger:   &logger,
+		Ctx:       ctx,
+		Resource:  operation,
+		Client:    r.Client,
+		Recorder:  r.Recorder,
+		Logger:    &logger,
+		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)

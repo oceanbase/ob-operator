@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
+	"context"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -42,7 +43,7 @@ var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
 	}
 
 	BeforeAll(func() {
-		telemetry = NewTelemetry(&fakeEventRecorder{})
+		telemetry = NewTelemetry(context.TODO(), &fakeEventRecorder{})
 		Expect(telemetry).ShouldNot(BeNil())
 	})
 

@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
-	"fmt"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
@@ -23,33 +23,28 @@ func objectSentry(object any) {
 		return
 	}
 	if cluster, ok := object.(*v1alpha1.OBCluster); ok {
-		processOBCluster(cluster)
+		debugWrapper(processOBCluster, cluster, "OBCluster")
 	} else if tenant, ok := object.(*v1alpha1.OBTenant); ok {
-		processOBTenant(tenant)
+		debugWrapper(processOBTenant, tenant, "OBTenant")
 	} else if server, ok := object.(*v1alpha1.OBServer); ok {
-		processOBServer(server)
+		debugWrapper(processOBServer, server, "OBServer")
 	} else if zone, ok := object.(*v1alpha1.OBZone); ok {
-		processOBZone(zone)
+		debugWrapper(processOBZone, zone, "OBZone")
 	}
 }
 
 func processOBCluster(cluster *v1alpha1.OBCluster) {
-	_, _ = fmt.Printf("[OBCluster Before] %+v\n", cluster)
 	if cluster.Spec.BackupVolume != nil && cluster.Spec.BackupVolume.Volume != nil && cluster.Spec.BackupVolume.Volume.NFS != nil {
 		cluster.Spec.BackupVolume.Volume.NFS.Server = md5Hash(cluster.Spec.BackupVolume.Volume.NFS.Server)
 	}
-	_, _ = fmt.Printf("[OBCluster After] %+v\n", cluster)
 }
 
 func processOBServer(server *v1alpha1.OBServer) {
-	_, _ = fmt.Printf("[OBServer Before] %+v\n", server)
 	server.Status.PodIp = md5Hash(server.Status.PodIp)
 	server.Status.NodeIp = md5Hash(server.Status.NodeIp)
-	_, _ = fmt.Printf("[OBServer After] %+v\n", server)
 }
 
 func processOBTenant(tenant *v1alpha1.OBTenant) {
-	_, _ = fmt.Printf("[OBTenant After] %+v\n", tenant)
 	for i := range tenant.Status.Pools {
 		for j := range tenant.Status.Pools[i].Units {
 			tenant.Status.Pools[i].Units[j].ServerIP = md5Hash(tenant.Status.Pools[i].Units[j].ServerIP)
@@ -58,16 +53,19 @@ func processOBTenant(tenant *v1alpha1.OBTenant) {
 			}
 		}
 	}
-	_, _ = fmt.Printf("[OBTenant After] %+v\n", tenant)
 }
 
 func processOBZone(zone *v1alpha1.OBZone) {
-	_, _ = fmt.Printf("[OBZone Before] %+v\n", zone)
 	for i := range zone.Status.OBServerStatus {
 		zone.Status.OBServerStatus[i].Server = md5Hash(zone.Status.OBServerStatus[i].Server)
 	}
 	if zone.Spec.BackupVolume != nil && zone.Spec.BackupVolume.Volume != nil && zone.Spec.BackupVolume.Volume.NFS != nil {
 		zone.Spec.BackupVolume.Volume.NFS.Server = md5Hash(zone.Spec.BackupVolume.Volume.NFS.Server)
 	}
-	_, _ = fmt.Printf("[OBZone After] %+v\n", zone)
+}
+
+func debugWrapper[T runtime.Object](processor func(T), object T, objectType string) {
+	getLogger().Printf("[%s Before] %+v\n", objectType, object)
+	processor(object)
+	getLogger().Printf("[%s After] %+v\n", objectType, object)
 }

@@ -39,15 +39,17 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type OBTenantManager struct {
 	ResourceManager
-	OBTenant *v1alpha1.OBTenant
-	Ctx      context.Context
-	Client   client.Client
-	Recorder record.EventRecorder
-	Logger   *logr.Logger
+	OBTenant  *v1alpha1.OBTenant
+	Ctx       context.Context
+	Client    client.Client
+	Recorder  record.EventRecorder
+	Telemetry telemetry.Telemetry
+	Logger    *logr.Logger
 }
 
 // TODO add lock to be thread safe, and read/write whitelist from/to DB
@@ -88,9 +90,12 @@ func (m *OBTenantManager) InitStatus() {
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
+		m.Telemetry.Event(m.OBTenant, "InitRestore", "", "start restoring")
 	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
+		m.Telemetry.Event(m.OBTenant, "InitEmptyStandby", "", "start creating empty standby")
 		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
+		m.Telemetry.Event(m.OBTenant, "Init", "", "start creating")
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
 }
@@ -328,7 +333,7 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 }
 
 func (m *OBTenantManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Telemetry.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 // ---------- K8S API Helper ----------

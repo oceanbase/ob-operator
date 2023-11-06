@@ -27,6 +27,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
@@ -43,6 +44,7 @@ type OBParameterManager struct {
 	OBParameter *v1alpha1.OBParameter
 	Client      client.Client
 	Recorder    record.EventRecorder
+	Telemetry   telemetry.Telemetry
 	Logger      *logr.Logger
 }
 

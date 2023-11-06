@@ -28,6 +28,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBTenantRestoreReconciler reconciles a OBTenantRestore object
@@ -58,23 +59,13 @@ func (r *OBTenantRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	// finalizerName := "obtenantrestore.finalizers.oceanbase.com"
-	// // examine DeletionTimestamp to determine if the policy is under deletion
-	// if restore.ObjectMeta.DeletionTimestamp.IsZero() {
-	// 	if !controllerutil.ContainsFinalizer(restore, finalizerName) {
-	// 		controllerutil.AddFinalizer(restore, finalizerName)
-	// 		if err := r.Update(ctx, restore); err != nil {
-	// 			return ctrl.Result{}, err
-	// 		}
-	// 	}
-	// }
-
 	mgr := &resource.ObTenantRestoreManager{
-		Ctx:      ctx,
-		Resource: restore,
-		Client:   r.Client,
-		Recorder: r.Recorder,
-		Logger:   &logger,
+		Ctx:       ctx,
+		Resource:  restore,
+		Client:    r.Client,
+		Recorder:  r.Recorder,
+		Logger:    &logger,
+		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)

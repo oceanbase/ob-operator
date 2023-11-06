@@ -18,6 +18,7 @@ import (
 	"os"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	record "k8s.io/client-go/tools/record"
 
@@ -36,11 +37,13 @@ type telemetry struct {
 	*hostMetrics
 	record.EventRecorder
 
+	ctx               context.Context
 	telemetryDisabled bool
 }
 
-func NewTelemetry(recorder record.EventRecorder) Telemetry {
+func NewTelemetry(ctx context.Context, recorder record.EventRecorder) Telemetry {
 	clt := &telemetry{
+		ctx:           ctx,
 		EventRecorder: recorder,
 	}
 
@@ -61,19 +64,19 @@ func NewTelemetry(recorder record.EventRecorder) Telemetry {
 
 // Implement record.EventRecorder interface
 func (t *telemetry) Event(object runtime.Object, eventType, reason, message string) {
-	t.EventRecorder.Event(object, eventType, reason, message)
+	t.EventRecorder.Event(object, t.transformEventType(eventType), reason, message)
 	t.generateFromEvent(object, nil, eventType, reason, message)
 }
 
 // Implement record.EventRecorder interface
 func (t *telemetry) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...any) {
-	t.EventRecorder.Eventf(object, eventType, reason, messageFmt, args...)
+	t.EventRecorder.Eventf(object, t.transformEventType(eventType), reason, messageFmt, args...)
 	t.generateFromEvent(object, nil, eventType, reason, messageFmt, args...)
 }
 
 // Implement record.EventRecorder interface
 func (t *telemetry) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
-	t.EventRecorder.AnnotatedEventf(object, annotations, eventType, reason, messageFmt, args...)
+	t.EventRecorder.AnnotatedEventf(object, annotations, t.transformEventType(eventType), reason, messageFmt, args...)
 	t.generateFromEvent(object, annotations, eventType, reason, messageFmt, args...)
 }
 
@@ -110,5 +113,14 @@ func (t *telemetry) generateFromEvent(object runtime.Object, annotations map[str
 		t.GenerateTelemetryRecord(nil, "Unknown", eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	} else {
 		t.GenerateTelemetryRecord(object.DeepCopyObject(), object.GetObjectKind().GroupVersionKind().Kind, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+	}
+}
+
+func (t *telemetry) transformEventType(eventType string) string {
+	switch eventType {
+	case "Error", "Warning", "error":
+		return corev1.EventTypeWarning
+	default:
+		return corev1.EventTypeNormal
 	}
 }

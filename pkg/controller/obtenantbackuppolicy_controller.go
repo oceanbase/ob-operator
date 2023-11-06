@@ -27,6 +27,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBTenantBackupPolicyReconciler reconciles a OBTenantBackupPolicy object
@@ -74,6 +75,7 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		Client:       r.Client,
 		Recorder:     r.Recorder,
 		Logger:       &logger,
+		Telemetry:    telemetry.NewTelemetry(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)

@@ -31,6 +31,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type OBClusterManager struct {
@@ -39,6 +40,7 @@ type OBClusterManager struct {
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
 	Recorder  record.EventRecorder
+	Telemetry telemetry.Telemetry
 	Logger    *logr.Logger
 }
 
@@ -48,6 +50,7 @@ func (m *OBClusterManager) IsNewResource() bool {
 
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
+	m.Telemetry.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
@@ -309,7 +312,7 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 }
 
 func (m *OBClusterManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Telemetry.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {

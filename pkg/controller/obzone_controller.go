@@ -28,6 +28,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBZoneReconciler reconciles a OBZone object
@@ -71,11 +72,12 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// create zone manager
 	obzoneManager := &resource.OBZoneManager{
-		Ctx:      ctx,
-		OBZone:   obzone,
-		Client:   r.Client,
-		Recorder: r.Recorder,
-		Logger:   &logger,
+		Ctx:       ctx,
+		OBZone:    obzone,
+		Client:    r.Client,
+		Recorder:  r.Recorder,
+		Logger:    &logger,
+		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
 	}
 	coordinator := resource.NewCoordinator(obzoneManager, &logger)
 	return coordinator.Coordinate()

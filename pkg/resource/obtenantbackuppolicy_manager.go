@@ -37,6 +37,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type ObTenantBackupPolicyManager struct {
@@ -45,6 +46,7 @@ type ObTenantBackupPolicyManager struct {
 	BackupPolicy *v1alpha1.OBTenantBackupPolicy
 	Client       client.Client
 	Recorder     record.EventRecorder
+	Telemetry    telemetry.Telemetry
 	Logger       *logr.Logger
 
 	con *operation.OceanbaseOperationManager
@@ -115,6 +117,7 @@ func (m *ObTenantBackupPolicyManager) InitStatus() {
 	m.BackupPolicy.Status = v1alpha1.OBTenantBackupPolicyStatus{
 		Status: constants.BackupPolicyStatusPreparing,
 	}
+	m.Telemetry.Event(m.BackupPolicy, "Init", "", "init status")
 	err = m.syncTenantInformation()
 	if err != nil {
 		m.PrintErrEvent(err)

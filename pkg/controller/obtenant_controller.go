@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/util/codec"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -84,11 +85,12 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// create observer manager
 	obtenantManager := &resource.OBTenantManager{
-		Ctx:      ctx,
-		OBTenant: obtenant,
-		Client:   r.Client,
-		Recorder: r.Recorder,
-		Logger:   &logger,
+		Ctx:       ctx,
+		OBTenant:  obtenant,
+		Client:    r.Client,
+		Recorder:  r.Recorder,
+		Logger:    &logger,
+		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(obtenantManager, &logger)

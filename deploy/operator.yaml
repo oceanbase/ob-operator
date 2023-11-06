@@ -11966,6 +11966,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - create
@@ -12614,6 +12622,12 @@ spec:
                 operator: In
                 values:
                 - linux
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - sqaappnoxdnv62s2011161204053.sa128
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       containers:
       - args:
         - --health-probe-bind-address=:8081
@@ -12622,7 +12636,10 @@ spec:
         - --manager-namespace=oceanbase-system
         command:
         - /manager
-        image: oceanbasedev/ob-operator:2.0.1-alpha.1
+        env:
+        - name: TELEMETRY_SIGNATURE
+          value: dbe97393a695335d67de91dd4049ba
+        image: oceanbasedev/ob-operator:2.0.1-alpha.2
         livenessProbe:
           httpGet:
             path: /healthz
@@ -12642,7 +12659,7 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 1
+            cpu: "1"
             memory: 1Gi
           requests:
             cpu: 10m
