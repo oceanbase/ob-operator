@@ -12637,8 +12637,8 @@ spec:
         command:
         - /manager
         env:
-        - name: TELEMETRY_SIGNATURE
-          value: dbe97393a695335d67de91dd4049ba
+        - name: TELEMETRY_DEBUG
+          value: "true"
         image: oceanbasedev/ob-operator:2.0.1-alpha.2
         livenessProbe:
           httpGet:

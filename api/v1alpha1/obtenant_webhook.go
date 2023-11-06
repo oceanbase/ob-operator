@@ -97,6 +97,20 @@ func (r *OBTenant) validateMutation() error {
 	}
 	var allErrs field.ErrorList
 
+	// 0. OBCluster must exist
+	cluster := &OBCluster{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      r.Spec.ClusterName,
+	}, cluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("clusterName"), r.Spec.ClusterName, "Given cluster not found"))
+		} else {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("clusterName"), err))
+		}
+	}
+
 	// 1. Standby tenant must have a source
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {

@@ -20,6 +20,8 @@ monitorResource:
 parameters:
   - name: system_memory
     value: 2G
+  - name: "__min_full_resource_pool_memory"
+    value: "2147483648" # 2G
 
 nfsBackupEnabled: false # set true and config volume if you want to enable backup with NFS
 nfsBackup:

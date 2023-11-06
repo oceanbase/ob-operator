@@ -79,10 +79,8 @@ spec:
         image: controller:latest
         name: manager
         env:
-          # - name: TELEMETRY_DEBUG
-          #   value: "true"
-          - name: TELEMETRY_SIGNATURE
-            value: "dbe97393a695335d67de91dd4049ba"
+          - name: TELEMETRY_DEBUG
+            value: "true"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

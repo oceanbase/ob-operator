@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -34,6 +35,7 @@ import (
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -198,6 +200,9 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
+	telem := telemetry.NewTelemetry(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
+	telem.GenerateTelemetryRecord(nil, "Operator", "Start", "", "start ob-operator", nil)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

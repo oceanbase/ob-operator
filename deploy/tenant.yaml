@@ -4,7 +4,7 @@ metadata:
   name: t1
   # namespace: oceanbase
 spec:	
-  obcluster: test
+  obcluster: obcluster1
   tenantName: t1
   unitNum: 1 
   charset: utf8mb4  

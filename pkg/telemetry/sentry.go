@@ -13,15 +13,28 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
+// Targets of sentry:
+// 1. Digests IP addresses of servers
+// 2. Digests NFS server address of backup volume
+// 3. Remove redundant fields in status
+
 func objectSentry(object any) {
 	if object == nil {
 		return
 	}
+
+	if metaObj, ok := object.(metav1.Object); ok {
+		// remove managed fields which are of no interest
+		metaObj.SetManagedFields(nil)
+	}
+
 	if cluster, ok := object.(*v1alpha1.OBCluster); ok {
 		debugWrapper(processOBCluster, cluster, "OBCluster")
 	} else if tenant, ok := object.(*v1alpha1.OBTenant); ok {

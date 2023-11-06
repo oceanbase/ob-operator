@@ -52,11 +52,6 @@ func NewTelemetry(ctx context.Context, recorder record.EventRecorder) Telemetry 
 		clt.telemetryDisabled = true
 		return clt
 	}
-	// no signature means telemetry is disabled
-	if TelemetryRequestSignature == "" {
-		clt.telemetryDisabled = true
-		return clt
-	}
 	clt.hostMetrics = getHostMetrics()
 	clt.throttler = getThrottler()
 	return clt
@@ -86,10 +81,12 @@ func (t *telemetry) GenerateTelemetryRecord(object any, objectType, eventType, r
 		return
 	}
 	go func(ctx context.Context, ch chan<- *models.TelemetryRecord) {
-		// TODO: guard here to mask IP address
 		objectSentry(object)
 		record := newRecordFromEvent(object, objectType, eventType, reason, message, annotations, extra...)
 		record.IpHashes = t.hostMetrics.IPHashes
+		if object == nil && objectType == "Operator" {
+			record.Resource = t.hostMetrics
+		}
 		select {
 		case <-ctx.Done():
 			return
