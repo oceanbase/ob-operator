@@ -58,12 +58,11 @@ func (r *OBTenantOperationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	mgr := &resource.ObTenantOperationManager{
-		Ctx:       ctx,
-		Resource:  operation,
-		Client:    r.Client,
-		Recorder:  r.Recorder,
-		Logger:    &logger,
-		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
+		Ctx:      ctx,
+		Resource: operation,
+		Client:   r.Client,
+		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)

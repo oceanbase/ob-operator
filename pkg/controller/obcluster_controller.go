@@ -83,9 +83,8 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Ctx:       ctx,
 		OBCluster: obcluster,
 		Client:    r.Client,
-		Recorder:  r.Recorder,
 		Logger:    &logger,
-		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
+		Recorder:  telemetry.NewRecorder(ctx, r.Recorder),
 	}
 	coordinator := resource.NewCoordinator(obclusterManager, &logger)
 	return coordinator.Coordinate()

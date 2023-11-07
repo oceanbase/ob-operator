@@ -13,9 +13,7 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 const (
-	TelemetryReportDevHost  = "openwebapi.dev.alipay.net"  // http
-	TelemetryReportTestHost = "openwebapi.test.alipay.net" // http
-	TelemetryReportProdHost = "openwebapi.ocenbase.com"    // https
+	TelemetryReportProdHost = "openwebapi-pre.oceanbase.com" // https
 
 	TelemetryReportPath = "/api/web/oceanbase/report"
 )
@@ -41,7 +39,12 @@ const (
 )
 
 const (
-	DisableTelemetryEnvName   = "DISABLE_TELEMETRY"
-	TelemetrySignatureEnvName = "TELEMETRY_SIGNATURE"
-	TelemetryDebugEnvName     = "TELEMETRY_DEBUG"
+	DisableTelemetryEnvName    = "DISABLE_TELEMETRY"
+	TelemetryDebugEnvName      = "TELEMETRY_DEBUG"
+	TelemetryReportHostEnvName = "TELEMETRY_REPORT_HOST"
+)
+
+const (
+	ObjectTypeUnknown  = "Unknown"
+	ObjectTypeOperator = "Operator"
 )

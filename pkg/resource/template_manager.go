@@ -17,7 +17,6 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -29,12 +28,11 @@ import (
 type ObResourceManager[T client.Object] struct {
 	ResourceManager
 
-	Ctx       context.Context
-	Resource  T
-	Client    client.Client
-	Recorder  record.EventRecorder
-	Logger    *logr.Logger
-	Telemetry telemetry.Telemetry
+	Ctx      context.Context
+	Resource T
+	Client   client.Client
+	Recorder telemetry.Recorder
+	Logger   *logr.Logger
 
 	con *operation.OceanbaseOperationManager
 }

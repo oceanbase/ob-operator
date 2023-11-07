@@ -27,7 +27,6 @@ func configLogger() {
 	if debugMode {
 		file, err := os.OpenFile("/tmp/telemetry.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 		if err != nil {
-			// log.Println("Failed to open log file:", err)
 			lg = log.New(io.Discard, "[Telemetry] ", log.LstdFlags|log.Lshortfile)
 		} else {
 			lg = log.New(file, "[Telemetry] ", log.LstdFlags|log.Lshortfile)

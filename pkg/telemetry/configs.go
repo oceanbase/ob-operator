@@ -12,14 +12,12 @@ See the Mulan PSL v2 for more details.
 
 package telemetry
 
-import "os"
-
-var TelemetryRequestSignature = os.Getenv(TelemetrySignatureEnvName)
-
 const (
 	DefaultThrottlerBufferSize  = 30
 	DefaultThrottlerWorkerCount = 30
 	DefaultWaitThrottlerSeconds = 60
 )
 
-const TelemetryReportHost = TelemetryReportProdHost
+var TelemetryReportHost = TelemetryReportProdHost
+var TelemetryReportScheme = SchemeHttps
+var TelemetryDisabled = false

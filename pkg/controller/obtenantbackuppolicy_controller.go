@@ -73,9 +73,8 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		Ctx:          ctx,
 		BackupPolicy: policy,
 		Client:       r.Client,
-		Recorder:     r.Recorder,
 		Logger:       &logger,
-		Telemetry:    telemetry.NewTelemetry(ctx, r.Recorder),
+		Recorder:     telemetry.NewRecorder(ctx, r.Recorder),
 	}
 
 	coordinator := resource.NewCoordinator(mgr, &logger)

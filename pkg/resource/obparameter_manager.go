@@ -20,7 +20,6 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -43,8 +42,7 @@ type OBParameterManager struct {
 	Ctx         context.Context
 	OBParameter *v1alpha1.OBParameter
 	Client      client.Client
-	Recorder    record.EventRecorder
-	Telemetry   telemetry.Telemetry
+	Recorder    telemetry.Recorder
 	Logger      *logr.Logger
 }
 

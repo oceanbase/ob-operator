@@ -23,7 +23,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -43,12 +42,11 @@ import (
 
 type OBServerManager struct {
 	ResourceManager
-	Ctx       context.Context
-	OBServer  *v1alpha1.OBServer
-	Client    client.Client
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
-	Logger    *logr.Logger
+	Ctx      context.Context
+	OBServer *v1alpha1.OBServer
+	Client   client.Client
+	Recorder telemetry.Recorder
+	Logger   *logr.Logger
 }
 
 func (m *OBServerManager) GetTaskFunc(name string) (func() error, error) {

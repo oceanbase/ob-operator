@@ -18,7 +18,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -39,8 +38,7 @@ type OBClusterManager struct {
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
+	Recorder  telemetry.Recorder
 	Logger    *logr.Logger
 }
 
@@ -50,7 +48,7 @@ func (m *OBClusterManager) IsNewResource() bool {
 
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
-	m.Telemetry.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
+	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
@@ -312,7 +310,7 @@ func (m *OBClusterManager) GetTaskFunc(name string) (func() error, error) {
 }
 
 func (m *OBClusterManager) PrintErrEvent(err error) {
-	m.Telemetry.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {

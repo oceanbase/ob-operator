@@ -20,7 +20,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -39,12 +38,11 @@ import (
 type ObTenantOperationManager struct {
 	ResourceManager
 
-	Ctx       context.Context
-	Resource  *v1alpha1.OBTenantOperation
-	Client    client.Client
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
-	Logger    *logr.Logger
+	Ctx      context.Context
+	Resource *v1alpha1.OBTenantOperation
+	Client   client.Client
+	Recorder telemetry.Recorder
+	Logger   *logr.Logger
 
 	con *operation.OceanbaseOperationManager
 }

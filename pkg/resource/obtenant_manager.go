@@ -25,7 +25,6 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -44,12 +43,11 @@ import (
 
 type OBTenantManager struct {
 	ResourceManager
-	OBTenant  *v1alpha1.OBTenant
-	Ctx       context.Context
-	Client    client.Client
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
-	Logger    *logr.Logger
+	OBTenant *v1alpha1.OBTenant
+	Ctx      context.Context
+	Client   client.Client
+	Recorder telemetry.Recorder
+	Logger   *logr.Logger
 }
 
 // TODO add lock to be thread safe, and read/write whitelist from/to DB
@@ -90,12 +88,12 @@ func (m *OBTenantManager) InitStatus() {
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
-		m.Telemetry.Event(m.OBTenant, "InitRestore", "", "start restoring")
+		m.Recorder.Event(m.OBTenant, "InitRestore", "", "start restoring")
 	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
-		m.Telemetry.Event(m.OBTenant, "InitEmptyStandby", "", "start creating empty standby")
+		m.Recorder.Event(m.OBTenant, "InitEmptyStandby", "", "start creating empty standby")
 		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
-		m.Telemetry.Event(m.OBTenant, "Init", "", "start creating")
+		m.Recorder.Event(m.OBTenant, "Init", "", "start creating")
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
 }
@@ -333,7 +331,7 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 }
 
 func (m *OBTenantManager) PrintErrEvent(err error) {
-	m.Telemetry.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
 // ---------- K8S API Helper ----------

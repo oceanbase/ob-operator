@@ -34,7 +34,7 @@ func (f *fakeEventRecorder) AnnotatedEventf(object runtime.Object, annotations m
 }
 
 var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
-	var telemetry Telemetry
+	var telemetry Recorder
 	tenant := &v1alpha1.OBTenant{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "OBTenant",
@@ -43,7 +43,7 @@ var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
 	}
 
 	BeforeAll(func() {
-		telemetry = NewTelemetry(context.TODO(), &fakeEventRecorder{})
+		telemetry = NewRecorder(context.TODO(), &fakeEventRecorder{})
 		Expect(telemetry).ShouldNot(BeNil())
 	})
 

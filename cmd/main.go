@@ -205,8 +205,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	telem := telemetry.NewTelemetry(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
-	telem.GenerateTelemetryRecord(nil, "Operator", "Start", "", "start ob-operator", nil)
+	rcd := telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
+	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "start ob-operator", nil)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

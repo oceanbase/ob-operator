@@ -71,9 +71,8 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		Ctx:         ctx,
 		OBParameter: obparameter,
 		Client:      r.Client,
-		Recorder:    r.Recorder,
 		Logger:      &logger,
-		Telemetry:   telemetry.NewTelemetry(ctx, r.Recorder),
+		Recorder:    telemetry.NewRecorder(ctx, r.Recorder),
 	}
 	coordinator := resource.NewCoordinator(obparameterManager, &logger)
 	return coordinator.Coordinate()

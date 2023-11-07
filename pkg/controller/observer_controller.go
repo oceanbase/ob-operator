@@ -78,12 +78,11 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// create observer manager
 	observerManager := &resource.OBServerManager{
-		Ctx:       ctx,
-		OBServer:  observer,
-		Client:    r.Client,
-		Recorder:  r.Recorder,
-		Logger:    &logger,
-		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
+		Ctx:      ctx,
+		OBServer: observer,
+		Client:   r.Client,
+		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
 	}
 
 	// execute finalizers

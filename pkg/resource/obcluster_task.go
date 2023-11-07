@@ -293,7 +293,7 @@ func (m *OBClusterManager) Bootstrap() error {
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
-		m.Telemetry.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
+		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
 	}
 	return err
 }
@@ -786,7 +786,7 @@ func (m *OBClusterManager) CreateServiceForMonitor() error {
 	if err != nil {
 		return errors.Wrap(err, "Create monitor service")
 	}
-	m.Telemetry.Event(m.OBCluster, "MaintainedAfterBootstrap", "", "Create monitor service successfully")
+	m.Recorder.Event(m.OBCluster, "MaintainedAfterBootstrap", "", "Create monitor service successfully")
 	return nil
 }
 
@@ -806,7 +806,7 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 	if err != nil {
 		m.Logger.Error(err, "Failed to get context secret")
 		// parameter can be set manually, just return here and emit an event
-		m.Telemetry.Event(m.OBCluster, "Warning", "Restore essential parameters failed", err.Error())
+		m.Recorder.Event(m.OBCluster, "Warning", "Restore essential parameters failed", err.Error())
 		return nil
 	}
 
@@ -827,6 +827,6 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 		}
 	}
 	_ = m.Client.Delete(m.Ctx, contextSecret)
-	m.Telemetry.Event(m.OBCluster, "Upgrade", "", "Restore essential parameters successfully")
+	m.Recorder.Event(m.OBCluster, "Upgrade", "", "Restore essential parameters successfully")
 	return nil
 }

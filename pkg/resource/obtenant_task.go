@@ -386,12 +386,12 @@ func (m *OBTenantManager) createTenant() error {
 
 	err = oceanbaseOperationManager.AddTenant(tenantSQLParam)
 	if err != nil {
-		m.Telemetry.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
+		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
 	}
 	GlobalWhiteListMap[tenantName] = m.OBTenant.Spec.ConnectWhiteList
 	// Create user or change password of root, do not return error
-	m.Telemetry.Event(m.OBTenant, "Create", "", "create OBTenant successfully")
+	m.Recorder.Event(m.OBTenant, "Create", "", "create OBTenant successfully")
 	return nil
 }
 
@@ -1088,7 +1088,7 @@ func (m *OBTenantManager) CreateUserWithCredentialSecrets() error {
 	}
 	err := m.createUserWithCredentials()
 	if err != nil {
-		m.Telemetry.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
+		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Failed to create user or change password", err.Error())
 		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
 	}
 
@@ -1181,7 +1181,7 @@ func (m *OBTenantManager) CreateEmptyStandbyTenant() error {
 	if err != nil {
 		return err
 	}
-	m.Telemetry.Event(m.OBTenant, "CreateEmptyStandby", "", "Succeed to create empty standby tenant")
+	m.Recorder.Event(m.OBTenant, "CreateEmptyStandby", "", "Succeed to create empty standby tenant")
 	return nil
 }
 

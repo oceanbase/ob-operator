@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -40,12 +39,11 @@ import (
 
 type OBZoneManager struct {
 	ResourceManager
-	Ctx       context.Context
-	OBZone    *v1alpha1.OBZone
-	Client    client.Client
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
-	Logger    *logr.Logger
+	Ctx      context.Context
+	OBZone   *v1alpha1.OBZone
+	Client   client.Client
+	Recorder telemetry.Recorder
+	Logger   *logr.Logger
 }
 
 func (m *OBZoneManager) IsNewResource() bool {

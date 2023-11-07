@@ -69,13 +69,12 @@ func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.R
 	req := &http.Request{
 		Method: http.MethodPost,
 		URL: &url.URL{
-			Scheme: SchemeHttp,
-			Host:   TelemetryReportTestHost,
+			Scheme: TelemetryReportScheme,
+			Host:   TelemetryReportHost,
 			Path:   TelemetryReportPath,
 		},
 		Header: http.Header{
 			"content-type": []string{ContentTypeJson},
-			"sig":          []string{TelemetryRequestSignature},
 		},
 		Body: body,
 	}

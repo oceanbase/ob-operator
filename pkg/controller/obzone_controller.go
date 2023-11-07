@@ -72,12 +72,11 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// create zone manager
 	obzoneManager := &resource.OBZoneManager{
-		Ctx:       ctx,
-		OBZone:    obzone,
-		Client:    r.Client,
-		Recorder:  r.Recorder,
-		Logger:    &logger,
-		Telemetry: telemetry.NewTelemetry(ctx, r.Recorder),
+		Ctx:      ctx,
+		OBZone:   obzone,
+		Client:   r.Client,
+		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
 	}
 	coordinator := resource.NewCoordinator(obzoneManager, &logger)
 	return coordinator.Coordinate()

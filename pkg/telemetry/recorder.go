@@ -25,14 +25,14 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/telemetry/models"
 )
 
-type Telemetry interface {
+type Recorder interface {
 	record.EventRecorder
 	GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField)
 	GetHostMetrics() *hostMetrics
 	Done()
 }
 
-type telemetry struct {
+type recorder struct {
 	*throttler
 	*hostMetrics
 	record.EventRecorder
@@ -41,13 +41,13 @@ type telemetry struct {
 	telemetryDisabled bool
 }
 
-func NewTelemetry(ctx context.Context, recorder record.EventRecorder) Telemetry {
-	clt := &telemetry{
+func NewRecorder(ctx context.Context, er record.EventRecorder) Recorder {
+	clt := &recorder{
 		ctx:           ctx,
-		EventRecorder: recorder,
+		EventRecorder: er,
 	}
 
-	// if telemetry is disabled, return a dummy telemetry as original event recorder
+	// if telemetry is disabled, return a dummy recorder as original event recorder
 	if os.Getenv(DisableTelemetryEnvName) == "true" {
 		clt.telemetryDisabled = true
 		return clt
@@ -58,25 +58,25 @@ func NewTelemetry(ctx context.Context, recorder record.EventRecorder) Telemetry 
 }
 
 // Implement record.EventRecorder interface
-func (t *telemetry) Event(object runtime.Object, eventType, reason, message string) {
+func (t *recorder) Event(object runtime.Object, eventType, reason, message string) {
 	t.EventRecorder.Event(object, t.transformEventType(eventType), reason, message)
 	t.generateFromEvent(object, nil, eventType, reason, message)
 }
 
 // Implement record.EventRecorder interface
-func (t *telemetry) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...any) {
+func (t *recorder) Eventf(object runtime.Object, eventType, reason, messageFmt string, args ...any) {
 	t.EventRecorder.Eventf(object, t.transformEventType(eventType), reason, messageFmt, args...)
 	t.generateFromEvent(object, nil, eventType, reason, messageFmt, args...)
 }
 
 // Implement record.EventRecorder interface
-func (t *telemetry) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
+func (t *recorder) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
 	t.EventRecorder.AnnotatedEventf(object, annotations, t.transformEventType(eventType), reason, messageFmt, args...)
 	t.generateFromEvent(object, annotations, eventType, reason, messageFmt, args...)
 }
 
 // Use Event, Eventf, AnnotatedEventf first
-func (t *telemetry) GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) {
+func (t *recorder) GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) {
 	if t.telemetryDisabled {
 		return
 	}
@@ -84,38 +84,41 @@ func (t *telemetry) GenerateTelemetryRecord(object any, objectType, eventType, r
 		objectSentry(object)
 		record := newRecordFromEvent(object, objectType, eventType, reason, message, annotations, extra...)
 		record.IpHashes = t.hostMetrics.IPHashes
-		if object == nil && objectType == "Operator" {
+		if object == nil && objectType == ObjectTypeOperator {
 			record.Resource = t.hostMetrics
 		}
 		select {
-		case <-ctx.Done():
-			return
 		case ch <- record:
+		case <-ctx.Done():
 		case <-time.After(DefaultWaitThrottlerSeconds * time.Second):
 		default:
 		}
 	}(t.ctx, t.chanIn())
 }
 
-func (t *telemetry) Done() {
+func (t *recorder) Done() {
 	t.throttler.close()
 }
 
-func (t *telemetry) GetHostMetrics() *hostMetrics {
+func (t *recorder) GetHostMetrics() *hostMetrics {
 	return t.hostMetrics
 }
 
-func (t *telemetry) generateFromEvent(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
+func (t *recorder) generateFromEvent(object runtime.Object, annotations map[string]string, eventType, reason, messageFmt string, args ...any) {
+	if t.telemetryDisabled {
+		return
+	}
 	if object == nil {
-		t.GenerateTelemetryRecord(nil, "Unknown", eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+		t.GenerateTelemetryRecord(nil, ObjectTypeUnknown, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	} else {
 		t.GenerateTelemetryRecord(object.DeepCopyObject(), object.GetObjectKind().GroupVersionKind().Kind, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	}
 }
 
-func (t *telemetry) transformEventType(eventType string) string {
+func (t *recorder) transformEventType(eventType string) string {
+	// k8s EventRecorder only accepts `Warning` and `Normal` as event type
 	switch eventType {
-	case "Error", "Warning", "error":
+	case "Error", "Warning", "error", "warning":
 		return corev1.EventTypeWarning
 	default:
 		return corev1.EventTypeNormal

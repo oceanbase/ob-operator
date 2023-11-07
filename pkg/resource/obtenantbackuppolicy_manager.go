@@ -23,7 +23,6 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -45,8 +44,7 @@ type ObTenantBackupPolicyManager struct {
 	Ctx          context.Context
 	BackupPolicy *v1alpha1.OBTenantBackupPolicy
 	Client       client.Client
-	Recorder     record.EventRecorder
-	Telemetry    telemetry.Telemetry
+	Recorder     telemetry.Recorder
 	Logger       *logr.Logger
 
 	con *operation.OceanbaseOperationManager
@@ -117,7 +115,7 @@ func (m *ObTenantBackupPolicyManager) InitStatus() {
 	m.BackupPolicy.Status = v1alpha1.OBTenantBackupPolicyStatus{
 		Status: constants.BackupPolicyStatusPreparing,
 	}
-	m.Telemetry.Event(m.BackupPolicy, "Init", "", "init status")
+	m.Recorder.Event(m.BackupPolicy, "Init", "", "init status")
 	err = m.syncTenantInformation()
 	if err != nil {
 		m.PrintErrEvent(err)

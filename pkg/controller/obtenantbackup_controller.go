@@ -46,7 +46,7 @@ type OBTenantBackupReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
 	Recorder  record.EventRecorder
-	Telemetry telemetry.Telemetry
+	Telemetry telemetry.Recorder
 
 	telemetryOnce sync.Once
 }
@@ -303,12 +303,12 @@ func (r *OBTenantBackupReconciler) retryUpdateStatus(ctx context.Context, job *v
 	})
 }
 
-func (r *OBTenantBackupReconciler) getTelemetry(ctx context.Context) telemetry.Telemetry {
+func (r *OBTenantBackupReconciler) getTelemetry(ctx context.Context) telemetry.Recorder {
 	if r.Telemetry != nil {
 		return r.Telemetry
 	}
 	r.telemetryOnce.Do(func() {
-		r.Telemetry = telemetry.NewTelemetry(ctx, r.Recorder)
+		r.Telemetry = telemetry.NewRecorder(ctx, r.Recorder)
 	})
 	return r.Telemetry
 }
