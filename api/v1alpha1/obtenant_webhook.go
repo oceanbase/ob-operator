@@ -111,6 +111,37 @@ func (r *OBTenant) validateMutation() error {
 		}
 	}
 
+	// 0. Given credentials must exist
+	if r.Spec.Credentials.Root != "" {
+		secret := &v1.Secret{}
+		err = tenantClt.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.Credentials.Root,
+		}, secret)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("root"), r.Spec.Credentials.Root, "Given root credential not found"))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("root"), err))
+			}
+		}
+	}
+
+	if r.Spec.Credentials.StandbyRO != "" {
+		secret := &v1.Secret{}
+		err = tenantClt.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      r.Spec.Credentials.StandbyRO,
+		}, secret)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "Given standbyRo credential not found"))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("standbyRo"), err))
+			}
+		}
+	}
+
 	// 1. Standby tenant must have a source
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {
