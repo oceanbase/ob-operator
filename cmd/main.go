@@ -190,6 +190,10 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
 		os.Exit(1)
 	}
+	if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
