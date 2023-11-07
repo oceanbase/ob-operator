@@ -12639,7 +12639,9 @@ spec:
         env:
         - name: TELEMETRY_DEBUG
           value: "true"
-        image: oceanbasedev/ob-operator:2.0.1-alpha.2
+        - name: TELEMETRY_REPORT_HOST
+          value: http://openwebapi.test.alipay.net
+        image: oceanbasedev/ob-operator:2.1.0-alpha.1
         livenessProbe:
           httpGet:
             path: /healthz
@@ -12762,6 +12764,26 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obcluster
+  failurePolicy: Fail
+  name: mobcluster.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenant
   failurePolicy: Fail
   name: mobtenant.kb.io
@@ -12831,6 +12853,26 @@ metadata:
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obcluster
+  failurePolicy: Fail
+  name: vobcluster.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:
