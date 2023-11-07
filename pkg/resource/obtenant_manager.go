@@ -117,7 +117,10 @@ func (m *OBTenantManager) HandleFailure() {
 		switch failureRule.Strategy {
 		case strategy.StartOver:
 			m.OBTenant.Status.Status = failureRule.NextTryStatus
-			m.OBTenant.Status.OperationContext = nil
+			m.OBTenant.Status.OperationContext.Idx = 0
+			m.OBTenant.Status.OperationContext.TaskStatus = ""
+			m.OBTenant.Status.OperationContext.TaskId = ""
+			m.OBTenant.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -161,6 +164,8 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
+	} else if m.OBTenant.Status.Status == "Failed" {
+		return nil
 	} else {
 		// build tenant status from DB
 		tenantStatusCurrent, err := m.buildTenantStatus()
@@ -332,6 +337,13 @@ func (m *OBTenantManager) GetTaskFlow() (*task.TaskFlow, error) {
 
 func (m *OBTenantManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *OBTenantManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant", "obtenant", m.OBTenant.Name)
+	m.Recorder.Event(m.OBTenant, "Archive", "", "archive obtenant")
+	m.OBTenant.Status.OperationContext = nil
+	m.OBTenant.Status.Status = "Failed"
 }
 
 // ---------- K8S API Helper ----------

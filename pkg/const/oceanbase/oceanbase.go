@@ -125,3 +125,7 @@ const (
 	TenantOpRetryTimes      = 9
 	TenantOpRetryGapSeconds = 9
 )
+
+const (
+	TaskMaxRetryTimes = 5
+)

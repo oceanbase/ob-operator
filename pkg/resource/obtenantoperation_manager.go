@@ -126,7 +126,10 @@ func (m *ObTenantOperationManager) HandleFailure() {
 			fallthrough
 		case strategy.StartOver:
 			m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
-			m.Resource.Status.OperationContext = nil
+			m.Resource.Status.OperationContext.Idx = 0
+			m.Resource.Status.OperationContext.TaskStatus = ""
+			m.Resource.Status.OperationContext.TaskId = ""
+			m.Resource.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -140,7 +143,17 @@ func (m *ObTenantOperationManager) FinishTask() {
 }
 
 func (m *ObTenantOperationManager) UpdateStatus() error {
+	if m.Resource.Status.Status == apitypes.TenantOperationStatus("Failed") {
+		return nil
+	}
 	return m.retryUpdateStatus()
+}
+
+func (m *ObTenantOperationManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant operation", "obtenant operation", m.Resource.Name)
+	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant operation")
+	m.Resource.Status.Status = "Failed"
+	m.Resource.Status.OperationContext = nil
 }
 
 func (m *ObTenantOperationManager) GetTaskFunc(name string) (func() error, error) {

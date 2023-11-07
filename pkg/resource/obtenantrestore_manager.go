@@ -88,7 +88,10 @@ func (m ObTenantRestoreManager) HandleFailure() {
 			fallthrough
 		case strategy.StartOver:
 			m.Resource.Status.Status = apitypes.RestoreJobStatus(failureRule.NextTryStatus)
-			m.Resource.Status.OperationContext = nil
+			m.Resource.Status.OperationContext.Idx = 0
+			m.Resource.Status.OperationContext.TaskStatus = ""
+			m.Resource.Status.OperationContext.TaskId = ""
+			m.Resource.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -151,6 +154,8 @@ func (m ObTenantRestoreManager) UpdateStatus() error {
 		if err != nil {
 			return err
 		}
+	} else if m.Resource.Status.Status == apitypes.RestoreJobStatus("Failed") {
+		return nil
 	}
 	return m.retryUpdateStatus()
 }
@@ -211,6 +216,13 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*task.TaskFlow, error) {
 
 func (m ObTenantRestoreManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *ObTenantRestoreManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant restore job", "obtenant restore job", m.Resource.Name)
+	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant restore job")
+	m.Resource.Status.Status = "Failed"
+	m.Resource.Status.OperationContext = nil
 }
 
 func (m *ObTenantRestoreManager) retryUpdateStatus() error {

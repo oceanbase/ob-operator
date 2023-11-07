@@ -134,6 +134,9 @@ func (m *OBClusterManager) retryUpdateStatus() error {
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
+	if m.OBCluster.Status.Status == "Failed" {
+		return nil
+	}
 	// update obzone status
 	obzoneList, err := m.listOBZones()
 	if err != nil {
@@ -255,7 +258,10 @@ func (m *OBClusterManager) HandleFailure() {
 	switch failureRule.Strategy {
 	case strategy.StartOver:
 		m.OBCluster.Status.Status = failureRule.NextTryStatus
-		m.OBCluster.Status.OperationContext = nil
+		m.OBCluster.Status.OperationContext.Idx = 0
+		m.OBCluster.Status.OperationContext.TaskStatus = ""
+		m.OBCluster.Status.OperationContext.TaskId = ""
+		m.OBCluster.Status.OperationContext.Task = ""
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
 	case strategy.Pause:
@@ -323,6 +329,13 @@ func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 		return nil, errors.Wrap(err, "get obzone list")
 	}
 	return obzoneList, nil
+}
+
+func (m *OBClusterManager) ArchiveResource() {
+	m.Logger.Info("Archive obcluster", "obcluster", m.OBCluster.Name)
+	m.Recorder.Event(m.OBCluster, "Archive", "", "archive obcluster")
+	m.OBCluster.Status.Status = "Failed"
+	m.OBCluster.Status.OperationContext = nil
 }
 
 func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error) {

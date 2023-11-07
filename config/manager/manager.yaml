@@ -83,6 +83,8 @@ spec:
             value: "true"
           - name: TELEMETRY_REPORT_HOST
             value: "http://openwebapi.test.alipay.net"
+          - name: DISABLE_TELEMETRY
+            value: "true"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

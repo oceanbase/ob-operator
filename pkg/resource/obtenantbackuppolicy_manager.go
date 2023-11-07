@@ -158,6 +158,9 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
+	if m.BackupPolicy.Status.Status == apitypes.BackupPolicyStatusType("Failed") {
+		return nil
+	}
 	if m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusPausing
 		m.BackupPolicy.Status.OperationContext = nil
@@ -329,7 +332,10 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 			fallthrough
 		case strategy.StartOver:
 			m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(failureRule.NextTryStatus)
-			m.BackupPolicy.Status.OperationContext = nil
+			m.BackupPolicy.Status.OperationContext.Idx = 0
+			m.BackupPolicy.Status.OperationContext.TaskStatus = ""
+			m.BackupPolicy.Status.OperationContext.TaskId = ""
+			m.BackupPolicy.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -339,6 +345,13 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *ObTenantBackupPolicyManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant backup policy", "obtenant backup policy", m.BackupPolicy.Name)
+	m.Recorder.Event(m.BackupPolicy, "Archive", "", "archive obtenant backup policy")
+	m.BackupPolicy.Status.Status = "Failed"
+	m.BackupPolicy.Status.OperationContext = nil
 }
 
 func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error) {

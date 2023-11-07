@@ -76,3 +76,6 @@ func (m *ObResourceManager[T]) GetTaskFlow() (*task.TaskFlow, error) {
 func (m *ObResourceManager[T]) PrintErrEvent(err error) {
 	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
+
+func (m *ObResourceManager[T]) ArchiveResource() {
+}

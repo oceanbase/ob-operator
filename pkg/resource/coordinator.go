@@ -19,8 +19,10 @@ import (
 	"github.com/pkg/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 
+	obconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 )
 
 const (
@@ -115,8 +117,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			if taskResult.Error != nil {
 				c.Manager.PrintErrEvent(taskResult.Error)
 			}
-
-			// Didn't get task result, task is still running"
+			// Didn't get task result, task is still running
 		}
 	case taskstatus.Successful:
 		// clean operation context and set status to target status
@@ -126,8 +127,24 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.NextTask()
 		}
 	case taskstatus.Failed:
-		c.Logger.Info("Task failed, back to initial status")
-		c.Manager.HandleFailure()
+		c.Logger.Info("Task failed, resource manager handles failure")
+		switch f.OperationContext.OnFailure.Strategy {
+		case strategy.RetryFromCurrent, strategy.StartOver:
+			// if strategy is retry or start over, limit the maximum retry times
+			maxRetry := obconst.TaskMaxRetryTimes
+			if !isZero(f.OperationContext.OnFailure.MaxRetry) {
+				maxRetry = f.OperationContext.OnFailure.MaxRetry
+			}
+			if f.OperationContext.OnFailure.RetryCount > maxRetry {
+				c.Logger.Info("Retry count exceeds limit, archive the resource")
+				c.Manager.ArchiveResource()
+			} else {
+				c.Manager.HandleFailure()
+				f.OperationContext.OnFailure.RetryCount++
+			}
+		default:
+			c.Manager.HandleFailure()
+		}
 	}
 	_ = c.cleanTaskResultMap(f)
 	// Coordinate finished

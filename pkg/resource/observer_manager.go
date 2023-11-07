@@ -136,6 +136,8 @@ func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
 		m.OBServer.Status.Status = serverstatus.Deleting
+	} else if m.OBServer.Status.Status == "Failed" {
+		return nil
 	} else {
 		// get Pod status and update
 		pod, err := m.getPod()
@@ -320,7 +322,10 @@ func (m *OBServerManager) HandleFailure() {
 		switch failureRule.Strategy {
 		case strategy.StartOver:
 			m.OBServer.Status.Status = failureRule.NextTryStatus
-			m.OBServer.Status.OperationContext = nil
+			m.OBServer.Status.OperationContext.Idx = 0
+			m.OBServer.Status.OperationContext.TaskStatus = ""
+			m.OBServer.Status.OperationContext.TaskId = ""
+			m.OBServer.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -380,4 +385,11 @@ func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
 		return nil, errors.Wrap(err, "get obzone")
 	}
 	return obzone, nil
+}
+
+func (m *OBServerManager) ArchiveResource() {
+	m.Logger.Info("Archive observer", "observer", m.OBServer.Name)
+	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
+	m.OBServer.Status.Status = "Failed"
+	m.OBServer.Status.OperationContext = nil
 }

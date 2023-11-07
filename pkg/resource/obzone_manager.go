@@ -162,6 +162,13 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
+func (m *OBZoneManager) ArchiveResource() {
+	m.Logger.Info("Archive obzone", "obzone", m.OBZone.Name)
+	m.Recorder.Event(m.OBZone, "Archive", "", "archive obzone")
+	m.OBZone.Status.Status = "Failed"
+	m.OBZone.Status.OperationContext = nil
+}
+
 func (m *OBZoneManager) retryUpdateStatus() error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obzone, err := m.getOBZone()
@@ -174,11 +181,13 @@ func (m *OBZoneManager) retryUpdateStatus() error {
 }
 
 func (m *OBZoneManager) UpdateStatus() error {
+	if m.OBZone.Status.Status == "Failed" {
+		return nil
+	}
 	observerList, err := m.listOBServers()
 	if err != nil {
 		m.Logger.Error(err, "Got error when list observers")
 	}
-
 	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
 	availableReplica := 0
 	// handle upgrade
@@ -249,7 +258,10 @@ func (m *OBZoneManager) HandleFailure() {
 		switch failureRule.Strategy {
 		case strategy.StartOver:
 			m.OBZone.Status.Status = failureRule.NextTryStatus
-			m.OBZone.Status.OperationContext = nil
+			m.OBZone.Status.OperationContext.Idx = 0
+			m.OBZone.Status.OperationContext.TaskStatus = ""
+			m.OBZone.Status.OperationContext.TaskId = ""
+			m.OBZone.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
