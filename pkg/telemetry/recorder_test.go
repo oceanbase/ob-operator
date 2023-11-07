@@ -27,10 +27,13 @@ import (
 type fakeEventRecorder struct{}
 
 func (f *fakeEventRecorder) Event(object runtime.Object, eventtype, reason, message string) {
+	getLogger().Printf("Event: %+v, %s, %s, %s\n", object, eventtype, reason, message)
 }
 func (f *fakeEventRecorder) Eventf(object runtime.Object, eventtype, reason, messageFmt string, args ...any) {
+	getLogger().Printf("Eventf: %+v, %s, %s, %s, %v\n", object, eventtype, reason, messageFmt, args)
 }
 func (f *fakeEventRecorder) AnnotatedEventf(object runtime.Object, annotations map[string]string, eventtype, reason, messageFmt string, args ...any) {
+	getLogger().Printf("AnnotatedEventf: %+v, %+v, %s, %s, %s, %v\n", object, annotations, eventtype, reason, messageFmt, args)
 }
 
 var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
@@ -60,7 +63,11 @@ var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
 
 	It("GetHostMetrics", func() {
 		metrics := telemetry.GetHostMetrics()
-		Expect(metrics).ShouldNot(BeNil())
+		if TelemetryDisabled {
+			Expect(metrics).Should(BeNil())
+		} else {
+			Expect(metrics).ShouldNot(BeNil())
+		}
 	})
 
 	It("Event", func() {

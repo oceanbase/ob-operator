@@ -97,6 +97,9 @@ func (t *recorder) GenerateTelemetryRecord(object any, objectType, eventType, re
 }
 
 func (t *recorder) Done() {
+	if t.telemetryDisabled {
+		return
+	}
 	t.throttler.close()
 }
 
