@@ -57,7 +57,7 @@ const (
 const (
 	PrepareBackupPolicy   = "prepare backup policy"
 	StartBackupJob        = "start backup job"
-	StopBackupJob         = "stop backup job"
+	StopBackupPolicy      = "stop backup policy"
 	MaintainRunningPolicy = "maintain running policy"
 	PauseBackup           = "pause backup"
 	ResumeBackup          = "resume backup"

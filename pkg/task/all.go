@@ -66,7 +66,7 @@ func init() {
 	// tenant-level backup
 	GetRegistry().Register(flowname.PrepareBackupPolicy, PrepareBackupPolicy)
 	GetRegistry().Register(flowname.StartBackupJob, StartBackupJob)
-	GetRegistry().Register(flowname.StopBackupJob, StopBackupJob)
+	GetRegistry().Register(flowname.StopBackupPolicy, StopBackupPolicy)
 	GetRegistry().Register(flowname.MaintainRunningPolicy, MaintainRunningPolicy)
 	GetRegistry().Register(flowname.PauseBackup, PauseBackup)
 	GetRegistry().Register(flowname.ResumeBackup, ResumeBackup)

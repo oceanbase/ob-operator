@@ -49,13 +49,12 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 }
 
 func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
-	logger.Info("Get cluster sys client", "obCluster", obcluster)
+	// logger.Info("Get cluster sys client", "obCluster", obcluster)
 	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 }
 
 func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
-	logger.Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
-
+	// logger.Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
 		oceanbaseconst.LabelRefOBCluster: obcluster.Name,

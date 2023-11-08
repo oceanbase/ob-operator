@@ -285,7 +285,7 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		m.Logger.Info("Get task flow when observer need to be added to obcluster")
 		taskFlow, err = task.GetRegistry().Get(flowname.AddServerInOB)
 	default:
-		m.Logger.Info("no need to run anything for observer")
+		// m.Logger.Info("no need to run anything for observer")
 		return nil, nil
 	}
 

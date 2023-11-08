@@ -80,7 +80,7 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case parameterstatus.NotMatch:
 		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
 	default:
-		m.Logger.Info("no need to run anything for obparameter")
+		// m.Logger.Info("no need to run anything for obparameter")
 		return nil, nil
 	}
 

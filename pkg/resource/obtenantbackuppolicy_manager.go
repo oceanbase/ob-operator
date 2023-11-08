@@ -92,12 +92,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 					finalizerFinished = true
 				}
 			} else {
-				err := m.StopBackup()
-				// the policy is being deleted, connection still exists, stop backup
-				if err != nil {
-					return err
-				}
-				finalizerFinished = true
+				finalizerFinished = m.BackupPolicy.Status.Status == constants.BackupPolicyStatusStopped
 			}
 		}
 
@@ -166,6 +161,11 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
+	} else if m.IsDeleting() && m.BackupPolicy.Status.Status != constants.BackupPolicyStatusDeleting {
+		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
+		m.BackupPolicy.Status.OperationContext = nil
+	} else if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
+		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		err := m.syncTenantInformation()
 		if err != nil {
@@ -197,6 +197,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 
 		if latestFull == nil || latestFull.Status == "CANCELED" {
 			m.BackupPolicy.Status.NextFull = time.Now().Format(time.DateTime)
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 		} else if latestFull.Status == "COMPLETED" {
 			fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
 			if err != nil {
@@ -216,6 +217,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 				if err != nil {
 					return err
 				}
+				var nextIncrTime time.Time
 				if latestIncr != nil {
 					if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
 						var lastIncrBackupFinishedAt time.Time
@@ -229,7 +231,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 							m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
 						}
 
-						nextIncrTime := incrCron.Next(lastIncrBackupFinishedAt)
+						nextIncrTime = incrCron.Next(lastIncrBackupFinishedAt)
 						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 					} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
 						// do nothing
@@ -238,13 +240,19 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 						m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
 					}
 				} else {
-					nextIncrTime := incrCron.Next(lastFullBackupFinishedAt)
+					nextIncrTime = incrCron.Next(lastFullBackupFinishedAt)
 					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
 				}
+				if !isZero(nextIncrTime) && nextIncrTime.Before(time.Now()) {
+					m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
+				}
+			} else {
+				m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 			}
 		}
 	}
 
+	m.BackupPolicy.Status.ObservedGeneration = m.BackupPolicy.GetGeneration()
 	return m.retryUpdateStatus()
 }
 
@@ -254,7 +262,7 @@ func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, er
 		return m.ConfigureServerForBackup, nil
 	case taskname.StartBackupJob:
 		return m.StartBackup, nil
-	case taskname.StopBackupJob:
+	case taskname.StopBackupPolicy:
 		return m.StopBackup, nil
 	case taskname.CheckAndSpawnJobs:
 		return m.CheckAndSpawnJobs, nil
@@ -283,12 +291,14 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
 	case constants.BackupPolicyStatusPrepared:
 		taskFlow, err = task.GetRegistry().Get(flow.StartBackupJob)
-	case constants.BackupPolicyStatusRunning:
+	case constants.BackupPolicyStatusMaintaining:
 		taskFlow, err = task.GetRegistry().Get(flow.MaintainRunningPolicy)
 	case constants.BackupPolicyStatusPausing:
 		taskFlow, err = task.GetRegistry().Get(flow.PauseBackup)
 	case constants.BackupPolicyStatusResuming:
 		taskFlow, err = task.GetRegistry().Get(flow.ResumeBackup)
+	case constants.BackupPolicyStatusDeleting:
+		taskFlow, err = task.GetRegistry().Get(flow.StopBackupPolicy)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil

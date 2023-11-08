@@ -112,7 +112,7 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		// TODO upgrade
 	default:
-		m.Logger.Info("no need to run anything for obzone")
+		// m.Logger.Info("no need to run anything for obzone")
 		return nil, nil
 	}
 
