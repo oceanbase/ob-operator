@@ -119,6 +119,16 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusters.oceanbase.oceanbase.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: oceanbase-webhook-service
+          namespace: oceanbase-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: oceanbase.oceanbase.com
   names:
     kind: OBCluster
