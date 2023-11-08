@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -35,6 +34,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type OBZoneManager struct {
@@ -42,7 +42,7 @@ type OBZoneManager struct {
 	Ctx      context.Context
 	OBZone   *v1alpha1.OBZone
 	Client   client.Client
-	Recorder record.EventRecorder
+	Recorder telemetry.Recorder
 	Logger   *logr.Logger
 }
 

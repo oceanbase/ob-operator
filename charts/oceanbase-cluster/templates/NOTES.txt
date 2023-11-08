@@ -1,0 +1,11 @@
+Welcome to OceanBase Cluster! 
+
+After installing OBCluster chart, you need to wait for the cluster bootstrapped. Bootstrap progress will cost approximately 2~3 minutes which may varies depends on the machine.
+
+You can use the following command to wait for the OBCluster to be ready.
+
+> kubectl wait -n {{ .Release.Namespace }} obcluster {{ .Release.Name }} --for=jsonpath='{.status.status}'=running --timeout=10m
+
+After that, the cluster is ready to handle connections stably. Example command is following:
+
+> mysql -A -h$(kubectl get pods -l ref-obcluster={{ .Release.Name }} -o jsonpath='{.items[0].status.podIP}') -P2881 -uroot -p$(kubectl get secret -n {{ .Release.Namespace }} {{ .Values.userSecrets.root }} -o jsonpath='{.data.password}' | base64 -d)

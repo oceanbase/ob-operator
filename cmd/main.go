@@ -17,6 +17,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
 
@@ -34,6 +35,7 @@ import (
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/controller"
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -147,7 +149,7 @@ func main() {
 	if err = (&controller.OBTenantBackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupControllerName),
+		Recorder: telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor(config.OBTenantBackupControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackup")
 		os.Exit(1)
@@ -160,18 +162,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantRestore")
 		os.Exit(1)
 	}
-	// if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
-	// 	os.Exit(1)
-	// }
-	// if err = (&v1alpha1.OBZone{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBZone")
-	// 	os.Exit(1)
-	// }
-	// if err = (&v1alpha1.OBServer{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "OBServer")
-	// 	os.Exit(1)
-	// }
 	if err = (&controller.OBTenantBackupPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -200,6 +190,10 @@ func main() {
 		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
 		os.Exit(1)
 	}
+	if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -210,6 +204,9 @@ func main() {
 		setupLog.Error(err, "unable to set up ready check")
 		os.Exit(1)
 	}
+
+	rcd := telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
+	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "start ob-operator", nil)
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

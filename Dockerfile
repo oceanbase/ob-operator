@@ -15,6 +15,6 @@ FROM openanolis/anolisos:8.4-x86_64
 WORKDIR /
 COPY --from=builder /workspace/manager .
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-USER 65532:65532
+USER 65534:65534
 
 ENTRYPOINT ["/manager"]

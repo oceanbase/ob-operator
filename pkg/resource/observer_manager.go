@@ -18,11 +18,11 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ type OBServerManager struct {
 	Ctx      context.Context
 	OBServer *v1alpha1.OBServer
 	Client   client.Client
-	Recorder record.EventRecorder
+	Recorder telemetry.Recorder
 	Logger   *logr.Logger
 }
 

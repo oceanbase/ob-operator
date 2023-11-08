@@ -28,6 +28,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBParameterReconciler reconciles a OBParameter object
@@ -70,8 +71,8 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 		Ctx:         ctx,
 		OBParameter: obparameter,
 		Client:      r.Client,
-		Recorder:    r.Recorder,
 		Logger:      &logger,
+		Recorder:    telemetry.NewRecorder(ctx, r.Recorder),
 	}
 	coordinator := resource.NewCoordinator(obparameterManager, &logger)
 	return coordinator.Coordinate()

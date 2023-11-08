@@ -119,6 +119,16 @@ metadata:
     controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusters.oceanbase.oceanbase.com
 spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: oceanbase-webhook-service
+          namespace: oceanbase-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
   group: oceanbase.oceanbase.com
   names:
     kind: OBCluster
@@ -6689,7 +6699,7 @@ spec:
                     type: string
                   create_time:
                     type: string
-                  gmt_create_time:
+                  gmt_create:
                     type: string
                   in_recyclebin:
                     type: string
@@ -11966,6 +11976,14 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - nodes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - create
@@ -12614,6 +12632,12 @@ spec:
                 operator: In
                 values:
                 - linux
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - sqaappnoxdnv62s2011161204053.sa128
+              - key: node-role.kubernetes.io/master
+                operator: Exists
       containers:
       - args:
         - --health-probe-bind-address=:8081
@@ -12622,7 +12646,12 @@ spec:
         - --manager-namespace=oceanbase-system
         command:
         - /manager
-        image: oceanbase/ob-operator:2.0.0
+        env:
+        - name: TELEMETRY_DEBUG
+          value: "true"
+        - name: TELEMETRY_REPORT_HOST
+          value: http://openwebapi.test.alipay.net
+        image: oceanbasedev/ob-operator:2.1.0-alpha.1
         livenessProbe:
           httpGet:
             path: /healthz
@@ -12642,7 +12671,7 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 1
+            cpu: "1"
             memory: 1Gi
           requests:
             cpu: 10m
@@ -12745,6 +12774,26 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obcluster
+  failurePolicy: Fail
+  name: mobcluster.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenant
   failurePolicy: Fail
   name: mobtenant.kb.io
@@ -12814,6 +12863,26 @@ metadata:
     app.kubernetes.io/part-of: ob-operator-generate
   name: oceanbase-validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obcluster
+  failurePolicy: Fail
+  name: vobcluster.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusters
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

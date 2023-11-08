@@ -185,6 +185,19 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	if r.Spec.ObClusterName == "" {
 		return errors.New("obClusterName is required")
 	}
+
+	cluster := &OBCluster{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      r.Spec.ObClusterName,
+	}, cluster)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return field.Invalid(field.NewPath("spec").Child("clusterName"), r.Spec.ObClusterName, "Given cluster not found")
+		}
+		return field.InternalError(field.NewPath("spec").Child("clusterName"), err)
+	}
+
 	if r.Spec.TenantName == "" && r.Spec.TenantCRName == "" {
 		return field.Invalid(field.NewPath("spec").Child("[tenantName | tenantCRName]"), r.Spec.TenantName, "tenantName and tenantCRName are both empty")
 	}
@@ -281,7 +294,7 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 	}
 
-	err := r.validateBackupCrontab()
+	err = r.validateBackupCrontab()
 	if err != nil {
 		return err
 	}

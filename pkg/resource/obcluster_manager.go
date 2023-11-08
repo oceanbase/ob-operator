@@ -18,7 +18,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -31,6 +30,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type OBClusterManager struct {
@@ -38,7 +38,7 @@ type OBClusterManager struct {
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
-	Recorder  record.EventRecorder
+	Recorder  telemetry.Recorder
 	Logger    *logr.Logger
 }
 
@@ -48,6 +48,7 @@ func (m *OBClusterManager) IsNewResource() bool {
 
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
+	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,

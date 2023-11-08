@@ -19,7 +19,7 @@ resources:
 patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
-# - patches/webhook_in_obclusters.yaml
+- patches/webhook_in_obclusters.yaml
 # - patches/webhook_in_obzones.yaml
 # - patches/webhook_in_observers.yaml
 # - patches/webhook_in_obparameters.yaml
@@ -35,7 +35,7 @@ patchesStrategicMerge:
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
-# - patches/cainjection_in_obclusters.yaml
+- patches/cainjection_in_obclusters.yaml
 # - patches/cainjection_in_obzones.yaml
 # - patches/cainjection_in_observers.yaml
 # - patches/cainjection_in_obparameters.yaml

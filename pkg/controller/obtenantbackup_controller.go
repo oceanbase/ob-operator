@@ -23,12 +23,13 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
+	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
 	"github.com/pkg/errors"
 
@@ -42,7 +43,7 @@ import (
 type OBTenantBackupReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Recorder telemetry.Recorder
 }
 
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantbackups,verbs=get;list;watch;create;update;patch;delete
@@ -134,11 +135,19 @@ func (r *OBTenantBackupReconciler) createBackupJobInOB(ctx context.Context, job 
 	latest, err := con.CreateAndReturnBackupJob(job.Spec.Type)
 	if err != nil {
 		logger.Error(err, "failed to create and return backup job")
+		r.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
 		return err
 	}
 
 	job.Status.BackupJob = latest
-	return r.Status().Update(ctx, job)
+	err = r.retryUpdateStatus(ctx, job)
+	if err != nil {
+		logger.Error(err, "failed to update status")
+		r.Recorder.Event(job, "Warning", "UpdateStatusFailed", err.Error())
+		return err
+	}
+	r.Recorder.Event(job, "Create", "", "create backup job successfully")
+	return nil
 }
 
 // TODO: Calculate the progress of running jobs
@@ -185,7 +194,7 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context,
 	case "CANCELED":
 		job.Status.Status = constants.BackupJobStatusCanceled
 	}
-	return r.Client.Status().Update(ctx, job)
+	return r.retryUpdateStatus(ctx, job)
 }
 
 func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
@@ -217,7 +226,7 @@ func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Con
 		case "DOING":
 			job.Status.Status = constants.BackupJobStatusRunning
 		}
-		return r.Client.Status().Update(ctx, job)
+		return r.retryUpdateStatus(ctx, job)
 	}
 
 	return nil
@@ -250,7 +259,7 @@ func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Cont
 		case "SUSPEND":
 			job.Status.Status = constants.BackupJobStatusSuspend
 		}
-		return r.Client.Status().Update(ctx, job)
+		return r.retryUpdateStatus(ctx, job)
 	}
 
 	return nil
@@ -272,4 +281,19 @@ func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
 	return con, nil
+}
+
+func (r *OBTenantBackupReconciler) retryUpdateStatus(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		newestJob := &v1alpha1.OBTenantBackup{}
+		err := r.Get(ctx, types.NamespacedName{
+			Namespace: job.GetNamespace(),
+			Name:      job.GetName(),
+		}, newestJob)
+		if err != nil {
+			return client.IgnoreNotFound(err)
+		}
+		newestJob.Status = job.Status
+		return r.Status().Update(ctx, newestJob)
+	})
 }

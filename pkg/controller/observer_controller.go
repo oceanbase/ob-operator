@@ -32,6 +32,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/resource"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 // OBServerReconciler reconciles a OBServer object
@@ -80,8 +81,8 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Ctx:      ctx,
 		OBServer: observer,
 		Client:   r.Client,
-		Recorder: r.Recorder,
 		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
 	}
 
 	// execute finalizers

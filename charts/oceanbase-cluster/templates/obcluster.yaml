@@ -37,10 +37,9 @@ spec:
     - name: {{ $param.name }}
       value: {{ $param.value | quote }}
   {{- end }}
-  {{- if .Values.nfsBackupEnabled }}
+  {{- if .Values.backupVolumeEnabled }}
   backupVolume:
     volume: 
       name: backup
-      nfs:
-      {{- toYaml .Values.nfsBackup | nindent 8 }}
+      {{- toYaml .Values.backupVolume | nindent 6 }}
   {{- end }}

@@ -19,7 +19,6 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -33,6 +32,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type ObTenantRestoreManager struct {
@@ -41,7 +41,7 @@ type ObTenantRestoreManager struct {
 	Ctx      context.Context
 	Resource *v1alpha1.OBTenantRestore
 	Client   client.Client
-	Recorder record.EventRecorder
+	Recorder telemetry.Recorder
 	Logger   *logr.Logger
 
 	con *operation.OceanbaseOperationManager

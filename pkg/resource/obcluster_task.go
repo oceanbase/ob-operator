@@ -292,6 +292,8 @@ func (m *OBClusterManager) Bootstrap() error {
 	err = manager.Bootstrap(bootstrapServers)
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
+	} else {
+		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
 	}
 	return err
 }
@@ -780,7 +782,12 @@ func (m *OBClusterManager) CreateServiceForMonitor() error {
 			Type:     corev1.ServiceTypeClusterIP,
 		},
 	}
-	return m.Client.Create(m.Ctx, &monitorService)
+	err := m.Client.Create(m.Ctx, &monitorService)
+	if err != nil {
+		return errors.Wrap(err, "Create monitor service")
+	}
+	m.Recorder.Event(m.OBCluster, "MaintainedAfterBootstrap", "", "Create monitor service successfully")
+	return nil
 }
 
 func (m *OBClusterManager) RestoreEssentialParameters() error {
@@ -798,9 +805,9 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 	}, contextSecret)
 	if err != nil {
 		m.Logger.Error(err, "Failed to get context secret")
-		return nil
 		// parameter can be set manually, just return here and emit an event
-		// TODO: emit an event
+		m.Recorder.Event(m.OBCluster, "Warning", "Restore essential parameters failed", err.Error())
+		return nil
 	}
 
 	encodedParameters := string(contextSecret.Data[oceanbaseconst.EssentialParametersKey])
@@ -820,5 +827,6 @@ func (m *OBClusterManager) RestoreEssentialParameters() error {
 		}
 	}
 	_ = m.Client.Delete(m.Ctx, contextSecret)
+	m.Recorder.Event(m.OBCluster, "Upgrade", "", "Restore essential parameters successfully")
 	return nil
 }

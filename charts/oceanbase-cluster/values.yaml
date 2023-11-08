@@ -20,12 +20,15 @@ monitorResource:
 parameters:
   - name: system_memory
     value: 2G
+  - name: "__min_full_resource_pool_memory"
+    value: "2147483648" # 2G
 
-nfsBackupEnabled: false # set true and config volume if you want to enable backup with NFS
-nfsBackup:
-  server: 1.1.1.1
-  path: /opt/nfs
-  readOnly: false
+backupVolumeEnabled: false # set true and config volume if you want to enable backup volume
+backupVolume:
+  nfs:
+    server: 1.1.1.1
+    path: /opt/nfs
+    readOnly: false
 
 generateUserSecrets: true # if set true, all system user secrets will be generated automatically
 userSecrets:

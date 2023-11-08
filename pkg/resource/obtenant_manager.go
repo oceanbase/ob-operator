@@ -25,7 +25,6 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -39,6 +38,7 @@ import (
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 )
 
 type OBTenantManager struct {
@@ -46,7 +46,7 @@ type OBTenantManager struct {
 	OBTenant *v1alpha1.OBTenant
 	Ctx      context.Context
 	Client   client.Client
-	Recorder record.EventRecorder
+	Recorder telemetry.Recorder
 	Logger   *logr.Logger
 }
 
@@ -88,9 +88,12 @@ func (m *OBTenantManager) InitStatus() {
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
+		m.Recorder.Event(m.OBTenant, "InitRestore", "", "start restoring")
 	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
+		m.Recorder.Event(m.OBTenant, "InitEmptyStandby", "", "start creating empty standby")
 		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
+		m.Recorder.Event(m.OBTenant, "Init", "", "start creating")
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
 }

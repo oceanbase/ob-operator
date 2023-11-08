@@ -40,22 +40,28 @@ spec:
       # according to the platforms which are supported by your solution.
       # It is considered best practice to support multiple architectures. You can
       # build your manager image using the makefile target docker-buildx.
-      # affinity:
-      #   nodeAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #       nodeSelectorTerms:
-      #         - matchExpressions:
-      #           - key: kubernetes.io/arch
-      #             operator: In
-      #             values:
-      #               - amd64
-      #               - arm64
-      #               - ppc64le
-      #               - s390x
-      #           - key: kubernetes.io/os
-      #             operator: In
-      #             values:
-      #               - linux
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: kubernetes.io/arch
+                  operator: In
+                  values:
+                    - amd64
+                    - arm64
+                    - ppc64le
+                    - s390x
+                - key: kubernetes.io/os
+                  operator: In
+                  values:
+                    - linux
+                - key: kubernetes.io/hostname
+                  operator: In
+                  values:
+                    - sqaappnoxdnv62s2011161204053.sa128
+                - key: node-role.kubernetes.io/master
+                  operator: Exists
       securityContext:
         runAsNonRoot: true
         # TODO(user): For common cases that do not require escalating privileges
@@ -72,6 +78,11 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
+        env:
+          - name: TELEMETRY_DEBUG
+            value: "true"
+          - name: TELEMETRY_REPORT_HOST
+            value: "http://openwebapi.test.alipay.net"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -93,7 +104,7 @@ spec:
         # More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
         resources:
           limits:
-            cpu: 1
+            cpu: "1"
             memory: 1Gi
           requests:
             cpu: 10m
