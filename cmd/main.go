@@ -149,7 +149,7 @@ func main() {
 	if err = (&controller.OBTenantBackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupControllerName),
+		Recorder: telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor(config.OBTenantBackupControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackup")
 		os.Exit(1)

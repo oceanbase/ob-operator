@@ -17,6 +17,7 @@ limitations under the License.
 package controller
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,6 +34,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	"github.com/oceanbase/ob-operator/pkg/controller/config"
+	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
@@ -134,7 +136,7 @@ var _ = BeforeSuite(func() {
 		err = (&OBTenantBackupReconciler{
 			Client:   k8sManager.GetClient(),
 			Scheme:   k8sManager.GetScheme(),
-			Recorder: k8sManager.GetEventRecorderFor(config.OBTenantBackupControllerName),
+			Recorder: telemetry.NewRecorder(context.Background(), k8sManager.GetEventRecorderFor(config.OBTenantBackupControllerName)),
 		}).SetupWithManager(k8sManager)
 		Expect(err).NotTo(HaveOccurred())
 

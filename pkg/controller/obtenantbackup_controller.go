@@ -24,7 +24,6 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/tools/record"
 	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,9 +43,8 @@ import (
 // OBTenantBackupReconciler reconciles a OBTenantBackup object
 type OBTenantBackupReconciler struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Recorder  record.EventRecorder
-	Telemetry telemetry.Recorder
+	Scheme   *runtime.Scheme
+	Recorder telemetry.Recorder
 
 	telemetryOnce sync.Once
 }
@@ -128,19 +126,19 @@ func (r *OBTenantBackupReconciler) createBackupJobInOB(ctx context.Context, job 
 		password, err := resource.ReadPassword(r.Client, job.Namespace, job.Spec.EncryptionSecret)
 		if err != nil {
 			logger.Error(err, "failed to read backup encryption secret")
-			r.getTelemetry(ctx).Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
+			r.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
 		} else if password != "" {
 			err = con.SetBackupPassword(password)
 			if err != nil {
 				logger.Error(err, "failed to set backup password")
-				r.getTelemetry(ctx).Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
+				r.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
 			}
 		}
 	}
 	latest, err := con.CreateAndReturnBackupJob(job.Spec.Type)
 	if err != nil {
 		logger.Error(err, "failed to create and return backup job")
-		r.getTelemetry(ctx).Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
+		r.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
 		return err
 	}
 
@@ -148,10 +146,10 @@ func (r *OBTenantBackupReconciler) createBackupJobInOB(ctx context.Context, job 
 	err = r.retryUpdateStatus(ctx, job)
 	if err != nil {
 		logger.Error(err, "failed to update status")
-		r.getTelemetry(ctx).Event(job, "Warning", "UpdateStatusFailed", err.Error())
+		r.Recorder.Event(job, "Warning", "UpdateStatusFailed", err.Error())
 		return err
 	}
-	r.getTelemetry(ctx).Event(job, "Create", "", "create backup job successfully")
+	r.Recorder.Event(job, "Create", "", "create backup job successfully")
 	return nil
 }
 
@@ -301,14 +299,4 @@ func (r *OBTenantBackupReconciler) retryUpdateStatus(ctx context.Context, job *v
 		newestJob.Status = job.Status
 		return r.Status().Update(ctx, newestJob)
 	})
-}
-
-func (r *OBTenantBackupReconciler) getTelemetry(ctx context.Context) telemetry.Recorder {
-	if r.Telemetry != nil {
-		return r.Telemetry
-	}
-	r.telemetryOnce.Do(func() {
-		r.Telemetry = telemetry.NewRecorder(ctx, r.Recorder)
-	})
-	return r.Telemetry
 }
