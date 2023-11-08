@@ -109,6 +109,7 @@ func (r *OBTenantBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBTenantBackup{}).
+		WithEventFilter(preds).
 		Complete(r)
 }
 

@@ -82,5 +82,6 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 func (r *OBParameterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBParameter{}).
+		WithEventFilter(preds).
 		Complete(r)
 }

@@ -127,5 +127,6 @@ const (
 )
 
 const (
-	TaskMaxRetryTimes = 5
+	TaskMaxRetryTimes         = 99
+	TaskRetryBackoffThreshold = 16
 )

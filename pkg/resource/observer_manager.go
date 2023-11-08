@@ -191,15 +191,15 @@ func (m *OBServerManager) UpdateStatus() error {
 			}
 		}
 
-		m.Logger.Info("update observer status", "status", m.OBServer.Status)
-		m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
+		// m.Logger.Info("update observer status", "status", m.OBServer.Status)
+		// m.Logger.Info("update observer status", "operation context", m.OBServer.Status.OperationContext)
 	}
 
 	err := m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
-	m.Logger.Info("update status finished")
+	// m.Logger.Info("update status finished")
 	return err
 }
 

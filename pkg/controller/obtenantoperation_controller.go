@@ -73,5 +73,6 @@ func (r *OBTenantOperationReconciler) Reconcile(ctx context.Context, req ctrl.Re
 func (r *OBTenantOperationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBTenantOperation{}).
+		WithEventFilter(preds).
 		Complete(r)
 }

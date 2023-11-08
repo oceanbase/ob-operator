@@ -115,5 +115,6 @@ func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBServer{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 9}).
+		WithEventFilter(preds).
 		Complete(r)
 }

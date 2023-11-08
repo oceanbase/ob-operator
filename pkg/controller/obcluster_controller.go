@@ -94,5 +94,6 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *OBClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBCluster{}).
+		WithEventFilter(preds).
 		Complete(r)
 }

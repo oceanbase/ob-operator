@@ -19,3 +19,10 @@ func getRef[T any](val T) *T {
 func isZero[T comparable](val T) bool {
 	return val == *(new(T))
 }
+
+func min[T int | int64 | uint | uint64 | float64 | float32](a, b T) T {
+	if a < b {
+		return a
+	}
+	return b
+}

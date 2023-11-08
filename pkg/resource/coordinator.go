@@ -26,8 +26,10 @@ import (
 )
 
 const (
-	NormalRequeueDuration    = 60 * time.Second
-	ExecutionRequeueDuration = 5 * time.Second
+	// If no task flow, requeue after 60 sec.
+	NormalRequeueDuration = 60 * time.Second
+	// In task flow, requeue after 500 ms.
+	ExecutionRequeueDuration = 1 * time.Second
 )
 
 type Coordinator struct {
@@ -42,6 +44,15 @@ func NewCoordinator(m ResourceManager, logger *logr.Logger) *Coordinator {
 	}
 }
 
+// 1. If the returned error is non-nil, the Result is ignored and the request will be
+// requeued using exponential backoff. The only exception is if the error is a
+// TerminalError in which case no requeuing happens.
+//
+// 2. If the error is nil and the returned Result has a non-zero result.RequeueAfter, the request
+// will be requeued after the specified duration.
+//
+// 3. If the error is nil and result.RequeueAfter is zero and result.Reque is true, the request
+// will be requeued using exponential backoff.
 func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	result := ctrl.Result{
 		RequeueAfter: ExecutionRequeueDuration,
@@ -62,6 +73,11 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 			c.Manager.SetOperationContext(f.OperationContext)
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
+			// if task status is `failed`, requeue after 2 ^ min(retryCount, threshold) * 500ms.
+			// maximum backoff time is about 2 hrs with 14 as threshold.
+			if f.OperationContext.OnFailure.RetryCount > 0 && f.OperationContext.TaskStatus == taskstatus.Failed {
+				result.RequeueAfter = ExecutionRequeueDuration * (1 << min(f.OperationContext.OnFailure.RetryCount, obconst.TaskRetryBackoffThreshold))
+			}
 		}
 	}
 	// handle instance deletion
@@ -70,6 +86,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 		if err != nil {
 			return result, errors.Wrapf(err, "Check and update finalizer failed")
 		}
+		result.RequeueAfter = ExecutionRequeueDuration
 	}
 	err = c.cleanTaskResultMap(f)
 	if err != nil {
@@ -127,7 +144,6 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			f.NextTask()
 		}
 	case taskstatus.Failed:
-		c.Logger.Info("Task failed, resource manager handles failure")
 		switch f.OperationContext.OnFailure.Strategy {
 		case strategy.RetryFromCurrent, strategy.StartOver:
 			// if strategy is retry or start over, limit the maximum retry times
@@ -146,11 +162,9 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Manager.HandleFailure()
 		}
 	}
-	_ = c.cleanTaskResultMap(f)
 	// Coordinate finished
 }
 
-// TODO clean task result map and cache map to free memory
 func (c *Coordinator) cleanTaskResultMap(f *task.TaskFlow) error {
 	if f == nil || f.OperationContext == nil {
 		return nil

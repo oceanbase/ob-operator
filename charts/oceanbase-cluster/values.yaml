@@ -1,5 +1,5 @@
-clusterName: obcluster
-clusterId: 1025
+clusterName: obc
+clusterId: 1
 
 storageClass: local-path
 
