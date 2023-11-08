@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,8 +44,6 @@ type OBTenantBackupReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder telemetry.Recorder
-
-	telemetryOnce sync.Once
 }
 
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantbackups,verbs=get;list;watch;create;update;patch;delete
