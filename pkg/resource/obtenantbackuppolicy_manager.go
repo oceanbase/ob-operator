@@ -78,17 +78,19 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 		}
 
 		if !finalizerFinished {
-			tenant, err := m.getOBTenantCR()
-			if err != nil {
-				// the tenant is deleted, no need to wait finalizer
-				if kubeerrors.IsNotFound(err) {
+			if m.BackupPolicy.Spec.TenantCRName != "" {
+				tenant, err := m.getOBTenantCR()
+				if err != nil {
+					// the tenant is deleted, no need to wait finalizer
+					if kubeerrors.IsNotFound(err) {
+						finalizerFinished = true
+					} else {
+						return errors.Wrap(err, "Get obtenant failed")
+					}
+				} else if !tenant.GetDeletionTimestamp().IsZero() {
+					// the tenant is being deleted
 					finalizerFinished = true
-				} else {
-					return errors.Wrap(err, "Get obtenant failed")
 				}
-			} else if !tenant.GetDeletionTimestamp().IsZero() {
-				// the tenant is being deleted
-				finalizerFinished = true
 			} else {
 				err := m.StopBackup()
 				// the policy is being deleted, connection still exists, stop backup
