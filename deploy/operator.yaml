@@ -6151,6 +6151,9 @@ spec:
                 type: string
               nextIncremental:
                 type: string
+              observedGeneration:
+                format: int64
+                type: integer
               operationContext:
                 properties:
                   failureRule:
