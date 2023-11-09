@@ -56,12 +56,6 @@ spec:
                   operator: In
                   values:
                     - linux
-                - key: kubernetes.io/hostname
-                  operator: In
-                  values:
-                    - sqaappnoxdnv62s2011161204053.sa128
-                - key: node-role.kubernetes.io/master
-                  operator: Exists
       securityContext:
         runAsNonRoot: true
         # TODO(user): For common cases that do not require escalating privileges
@@ -81,10 +75,10 @@ spec:
         env:
           - name: TELEMETRY_DEBUG
             value: "true"
-          - name: TELEMETRY_REPORT_HOST
-            value: "http://openwebapi.test.alipay.net"
           - name: DISABLE_TELEMETRY
             value: "true"
+          - name: TELEMETRY_REPORT_HOST
+            value: "http://openwebapi.test.alipay.net"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
