@@ -61,6 +61,8 @@ const (
 	MaintainRunningPolicy = "maintain running policy"
 	PauseBackup           = "pause backup"
 	ResumeBackup          = "resume backup"
+
+	CreateBackupJobInDB = "create backup job in db"
 )
 
 const (

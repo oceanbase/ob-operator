@@ -82,3 +82,16 @@ func ResumeBackup() *TaskFlow {
 		},
 	}
 }
+
+func CreateBackupJobInDB() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.CreateBackupJobInDB,
+			Tasks:        []string{taskname.CreateBackupJobInDB},
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
+			OnFailure: strategy.FailureRule{
+				Strategy: strategy.StartOver,
+			},
+		},
+	}
+}

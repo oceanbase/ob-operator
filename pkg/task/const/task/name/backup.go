@@ -22,3 +22,7 @@ const (
 	ResumeBackup             = "resume backup"
 	DeleteBackupPolicy       = "delete backup policy"
 )
+
+const (
+	CreateBackupJobInDB = "create backup job in db"
+)

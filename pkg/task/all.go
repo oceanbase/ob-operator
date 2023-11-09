@@ -71,6 +71,8 @@ func init() {
 	GetRegistry().Register(flowname.PauseBackup, PauseBackup)
 	GetRegistry().Register(flowname.ResumeBackup, ResumeBackup)
 
+	GetRegistry().Register(flowname.CreateBackupJobInDB, CreateBackupJobInDB)
+
 	// obparameter
 	GetRegistry().Register(flowname.SetOBParameter, SetOBParameter)
 

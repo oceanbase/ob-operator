@@ -164,90 +164,92 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	} else if m.IsDeleting() && m.BackupPolicy.Status.Status != constants.BackupPolicyStatusDeleting {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
 		m.BackupPolicy.Status.OperationContext = nil
-	} else if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
-		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
-		err := m.syncTenantInformation()
-		if err != nil {
-			m.PrintErrEvent(err)
-			return err
-		}
-		err = m.syncLatestJobs()
-		if err != nil {
-			m.PrintErrEvent(err)
-			return err
-		}
-		var backupPath string
-		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
-		} else {
-			backupPath = m.getBackupDestPath()
-		}
-
-		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
-		if err != nil {
-			return err
-		}
-		latestIncr, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeIncr, backupPath)
-		if err != nil {
-			return err
-		}
-		m.BackupPolicy.Status.LatestFullBackupJob = latestFull
-		m.BackupPolicy.Status.LatestIncrementalJob = latestIncr
-
-		if latestFull == nil || latestFull.Status == "CANCELED" {
-			m.BackupPolicy.Status.NextFull = time.Now().Format(time.DateTime)
+		if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
 			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
-		} else if latestFull.Status == "COMPLETED" {
-			fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
+		} else {
+			err := m.syncTenantInformation()
+			if err != nil {
+				m.PrintErrEvent(err)
+				return err
+			}
+			err = m.syncLatestJobs()
+			if err != nil {
+				m.PrintErrEvent(err)
+				return err
+			}
+			var backupPath string
+			if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+				backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+			} else {
+				backupPath = m.getBackupDestPath()
+			}
+
+			latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 			if err != nil {
 				return err
 			}
-			var lastFullBackupFinishedAt time.Time
-			if latestFull.EndTimestamp != nil {
-				lastFullBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestFull.EndTimestamp, time.Local)
-				if err != nil {
-					return err
-				}
+			latestIncr, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeIncr, backupPath)
+			if err != nil {
+				return err
 			}
-			nextFull := fullCron.Next(lastFullBackupFinishedAt)
-			m.BackupPolicy.Status.NextFull = nextFull.Format(time.DateTime)
-			if nextFull.After(time.Now()) {
-				incrCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrementalCrontab)
+			m.BackupPolicy.Status.LatestFullBackupJob = latestFull
+			m.BackupPolicy.Status.LatestIncrementalJob = latestIncr
+
+			if latestFull == nil || latestFull.Status == "CANCELED" {
+				m.BackupPolicy.Status.NextFull = time.Now().Format(time.DateTime)
+				m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
+			} else if latestFull.Status == "COMPLETED" {
+				fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
 				if err != nil {
 					return err
 				}
-				var nextIncrTime time.Time
-				if latestIncr != nil {
-					if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
-						var lastIncrBackupFinishedAt time.Time
-						if latestIncr.EndTimestamp == nil {
-							// TODO: check if this is possible
-							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
-						} else {
-							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
-						}
-						if err != nil {
-							m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
-						}
+				var lastFullBackupFinishedAt time.Time
+				if latestFull.EndTimestamp != nil {
+					lastFullBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestFull.EndTimestamp, time.Local)
+					if err != nil {
+						return err
+					}
+				}
+				nextFull := fullCron.Next(lastFullBackupFinishedAt)
+				m.BackupPolicy.Status.NextFull = nextFull.Format(time.DateTime)
+				if nextFull.After(time.Now()) {
+					incrCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrementalCrontab)
+					if err != nil {
+						return err
+					}
+					var nextIncrTime time.Time
+					if latestIncr != nil {
+						if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
+							var lastIncrBackupFinishedAt time.Time
+							if latestIncr.EndTimestamp == nil {
+								// TODO: check if this is possible
+								lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
+							} else {
+								lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
+							}
+							if err != nil {
+								m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+							}
 
-						nextIncrTime = incrCron.Next(lastIncrBackupFinishedAt)
-						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
-					} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
-						// do nothing
-						_ = latestIncr
+							nextIncrTime = incrCron.Next(lastIncrBackupFinishedAt)
+							m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+						} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
+							// do nothing
+							_ = latestIncr
+						} else {
+							m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+						}
 					} else {
-						m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+						nextIncrTime = incrCron.Next(lastFullBackupFinishedAt)
+						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+					}
+					if !isZero(nextIncrTime) && nextIncrTime.Before(time.Now()) {
+						m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 					}
 				} else {
-					nextIncrTime = incrCron.Next(lastFullBackupFinishedAt)
-					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
-				}
-				if !isZero(nextIncrTime) && nextIncrTime.Before(time.Now()) {
 					m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 				}
-			} else {
-				m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 			}
 		}
 	}

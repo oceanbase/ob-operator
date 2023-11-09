@@ -18,12 +18,9 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -31,12 +28,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/resource"
 	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 )
 
 // OBTenantBackupReconciler reconciles a OBTenantBackup object
@@ -56,45 +49,35 @@ type OBTenantBackupReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.14.4/pkg/reconcile
 func (r *OBTenantBackupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
 	crJob := &v1alpha1.OBTenantBackup{}
 	if err := r.Get(ctx, req.NamespacedName, crJob); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// Do not reconcile if the backup job is already completed
 	switch crJob.Spec.Type {
-	case constants.BackupJobTypeFull:
-		fallthrough
-	case constants.BackupJobTypeIncr:
+	case constants.BackupJobTypeFull, constants.BackupJobTypeIncr:
 		switch crJob.Status.Status {
-		case "":
-			fallthrough
-		case constants.BackupJobStatusInitializing:
-			crJob.Status.Status = constants.BackupJobStatusRunning
-			return ctrl.Result{
-				RequeueAfter: time.Second * 5,
-			}, r.createBackupJobInOB(ctx, crJob)
-		case constants.BackupJobStatusRunning:
-			return ctrl.Result{
-				RequeueAfter: time.Second * 5,
-			}, r.maintainRunningBackupJob(ctx, crJob)
-		default:
-			// Completed, Failed, Canceled, do nothing
+		case constants.BackupJobStatusCanceled, constants.BackupJobStatusSuccessful, constants.BackupJobStatusFailed:
 			return ctrl.Result{}, nil
 		}
-
-	case constants.BackupJobTypeArchive:
-		return ctrl.Result{
-			RequeueAfter: time.Second * 5,
-		}, r.maintainRunningArchiveLogJob(ctx, crJob)
-	case constants.BackupJobTypeClean:
-		return ctrl.Result{
-			RequeueAfter: time.Second * 5,
-		}, r.maintainRunningBackupCleanJob(ctx, crJob)
 	}
 
-	return ctrl.Result{
-		RequeueAfter: time.Second * 5,
-	}, nil
+	mgr := &resource.OBTenantBackupManager{
+		Ctx:      ctx,
+		Resource: crJob,
+		Client:   r.Client,
+		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+	}
+
+	result, err := resource.NewCoordinator(mgr, &logger).Coordinate()
+	if result.RequeueAfter < time.Second*5 {
+		result.RequeueAfter = time.Second * 5
+	}
+
+	return result, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -111,190 +94,4 @@ func (r *OBTenantBackupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha1.OBTenantBackup{}).
 		WithEventFilter(preds).
 		Complete(r)
-}
-
-func (r *OBTenantBackupReconciler) createBackupJobInOB(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
-	logger := log.FromContext(ctx)
-	con, err := r.getObOperationClient(ctx, job)
-	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
-		return err
-	}
-	if job.Spec.EncryptionSecret != "" {
-		password, err := resource.ReadPassword(r.Client, job.Namespace, job.Spec.EncryptionSecret)
-		if err != nil {
-			logger.Error(err, "failed to read backup encryption secret")
-			r.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
-		} else if password != "" {
-			err = con.SetBackupPassword(password)
-			if err != nil {
-				logger.Error(err, "failed to set backup password")
-				r.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
-			}
-		}
-	}
-	latest, err := con.CreateAndReturnBackupJob(job.Spec.Type)
-	if err != nil {
-		logger.Error(err, "failed to create and return backup job")
-		r.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
-		return err
-	}
-
-	job.Status.BackupJob = latest
-	err = r.retryUpdateStatus(ctx, job)
-	if err != nil {
-		logger.Error(err, "failed to update status")
-		r.Recorder.Event(job, "Warning", "UpdateStatusFailed", err.Error())
-		return err
-	}
-	r.Recorder.Event(job, "Create", "", "create backup job successfully")
-	return nil
-}
-
-// TODO: Calculate the progress of running jobs
-
-func (r *OBTenantBackupReconciler) maintainRunningBackupJob(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
-	logger := log.FromContext(ctx)
-	con, err := r.getObOperationClient(ctx, job)
-	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
-		return err
-	}
-	var targetJob *model.OBBackupJob
-	if job.Status.BackupJob == nil {
-		// occasionally happen, try to fetch the job from OB view
-		if job.Spec.Type == constants.BackupJobTypeFull || job.Spec.Type == constants.BackupJobTypeIncr {
-			latest, err := con.GetLatestBackupJobOfType(job.Spec.Type)
-			if err != nil {
-				return err
-			}
-			job.Status.BackupJob = latest
-			targetJob = latest
-		}
-		// archive log and data clean job should not be here
-	} else {
-		modelJob, err := con.GetBackupJobWithId(job.Status.BackupJob.JobID)
-		if err != nil {
-			return err
-		}
-		if modelJob == nil {
-			return fmt.Errorf("backup job with id %d not found", job.Status.BackupJob.JobID)
-		}
-		job.Status.BackupJob = modelJob
-		targetJob = modelJob
-	}
-	job.Status.StartedAt = targetJob.StartTimestamp
-	if targetJob.EndTimestamp != nil {
-		job.Status.EndedAt = *targetJob.EndTimestamp
-	}
-	switch targetJob.Status {
-	case "COMPLETED":
-		job.Status.Status = constants.BackupJobStatusSuccessful
-	case "FAILED":
-		job.Status.Status = constants.BackupJobStatusFailed
-	case "CANCELED":
-		job.Status.Status = constants.BackupJobStatusCanceled
-	}
-	return r.retryUpdateStatus(ctx, job)
-}
-
-func (r *OBTenantBackupReconciler) maintainRunningBackupCleanJob(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
-	logger := log.FromContext(ctx)
-	con, err := r.getObOperationClient(ctx, job)
-	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
-		return err
-	}
-
-	latest, err := con.GetLatestBackupCleanJob()
-	if err != nil {
-		logger.Error(err, "failed to query latest backup clean job")
-		return err
-	}
-	if latest != nil {
-		job.Status.DataCleanJob = latest
-		job.Status.StartedAt = latest.StartTimestamp
-		if latest.EndTimestamp != nil {
-			job.Status.EndedAt = *latest.EndTimestamp
-		}
-		switch latest.Status {
-		case "COMPLETED":
-			job.Status.Status = constants.BackupJobStatusSuccessful
-		case "FAILED":
-			job.Status.Status = constants.BackupJobStatusFailed
-		case "CANCELED":
-			job.Status.Status = constants.BackupJobStatusCanceled
-		case "DOING":
-			job.Status.Status = constants.BackupJobStatusRunning
-		}
-		return r.retryUpdateStatus(ctx, job)
-	}
-
-	return nil
-}
-
-func (r *OBTenantBackupReconciler) maintainRunningArchiveLogJob(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
-	logger := log.FromContext(ctx)
-	con, err := r.getObOperationClient(ctx, job)
-	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
-		return err
-	}
-
-	latest, err := con.GetLatestArchiveLogJob()
-	if err != nil {
-		logger.Error(err, "failed to query latest archive log job")
-		return err
-	}
-	if latest != nil {
-		job.Status.ArchiveLogJob = latest
-		if latest.StartScnDisplay != nil {
-			job.Status.StartedAt = *latest.StartScnDisplay
-		}
-		job.Status.EndedAt = latest.CheckpointScnDisplay
-		switch latest.Status {
-		case "STOP":
-			job.Status.Status = constants.BackupJobStatusStopped
-		case "DOING":
-			job.Status.Status = constants.BackupJobStatusRunning
-		case "SUSPEND":
-			job.Status.Status = constants.BackupJobStatusSuspend
-		}
-		return r.retryUpdateStatus(ctx, job)
-	}
-
-	return nil
-}
-
-func (r *OBTenantBackupReconciler) getObOperationClient(ctx context.Context, job *v1alpha1.OBTenantBackup) (*operation.OceanbaseOperationManager, error) {
-	var err error
-	logger := log.FromContext(ctx)
-	obcluster := &v1alpha1.OBCluster{}
-	err = r.Client.Get(ctx, types.NamespacedName{
-		Namespace: job.Namespace,
-		Name:      job.Spec.ObClusterName,
-	}, obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	con, err := resource.GetTenantRootOperationClient(r.Client, &logger, obcluster, job.Spec.TenantName, job.Spec.TenantSecret)
-	if err != nil {
-		return nil, errors.Wrap(err, "get oceanbase operation manager")
-	}
-	return con, nil
-}
-
-func (r *OBTenantBackupReconciler) retryUpdateStatus(ctx context.Context, job *v1alpha1.OBTenantBackup) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		newestJob := &v1alpha1.OBTenantBackup{}
-		err := r.Get(ctx, types.NamespacedName{
-			Namespace: job.GetNamespace(),
-			Name:      job.GetName(),
-		}, newestJob)
-		if err != nil {
-			return client.IgnoreNotFound(err)
-		}
-		newestJob.Status = job.Status
-		return r.Status().Update(ctx, newestJob)
-	})
 }
