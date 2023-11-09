@@ -138,6 +138,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 			m.Logger.Error(err, "create observer failed", "server", serverName)
 			return errors.Wrap(err, "create observer")
 		}
+		m.Recorder.Event(m.OBZone, "CreateObServer", "CreateObserver", fmt.Sprintf("Create observer %s", serverName))
 	}
 	return nil
 }
@@ -157,6 +158,7 @@ func (m *OBZoneManager) DeleteOBServer() error {
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
+			m.Recorder.Event(m.OBZone, "DeleteObServer", "DeleteObserver", fmt.Sprintf("Delete observer %+v", observer))
 			continue
 		}
 		observerCount++
