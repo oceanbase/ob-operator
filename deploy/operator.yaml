@@ -12705,6 +12705,7 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --manager-namespace=oceanbase-system
+        - --log-verbosity=2
         command:
         - /manager
         env:
@@ -12714,7 +12715,7 @@ spec:
           value: "true"
         - name: TELEMETRY_REPORT_HOST
           value: http://openwebapi.test.alipay.net
-        image: oceanbasedev/ob-operator:2.1.0-alpha.1
+        image: oceanbasedev/ob-operator:2.1.0-alpha.2
         livenessProbe:
           httpGet:
             path: /healthz
