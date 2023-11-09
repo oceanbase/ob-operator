@@ -30,6 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -238,7 +239,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 							// do nothing
 							_ = latestIncr
 						} else {
-							m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+							m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Incremental BackupJob are in status " + latestIncr.Status)
 						}
 					} else {
 						nextIncrTime = incrCron.Next(lastFullBackupFinishedAt)

@@ -69,7 +69,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 			// No need to execute task flow
 			result.RequeueAfter = NormalRequeueDuration
 		} else {
-			c.Logger.Info("Set operation context", "operation context", f.OperationContext)
+			c.Logger.V(obconst.LogLevelDebug).Info("Set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
@@ -114,9 +114,9 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 		if err != nil {
 			c.Logger.Error(err, "No executable function found for task")
 		} else {
-			c.Logger.Info("Successfully get task flow")
+			c.Logger.V(obconst.LogLevelDebug).Info("Successfully get task flow")
 			taskId := task.GetTaskManager().Submit(taskFunc)
-			c.Logger.Info("Successfully submit task", "taskId", taskId)
+			c.Logger.V(obconst.LogLevelDebug).Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId
 			f.OperationContext.TaskStatus = taskstatus.Running
 		}
@@ -129,7 +129,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Manager.PrintErrEvent(err)
 			f.OperationContext.TaskStatus = taskstatus.Failed
 		} else if taskResult != nil {
-			c.Logger.Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
+			c.Logger.V(obconst.LogLevelDebug).Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
 			f.OperationContext.TaskStatus = taskResult.Status
 			if taskResult.Error != nil {
 				c.Manager.PrintErrEvent(taskResult.Error)

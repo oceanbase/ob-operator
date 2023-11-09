@@ -58,14 +58,13 @@ func (m *OBClusterManager) InitStatus() {
 }
 
 func (m *OBClusterManager) SetOperationContext(c *v1alpha1.OperationContext) {
-	m.Logger.Info("Set operation context", "current", m.OBCluster.Status.OperationContext, "new", c)
 	m.OBCluster.Status.OperationContext = c
 }
 
 func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBCluster.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from obcluster status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obcluster status")
 		return task.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
 	}
 	// return task flow depends on status
@@ -73,7 +72,7 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// newly created cluster
 	var taskFlow *task.TaskFlow
 	var err error
-	m.Logger.Info("create task flow according to obcluster status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.New:
@@ -92,7 +91,7 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
-		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
 	}
 
@@ -171,7 +170,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 
 	// compare spec and set status
 	if m.OBCluster.Status.Status != clusterstatus.Running {
-		m.Logger.Info("OBCluster status is not running, skip compare")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBCluster status is not running, skip compare")
 	} else {
 		if allZoneVersionSync {
 			m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
@@ -214,7 +213,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 		if m.OBCluster.Status.Status == clusterstatus.Running {
 			parameterMap := make(map[string]v1alpha1.Parameter)
 			for _, parameter := range m.OBCluster.Status.Parameters {
-				m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
 				parameterMap[parameter.Name] = parameter
 			}
 			for _, parameter := range m.OBCluster.Spec.Parameters {
@@ -233,8 +232,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
-	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obcluster status", "status", m.OBCluster.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")

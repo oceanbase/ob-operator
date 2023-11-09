@@ -17,24 +17,3 @@ import (
 )
 
 var preds = predicate.GenerationChangedPredicate{}
-
-// var preds = predicate.Or(
-// 	predicate.AnnotationChangedPredicate{},
-// 	predicate.LabelChangedPredicate{},
-// 	predicate.GenerationChangedPredicate{},
-// 	predicate.Funcs{
-//		// Default value of funcs is true
-// 		CreateFunc: func(event.CreateEvent) bool {
-// 			return false
-// 		},
-// 		DeleteFunc: func(event.DeleteEvent) bool {
-// 			return true
-// 		},
-// 		UpdateFunc: func(event.UpdateEvent) bool {
-// 			return false
-// 		},
-// 		GenericFunc: func(event.GenericEvent) bool {
-// 			return false
-// 		},
-// 	},
-// )

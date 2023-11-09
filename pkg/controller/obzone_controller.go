@@ -60,11 +60,11 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	obzone := &v1alpha1.OBZone{}
 	err := r.Client.Get(ctx, req.NamespacedName, obzone)
 	if err != nil {
-		logger.Error(err, "get obzone error")
 		if kubeerrors.IsNotFound(err) {
 			// obzone not found, just return
 			return ctrl.Result{}, nil
 		}
+		logger.Error(err, "get obzone error")
 		return ctrl.Result{}, err
 	}
 

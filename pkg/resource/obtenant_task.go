@@ -322,7 +322,7 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 			return err
 		}
 	}
-	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
+	m.Logger.V(obconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
 	for {
 		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
@@ -333,7 +333,7 @@ func (m *OBTenantManager) CheckAndApplyLocality() error {
 		}
 		time.Sleep(config.PollingJobSleepTime)
 	}
-	m.Logger.Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
+	m.Logger.V(obconst.LogLevelDebug).Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
 	return nil
 }
 
@@ -492,7 +492,7 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 	}
 
 	// step 2.2: Wait for task finished
-	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
+	m.Logger.V(obconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
 	for {
 		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
@@ -503,9 +503,9 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 		}
 		time.Sleep(config.PollingJobSleepTime)
 	}
-	m.Logger.Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
+	m.Logger.V(obconst.LogLevelDebug).Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
 
-	m.Logger.Info("Succeed add poolAdd", "deleted poolName", poolAdd.Zone)
+	m.Logger.V(obconst.LogLevelDebug).Info("Succeed add poolAdd", "deleted poolName", poolAdd.Zone)
 	return nil
 }
 
@@ -542,7 +542,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		return err
 	}
 
-	m.Logger.Info("Wait For Tenant 'ALTER_TENANT' Job for deletePool Finished", "tenantName", tenantName)
+	m.Logger.V(obconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for deletePool Finished", "tenantName", tenantName)
 
 	for {
 		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)

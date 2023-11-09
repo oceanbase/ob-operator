@@ -195,7 +195,7 @@ func (m *OBZoneManager) WaitReplicaMatch() error {
 			matched = true
 			break
 		} else {
-			m.Logger.Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
 		}
 		time.Sleep(time.Second * 1)
 	}

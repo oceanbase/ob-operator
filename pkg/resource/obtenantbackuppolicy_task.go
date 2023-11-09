@@ -40,7 +40,7 @@ import (
 const backupVolumePath = oceanbaseconst.BackupPath
 
 func (m *ObTenantBackupPolicyManager) ConfigureServerForBackup() error {
-	m.Logger.Info("Configure Server For Backup")
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Configure Server For Backup")
 	con, err := m.getOperationManager()
 	if err != nil {
 		return err
@@ -288,7 +288,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 				// do nothing
 				_ = latestIncr
 			} else {
-				m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Incremental BackupJob are in status " + latestIncr.Status)
 			}
 		} else {
 			nextIncrTime := incrementalCron.Next(lastFullBackupFinishedAt)
@@ -303,7 +303,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 		// do nothing
 		_ = latestFull
 	} else {
-		m.Logger.Info("BackupJob are in status " + latestFull.Status)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("BackupJob are in status " + latestFull.Status)
 	}
 	return nil
 }

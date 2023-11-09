@@ -66,7 +66,7 @@ func (m *OBParameterManager) SetOperationContext(c *v1alpha1.OperationContext) {
 func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBParameter.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from obparameter status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obparameter status")
 		return task.NewTaskFlow(m.OBParameter.Status.OperationContext), nil
 	}
 
@@ -74,13 +74,13 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 
 	var taskFlow *task.TaskFlow
 	var err error
-	m.Logger.Info("create task flow according to obparameter status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obparameter status")
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
 		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
 	default:
-		// m.Logger.Info("no need to run anything for obparameter")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obparameter")
 		return nil, nil
 	}
 

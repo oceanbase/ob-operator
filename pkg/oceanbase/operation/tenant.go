@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
@@ -267,7 +268,7 @@ func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string
 			m.Logger.Error(err, "Failed to get tenant info")
 		}
 		if tenant.PreviousLocality == "" {
-			m.Logger.Info("tenant locality change finished", "tenant name", name)
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant locality change finished", "tenant name", name)
 			finished = true
 			break
 		}
@@ -281,7 +282,7 @@ func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string
 
 func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForSetTenant(tenantSQLParam)
-	m.Logger.Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
 	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set tenant")

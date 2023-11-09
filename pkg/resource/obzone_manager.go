@@ -67,7 +67,7 @@ func (m *OBZoneManager) SetOperationContext(c *v1alpha1.OperationContext) {
 func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBZone.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from obzone status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obzone status")
 		return task.NewTaskFlow(m.OBZone.Status.OperationContext), nil
 	}
 	// newly created zone
@@ -112,7 +112,7 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
 		// TODO upgrade
 	default:
-		// m.Logger.Info("no need to run anything for obzone")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obzone")
 		return nil, nil
 	}
 
@@ -210,7 +210,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 		m.OBZone.Status.Status = zonestatus.Deleting
 	}
 	if m.OBZone.Status.Status != zonestatus.Running {
-		m.Logger.Info("OBZone status is not running, skip compare")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBZone status is not running, skip compare")
 	} else {
 		// set status image
 		if allServerVersionSync {
@@ -234,8 +234,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.Info("update obzone status", "status", m.OBZone.Status)
-	m.Logger.Info("update obzone status", "operation context", m.OBZone.Status.OperationContext)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obzone status", "status", m.OBZone.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")

@@ -56,11 +56,11 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 	obparameter := &v1alpha1.OBParameter{}
 	err := r.Client.Get(ctx, req.NamespacedName, obparameter)
 	if err != nil {
-		logger.Error(err, "get obparameter error")
 		if kubeerrors.IsNotFound(err) {
 			// obparameter not found, just return
 			return ctrl.Result{}, nil
 		}
+		logger.Error(err, "get obparameter error")
 		return ctrl.Result{}, err
 	}
 

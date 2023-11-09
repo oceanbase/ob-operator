@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -251,7 +252,7 @@ func (m *ObTenantOperationManager) getTenantCR(tenantCRName string) (*v1alpha1.O
 
 func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.OBTenant) {
 	meta := tenant.GetObjectMeta()
-	m.Logger.Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
 	owners := make([]metav1.OwnerReference, 0)
 	if m.Resource.OwnerReferences != nil {
 		owners = append(owners, m.Resource.OwnerReferences...)
