@@ -70,7 +70,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 			allMatched := true
 			for _, observerStatus := range obzone.Status.OBServerStatus {
 				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
-					m.Logger.Info("server status still not matched", "server", observerStatus.Server, "status", status)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("server status still not matched", "server", observerStatus.Server, "status", status)
 					allMatched = false
 					break
 				}
