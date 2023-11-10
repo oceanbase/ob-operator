@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -126,7 +127,10 @@ func (m *ObTenantOperationManager) HandleFailure() {
 			fallthrough
 		case strategy.StartOver:
 			m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
-			m.Resource.Status.OperationContext = nil
+			m.Resource.Status.OperationContext.Idx = 0
+			m.Resource.Status.OperationContext.TaskStatus = ""
+			m.Resource.Status.OperationContext.TaskId = ""
+			m.Resource.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -140,7 +144,17 @@ func (m *ObTenantOperationManager) FinishTask() {
 }
 
 func (m *ObTenantOperationManager) UpdateStatus() error {
+	if m.Resource.Status.Status == apitypes.TenantOperationStatus("Failed") {
+		return nil
+	}
 	return m.retryUpdateStatus()
+}
+
+func (m *ObTenantOperationManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant operation", "obtenant operation", m.Resource.Name)
+	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant operation")
+	m.Resource.Status.Status = "Failed"
+	m.Resource.Status.OperationContext = nil
 }
 
 func (m *ObTenantOperationManager) GetTaskFunc(name string) (func() error, error) {
@@ -238,7 +252,7 @@ func (m *ObTenantOperationManager) getTenantCR(tenantCRName string) (*v1alpha1.O
 
 func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.OBTenant) {
 	meta := tenant.GetObjectMeta()
-	m.Logger.Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
 	owners := make([]metav1.OwnerReference, 0)
 	if m.Resource.OwnerReferences != nil {
 		owners = append(owners, m.Resource.OwnerReferences...)

@@ -25,11 +25,11 @@ undeploy: ## Undeploy controller from the K8s cluster specified in ~/.kube/confi
 redeploy: undeploy uninstall export-crd export-operator install deploy ## redeploy crd and controller to the K8s cluster specified in ~/.kube/config.
 
 .PHONY: export-crd
-export-crd: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
+export-crd: manifests kustomize ## Export CRDs manifests
 	$(KUSTOMIZE) build config/crd > deploy/crd.yaml
 
 .PHONY: export-operator
-export-operator: manifests kustomize ## Deploy controller to the K8s cluster specified in ~/.kube/config.
+export-operator: manifests kustomize ## Export operator manifests
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > deploy/operator.yaml
 

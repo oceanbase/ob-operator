@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 const (
-	TelemetryReportProdHost = "openwebapi-pre.oceanbase.com" // https
+	TelemetryReportProdHost = "openwebapi.oceanbase.com" // https
 
 	TelemetryReportPath = "/api/web/oceanbase/report"
 )

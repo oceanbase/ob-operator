@@ -78,8 +78,8 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			err := r.Client.Update(ctx, obtenant)
 			if err != nil {
 				logger.Error(err, "got error when update finalizers")
+				return ctrl.Result{}, err
 			}
-			return ctrl.Result{}, err
 		}
 	}
 
@@ -100,5 +100,6 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *OBTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBTenant{}).
+		WithEventFilter(preds).
 		Complete(r)
 }

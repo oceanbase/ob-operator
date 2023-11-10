@@ -68,11 +68,11 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	observer := &v1alpha1.OBServer{}
 	err := r.Client.Get(ctx, req.NamespacedName, observer)
 	if err != nil {
-		logger.Error(err, "get observer error")
 		if kubeerrors.IsNotFound(err) {
 			// observer not found, just return
 			return ctrl.Result{}, nil
 		}
+		logger.Error(err, "get observer error")
 		return ctrl.Result{}, err
 	}
 
@@ -115,5 +115,6 @@ func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBServer{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 9}).
+		WithEventFilter(preds).
 		Complete(r)
 }

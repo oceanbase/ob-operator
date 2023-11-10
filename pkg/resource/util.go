@@ -49,13 +49,12 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 }
 
 func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
-	logger.Info("Get cluster sys client", "obCluster", obcluster)
+	logger.V(oceanbaseconst.LogLevelTrace).Info("Get cluster sys client", "obCluster", obcluster)
 	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 }
 
 func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
-	logger.Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
-
+	logger.V(oceanbaseconst.LogLevelTrace).Info("Get tenant root client", "obCluster", obcluster, "tenantName", tenantName, "credential", credential)
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
 		oceanbaseconst.LabelRefOBCluster: obcluster.Name,
@@ -210,17 +209,17 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			logger.Info("job is still running")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
 		} else {
-			logger.Info("job finished")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
 			break
 		}
 		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
 	if jobObject.Status.Succeeded == 1 {
-		logger.Info("job succeeded")
+		logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded")
 	} else {
-		logger.Info("job failed", "job", jobName)
+		logger.V(oceanbaseconst.LogLevelDebug).Info("job failed", "job", jobName)
 		return errors.Wrap(err, "Failed to run upgrade script job")
 	}
 	return nil

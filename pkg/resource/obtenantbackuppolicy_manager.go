@@ -30,6 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
@@ -92,12 +93,7 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 					finalizerFinished = true
 				}
 			} else {
-				err := m.StopBackup()
-				// the policy is being deleted, connection still exists, stop backup
-				if err != nil {
-					return err
-				}
-				finalizerFinished = true
+				finalizerFinished = m.BackupPolicy.Status.Status == constants.BackupPolicyStatusStopped
 			}
 		}
 
@@ -158,90 +154,108 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
+	if m.BackupPolicy.Status.Status == apitypes.BackupPolicyStatusType("Failed") {
+		return nil
+	}
 	if m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusPausing
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
+	} else if m.IsDeleting() && m.BackupPolicy.Status.Status != constants.BackupPolicyStatusDeleting {
+		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
+		m.BackupPolicy.Status.OperationContext = nil
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
-		err := m.syncTenantInformation()
-		if err != nil {
-			m.PrintErrEvent(err)
-			return err
-		}
-		err = m.syncLatestJobs()
-		if err != nil {
-			m.PrintErrEvent(err)
-			return err
-		}
-		var backupPath string
-		if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+		if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 		} else {
-			backupPath = m.getBackupDestPath()
-		}
+			err := m.syncTenantInformation()
+			if err != nil {
+				m.PrintErrEvent(err)
+				return err
+			}
+			err = m.syncLatestJobs()
+			if err != nil {
+				m.PrintErrEvent(err)
+				return err
+			}
+			var backupPath string
+			if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+				backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
+			} else {
+				backupPath = m.getBackupDestPath()
+			}
 
-		latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
-		if err != nil {
-			return err
-		}
-		latestIncr, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeIncr, backupPath)
-		if err != nil {
-			return err
-		}
-		m.BackupPolicy.Status.LatestFullBackupJob = latestFull
-		m.BackupPolicy.Status.LatestIncrementalJob = latestIncr
-
-		if latestFull == nil || latestFull.Status == "CANCELED" {
-			m.BackupPolicy.Status.NextFull = time.Now().Format(time.DateTime)
-		} else if latestFull.Status == "COMPLETED" {
-			fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
+			latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 			if err != nil {
 				return err
 			}
-			var lastFullBackupFinishedAt time.Time
-			if latestFull.EndTimestamp != nil {
-				lastFullBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestFull.EndTimestamp, time.Local)
-				if err != nil {
-					return err
-				}
+			latestIncr, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeIncr, backupPath)
+			if err != nil {
+				return err
 			}
-			nextFull := fullCron.Next(lastFullBackupFinishedAt)
-			m.BackupPolicy.Status.NextFull = nextFull.Format(time.DateTime)
-			if nextFull.After(time.Now()) {
-				incrCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrementalCrontab)
+			m.BackupPolicy.Status.LatestFullBackupJob = latestFull
+			m.BackupPolicy.Status.LatestIncrementalJob = latestIncr
+
+			if latestFull == nil || latestFull.Status == "CANCELED" {
+				m.BackupPolicy.Status.NextFull = time.Now().Format(time.DateTime)
+				m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
+			} else if latestFull.Status == "COMPLETED" {
+				fullCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.FullCrontab)
 				if err != nil {
 					return err
 				}
-				if latestIncr != nil {
-					if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
-						var lastIncrBackupFinishedAt time.Time
-						if latestIncr.EndTimestamp == nil {
-							// TODO: check if this is possible
-							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
-						} else {
-							lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
-						}
-						if err != nil {
-							m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
-						}
+				var lastFullBackupFinishedAt time.Time
+				if latestFull.EndTimestamp != nil {
+					lastFullBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestFull.EndTimestamp, time.Local)
+					if err != nil {
+						return err
+					}
+				}
+				nextFull := fullCron.Next(lastFullBackupFinishedAt)
+				m.BackupPolicy.Status.NextFull = nextFull.Format(time.DateTime)
+				if nextFull.After(time.Now()) {
+					incrCron, err := cron.ParseStandard(m.BackupPolicy.Spec.DataBackup.IncrementalCrontab)
+					if err != nil {
+						return err
+					}
+					var nextIncrTime time.Time
+					if latestIncr != nil {
+						if latestIncr.Status == "COMPLETED" || latestIncr.Status == "CANCELED" {
+							var lastIncrBackupFinishedAt time.Time
+							if latestIncr.EndTimestamp == nil {
+								// TODO: check if this is possible
+								lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, latestIncr.StartTimestamp, time.Local)
+							} else {
+								lastIncrBackupFinishedAt, err = time.ParseInLocation(time.DateTime, *latestIncr.EndTimestamp, time.Local)
+							}
+							if err != nil {
+								m.Logger.Error(err, "Failed to parse end timestamp of completed backup job")
+							}
 
-						nextIncrTime := incrCron.Next(lastIncrBackupFinishedAt)
-						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
-					} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
-						// do nothing
-						_ = latestIncr
+							nextIncrTime = incrCron.Next(lastIncrBackupFinishedAt)
+							m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+						} else if latestIncr.Status == "INIT" || latestIncr.Status == "DOING" {
+							// do nothing
+							_ = latestIncr
+						} else {
+							m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Incremental BackupJob are in status " + latestIncr.Status)
+						}
 					} else {
-						m.Logger.Info("Incremental BackupJob are in status " + latestIncr.Status)
+						nextIncrTime = incrCron.Next(lastFullBackupFinishedAt)
+						m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+					}
+					if !isZero(nextIncrTime) && nextIncrTime.Before(time.Now()) {
+						m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 					}
 				} else {
-					nextIncrTime := incrCron.Next(lastFullBackupFinishedAt)
-					m.BackupPolicy.Status.NextIncremental = nextIncrTime.Format(time.DateTime)
+					m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
 				}
 			}
 		}
 	}
 
+	m.BackupPolicy.Status.ObservedGeneration = m.BackupPolicy.GetGeneration()
 	return m.retryUpdateStatus()
 }
 
@@ -251,7 +265,7 @@ func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (func() error, er
 		return m.ConfigureServerForBackup, nil
 	case taskname.StartBackupJob:
 		return m.StartBackup, nil
-	case taskname.StopBackupJob:
+	case taskname.StopBackupPolicy:
 		return m.StopBackup, nil
 	case taskname.CheckAndSpawnJobs:
 		return m.CheckAndSpawnJobs, nil
@@ -280,12 +294,14 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
 	case constants.BackupPolicyStatusPrepared:
 		taskFlow, err = task.GetRegistry().Get(flow.StartBackupJob)
-	case constants.BackupPolicyStatusRunning:
+	case constants.BackupPolicyStatusMaintaining:
 		taskFlow, err = task.GetRegistry().Get(flow.MaintainRunningPolicy)
 	case constants.BackupPolicyStatusPausing:
 		taskFlow, err = task.GetRegistry().Get(flow.PauseBackup)
 	case constants.BackupPolicyStatusResuming:
 		taskFlow, err = task.GetRegistry().Get(flow.ResumeBackup)
+	case constants.BackupPolicyStatusDeleting:
+		taskFlow, err = task.GetRegistry().Get(flow.StopBackupPolicy)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil
@@ -329,7 +345,10 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 			fallthrough
 		case strategy.StartOver:
 			m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(failureRule.NextTryStatus)
-			m.BackupPolicy.Status.OperationContext = nil
+			m.BackupPolicy.Status.OperationContext.Idx = 0
+			m.BackupPolicy.Status.OperationContext.TaskStatus = ""
+			m.BackupPolicy.Status.OperationContext.TaskId = ""
+			m.BackupPolicy.Status.OperationContext.Task = ""
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
@@ -339,6 +358,13 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
+}
+
+func (m *ObTenantBackupPolicyManager) ArchiveResource() {
+	m.Logger.Info("Archive obtenant backup policy", "obtenant backup policy", m.BackupPolicy.Name)
+	m.Recorder.Event(m.BackupPolicy, "Archive", "", "archive obtenant backup policy")
+	m.BackupPolicy.Status.Status = "Failed"
+	m.BackupPolicy.Status.OperationContext = nil
 }
 
 func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error) {

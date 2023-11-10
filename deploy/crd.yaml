@@ -2844,6 +2844,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -2969,6 +2973,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -5672,6 +5680,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -6122,6 +6134,9 @@ spec:
                 type: string
               nextIncremental:
                 type: string
+              observedGeneration:
+                format: int64
+                type: integer
               operationContext:
                 properties:
                   failureRule:
@@ -6130,6 +6145,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -6361,6 +6380,10 @@ spec:
                                 type: string
                               failureStrategy:
                                 type: string
+                              maxRetry:
+                                type: integer
+                              retryCount:
+                                type: integer
                             required:
                             - failureStatus
                             - failureStrategy
@@ -6505,6 +6528,10 @@ spec:
                                         type: string
                                       failureStrategy:
                                         type: string
+                                      maxRetry:
+                                        type: integer
+                                      retryCount:
+                                        type: integer
                                     required:
                                     - failureStatus
                                     - failureStrategy
@@ -7036,6 +7063,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -7192,6 +7223,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -7421,6 +7456,10 @@ spec:
                                 type: string
                               failureStrategy:
                                 type: string
+                              maxRetry:
+                                type: integer
+                              retryCount:
+                                type: integer
                             required:
                             - failureStatus
                             - failureStrategy
@@ -7565,6 +7604,10 @@ spec:
                                         type: string
                                       failureStrategy:
                                         type: string
+                                      maxRetry:
+                                        type: integer
+                                      retryCount:
+                                        type: integer
                                     required:
                                     - failureStatus
                                     - failureStrategy
@@ -7933,6 +7976,10 @@ spec:
                                 type: string
                               failureStrategy:
                                 type: string
+                              maxRetry:
+                                type: integer
+                              retryCount:
+                                type: integer
                             required:
                             - failureStatus
                             - failureStrategy
@@ -8077,6 +8124,10 @@ spec:
                                         type: string
                                       failureStrategy:
                                         type: string
+                                      maxRetry:
+                                        type: integer
+                                      retryCount:
+                                        type: integer
                                     required:
                                     - failureStatus
                                     - failureStrategy
@@ -8397,6 +8448,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -8788,6 +8843,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy
@@ -8932,6 +8991,10 @@ spec:
                                 type: string
                               failureStrategy:
                                 type: string
+                              maxRetry:
+                                type: integer
+                              retryCount:
+                                type: integer
                             required:
                             - failureStatus
                             - failureStrategy
@@ -9169,7 +9232,14 @@ spec:
     singular: obzone
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBZone is the Schema for the obzones API
@@ -11840,6 +11910,10 @@ spec:
                         type: string
                       failureStrategy:
                         type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
                     required:
                     - failureStatus
                     - failureStrategy

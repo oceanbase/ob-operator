@@ -66,7 +66,7 @@ func (m *OBParameterManager) SetOperationContext(c *v1alpha1.OperationContext) {
 func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBParameter.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from obparameter status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obparameter status")
 		return task.NewTaskFlow(m.OBParameter.Status.OperationContext), nil
 	}
 
@@ -74,13 +74,13 @@ func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
 
 	var taskFlow *task.TaskFlow
 	var err error
-	m.Logger.Info("create task flow according to obparameter status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obparameter status")
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
 		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
 	default:
-		m.Logger.Info("no need to run anything for obparameter")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obparameter")
 		return nil, nil
 	}
 
@@ -121,6 +121,9 @@ func (m *OBParameterManager) retryUpdateStatus() error {
 }
 
 func (m *OBParameterManager) UpdateStatus() error {
+	if m.OBParameter.Status.Status == "Failed" {
+		return nil
+	}
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -185,7 +188,10 @@ func (m *OBParameterManager) HandleFailure() {
 	switch failureRule.Strategy {
 	case strategy.StartOver:
 		m.OBParameter.Status.Status = failureRule.NextTryStatus
-		m.OBParameter.Status.OperationContext = nil
+		m.OBParameter.Status.OperationContext.Idx = 0
+		m.OBParameter.Status.OperationContext.TaskStatus = ""
+		m.OBParameter.Status.OperationContext.TaskId = ""
+		m.OBParameter.Status.OperationContext.Task = ""
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
 	case strategy.Pause:
@@ -243,4 +249,11 @@ func (m *OBParameterManager) getOceanbaseOperationManager() (*operation.Oceanbas
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
 	return GetSysOperationClient(m.Client, m.Logger, obcluster)
+}
+
+func (m *OBParameterManager) ArchiveResource() {
+	m.Logger.Info("Archive obparameter", "obparameter", m.OBParameter.Name)
+	m.Recorder.Event(m.OBParameter, "Archive", "", "archive obparameter")
+	m.OBParameter.Status.Status = "Failed"
+	m.OBParameter.Status.OperationContext = nil
 }

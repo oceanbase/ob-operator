@@ -4,7 +4,7 @@ metadata:
   name: t1
   # namespace: oceanbase
 spec:	
-  obcluster: obcluster1
+  obcluster: obc1
   tenantName: t1
   unitNum: 1 
   charset: utf8mb4  
@@ -21,7 +21,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 1 
-        memorySize: 2Gi 
+        memorySize: 1Gi 
         minCPU: 1 
         maxIops: 1024 
         minIops: 1024
@@ -34,7 +34,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 1 
-        memorySize: 2Gi
+        memorySize: 1Gi
         minCPU: 1 
         maxIops: 1024
         minIops: 1024
@@ -48,7 +48,7 @@ spec:
       priority: 3
       resource:
         maxCPU: 1 
-        memorySize: 2Gi
+        memorySize: 1Gi
         minCPU: 1
         maxIops: 1024
         minIops: 1024

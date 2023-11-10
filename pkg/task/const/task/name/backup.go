@@ -16,8 +16,13 @@ const (
 	ConfigureServerForBackup = "configure server for backup"
 	CheckAndSpawnJobs        = "check and spawn jobs"
 	StartBackupJob           = "start backup job"
-	StopBackupJob            = "stop backup job"
+	StopBackupPolicy         = "stop backup policy"
 	CleanOldBackupJobs       = "clean old backup jobs"
 	PauseBackup              = "pause backup"
 	ResumeBackup             = "resume backup"
+	DeleteBackupPolicy       = "delete backup policy"
+)
+
+const (
+	CreateBackupJobInDB = "create backup job in db"
 )

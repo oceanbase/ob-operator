@@ -125,3 +125,15 @@ const (
 	TenantOpRetryTimes      = 9
 	TenantOpRetryGapSeconds = 9
 )
+
+const (
+	TaskMaxRetryTimes         = 99
+	TaskRetryBackoffThreshold = 16
+)
+
+const (
+	LogLevelDefault = 0
+	LogLevelInfo    = 0
+	LogLevelDebug   = 1
+	LogLevelTrace   = 2
+)

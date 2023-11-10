@@ -23,6 +23,8 @@ import (
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
+
+	"go.uber.org/zap/zapcore"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,6 +59,7 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var logVerbosity int
 	flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
 	flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -64,10 +67,12 @@ func main() {
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
 	opts := zap.Options{
-		Development: true,
+		Development: logVerbosity > 0,
+		Level:       zapcore.Level(-logVerbosity),
 	}
-	opts.BindFlags(flag.CommandLine)
+	// opts.BindFlags(flag.CommandLine)
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
@@ -170,10 +175,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
 	}
-	if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
-		os.Exit(1)
-	}
 	if err = (&controller.OBTenantOperationReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -182,17 +183,23 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantOperation")
 		os.Exit(1)
 	}
-	if err = (&v1alpha1.OBTenant{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenant")
-		os.Exit(1)
-	}
-	if err = (&v1alpha1.OBTenantOperation{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
-		os.Exit(1)
-	}
-	if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
-		os.Exit(1)
+	if os.Getenv("DISABLE_WEBHOOKS") != "true" {
+		if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
+			os.Exit(1)
+		}
+		if err = (&v1alpha1.OBTenant{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenant")
+			os.Exit(1)
+		}
+		if err = (&v1alpha1.OBTenantOperation{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
+			os.Exit(1)
+		}
+		if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 

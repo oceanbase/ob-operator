@@ -1,36 +1,38 @@
 # All targets here are phony
 ##@ Debug
 
-.PHONY: connect gettenants getpolicy getbackupjobs getcluster getobserver getrestorejobs getpods
+.PHONY: connect root-pwd run-delve install-delve
 
-connect:
-	$(eval nodeHost = $(shell kubectl get pods -o jsonpath='{.items[1].status.podIP}'))
+NS ?= default
+LOG_LEVEL ?= 2
+
+connect: root-pwd
+	$(eval nodeHost = $(shell kubectl -n ${NS} get pods -l ref-obcluster=$(clusterName) -o jsonpath='{.items[0].status.podIP}'))
 ifdef TENANT
-	$(eval secretName = $(shell kubectl get obtenant ${TENANT} -o jsonpath='{.status.credentials.root}'))
-	$(eval tenantName = $(shell kubectl get obtenant ${TENANT} -o jsonpath='{.spec.tenantName}'))
-	$(if $(strip $(secretName)), $(eval pwd = $(shell kubectl get secret $(secretName) -o jsonpath='{.data.password}' | base64 -d)), )
+	$(eval secretName = $(shell kubectl -n ${NS} get obtenant ${TENANT} -o jsonpath='{.status.credentials.root}'))
+	$(eval tenantName = $(shell kubectl -n ${NS} get obtenant ${TENANT} -o jsonpath='{.spec.tenantName}'))
+	$(if $(strip $(secretName)), $(eval pwd = $(shell kubectl -n ${NS} get secret $(secretName) -o jsonpath='{.data.password}' | base64 -d)), )
 	$(if $(strip $(pwd)), mysql -h$(nodeHost) -P2881 -A -uroot@$(tenantName) -p$(pwd) -Doceanbase, mysql -h$(nodeHost) -P2881 -A -uroot@$(tenantName) -Doceanbase)
 else
-	mysql -h$(nodeHost) -P2881 -A -uroot -p -Doceanbase
+	mysql -h$(nodeHost) -P2881 -A -uroot -p -Doceanbase -p$(pwd)
 endif
 
-gettenants: ## Get all tenants
-	@kubectl get -n oceanbase obtenant -o wide
+root-pwd:
+ifdef CLUSTER
+	$(eval clusterName = ${CLUSTER})
+else
+	$(eval clusterName = $(shell kubectl -n ${NS} get obcluster -o jsonpath='{.items[0].metadata.name}'))
+endif
+	@echo clusterName $(clusterName)
+	$(eval secretName = $(shell kubectl -n ${NS} get obcluster $(clusterName) -o jsonpath='{.spec.userSecrets.root}'))
+	$(eval nodeHost = $(shell kubectl -n ${NS} get pods -l ref-obcluster=$(clusterName) -o jsonpath='{.items[0].status.podIP}'))
+	$(if $(strip $(secretName)), $(eval pwd = $(shell kubectl -n ${NS} get secret $(secretName) -o jsonpath='{.data.password}' | base64 -d)), )
+	@echo root pwd of sys of cluster '$(clusterName)' is $(pwd)
 
-getpolicy: ## Get all backup policy
-	@kubectl get -n oceanbase obtenantbackuppolicy
-	
-getbackupjobs: ## Get all backup jobs
-	@kubectl get -n oceanbase obtenantbackup
+## Delve is a debugger for the Go programming language. More info: https://github.com/go-delve/delve
+run-delve: generate fmt vet manifests ## Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config 
+	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/main.go
+	DISABLE_WEBHOOKS=true dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager --continue -- -log-verbosity=${LOG_LEVEL}
 
-getcluster: ## Get all obclusters
-	@kubectl get -n oceanbase obcluster
-
-getobserver: ## Get all observers
-	@kubectl get -n oceanbase observer
-
-getrestorejobs:
-	@kubectl get -n oceanbase obtenantrestore
-
-getpods:
-	@kubectl get -n oceanbase pods -o wide
+install-delve: ## Install delve, a debugger for the Go programming language. More info: https://github.com/go-delve/delve
+	go install github.com/go-delve/delve/cmd/dlv@master

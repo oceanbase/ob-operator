@@ -15,4 +15,6 @@ package strategy
 type FailureRule struct {
 	Strategy      string `json:"failureStrategy"`
 	NextTryStatus string `json:"failureStatus"`
+	RetryCount    int    `json:"retryCount,omitempty"`
+	MaxRetry      int    `json:"maxRetry,omitempty"`
 }

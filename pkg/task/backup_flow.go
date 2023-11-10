@@ -40,11 +40,11 @@ func StartBackupJob() *TaskFlow {
 	}
 }
 
-func StopBackupJob() *TaskFlow {
+func StopBackupPolicy() *TaskFlow {
 	return &TaskFlow{
 		OperationContext: &v1alpha1.OperationContext{
-			Name:         flowname.StopBackupJob,
-			Tasks:        []string{taskname.StopBackupJob},
+			Name:         flowname.StopBackupPolicy,
+			Tasks:        []string{taskname.StopBackupPolicy},
 			TargetStatus: string(constants.BackupPolicyStatusStopped),
 		},
 	}
@@ -79,6 +79,19 @@ func ResumeBackup() *TaskFlow {
 			Name:         flowname.ResumeBackup,
 			Tasks:        []string{taskname.ResumeBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
+		},
+	}
+}
+
+func CreateBackupJobInDB() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name:         flowname.CreateBackupJobInDB,
+			Tasks:        []string{taskname.CreateBackupJobInDB},
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
+			OnFailure: strategy.FailureRule{
+				Strategy: strategy.StartOver,
+			},
 		},
 	}
 }

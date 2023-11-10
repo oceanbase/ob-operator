@@ -46,6 +46,7 @@ type OBTenantBackupPolicyStatus struct {
 	Status           apitypes.BackupPolicyStatusType `json:"status"`
 	OperationContext *OperationContext               `json:"operationContext,omitempty"`
 
+	ObservedGeneration   int64                   `json:"observedGeneration,omitempty"`
 	NextFull             string                  `json:"nextFull,omitempty"`
 	NextIncremental      string                  `json:"nextIncremental,omitempty"`
 	TenantCR             *OBTenant               `json:"tenantCR,omitempty"`

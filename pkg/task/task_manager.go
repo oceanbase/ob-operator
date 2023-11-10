@@ -85,7 +85,6 @@ func (m *TaskManager) Submit(f func() error) string {
 func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 	retCh, exists := m.ResultMap[taskId]
 	if !exists {
-		// m.Logger.Info("Query a task id that's not exists", "task id", taskId)
 		return nil, errors.Errorf("Task %s not exists", taskId)
 	}
 	if m.TaskResultCache[taskId] == nil {

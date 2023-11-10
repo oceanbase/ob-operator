@@ -10,19 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package resource
+package controller
 
-func getRef[T any](val T) *T {
-	return &val
-}
+import (
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+)
 
-func isZero[T comparable](val T) bool {
-	return val == *(new(T))
-}
-
-func min[T int | int64 | uint | uint64 | float64 | float32](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
-}
+var preds = predicate.GenerationChangedPredicate{}

@@ -31,4 +31,5 @@ type ResourceManager interface {
 	GetTaskFunc(string) (func() error, error)
 	GetTaskFlow() (*task.TaskFlow, error)
 	PrintErrEvent(error)
+	ArchiveResource()
 }

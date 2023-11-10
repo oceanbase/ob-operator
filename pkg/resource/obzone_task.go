@@ -70,7 +70,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 			allMatched := true
 			for _, observerStatus := range obzone.Status.OBServerStatus {
 				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
-					m.Logger.Info("server status still not matched", "server", observerStatus.Server, "status", status)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("server status still not matched", "server", observerStatus.Server, "status", status)
 					allMatched = false
 					break
 				}
@@ -138,6 +138,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 			m.Logger.Error(err, "create observer failed", "server", serverName)
 			return errors.Wrap(err, "create observer")
 		}
+		m.Recorder.Event(m.OBZone, "CreateObServer", "CreateObserver", fmt.Sprintf("Create observer %s", serverName))
 	}
 	return nil
 }
@@ -157,6 +158,7 @@ func (m *OBZoneManager) DeleteOBServer() error {
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
+			m.Recorder.Event(m.OBZone, "DeleteObServer", "DeleteObserver", fmt.Sprintf("Delete observer %+v", observer))
 			continue
 		}
 		observerCount++
@@ -193,7 +195,7 @@ func (m *OBZoneManager) WaitReplicaMatch() error {
 			matched = true
 			break
 		} else {
-			m.Logger.Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
 		}
 		time.Sleep(time.Second * 1)
 	}

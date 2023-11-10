@@ -32,14 +32,16 @@ const (
 )
 
 const (
-	BackupPolicyStatusPreparing types.BackupPolicyStatusType = "PREPARING"
-	BackupPolicyStatusPrepared  types.BackupPolicyStatusType = "PREPARED"
-	BackupPolicyStatusRunning   types.BackupPolicyStatusType = "RUNNING"
-	BackupPolicyStatusFailed    types.BackupPolicyStatusType = "FAILED"
-	BackupPolicyStatusPausing   types.BackupPolicyStatusType = "PAUSING"
-	BackupPolicyStatusPaused    types.BackupPolicyStatusType = "PAUSED"
-	BackupPolicyStatusStopped   types.BackupPolicyStatusType = "STOPPED"
-	BackupPolicyStatusResuming  types.BackupPolicyStatusType = "RESUMING"
+	BackupPolicyStatusPreparing   types.BackupPolicyStatusType = "PREPARING"
+	BackupPolicyStatusPrepared    types.BackupPolicyStatusType = "PREPARED"
+	BackupPolicyStatusRunning     types.BackupPolicyStatusType = "RUNNING"
+	BackupPolicyStatusFailed      types.BackupPolicyStatusType = "FAILED"
+	BackupPolicyStatusPausing     types.BackupPolicyStatusType = "PAUSING"
+	BackupPolicyStatusPaused      types.BackupPolicyStatusType = "PAUSED"
+	BackupPolicyStatusStopped     types.BackupPolicyStatusType = "STOPPED"
+	BackupPolicyStatusResuming    types.BackupPolicyStatusType = "RESUMING"
+	BackupPolicyStatusDeleting    types.BackupPolicyStatusType = "DELETING"
+	BackupPolicyStatusMaintaining types.BackupPolicyStatusType = "MAINTAINING"
 )
 
 const (

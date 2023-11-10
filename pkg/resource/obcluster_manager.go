@@ -58,14 +58,13 @@ func (m *OBClusterManager) InitStatus() {
 }
 
 func (m *OBClusterManager) SetOperationContext(c *v1alpha1.OperationContext) {
-	m.Logger.Info("Set operation context", "current", m.OBCluster.Status.OperationContext, "new", c)
 	m.OBCluster.Status.OperationContext = c
 }
 
 func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBCluster.Status.OperationContext != nil {
-		m.Logger.Info("get task flow from obcluster status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obcluster status")
 		return task.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
 	}
 	// return task flow depends on status
@@ -73,7 +72,7 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	// newly created cluster
 	var taskFlow *task.TaskFlow
 	var err error
-	m.Logger.Info("create task flow according to obcluster status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.New:
@@ -92,7 +91,7 @@ func (m *OBClusterManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBParameter)
 	default:
-		m.Logger.Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
 	}
 
@@ -134,6 +133,9 @@ func (m *OBClusterManager) retryUpdateStatus() error {
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
+	if m.OBCluster.Status.Status == "Failed" {
+		return nil
+	}
 	// update obzone status
 	obzoneList, err := m.listOBZones()
 	if err != nil {
@@ -168,7 +170,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 
 	// compare spec and set status
 	if m.OBCluster.Status.Status != clusterstatus.Running {
-		m.Logger.Info("OBCluster status is not running, skip compare")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBCluster status is not running, skip compare")
 	} else {
 		if allZoneVersionSync {
 			m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
@@ -211,7 +213,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 		if m.OBCluster.Status.Status == clusterstatus.Running {
 			parameterMap := make(map[string]v1alpha1.Parameter)
 			for _, parameter := range m.OBCluster.Status.Parameters {
-				m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
 				parameterMap[parameter.Name] = parameter
 			}
 			for _, parameter := range m.OBCluster.Spec.Parameters {
@@ -230,8 +232,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.Info("update obcluster status", "status", m.OBCluster.Status)
-	m.Logger.Info("update obcluster status", "operation context", m.OBCluster.Status.OperationContext)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obcluster status", "status", m.OBCluster.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
@@ -255,7 +256,10 @@ func (m *OBClusterManager) HandleFailure() {
 	switch failureRule.Strategy {
 	case strategy.StartOver:
 		m.OBCluster.Status.Status = failureRule.NextTryStatus
-		m.OBCluster.Status.OperationContext = nil
+		m.OBCluster.Status.OperationContext.Idx = 0
+		m.OBCluster.Status.OperationContext.TaskStatus = ""
+		m.OBCluster.Status.OperationContext.TaskId = ""
+		m.OBCluster.Status.OperationContext.Task = ""
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
 	case strategy.Pause:
@@ -323,6 +327,13 @@ func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 		return nil, errors.Wrap(err, "get obzone list")
 	}
 	return obzoneList, nil
+}
+
+func (m *OBClusterManager) ArchiveResource() {
+	m.Logger.Info("Archive obcluster", "obcluster", m.OBCluster.Name)
+	m.Recorder.Event(m.OBCluster, "Archive", "", "archive obcluster")
+	m.OBCluster.Status.Status = "Failed"
+	m.OBCluster.Status.OperationContext = nil
 }
 
 func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error) {

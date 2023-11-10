@@ -107,7 +107,7 @@ func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
 }
 
 func (m *OBServerManager) CreateOBPod() error {
-	m.Logger.Info("create observer pod")
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("create observer pod")
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -474,7 +474,7 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 }
 
 func (m *OBServerManager) DeleteOBServerInCluster() error {
-	m.Logger.Info("delete observer in cluster")
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("delete observer in cluster")
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -584,7 +584,7 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 				break
 			}
 		} else {
-			m.Logger.Info("OBServer is nil, check next time")
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("OBServer is nil, check next time")
 		}
 		time.Sleep(time.Second)
 	}

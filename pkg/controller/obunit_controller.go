@@ -61,5 +61,6 @@ func (r *OBUnitReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *OBUnitReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBUnit{}).
+		WithEventFilter(preds).
 		Complete(r)
 }

@@ -86,7 +86,7 @@ func (m *OBClusterManager) WaitOBZoneDeleted() error {
 			}
 		}
 		if zoneDeleted {
-			m.Logger.Info("All zone deleted")
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("All zone deleted")
 			waitSuccess = true
 			break
 		}
@@ -108,7 +108,7 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 			allMatched := true
 			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
 				if obzoneStatus.Status != status {
-					m.Logger.Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
 					allMatched = false
 					break
 				}
@@ -162,7 +162,7 @@ func (m *OBClusterManager) getZonesToDelete() ([]v1alpha1.OBZone, error) {
 			}
 		}
 		if !reserve {
-			m.Logger.Info("Need to delete obzone", "obzone", obzone.Name)
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Need to delete obzone", "obzone", obzone.Name)
 			deletedZones = append(deletedZones, obzone)
 		}
 	}
@@ -179,12 +179,13 @@ func (m *OBClusterManager) DeleteOBZone() error {
 		if err != nil {
 			return errors.Wrapf(err, "Delete obzone %s", zone.Name)
 		}
+		m.Recorder.Event(m.OBCluster, "DeleteOBZone", "", fmt.Sprintf("Delete obzone %s successfully", zone.Name))
 	}
 	return nil
 }
 
 func (m *OBClusterManager) CreateOBZone() error {
-	m.Logger.Info("create obzones")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create obzones")
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
@@ -236,6 +237,7 @@ func (m *OBClusterManager) CreateOBZone() error {
 			m.Logger.Error(err, "create obzone failed", "zone", zone.Zone)
 			return errors.Wrap(err, "create obzone")
 		}
+		m.Recorder.Event(m.OBCluster, "CreateOBZone", "", fmt.Sprintf("Create obzone %s successfully", zoneName))
 	}
 	return nil
 }
@@ -250,7 +252,7 @@ func (m *OBClusterManager) Bootstrap() error {
 		m.Logger.Error(err, "list obzones failed")
 		return errors.Wrap(err, "list obzones")
 	}
-	m.Logger.Info("successfully get obzone list", "obzone list", obzoneList)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("successfully get obzone list", "obzone list", obzoneList)
 	if len(obzoneList.Items) == 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
@@ -258,10 +260,10 @@ func (m *OBClusterManager) Bootstrap() error {
 	for i := 0; i < oceanbaseconst.GetConnectionMaxRetries; i++ {
 		manager, err = m.getOceanbaseOperationManager()
 		if err != nil || manager == nil {
-			m.Logger.Info("Get oceanbase operation manager failed")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get oceanbase operation manager failed")
 			time.Sleep(time.Second * oceanbaseconst.CheckConnectionInterval)
 		} else {
-			m.Logger.Info("Successfully got oceanbase operation manager")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully got oceanbase operation manager")
 			break
 		}
 	}
@@ -323,70 +325,70 @@ func (m *OBClusterManager) CreateUsers() error {
 }
 
 func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
-	m.Logger.Info("begin create user", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("begin create user", "username", userName)
 	password, err := ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
 	if err != nil {
 		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
 	}
-	m.Logger.Info("finish get password", "username", userName, "password", password)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get password", "username", userName, "password", password)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	m.Logger.Info("finish get operationmanager", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get operationmanager", "username", userName)
 	err = oceanbaseOperationManager.CreateUser(userName)
 	if err != nil {
 		m.Logger.Error(err, "Create user")
 		return errors.Wrapf(err, "Create user %s", userName)
 	}
-	m.Logger.Info("finish create user", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish create user", "username", userName)
 	err = oceanbaseOperationManager.SetUserPassword(userName, password)
 	if err != nil {
 		m.Logger.Error(err, "Set user password")
 		return errors.Wrapf(err, "Set password for user %s", userName)
 	}
-	m.Logger.Info("finish set user password", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish set user password", "username", userName)
 	object := "*.*"
 	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
 	if err != nil {
 		m.Logger.Error(err, "Grant privilege")
 		return errors.Wrapf(err, "Grant privilege for user %s", userName)
 	}
-	m.Logger.Info("finish grant user privilege", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish grant user privilege", "username", userName)
 	return nil
 }
 
 func (m *OBClusterManager) MaintainOBParameter() error {
 	parameterMap := make(map[string]v1alpha1.Parameter)
 	for _, parameter := range m.OBCluster.Status.Parameters {
-		m.Logger.Info("Build parameter map", "parameter", parameter.Name)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
 		parameterMap[parameter.Name] = parameter
 	}
 	for _, parameter := range m.OBCluster.Spec.Parameters {
 		parameterStatus, parameterExists := parameterMap[parameter.Name]
 		if !parameterExists {
-			m.Logger.Info("Parameter not exists, need create", "param", parameter.Name)
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter not exists, need create", "param", parameter.Name)
 			err := m.CreateOBParameter(&parameter)
 			if err != nil {
 				// since parameter is not a big problem, just log the error
 				m.Logger.Error(err, "Crate obparameter failed", "param", parameter.Name)
 			}
 		} else if parameterStatus.Value != parameter.Value {
-			m.Logger.Info("Parameter value not matched, need update", "param", parameter.Name)
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter value not matched, need update", "param", parameter.Name)
 			err := m.UpdateOBParameter(&parameter)
 			if err != nil {
 				// since parameter is not a big problem, just log the error
 				m.Logger.Error(err, "Update obparameter failed", "param", parameter.Name)
 			}
 		}
-		m.Logger.Info("Remove parameter from map", "parameter", parameter.Name)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Remove parameter from map", "parameter", parameter.Name)
 		delete(parameterMap, parameter.Name)
 	}
 
 	// delete parameters that not in spec definition
 	for _, parameter := range parameterMap {
-		m.Logger.Info("Delete parameter", "parameter", parameter.Name)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Delete parameter", "parameter", parameter.Name)
 		err := m.DeleteOBParameter(&parameter)
 		if err != nil {
 			m.Logger.Error(err, "Failed to delete parameter")
@@ -422,7 +424,7 @@ func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) erro
 			Parameter:   parameter,
 		},
 	}
-	m.Logger.Info("create obparameter", "parameter", parameterName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("create obparameter", "parameter", parameterName)
 	err := m.Client.Create(m.Ctx, obparameter)
 	if err != nil {
 		m.Logger.Error(err, "create obparameter failed")
@@ -506,7 +508,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() error {
 		},
 	}
 
-	m.Logger.Info("Create validate upgrade job", "job", jobName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create validate upgrade job", "job", jobName)
 	err = m.Client.Create(m.Ctx, &job)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create validate job for obcluster %s", m.OBCluster.Name)
@@ -519,16 +521,16 @@ func (m *OBClusterManager) ValidateUpgradeInfo() error {
 			m.Logger.Error(err, "Failed to get job")
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			m.Logger.Info("job is still running")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
 		} else {
-			m.Logger.Info("job finished")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
 			break
 		}
 	}
 	if jobObject.Status.Succeeded == 1 {
-		m.Logger.Info("job succeeded")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded")
 	} else {
-		m.Logger.Info("job is failed", "job", jobName)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job is failed", "job", jobName)
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
