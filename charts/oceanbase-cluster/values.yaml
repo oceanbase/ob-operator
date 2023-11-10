@@ -1,4 +1,4 @@
-clusterName: obc
+clusterName: obcluster
 clusterId: 1
 
 storageClass: local-path

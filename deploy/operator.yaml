@@ -9253,7 +9253,14 @@ spec:
     singular: obzone
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBZone is the Schema for the obzones API
@@ -12714,7 +12721,7 @@ spec:
         - name: DISABLE_TELEMETRY
           value: "true"
         - name: TELEMETRY_REPORT_HOST
-          value: http://openwebapi.test.alipay.net
+          value: https://openwebapi.oceanbase.com
         image: oceanbasedev/ob-operator:2.1.0-alpha.2
         livenessProbe:
           httpGet:
