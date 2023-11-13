@@ -1,6 +1,6 @@
 Welcome to OceanBase Cluster! 
 
-After installing OBCluster chart, you need to wait for the cluster bootstrapped. Bootstrap progress will cost approximately 2~3 minutes which may varies depends on the machine.
+After installing OBCluster chart, you need to wait for the cluster bootstrapped. Bootstrap progress will cost approximately 2~3 minutes which may vary depends on the machine.
 
 You can use the following command to wait for the OBCluster to be ready.
 
