@@ -15,6 +15,7 @@ package telemetry
 import (
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -71,5 +72,50 @@ var _ = Describe("Telemetry", Label("misc"), func() {
 		}
 		_, err := clt.Head("https://www.baidx.com/abc")
 		Expect(err).Should(HaveOccurred())
+	})
+
+	It("Test concurrent map writes with sync.Map, 1000 times", Label("panic"), func() {
+		// This case will not panic.
+		var m sync.Map
+		for i := 0; i < 1000; i++ {
+			go func() {
+				defer GinkgoRecover()
+				m.Store("a", "1")
+			}()
+			go func() {
+				defer GinkgoRecover()
+				m.Store("b", "2")
+			}()
+		}
+	})
+
+	It("Test concurrent map writes 100 times", Label("panic"), func() {
+		// This case will panic with a high probability.
+		m := make(map[string]string)
+		for i := 0; i < 100; i++ {
+			go func() {
+				defer GinkgoRecover()
+				m["a"] = "1"
+			}()
+			go func() {
+				defer GinkgoRecover()
+				m["b"] = "2"
+			}()
+		}
+	})
+
+	It("Test concurrent map writes 1000 times", Label("panic"), func() {
+		// This case will definitely panic.
+		m := make(map[string]string)
+		for i := 0; i < 1000; i++ {
+			go func() {
+				defer GinkgoRecover()
+				m["a"] = "1"
+			}()
+			go func() {
+				defer GinkgoRecover()
+				m["b"] = "2"
+			}()
+		}
 	})
 })
