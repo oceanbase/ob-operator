@@ -1,2 +1,3 @@
 #!/bin/bash
-docker build -t $1:$2 --build-arg GOPROXY=${GOPROXY} --build-arg VERSION=$2 .
+
+docker build -t $1:$2 --build-arg GOPROXY=${GOPROXY} --build-arg VERSION=$2 --build-arg ARCH=$3 .

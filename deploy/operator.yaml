@@ -12722,7 +12722,7 @@ spec:
           value: "true"
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
-        image: oceanbasedev/ob-operator:2.1.0-alpha.2
+        image: oceanbase/ob-operator:2.0.0
         livenessProbe:
           httpGet:
             path: /healthz
