@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"strings"
 
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -32,6 +33,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 )
 
 // log is for logging in this package.
@@ -69,6 +72,8 @@ func (r *OBTenant) Default() {
 
 	if r.Spec.TenantRole == "" {
 		r.Spec.TenantRole = constants.TenantRolePrimary
+	} else {
+		r.Spec.TenantRole = apitypes.TenantRole(strings.ToUpper(string(r.Spec.TenantRole)))
 	}
 }
 
@@ -86,7 +91,14 @@ func (r *OBTenant) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	_ = old
-	// TODO(user): fill in your validation logic upon object update.
+	if r.Status.Status == tenantstatus.Running {
+		switch {
+		case r.Spec.ClusterName != old.(*OBTenant).Spec.ClusterName:
+			return nil, apierrors.NewBadRequest("Cannot change clusterName when tenant is running")
+		case r.Spec.TenantName != old.(*OBTenant).Spec.TenantName:
+			return nil, apierrors.NewBadRequest("Cannot change tenantName when tenant is running")
+		}
+	}
 	return nil, r.validateMutation()
 }
 
@@ -96,6 +108,11 @@ func (r *OBTenant) validateMutation() error {
 		return nil
 	}
 	var allErrs field.ErrorList
+
+	// 0. TenantRole must be one of PRIMARY and STANDBY
+	if r.Spec.TenantRole != constants.TenantRolePrimary && r.Spec.TenantRole != constants.TenantRoleStandby {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "TenantRole must be primary or standby"))
+	}
 
 	// 0. OBCluster must exist
 	cluster := &OBCluster{}
