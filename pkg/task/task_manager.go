@@ -52,7 +52,6 @@ type TaskManager struct {
 func (m *TaskManager) Submit(f func() error) string {
 	retCh := make(chan *TaskResult, 1)
 	taskId := uuid.New().String()
-	// TODO add lock to keep ResultMap safe
 	m.ResultMap.Store(taskId, retCh)
 	m.TaskResultCache.Delete(taskId)
 	go func() {
