@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 )
 
 // log is for logging in this package.
@@ -51,7 +53,8 @@ var _ webhook.Defaulter = &OBTenantOperation{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenantOperation) Default() {
-	obtenantoperationlog.Info("default", "name", r.Name)
+	r.Spec.Type = apitypes.TenantOperationType(strings.ToUpper(string(r.Spec.Type)))
+
 	tenant := &OBTenant{}
 	var targetTenantName string
 	var secondaryTenantName string
@@ -113,7 +116,8 @@ func (r *OBTenantOperation) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenantOperation) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	_ = old
-	return nil, r.validateMutation()
+	warnings := []string{"Updating operation resource can not trigger any action, please create a new one if you want to do that"}
+	return warnings, r.validateMutation()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -140,6 +144,8 @@ func (r *OBTenantOperation) validateMutation() error {
 		if r.Spec.Switchover == nil || r.Spec.Switchover.PrimaryTenant == "" || r.Spec.Switchover.StandbyTenant == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("switchover").Child("primaryTenant", "standbyTenant"), "name of primary tenant and standby tenant are both required"))
 		}
+	default:
+		allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("type"), string(r.Spec.Type)+" type of operation is not supported"))
 	}
 	if len(allErrs) == 0 {
 		return nil

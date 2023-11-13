@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
 )
@@ -60,11 +61,16 @@ var _ webhook.Defaulter = &OBTenantBackupPolicy{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBTenantBackupPolicy) Default() {
+	// Set default values for backup policy destination types
 	if r.Spec.DataBackup.Destination.Type == "" {
 		r.Spec.DataBackup.Destination.Type = constants.BackupDestTypeNFS
+	} else {
+		r.Spec.DataBackup.Destination.Type = apitypes.BackupDestType(strings.ToUpper(string(r.Spec.DataBackup.Destination.Type)))
 	}
 	if r.Spec.LogArchive.Destination.Type == "" {
 		r.Spec.LogArchive.Destination.Type = constants.BackupDestTypeNFS
+	} else {
+		r.Spec.LogArchive.Destination.Type = apitypes.BackupDestType(strings.ToUpper(string(r.Spec.LogArchive.Destination.Type)))
 	}
 	if r.Spec.LogArchive.SwitchPieceInterval == "" {
 		r.Spec.LogArchive.SwitchPieceInterval = "1d"
@@ -220,6 +226,19 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 	}
 
+	if r.Spec.LogArchive.Binding != constants.ArchiveBindingOptional && r.Spec.LogArchive.Binding != constants.ArchiveBindingMandatory {
+		return field.Invalid(field.NewPath("spec").Child("logArchive").Child("binding"), r.Spec.LogArchive.Binding, "invalid binding, only optional and mandatory are supported")
+	}
+
+	// Check types of destinations are legal
+	if r.Spec.LogArchive.Destination.Type != constants.BackupDestTypeNFS && r.Spec.LogArchive.Destination.Type != constants.BackupDestTypeOSS {
+		return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("type"), r.Spec.LogArchive.Destination.Type, "invalid destination type, only NFS and OSS are supported")
+	}
+	if r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS && r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeOSS {
+		return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("type"), r.Spec.DataBackup.Destination.Type, "invalid destination type, only NFS and OSS are supported")
+	}
+
+	// Check oss access of destinations
 	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS && r.Spec.DataBackup.Destination.OSSAccessSecret != "" {
 		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
 			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
