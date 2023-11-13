@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-obproxy
+  namespace: oceanbase
+spec:
+  type: ClusterIP
+  selector:
+    app: obproxy
+  ports:
+    - name: "sql"
+      port: 2883
+      targetPort: 2883
+    - name: "prometheus"
+      port: 2884
+      targetPort: 2884
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: obproxy
+  namespace: oceanbase
+spec:
+  selector:
+    matchLabels:
+      app: obproxy
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: obproxy
+    spec:
+      containers:
+        - name: obproxy
+          image: oceanbasedev/obproxy-ce:4.2.0.0-7
+          ports:
+            - containerPort: 2883
+              name: "sql"
+            - containerPort: 2884
+              name: "prometheus"
+          env:
+            - name: APP_NAME
+              value: helloworld
+            - name: OB_CLUSTER
+              value: metadb
+            - name: CONFIG_URL
+              value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
+            - name: PROXYRO_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  name: sc-sys-proxyro
+                  key: password
+          resources:
+            limits:
+              memory: 2Gi

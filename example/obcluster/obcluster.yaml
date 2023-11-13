@@ -1,0 +1,61 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: test
+  namespace: oceanbase
+spec:
+  clusterName: obcluster
+  clusterId: 1
+  userSecrets:
+    root: root-password
+    proxyro: proxyro-password
+    monitor: monitor-password
+    operator: operator-password
+  topology:
+    - zone: zone1
+      replica: 1
+      # nodeSelector:
+      #   k1: v1
+      # affinity:
+      #   nodeAffinity:
+      #   podAffinity:
+      #   podAntiAffinity:
+      # tolerations:
+      #   - key: "obtopo"
+      #     value: "zone"
+      #     effect: "NoSchedule"
+    - zone: zone2
+      replica: 1
+    - zone: zone3
+      replica: 1
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  monitor:
+    image: oceanbase/obagent:4.2.0-100000062023080210
+    resource:
+      cpu: 1
+      memory: 1Gi
+
+  # parameters:
+  #   - name: system_memory
+  #     value: 2G
+  # backupVolume:
+  #   volume:
+  #     name: backup
+  #     nfs:
+  #       server: 1.1.1.1
+  #       path: /opt/nfs
+  #       readOnly: false

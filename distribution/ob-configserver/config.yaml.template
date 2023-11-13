@@ -1,0 +1,21 @@
+log:
+  level: info
+  filename: ./log/ob-configserver.log
+  maxsize: 30
+  maxage: 7
+  maxbackups: 10
+  localtime: true
+  compress: true
+
+server:
+  address: "0.0.0.0:8080"
+  run_dir: run
+
+vip:
+  address: ${SVC_ADDRESS}
+  port: ${SVC_PORT}
+
+storage:
+  database_type: ${DATABASE_TYPE}
+  connection_url: "${META_USER}:${META_PASSWORD}@tcp(${META_HOST}:${META_PORT})/${META_DATABASE}?parseTime=true&interpolateParams=true" #CONFIG_FOR_MYSQL
+  connection_url: "/home/admin/ob-configserver/.data.db?cache=shared&_fk=1" #CONFIG_FOR_SQLITE

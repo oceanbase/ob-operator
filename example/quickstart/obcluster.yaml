@@ -1,0 +1,36 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: test
+  namespace: default
+spec:
+  clusterName: obcluster
+  clusterId: 1
+  userSecrets:
+    root: root-password
+    proxyro: proxyro-password
+    monitor: monitor-password
+    operator: operator-password
+  topology:
+    - zone: zone1
+      replica: 1
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  monitor:
+    image: oceanbase/obagent:4.2.0-100000062023080210
+    resource:
+      cpu: 1
+      memory: 1Gi
