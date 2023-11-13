@@ -51,9 +51,6 @@ type OBTenantManager struct {
 	Logger   *logr.Logger
 }
 
-// TODO add lock to be thread safe, and read/write whitelist from/to DB
-var GlobalWhiteListMap = make(map[string]string, 0)
-
 func (m *OBTenantManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
@@ -567,14 +564,14 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(obtenant.TenantID)
 
-	// TODO get whitelist from tenant account
-	whitelist, exists := GlobalWhiteListMap[obtenant.TenantName]
+	// TODO: get whitelist from tenant account
+	whitelist, exists := GlobalWhiteListMap.Load(obtenant.TenantName)
 	if exists {
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist
+		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist.(string)
 	} else {
 		// try update whitelist after the manager restart
-		GlobalWhiteListMap[obtenant.TenantName] = tenant.DefaultOBTcpInvitedNodes
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = GlobalWhiteListMap[obtenant.TenantName]
+		GlobalWhiteListMap.Store(obtenant.TenantName, tenant.DefaultOBTcpInvitedNodes)
+		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = tenant.DefaultOBTcpInvitedNodes
 	}
 
 	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber

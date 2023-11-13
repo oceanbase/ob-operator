@@ -32,9 +32,7 @@ func GetTaskManager() *TaskManager {
 	taskManagerOnce.Do(func() {
 		logger := log.FromContext(context.TODO())
 		taskManager = &TaskManager{
-			ResultMap:       make(map[string]chan *TaskResult),
-			Logger:          &logger,
-			TaskResultCache: make(map[string]*TaskResult, 0),
+			Logger: &logger,
 		}
 	})
 	return taskManager
@@ -46,17 +44,17 @@ type TaskResult struct {
 }
 
 type TaskManager struct {
-	ResultMap       map[string]chan *TaskResult
+	ResultMap       sync.Map
 	Logger          *logr.Logger
-	TaskResultCache map[string]*TaskResult
+	TaskResultCache sync.Map
 }
 
 func (m *TaskManager) Submit(f func() error) string {
 	retCh := make(chan *TaskResult, 1)
 	taskId := uuid.New().String()
 	// TODO add lock to keep ResultMap safe
-	m.ResultMap[taskId] = retCh
-	m.TaskResultCache[taskId] = nil
+	m.ResultMap.Store(taskId, retCh)
+	m.TaskResultCache.Delete(taskId)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
@@ -83,30 +81,38 @@ func (m *TaskManager) Submit(f func() error) string {
 }
 
 func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
-	retCh, exists := m.ResultMap[taskId]
+	retChAny, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil, errors.Errorf("Task %s not exists", taskId)
 	}
-	if m.TaskResultCache[taskId] == nil {
+	retCh, ok := retChAny.(chan *TaskResult)
+	if !ok {
+		return nil, errors.Errorf("Task %s not exists", taskId)
+	}
+	result, exists := m.TaskResultCache.Load(taskId)
+	if !exists {
 		select {
 		case result := <-retCh:
-			m.TaskResultCache[taskId] = result
+			m.TaskResultCache.Store(taskId, result)
 			return result, nil
 		default:
 			return nil, nil
 		}
-	} else {
-		return m.TaskResultCache[taskId], nil
 	}
+	return result.(*TaskResult), nil
 }
 
 func (m *TaskManager) CleanTaskResult(taskId string) error {
-	retCh, exists := m.ResultMap[taskId]
+	retChAny, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil
 	}
+	retCh, ok := retChAny.(chan *TaskResult)
+	if !ok {
+		return nil
+	}
 	close(retCh)
-	delete(m.ResultMap, taskId)
-	delete(m.TaskResultCache, taskId)
+	m.ResultMap.Delete(taskId)
+	m.TaskResultCache.Delete(taskId)
 	return nil
 }

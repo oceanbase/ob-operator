@@ -117,7 +117,7 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 		}
 		time.Sleep(5 * time.Second)
 	}
-	GlobalWhiteListMap[m.OBTenant.Spec.TenantName] = m.OBTenant.Spec.ConnectWhiteList
+	GlobalWhiteListMap.Store(m.OBTenant.Spec.TenantName, m.OBTenant.Spec.ConnectWhiteList)
 	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "restore job finished successfully")
 	return nil
 }

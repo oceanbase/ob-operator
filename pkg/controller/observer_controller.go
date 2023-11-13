@@ -27,7 +27,6 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -114,7 +113,6 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBServer{}).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 9}).
 		WithEventFilter(preds).
 		Complete(r)
 }
