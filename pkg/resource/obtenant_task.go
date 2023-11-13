@@ -226,7 +226,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() error {
 		}
 		// TODO: get whitelist variable by tenant account
 		// Because getting a whitelist requires specifying a tenant , temporary use .Status.TenantRecordInfo.ConnectWhiteList as value in db
-		GlobalWhiteListMap.Store(tenantName, specWhiteList)
+		tenantWhiteListMap.Store(tenantName, specWhiteList)
 	}
 	return nil
 }
@@ -389,7 +389,7 @@ func (m *OBTenantManager) createTenant() error {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
 	}
-	GlobalWhiteListMap.Store(tenantName, m.OBTenant.Spec.ConnectWhiteList)
+	tenantWhiteListMap.Store(tenantName, m.OBTenant.Spec.ConnectWhiteList)
 	// Create user or change password of root, do not return error
 	m.Recorder.Event(m.OBTenant, "Create", "", "create OBTenant successfully")
 	return nil

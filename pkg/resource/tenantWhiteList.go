@@ -14,4 +14,4 @@ package resource
 
 import "sync"
 
-var GlobalWhiteListMap sync.Map
+var tenantWhiteListMap sync.Map

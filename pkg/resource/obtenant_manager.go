@@ -565,12 +565,12 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(obtenant.TenantID)
 
 	// TODO: get whitelist from tenant account
-	whitelist, exists := GlobalWhiteListMap.Load(obtenant.TenantName)
+	whitelist, exists := tenantWhiteListMap.Load(obtenant.TenantName)
 	if exists {
 		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist.(string)
 	} else {
 		// try update whitelist after the manager restart
-		GlobalWhiteListMap.Store(obtenant.TenantName, tenant.DefaultOBTcpInvitedNodes)
+		tenantWhiteListMap.Store(obtenant.TenantName, tenant.DefaultOBTcpInvitedNodes)
 		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = tenant.DefaultOBTcpInvitedNodes
 	}
 
