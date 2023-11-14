@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	// If no task flow, requeue after 60 sec.
+	// If no task flow, requeue after 30 sec.
 	NormalRequeueDuration = 30 * time.Second
-	// In task flow, requeue after 500 ms.
+	// In task flow, requeue after 1 sec.
 	ExecutionRequeueDuration = 1 * time.Second
 )
 
