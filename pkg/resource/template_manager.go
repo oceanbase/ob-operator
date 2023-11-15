@@ -41,6 +41,10 @@ func (m *ObResourceManager[T]) IsNewResource() bool {
 	return false
 }
 
+func (m *ObResourceManager[T]) GetStatus() string {
+	return ""
+}
+
 func (m *ObResourceManager[T]) IsDeleting() bool {
 	return false
 }

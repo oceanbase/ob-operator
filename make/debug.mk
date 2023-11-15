@@ -36,3 +36,7 @@ run-delve: generate fmt vet manifests ## Run with Delve for development purposes
 
 install-delve: ## Install delve, a debugger for the Go programming language. More info: https://github.com/go-delve/delve
 	go install github.com/go-delve/delve/cmd/dlv@master
+
+.PHONY: run
+run: manifests generate fmt vet ## Run a controller from your host.
+	go run ./cmd/main.go --log-verbosity=${LOG_LEVEL}

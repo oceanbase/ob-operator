@@ -59,6 +59,10 @@ func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
 	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero()
 }
 
+func (m *ObTenantBackupPolicyManager) GetStatus() string {
+	return string(m.BackupPolicy.Status.Status)
+}
+
 func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 	policy := m.BackupPolicy
 	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"

@@ -46,6 +46,10 @@ func (m *OBClusterManager) IsNewResource() bool {
 	return m.OBCluster.Status.Status == ""
 }
 
+func (m *OBClusterManager) GetStatus() string {
+	return m.OBCluster.Status.Status
+}
+
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
 	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")

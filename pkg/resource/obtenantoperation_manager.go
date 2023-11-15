@@ -52,6 +52,10 @@ func (m *ObTenantOperationManager) IsNewResource() bool {
 	return m.Resource.Status.Status == ""
 }
 
+func (m *ObTenantOperationManager) GetStatus() string {
+	return string(m.Resource.Status.Status)
+}
+
 func (m *ObTenantOperationManager) IsDeleting() bool {
 	return m.Resource.GetDeletionTimestamp() != nil
 }

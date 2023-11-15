@@ -28,6 +28,7 @@ type ResourceManager interface {
 	HandleFailure()
 	FinishTask()
 	UpdateStatus() error
+	GetStatus() string
 	GetTaskFunc(string) (func() error, error)
 	GetTaskFlow() (*task.TaskFlow, error)
 	PrintErrEvent(error)
