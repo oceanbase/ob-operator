@@ -50,6 +50,10 @@ func (m *OBParameterManager) IsNewResource() bool {
 	return m.OBParameter.Status.Status == ""
 }
 
+func (m *OBParameterManager) GetStatus() string {
+	return m.OBParameter.Status.Status
+}
+
 func (m *OBParameterManager) InitStatus() {
 	m.Logger.Info("newly created obparameter, init status")
 	status := v1alpha1.OBParameterStatus{

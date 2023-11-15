@@ -22,6 +22,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
@@ -103,16 +104,21 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}
 	coordinator := resource.NewCoordinator(observerManager, &logger)
-	_, err = coordinator.Coordinate()
-	return ctrl.Result{
-		RequeueAfter: 5 * time.Second,
-	}, err
+	result, err := coordinator.Coordinate()
+	if err != nil {
+		return result, err
+	}
+	if result.RequeueAfter > 5*time.Second {
+		result.RequeueAfter = 5 * time.Second
+	}
+	return result, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBServer{}).
+		Owns(&corev1.Pod{}).
 		WithEventFilter(preds).
 		Complete(r)
 }

@@ -50,6 +50,10 @@ func (m *OBTenantBackupManager) IsNewResource() bool {
 	return m.Resource.Status.Status == ""
 }
 
+func (m *OBTenantBackupManager) GetStatus() string {
+	return string(m.Resource.Status.Status)
+}
+
 func (m *OBTenantBackupManager) IsDeleting() bool {
 	return m.Resource.GetDeletionTimestamp() != nil
 }

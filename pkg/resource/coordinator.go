@@ -59,6 +59,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	}
 	var f *task.TaskFlow
 	var err error
+	beforeStatus := c.Manager.GetStatus()
 	if c.Manager.IsNewResource() {
 		c.Manager.InitStatus()
 	} else {
@@ -96,6 +97,11 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	if err != nil {
 		c.Logger.Error(err, "Failed to update status")
 	}
+	// When status changes(e.g. from running to other status), set a shorter `requeue after` to speed up processing.
+	if c.Manager.GetStatus() != beforeStatus {
+		result.RequeueAfter = ExecutionRequeueDuration
+	}
+	c.Logger.V(obconst.LogLevelTrace).Info("Requeue after", "duration", result.RequeueAfter)
 	return result, err
 }
 

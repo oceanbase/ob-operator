@@ -50,6 +50,10 @@ func (m *OBZoneManager) IsNewResource() bool {
 	return m.OBZone.Status.Status == ""
 }
 
+func (m *OBZoneManager) GetStatus() string {
+	return m.OBZone.Status.Status
+}
+
 func (m *OBZoneManager) InitStatus() {
 	m.Logger.Info("newly created zone, init status")
 	status := v1alpha1.OBZoneStatus{

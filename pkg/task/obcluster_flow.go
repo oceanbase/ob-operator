@@ -26,6 +26,9 @@ func BootstrapOBCluster() *TaskFlow {
 			Name:         flowname.BootstrapOBCluster,
 			Tasks:        []string{taskname.CreateOBZone, taskname.WaitOBZoneBootstrapReady, taskname.Bootstrap},
 			TargetStatus: clusterstatus.Bootstrapped,
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: "new",
+			},
 		},
 	}
 }
