@@ -82,6 +82,10 @@ func (m *OBServerManager) IsNewResource() bool {
 	return m.OBServer.Status.Status == ""
 }
 
+func (m *OBServerManager) GetStatus() string {
+	return m.OBServer.Status.Status
+}
+
 func (m *OBServerManager) InitStatus() {
 	m.Logger.Info("newly created server, init status")
 	status := v1alpha1.OBServerStatus{

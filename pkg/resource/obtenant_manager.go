@@ -77,6 +77,10 @@ func (m *OBTenantManager) IsDeleting() bool {
 	return !m.OBTenant.ObjectMeta.DeletionTimestamp.IsZero()
 }
 
+func (m *OBTenantManager) GetStatus() string {
+	return m.OBTenant.Status.Status
+}
+
 func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
 		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),

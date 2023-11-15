@@ -68,12 +68,12 @@ func main() {
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
+	flag.Parse()
+
 	opts := zap.Options{
 		Development: logVerbosity > 0,
 		Level:       zapcore.Level(-logVerbosity),
 	}
-	// opts.BindFlags(flag.CommandLine)
-	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
@@ -215,7 +215,15 @@ func main() {
 	rcd := telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
 	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "start ob-operator", nil)
 
-	setupLog.Info("starting manager")
+	setupLog.WithValues(
+		"namespace", namespace,
+		"manager-namespace", managerNamespace,
+		"metrics-bind-address", metricsAddr,
+		"health-probe-bind-address", probeAddr,
+		"leader-elect", enableLeaderElection,
+		"log-verbosity", logVerbosity,
+	).Info("starting manager")
+
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)
