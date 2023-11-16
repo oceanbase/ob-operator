@@ -96,9 +96,8 @@ func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 					// the tenant is being deleted
 					finalizerFinished = true
 				}
-			} else {
-				finalizerFinished = m.BackupPolicy.Status.Status == constants.BackupPolicyStatusStopped
 			}
+			finalizerFinished = finalizerFinished || m.BackupPolicy.Status.Status == constants.BackupPolicyStatusStopped
 		}
 
 		if finalizerFinished {
@@ -125,15 +124,17 @@ func (m *ObTenantBackupPolicyManager) InitStatus() {
 }
 
 func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
-	tenant := &v1alpha1.OBTenant{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.BackupPolicy.Namespace,
-		Name:      m.BackupPolicy.Spec.TenantCRName,
-	}, tenant)
-	if err != nil {
-		return err
+	if m.BackupPolicy.Spec.TenantCRName != "" {
+		tenant := &v1alpha1.OBTenant{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.BackupPolicy.Namespace,
+			Name:      m.BackupPolicy.Spec.TenantCRName,
+		}, tenant)
+		if err != nil {
+			return err
+		}
+		m.BackupPolicy.Status.TenantCR = tenant
 	}
-	m.BackupPolicy.Status.TenantCR = tenant
 
 	tenantRecord, err := m.getTenantRecord(false)
 	if err != nil {
@@ -166,7 +167,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
-	} else if m.IsDeleting() && m.BackupPolicy.Status.Status != constants.BackupPolicyStatusDeleting {
+	} else if m.IsDeleting() && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {

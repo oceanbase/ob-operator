@@ -193,8 +193,16 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
-
-	_ = con.DisableArchiveLogForTenant()
+	tenantInfo, err := m.getTenantRecord(false)
+	if err != nil {
+		return err
+	}
+	if tenantInfo.LogMode != "NOARCHIVELOG" {
+		err = con.DisableArchiveLogForTenant()
+		if err != nil {
+			return err
+		}
+	}
 
 	err = con.StopBackupJobOfTenant()
 	if err != nil {
