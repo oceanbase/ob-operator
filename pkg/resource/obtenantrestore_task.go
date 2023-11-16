@@ -104,7 +104,7 @@ func (m *OBTenantManager) WatchRestoreJobToFinish() error {
 		runningRestore := &v1alpha1.OBTenantRestore{}
 		err = m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.OBTenant.GetNamespace(),
-			Name:      m.OBTenant.Spec.TenantName + "-restore",
+			Name:      m.OBTenant.Name + "-restore",
 		}, runningRestore)
 		if err != nil {
 			return err
@@ -141,7 +141,7 @@ func (m *OBTenantManager) CancelTenantRestoreJob() error {
 	}
 	err = m.Client.Delete(m.Ctx, &v1alpha1.OBTenantRestore{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.OBTenant.Spec.TenantName + "-restore",
+			Name:      m.OBTenant.Name + "-restore",
 			Namespace: m.OBTenant.GetNamespace(),
 		},
 	})
