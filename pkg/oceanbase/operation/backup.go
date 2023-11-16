@@ -272,6 +272,13 @@ func (m *OceanbaseOperationManager) GetLatestBackupCleanJob() (*model.OBBackupCl
 	if len(jobs) != 0 {
 		return jobs[0], nil
 	}
+	err = m.QueryList(&jobs, sql.QueryLatestCleanJobHistory)
+	if err != nil {
+		return nil, err
+	}
+	if len(jobs) != 0 {
+		return jobs[0], nil
+	}
 	return nil, nil
 }
 

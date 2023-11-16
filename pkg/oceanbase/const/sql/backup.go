@@ -52,7 +52,8 @@ const (
 	QueryLatestBackupJobOfTypeAndPath        = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE backup_type = ? and path = ? order by job_id DESC LIMIT 1"
 	QueryLatestBackupJobHistoryOfTypeAndPath = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOB_HISTORY WHERE backup_type = ? and path = ? order by job_id DESC LIMIT 1"
 	QueryLatestRunningBackupJob              = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS order by job_id DESC LIMIT 1"
-	QueryLatestCleanJob                      = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS ORDER BY job_id DESC LIMIT 1 UNION ALL SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY ORDER BY job_id DESC LIMIT 1"
+	QueryLatestCleanJob                      = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOBS ORDER BY job_id DESC LIMIT 1"
+	QueryLatestCleanJobHistory               = "SELECT " + cleanJobFields + " FROM DBA_OB_BACKUP_DELETE_JOB_HISTORY ORDER BY job_id DESC LIMIT 1"
 	QueryLatestArchiveLogJob                 = "SELECT " + logArchiveJobFields + " FROM DBA_OB_ARCHIVELOG_SUMMARY ORDER BY round_id DESC LIMIT 1"
 
 	QueryBackupJobWithId            = "SELECT " + backupJobFields + " FROM DBA_OB_BACKUP_JOBS WHERE job_id = ?"
