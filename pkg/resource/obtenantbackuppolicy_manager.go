@@ -128,7 +128,7 @@ func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,
-		Name:      m.BackupPolicy.Spec.TenantName,
+		Name:      m.BackupPolicy.Spec.TenantCRName,
 	}, tenant)
 	if err != nil {
 		return err
@@ -393,15 +393,15 @@ func (m *ObTenantBackupPolicyManager) getOBTenantCR() (*v1alpha1.OBTenant, error
 			Resource: "obtenantbackuppolicies",
 		}, m.BackupPolicy.Spec.TenantCRName)
 	}
-	tenantName := m.BackupPolicy.Spec.TenantCRName
+	tenantCRName := m.BackupPolicy.Spec.TenantCRName
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,
-		Name:      tenantName,
+		Name:      tenantCRName,
 	}, tenant)
 	if err != nil {
 		if !kubeerrors.IsNotFound(err) {
-			m.Logger.Error(err, "get obtenant failed", "tenantName", tenantName, "namespaced", m.BackupPolicy.Namespace)
+			m.Logger.Error(err, "get obtenant failed", "tenantCRName", tenantCRName, "namespaced", m.BackupPolicy.Namespace)
 		}
 		return nil, err
 	}
