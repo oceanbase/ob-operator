@@ -193,8 +193,16 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 	if err != nil {
 		return err
 	}
-
-	_ = con.DisableArchiveLogForTenant()
+	tenantInfo, err := m.getTenantRecord(false)
+	if err != nil {
+		return err
+	}
+	if tenantInfo.LogMode != "NOARCHIVELOG" {
+		err = con.DisableArchiveLogForTenant()
+		if err != nil {
+			return err
+		}
+	}
 
 	err = con.StopBackupJobOfTenant()
 	if err != nil {
@@ -471,7 +479,7 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 		tenantCR := &v1alpha1.OBTenant{}
 		err = m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.BackupPolicy.Namespace,
-			Name:      m.BackupPolicy.Spec.TenantName,
+			Name:      m.BackupPolicy.Spec.TenantCRName,
 		}, tenantCR)
 		if err != nil {
 			return nil, err
