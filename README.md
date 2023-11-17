@@ -3,7 +3,14 @@ The ob-operator is a Kubernetes operator that simplifies the deployment and mana
 
 # Quick Start
 ## Requirement
-In order to run ob-operator properly, [cert-manager](https://cert-manager.io/docs) needs to be deployed as its dependency, for more details about how to install it, please refer to the [installation](https://cert-manager.io/docs/installation/) document.
+In order to run ob-operator properly, [cert-manager](https://cert-manager.io/docs) needs to be deployed as its dependency. For more details about how to install it, please refer to the [installation](https://cert-manager.io/docs/installation/) document.
+
+Some developers may have trouble accessing images in `quay.io/jetstack` registry. We put an mirrored cert-manager manifest at `deploy/cert-manager.yaml` in which images registry is replaced with `docker.io/oceanbase`, so cert-manager images get more accessible. 
+
+```shell
+# Deploy cert-manager with our mirrored images
+kubectl apply -f deploy/cert-manager.yaml
+```
 
 ## Deploy ob-operator
 ### Using helm
