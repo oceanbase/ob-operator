@@ -1,6 +1,8 @@
 clusterName: obcluster
 clusterId: 1
 
+obAgentVersion: 4.2.1-100000092023101717
+
 storageClass: local-path
 
 observerConfig:

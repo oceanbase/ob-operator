@@ -15,7 +15,7 @@ spec:
   topology: 
     {{- toYaml .Values.topology | nindent 4 }}
   observer:
-    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
+    image: oceanbase/oceanbase-cloud-native:{{ .Chart.AppVersion }}
     {{- with .Values.observerConfig }}
     resource:
       {{- toYaml .resource | nindent 6 }}
@@ -28,7 +28,7 @@ spec:
     {{- end }}
   {{- if .Values.monitorEnabled }}
   monitor:
-    image: oceanbase/obagent:4.2.0-100000062023080210
+    image: oceanbase/obagent:{{ .Values.obAgentVersion }}
     resource:
       {{- toYaml .Values.monitorResource | nindent 6 }}
   {{- end }}
