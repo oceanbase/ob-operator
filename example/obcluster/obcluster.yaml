@@ -29,7 +29,7 @@ spec:
     - zone: zone3
       replica: 1
   observer:
-    image: oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319
+    image: oceanbase/oceanbase-cloud-native:4.2.1.1-101010012023111012
     resource:
       cpu: 2
       memory: 10Gi
@@ -44,7 +44,7 @@ spec:
         storageClass: local-path
         size: 20Gi
   monitor:
-    image: oceanbase/obagent:4.2.0-100000062023080210
+    image: oceanbase/obagent:4.2.1-100000092023101717
     resource:
       cpu: 1
       memory: 1Gi

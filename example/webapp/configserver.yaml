@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
         - name: ob-configserver
-          image: oceanbasedev/ob-configserver:1.0.0-2
+          image: oceanbase/ob-configserver:1.0.0-2
           ports:
             - containerPort: 8080
               name: "http"
