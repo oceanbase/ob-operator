@@ -108,4 +108,5 @@ const (
 	CreateUsersByCredentials      = "create users by credentials"
 	CheckPrimaryTenantLSIntegrity = "check primary tenant ls integrity"
 	CreateEmptyStandbyTenant      = "create empty standby tenant"
+	UpgradeTenantIfNeeded         = "upgrade tenant if needed"
 )

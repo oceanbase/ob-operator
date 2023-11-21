@@ -18,3 +18,7 @@ const (
 	QueryParameter          = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ?"
 	QueryParameterWithScope = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ? and %s = ?"
 )
+
+const (
+	ListParametersWithTenantID = "select name, value from GV$OB_PARAMETERS where tenant_id = ?"
+)

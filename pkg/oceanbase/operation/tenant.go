@@ -525,3 +525,20 @@ func (m OceanbaseOperationManager) ListLogStats(tenantId int64) ([]*model.LogSta
 	}
 	return logStats, nil
 }
+
+func (m OceanbaseOperationManager) UpgradeTenantWithName(tenantName string) error {
+	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.UpgradeTenantWithName, tenantName))
+	if err != nil {
+		return errors.Wrap(err, "Upgrade tenant")
+	}
+	return nil
+}
+
+func (m OceanbaseOperationManager) ListParametersWithTenantID(tenantID int64) ([]*model.Parameter, error) {
+	params := make([]*model.Parameter, 0)
+	err := m.QueryList(&params, sql.ListParametersWithTenantID, tenantID)
+	if err != nil {
+		return nil, errors.Wrap(err, "List parameters")
+	}
+	return params, nil
+}

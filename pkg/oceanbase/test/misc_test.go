@@ -27,7 +27,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 )
 
-var _ = Describe("Test Miscellaneous Operation", func() {
+var _ = Describe("Test Miscellaneous Operation", Label("misc"), func() {
 	var _ = BeforeEach(func() {
 	})
 
@@ -134,7 +134,11 @@ var _ = Describe("Test Miscellaneous Operation", func() {
 		Expect(keepWindow).To(Equal(TwoHundredDays))
 	})
 
-	It("Split uri", Label("strings"), func() {
+	It("Compare versions", Label("strings"), func() {
+		Expect("4.2.0.0" < "4.2.1.0").To(BeTrue())
+		Expect("4.2.0.0" <= "4.2.1.0").To(BeTrue())
+		Expect("4.2.1.1" >= "4.2.1.0").To(BeTrue())
+		Expect("4.2.1.1" > "4.2.1.0").To(BeTrue())
 	})
 
 	It("OSS path", Label("pattern"), func() {

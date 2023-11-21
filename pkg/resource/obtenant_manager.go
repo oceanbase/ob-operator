@@ -261,6 +261,8 @@ func (m *OBTenantManager) GetTaskFunc(taskName string) (func() error, error) {
 		return m.CreateUserWithCredentialSecrets, nil
 	case taskname.CheckPrimaryTenantLSIntegrity:
 		return m.CheckPrimaryTenantLSIntegrity, nil
+	case taskname.UpgradeTenantIfNeeded:
+		return m.UpgradeTenantIfNeeded, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", taskName)
 	}

@@ -37,6 +37,7 @@ type OBTenant struct {
 	SwitchoverStatus         string `json:"switchover_status,omitempty" db:"switchover_status"`
 	SwitchoverEpoch          int64  `json:"switchover_epoch,omitempty" db:"switchover_epoch"`
 	UnitNum                  int64  `json:"unit_num,omitempty" db:"unit_num"`
+	Compatible               string `json:"compatible,omitempty" db:"compatible"`
 }
 
 // OBUnit is the unit model of OB system
