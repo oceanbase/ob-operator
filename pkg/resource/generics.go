@@ -12,6 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package resource
 
+import (
+	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
 func getRef[T any](val T) *T {
 	return &val
 }
@@ -25,4 +29,15 @@ func min[T int | int64 | uint | uint64 | float64 | float32](a, b T) T {
 		return a
 	}
 	return b
+}
+
+func GetAnnotationField[T client.Object](obj T, key string) (string, bool) {
+	annos := obj.GetAnnotations()
+	if annos == nil {
+		return "", false
+	}
+	if val, ok := annos[key]; ok {
+		return val, true
+	}
+	return "", false
 }

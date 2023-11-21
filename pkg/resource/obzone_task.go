@@ -103,6 +103,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 			currentReplica++
 		}
 	}
+	sepVolumeAnnoVal, sepVolumeAnnoExist := GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSeparateVolumes)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -131,6 +132,10 @@ func (m *OBZoneManager) CreateOBServer() error {
 				MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
 				BackupVolume:     m.OBZone.Spec.BackupVolume,
 			},
+		}
+		if sepVolumeAnnoExist {
+			observer.ObjectMeta.Annotations = make(map[string]string)
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSeparateVolumes] = sepVolumeAnnoVal
 		}
 		m.Logger.Info("create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)

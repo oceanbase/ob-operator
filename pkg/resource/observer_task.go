@@ -156,13 +156,16 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.Sto
 
 func (m *OBServerManager) CreateOBPVC() error {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBServer.APIVersion,
-		Kind:       m.OBServer.Kind,
-		Name:       m.OBServer.Name,
-		UID:        m.OBServer.GetUID(),
+	_, sepVolumeAnnoExist := GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSeparateVolumes)
+	if !sepVolumeAnnoExist {
+		ownerReference := metav1.OwnerReference{
+			APIVersion: m.OBServer.APIVersion,
+			Kind:       m.OBServer.Kind,
+			Name:       m.OBServer.Name,
+			UID:        m.OBServer.GetUID(),
+		}
+		ownerReferenceList = append(ownerReferenceList, ownerReference)
 	}
-	ownerReferenceList = append(ownerReferenceList, ownerReference)
 
 	objectMeta := metav1.ObjectMeta{
 		Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),

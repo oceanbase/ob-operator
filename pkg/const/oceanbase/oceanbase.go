@@ -52,6 +52,10 @@ const (
 )
 
 const (
+	AnnotationsSeparateVolumes = "oceanbase.oceanbase.com/separateVolumes"
+)
+
+const (
 	CNICalico  = "calico"
 	CNIUnknown = "unknown"
 )
