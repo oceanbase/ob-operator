@@ -14,6 +14,7 @@ package resource
 
 import (
 	"context"
+	"time"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
@@ -125,6 +126,15 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	return operationManager.GetServer(observerInfo)
 }
 
+func (m *OBServerManager) getBindingPod() (*corev1.Pod, error) {
+	pod := &corev1.Pod{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBServer.GetNamespace(),
+		Name:      m.OBServer.GetName(),
+	}, pod)
+	return pod, err
+}
+
 func (m *OBServerManager) retryUpdateStatus() error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		observer, err := m.getOBServer()
@@ -169,6 +179,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
+		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("check observer in obcluster")
 			observer, err := m.getCurrentOBServerFromOB()
@@ -178,6 +189,8 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.OBServer.Status.Status = serverstatus.AddServer
 			}
 		}
+
+		// 2. Check CNI Annotations and upgrade
 		if m.OBServer.Status.Status == serverstatus.Running {
 			if NeedAnnotation(pod, m.OBServer.Status.CNI) {
 				m.OBServer.Status.Status = serverstatus.Annotate
@@ -191,6 +204,28 @@ func (m *OBServerManager) UpdateStatus() error {
 				if m.OBServer.Spec.OBServerTemplate.Image != m.OBServer.Status.Image {
 					m.Logger.Info("Found image changed, begin upgrade")
 					m.OBServer.Status.Status = serverstatus.Upgrade
+				}
+			}
+		}
+
+		// 3. Check status of binding pod
+		if m.OBServer.Status.Status == serverstatus.Running {
+			pod, err := m.getBindingPod()
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					m.OBServer.Status.Status = serverstatus.AddServer
+				} else {
+					return err
+				}
+			}
+			if pod != nil {
+				for _, cond := range pod.Status.Conditions {
+					if cond.Type == corev1.PodReady && cond.Status != corev1.ConditionTrue {
+						if cond.LastTransitionTime.Add(oceanbaseconst.TolerateServerPodNotReadyMinutes * time.Minute).Before(time.Now()) {
+							m.OBServer.Status.Status = serverstatus.AddServer
+							break
+						}
+					}
 				}
 			}
 		}

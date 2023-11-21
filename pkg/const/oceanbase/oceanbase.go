@@ -141,3 +141,7 @@ const (
 	LogLevelDebug   = 1
 	LogLevelTrace   = 2
 )
+
+const (
+	TolerateServerPodNotReadyMinutes = 5
+)
