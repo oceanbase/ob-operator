@@ -3,8 +3,8 @@ name: release helm charts
 on: 
   push:
     tags: 
-      - '*.*.*'
-      - 'chart-*.*.*'
+      - '*[0-9].*[0-9].*[0-9]*'
+      - 'chart-*[0-9].*[0-9].*[0-9]*'
 
 env:
   GO_VERSION: "1.20"
