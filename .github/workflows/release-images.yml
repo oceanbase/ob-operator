@@ -8,10 +8,8 @@ name: release images
 #       - 'helm-chart'
 on: 
   push:
-    branches:
-      - '*release'
     tags: 
-      - '*'
+      - '*.*.*'
 
 env:
   GO_VERSION: "1.20"
@@ -50,6 +48,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: Dockerfile
           push: true
-          tags: ${{ vars.DOCKER_REPOSITORY }}:latest
+          tags: ${{ vars.DOCKER_REPOSITORY }}:${{ github.ref_name }}
           cache-from: type=registry,ref=${{ vars.DOCKER_REPOSITORY }}:buildcache
           cache-to: type=registry,ref=${{ vars.DOCKER_REPOSITORY }}:buildcache,mode=max

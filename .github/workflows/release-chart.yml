@@ -2,10 +2,8 @@ name: release helm charts
 
 on: 
   push:
-    branches:
-      - '*release'
     tags: 
-      - '*'
+      - '*.*.*'
 
 env:
   GO_VERSION: "1.20"
