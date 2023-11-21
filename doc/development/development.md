@@ -8,7 +8,7 @@ ob-operator requires [go 1.20 or above](https://go.dev/doc/install) to build, yo
 ob-operator uses [make](https://www.gnu.org/software/make/) for a variety of build and test actions, it's need to be installed before you go.
 
 3. kubebuilder
-ob-operator uses kubebuilder as operator framework, before you dive into the code, it's highly recommended to read [kubebuilder books](https://book.kubebuilder.io)
+ob-operator uses kubebuilder as operator framework, before you dive into the code, it's highly recommended to read [kubebuilder books](https://book.kubebuilder.io).
 
 ## build ob-operator
 
