@@ -64,3 +64,5 @@ jobs:
           file: Dockerfile
           push: true
           tags: ${{ vars.DOCKER_REPOSITORY }}:latest
+          cache-from: type=registry,ref={{ vars.DOCKER_REPOSITORY }}:buildcache
+          cache-to: type=registry,ref={{ vars.DOCKER_REPOSITORY }}:buildcache,mode=max
