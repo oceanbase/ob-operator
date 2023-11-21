@@ -1,11 +1,5 @@
 name: release images
 
-# on:
-#   push:
-#     branches:
-#       - 'master'
-#       - '*release'
-#       - 'helm-chart'
 on: 
   push:
     tags: 
