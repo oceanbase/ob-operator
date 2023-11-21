@@ -606,7 +606,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 		Port: oceanbaseconst.RpcPort,
 	}
 	deleted := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds/2; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -619,7 +619,16 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 		} else if err != nil {
 			m.Logger.Error(err, "Query observer info failed")
 		}
-		time.Sleep(time.Second)
+		obunits, err := operationManager.ListUnitsWithServerIP(observerInfo.Ip)
+		if err != nil {
+			return errors.Wrapf(err, "List units on server "+observerInfo.Ip)
+		}
+		if len(obunits) == 0 {
+			m.Logger.Info("none of units left on observer, deleted")
+			deleted = true
+			break
+		}
+		time.Sleep(2 * time.Second)
 	}
 	if !deleted {
 		m.Logger.Info("Wait observer deleted timeout")

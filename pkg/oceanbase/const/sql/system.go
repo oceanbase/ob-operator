@@ -20,4 +20,5 @@ const (
 const (
 	QueryTenantWithName    = "SELECT " + tenantFields + " FROM DBA_OB_TENANTS where tenant_name = ? and tenant_type = 'USER'"
 	QueryUnitsWithTenantId = "SELECT " + unitFields + " FROM DBA_OB_UNITS where tenant_id = ?"
+	ListUnitsWithServerIP  = "SELECT " + unitFields + " FROM DBA_OB_UNITS where svr_ip = ?"
 )
