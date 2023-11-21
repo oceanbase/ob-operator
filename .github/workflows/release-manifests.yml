@@ -1,11 +1,12 @@
 name: release manifests
 
-on:
-  push:
-    branches:
-      - 'master'
-      - '*release'
-      - 'helm-chart'
+# on:
+#   push:
+#     branches:
+#       - 'master'
+#       - '*release'
+#       - 'helm-chart'
+on: [push, pull_request]
 
 env:
   GO_VERSION: "1.20"
