@@ -1,4 +1,4 @@
-name: release manifests
+name: release images
 
 # on:
 #   push:
@@ -12,24 +12,6 @@ env:
   GO_VERSION: "1.20"
 
 jobs:
-  release-chart:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.1.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
   release-images:
     runs-on: ubuntu-latest
     steps:
