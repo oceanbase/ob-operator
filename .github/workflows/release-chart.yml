@@ -1,12 +1,11 @@
 name: release helm charts
 
-# on:
-#   push:
-#     branches:
-#       - 'master'
-#       - '*release'
-#       - 'helm-chart'
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - '*release'
+    tags: 
+      - '*'
 
 env:
   GO_VERSION: "1.20"
@@ -30,3 +29,5 @@ jobs:
         uses: helm/chart-releaser-action@v1.1.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          mark_as_latest: false

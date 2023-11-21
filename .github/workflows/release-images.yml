@@ -6,7 +6,12 @@ name: release images
 #       - 'master'
 #       - '*release'
 #       - 'helm-chart'
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - '*release'
+    tags: 
+      - '*'
 
 env:
   GO_VERSION: "1.20"
