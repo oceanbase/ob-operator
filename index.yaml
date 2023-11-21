@@ -52,4 +52,14 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.2.1-sp.1-101010012023111012/oceanbase-cluster-4.2.1-sp.1-101010012023111012.tgz
     version: 4.2.1-sp.1-101010012023111012
+  - apiVersion: v2
+    appVersion: 4.2.1.1-101010012023111012
+    created: "2023-11-21T06:18:15.483726447Z"
+    description: A Helm chart for Kubernetes to deploy OceanBase cluster
+    digest: f23c30de17a3cfe2fbda191d01e2aa130e6645a8a6d892eea72e7d860db092ab
+    name: oceanbase-cluster
+    type: application
+    urls:
+    - https://github.com/PowerfooI/ob-operator/releases/download/oceanbase-cluster-4.2.1-sp.1-101010012023111012/oceanbase-cluster-4.2.1-sp.1-101010012023111012.tgz
+    version: 4.2.1-sp.1-101010012023111012
 generated: "2022-11-21T15:05:54.806129385Z"
