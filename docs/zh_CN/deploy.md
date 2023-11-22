@@ -1,6 +1,6 @@
 # ob-operator 部署
 
-[English version](../en_US/deploy.md)
+[English version](../en_US/deploy.md) is available.
 
 本文介绍 ob-operator 的部署方式。
 

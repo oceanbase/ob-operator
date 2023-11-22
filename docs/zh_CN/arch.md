@@ -1,6 +1,6 @@
 # 架构设计
 
-[English version](../en_US/arch.md)
+[English version](../en_US/arch.md) is available.
 
 本文不涉及 OceanBase 数据库本身的架构和数据库管理说明，如需了解请参见[官网文档](https://www.oceanbase.com/docs/common-oceanbase-database-cn-1000000000217922)。
 

@@ -1,6 +1,6 @@
 # How to contribute
 
-[中文版](../zh_CN/contribute.md)
+该文档也提供[中文版](../zh_CN/contribute.md)。
 
 ## Code structure
 

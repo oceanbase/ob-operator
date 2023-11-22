@@ -1,6 +1,6 @@
 # 如何参与开发
 
-[English version](../en_US/contribute.md)
+[English version](../en_US/contribute.md) is available.
 
 ## 代码目录结构
 
