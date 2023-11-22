@@ -37,7 +37,7 @@ jobs:
       
       - name: Create and push manifests w/ cache
         uses: docker/build-push-action@v2
-        if: ${{ vars.ENABLE_DOCKER_CACHE == "true" }}
+        if: ${{ vars.ENABLE_DOCKER_CACHE }}
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -49,7 +49,7 @@ jobs:
       
       - name: Create and push manifests w/o cache
         uses: docker/build-push-action@v2
-        if: ${{ vars.ENABLE_DOCKER_CACHE != "true" }}
+        if: ${{ !vars.ENABLE_DOCKER_CACHE }}
         with:
           context: .
           platforms: linux/amd64,linux/arm64
