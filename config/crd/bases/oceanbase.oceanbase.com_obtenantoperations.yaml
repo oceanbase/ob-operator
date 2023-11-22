@@ -54,6 +54,8 @@ spec:
           spec:
             description: OBTenantOperationSpec defines the desired state of OBTenantOperation
             properties:
+              auxillaryTenant:
+                type: string
               changePwd:
                 properties:
                   secretRef:
@@ -71,6 +73,15 @@ spec:
                 required:
                 - standbyTenant
                 type: object
+              replayUntil:
+                properties:
+                  scn:
+                    type: string
+                  timestamp:
+                    type: string
+                  unlimited:
+                    type: boolean
+                type: object
               switchover:
                 properties:
                   primaryTenant:
@@ -81,6 +92,8 @@ spec:
                 - primaryTenant
                 - standbyTenant
                 type: object
+              targetTenant:
+                type: string
               type:
                 type: string
             required:

@@ -955,6 +955,8 @@ spec:
                     type: string
                   compatibility_mode:
                     type: string
+                  compatible:
+                    type: string
                   create_time:
                     type: string
                   gmt_create:

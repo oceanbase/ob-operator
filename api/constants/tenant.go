@@ -23,6 +23,8 @@ const (
 	TenantOpSwitchover types.TenantOperationType = "SWITCHOVER"
 	TenantOpFailover   types.TenantOperationType = "FAILOVER"
 	TenantOpChangePwd  types.TenantOperationType = "CHANGE_PASSWORD"
+	TenantOpUpgrade    types.TenantOperationType = "UPGRADE"
+	TenantOpReplayLog  types.TenantOperationType = "REPLAY_LOG"
 )
 
 const (

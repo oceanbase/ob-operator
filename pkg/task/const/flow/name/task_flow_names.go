@@ -103,4 +103,6 @@ const (
 	ActivateStandbyTenantFlow    = "activate standby tenant"
 	SwitchoverTenantsFlow        = "switchover tenants"
 	RevertSwitchoverTenantsFlow  = "revert switchover tenants"
+	OpUpgradeTenant              = "upgrade tenant"
+	OpReplayLog                  = "replay log"
 )

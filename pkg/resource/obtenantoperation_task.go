@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package resource
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -312,4 +313,76 @@ func (m *ObTenantOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) err
 		tenant.Status = obj.Status
 		return m.Client.Status().Update(m.Ctx, tenant)
 	})
+}
+
+func (m *ObTenantOperationManager) UpgradeTenant() error {
+	targetTenant := m.Resource.Status.PrimaryTenant
+	con, err := m.getClusterSysClient(targetTenant.Spec.ClusterName)
+	if err != nil {
+		return err
+	}
+	sysTenants, err := con.ListTenantWithName("sys")
+	if err != nil {
+		return err
+	}
+	if len(sysTenants) != 1 {
+		return errors.New("# of tenant sys is not exactly 1")
+	}
+	sys := sysTenants[0]
+	targetTenantRecords, err := con.ListTenantWithName(targetTenant.Spec.TenantName)
+	if err != nil {
+		return err
+	}
+	if len(targetTenantRecords) != 1 {
+		return errors.New("# of tenant " + targetTenant.Spec.TenantName + " is not exactly 1")
+	}
+	if sys.Compatible >= "4.1.0.0" && targetTenantRecords[0].Compatible < sys.Compatible {
+		err := con.UpgradeTenantWithName(targetTenant.Spec.TenantName)
+		if err != nil {
+			return err
+		}
+	outer:
+		for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout/5+1; i++ {
+			time.Sleep(5 * time.Second)
+			params, err := con.ListParametersWithTenantID(targetTenantRecords[0].TenantID)
+			if err != nil {
+				return err
+			}
+			for _, p := range params {
+				if p.Name == "compatible" && p.Value == sys.Compatible {
+					break outer
+				}
+			}
+		}
+	} else if sys.Compatible < "4.1.0.0" {
+		return errors.New("The cluster is of version less than 4.1.0.0, which does not support tenant upgrade")
+	} else if targetTenantRecords[0].Compatible >= sys.Compatible {
+		return errors.New("The version of target tenant is greater than the cluster")
+	}
+	return nil
+}
+
+func (m *ObTenantOperationManager) ReplayLogOfStandby() error {
+	targetTenant := m.Resource.Status.PrimaryTenant
+	if targetTenant.Status.TenantRole != constants.TenantRoleStandby {
+		return errors.New("The target tenant is not standby")
+	}
+	con, err := m.getClusterSysClient(targetTenant.Spec.ClusterName)
+	if err != nil {
+		return err
+	}
+	replayUntil := m.Resource.Spec.ReplayUntil
+	if replayUntil == nil || replayUntil.Unlimited {
+		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, "UNLIMITED")
+	} else if replayUntil.Timestamp != nil {
+		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
+	} else if replayUntil.Scn != nil {
+		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
+	} else {
+		return errors.New("Replay until with limit must have a limit key, scn and timestamp are both nil now")
+	}
+	if err != nil {
+		return err
+	}
+	return nil
 }
