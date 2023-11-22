@@ -20,8 +20,6 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 - [ ] 支持 OceanBase 企业版
 - [ ] 支持 Oracle 模式的租户
 
-![01](docs/img/01.png)
-
 ## 环境依赖
 
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
@@ -33,6 +31,7 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 ## 支持的 OceanBase 版本
 
 支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+
 暂不支持 OceanBase v3.x 版本。
 
 ## 快速上手
@@ -110,7 +109,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ## 文档
 
-参考 [ob-operator 文档](docs/intro-cn.md)。
+参考 [ob-operator 文档](docs/zh_CN/intro.md)。
 
 ## 获取帮助
 
