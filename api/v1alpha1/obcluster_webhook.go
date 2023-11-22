@@ -85,17 +85,24 @@ func (r *OBCluster) validateMutation() error {
 	var allErrs field.ErrorList
 
 	// 0. Validate userSecrets
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
-		allErrs = append(allErrs, err)
+	if r.Spec.UserSecrets != nil {
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
+			allErrs = append(allErrs, err)
+		}
 	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
-		allErrs = append(allErrs, err)
-	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
-		allErrs = append(allErrs, err)
-	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
-		allErrs = append(allErrs, err)
+
+	// 1. Validate Topology
+	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
 	}
 
 	if len(allErrs) == 0 {

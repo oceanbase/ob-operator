@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"regexp"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -109,6 +110,10 @@ func (r *OBTenant) validateMutation() error {
 	}
 	var allErrs field.ErrorList
 
+	if r.Spec.UnitNumber <= 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("unitNum"), r.Spec.UnitNumber, "unitNum must be greater than 0"))
+	}
+
 	// 0. TenantRole must be one of PRIMARY and STANDBY
 	if r.Spec.TenantRole != constants.TenantRolePrimary && r.Spec.TenantRole != constants.TenantRoleStandby {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "TenantRole must be primary or standby"))
@@ -126,6 +131,12 @@ func (r *OBTenant) validateMutation() error {
 		} else {
 			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("clusterName"), err))
 		}
+	}
+
+	// 0. Check the existence of tenant with TenantName
+	tenantNamePattern := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	if !tenantNamePattern.MatchString(r.Spec.TenantName) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantName"), r.Spec.TenantName, "Invalid tenantName, which should start with character or underscore and contain character, digit and underscore only"))
 	}
 
 	// 0. Given credentials must exist
@@ -159,12 +170,25 @@ func (r *OBTenant) validateMutation() error {
 		}
 	}
 
-	// 1. Standby tenant must have a source
+	// 1. Standby tenant must have a source; source.tenant must be valid
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source"), r.Spec.Source, "Standby tenant must have non-nil source field"))
 		} else if r.Spec.Source.Restore == nil && r.Spec.Source.Tenant == nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "Standby must have a source option, but both restore and tenantRef are nil now"))
+		} else if r.Spec.Source.Tenant != nil {
+			tenant := &OBTenant{}
+			err = tenantClt.Get(context.TODO(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      *r.Spec.Source.Tenant,
+			}, tenant)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+				} else {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
+				}
+			}
 		}
 	}
 
