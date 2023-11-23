@@ -47,11 +47,11 @@ type ResourceManager interface {
 ResourceManager 是典型的状态机模型，其调度资源的大致流程为：
 1. 如果是新的资源，初始化其状态字段 `status.status`
 2. 根据资源状态获取响应的任务流(`TaskFlow`)
-  a. 如果获取到的任务流非空，则将其存储在资源的 `status.operationContext` 当中，以较短的间隔轮询任务状态
-    ⅰ. 如果有任务待执行，则将任务提交到任务管理器，并将任务置于 `Pending` 状态并轮询任务状态
-    ⅱ. 如果任务成功，则执行下一个任务或者将资源置为下一个状态
-    ⅲ. 如果任务失败，则选择重试或者将资源置为错误状态
-  b. 如果获取到的任务流为空，表示当前资源正常运行没有变化，则以较长的间隔让该资源重新入队
+  * 如果获取到的任务流非空，则将其存储在资源的 `status.operationContext` 当中，以较短的间隔轮询任务状态
+    * 如果有任务待执行，则将任务提交到任务管理器，并将任务置于 `Pending` 状态并轮询任务状态
+    * 如果任务成功，则执行下一个任务或者将资源置为下一个状态
+    * 如果任务失败，则选择重试或者将资源置为错误状态
+  * 如果获取到的任务流为空，表示当前资源正常运行没有变化，则以较长的间隔让该资源重新入队
 3. 处理和响应资源的删除信息
 4. 更新资源状态（`status.status` 和 `status.operationContext` 等字段都在此处更新）
 5. 将调解结果返回给 ControllerManager，主要是返回重新入队间隔或者错误信息
@@ -73,7 +73,8 @@ Kubernetes 在内部采用控制循环和消息队列的方式来实现事件的
 
 任务流中的任务由资源管理器 `ResourceManager` 提交给全局的任务管理器 `TaskManager` 来执行，资源、资源管理器和任务管理器的大致关系和相互作用流程如下面的时序图所示：
 
-```mermaid
+<main>
+  <pre class="mermaid">
 sequenceDiagram
 	participant r as Resource
 	participant c as Controller (ResourceManager)
@@ -101,4 +102,8 @@ sequenceDiagram
 		end
 	end
 	t->>t: Clean maps
-```
+  </pre>
+  <script type="module">
+    import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  </script>
+</main>
