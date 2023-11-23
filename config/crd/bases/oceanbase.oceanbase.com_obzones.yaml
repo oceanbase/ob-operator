@@ -21,6 +21,12 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.topology.zone
+      name: ZoneName
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
