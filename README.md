@@ -1,5 +1,7 @@
 # New Release
-We have the latest 2.0.0 version released, please refer to branch [2.0.0_release](https://github.com/oceanbase/ob-operator/tree/2.0.0_release)
+We have the latest 2.1.0 version released, please refer to branch [2.1.0_release](https://github.com/oceanbase/ob-operator/tree/2.1.0_release).
+
+Notes: ob-operator 1.x has been deprecated and will not be supported in the future. The following content is of version 1.x and is out of date.
 
 # What is ob-operator
 The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase clusters on Kubernetes.
