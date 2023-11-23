@@ -16,14 +16,14 @@ kubectl apply -f deploy/cert-manager.yaml
 ### Using helm
 [Helm](https://github.com/helm/helm) is a package management tool for Kubernetes, please refer to the helm documentation to install the helm client.
 
-```
+```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace  --version=2.0.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
 ```
 
 ### Using configuration file
 The configuration files are located under deploy directory, using the following commands to deploy ob-operator.
-```
+```shell
 # Deploy ob-operator
 kubectl apply -f deploy/operator.yaml
 ```
@@ -33,12 +33,12 @@ kubectl apply -f deploy/operator.yaml
 `deploy/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources, storages etc. You can configure your own OceanBase based on this file.
 
 ### Deploy OceanBase
-Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
-```
+Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`.
+```shell
 kubectl create namespace oceanbase
 ```
 Create secret for users, secret name must be the same as these configed in deploy/obcluster.yaml under spec.userSecrets
-```
+```shell
 # create secret to hold password for user root
 kubectl create secret -n oceanbase generic test-user-root --from-literal=password='******'
 
@@ -51,12 +51,12 @@ kubectl create secret -n oceanbase generic test-user-monitor --from-literal=pass
 # create secret to hold password for user operator, operator is the admin user for obproxy to maintain obcluster
 kubectl create secret -n oceanbase generic test-user-operator --from-literal=password='******'
 ```
-Using the following command to deploy OceanBase Cluster
-```
+Using the following command to deploy OceanBase Cluster.
+```shell
 kubectl apply -f deploy/obcluster.yaml
 ```
-It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished
-```
+It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished.
+```shell
 kubectl get obclusters test -n oceanbase -o yaml
 ```
 wait until the status of obclster resource turns into running.
