@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -114,6 +115,12 @@ func (r *OBTenant) validateMutation() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("unitNum"), r.Spec.UnitNumber, "unitNum must be greater than 0"))
 	}
 
+	// 0. Check the existence of tenant with TenantName
+	tenantNamePattern := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	if !tenantNamePattern.MatchString(r.Spec.TenantName) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantName"), r.Spec.TenantName, "Invalid tenantName, which should start with character or underscore and contain character, digit and underscore only"))
+	}
+
 	// 0. TenantRole must be one of PRIMARY and STANDBY
 	if r.Spec.TenantRole != constants.TenantRolePrimary && r.Spec.TenantRole != constants.TenantRoleStandby {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "TenantRole must be primary or standby"))
@@ -133,10 +140,19 @@ func (r *OBTenant) validateMutation() error {
 		}
 	}
 
-	// 0. Check the existence of tenant with TenantName
-	tenantNamePattern := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
-	if !tenantNamePattern.MatchString(r.Spec.TenantName) {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantName"), r.Spec.TenantName, "Invalid tenantName, which should start with character or underscore and contain character, digit and underscore only"))
+	// 0. Check whether zones in tenant.spec.pools exist or not
+	for i, pool := range r.Spec.Pools {
+		exist := false
+		for _, zone := range cluster.Spec.Topology {
+			if pool.Zone == zone.Zone {
+				exist = true
+				break
+			}
+		}
+		if !exist {
+			msg := fmt.Sprintf("Zone %s does not exist in cluster %s", r.Spec.Pools[i].Zone, cluster.Spec.ClusterName)
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("pools").Child(fmt.Sprintf("%d", i)), r.Spec.Pools[i], msg))
+		}
 	}
 
 	// 0. Given credentials must exist

@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/kubernetes/pkg/apis/storage"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -103,6 +104,36 @@ func (r *OBCluster) validateMutation() error {
 	// 1. Validate Topology
 	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
+	}
+
+	// 2. Validate storageClasses
+	storageClassMapping := make(map[string]bool)
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass] = true
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass] = true
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass] = true
+
+	for key := range storageClassMapping {
+		err := clt.Get(context.TODO(), types.NamespacedName{
+			Name: key,
+		}, &storage.StorageClass{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), key, fmt.Sprintf("storageClass %s not found", key)))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), err))
+			}
+		}
+	}
+
+	// 3. Validate storage sizes
+	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64()*3.8 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size, "Size of dataStorage should not be less than 4x of memory size"))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64()*3.8 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size, "Size of redoLogStorage should not be less than 4x of memory size"))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.AsApproximateFloat64() < r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64()*1.9 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size, "Size of logStorage should not be less than 2x of memory size"))
 	}
 
 	if len(allErrs) == 0 {
