@@ -12,58 +12,75 @@ Some developers may have trouble accessing images in `quay.io/jetstack` registry
 kubectl apply -f deploy/cert-manager.yaml
 ```
 
+The mirrored manifests of cert-manager is of version `12.0.4`. If there is any warning thrown out when applying `deploy/cert-manager.yaml`, please apply another compatible version.
+
 ## Deploy ob-operator
 ### Using helm
 [Helm](https://github.com/helm/helm) is a package management tool for Kubernetes, please refer to the helm documentation to install the helm client.
 
-```
+```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace  --version=2.0.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
 ```
 
 ### Using configuration file
 The configuration files are located under deploy directory, using the following commands to deploy ob-operator.
-```
+```shell
 # Deploy ob-operator
 kubectl apply -f deploy/operator.yaml
 ```
 
 ## Deploy OceanBase cluster
 ### Customize configuration file
-`deploy/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources, storages etc. You can configure your own OceanBase based on this file.
+`example/obcluster/obcluster.yaml` defines an OceanBase cluster, including deployment topology, resources, storages etc. You can configure your own OceanBase based on this file.
 
-### Deploy OceanBase
-Create namespace if needed, namespace should match the one in configuration file `deploy/obcluster.yaml`
-```
+### Deploy OceanBase cluster
+Create namespace if needed, namespace should match the one in configuration file `example/obcluster/obcluster.yaml`.
+
+```shell
 kubectl create namespace oceanbase
 ```
-Create secret for users, secret name must be the same as these configed in deploy/obcluster.yaml under spec.userSecrets
-```
+
+Create secret for users, secret name must be the same as these configured in `example/obcluster/obcluster.yaml` under spec.userSecrets
+
+```shell
 # create secret to hold password for user root
-kubectl create secret -n oceanbase generic test-user-root --from-literal=password='******'
+kubectl create secret -n oceanbase generic root-password --from-literal=password='******'
 
 # create secret to hold password for user proxyro, proxyro is a readonly user for obproxy to query meta info
-kubectl create secret -n oceanbase generic test-user-proxyro --from-literal=password='******'
+kubectl create secret -n oceanbase generic proxyro-password --from-literal=password='******'
 
 # create secret to hold password for user monitor, monitor is a readonly user for obagent to query metric data
-kubectl create secret -n oceanbase generic test-user-monitor --from-literal=password='******'
+kubectl create secret -n oceanbase generic monitor-password --from-literal=password='******'
 
 # create secret to hold password for user operator, operator is the admin user for obproxy to maintain obcluster
-kubectl create secret -n oceanbase generic test-user-operator --from-literal=password='******'
+kubectl create secret -n oceanbase generic operator-password --from-literal=password='******'
 ```
-Using the following command to deploy OceanBase Cluster
+
+Using the following command to deploy OceanBase Cluster.
+
+```shell
+kubectl apply -f example/obcluster/obcluster.yaml
 ```
-kubectl apply -f deploy/obcluster.yaml
-```
-It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished
-```
+
+It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished. It may cost 2~3 minutes to bootstrap the cluster in usual.
+
+```shell
+# use kubectl get
 kubectl get obclusters test -n oceanbase -o yaml
+# or use kubectl wait
+kubectl wait -n oceanbase obclusters test --for=jsonpath='{.status.status}'=running --timeout=10m
 ```
 wait until the status of obclster resource turns into running.
 
 
 ### Connect to OceanBase Cluster
-After successfully deployed OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip.
+After successfully deploying OceanBase cluster, you can connect to OceanBase cluster via any observer pod's ip.
+
+```shell
+# connect the root user of sys tenant
+mysql -h{POD_IP} -P2881 -uroot -p${ROOT_PWD} oceanbase -A -c
+```
 
 # Contributing
 Contributions are warmly welcomed and greatly appreciated. Here are a few ways you can contribute:
