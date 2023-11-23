@@ -42,3 +42,8 @@
 │   └── ...
 └── README.md
 ```
+
+## 参与方式
+
+- [提出 Issue](https://github.com/oceanbase/ob-operator/issues)
+- [发起 Pull request](https://github.com/oceanbase/ob-operator/pulls)
