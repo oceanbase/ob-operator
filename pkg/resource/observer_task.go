@@ -582,7 +582,6 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		observer, _ := operationManager.GetServer(observerInfo)
 		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
-				m.Logger.Info("Observer active")
 				active = true
 				break
 			}
@@ -592,10 +591,10 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		time.Sleep(time.Second)
 	}
 	if !active {
-		m.Logger.Info("Wait observer active timeout")
+		m.Logger.Info("Wait for observer to become active, timeout")
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("observer active", "observer", observerInfo)
+	m.Logger.Info("observer becomes active", "observer", observerInfo)
 	return nil
 }
 

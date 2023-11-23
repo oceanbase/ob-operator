@@ -139,7 +139,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
 		m.OBParameter.Status.Status = parameterstatus.PendingOB
-		m.Logger.Info("obcluster not in running status, skip compare parameters")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("obcluster not in running status, skip compare parameters")
 	} else {
 		parameterInfoList, err := operationManager.GetParameter(m.OBParameter.Spec.Parameter.Name, nil)
 		if err != nil {

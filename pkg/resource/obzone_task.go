@@ -149,7 +149,7 @@ func (m *OBZoneManager) CreateOBServer() error {
 }
 
 func (m *OBZoneManager) DeleteOBServer() error {
-	m.Logger.Info("delete observers")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("delete observers")
 	observerList, err := m.listOBServers()
 	if err != nil {
 		m.Logger.Error(err, "List observers failed")
