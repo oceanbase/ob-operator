@@ -134,8 +134,6 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		operationContext := m.Resource.Status.OperationContext
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
-		case "":
-			fallthrough
 		case strategy.StartOver:
 			m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
 			m.Resource.Status.OperationContext.Idx = 0
@@ -145,6 +143,8 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
+		default:
+			m.Resource.Status.OperationContext = nil
 		}
 	}
 }
@@ -229,11 +229,8 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if taskFlow.OperationContext.OnFailure.Strategy == "" {
-		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
-		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
-			taskFlow.OperationContext.OnFailure.NextTryStatus = string(status)
-		}
+	if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+		taskFlow.OperationContext.OnFailure.NextTryStatus = string(constants.TenantOpFailed)
 	}
 	return taskFlow, nil
 }

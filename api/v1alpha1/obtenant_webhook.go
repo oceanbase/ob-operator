@@ -138,20 +138,20 @@ func (r *OBTenant) validateMutation() error {
 		} else {
 			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("clusterName"), err))
 		}
-	}
-
-	// 0. Check whether zones in tenant.spec.pools exist or not
-	for i, pool := range r.Spec.Pools {
-		exist := false
-		for _, zone := range cluster.Spec.Topology {
-			if pool.Zone == zone.Zone {
-				exist = true
-				break
+	} else {
+		// 0. Check whether zones in tenant.spec.pools exist or not
+		for i, pool := range r.Spec.Pools {
+			exist := false
+			for _, zone := range cluster.Spec.Topology {
+				if pool.Zone == zone.Zone {
+					exist = true
+					break
+				}
 			}
-		}
-		if !exist {
-			msg := fmt.Sprintf("Zone %s does not exist in cluster %s", r.Spec.Pools[i].Zone, cluster.Spec.ClusterName)
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("pools").Child(fmt.Sprintf("%d", i)), r.Spec.Pools[i], msg))
+			if !exist {
+				msg := fmt.Sprintf("Zone %s does not exist in cluster %s", pool.Zone, cluster.Spec.ClusterName)
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("pools").Child(fmt.Sprintf("%d", i)), pool.Zone, msg))
+			}
 		}
 	}
 
