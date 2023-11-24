@@ -162,18 +162,22 @@ func (m *OBTenantManager) UpgradeTenantIfNeeded() error {
 	if err != nil {
 		return err
 	}
-	sys, err := con.SelectSysTenant()
+	var sysCompatible string
+	var restoredCompatible string
+
+	compatibles, err := con.SelectCompatibleOfTenants()
 	if err != nil {
 		return err
 	}
-	restoredTenant, err := con.ListTenantWithName(m.OBTenant.Spec.TenantName)
-	if err != nil {
-		return err
+	for _, p := range compatibles {
+		if p.TenantID == 1 {
+			sysCompatible = p.Value
+		}
+		if p.TenantID == int64(m.OBTenant.Status.TenantRecordInfo.TenantID) {
+			restoredCompatible = p.Value
+		}
 	}
-	if len(restoredTenant) != 1 {
-		return errors.New("# of tenant " + m.OBTenant.Spec.TenantName + " is not exactly 1")
-	}
-	if sys.Compatible >= "4.1.0.0" && restoredTenant[0].Compatible < sys.Compatible {
+	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
 		err := con.UpgradeTenantWithName(m.OBTenant.Spec.TenantName)
 		if err != nil {
 			return err
@@ -181,12 +185,12 @@ func (m *OBTenantManager) UpgradeTenantIfNeeded() error {
 	outer:
 		for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout/5+1; i++ {
 			time.Sleep(5 * time.Second)
-			params, err := con.ListParametersWithTenantID(restoredTenant[0].TenantID)
+			params, err := con.ListParametersWithTenantID(int64(m.OBTenant.Status.TenantRecordInfo.TenantID))
 			if err != nil {
 				return err
 			}
 			for _, p := range params {
-				if p.Name == "compatible" && p.Value == sys.Compatible {
+				if p.Name == "compatible" && p.Value == sysCompatible {
 					break outer
 				}
 			}

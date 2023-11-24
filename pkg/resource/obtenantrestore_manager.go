@@ -99,6 +99,13 @@ func (m ObTenantRestoreManager) HandleFailure() {
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
+		default:
+			m.Resource.Status.OperationContext = nil
+			if failureRule.NextTryStatus == "" {
+				m.Resource.Status.Status = constants.RestoreJobFailed
+			} else {
+				m.Resource.Status.Status = apitypes.RestoreJobStatus(failureRule.NextTryStatus)
+			}
 		}
 	}
 }

@@ -145,6 +145,11 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		case strategy.Pause:
 		default:
 			m.Resource.Status.OperationContext = nil
+			if failureRule.NextTryStatus == "" {
+				m.Resource.Status.Status = constants.TenantOpFailed
+			} else {
+				m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
+			}
 		}
 	}
 }
@@ -155,9 +160,6 @@ func (m *ObTenantOperationManager) FinishTask() {
 }
 
 func (m *ObTenantOperationManager) UpdateStatus() error {
-	if m.Resource.Status.Status == apitypes.TenantOperationStatus("Failed") {
-		return nil
-	}
 	return m.retryUpdateStatus()
 }
 

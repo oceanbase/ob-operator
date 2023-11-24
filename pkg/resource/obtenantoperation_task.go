@@ -321,18 +321,23 @@ func (m *ObTenantOperationManager) UpgradeTenant() error {
 	if err != nil {
 		return err
 	}
-	sys, err := con.SelectSysTenant()
+	var sysCompatible string
+	var restoredCompatible string
+
+	compatibles, err := con.SelectCompatibleOfTenants()
 	if err != nil {
 		return err
 	}
-	targetTenantRecords, err := con.ListTenantWithName(targetTenant.Spec.TenantName)
-	if err != nil {
-		return err
+	for _, p := range compatibles {
+		if p.TenantID == 1 {
+			sysCompatible = p.Value
+		}
+		if p.TenantID == int64(targetTenant.Status.TenantRecordInfo.TenantID) {
+			restoredCompatible = p.Value
+		}
 	}
-	if len(targetTenantRecords) != 1 {
-		return errors.New("# of tenant " + targetTenant.Spec.TenantName + " is not exactly 1")
-	}
-	if sys.Compatible >= "4.1.0.0" && targetTenantRecords[0].Compatible < sys.Compatible {
+
+	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
 		err := con.UpgradeTenantWithName(targetTenant.Spec.TenantName)
 		if err != nil {
 			return err
@@ -340,19 +345,19 @@ func (m *ObTenantOperationManager) UpgradeTenant() error {
 	outer:
 		for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout/5+1; i++ {
 			time.Sleep(5 * time.Second)
-			params, err := con.ListParametersWithTenantID(targetTenantRecords[0].TenantID)
+			params, err := con.ListParametersWithTenantID(int64(targetTenant.Status.TenantRecordInfo.TenantID))
 			if err != nil {
 				return err
 			}
 			for _, p := range params {
-				if p.Name == "compatible" && p.Value == sys.Compatible {
+				if p.Name == "compatible" && p.Value == sysCompatible {
 					break outer
 				}
 			}
 		}
-	} else if sys.Compatible < "4.1.0.0" {
+	} else if sysCompatible < "4.1.0.0" {
 		return errors.New("The cluster is of version less than 4.1.0.0, which does not support tenant upgrade")
-	} else if targetTenantRecords[0].Compatible >= sys.Compatible {
+	} else if restoredCompatible >= sysCompatible {
 		return errors.New("The version of target tenant is greater than the cluster")
 	}
 	return nil

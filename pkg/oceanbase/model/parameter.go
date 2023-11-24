@@ -20,4 +20,5 @@ type Parameter struct {
 	Value     string `json:"value" db:"value"`
 	Scope     string `json:"scope" db:"scope"`
 	EditLevel string `json:"edit_level" db:"edit_level"`
+	TenantID  int64  `json:"tenant_id" db:"tenant_id"`
 }
