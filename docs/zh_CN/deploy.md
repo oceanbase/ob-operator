@@ -24,11 +24,11 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 ## 2.2 使用配置文件部署
 
 * Stable
-```
+```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/deploy/operator.yaml
 ```
 * Development
-```
+```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
 ```
 一般建议使用 Stable 版本的配置文件，如果您想使用开发中的版本，可以选择使用 Development 的配置文件。
