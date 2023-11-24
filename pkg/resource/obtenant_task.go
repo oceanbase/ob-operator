@@ -1083,7 +1083,7 @@ func (m *OBTenantManager) deleteUnitConfig() error {
 
 func (m *OBTenantManager) CreateUserWithCredentialSecrets() error {
 	if m.OBTenant.Spec.TenantRole == constants.TenantRoleStandby {
-		// standby tenant can not need to create user
+		// standby tenant can not create users
 		return nil
 	}
 	err := m.createUserWithCredentials()

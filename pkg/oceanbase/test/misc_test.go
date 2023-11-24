@@ -139,6 +139,7 @@ var _ = Describe("Test Miscellaneous Operation", Label("misc"), func() {
 		Expect("4.2.0.0" <= "4.2.1.0").To(BeTrue())
 		Expect("4.2.1.1" >= "4.2.1.0").To(BeTrue())
 		Expect("4.2.1.1" > "4.2.1.0").To(BeTrue())
+		Expect("" < "4.1.0.0").To(BeTrue())
 	})
 
 	It("OSS path", Label("pattern"), func() {

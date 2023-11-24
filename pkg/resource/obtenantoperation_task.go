@@ -321,14 +321,10 @@ func (m *ObTenantOperationManager) UpgradeTenant() error {
 	if err != nil {
 		return err
 	}
-	sysTenants, err := con.ListTenantWithName("sys")
+	sys, err := con.SelectSysTenant()
 	if err != nil {
 		return err
 	}
-	if len(sysTenants) != 1 {
-		return errors.New("# of tenant sys is not exactly 1")
-	}
-	sys := sysTenants[0]
 	targetTenantRecords, err := con.ListTenantWithName(targetTenant.Spec.TenantName)
 	if err != nil {
 		return err

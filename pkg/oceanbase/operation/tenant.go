@@ -35,6 +35,18 @@ func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*mo
 	return tenants, nil
 }
 
+func (m *OceanbaseOperationManager) SelectSysTenant() (*model.OBTenant, error) {
+	tenants := make([]*model.OBTenant, 0)
+	err := m.QueryList(&tenants, sql.SelectSysTenant)
+	if err != nil {
+		return nil, errors.Wrap(err, "Select sys tenant")
+	}
+	if len(tenants) == 0 {
+		return nil, errors.New("Empty results when selecting sys tenant")
+	}
+	return tenants[0], nil
+}
+
 func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
 	units := make([]*model.OBUnit, 0)
 	err := m.QueryList(&units, sql.QueryUnitsWithTenantId, tenantID)
