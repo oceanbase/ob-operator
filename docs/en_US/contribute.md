@@ -12,33 +12,34 @@
 ├── LICENSE
 ├── Makefile
 ├── PROJECT
-├── api
-│   ├── constants
-│   ├── types
-│   └── v1alpha1
-├── charts
-│   ├── ob-operator
-│   └── oceanbase-cluster
-├── cmd
-│   └── main.go
-├── config/
-├── deploy/
-├── distribution
-│   ├── obagent
-│   ├── ob-configserver
-│   ├── obproxy
-│   └── oceanbase
-├── doc/
-├── example/
-├── hack/
+├── api # CRD definition and Webhook implementation
+│   ├── constants
+│   ├── types
+│   └── v1alpha1
+├── charts # Helm chart implementation
+│   ├── ob-operator
+│   └── oceanbase-cluster
+├── cmd # Command directory, program entry
+│   └── main.go
+├── config/ # kustomize configuration directory
+├── deploy/ # YAML files required for ob-operator deployment
+├── distribution # Kubernetes-related component build files
+├── doc/ # Documentation directory
+├── example/ # Example configuration files
+├── hack/ 
 ├── make/
 ├── pkg
-│   ├── const
-│   ├── controller
-│   ├── database
-│   ├── oceanbase
-│   ├── resource
-│   ├── task
-│   └── ...
+│   ├── const
+│   ├── controller # Controller implementations
+│   ├── database # Database connection pool
+│   ├── oceanbase # OceanBase SDK
+│   ├── resource # Resource manager interfaces and implementations
+│   ├── task # Task flow and task manager
+│   └── ...
 └── README.md
 ```
+
+## Contribution
+
+- [Submit an issue](https://github.com/oceanbase/ob-operator/issues)
+- [Create a Pull request](https://github.com/oceanbase/ob-operator/pulls)

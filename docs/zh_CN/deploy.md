@@ -31,18 +31,19 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_r
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
 ```
+
 一般建议使用 Stable 版本的配置文件，如果您想使用开发中的版本，可以选择使用 Development 的配置文件。
 
 
 ## 3. 查看部署结果
 
-部署成功之后可以查看 CRD 的定义。
+部署成功之后可以查看 CRD 的定义：
 
 ```shell
 kubectl get crds
 ```
 
-得到如下输出表示部署成功。
+得到如下输出表示部署成功：
 
 ```shell
 obparameters.oceanbase.oceanbase.com             2023-11-12T08:06:58Z
@@ -56,13 +57,13 @@ obclusters.oceanbase.oceanbase.com               2023-11-12T08:06:58Z
 obtenantbackuppolicies.oceanbase.oceanbase.com   2023-11-12T08:06:58Z
 ```
 
-通过如下命令确认 ob-operator 部署成功。
+通过如下命令确认 ob-operator 是否部署成功：
 
 ```shell
 kubectl get pods -n oceanbase-system
 ```
 
-返回结果如下，当看到所有容器都 ready 时并且 status 为 Running， 则表示部署成功。
+返回结果示例如下，当看到所有容器都 ready 时并且 status 为 Running， 则表示部署成功。
 
 ```shell
 NAME                                            READY   STATUS    RESTARTS   AGE

@@ -4,7 +4,7 @@
 
 本文不涉及 OceanBase 数据库本身的架构和数据库管理说明，如需了解请参见[官网文档](https://www.oceanbase.com/docs/common-oceanbase-database-cn-1000000000217922)。
 
-ob-operator 遵循 Kubernetes 的 [Operator 拓展范式](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)，聚焦于自定义资源及其控制逻辑。ob-operator 使用 Operator 开发框架 [kubebuilder@v3](https://book.kubebuilder.io/introduction) 为基础进行开发，所以底层架构与 [kubebuilder 的架构](https://book.kubebuilder.io/architecture)相近。通过向 Kubernetes 控制平面全局注册 Controller Manager，下辖若干控制器和 Webhook，来对自定义的资源进行控制。
+ob-operator 遵循 Kubernetes 的 [Operator 拓展范式](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)，聚焦于自定义资源及其控制逻辑。ob-operator 使用 Operator 开发框架 [kubebuilder@v3](https://book.kubebuilder.io/introduction) 为基础进行开发，所以底层架构与 [kubebuilder 的架构](https://book.kubebuilder.io/architecture)相近。通过向上在 Kubernetes 控制平面全局注册 Controller Manager，向下管理若干控制器和 Webhook，来对自定义的资源进行控制。
 
 * 控制器通过监听特定资源的特定事件对事件做出响应，依据实现好的逻辑将资源的实际状态（Status）和期望状态（Spec）对齐；
 * Webhook 主要有设定默认值和进行资源规约校验两部分功能，分别由 Defaulter 和 Validator 两个模块完成。资源规约校验过程主要防止出现 ob-operator 预期之外的资源被安装到集群当中，无法被正常调度。例如创建租户时如果指定的集群并不存在，则会在 apply 资源时就把错误抛出，而不是调度到一半才用事件或者日志的方式告知用户。
@@ -62,12 +62,12 @@ Kubernetes 在内部采用控制循环和消息队列的方式来实现事件的
 
 为了解决这个问题，ob-operator 采用了任务流和全局任务管理器的方式来解决长调度问题。任务流由任务列表，当前执行的任务索引和任务状态信息组成；全局任务管理器则包含了两个 Map 结构：
 
-* 工作集映射：`TaskID -> chan Result`，执行中或已结束但未读取结果的任务集合
-* 结果缓存映射：`TaskID -> Result`，已结束（成功、失败）任务的结果集合
+* 工作集映射：`TaskID -> chan Result`，执行中或已结束但未读取结果的任务集合；
+* 结果缓存映射：`TaskID -> Result`，已结束（成功、失败）任务的结果集合。
 
 控制循环、资源管理器、任务管理器的关系如下图所示。
 
-![ob-operator 资源调度过程](../img/ob-operator-arch.png)
+![控制循环、资源管理器、任务管理器的关系](../img/ob-operator-arch.png)
 
 ## 资源与任务管理器的交互
 

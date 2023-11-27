@@ -20,6 +20,14 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 - [ ] 支持 OceanBase 企业版
 - [ ] 支持 Oracle 模式的租户
 
+## 项目架构
+
+ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、全局的任务管理器实例以及解决长调度的任务流机制完成对 OceanBase 集群及相关应用的控制和管理。ob-operator 的架构大致如下图所示：
+
+![ob-operator 架构设计](./docs/img/ob-operator-arch.png)
+
+有关架构细节可参见[架构设计文档](./docs/zh_CN/arch.md)。
+
 ## 环境依赖
 
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
@@ -36,15 +44,15 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 快速上手
 
-本文以部署 ob-operator、部署 OceanBase 集群为例指导您如何快速使用 ob-operator 进行 OceanBase 的管理。
+这部分以部署 ob-operator、部署 OceanBase 集群为例指导您如何快速使用 ob-operator 进行 OceanBase 的管理。
 
 ### 前提条件
 
-开始之前请准备一套可用的 Kubernetes 集群，并且至少可以分配 2C, 10G 内存以及 100G 存储空间，ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，OceanBase 的存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装。
+开始之前请准备一套可用的 Kubernetes 集群，并且至少可以分配 2C, 10G 内存以及 100G 存储空间，ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装。
 
 ### 部署 ob-operator
 
-通过以下命令即可在 K8s 集群中部署 ob-operator
+通过以下命令即可在 K8s 集群中部署 ob-operator：
 
 * Stable
 ```shell
@@ -62,7 +70,8 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
 ```
 
-通过以下命令验证 ob-operator 部署成功
+通过以下命令验证 ob-operator 部署成功：
+
 ```shell
 kubectl get pod -n oceanbase-system
 
@@ -73,7 +82,8 @@ oceanbase-controller-manager-86cfc8f7bf-4hfnj   2/2     Running   0          1m
 
 ### 部署 OceanBase 集群
 
-创建 OceanBase 集群之前，需要先创建好若干 secret 来存储 OceanBase 中的特定用户
+创建 OceanBase 集群之前，需要先创建好若干 secret 来存储 OceanBase 中的特定用户的密码：
+
 ```shell
 kubectl create secret generic root-password --from-literal=password='root_password'
 kubectl create secret generic proxyro-password --from-literal=password='proxyro_password'
@@ -81,13 +91,14 @@ kubectl create secret generic monitor-password --from-literal=password='monitor_
 kubectl create secret generic operator-password --from-literal=password='operator_password'
 ```
 
-通过以下命令即可在 K8s 集群中部署 OceanBase
+通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/example/quickstart/obcluster.yaml
 ```
 
-一般创建集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建成功
+一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
+
 ```shell
 kubectl get obclusters.oceanbase.oceanbase.com test
 
@@ -96,13 +107,16 @@ NAME   STATUS    AGE
 test   running   6m2s
 ```
 
-连接集群
-通过以下命令查找 observer 的 POD IP， POD 名的规则是 {cluster_name}-{cluster_id}-{zone}-uuid
+### 连接集群
+
+通过以下命令查找 observer 的 POD IP，POD 名的规则是 {cluster_name}-{cluster_id}-{zone}-uuid：
+
 ```shell
 kubectl get pods  -o wide
 ```
 
-通过以下命令连接
+通过以下命令连接：
+
 ```shell
 mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
