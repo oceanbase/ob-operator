@@ -194,8 +194,13 @@ func (r *OBTenantOperation) validateMutation() error {
 	case constants.TenantOpUpgrade:
 		if r.Spec.TargetTenant == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("targetTenant"), "name of targetTenant is required"))
-		} else if _, err := r.checkTenantCRExistence(*r.Spec.TargetTenant); err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Failed to get target tenant of given name"))
+		} else {
+			tenant, err := r.checkTenantCRExistence(*r.Spec.TargetTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Failed to get target tenant of given name"))
+			} else if tenant.Status.TenantRole != constants.TenantRoleStandby {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Standby tenant cannot be upgraded, please activate it first"))
+			}
 		}
 	case constants.TenantOpReplayLog:
 		untilSpec := r.Spec.ReplayUntil

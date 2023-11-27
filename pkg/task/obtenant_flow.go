@@ -146,7 +146,6 @@ func RestoreTenant() *TaskFlow {
 				taskname.CreateRestoreJobCR,
 				taskname.WatchRestoreJobToFinish,
 				taskname.MaintainWhiteList,
-				taskname.UpgradeTenantIfNeeded,
 				taskname.CreateUsersByCredentials,
 			},
 			TargetStatus: tenantstatus.Running,
