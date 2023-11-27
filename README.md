@@ -127,7 +127,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ## Documents
 
-Please refer to the [ob-operator documentation](docs/zh_CN/intro.md) for more information.
+Please refer to the [ob-operator documentation](docs/en_US/intro.md) for more information.
 
 ## Getting Help
 
