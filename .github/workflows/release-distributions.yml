@@ -140,9 +140,9 @@ jobs:
       - name: Build and push obconfigserver w/o cache
         uses: docker/build-push-action@v2
         with:
-          context: ./distribution/obconfigserver
+          context: ./distribution/ob-configserver
           platforms: linux/amd64,linux/arm64
-          file: ./distribution/obconfigserver/Dockerfile
+          file: ./distribution/ob-configserver/Dockerfile
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/obconfigserver-cloud-native:${{ steps.set_version_vars.outputs.version }}
           build-args: |
