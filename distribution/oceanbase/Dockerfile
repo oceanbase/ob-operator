@@ -1,10 +1,11 @@
-FROM --platform=${TARGETPLATFORM} golang:1.20.4 as builder
+FROM golang:1.20.4 as builder
 WORKDIR /workspace
 COPY ./oceanbase-helper .
 RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux GOPROXY=https://goproxy.io,direct go build -a -o oceanbase-helper main.go
 
-FROM --platform=${TARGETPLATFORM} openanolis/anolisos:8.8
+FROM openanolis/anolisos:8.8
 ARG VERSION
+ARG TARGETPLATFORM
 RUN echo TARGET_PLATFORM is ${TARGETPLATFORM}
 WORKDIR /home/admin/oceanbase
 RUN mkdir -p /home/admin/oceanbase/bin
