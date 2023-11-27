@@ -15,7 +15,6 @@ jobs:
   release-observer:
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref_name, 'observer-') }}
-    needs: setup-docker
     steps:
       - name: Log in to Docker hub
         uses: docker/login-action@v2
@@ -50,7 +49,6 @@ jobs:
   release-obproxy:
     runs-on: ubuntu-latest
     if: ${{ startsWith(github.ref_name, 'obproxy-') }}
-    needs: setup-docker
     steps:
       - name: Log in to Docker hub
         uses: docker/login-action@v2
