@@ -1,4 +1,4 @@
-name: release images
+name: release distributions
 
 on: 
   push:
