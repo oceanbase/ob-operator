@@ -4,7 +4,7 @@ clusterId: 1
 obAgentVersion: 4.2.1-100000092023101717
 
 annotations: 
-  # "oceanbase.oceanbase.com/separateVolumes": "true"
+  # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
 
 storageClass: local-path
 

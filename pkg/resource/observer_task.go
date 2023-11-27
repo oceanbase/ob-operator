@@ -156,7 +156,7 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.Sto
 
 func (m *OBServerManager) CreateOBPVC() error {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	_, sepVolumeAnnoExist := GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSeparateVolumes)
+	_, sepVolumeAnnoExist := GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	if !sepVolumeAnnoExist {
 		ownerReference := metav1.OwnerReference{
 			APIVersion: m.OBServer.APIVersion,
@@ -605,7 +605,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 		Port: oceanbaseconst.RpcPort,
 	}
 	deleted := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds/2; i++ {
+	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -627,7 +627,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 			deleted = true
 			break
 		}
-		time.Sleep(2 * time.Second)
+		time.Sleep(time.Second)
 	}
 	if !deleted {
 		m.Logger.Info("Wait observer deleted timeout")

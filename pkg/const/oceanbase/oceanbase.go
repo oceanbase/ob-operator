@@ -52,7 +52,7 @@ const (
 )
 
 const (
-	AnnotationsSeparateVolumes = "oceanbase.oceanbase.com/separateVolumes"
+	AnnotationsIndependentPVCLifecycle = "oceanbase.oceanbase.com/independent-pvc-lifecycle"
 )
 
 const (

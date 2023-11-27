@@ -111,22 +111,23 @@ func (r *OBTenant) validateMutation() error {
 	}
 	var allErrs field.ErrorList
 
+	// Check the unit number
 	if r.Spec.UnitNumber <= 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("unitNum"), r.Spec.UnitNumber, "unitNum must be greater than 0"))
 	}
 
-	// 0. Check the existence of tenant with TenantName
+	// Check the legality of tenantName
 	tenantNamePattern := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
 	if !tenantNamePattern.MatchString(r.Spec.TenantName) {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantName"), r.Spec.TenantName, "Invalid tenantName, which should start with character or underscore and contain character, digit and underscore only"))
 	}
 
-	// 0. TenantRole must be one of PRIMARY and STANDBY
+	// TenantRole must be one of PRIMARY and STANDBY
 	if r.Spec.TenantRole != constants.TenantRolePrimary && r.Spec.TenantRole != constants.TenantRoleStandby {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "TenantRole must be primary or standby"))
 	}
 
-	// 0. OBCluster must exist
+	// OBCluster must exist
 	cluster := &OBCluster{}
 	err := tenantClt.Get(context.Background(), types.NamespacedName{
 		Namespace: r.GetNamespace(),
@@ -139,7 +140,7 @@ func (r *OBTenant) validateMutation() error {
 			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("clusterName"), err))
 		}
 	} else {
-		// 0. Check whether zones in tenant.spec.pools exist or not
+		// Check whether zones in tenant.spec.pools exist or not
 		for i, pool := range r.Spec.Pools {
 			exist := false
 			for _, zone := range cluster.Spec.Topology {
@@ -155,7 +156,7 @@ func (r *OBTenant) validateMutation() error {
 		}
 	}
 
-	// 0. Given credentials must exist
+	// Given credentials must exist
 	if r.Spec.Credentials.Root != "" {
 		secret := &v1.Secret{}
 		err = tenantClt.Get(context.Background(), types.NamespacedName{

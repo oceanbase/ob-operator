@@ -182,8 +182,9 @@ func (m *OBTenantManager) UpgradeTenantIfNeeded() error {
 		if err != nil {
 			return err
 		}
+		maxWait5secTimes := oceanbaseconst.DefaultStateWaitTimeout/5 + 1
 	outer:
-		for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout/5+1; i++ {
+		for i := 0; i < maxWait5secTimes; i++ {
 			time.Sleep(5 * time.Second)
 			params, err := con.ListParametersWithTenantID(int64(m.OBTenant.Status.TenantRecordInfo.TenantID))
 			if err != nil {
