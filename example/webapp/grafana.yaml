@@ -2560,7 +2560,7 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: grafana
+  name: svc-grafana
   namespace: oceanbase
 spec:
   selector:
