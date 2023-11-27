@@ -32,7 +32,7 @@ jobs:
 
       - name: Set Version variables
         id: set_version_vars
-        run: echo "version=$(echo $tagName | grep -P \"(\d*\.\d*\.\d*\.\d*-\d{18})\" --only-matching)" >> $GITHUB_OUTPUT
+        run: echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*\.\d*-\d{18})' --only-matching)" >> $GITHUB_OUTPUT
 
       - name: Build and push observer w/o cache
         uses: docker/build-push-action@v2
