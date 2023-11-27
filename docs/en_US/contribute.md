@@ -23,8 +23,8 @@
 │   └── main.go
 ├── config/ # kustomize configuration directory
 ├── deploy/ # YAML files required for ob-operator deployment
-├── distribution # Kubernetes-related component build files
-├── doc/ # Documentation directory
+├── distribution # Relative OceanBase component build files
+├── doc/ # Documentations
 ├── example/ # Example configuration files
 ├── hack/ 
 ├── make/

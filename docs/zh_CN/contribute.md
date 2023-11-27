@@ -23,7 +23,7 @@
 │   └── main.go
 ├── config/ # kustomize 配置目录
 ├── deploy/ # 部署 ob-operator 所需的 YAML 文件
-├── distribution # Kubernetes 相关的组件构建文件
+├── distribution # OceanBase 相关的组件构建文件
 ├── doc/ # 文档目录
 ├── example/ # 示例配置文件
 ├── hack/ 
