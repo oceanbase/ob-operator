@@ -1,8 +1,8 @@
 FROM openanolis/anolisos:8.8
 ARG VERSION
-ARG ARCH=x86_64
+ARG TARGETPLATFORM
 WORKDIR /home/admin/obagent
-RUN yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/${ARCH}/obagent-${VERSION}.el8.${ARCH}.rpm
+RUN if [[ ${TARGETPLATFORM} == 'linux/amd64' ]] ; yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/obagent-${VERSION}.el8.x86_64.rpm ; else yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/aarch64/obagent-${VERSION}.el8.aarch64.rpm ; fi
 ADD replace_properties.sh /home/admin/obagent
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
