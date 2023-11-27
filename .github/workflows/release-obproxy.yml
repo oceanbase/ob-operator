@@ -38,6 +38,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: ./distribution/obproxy/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/obproxy-cloud-native:${{ steps.set_version_vars.outputs.version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/obproxy:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}

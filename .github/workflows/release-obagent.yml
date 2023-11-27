@@ -38,6 +38,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: ./distribution/obagent/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/obagent-cloud-native:${{ steps.set_version_vars.outputs.version }}
+          tags: ${{ secrets.DOCKER_USERNAME }}/obagent:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}
