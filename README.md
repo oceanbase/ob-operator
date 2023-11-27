@@ -1,46 +1,6 @@
 # ob-operator
 
-ob-operator enables seamless deployment of OceanBase on public cloud or private Kubernetes clusters in the form of containers. 
-
-It provides various functionalities for managing OceanBase clusters, tenants, backup and recovery, and fault recovery. Specifically, ob-operator supports the following features:
-
-- [x] Cluster Management: Bootstrap the cluster, adjust cluster topology, support K8s topology configuration, scale-in/out, cluster upgrade, modify parameters.
-- [x] Tenant Management: Create tenants, adjust tenant topology, manage resource units, modify user passwords.
-- [x] Backup and Recovery: Periodically backup data to OSS or NFS destinations, restore data from OSS or NFS.
-- [x] Physical Standby: Restore standby tenant from backup, create empty standby tenant, activate standby tenant to primary, primary-standby switchover.
-- [x] Fault Recovery: Single node fault recovery, cluster-wide fault recovery with IP preservation.
-
-The upcoming features include:
-
-- [ ] Dashboard: A web-based graphical management tool for OceanBase clusters based on ob-operator.
-- [ ] Enhanced operational task resources: This includes lightweight tasks focused on cluster and tenant management, among other features.
-
-In the planning phase, there are two additional features:
-
-- [ ] Support for OceanBase Enterprise Edition: The ob-operator is being planned to support the OceanBase Enterprise Edition, which provides additional enterprise-grade features and capabilities.
-- [ ] Support for Oracle mode tenants: The ob-operator is also being planned to support Oracle mode tenants, allowing users to run their applications using the Oracle compatibility mode within OceanBase.
-
-## Project Architecture
-
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
-
-![ob-operator Architecture](./docs/img/ob-operator-arch.png)
-
-For more detailed information about the architecture, please refer to the [Architecture Document](./docs/en_US/arch.md).
-
-## Requirements
-
-ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introduction) project, so the development and runtime environment are similar to it.
-
-* To build ob-operator: Go version 1.20 or higher is required.
-* To run ob-operator: Kubernetes cluster and kubectl version 1.11.3 or higher are required.
-* If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required.
-
-## Supported OceanBase Versions
-
-ob-operator supports OceanBase v4.x versions. The validated versions include 4.1.x and 4.2.x. It will continue to support new versions of the OceanBase community edition.
-
-OceanBase v3.x versions are currently not supported by ob-operator.
+The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
 
 ## Quick Start
 
@@ -124,6 +84,44 @@ To connect, use the following command:
 ```shell
 mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
+
+## Project Architecture
+
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
+
+![ob-operator Architecture](./docs/img/ob-operator-arch.png)
+
+For more detailed information about the architecture, please refer to the [Architecture Document](./docs/en_US/arch.md).
+
+
+## Features
+
+It provides various functionalities for managing OceanBase clusters, tenants, backup and recovery, and fault recovery. Specifically, ob-operator supports the following features:
+
+- [x] Cluster Management: Bootstrap the cluster, adjust cluster topology, support K8s topology configuration, scale-in/out, cluster upgrade, modify parameters.
+- [x] Tenant Management: Create tenants, adjust tenant topology, manage resource units, modify user passwords.
+- [x] Backup and Recovery: Periodically backup data to OSS or NFS destinations, restore data from OSS or NFS.
+- [x] Physical Standby: Restore standby tenant from backup, create empty standby tenant, activate standby tenant to primary, primary-standby switchover.
+- [x] Fault Recovery: Single node fault recovery, cluster-wide fault recovery with IP preservation.
+
+The upcoming features include:
+
+- [ ] Dashboard: A web-based graphical management tool for OceanBase clusters based on ob-operator.
+- [ ] Enhanced operational task resources: This includes lightweight tasks focused on cluster and tenant management, among other features.
+
+## Supported OceanBase Versions
+
+ob-operator supports OceanBase v4.x versions. The validated versions include 4.1.x and 4.2.x. It will continue to support new versions of the OceanBase community edition.
+
+OceanBase v3.x versions are currently not supported by ob-operator.
+
+## Development requirements
+
+ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introduction) project, so the development and runtime environment are similar to it.
+
+* To build ob-operator: Go version 1.20 or higher is required.
+* To run ob-operator: Kubernetes cluster and kubectl version 1.11.3 or higher are required.
+* If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required.
 
 ## Documents
 

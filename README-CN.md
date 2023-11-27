@@ -1,50 +1,10 @@
 # ob-operator
 
-ob-operator 可以让 OceanBase 以容器的形式，无缝运行在公有云或私有部署的 Kubernetes 集群上。
-
-ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故障恢复等功能，具体而言支持了以下功能：
-
-- [x] 集群管理：集群自举、调整集群拓扑、支持 K8s 拓扑配置、扩缩容、集群升级、修改参数
-- [x] 租户管理：创建租户、调整租户拓扑、管理资源单元、修改用户密码
-- [x] 备份恢复：向 OSS 或 NFS 目的地周期性备份数据、从 OSS 或 NFS 中恢复数据
-- [x] 物理备库：从备份中恢复出备租户、创建空备租户、备租户升主、主备切换
-- [x] 故障恢复：单节点故障恢复，IP 保持情况下的集群故障恢复
-
-即将支持的功能有：
-
-- [ ] Dashboard：基于 ob-operator 的图形化 OceanBase 集群管理工具
-- [ ] 丰富的运维任务资源：包括但不限于针对集群和租户的轻量任务
-
-规划中：
-
-- [ ] 支持 OceanBase 企业版
-- [ ] 支持 Oracle 模式的租户
-
-## 项目架构
-
-ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、全局的任务管理器实例以及解决长调度的任务流机制完成对 OceanBase 集群及相关应用的控制和管理。ob-operator 的架构大致如下图所示：
-
-![ob-operator 架构设计](./docs/img/ob-operator-arch.png)
-
-有关架构细节可参见[架构设计文档](./docs/zh_CN/arch.md)。
-
-## 环境依赖
-
-ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
-
-* 构建 ob-operator 需要 Go 1.20 版本及以上；
-* 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.11.3 及以上；
-* 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；
-
-## 支持的 OceanBase 版本
-
-支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
-
-暂不支持 OceanBase v3.x 版本。
+ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。
 
 ## 快速上手
 
-这部分以部署 ob-operator、部署 OceanBase 集群为例指导您如何快速使用 ob-operator 进行 OceanBase 的管理。
+这部分以部署 ob-operator 和 OceanBase 集群为例指导您如何快速使用 ob-operator 进行 OceanBase 集群的管理。
 
 ### 前提条件
 
@@ -120,6 +80,44 @@ kubectl get pods  -o wide
 ```shell
 mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
+
+## 项目架构
+
+ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、全局的任务管理器实例以及解决长调度的任务流机制完成对 OceanBase 集群及相关应用的控制和管理。ob-operator 的架构大致如下图所示：
+
+![ob-operator 架构设计](./docs/img/ob-operator-arch.png)
+
+有关架构细节可参见[架构设计文档](./docs/zh_CN/arch.md)。
+
+## 特性
+
+ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故障恢复等功能，具体而言支持了以下功能：
+
+- [x] 集群管理：集群自举、调整集群拓扑、支持 K8s 拓扑配置、扩缩容、集群升级、修改参数
+- [x] 租户管理：创建租户、调整租户拓扑、管理资源单元、修改用户密码
+- [x] 备份恢复：向 OSS 或 NFS 目的地周期性备份数据、从 OSS 或 NFS 中恢复数据
+- [x] 物理备库：从备份中恢复出备租户、创建空备租户、备租户升主、主备切换
+- [x] 故障恢复：单节点故障恢复，IP 保持情况下的集群故障恢复
+
+即将支持的功能有：
+
+- [ ] Dashboard：基于 ob-operator 的图形化 OceanBase 集群管理工具
+- [ ] 丰富的运维任务资源：包括但不限于针对集群和租户的轻量任务
+
+
+## 支持的 OceanBase 版本
+
+支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+
+暂不支持 OceanBase v3.x 版本。
+
+## 环境依赖
+
+ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
+
+* 构建 ob-operator 需要 Go 1.20 版本及以上；
+* 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.11.3 及以上；
+* 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；
 
 ## 文档
 
