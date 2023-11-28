@@ -80,6 +80,9 @@ func (t *recorder) GenerateTelemetryRecord(object any, objectType, eventType, re
 	if t.telemetryDisabled {
 		return
 	}
+	if objectType == "OBTenantBackup" {
+		return
+	}
 	go func(ctx context.Context, ch chan<- *models.TelemetryRecord) {
 		objectSentry(object)
 		record := newRecordFromEvent(object, objectType, eventType, reason, message, annotations, extra...)
