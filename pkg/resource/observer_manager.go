@@ -390,8 +390,7 @@ func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
 }
 
 func (m *OBServerManager) ArchiveResource() {
-	m.Logger.Info("Archive observer", "observer", m.OBServer.Name)
-	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Archive observer", "observer", m.OBServer.Name)
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
 }
