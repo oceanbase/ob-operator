@@ -185,11 +185,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 				return err
 			}
 			var backupPath string
-			if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-				backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
-			} else {
-				backupPath = m.getBackupDestPath()
-			}
+			backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 
 			latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 			if err != nil {

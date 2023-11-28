@@ -33,6 +33,8 @@ func objectSentry(object any) {
 	if metaObj, ok := object.(metav1.Object); ok {
 		// remove managed fields which are of no interest
 		metaObj.SetManagedFields(nil)
+		metaObj.SetAnnotations(nil)
+		metaObj.SetLabels(nil)
 	}
 
 	if cluster, ok := object.(*v1alpha1.OBCluster); ok {

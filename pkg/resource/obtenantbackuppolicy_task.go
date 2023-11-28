@@ -222,11 +222,7 @@ func (m *ObTenantBackupPolicyManager) StopBackup() error {
 
 func (m *ObTenantBackupPolicyManager) CheckAndSpawnJobs() error {
 	var backupPath string
-	if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
-		backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
-	} else {
-		backupPath = m.getBackupDestPath()
-	}
+	backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)
 	if err != nil {
@@ -552,10 +548,9 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJob
 	case constants.BackupJobTypeIncr:
 		fallthrough
 	case constants.BackupJobTypeFull:
-		path = m.getBackupDestPath()
-
+		path = m.BackupPolicy.Spec.DataBackup.Destination.Path
 	case constants.BackupJobTypeArchive:
-		path = m.getArchiveDestPath()
+		path = m.BackupPolicy.Spec.LogArchive.Destination.Path
 	}
 	var tenantRecordName string
 	var tenantSecret string
