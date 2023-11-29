@@ -16,6 +16,8 @@ OceanBase cluster storage in this example relies on [local-path-provisioner](htt
 
 ### Deploy ob-operator
 
+#### Using YAML configuration file
+
 You can deploy ob-operator in a Kubernetes cluster by executing the following command:
 
 * Stable
@@ -23,18 +25,23 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/deploy/operator.yaml
 ```
 
-* Helm chart
-```shell
-helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
-```
-
 * Development
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
 ```
 
-You can verify the successful deployment of ob-operator by executing the following command:
+#### Using Helm chart
+
+Helm Chart parameterizes the namespace in which ob-operator is deployed, allowing you to specify the namespace before installing ob-operator.
+
+```shell
+helm repo add ob-operator https://oceanbase.github.io/ob-operator/
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
+```
+
+#### Verify deployment
+
+After deployment/installation is complete, you can use the following command to verify if ob-operator is deployed successfully:
 
 ```shell
 kubectl get pod -n oceanbase-system

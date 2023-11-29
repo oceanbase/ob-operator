@@ -12,30 +12,37 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 
 ### 部署 ob-operator
 
+#### 使用 YAML 配置文件
+
 通过以下命令即可在 K8s 集群中部署 ob-operator：
 
-* Stable
+* 稳定版本
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/deploy/operator.yaml
 ```
 
-* Helm chart
+* 开发版本
+```shell
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
+```
+
+#### 使用 Helm Chart
+
+Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安装 ob-operator 之前指定命名空间。
+
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
 ```
 
-* Development
-```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
-```
+#### 验证部署结果
 
-通过以下命令验证 ob-operator 部署成功：
+安装完成之后，可以使用以下命令验证 ob-operator 是否部署成功：
 
 ```shell
 kubectl get pod -n oceanbase-system
 
-# desired output 
+# 预期的输出
 NAME                                            READY   STATUS    RESTARTS   AGE
 oceanbase-controller-manager-86cfc8f7bf-4hfnj   2/2     Running   0          1m
 ```
@@ -72,7 +79,7 @@ test   running   6m2s
 通过以下命令查找 observer 的 POD IP，POD 名的规则是 {cluster_name}-{cluster_id}-{zone}-uuid：
 
 ```shell
-kubectl get pods  -o wide
+kubectl get pods -o wide
 ```
 
 通过以下命令连接：
