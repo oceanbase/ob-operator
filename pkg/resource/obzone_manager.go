@@ -205,7 +205,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			availableReplica++
 		}
 		if observer.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
-			m.Logger.Info("Found observer image not match")
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Found observer image not match")
 			allServerVersionSync = false
 		}
 	}

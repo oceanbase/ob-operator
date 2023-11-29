@@ -61,7 +61,9 @@ type OBServerStatus struct {
 //+kubebuilder:printcolumn:name="PodIP",type="string",JSONPath=".status.podIp"
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-//+kubebuilder:printcolumn:name="OBStatus",type="string",JSONPath=".status.obStatus"
+//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="ZoneName",type="string",JSONPath=".spec.zone"
+//+kubebuilder:printcolumn:name="OBStatus",type="string",JSONPath=".status.obStatus",priority=1
 
 // OBServer is the Schema for the observers API
 type OBServer struct {

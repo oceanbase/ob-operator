@@ -26,9 +26,9 @@ import (
 )
 
 const (
-	// If no task flow, requeue after 60 sec.
+	// If no task flow, requeue after 30 sec.
 	NormalRequeueDuration = 30 * time.Second
-	// In task flow, requeue after 500 ms.
+	// In task flow, requeue after 1 sec.
 	ExecutionRequeueDuration = 1 * time.Second
 )
 
@@ -119,8 +119,9 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 		taskFunc, err := c.Manager.GetTaskFunc(f.OperationContext.Task)
 		if err != nil {
 			c.Logger.Error(err, "No executable function found for task")
+			c.Manager.PrintErrEvent(err)
 		} else {
-			c.Logger.V(obconst.LogLevelDebug).Info("Successfully get task flow")
+			c.Logger.V(obconst.LogLevelDebug).Info("Successfully get task func " + f.OperationContext.Task)
 			taskId := task.GetTaskManager().Submit(taskFunc)
 			c.Logger.V(obconst.LogLevelDebug).Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId
@@ -140,8 +141,8 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			if taskResult.Error != nil {
 				c.Manager.PrintErrEvent(taskResult.Error)
 			}
-			// Didn't get task result, task is still running
 		}
+		// Didn't get task result, task is still running
 	case taskstatus.Successful:
 		// clean operation context and set status to target status
 		if !f.HasNext() {

@@ -156,13 +156,16 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.Sto
 
 func (m *OBServerManager) CreateOBPVC() error {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBServer.APIVersion,
-		Kind:       m.OBServer.Kind,
-		Name:       m.OBServer.Name,
-		UID:        m.OBServer.GetUID(),
+	_, sepVolumeAnnoExist := GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	if !sepVolumeAnnoExist {
+		ownerReference := metav1.OwnerReference{
+			APIVersion: m.OBServer.APIVersion,
+			Kind:       m.OBServer.Kind,
+			Name:       m.OBServer.Name,
+			UID:        m.OBServer.GetUID(),
+		}
+		ownerReferenceList = append(ownerReferenceList, ownerReference)
 	}
-	ownerReferenceList = append(ownerReferenceList, ownerReference)
 
 	objectMeta := metav1.ObjectMeta{
 		Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
@@ -579,7 +582,6 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		observer, _ := operationManager.GetServer(observerInfo)
 		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
-				m.Logger.Info("Observer active")
 				active = true
 				break
 			}
@@ -589,10 +591,10 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() error {
 		time.Sleep(time.Second)
 	}
 	if !active {
-		m.Logger.Info("Wait observer active timeout")
+		m.Logger.Info("Wait for observer to become active, timeout")
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("observer active", "observer", observerInfo)
+	m.Logger.Info("observer becomes active", "observer", observerInfo)
 	return nil
 }
 
@@ -615,6 +617,15 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() error {
 			break
 		} else if err != nil {
 			m.Logger.Error(err, "Query observer info failed")
+		}
+		obunits, err := operationManager.ListUnitsWithServerIP(observerInfo.Ip)
+		if err != nil {
+			return errors.Wrapf(err, "List units on server "+observerInfo.Ip)
+		}
+		if len(obunits) == 0 {
+			m.Logger.Info("none of units left on observer, deleted")
+			deleted = true
+			break
 		}
 		time.Sleep(time.Second)
 	}

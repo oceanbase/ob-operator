@@ -10,34 +10,21 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package resource
+package operation
 
 import (
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/const/sql"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 )
 
-func getRef[T any](val T) *T {
-	return &val
-}
-
-func isZero[T comparable](val T) bool {
-	return val == *(new(T))
-}
-
-func min[T int | int64 | uint | uint64 | float64 | float32](a, b T) T {
-	if a < b {
-		return a
+func (m *OceanbaseOperationManager) ListUnitsWithServerIP(serverIP string) ([]*model.OBUnit, error) {
+	units := make([]*model.OBUnit, 0)
+	err := m.QueryList(&units, sql.ListUnitsWithServerIP, serverIP)
+	if err != nil {
+		m.Logger.Error(err, "Failed to list ob units")
+		return nil, errors.Wrap(err, "List OB units")
 	}
-	return b
-}
-
-func GetAnnotationField[T client.Object](obj T, key string) (string, bool) {
-	annos := obj.GetAnnotations()
-	if annos == nil {
-		return "", false
-	}
-	if val, ok := annos[key]; ok {
-		return val, true
-	}
-	return "", false
+	return units, nil
 }

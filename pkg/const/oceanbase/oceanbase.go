@@ -52,6 +52,10 @@ const (
 )
 
 const (
+	AnnotationsIndependentPVCLifecycle = "oceanbase.oceanbase.com/independent-pvc-lifecycle"
+)
+
+const (
 	CNICalico  = "calico"
 	CNIUnknown = "unknown"
 )
@@ -136,4 +140,8 @@ const (
 	LogLevelInfo    = 0
 	LogLevelDebug   = 1
 	LogLevelTrace   = 2
+)
+
+const (
+	TolerateServerPodNotReadyMinutes = 5
 )

@@ -30,10 +30,13 @@ type OBTenantOperationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	Type       apitypes.TenantOperationType `json:"type"`
-	Switchover *OBTenantOpSwitchoverSpec    `json:"switchover,omitempty"`
-	Failover   *OBTenantOpFailoverSpec      `json:"failover,omitempty"`
-	ChangePwd  *OBTenantOpChangePwdSpec     `json:"changePwd,omitempty"`
+	Type            apitypes.TenantOperationType `json:"type"`
+	Switchover      *OBTenantOpSwitchoverSpec    `json:"switchover,omitempty"`
+	Failover        *OBTenantOpFailoverSpec      `json:"failover,omitempty"`
+	ChangePwd       *OBTenantOpChangePwdSpec     `json:"changePwd,omitempty"`
+	ReplayUntil     *RestoreUntilConfig          `json:"replayUntil,omitempty"`
+	TargetTenant    *string                      `json:"targetTenant,omitempty"`
+	AuxillaryTenant *string                      `json:"auxillaryTenant,omitempty"`
 }
 
 type OBTenantOpSwitchoverSpec struct {

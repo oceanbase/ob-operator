@@ -18,4 +18,6 @@ const (
 	OpCreateUsersForActivatedStandby string = "create users for activated standby"
 	OpSwitchTenantsRole              string = "switch tenants role"
 	OpSetTenantLogRestoreSource      string = "set tenant log restore source"
+	OpUpgradeTenant                  string = "upgrade tenant"
+	OpReplayLog                      string = "replay log"
 )

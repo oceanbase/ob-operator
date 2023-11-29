@@ -5,6 +5,8 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
   {{- include "oceanbase-cluster.labels" . | nindent 4 }}
+  annotations:
+  {{- toYaml .Values.annotations | nindent 4 }}
 spec:
   clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
   clusterId: {{ .Values.clusterId | default 1 }}

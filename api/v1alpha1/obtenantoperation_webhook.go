@@ -18,10 +18,14 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
+	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -65,22 +69,28 @@ func (r *OBTenantOperation) Default() {
 	} else if r.Spec.Type == constants.TenantOpSwitchover {
 		targetTenantName = r.Spec.Switchover.PrimaryTenant
 		secondaryTenantName = r.Spec.Switchover.StandbyTenant
-	}
-	err := clt.Get(context.Background(), types.NamespacedName{
-		Namespace: r.GetNamespace(),
-		Name:      targetTenantName,
-	}, tenant)
-	if err != nil {
-		obtenantoperationlog.Error(err, "get tenant")
+	} else if (r.Spec.Type == constants.TenantOpUpgrade || r.Spec.Type == constants.TenantOpReplayLog) && r.Spec.TargetTenant != nil {
+		targetTenantName = *r.Spec.TargetTenant
 	}
 	references := r.GetOwnerReferences()
-	firstMeta := tenant.GetObjectMeta()
-	references = append(references, metav1.OwnerReference{
-		APIVersion: tenant.APIVersion,
-		Kind:       tenant.Kind,
-		Name:       firstMeta.GetName(),
-		UID:        firstMeta.GetUID(),
-	})
+
+	if targetTenantName != "" {
+		err := clt.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      targetTenantName,
+		}, tenant)
+		if err != nil {
+			obtenantoperationlog.Error(err, "get tenant")
+			return
+		}
+		firstMeta := tenant.GetObjectMeta()
+		references = append(references, metav1.OwnerReference{
+			APIVersion: tenant.APIVersion,
+			Kind:       tenant.Kind,
+			Name:       firstMeta.GetName(),
+			UID:        firstMeta.GetUID(),
+		})
+	}
 
 	if secondaryTenantName != "" {
 		secondaryTenant := &OBTenant{}
@@ -90,6 +100,7 @@ func (r *OBTenantOperation) Default() {
 		}, secondaryTenant)
 		if err != nil {
 			obtenantoperationlog.Error(err, "get tenant")
+			return
 		}
 		secondMeta := secondaryTenant.GetObjectMeta()
 		references = append(references, metav1.OwnerReference{
@@ -132,17 +143,81 @@ func (r *OBTenantOperation) validateMutation() error {
 	case constants.TenantOpChangePwd:
 		if r.Spec.ChangePwd == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("changePwd"), "change password spec is required"))
-			if r.Spec.ChangePwd.SecretRef == "" || r.Spec.ChangePwd.Tenant == "" {
-				allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("changePwd").Child("secretRef", "tenant"), "tenant name and secretRef are required"))
+		} else if r.Spec.ChangePwd.SecretRef == "" || r.Spec.ChangePwd.Tenant == "" {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("changePwd").Child("secretRef", "tenant"), "tenant name and secretRef are required"))
+		} else if _, err := r.checkTenantCRExistence(r.Spec.ChangePwd.Tenant); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("changePwd").Child("tenant"), r.Spec.ChangePwd.Tenant, "Failed to get tenant of given name"))
+		} else {
+			sec, err := r.checkSecretExistence(r.GetNamespace(), r.Spec.ChangePwd.SecretRef)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("changePwd").Child("secretRef"), r.Spec.ChangePwd.SecretRef, "Given secret not found"))
+				} else {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("changePwd").Child("secretRef"), err))
+				}
+			} else if _, ok := sec.Data["password"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("changePwd").Child("secretRef"), r.Spec.ChangePwd.SecretRef, "'password' field not found in data of secret"))
 			}
 		}
 	case constants.TenantOpFailover:
 		if r.Spec.Failover == nil || r.Spec.Failover.StandbyTenant == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("failover").Child("standbyTenant"), "name of standby tenant is activating is required"))
+		} else {
+			tenant, err := r.checkTenantCRExistence(r.Spec.Failover.StandbyTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("failover").Child("standbyTenant"), r.Spec.Failover.StandbyTenant, "Failed to get standby tenant of given name"))
+			} else if tenant.Status.TenantRole != constants.TenantRoleStandby {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("failover").Child("standbyTenant"), r.Spec.Failover.StandbyTenant, fmt.Sprintf("Tenant %s is not a standby tenant", r.Spec.Failover.StandbyTenant)))
+			}
 		}
 	case constants.TenantOpSwitchover:
 		if r.Spec.Switchover == nil || r.Spec.Switchover.PrimaryTenant == "" || r.Spec.Switchover.StandbyTenant == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("switchover").Child("primaryTenant", "standbyTenant"), "name of primary tenant and standby tenant are both required"))
+		} else {
+			primary, err := r.checkTenantCRExistence(r.Spec.Switchover.PrimaryTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("primaryTenant"), r.Spec.Switchover.PrimaryTenant, "Failed to get primary tenant of given name"))
+			} else if primary.Status.TenantRole != constants.TenantRolePrimary {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("primaryTenant"), r.Spec.Switchover.PrimaryTenant, fmt.Sprintf("Tenant %s is not a primary tenant", r.Spec.Switchover.PrimaryTenant)))
+			} else if primary.Status.Status != "running" {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("primaryTenant"), r.Spec.Switchover.PrimaryTenant, "The primary tenant is not in running status"))
+			}
+			standby, err := r.checkTenantCRExistence(r.Spec.Switchover.StandbyTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("standbyTenant"), r.Spec.Switchover.StandbyTenant, "Failed to get standby tenant of given name"))
+			} else if standby.Status.TenantRole != constants.TenantRoleStandby {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("standbyTenant"), r.Spec.Switchover.StandbyTenant, fmt.Sprintf("Tenant %s is not a standby tenant", r.Spec.Switchover.StandbyTenant)))
+			} else if standby.Status.Status != "running" {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("switchover").Child("standbyTenant"), r.Spec.Switchover.StandbyTenant, "The standby tenant is not in running status"))
+			}
+		}
+	case constants.TenantOpUpgrade:
+		if r.Spec.TargetTenant == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("targetTenant"), "name of targetTenant is required"))
+		} else {
+			tenant, err := r.checkTenantCRExistence(*r.Spec.TargetTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Failed to get target tenant of given name"))
+			} else if tenant.Status.TenantRole != constants.TenantRoleStandby {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Standby tenant cannot be upgraded, please activate it first"))
+			}
+		}
+	case constants.TenantOpReplayLog:
+		untilSpec := r.Spec.ReplayUntil
+		if untilSpec == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("replayUntil"), "replayUntil is required"))
+		} else if !untilSpec.Unlimited && untilSpec.Scn == nil && untilSpec.Timestamp == nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("replayUntil"), untilSpec, "Limited replayUntil must have a limit key, scn and timestamp are both nil now"))
+		}
+		if r.Spec.TargetTenant == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("targetTenant"), "name of targetTenant is required"))
+		} else {
+			tenant, err := r.checkTenantCRExistence(*r.Spec.TargetTenant)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Failed to get target tenant of given name"))
+			} else if tenant.Status.TenantRole != constants.TenantRoleStandby {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant is not a standby"))
+			}
 		}
 	default:
 		allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("type"), string(r.Spec.Type)+" type of operation is not supported"))
@@ -151,4 +226,34 @@ func (r *OBTenantOperation) validateMutation() error {
 		return nil
 	}
 	return allErrs.ToAggregate()
+}
+
+func (r *OBTenantOperation) checkTenantCRExistence(tenantCRName string) (*OBTenant, error) {
+	tenant := &OBTenant{}
+	err := clt.Get(context.TODO(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      tenantCRName,
+	}, tenant)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, apierrors.NewNotFound(schema.GroupResource{
+				Group:    "oceanbase.oceanbase.com",
+				Resource: "OBTenant",
+			}, tenantCRName)
+		}
+		return nil, apierrors.NewInternalError(err)
+	}
+	return tenant, nil
+}
+
+func (r *OBTenantOperation) checkSecretExistence(ns, secretName string) (*v1.Secret, error) {
+	secret := &v1.Secret{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: ns,
+		Name:      secretName,
+	}, secret)
+	if err != nil {
+		return nil, err
+	}
+	return secret, nil
 }

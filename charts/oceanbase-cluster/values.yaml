@@ -3,6 +3,9 @@ clusterId: 1
 
 obAgentVersion: 4.2.1-100000092023101717
 
+annotations: 
+  # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
+
 storageClass: local-path
 
 observerConfig:
@@ -42,11 +45,11 @@ userSecrets:
 topology:
   - zone: zone1
     replica: 1
-  - zone: zone2
-    replica: 1
-  - zone: zone3
-    replica: 1
-    tolerations:
-      - key: obtopo
-        value: zone
-        effect: NoSchedule
+  # - zone: zone2
+  #   replica: 1
+  # - zone: zone3
+  #   replica: 1
+  #   tolerations:
+  #     - key: obtopo
+  #       value: zone
+  #       effect: NoSchedule

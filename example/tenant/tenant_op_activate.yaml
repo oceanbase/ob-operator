@@ -1,13 +1,6 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenantOperation
 metadata:
-  labels:
-    ref-obcluster: test
-    app.kubernetes.io/name: obtenantoperation
-    app.kubernetes.io/instance: op-activate
-    app.kubernetes.io/part-of: ob-operator
-    app.kubernetes.io/managed-by: kustomize
-    app.kubernetes.io/created-by: ob-operator
   name: op-activate
   namespace: oceanbase
 spec:

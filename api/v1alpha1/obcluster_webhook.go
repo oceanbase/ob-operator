@@ -21,7 +21,9 @@ import (
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -85,17 +87,49 @@ func (r *OBCluster) validateMutation() error {
 	var allErrs field.ErrorList
 
 	// 0. Validate userSecrets
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
-		allErrs = append(allErrs, err)
+	if r.Spec.UserSecrets != nil {
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
+			allErrs = append(allErrs, err)
+		}
+		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
+			allErrs = append(allErrs, err)
+		}
 	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
-		allErrs = append(allErrs, err)
+
+	// 1. Validate Topology
+	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
 	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
-		allErrs = append(allErrs, err)
+
+	// 2. Validate storageClasses
+	storageClassMapping := make(map[string]bool)
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass] = true
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass] = true
+	storageClassMapping[r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass] = true
+
+	for key := range storageClassMapping {
+		err := clt.Get(context.TODO(), types.NamespacedName{
+			Name: key,
+		}, &storagev1.StorageClass{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), key, fmt.Sprintf("storageClass %s not found", key)))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), err))
+			}
+		}
 	}
-	if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
-		allErrs = append(allErrs, err)
+
+	// 3. Validate memory size
+	clusterMinMemory := resource.MustParse("8Gi")
+	if r.Spec.MonitorTemplate.Resource.Memory.AsApproximateFloat64() < clusterMinMemory.AsApproximateFloat64() {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.MonitorTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+clusterMinMemory.String()))
 	}
 
 	if len(allErrs) == 0 {

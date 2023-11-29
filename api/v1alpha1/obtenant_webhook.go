@@ -18,6 +18,8 @@ package v1alpha1
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"strings"
 
 	v1 "k8s.io/api/core/v1"
@@ -109,12 +111,23 @@ func (r *OBTenant) validateMutation() error {
 	}
 	var allErrs field.ErrorList
 
-	// 0. TenantRole must be one of PRIMARY and STANDBY
+	// Check the unit number
+	if r.Spec.UnitNumber <= 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("unitNum"), r.Spec.UnitNumber, "unitNum must be greater than 0"))
+	}
+
+	// Check the legality of tenantName
+	tenantNamePattern := regexp.MustCompile("^[a-zA-Z_][a-zA-Z0-9_]{0,127}$")
+	if !tenantNamePattern.MatchString(r.Spec.TenantName) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantName"), r.Spec.TenantName, "Invalid tenantName, which should start with character or underscore and contain character, digit and underscore only"))
+	}
+
+	// TenantRole must be one of PRIMARY and STANDBY
 	if r.Spec.TenantRole != constants.TenantRolePrimary && r.Spec.TenantRole != constants.TenantRoleStandby {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "TenantRole must be primary or standby"))
 	}
 
-	// 0. OBCluster must exist
+	// OBCluster must exist
 	cluster := &OBCluster{}
 	err := tenantClt.Get(context.Background(), types.NamespacedName{
 		Namespace: r.GetNamespace(),
@@ -126,9 +139,24 @@ func (r *OBTenant) validateMutation() error {
 		} else {
 			allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("clusterName"), err))
 		}
+	} else {
+		// Check whether zones in tenant.spec.pools exist or not
+		for i, pool := range r.Spec.Pools {
+			exist := false
+			for _, zone := range cluster.Spec.Topology {
+				if pool.Zone == zone.Zone {
+					exist = true
+					break
+				}
+			}
+			if !exist {
+				msg := fmt.Sprintf("Zone %s does not exist in cluster %s", pool.Zone, cluster.Spec.ClusterName)
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("pools").Child(fmt.Sprintf("%d", i)), pool.Zone, msg))
+			}
+		}
 	}
 
-	// 0. Given credentials must exist
+	// Given credentials must exist
 	if r.Spec.Credentials.Root != "" {
 		secret := &v1.Secret{}
 		err = tenantClt.Get(context.Background(), types.NamespacedName{
@@ -159,12 +187,25 @@ func (r *OBTenant) validateMutation() error {
 		}
 	}
 
-	// 1. Standby tenant must have a source
+	// 1. Standby tenant must have a source; source.tenant must be valid
 	if r.Spec.TenantRole == constants.TenantRoleStandby {
 		if r.Spec.Source == nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source"), r.Spec.Source, "Standby tenant must have non-nil source field"))
 		} else if r.Spec.Source.Restore == nil && r.Spec.Source.Tenant == nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "Standby must have a source option, but both restore and tenantRef are nil now"))
+		} else if r.Spec.Source.Tenant != nil {
+			tenant := &OBTenant{}
+			err = tenantClt.Get(context.TODO(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      *r.Spec.Source.Tenant,
+			}, tenant)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+				} else {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
+				}
+			}
 		}
 	}
 

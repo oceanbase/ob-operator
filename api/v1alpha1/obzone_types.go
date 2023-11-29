@@ -50,6 +50,8 @@ type OBZoneStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="ZoneName",type="string",JSONPath=".spec.topology.zone"
 
 // OBZone is the Schema for the obzones API
 type OBZone struct {

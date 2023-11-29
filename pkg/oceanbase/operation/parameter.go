@@ -41,3 +41,13 @@ func (m *OceanbaseOperationManager) SetParameter(name string, value any, scope *
 	m.Logger.Info("setParameterSql statement", "statement", setParameterSql)
 	return m.ExecWithDefaultTimeout(setParameterSql, value, scope.Value)
 }
+
+func (m *OceanbaseOperationManager) SelectCompatibleOfTenants() ([]*model.Parameter, error) {
+	parameters := make([]*model.Parameter, 0)
+	var err error
+	err = m.QueryList(&parameters, sql.SelectCompatibleOfTenants)
+	if err != nil {
+		return nil, err
+	}
+	return parameters, nil
+}

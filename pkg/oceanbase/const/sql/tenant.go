@@ -59,3 +59,7 @@ const (
 	QueryLSDeletion              = "(SELECT ls_id FROM oceanbase.CDB_OB_LS_HISTORY WHERE TENANT_ID = ?) EXCEPT (SELECT ls_id FROM oceanbase.CDB_OB_LS WHERE TENANT_ID = ?);"
 	QueryLogStats                = "SELECT ls_id, begin_lsn FROM oceanbase.GV$OB_LOG_STAT WHERE TENANT_ID = ? AND ROLE = 'LEADER';"
 )
+
+const (
+	UpgradeTenantWithName = "ALTER SYSTEM RUN UPGRADE JOB \"UPGRADE_ALL\" TENANT = %s"
+)

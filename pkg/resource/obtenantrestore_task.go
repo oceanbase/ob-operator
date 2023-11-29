@@ -37,7 +37,8 @@ import (
 // 2. create resource pool (in tenant manager)
 // 3. trigger restore job
 // 4. wait for finishing
-// 5. activate or replay log
+// 5. upgrade tenant if needed
+// 6. activate or replay log or do nothing
 
 // OBTenantManager tasks completion
 
@@ -152,6 +153,49 @@ func (m *OBTenantManager) CancelTenantRestoreJob() error {
 	err = m.Client.Delete(m.Ctx, m.OBTenant)
 	if err != nil {
 		m.Logger.Error(err, "delete tenant CR")
+	}
+	return nil
+}
+
+func (m *OBTenantManager) UpgradeTenantIfNeeded() error {
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return err
+	}
+	var sysCompatible string
+	var restoredCompatible string
+
+	compatibles, err := con.SelectCompatibleOfTenants()
+	if err != nil {
+		return err
+	}
+	for _, p := range compatibles {
+		if p.TenantID == 1 {
+			sysCompatible = p.Value
+		}
+		if p.TenantID == int64(m.OBTenant.Status.TenantRecordInfo.TenantID) {
+			restoredCompatible = p.Value
+		}
+	}
+	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
+		err := con.UpgradeTenantWithName(m.OBTenant.Spec.TenantName)
+		if err != nil {
+			return err
+		}
+		maxWait5secTimes := oceanbaseconst.DefaultStateWaitTimeout/5 + 1
+	outer:
+		for i := 0; i < maxWait5secTimes; i++ {
+			time.Sleep(5 * time.Second)
+			params, err := con.ListParametersWithTenantID(int64(m.OBTenant.Status.TenantRecordInfo.TenantID))
+			if err != nil {
+				return err
+			}
+			for _, p := range params {
+				if p.Name == "compatible" && p.Value == sysCompatible {
+					break outer
+				}
+			}
+		}
 	}
 	return nil
 }

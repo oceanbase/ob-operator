@@ -99,6 +99,13 @@ func (m *ObTenantOperationManager) InitStatus() {
 		}
 		m.Resource.Status.PrimaryTenant = tenant
 		m.Resource.Status.SecondaryTenant = standbyTenant
+	case constants.TenantOpUpgrade, constants.TenantOpReplayLog:
+		tenant, err := m.getTenantCR(*m.Resource.Spec.TargetTenant)
+		if err != nil {
+			m.Logger.Error(err, "Failed to find target tenant")
+			break
+		}
+		m.Resource.Status.PrimaryTenant = tenant
 	default:
 		err = errors.New("unknown tenant operation type")
 		m.Logger.Error(err, "InitStatus")
@@ -127,8 +134,6 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		operationContext := m.Resource.Status.OperationContext
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
-		case "":
-			fallthrough
 		case strategy.StartOver:
 			m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
 			m.Resource.Status.OperationContext.Idx = 0
@@ -138,6 +143,13 @@ func (m *ObTenantOperationManager) HandleFailure() {
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
+		default:
+			m.Resource.Status.OperationContext = nil
+			if failureRule.NextTryStatus == "" {
+				m.Resource.Status.Status = constants.TenantOpFailed
+			} else {
+				m.Resource.Status.Status = apitypes.TenantOperationStatus(failureRule.NextTryStatus)
+			}
 		}
 	}
 }
@@ -148,9 +160,6 @@ func (m *ObTenantOperationManager) FinishTask() {
 }
 
 func (m *ObTenantOperationManager) UpdateStatus() error {
-	if m.Resource.Status.Status == apitypes.TenantOperationStatus("Failed") {
-		return nil
-	}
 	return m.retryUpdateStatus()
 }
 
@@ -173,6 +182,10 @@ func (m *ObTenantOperationManager) GetTaskFunc(name string) (func() error, error
 		return m.SwitchTenantsRole, nil
 	case taskname.OpSetTenantLogRestoreSource:
 		return m.SetTenantLogRestoreSource, nil
+	case taskname.OpUpgradeTenant:
+		return m.UpgradeTenant, nil
+	case taskname.OpReplayLog:
+		return m.ReplayLogOfStandby, nil
 	default:
 		return nil, errors.New("Task name not registered")
 	}
@@ -196,6 +209,10 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 			taskFlow, err = task.GetRegistry().Get(flow.ActivateStandbyTenantFlow)
 		case constants.TenantOpSwitchover:
 			taskFlow, err = task.GetRegistry().Get(flow.SwitchoverTenantsFlow)
+		case constants.TenantOpUpgrade:
+			taskFlow, err = task.GetRegistry().Get(flow.OpUpgradeTenant)
+		case constants.TenantOpReplayLog:
+			taskFlow, err = task.GetRegistry().Get(flow.OpReplayLog)
 		}
 	case constants.TenantOpReverting:
 		switch m.Resource.Spec.Type {
@@ -214,11 +231,8 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 	if err != nil {
 		return nil, err
 	}
-	if taskFlow.OperationContext.OnFailure.Strategy == "" {
-		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
-		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
-			taskFlow.OperationContext.OnFailure.NextTryStatus = string(status)
-		}
+	if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
+		taskFlow.OperationContext.OnFailure.NextTryStatus = string(constants.TenantOpFailed)
 	}
 	return taskFlow, nil
 }

@@ -136,6 +136,16 @@ func (m *OBServerManager) retryUpdateStatus() error {
 	})
 }
 
+func (m *OBServerManager) setRecoveryStatus() {
+	if m.SupportStaticIp() {
+		m.Logger.Info("current cni supports specific static ip address, recover by recreate pod")
+		m.OBServer.Status.Status = serverstatus.Recover
+	} else {
+		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+		m.OBServer.Status.Status = serverstatus.Unrecoverable
+	}
+}
+
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -149,13 +159,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			if kubeerrors.IsNotFound(err) {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("pod not found")
 				if m.OBServer.Status.Status == serverstatus.Running {
-					if m.SupportStaticIp() {
-						m.Logger.Info("current cni supports specific static ip address, recover by recreate pod")
-						m.OBServer.Status.Status = serverstatus.Recover
-					} else {
-						m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
-						m.OBServer.Status.Status = serverstatus.Unrecoverable
-					}
+					m.setRecoveryStatus()
 				}
 			} else {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("observer status is not running, wait task finish")
@@ -169,6 +173,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = GetCNIFromAnnotation(pod)
 		}
+		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("check observer in obcluster")
 			observer, err := m.getCurrentOBServerFromOB()
@@ -178,6 +183,8 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.OBServer.Status.Status = serverstatus.AddServer
 			}
 		}
+
+		// 2. Check CNI Annotations and upgrade
 		if m.OBServer.Status.Status == serverstatus.Running {
 			if NeedAnnotation(pod, m.OBServer.Status.CNI) {
 				m.OBServer.Status.Status = serverstatus.Annotate

@@ -3078,8 +3078,15 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.zone
+      name: ZoneName
+      type: string
     - jsonPath: .status.obStatus
       name: OBStatus
+      priority: 1
       type: string
     name: v1alpha1
     schema:
@@ -6724,6 +6731,8 @@ spec:
                     type: string
                   compatibility_mode:
                     type: string
+                  compatible:
+                    type: string
                   create_time:
                     type: string
                   gmt_create:
@@ -7198,6 +7207,8 @@ spec:
           spec:
             description: OBTenantOperationSpec defines the desired state of OBTenantOperation
             properties:
+              auxillaryTenant:
+                type: string
               changePwd:
                 properties:
                   secretRef:
@@ -7215,6 +7226,15 @@ spec:
                 required:
                 - standbyTenant
                 type: object
+              replayUntil:
+                properties:
+                  scn:
+                    type: string
+                  timestamp:
+                    type: string
+                  unlimited:
+                    type: boolean
+                type: object
               switchover:
                 properties:
                   primaryTenant:
@@ -7225,6 +7245,8 @@ spec:
                 - primaryTenant
                 - standbyTenant
                 type: object
+              targetTenant:
+                type: string
               type:
                 type: string
             required:
@@ -9260,6 +9282,12 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.topology.zone
+      name: ZoneName
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

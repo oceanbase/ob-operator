@@ -81,3 +81,33 @@ func RevertSwitchoverTenants() *TaskFlow {
 		},
 	}
 }
+
+func UpgradeTenant() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.OpUpgradeTenant,
+			Tasks: []string{
+				taskname.OpUpgradeTenant,
+			},
+			TargetStatus: string(constants.TenantOpSuccessful),
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: string(constants.TenantOpFailed),
+			},
+		},
+	}
+}
+
+func ReplayLogOfStandby() *TaskFlow {
+	return &TaskFlow{
+		OperationContext: &v1alpha1.OperationContext{
+			Name: flowname.OpReplayLog,
+			Tasks: []string{
+				taskname.OpReplayLog,
+			},
+			TargetStatus: string(constants.TenantOpSuccessful),
+			OnFailure: strategy.FailureRule{
+				NextTryStatus: string(constants.TenantOpFailed),
+			},
+		},
+	}
+}

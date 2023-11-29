@@ -86,4 +86,6 @@ func init() {
 	GetRegistry().Register(flowname.ActivateStandbyTenantFlow, ActivateStandbyTenantOp)
 	GetRegistry().Register(flowname.SwitchoverTenantsFlow, SwitchoverTenants)
 	GetRegistry().Register(flowname.RevertSwitchoverTenantsFlow, RevertSwitchoverTenants)
+	GetRegistry().Register(flowname.OpReplayLog, ReplayLogOfStandby)
+	GetRegistry().Register(flowname.OpUpgradeTenant, UpgradeTenant)
 }

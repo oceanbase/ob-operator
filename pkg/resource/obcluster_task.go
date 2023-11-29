@@ -196,6 +196,7 @@ func (m *OBClusterManager) CreateOBZone() error {
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	independentVolumeAnnoVal, independentVolumeAnnoExist := GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -230,6 +231,10 @@ func (m *OBClusterManager) CreateOBZone() error {
 				BackupVolume:     m.OBCluster.Spec.BackupVolume,
 				Topology:         zone,
 			},
+		}
+		if independentVolumeAnnoExist {
+			obzone.ObjectMeta.Annotations = make(map[string]string)
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
 		}
 		m.Logger.Info("create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)

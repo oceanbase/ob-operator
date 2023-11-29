@@ -3,6 +3,8 @@ kind: OBCluster
 metadata:
   name: test
   namespace: oceanbase
+  # annotations:
+  #   "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
 spec:
   clusterName: obcluster
   clusterId: 1
