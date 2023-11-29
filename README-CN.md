@@ -123,8 +123,8 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
 
 * 构建 ob-operator 需要 Go 1.20 版本及以上；
-* 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.11.3 及以上；
-* 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；
+* 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.25 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。
+* 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。
 
 ## 文档
 
