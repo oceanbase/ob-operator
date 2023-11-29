@@ -83,7 +83,7 @@ test   running   6m2s
 Use the following command to find the POD IP of the observer. The naming convention for PODs is {cluster_name}-{cluster_id}-{zone}-uuid:
 
 ```shell
-kubectl get pods  -o wide
+kubectl get pods -o wide
 ```
 
 To connect, use the following command:
