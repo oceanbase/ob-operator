@@ -38,6 +38,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: ./distribution/ob-configserver/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/obconfigserver:${{ steps.set_version_vars.outputs.version }}
+          tags: ${{ vars.DOCKER_PUSH_BASE }}/obconfigserver:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}

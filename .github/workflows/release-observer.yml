@@ -38,6 +38,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           file: ./distribution/oceanbase/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/oceanbase-cloud-native:${{ steps.set_version_vars.outputs.version }}
+          tags: ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-cloud-native:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}

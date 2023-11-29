@@ -1,7 +1,8 @@
 FROM golang:1.20.4 as builder
+ARG GOPROXY=https://goproxy.io,direct
 WORKDIR /workspace
 COPY ./oceanbase-helper .
-RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux GOPROXY=https://goproxy.io,direct go build -a -o oceanbase-helper main.go
+RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build -a -o oceanbase-helper main.go
 
 FROM openanolis/anolisos:8.8
 ARG VERSION
