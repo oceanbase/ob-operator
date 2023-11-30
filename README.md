@@ -4,11 +4,11 @@ The ob-operator is a Kubernetes operator that simplifies the deployment and mana
 
 ## Quick Start
 
-This section provides a step-by-step guide on how to quickly use ob-operator for managing OceanBase, using examples of deploying ob-operator and deploying an OceanBase cluster.
+This section provides a step-by-step guide on how to use ob-operator to deploy an OceanBase cluster.
 
 ### Prerequisites
 
-Before getting started, please ensure you have a functional Kubernetes cluster with at least 2 CPU cores, 10GB of memory, and 100GB of storage space. 
+Before getting started, please ensure you have a functional Kubernetes cluster with at least 2 CPU cores, 10GB of memory, and 100GB of storage space available. 
 
 ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certificate management. For instructions on installing cert-manager, please refer to the corresponding [installation](https://cert-manager.io/docs/installation/) documentation. 
 
@@ -134,7 +134,6 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 - [Architecture](docs/en_US/arch.md)
 - [Deploy ob-operators](docs/en_US/deploy.md)
-- [Contribute](docs/en_US/contribute.md)
 - [User Manual](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367) in Chinese
 
 ## Getting Help
@@ -143,6 +142,14 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [Official Website](https://open.oceanbase.com/)
+- [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
+- DingTalk Group（[QRCode](./docs/img/dingtalk-operator-users.png)）
+- WeChat Group（Add the assistant with WeChat ID: OBCE666）
+
+## Contributing
+
+- [Submit an issue](https://github.com/oceanbase/ob-operator/issues)
+- [Create a Pull request](https://github.com/oceanbase/ob-operator/pulls)
 
 ## License
 

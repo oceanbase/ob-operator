@@ -4,7 +4,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 
 ## 快速上手
 
-这部分以部署 ob-operator 和 OceanBase 集群为例指导您如何快速使用 ob-operator 进行 OceanBase 集群的管理。
+这部分以一个简单示例说明如何使用 ob-operator 快速部署 OceanBase 集群。
 
 ### 前提条件
 
@@ -130,7 +130,6 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 - [ob-operator 架构设计](docs/zh_CN/arch.md)
 - [部署 ob-operator](docs/zh_CN/deploy.md)
-- [参与开发](docs/zh_CN/contribute.md)
 - [用户手册](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367)
 
 ## 获取帮助
@@ -139,6 +138,14 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [官方网站](https://open.oceanbase.com/)
+- [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
+- 钉钉群（[二维码](./docs/img/dingtalk-operator-users.png)）
+- 微信群（请添加小助手微信，微信号: OBCE666）
+
+## 参与开发
+
+- [提出 Issue](https://github.com/oceanbase/ob-operator/issues)
+- [发起 Pull request](https://github.com/oceanbase/ob-operator/pulls)
 
 ## 许可证
 
