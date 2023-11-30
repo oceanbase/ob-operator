@@ -128,7 +128,10 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 文档
 
-参考 [ob-operator 文档](docs/zh_CN/intro.md)。
+- [ob-operator 架构设计](docs/zh_CN/arch.md)
+- [部署 ob-operator](docs/zh_CN/deploy.md)
+- [参与开发](docs/zh_CN/contribute.md)
+- [用户手册](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367)
 
 ## 获取帮助
 

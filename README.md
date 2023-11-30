@@ -132,7 +132,10 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-Please refer to the [ob-operator documentation](docs/en_US/intro.md) for more information.
+- [Architecture](docs/en_US/arch.md)
+- [Deploy ob-operators](docs/en_US/deploy.md)
+- [Contribute](docs/en_US/contribute.md)
+- [User Manual](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367) in Chinese
 
 ## Getting Help
 
