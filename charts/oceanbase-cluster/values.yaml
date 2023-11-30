@@ -1,5 +1,5 @@
-clusterName: obcluster
-clusterId: 1
+clusterName: refactortest
+clusterId: 1130
 
 obAgentVersion: 4.2.1-100000092023101717
 

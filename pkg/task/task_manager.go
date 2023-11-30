@@ -47,7 +47,8 @@ type TaskManager struct {
 
 func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 	retCh := make(chan *tasktypes.TaskResult, 1)
-	taskId := uuid.New().String()
+	// Notes: casting type here is important as equality of interface including type equality and value equality
+	taskId := tasktypes.TaskID(uuid.New().String())
 	m.ResultMap.Store(taskId, retCh)
 	m.TaskResultCache.Delete(taskId)
 	go func() {
@@ -72,7 +73,7 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 			Error:  nil,
 		}
 	}()
-	return tasktypes.TaskID(taskId)
+	return taskId
 }
 
 func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskResult, error) {
