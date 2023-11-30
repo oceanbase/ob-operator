@@ -143,8 +143,8 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [Official Website](https://open.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- DingTalk Group（[QRCode](./docs/img/dingtalk-operator-users.png)）
-- WeChat Group（Add the assistant with WeChat ID: OBCE666）
+- DingTalk Group ([QRCode](./docs/img/dingtalk-operator-users.png))
+- WeChat Group (Add the assistant with WeChat ID: OBCE666)
 
 ## Contributing
 
