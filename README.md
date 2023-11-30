@@ -12,7 +12,7 @@ Before getting started, please ensure you have a functional Kubernetes cluster w
 
 ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certificate management. For instructions on installing cert-manager, please refer to the corresponding [installation](https://cert-manager.io/docs/installation/) documentation. 
 
-OceanBase cluster storage in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand.
+Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand.
 
 ### Deploy ob-operator
 
