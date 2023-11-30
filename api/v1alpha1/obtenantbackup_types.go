@@ -43,14 +43,14 @@ type OBTenantBackupSpec struct {
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           apitypes.BackupJobStatus `json:"status"`
-	Progress         string                   `json:"progress,omitempty"` // Not support yet
-	OperationContext *OperationContext        `json:"operationContext,omitempty"`
-	StartedAt        string                   `json:"startedAt,omitempty"`
-	EndedAt          string                   `json:"endedAt,omitempty"`
-	BackupJob        *model.OBBackupJob       `json:"backupJob,omitempty"`
-	ArchiveLogJob    *model.OBArchiveLogJob   `json:"archiveLogJob,omitempty"`
-	DataCleanJob     *model.OBBackupCleanJob  `json:"dataCleanJob,omitempty"`
+	Status           apitypes.BackupJobStatus   `json:"status"`
+	Progress         string                     `json:"progress,omitempty"` // Not support yet
+	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
+	StartedAt        string                     `json:"startedAt,omitempty"`
+	EndedAt          string                     `json:"endedAt,omitempty"`
+	BackupJob        *model.OBBackupJob         `json:"backupJob,omitempty"`
+	ArchiveLogJob    *model.OBArchiveLogJob     `json:"archiveLogJob,omitempty"`
+	DataCleanJob     *model.OBBackupCleanJob    `json:"dataCleanJob,omitempty"`
 }
 
 // fix: implementation of DeepCopyInto needed by zz_generated.deepcopy.go
@@ -59,7 +59,7 @@ func (in *OBTenantBackupStatus) DeepCopyInto(out *OBTenantBackupStatus) {
 	*out = *in
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(apitypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.BackupJob != nil {

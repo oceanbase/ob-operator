@@ -10,8 +10,9 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-type ObagentStorageSpec struct {
-	ConfigStorage *StorageSpec `json:"configStorage"`
+type MonitorTemplate struct {
+	Image    string        `json:"image"`
+	Resource *ResourceSpec `json:"resource,omitempty"`
 }

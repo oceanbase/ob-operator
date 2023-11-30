@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	obagentconst "github.com/oceanbase/ob-operator/pkg/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/pkg/const/pod"
@@ -141,7 +142,7 @@ func (m *OBServerManager) CreateOBPod() error {
 	return nil
 }
 
-func (m *OBServerManager) generatePVCSpec(name string, storageSpec *v1alpha1.StorageSpec) corev1.PersistentVolumeClaimSpec {
+func (m *OBServerManager) generatePVCSpec(name string, storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
 	_ = name
 	pvcSpec := &corev1.PersistentVolumeClaimSpec{}
 	requestsResources := corev1.ResourceList{}

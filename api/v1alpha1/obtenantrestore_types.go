@@ -60,9 +60,9 @@ type RestoreUntilConfig struct {
 type OBTenantRestoreStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           apitypes.RestoreJobStatus `json:"status"`
-	RestoreProgress  *model.RestoreHistory     `json:"restoreProgress,omitempty"`
-	OperationContext *OperationContext         `json:"operationContext,omitempty"`
+	Status           apitypes.RestoreJobStatus  `json:"status"`
+	RestoreProgress  *model.RestoreHistory      `json:"restoreProgress,omitempty"`
+	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
 }
 
 func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
@@ -74,7 +74,7 @@ func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
 	}
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(apitypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 }

@@ -144,7 +144,7 @@ func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
 	return nil
 }
 
-func (m *ObTenantBackupPolicyManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *ObTenantBackupPolicyManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.BackupPolicy.Status.OperationContext = c
 }
 

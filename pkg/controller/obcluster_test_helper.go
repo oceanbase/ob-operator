@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
@@ -33,20 +34,20 @@ const (
 )
 
 func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
-	observerResource := &v1alpha1.ResourceSpec{
+	observerResource := &apitypes.ResourceSpec{
 		Cpu:    *resource.NewQuantity(2, resource.DecimalSI),
 		Memory: *resource.NewQuantity(10*GB, resource.BinarySI),
 	}
-	observerStorage := &v1alpha1.OceanbaseStorageSpec{
-		DataStorage: &v1alpha1.StorageSpec{
+	observerStorage := &apitypes.OceanbaseStorageSpec{
+		DataStorage: &apitypes.StorageSpec{
 			StorageClass: DefaultStorageClass,
 			Size:         *resource.NewQuantity(50*GB, resource.BinarySI),
 		},
-		RedoLogStorage: &v1alpha1.StorageSpec{
+		RedoLogStorage: &apitypes.StorageSpec{
 			StorageClass: DefaultStorageClass,
 			Size:         *resource.NewQuantity(50*GB, resource.BinarySI),
 		},
-		LogStorage: &v1alpha1.StorageSpec{
+		LogStorage: &apitypes.StorageSpec{
 			StorageClass: DefaultStorageClass,
 			Size:         *resource.NewQuantity(10*GB, resource.BinarySI),
 		},
@@ -58,16 +59,16 @@ func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
 		Storage:  observerStorage,
 	}
 
-	topology := make([]v1alpha1.OBZoneTopology, zoneNum)
+	topology := make([]apitypes.OBZoneTopology, zoneNum)
 	for i := 0; i < zoneNum; i++ {
-		zoneTopology := v1alpha1.OBZoneTopology{
+		zoneTopology := apitypes.OBZoneTopology{
 			Zone:    fmt.Sprintf("zone%d", i),
 			Replica: serverNum,
 		}
 		topology[i] = zoneTopology
 	}
 
-	userSecrets := &v1alpha1.OBUserSecrets{
+	userSecrets := &apitypes.OBUserSecrets{
 		Root:     "root-secret",
 		ProxyRO:  "proxyro-secret",
 		Monitor:  "monitor-secret",

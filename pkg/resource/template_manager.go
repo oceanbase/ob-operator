@@ -19,7 +19,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 	"github.com/oceanbase/ob-operator/pkg/telemetry"
@@ -55,7 +55,7 @@ func (m *ObResourceManager[T]) CheckAndUpdateFinalizers() error {
 
 func (m *ObResourceManager[T]) InitStatus() {}
 
-func (m *ObResourceManager[T]) SetOperationContext(*v1alpha1.OperationContext) {
+func (m *ObResourceManager[T]) SetOperationContext(*apitypes.OperationContext) {
 
 }
 

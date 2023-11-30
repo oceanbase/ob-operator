@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: svc-obproxy
-  namespace: oceanbase
+  # namespace: oceanbase
 spec:
   type: ClusterIP
   selector:
@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: obproxy
-  namespace: oceanbase
+  # namespace: oceanbase
 spec:
   selector:
     matchLabels:
@@ -45,11 +45,11 @@ spec:
             - name: OB_CLUSTER
               value: metadb
             - name: CONFIG_URL
-              value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
+              value: 'http://svc-ob-configserver.default.svc:8080/services?Action=GetObProxyConfig'
             - name: PROXYRO_PASSWORD
               valueFrom: 
                 secretKeyRef:
-                  name: sc-sys-proxyro
+                  name: ob-user-proxyro
                   key: password
           resources:
             limits:

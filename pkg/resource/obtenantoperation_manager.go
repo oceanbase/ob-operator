@@ -118,7 +118,7 @@ func (m *ObTenantOperationManager) InitStatus() {
 	}
 }
 
-func (m *ObTenantOperationManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *ObTenantOperationManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.Resource.Status.OperationContext = c
 }
 

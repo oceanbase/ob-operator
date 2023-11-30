@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,25 +30,25 @@ type OBClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string            `json:"clusterName"`
-	ClusterId        int64             `json:"clusterId,omitempty"`
-	OBServerTemplate *OBServerTemplate `json:"observer"`
-	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
-	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
-	Parameters       []Parameter       `json:"parameters,omitempty"`
-	Topology         []OBZoneTopology  `json:"topology"`
-	UserSecrets      *OBUserSecrets    `json:"userSecrets"`
+	ClusterName      string                     `json:"clusterName"`
+	ClusterId        int64                      `json:"clusterId,omitempty"`
+	OBServerTemplate *OBServerTemplate          `json:"observer"`
+	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitor,omitempty"`
+	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
+	Parameters       []apitypes.Parameter       `json:"parameters,omitempty"`
+	Topology         []apitypes.OBZoneTopology  `json:"topology"`
+	UserSecrets      *apitypes.OBUserSecrets    `json:"userSecrets"`
 }
 
 // OBClusterStatus defines the observed state of OBCluster
 type OBClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Image            string                `json:"image"`
-	OperationContext *OperationContext     `json:"operationContext,omitempty"`
-	Status           string                `json:"status"`
-	OBZoneStatus     []OBZoneReplicaStatus `json:"obzones"`
-	Parameters       []Parameter           `json:"parameters"`
+	Image            string                         `json:"image"`
+	OperationContext *apitypes.OperationContext     `json:"operationContext,omitempty"`
+	Status           string                         `json:"status"`
+	OBZoneStatus     []apitypes.OBZoneReplicaStatus `json:"obzones"`
+	Parameters       []apitypes.Parameter           `json:"parameters"`
 }
 
 //+kubebuilder:object:root=true

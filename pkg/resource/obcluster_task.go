@@ -31,6 +31,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase/operation"
@@ -365,7 +366,7 @@ func (m *OBClusterManager) createUser(userName, secretName, privilege string) er
 }
 
 func (m *OBClusterManager) MaintainOBParameter() error {
-	parameterMap := make(map[string]v1alpha1.Parameter)
+	parameterMap := make(map[string]apitypes.Parameter)
 	for _, parameter := range m.OBCluster.Status.Parameters {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
 		parameterMap[parameter.Name] = parameter
@@ -402,7 +403,7 @@ func (m *OBClusterManager) MaintainOBParameter() error {
 	return nil
 }
 
-func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) error {
+func (m *OBClusterManager) CreateOBParameter(parameter *apitypes.Parameter) error {
 	m.Logger.Info("create ob parameters")
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
@@ -438,7 +439,7 @@ func (m *OBClusterManager) CreateOBParameter(parameter *v1alpha1.Parameter) erro
 	return nil
 }
 
-func (m *OBClusterManager) UpdateOBParameter(parameter *v1alpha1.Parameter) error {
+func (m *OBClusterManager) UpdateOBParameter(parameter *apitypes.Parameter) error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obparameter := &v1alpha1.OBParameter{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
@@ -457,7 +458,7 @@ func (m *OBClusterManager) UpdateOBParameter(parameter *v1alpha1.Parameter) erro
 	})
 }
 
-func (m *OBClusterManager) DeleteOBParameter(parameter *v1alpha1.Parameter) error {
+func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) error {
 	obparameter := &v1alpha1.OBParameter{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.OBCluster.Namespace,

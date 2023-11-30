@@ -10,12 +10,9 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-import (
-	corev1 "k8s.io/api/core/v1"
-)
-
-type BackupVolumeSpec struct {
-	Volume *corev1.Volume `json:"volume"`
+type OBZoneReplicaStatus struct {
+	Zone   string `json:"zone"`
+	Status string `json:"status"`
 }

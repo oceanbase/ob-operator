@@ -44,7 +44,7 @@ type OBTenantBackupPolicySpec struct {
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
 	Status           apitypes.BackupPolicyStatusType `json:"status"`
-	OperationContext *OperationContext               `json:"operationContext,omitempty"`
+	OperationContext *apitypes.OperationContext      `json:"operationContext,omitempty"`
 
 	ObservedGeneration   int64                   `json:"observedGeneration,omitempty"`
 	NextFull             string                  `json:"nextFull,omitempty"`
@@ -62,7 +62,7 @@ func (in *OBTenantBackupPolicyStatus) DeepCopyInto(out *OBTenantBackupPolicyStat
 	*out = *in
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(apitypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.TenantInfo != nil {

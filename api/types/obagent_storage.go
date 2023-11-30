@@ -10,13 +10,8 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-import (
-	corev1 "k8s.io/api/core/v1"
-)
-
-type PVCStatus struct {
-	Name  string                       `json:"name"`
-	Phase corev1.PersistentVolumePhase `json:"phase"`
+type ObagentStorageSpec struct {
+	ConfigStorage *StorageSpec `json:"configStorage"`
 }

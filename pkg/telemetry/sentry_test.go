@@ -17,6 +17,7 @@ import (
 	. "github.com/onsi/gomega"
 	corev1 "k8s.io/api/core/v1"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
@@ -26,7 +27,7 @@ var _ = Describe("Telemetry sentry", Label("sentry"), func() {
 		objectSentry(cluster)
 
 		beforeServer := "1.2.3.4"
-		cluster.Spec.BackupVolume = &v1alpha1.BackupVolumeSpec{
+		cluster.Spec.BackupVolume = &apitypes.BackupVolumeSpec{
 			Volume: &corev1.Volume{
 				Name: "backup",
 				VolumeSource: corev1.VolumeSource{
@@ -81,12 +82,12 @@ var _ = Describe("Telemetry sentry", Label("sentry"), func() {
 		beforeIp := "1.2.3.4"
 		zone := &v1alpha1.OBZone{
 			Status: v1alpha1.OBZoneStatus{
-				OBServerStatus: []v1alpha1.OBServerReplicaStatus{{
+				OBServerStatus: []apitypes.OBServerReplicaStatus{{
 					Server: beforeIp,
 				}},
 			},
 			Spec: v1alpha1.OBZoneSpec{
-				BackupVolume: &v1alpha1.BackupVolumeSpec{
+				BackupVolume: &apitypes.BackupVolumeSpec{
 					Volume: &corev1.Volume{
 						Name: "backup",
 						VolumeSource: corev1.VolumeSource{

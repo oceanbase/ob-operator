@@ -24,7 +24,9 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
@@ -59,12 +61,12 @@ func (m *OBZoneManager) InitStatus() {
 	status := v1alpha1.OBZoneStatus{
 		Image:          m.OBZone.Spec.OBServerTemplate.Image,
 		Status:         zonestatus.New,
-		OBServerStatus: make([]v1alpha1.OBServerReplicaStatus, 0, m.OBZone.Spec.Topology.Replica),
+		OBServerStatus: make([]apitypes.OBServerReplicaStatus, 0, m.OBZone.Spec.Topology.Replica),
 	}
 	m.OBZone.Status = status
 }
 
-func (m *OBZoneManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *OBZoneManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.OBZone.Status.OperationContext = c
 }
 
@@ -192,12 +194,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 	if err != nil {
 		m.Logger.Error(err, "Got error when list observers")
 	}
-	observerReplicaStatusList := make([]v1alpha1.OBServerReplicaStatus, 0, len(observerList.Items))
+	observerReplicaStatusList := make([]apitypes.OBServerReplicaStatus, 0, len(observerList.Items))
 	availableReplica := 0
 	// handle upgrade
 	allServerVersionSync := true
 	for _, observer := range observerList.Items {
-		observerReplicaStatusList = append(observerReplicaStatusList, v1alpha1.OBServerReplicaStatus{
+		observerReplicaStatusList = append(observerReplicaStatusList, apitypes.OBServerReplicaStatus{
 			Server: observer.Status.PodIp,
 			Status: observer.Status.Status,
 		})

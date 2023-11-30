@@ -58,7 +58,7 @@ type OBTenantOperationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           apitypes.TenantOperationStatus `json:"status"`
-	OperationContext *OperationContext              `json:"operationContext,omitempty"`
+	OperationContext *apitypes.OperationContext     `json:"operationContext,omitempty"`
 	PrimaryTenant    *OBTenant                      `json:"primaryTenant,omitempty"`
 	SecondaryTenant  *OBTenant                      `json:"secondaryTenant,omitempty"`
 }

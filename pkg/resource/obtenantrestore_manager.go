@@ -67,7 +67,7 @@ func (m ObTenantRestoreManager) InitStatus() {
 	m.Resource.Status.Status = constants.RestoreJobStarting
 }
 
-func (m ObTenantRestoreManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m ObTenantRestoreManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.Resource.Status.OperationContext = c
 }
 

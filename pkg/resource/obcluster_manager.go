@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
@@ -56,12 +57,12 @@ func (m *OBClusterManager) InitStatus() {
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
-		OBZoneStatus: make([]v1alpha1.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
+		OBZoneStatus: make([]apitypes.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
 	}
 	m.OBCluster.Status = status
 }
 
-func (m *OBClusterManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *OBClusterManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.OBCluster.Status.OperationContext = c
 }
 
@@ -146,10 +147,10 @@ func (m *OBClusterManager) UpdateStatus() error {
 		m.Logger.Error(err, "list obzones error")
 		return errors.Wrap(err, "list obzones")
 	}
-	obzoneReplicaStatusList := make([]v1alpha1.OBZoneReplicaStatus, 0, len(obzoneList.Items))
+	obzoneReplicaStatusList := make([]apitypes.OBZoneReplicaStatus, 0, len(obzoneList.Items))
 	allZoneVersionSync := true
 	for _, obzone := range obzoneList.Items {
-		obzoneReplicaStatusList = append(obzoneReplicaStatusList, v1alpha1.OBZoneReplicaStatus{
+		obzoneReplicaStatusList = append(obzoneReplicaStatusList, apitypes.OBZoneReplicaStatus{
 			Zone:   obzone.Name,
 			Status: obzone.Status.Status,
 		})
@@ -166,7 +167,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 		m.Logger.Error(err, "list obparameters error")
 		return errors.Wrap(err, "list obparameters")
 	}
-	obparameterStatusList := make([]v1alpha1.Parameter, 0)
+	obparameterStatusList := make([]apitypes.Parameter, 0)
 	for _, obparameter := range obparameterList.Items {
 		obparameterStatusList = append(obparameterStatusList, *(obparameter.Spec.Parameter))
 	}
@@ -215,7 +216,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 
 		// only do this when obzone matched, thus obcluster status is running after obzone check
 		if m.OBCluster.Status.Status == clusterstatus.Running {
-			parameterMap := make(map[string]v1alpha1.Parameter)
+			parameterMap := make(map[string]apitypes.Parameter)
 			for _, parameter := range m.OBCluster.Status.Parameters {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
 				parameterMap[parameter.Name] = parameter

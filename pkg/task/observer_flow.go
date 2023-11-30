@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
@@ -21,7 +21,7 @@ import (
 
 func PrepareOBServerForBootstrap() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
@@ -31,7 +31,7 @@ func PrepareOBServerForBootstrap() *TaskFlow {
 
 func MaintainOBServerAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.PrepareOBServerForBootstrap,
 			Tasks:        []string{taskname.WaitOBClusterBootstrapped, taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
@@ -41,7 +41,7 @@ func MaintainOBServerAfterBootstrap() *TaskFlow {
 
 func CreateOBServer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.CreateOBServer,
 			Tasks:        []string{taskname.CreateOBPVC, taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
@@ -51,7 +51,7 @@ func CreateOBServer() *TaskFlow {
 
 func DeleteOBServerFinalizer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.DeleteOBServerFinalizer,
 			Tasks:        []string{taskname.DeleteOBServerInCluster, taskname.WaitOBServerDeletedInCluster},
 			TargetStatus: serverstatus.FinalizerFinished,
@@ -61,7 +61,7 @@ func DeleteOBServerFinalizer() *TaskFlow {
 
 func UpgradeOBServer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.UpgradeOBServer,
 			Tasks:        []string{taskname.UpgradeOBServerImage, taskname.WaitOBServerPodReady, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
@@ -71,7 +71,7 @@ func UpgradeOBServer() *TaskFlow {
 
 func RecoverOBServer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.RecoverOBServer,
 			Tasks:        []string{taskname.CreateOBPod, taskname.WaitOBServerReady, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
@@ -81,7 +81,7 @@ func RecoverOBServer() *TaskFlow {
 
 func AddServerInOB() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.AddServerInOB,
 			Tasks:        []string{taskname.AddServer, taskname.WaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
@@ -91,7 +91,7 @@ func AddServerInOB() *TaskFlow {
 
 func AnnotateOBServerPod() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.AnnotateOBServerPod,
 			Tasks:        []string{taskname.AnnotateOBServerPod},
 			TargetStatus: serverstatus.Running,

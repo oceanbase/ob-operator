@@ -10,9 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-type OBServerReplicaStatus struct {
-	Server string `json:"server"`
-	Status string `json:"status"`
+import (
+	corev1 "k8s.io/api/core/v1"
+)
+
+type BackupVolumeSpec struct {
+	Volume *corev1.Volume `json:"volume"`
 }

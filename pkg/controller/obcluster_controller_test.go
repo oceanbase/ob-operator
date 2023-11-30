@@ -23,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 )
@@ -84,7 +85,7 @@ var _ = Describe("OBCluster controller", func() {
 				err := k8sClient.Get(ctx, obclusterLookupKey, obcluster)
 				return err == nil
 			}, commonTimeout, interval).Should(BeTrue())
-			newZone := v1alpha1.OBZoneTopology{
+			newZone := apitypes.OBZoneTopology{
 				Zone:    fmt.Sprintf("zone%d", len(obcluster.Spec.Topology)),
 				Replica: 1,
 			}

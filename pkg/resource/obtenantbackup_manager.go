@@ -71,7 +71,7 @@ func (m *OBTenantBackupManager) InitStatus() {
 	}
 }
 
-func (m *OBTenantBackupManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *OBTenantBackupManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.Resource.Status.OperationContext = c
 }
 

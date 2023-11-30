@@ -10,14 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-import corev1 "k8s.io/api/core/v1"
+import (
+	"k8s.io/apimachinery/pkg/api/resource"
+)
 
-type OBZoneTopology struct {
-	Zone         string              `json:"zone"`
-	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
-	Affinity     *corev1.Affinity    `json:"affinity,omitempty"`
-	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
-	Replica      int                 `json:"replica"`
+type ResourceSpec struct {
+	Cpu    resource.Quantity `json:"cpu"`
+	Memory resource.Quantity `json:"memory"`
 }

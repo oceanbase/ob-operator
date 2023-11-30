@@ -94,10 +94,10 @@ type UnitConfig struct {
 type OBTenantStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           string               `json:"status"`
-	Pools            []ResourcePoolStatus `json:"resourcePool"`
-	OperationContext *OperationContext    `json:"operationContext,omitempty"`
-	TenantRecordInfo TenantRecordInfo     `json:"tenantRecordInfo,omitempty"`
+	Status           string                     `json:"status"`
+	Pools            []ResourcePoolStatus       `json:"resourcePool"`
+	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
+	TenantRecordInfo TenantRecordInfo           `json:"tenantRecordInfo,omitempty"`
 
 	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
 	Source      *TenantSourceStatus `json:"source,omitempty"`
@@ -120,7 +120,7 @@ func (in *OBTenantStatus) DeepCopyInto(out *OBTenantStatus) {
 	}
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(apitypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 	out.TenantRecordInfo = in.TenantRecordInfo

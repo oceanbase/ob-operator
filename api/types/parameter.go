@@ -10,11 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
+package types
 
-type OBUserSecrets struct {
-	Root     string `json:"root"`
-	ProxyRO  string `json:"proxyro"`
-	Monitor  string `json:"monitor"`
-	Operator string `json:"operator,omitempty"`
+type Parameter struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
+type ParameterValue struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Zone   string `json:"zone"`
+	Server string `json:"server"`
 }

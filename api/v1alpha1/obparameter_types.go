@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,18 +29,18 @@ import (
 type OBParameterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	ClusterName string     `json:"clusterName"`
-	ClusterId   int64      `json:"clusterId,omitempty"`
-	Parameter   *Parameter `json:"parameter"`
+	ClusterName string              `json:"clusterName"`
+	ClusterId   int64               `json:"clusterId,omitempty"`
+	Parameter   *apitypes.Parameter `json:"parameter"`
 }
 
 // OBParameterStatus defines the observed state of OBParameter
 type OBParameterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OperationContext *OperationContext `json:"operationContext,omitempty"`
-	Status           string            `json:"status"`
-	Parameter        []ParameterValue  `json:"parameter"`
+	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
+	Status           string                     `json:"status"`
+	Parameter        []apitypes.ParameterValue  `json:"parameter"`
 }
 
 //+kubebuilder:object:root=true

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: svc-ob-configserver
-  namespace: oceanbase
+  # namespace: oceanbase
 spec:
   type: NodePort
   selector:
@@ -17,7 +17,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: ob-configserver
-  namespace: oceanbase
+  # namespace: oceanbase
 spec:
   selector:
     matchLabels:

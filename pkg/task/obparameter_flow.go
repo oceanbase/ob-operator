@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	parameterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obparameter"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
@@ -21,7 +21,7 @@ import (
 
 func SetOBParameter() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.SetOBParameter,
 			Tasks:        []string{taskname.SetOBParameter},
 			TargetStatus: parameterstatus.Matched,

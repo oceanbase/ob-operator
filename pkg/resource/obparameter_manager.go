@@ -28,6 +28,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	"github.com/oceanbase/ob-operator/pkg/telemetry"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
@@ -58,12 +59,12 @@ func (m *OBParameterManager) InitStatus() {
 	m.Logger.Info("newly created obparameter, init status")
 	status := v1alpha1.OBParameterStatus{
 		Status:    parameterstatus.New,
-		Parameter: make([]v1alpha1.ParameterValue, 0),
+		Parameter: make([]apitypes.ParameterValue, 0),
 	}
 	m.OBParameter.Status = status
 }
 
-func (m *OBParameterManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *OBParameterManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.OBParameter.Status.OperationContext = c
 }
 
@@ -147,9 +148,9 @@ func (m *OBParameterManager) UpdateStatus() error {
 			return errors.Wrapf(err, "Get parameter info")
 		}
 		parameterMatched := true
-		parameterValues := make([]v1alpha1.ParameterValue, 0)
+		parameterValues := make([]apitypes.ParameterValue, 0)
 		for _, parameterInfo := range parameterInfoList {
-			parameterValue := v1alpha1.ParameterValue{
+			parameterValue := apitypes.ParameterValue{
 				Name:   parameterInfo.Name,
 				Value:  parameterInfo.Value,
 				Zone:   parameterInfo.Zone,

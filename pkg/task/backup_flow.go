@@ -14,7 +14,7 @@ package task
 
 import (
 	"github.com/oceanbase/ob-operator/api/constants"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
@@ -22,7 +22,7 @@ import (
 
 func PrepareBackupPolicy() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.PrepareBackupPolicy,
 			Tasks:        []string{taskname.ConfigureServerForBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPrepared),
@@ -32,7 +32,7 @@ func PrepareBackupPolicy() *TaskFlow {
 
 func StartBackupJob() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.StartBackupJob,
 			Tasks:        []string{taskname.StartBackupJob},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
@@ -42,7 +42,7 @@ func StartBackupJob() *TaskFlow {
 
 func StopBackupPolicy() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.StopBackupPolicy,
 			Tasks:        []string{taskname.StopBackupPolicy},
 			TargetStatus: string(constants.BackupPolicyStatusStopped),
@@ -52,7 +52,7 @@ func StopBackupPolicy() *TaskFlow {
 
 func MaintainRunningPolicy() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.MaintainRunningPolicy,
 			Tasks:        []string{taskname.ConfigureServerForBackup, taskname.CleanOldBackupJobs, taskname.CheckAndSpawnJobs},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
@@ -65,7 +65,7 @@ func MaintainRunningPolicy() *TaskFlow {
 
 func PauseBackup() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.PauseBackup,
 			Tasks:        []string{taskname.PauseBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPaused),
@@ -75,7 +75,7 @@ func PauseBackup() *TaskFlow {
 
 func ResumeBackup() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.ResumeBackup,
 			Tasks:        []string{taskname.ResumeBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
@@ -85,7 +85,7 @@ func ResumeBackup() *TaskFlow {
 
 func CreateBackupJobInDB() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name:         flowname.CreateBackupJobInDB,
 			Tasks:        []string{taskname.CreateBackupJobInDB},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),

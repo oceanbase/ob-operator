@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
@@ -100,7 +101,7 @@ func (m *OBTenantManager) InitStatus() {
 	}
 }
 
-func (m *OBTenantManager) SetOperationContext(ctx *v1alpha1.OperationContext) {
+func (m *OBTenantManager) SetOperationContext(ctx *apitypes.OperationContext) {
 	m.OBTenant.Status.OperationContext = ctx
 }
 

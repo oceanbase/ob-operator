@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -29,31 +31,31 @@ type OBServerSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string              `json:"clusterName"`
-	ClusterId        int64               `json:"clusterId,omitempty"`
-	Zone             string              `json:"zone"`
-	NodeSelector     map[string]string   `json:"nodeSelector,omitempty"`
-	Affinity         *corev1.Affinity    `json:"affinity,omitempty"`
-	Tolerations      []corev1.Toleration `json:"tolerations,omitempty"`
-	OBServerTemplate *OBServerTemplate   `json:"observerTemplate"`
-	MonitorTemplate  *MonitorTemplate    `json:"monitorTemplate,omitempty"`
-	BackupVolume     *BackupVolumeSpec   `json:"backupVolume,omitempty"`
+	ClusterName      string                     `json:"clusterName"`
+	ClusterId        int64                      `json:"clusterId,omitempty"`
+	Zone             string                     `json:"zone"`
+	NodeSelector     map[string]string          `json:"nodeSelector,omitempty"`
+	Affinity         *corev1.Affinity           `json:"affinity,omitempty"`
+	Tolerations      []corev1.Toleration        `json:"tolerations,omitempty"`
+	OBServerTemplate *OBServerTemplate          `json:"observerTemplate"`
+	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
+	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 }
 
 // OBServerStatus defines the observed state of OBServer
 type OBServerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OperationContext *OperationContext `json:"operationContext,omitempty"`
-	Image            string            `json:"image"`
-	Status           string            `json:"status"`
-	PodPhase         corev1.PodPhase   `json:"podPhase"`
-	Ready            bool              `json:"ready"`
-	PodIp            string            `json:"podIp"`
-	NodeIp           string            `json:"nodeIp"`
-	OBStatus         string            `json:"obStatus,omitempty"`
-	StartServiceTime int64             `json:"startServiceTime,omitempty"`
-	CNI              string            `json:"cni,omitempty"`
+	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
+	Image            string                     `json:"image"`
+	Status           string                     `json:"status"`
+	PodPhase         corev1.PodPhase            `json:"podPhase"`
+	Ready            bool                       `json:"ready"`
+	PodIp            string                     `json:"podIp"`
+	NodeIp           string                     `json:"nodeIp"`
+	OBStatus         string                     `json:"obStatus,omitempty"`
+	StartServiceTime int64                      `json:"startServiceTime,omitempty"`
+	CNI              string                     `json:"cni,omitempty"`
 }
 
 //+kubebuilder:object:root=true

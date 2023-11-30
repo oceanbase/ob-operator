@@ -14,7 +14,7 @@ package task
 
 import (
 	"github.com/oceanbase/ob-operator/api/constants"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
@@ -22,7 +22,7 @@ import (
 
 func ChangeTenantRootPassword() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.ChangeTenantRootPasswordFlow,
 			Tasks: []string{
 				taskname.OpChangeTenantRootPassword,
@@ -37,7 +37,7 @@ func ChangeTenantRootPassword() *TaskFlow {
 
 func ActivateStandbyTenantOp() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.ActivateStandbyTenantFlow,
 			Tasks: []string{
 				taskname.OpActivateStandby,
@@ -53,7 +53,7 @@ func ActivateStandbyTenantOp() *TaskFlow {
 
 func SwitchoverTenants() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.SwitchoverTenantsFlow,
 			Tasks: []string{
 				taskname.OpSwitchTenantsRole,
@@ -69,7 +69,7 @@ func SwitchoverTenants() *TaskFlow {
 
 func RevertSwitchoverTenants() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.RevertSwitchoverTenantsFlow,
 			Tasks: []string{
 				taskname.OpSwitchTenantsRole,
@@ -84,7 +84,7 @@ func RevertSwitchoverTenants() *TaskFlow {
 
 func UpgradeTenant() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.OpUpgradeTenant,
 			Tasks: []string{
 				taskname.OpUpgradeTenant,
@@ -99,7 +99,7 @@ func UpgradeTenant() *TaskFlow {
 
 func ReplayLogOfStandby() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &v1alpha1.OperationContext{
+		OperationContext: &apitypes.OperationContext{
 			Name: flowname.OpReplayLog,
 			Tasks: []string{
 				taskname.OpReplayLog,

@@ -32,6 +32,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/pkg/const/status/observer"
@@ -95,7 +96,7 @@ func (m *OBServerManager) InitStatus() {
 	m.OBServer.Status = status
 }
 
-func (m *OBServerManager) SetOperationContext(c *v1alpha1.OperationContext) {
+func (m *OBServerManager) SetOperationContext(c *apitypes.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
