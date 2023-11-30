@@ -13,15 +13,15 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	zonestatus "github.com/oceanbase/ob-operator/pkg/const/status/obzone"
+	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 func PrepareOBZoneForBootstrap() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.PrepareOBZoneForBootstrap,
 			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerBootstrapReady},
 			TargetStatus: zonestatus.BootstrapReady,
@@ -31,7 +31,7 @@ func PrepareOBZoneForBootstrap() *TaskFlow {
 
 func MaintainOBZoneAfterBootstrap() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainOBZoneAfterBootstrap,
 			Tasks:        []string{taskname.WaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
@@ -41,7 +41,7 @@ func MaintainOBZoneAfterBootstrap() *TaskFlow {
 
 func CreateOBZone() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.CreateOBZone,
 			Tasks:        []string{taskname.AddZone, taskname.StartOBZone, taskname.CreateOBServer, taskname.WaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
@@ -51,7 +51,7 @@ func CreateOBZone() *TaskFlow {
 
 func AddOBServer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.AddOBServer,
 			Tasks:        []string{taskname.CreateOBServer, taskname.WaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
@@ -61,7 +61,7 @@ func AddOBServer() *TaskFlow {
 
 func DeleteOBServer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.DeleteOBServer,
 			Tasks:        []string{taskname.DeleteOBServer, taskname.WaitReplicaMatch},
 			TargetStatus: zonestatus.Running,
@@ -71,7 +71,7 @@ func DeleteOBServer() *TaskFlow {
 
 func DeleteOBZoneFinalizer() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.DeleteOBZoneFinalizer,
 			Tasks:        []string{taskname.StopOBZone, taskname.DeleteAllOBServer, taskname.WaitOBServerDeleted, taskname.DeleteOBZoneInCluster},
 			TargetStatus: zonestatus.FinalizerFinished,
@@ -81,7 +81,7 @@ func DeleteOBZoneFinalizer() *TaskFlow {
 
 func UpgradeOBZone() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.UpgradeOBZone,
 			Tasks:        []string{taskname.OBClusterHealthCheck, taskname.StopOBZone, taskname.UpgradeOBServer, taskname.WaitOBServerUpgraded, taskname.OBZoneHealthCheck, taskname.StartOBZone},
 			TargetStatus: zonestatus.Running,
@@ -91,7 +91,7 @@ func UpgradeOBZone() *TaskFlow {
 
 func ForceUpgradeOBZone() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.ForceUpgradeOBZone,
 			Tasks:        []string{taskname.OBClusterHealthCheck, taskname.UpgradeOBServer, taskname.WaitOBServerUpgraded, taskname.OBZoneHealthCheck},
 			TargetStatus: zonestatus.Running,

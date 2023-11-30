@@ -13,15 +13,15 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 type TaskFlow struct {
-	OperationContext *apitypes.OperationContext
+	OperationContext *tasktypes.OperationContext
 }
 
-func NewTaskFlow(c *apitypes.OperationContext) *TaskFlow {
+func NewTaskFlow(c *tasktypes.OperationContext) *TaskFlow {
 	return &TaskFlow{
 		OperationContext: c,
 	}

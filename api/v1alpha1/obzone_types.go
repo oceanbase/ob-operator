@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -43,7 +44,7 @@ type OBZoneStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Image            string                           `json:"image"`
-	OperationContext *apitypes.OperationContext       `json:"operationContext,omitempty"`
+	OperationContext *tasktypes.OperationContext      `json:"operationContext,omitempty"`
 	Status           string                           `json:"status"`
 	OBServerStatus   []apitypes.OBServerReplicaStatus `json:"observers"`
 }

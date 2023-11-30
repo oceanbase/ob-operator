@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -58,7 +59,7 @@ type OBTenantOperationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           apitypes.TenantOperationStatus `json:"status"`
-	OperationContext *apitypes.OperationContext     `json:"operationContext,omitempty"`
+	OperationContext *tasktypes.OperationContext    `json:"operationContext,omitempty"`
 	PrimaryTenant    *OBTenant                      `json:"primaryTenant,omitempty"`
 	SecondaryTenant  *OBTenant                      `json:"secondaryTenant,omitempty"`
 }

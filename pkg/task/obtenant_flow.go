@@ -13,16 +13,16 @@ See the Mulan PSL v2 for more details.
 package task
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	tenantstatus "github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
+	tenantstatus "github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
 	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 func CreateTenant() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name: flowname.CreateTenant,
 			Tasks: []string{
 				taskname.CheckTenant,
@@ -41,7 +41,7 @@ func CreateTenant() *TaskFlow {
 
 func MaintainWhiteList() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainWhiteList,
 			Tasks:        []string{taskname.MaintainWhiteList},
 			TargetStatus: tenantstatus.Running,
@@ -51,7 +51,7 @@ func MaintainWhiteList() *TaskFlow {
 
 func MaintainCharset() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainCharset,
 			Tasks:        []string{taskname.MaintainCharset},
 			TargetStatus: tenantstatus.Running,
@@ -61,7 +61,7 @@ func MaintainCharset() *TaskFlow {
 
 func MaintainUnitNum() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainUnitNum,
 			Tasks:        []string{taskname.MaintainUnitNum},
 			TargetStatus: tenantstatus.Running,
@@ -71,7 +71,7 @@ func MaintainUnitNum() *TaskFlow {
 
 func MaintainLocality() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainLocality,
 			Tasks:        []string{taskname.MaintainLocality},
 			TargetStatus: tenantstatus.Running,
@@ -81,7 +81,7 @@ func MaintainLocality() *TaskFlow {
 
 func MaintainPrimaryZone() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainPrimaryZone,
 			Tasks:        []string{taskname.MaintainPrimaryZone},
 			TargetStatus: tenantstatus.Running,
@@ -91,7 +91,7 @@ func MaintainPrimaryZone() *TaskFlow {
 
 func AddPool() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.AddPool,
 			Tasks:        []string{taskname.CheckPoolAndUnitConfig, taskname.AddResourcePool},
 			TargetStatus: tenantstatus.Running,
@@ -104,7 +104,7 @@ func AddPool() *TaskFlow {
 
 func DeletePool() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.DeletePool,
 			Tasks:        []string{taskname.DeleteResourcePool},
 			TargetStatus: tenantstatus.Running,
@@ -114,7 +114,7 @@ func DeletePool() *TaskFlow {
 
 func MaintainUnitConfig() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.MaintainUnitConfig,
 			Tasks:        []string{taskname.MaintainUnitConfig},
 			TargetStatus: tenantstatus.Running,
@@ -124,7 +124,7 @@ func MaintainUnitConfig() *TaskFlow {
 
 func DeleteTenant() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name:         flowname.DeleteTenant,
 			Tasks:        []string{taskname.DeleteTenant},
 			TargetStatus: tenantstatus.FinalizerFinished,
@@ -137,7 +137,7 @@ func DeleteTenant() *TaskFlow {
 
 func RestoreTenant() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name: flowname.RestoreTenant,
 			Tasks: []string{
 				taskname.CheckTenant,
@@ -158,7 +158,7 @@ func RestoreTenant() *TaskFlow {
 
 func CancelRestoreJob() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name: flowname.CancelRestoreFlow,
 			Tasks: []string{
 				taskname.CancelRestoreJob,
@@ -170,7 +170,7 @@ func CancelRestoreJob() *TaskFlow {
 
 func CreateEmptyStandbyTenant() *TaskFlow {
 	return &TaskFlow{
-		OperationContext: &apitypes.OperationContext{
+		OperationContext: &tasktypes.OperationContext{
 			Name: flowname.CreateEmptyStandbyTenant,
 			Tasks: []string{
 				taskname.CheckPrimaryTenantLSIntegrity,

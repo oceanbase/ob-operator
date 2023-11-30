@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -46,16 +47,16 @@ type OBServerSpec struct {
 type OBServerStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
-	Image            string                     `json:"image"`
-	Status           string                     `json:"status"`
-	PodPhase         corev1.PodPhase            `json:"podPhase"`
-	Ready            bool                       `json:"ready"`
-	PodIp            string                     `json:"podIp"`
-	NodeIp           string                     `json:"nodeIp"`
-	OBStatus         string                     `json:"obStatus,omitempty"`
-	StartServiceTime int64                      `json:"startServiceTime,omitempty"`
-	CNI              string                     `json:"cni,omitempty"`
+	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
+	Image            string                      `json:"image"`
+	Status           string                      `json:"status"`
+	PodPhase         corev1.PodPhase             `json:"podPhase"`
+	Ready            bool                        `json:"ready"`
+	PodIp            string                      `json:"podIp"`
+	NodeIp           string                      `json:"nodeIp"`
+	OBStatus         string                      `json:"obStatus,omitempty"`
+	StartServiceTime int64                       `json:"startServiceTime,omitempty"`
+	CNI              string                      `json:"cni,omitempty"`
 }
 
 //+kubebuilder:object:root=true

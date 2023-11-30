@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -38,9 +39,9 @@ type OBParameterSpec struct {
 type OBParameterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
-	Status           string                     `json:"status"`
-	Parameter        []apitypes.ParameterValue  `json:"parameter"`
+	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
+	Status           string                      `json:"status"`
+	Parameter        []apitypes.ParameterValue   `json:"parameter"`
 }
 
 //+kubebuilder:object:root=true

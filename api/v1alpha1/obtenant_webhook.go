@@ -36,7 +36,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // log is for logging in this package.

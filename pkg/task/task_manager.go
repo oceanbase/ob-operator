@@ -23,6 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 var taskManager *TaskManager
@@ -49,7 +50,7 @@ type TaskManager struct {
 	TaskResultCache sync.Map
 }
 
-func (m *TaskManager) Submit(f func() error) string {
+func (m *TaskManager) Submit(f tasktypes.TaskFunc) string {
 	retCh := make(chan *TaskResult, 1)
 	taskId := uuid.New().String()
 	m.ResultMap.Store(taskId, retCh)

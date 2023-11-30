@@ -16,8 +16,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -60,9 +60,9 @@ type RestoreUntilConfig struct {
 type OBTenantRestoreStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           apitypes.RestoreJobStatus  `json:"status"`
-	RestoreProgress  *model.RestoreHistory      `json:"restoreProgress,omitempty"`
-	OperationContext *apitypes.OperationContext `json:"operationContext,omitempty"`
+	Status           apitypes.RestoreJobStatus   `json:"status"`
+	RestoreProgress  *model.RestoreHistory       `json:"restoreProgress,omitempty"`
+	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
 }
 
 func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
@@ -74,7 +74,7 @@ func (in *OBTenantRestoreStatus) DeepCopyInto(out *OBTenantRestoreStatus) {
 	}
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(apitypes.OperationContext)
+		*out = new(tasktypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 }
