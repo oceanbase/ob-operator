@@ -2,6 +2,8 @@
 
 The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
 
+此文档也提供[中文版](./README-CN.md)。
+
 ## Quick Start
 
 This section provides a step-by-step guide on how to use ob-operator to deploy an OceanBase cluster.

@@ -2,6 +2,8 @@
 
 ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。
 
+[English version](./README.md) of this document is available.
+
 ## 快速上手
 
 这部分以一个简单示例说明如何使用 ob-operator 快速部署 OceanBase 集群。
