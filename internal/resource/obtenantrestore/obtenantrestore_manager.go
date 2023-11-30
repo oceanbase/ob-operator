@@ -30,10 +30,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -173,34 +171,34 @@ func (m ObTenantRestoreManager) UpdateStatus() error {
 	return m.retryUpdateStatus()
 }
 
-func (m ObTenantRestoreManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m ObTenantRestoreManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.StartRestoreJob:
+	case tStartRestoreJob:
 		return m.StartRestoreJobInOB, nil
-	case taskname.StartLogReplay:
+	case tStartLogReplay:
 		return m.StartLogReplay, nil
-	case taskname.ActivateStandby:
+	case tActivateStandby:
 		return m.ActivateStandby, nil
 	default:
 		return nil, errors.New("Task name not registered")
 	}
 }
 
-func (m ObTenantRestoreManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.Resource.Status.OperationContext != nil {
-		return task.NewTaskFlow(m.Resource.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	status := m.Resource.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.RestoreJobStarting:
-		taskFlow, err = task.GetRegistry().Get(flow.StartRestoreFlow)
+		taskFlow, err = task.GetRegistry().Get(fStartRestoreFlow)
 	case constants.RestoreJobStatusActivating:
-		taskFlow, err = task.GetRegistry().Get(flow.RestoreAsPrimaryFlow)
+		taskFlow, err = task.GetRegistry().Get(fRestoreAsPrimaryFlow)
 	case constants.RestoreJobStatusReplaying:
-		taskFlow, err = task.GetRegistry().Get(flow.RestoreAsStandbyFlow)
+		taskFlow, err = task.GetRegistry().Get(fRestoreAsStandbyFlow)
 	case constants.RestoreJobRunning:
 		fallthrough
 	case constants.RestoreJobCanceled:

@@ -22,7 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -70,11 +69,11 @@ func (m *ObResourceManager[T]) UpdateStatus() error {
 	return m.Client.Status().Update(m.Ctx, m.Resource)
 }
 
-func (m *ObResourceManager[T]) GetTaskFunc(string) (func() error, error) {
+func (m *ObResourceManager[T]) GetTaskFunc(tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	return nil, nil
 }
 
-func (m *ObResourceManager[T]) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *ObResourceManager[T]) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	return nil, nil
 }
 

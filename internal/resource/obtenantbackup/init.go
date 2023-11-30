@@ -10,11 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package strategy
+package obtenantbackup
 
-type FailureRule struct {
-	Strategy      string `json:"failureStrategy"`
-	NextTryStatus string `json:"failureStatus"`
-	RetryCount    int    `json:"retryCount,omitempty"`
-	MaxRetry      int    `json:"maxRetry,omitempty"`
+import (
+	"github.com/oceanbase/ob-operator/pkg/task"
+)
+
+func init() {
+	// obtenantbackup
+	task.GetRegistry().Register(fCreateBackupJobInDB, CreateBackupJobInDB)
 }

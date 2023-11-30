@@ -10,6 +10,8 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package types
+package _template
 
-type TaskName string
+func init() {
+	// Register task flow here
+}

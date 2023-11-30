@@ -10,24 +10,25 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package task
+package types
 
 import (
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 )
 
+type FlowName string
+
 type TaskFlow struct {
-	OperationContext *tasktypes.OperationContext
+	OperationContext *OperationContext
 }
 
-func NewTaskFlow(c *tasktypes.OperationContext) *TaskFlow {
+func NewTaskFlow(c *OperationContext) *TaskFlow {
 	return &TaskFlow{
 		OperationContext: c,
 	}
 }
 
-func (f *TaskFlow) NextTask() string {
+func (f *TaskFlow) NextTask() TaskName {
 	if f.OperationContext.Idx >= len(f.OperationContext.Tasks) {
 		f.OperationContext.Task = ""
 	} else {

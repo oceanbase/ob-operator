@@ -17,8 +17,8 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,8 +38,6 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -52,29 +50,29 @@ type OBServerManager struct {
 	Logger   *logr.Logger
 }
 
-func (m *OBServerManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.CreateOBPVC:
+	case tCreateOBPVC:
 		return m.CreateOBPVC, nil
-	case taskname.CreateOBPod:
+	case tCreateOBPod:
 		return m.CreateOBPod, nil
-	case taskname.WaitOBServerReady:
+	case tWaitOBServerReady:
 		return m.WaitOBServerReady, nil
-	case taskname.WaitOBClusterBootstrapped:
+	case tWaitOBClusterBootstrapped:
 		return m.WaitOBClusterBootstrapped, nil
-	case taskname.AddServer:
+	case tAddServer:
 		return m.AddServer, nil
-	case taskname.DeleteOBServerInCluster:
+	case tDeleteOBServerInCluster:
 		return m.DeleteOBServerInCluster, nil
-	case taskname.WaitOBServerDeletedInCluster:
+	case tWaitOBServerDeletedInCluster:
 		return m.WaitOBServerDeletedInCluster, nil
-	case taskname.WaitOBServerPodReady:
+	case tWaitOBServerPodReady:
 		return m.WaitOBServerPodReady, nil
-	case taskname.WaitOBServerActiveInCluster:
+	case tWaitOBServerActiveInCluster:
 		return m.WaitOBServerActiveInCluster, nil
-	case taskname.UpgradeOBServerImage:
+	case tUpgradeOBServerImage:
 		return m.UpgradeOBServerImage, nil
-	case taskname.AnnotateOBServerPod:
+	case tAnnotateOBServerPod:
 		return m.AnnotateOBServerPod, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
@@ -248,14 +246,14 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
-func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBServer.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from observer status")
-		return task.NewTaskFlow(m.OBServer.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.OBServer.Status.OperationContext), nil
 	}
 	// newly created observer
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
@@ -269,33 +267,33 @@ func (m *OBServerManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create observer when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(flowname.PrepareOBServerForBootstrap)
+			taskFlow, err = task.GetRegistry().Get(fPrepareOBServerForBootstrap)
 		} else {
 			// created normally
 			m.Logger.Info("Create observer when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateOBServer)
+			taskFlow, err = task.GetRegistry().Get(fCreateOBServer)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
 	case serverstatus.BootstrapReady:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when bootstrap ready")
-		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBServerAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(fMaintainOBServerAfterBootstrap)
 	case serverstatus.Deleting:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer deleting")
-		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServerFinalizer)
+		taskFlow, err = task.GetRegistry().Get(fDeleteOBServerFinalizer)
 	case serverstatus.Upgrade:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer upgrade")
-		taskFlow, err = task.GetRegistry().Get(flowname.UpgradeOBServer)
+		taskFlow, err = task.GetRegistry().Get(fUpgradeOBServer)
 	case serverstatus.Recover:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need recover")
-		taskFlow, err = task.GetRegistry().Get(flowname.RecoverOBServer)
+		taskFlow, err = task.GetRegistry().Get(fRecoverOBServer)
 	case serverstatus.Annotate:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need set annotation")
-		taskFlow, err = task.GetRegistry().Get(flowname.AnnotateOBServerPod)
+		taskFlow, err = task.GetRegistry().Get(fAnnotateOBServerPod)
 	case serverstatus.AddServer:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be added to obcluster")
-		taskFlow, err = task.GetRegistry().Get(flowname.AddServerInOB)
+		taskFlow, err = task.GetRegistry().Get(fAddServerInOB)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil

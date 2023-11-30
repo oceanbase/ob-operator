@@ -10,102 +10,99 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package task
+package obtenantoperation
 
 import (
 	"github.com/oceanbase/ob-operator/api/constants"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func ChangeTenantRootPassword() *TaskFlow {
-	return &TaskFlow{
+func ChangeTenantRootPassword() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.ChangeTenantRootPasswordFlow,
-			Tasks: []string{
-				taskname.OpChangeTenantRootPassword,
+			Name: fChangeTenantRootPasswordFlow,
+			Tasks: []tasktypes.TaskName{
+				tOpChangeTenantRootPassword,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
 			},
 		},
 	}
 }
 
-func ActivateStandbyTenantOp() *TaskFlow {
-	return &TaskFlow{
+func ActivateStandbyTenantOp() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.ActivateStandbyTenantFlow,
-			Tasks: []string{
-				taskname.OpActivateStandby,
-				taskname.OpCreateUsersForActivatedStandby,
+			Name: fActivateStandbyTenantFlow,
+			Tasks: []tasktypes.TaskName{
+				tOpActivateStandby,
+				tOpCreateUsersForActivatedStandby,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
 			},
 		},
 	}
 }
 
-func SwitchoverTenants() *TaskFlow {
-	return &TaskFlow{
+func SwitchoverTenants() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.SwitchoverTenantsFlow,
-			Tasks: []string{
-				taskname.OpSwitchTenantsRole,
-				taskname.OpSetTenantLogRestoreSource,
+			Name: fSwitchoverTenantsFlow,
+			Tasks: []tasktypes.TaskName{
+				tOpSwitchTenantsRole,
+				tOpSetTenantLogRestoreSource,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpReverting),
 			},
 		},
 	}
 }
 
-func RevertSwitchoverTenants() *TaskFlow {
-	return &TaskFlow{
+func RevertSwitchoverTenants() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.RevertSwitchoverTenantsFlow,
-			Tasks: []string{
-				taskname.OpSwitchTenantsRole,
+			Name: fRevertSwitchoverTenantsFlow,
+			Tasks: []tasktypes.TaskName{
+				tOpSwitchTenantsRole,
 			},
 			TargetStatus: string(constants.TenantOpFailed),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpReverting),
 			},
 		},
 	}
 }
 
-func UpgradeTenant() *TaskFlow {
-	return &TaskFlow{
+func UpgradeTenant() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.OpUpgradeTenant,
-			Tasks: []string{
-				taskname.OpUpgradeTenant,
+			Name: fOpUpgradeTenant,
+			Tasks: []tasktypes.TaskName{
+				tOpUpgradeTenant,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
 			},
 		},
 	}
 }
 
-func ReplayLogOfStandby() *TaskFlow {
-	return &TaskFlow{
+func ReplayLogOfStandby() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: flowname.OpReplayLog,
-			Tasks: []string{
-				taskname.OpReplayLog,
+			Name: fOpReplayLog,
+			Tasks: []tasktypes.TaskName{
+				tOpReplayLog,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.TenantOpFailed),
 			},
 		},

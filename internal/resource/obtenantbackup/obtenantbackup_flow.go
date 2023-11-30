@@ -10,21 +10,23 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package task
+package obtenantbackup
 
 import (
-	parameterstatus "github.com/oceanbase/ob-operator/internal/const/status/obparameter"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
+	"github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func SetOBParameter() *TaskFlow {
-	return &TaskFlow{
+func CreateBackupJobInDB() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         flowname.SetOBParameter,
-			Tasks:        []string{taskname.SetOBParameter},
-			TargetStatus: parameterstatus.Matched,
+			Name:         fCreateBackupJobInDB,
+			Tasks:        []tasktypes.TaskName{tCreateBackupJobInDB},
+			TargetStatus: string(constants.BackupPolicyStatusRunning),
+			OnFailure: tasktypes.FailureRule{
+				Strategy: strategy.StartOver,
+			},
 		},
 	}
 }

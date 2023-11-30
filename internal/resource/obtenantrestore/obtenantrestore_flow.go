@@ -10,49 +10,46 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package task
+package obtenantrestore
 
 import (
 	"github.com/oceanbase/ob-operator/api/constants"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func StartRestoreJob() *TaskFlow {
-	return &TaskFlow{
+func StartRestoreJob() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         flowname.StartRestoreFlow,
-			Tasks:        []string{taskname.StartRestoreJob},
+			Name:         fStartRestoreFlow,
+			Tasks:        []tasktypes.TaskName{tStartRestoreJob},
 			TargetStatus: string(constants.RestoreJobRunning),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.RestoreJobFailed),
 			},
 		},
 	}
 }
 
-func RestoreAsPrimary() *TaskFlow {
-	return &TaskFlow{
+func RestoreAsPrimary() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         flowname.RestoreAsPrimaryFlow,
-			Tasks:        []string{taskname.ActivateStandby},
+			Name:         fRestoreAsPrimaryFlow,
+			Tasks:        []tasktypes.TaskName{tActivateStandby},
 			TargetStatus: string(constants.RestoreJobSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.RestoreJobFailed),
 			},
 		},
 	}
 }
 
-func RestoreAsStandby() *TaskFlow {
-	return &TaskFlow{
+func RestoreAsStandby() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         flowname.RestoreAsStandbyFlow,
-			Tasks:        []string{taskname.StartLogReplay},
+			Name:         fRestoreAsStandbyFlow,
+			Tasks:        []tasktypes.TaskName{tStartLogReplay},
 			TargetStatus: string(constants.RestoreJobSuccessful),
-			OnFailure: strategy.FailureRule{
+			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.RestoreJobFailed),
 			},
 		},

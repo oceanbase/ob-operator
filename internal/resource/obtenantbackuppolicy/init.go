@@ -10,25 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package coordinator
+package obtenantbackuppolicy
 
 import (
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
-type ResourceManager interface {
-	IsNewResource() bool
-	IsDeleting() bool
-	CheckAndUpdateFinalizers() error
-	InitStatus()
-	SetOperationContext(*tasktypes.OperationContext)
-	ClearTaskInfo()
-	HandleFailure()
-	FinishTask()
-	UpdateStatus() error
-	GetStatus() string
-	GetTaskFunc(tasktypes.TaskName) (tasktypes.TaskFunc, error)
-	GetTaskFlow() (*tasktypes.TaskFlow, error)
-	PrintErrEvent(error)
-	ArchiveResource()
+func init() {
+	// obtenantbackuppolicy
+	task.GetRegistry().Register(fPrepareBackupPolicy, PrepareBackupPolicy)
+	task.GetRegistry().Register(fStartBackupJob, StartBackupJob)
+	task.GetRegistry().Register(fStopBackupPolicy, StopBackupPolicy)
+	task.GetRegistry().Register(fMaintainRunningPolicy, MaintainRunningPolicy)
+	task.GetRegistry().Register(fPauseBackup, PauseBackup)
+	task.GetRegistry().Register(fResumeBackup, ResumeBackup)
 }

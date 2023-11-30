@@ -25,8 +25,8 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -36,8 +36,6 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -71,22 +69,22 @@ func (m *OBParameterManager) SetOperationContext(c *tasktypes.OperationContext) 
 	m.OBParameter.Status.OperationContext = c
 }
 
-func (m *OBParameterManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBParameter.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obparameter status")
-		return task.NewTaskFlow(m.OBParameter.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.OBParameter.Status.OperationContext), nil
 	}
 
 	// return task flow depends on status
 
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obparameter status")
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
-		taskFlow, err = task.GetRegistry().Get(flowname.SetOBParameter)
+		taskFlow, err = task.GetRegistry().Get(fSetOBParameter)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obparameter")
 		return nil, nil
@@ -206,9 +204,9 @@ func (m *OBParameterManager) HandleFailure() {
 	}
 }
 
-func (m *OBParameterManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m *OBParameterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.SetOBParameter:
+	case tSetOBParameter:
 		return m.SetOBParameter, nil
 	default:
 		return nil, errors.New("Can not find a function for task")

@@ -10,14 +10,15 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package name
+package obtenantrestore
 
-const (
-	OpChangeTenantRootPassword       string = "change tenant root password"
-	OpActivateStandby                string = "activate standby"
-	OpCreateUsersForActivatedStandby string = "create users for activated standby"
-	OpSwitchTenantsRole              string = "switch tenants role"
-	OpSetTenantLogRestoreSource      string = "set tenant log restore source"
-	OpUpgradeTenant                  string = "upgrade tenant"
-	OpReplayLog                      string = "replay log"
+import (
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
+
+func init() {
+	// tenant-level restore
+	task.GetRegistry().Register(fStartRestoreFlow, StartRestoreJob)
+	task.GetRegistry().Register(fRestoreAsPrimaryFlow, RestoreAsPrimary)
+	task.GetRegistry().Register(fRestoreAsStandbyFlow, RestoreAsStandby)
+}

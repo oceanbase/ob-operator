@@ -32,10 +32,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -126,25 +124,25 @@ func (m *OBTenantBackupManager) UpdateStatus() error {
 	return m.retryUpdateStatus()
 }
 
-func (m *OBTenantBackupManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
-	if name == taskname.CreateBackupJobInDB {
+func (m *OBTenantBackupManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
+	if name == tCreateBackupJobInDB {
 		return m.CreateBackupJobInOB, nil
 	}
 
 	return nil, nil
 }
 
-func (m *OBTenantBackupManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *OBTenantBackupManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.Resource.Status.OperationContext != nil {
-		return task.NewTaskFlow(m.Resource.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	if m.Resource.Status.Status == constants.BackupJobStatusInitializing {
 		switch m.Resource.Spec.Type {
 		case constants.BackupJobTypeFull, constants.BackupJobTypeIncr:
-			taskFlow, err = task.GetRegistry().Get(flow.CreateBackupJobInDB)
+			taskFlow, err = task.GetRegistry().Get(fCreateBackupJobInDB)
 		}
 	}
 	return taskFlow, err

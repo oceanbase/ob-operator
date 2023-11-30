@@ -10,10 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package name
+package types
 
-const (
-	StartRestoreJob = "start restore job"
-	StartLogReplay  = "start log replay"
-	ActivateStandby = "activate standby"
-)
+type FailureRule struct {
+	Strategy      TaskFailureStrategy `json:"failureStrategy"`
+	NextTryStatus string              `json:"failureStatus"`
+	RetryCount    int                 `json:"retryCount,omitempty"`
+	MaxRetry      int                 `json:"maxRetry,omitempty"`
+}

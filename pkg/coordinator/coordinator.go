@@ -21,8 +21,9 @@ import (
 
 	obconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 const (
@@ -57,7 +58,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	result := ctrl.Result{
 		RequeueAfter: ExecutionRequeueDuration,
 	}
-	var f *task.TaskFlow
+	var f *tasktypes.TaskFlow
 	var err error
 	beforeStatus := c.Manager.GetStatus()
 	if c.Manager.IsNewResource() {
@@ -105,7 +106,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	return result, err
 }
 
-func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
+func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 	switch f.OperationContext.TaskStatus {
 	case taskstatus.Empty:
 		if !f.HasNext() {
@@ -121,7 +122,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 			c.Logger.Error(err, "No executable function found for task")
 			c.Manager.PrintErrEvent(err)
 		} else {
-			c.Logger.V(obconst.LogLevelDebug).Info("Successfully get task func " + f.OperationContext.Task)
+			c.Logger.V(obconst.LogLevelDebug).Info("Successfully get task func " + f.OperationContext.Task.Display())
 			taskId := task.GetTaskManager().Submit(taskFunc)
 			c.Logger.V(obconst.LogLevelDebug).Info("Successfully submit task", "taskId", taskId)
 			f.OperationContext.TaskId = taskId
@@ -172,7 +173,7 @@ func (c *Coordinator) executeTaskFlow(f *task.TaskFlow) {
 	// Coordinate finished
 }
 
-func (c *Coordinator) cleanTaskResultMap(f *task.TaskFlow) error {
+func (c *Coordinator) cleanTaskResultMap(f *tasktypes.TaskFlow) error {
 	if f == nil || f.OperationContext == nil {
 		return nil
 	}

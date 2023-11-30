@@ -10,25 +10,19 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package coordinator
+package obparameter
 
 import (
+	parameterstatus "github.com/oceanbase/ob-operator/internal/const/status/obparameter"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type ResourceManager interface {
-	IsNewResource() bool
-	IsDeleting() bool
-	CheckAndUpdateFinalizers() error
-	InitStatus()
-	SetOperationContext(*tasktypes.OperationContext)
-	ClearTaskInfo()
-	HandleFailure()
-	FinishTask()
-	UpdateStatus() error
-	GetStatus() string
-	GetTaskFunc(tasktypes.TaskName) (tasktypes.TaskFunc, error)
-	GetTaskFlow() (*tasktypes.TaskFlow, error)
-	PrintErrEvent(error)
-	ArchiveResource()
+func SetOBParameter() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fSetOBParameter,
+			Tasks:        []tasktypes.TaskName{tSetOBParameter},
+			TargetStatus: parameterstatus.Matched,
+		},
+	}
 }

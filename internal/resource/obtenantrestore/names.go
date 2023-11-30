@@ -10,19 +10,20 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package name
+package obtenantrestore
 
-const (
-	ConfigureServerForBackup = "configure server for backup"
-	CheckAndSpawnJobs        = "check and spawn jobs"
-	StartBackupJob           = "start backup job"
-	StopBackupPolicy         = "stop backup policy"
-	CleanOldBackupJobs       = "clean old backup jobs"
-	PauseBackup              = "pause backup"
-	ResumeBackup             = "resume backup"
-	DeleteBackupPolicy       = "delete backup policy"
+import (
+	ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 const (
-	CreateBackupJobInDB = "create backup job in db"
+	fStartRestoreFlow     ttypes.FlowName = "start restore"
+	fRestoreAsStandbyFlow ttypes.FlowName = "restore as standby"
+	fRestoreAsPrimaryFlow ttypes.FlowName = "restore as primary"
+)
+
+const (
+	tStartRestoreJob ttypes.TaskName = "start restore job"
+	tStartLogReplay  ttypes.TaskName = "start log replay"
+	tActivateStandby ttypes.TaskName = "activate standby"
 )

@@ -31,10 +31,8 @@ import (
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -172,32 +170,32 @@ func (m *ObTenantOperationManager) ArchiveResource() {
 	m.Resource.Status.OperationContext = nil
 }
 
-func (m *ObTenantOperationManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m *ObTenantOperationManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.OpChangeTenantRootPassword:
+	case tOpChangeTenantRootPassword:
 		return m.ChangeTenantRootPassword, nil
-	case taskname.OpActivateStandby:
+	case tOpActivateStandby:
 		return m.ActivateStandbyTenant, nil
-	case taskname.OpCreateUsersForActivatedStandby:
+	case tOpCreateUsersForActivatedStandby:
 		return m.CreateUsersForActivatedStandby, nil
-	case taskname.OpSwitchTenantsRole:
+	case tOpSwitchTenantsRole:
 		return m.SwitchTenantsRole, nil
-	case taskname.OpSetTenantLogRestoreSource:
+	case tOpSetTenantLogRestoreSource:
 		return m.SetTenantLogRestoreSource, nil
-	case taskname.OpUpgradeTenant:
+	case tOpUpgradeTenant:
 		return m.UpgradeTenant, nil
-	case taskname.OpReplayLog:
+	case tOpReplayLog:
 		return m.ReplayLogOfStandby, nil
 	default:
 		return nil, errors.New("Task name not registered")
 	}
 }
 
-func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.Resource.Status.OperationContext != nil {
-		return task.NewTaskFlow(m.Resource.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	status := m.Resource.Status.Status
 	switch status {
@@ -206,20 +204,20 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*task.TaskFlow, error) {
 	case constants.TenantOpRunning:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpChangePwd:
-			taskFlow, err = task.GetRegistry().Get(flow.ChangeTenantRootPasswordFlow)
+			taskFlow, err = task.GetRegistry().Get(fChangeTenantRootPasswordFlow)
 		case constants.TenantOpFailover:
-			taskFlow, err = task.GetRegistry().Get(flow.ActivateStandbyTenantFlow)
+			taskFlow, err = task.GetRegistry().Get(fActivateStandbyTenantFlow)
 		case constants.TenantOpSwitchover:
-			taskFlow, err = task.GetRegistry().Get(flow.SwitchoverTenantsFlow)
+			taskFlow, err = task.GetRegistry().Get(fSwitchoverTenantsFlow)
 		case constants.TenantOpUpgrade:
-			taskFlow, err = task.GetRegistry().Get(flow.OpUpgradeTenant)
+			taskFlow, err = task.GetRegistry().Get(fOpUpgradeTenant)
 		case constants.TenantOpReplayLog:
-			taskFlow, err = task.GetRegistry().Get(flow.OpReplayLog)
+			taskFlow, err = task.GetRegistry().Get(fOpReplayLog)
 		}
 	case constants.TenantOpReverting:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpSwitchover:
-			taskFlow, err = task.GetRegistry().Get(flow.RevertSwitchoverTenantsFlow)
+			taskFlow, err = task.GetRegistry().Get(fRevertSwitchoverTenantsFlow)
 		default:
 			err = errors.New("unsupported operation type")
 		}

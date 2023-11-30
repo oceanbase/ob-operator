@@ -10,6 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package types
+package obtenantbackup
 
-type TaskFunc func() TaskError
+import (
+	ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
+)
+
+const (
+	fCreateBackupJobInDB ttypes.FlowName = "create backup job in db"
+)
+
+const (
+	tCreateBackupJobInDB ttypes.TaskName = "create backup job in db"
+)

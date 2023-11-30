@@ -36,10 +36,8 @@ import (
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flow "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -267,49 +265,49 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 	return m.retryUpdateStatus()
 }
 
-func (m *ObTenantBackupPolicyManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m *ObTenantBackupPolicyManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.ConfigureServerForBackup:
+	case tConfigureServerForBackup:
 		return m.ConfigureServerForBackup, nil
-	case taskname.StartBackupJob:
+	case tStartBackupJob:
 		return m.StartBackup, nil
-	case taskname.StopBackupPolicy:
+	case tStopBackupPolicy:
 		return m.StopBackup, nil
-	case taskname.CheckAndSpawnJobs:
+	case tCheckAndSpawnJobs:
 		return m.CheckAndSpawnJobs, nil
-	case taskname.CleanOldBackupJobs:
+	case tCleanOldBackupJobs:
 		return m.CleanOldBackupJobs, nil
-	case taskname.PauseBackup:
+	case tPauseBackup:
 		return m.PauseBackup, nil
-	case taskname.ResumeBackup:
+	case tResumeBackup:
 		return m.ResumeBackup, nil
 	default:
 		return nil, errors.Errorf("unknown task name %s", name)
 	}
 }
 
-func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.BackupPolicy.Status.OperationContext != nil {
-		return task.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
 	}
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	status := m.BackupPolicy.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.BackupPolicyStatusPreparing:
-		taskFlow, err = task.GetRegistry().Get(flow.PrepareBackupPolicy)
+		taskFlow, err = task.GetRegistry().Get(fPrepareBackupPolicy)
 	case constants.BackupPolicyStatusPrepared:
-		taskFlow, err = task.GetRegistry().Get(flow.StartBackupJob)
+		taskFlow, err = task.GetRegistry().Get(fStartBackupJob)
 	case constants.BackupPolicyStatusMaintaining:
-		taskFlow, err = task.GetRegistry().Get(flow.MaintainRunningPolicy)
+		taskFlow, err = task.GetRegistry().Get(fMaintainRunningPolicy)
 	case constants.BackupPolicyStatusPausing:
-		taskFlow, err = task.GetRegistry().Get(flow.PauseBackup)
+		taskFlow, err = task.GetRegistry().Get(fPauseBackup)
 	case constants.BackupPolicyStatusResuming:
-		taskFlow, err = task.GetRegistry().Get(flow.ResumeBackup)
+		taskFlow, err = task.GetRegistry().Get(fResumeBackup)
 	case constants.BackupPolicyStatusDeleting:
-		taskFlow, err = task.GetRegistry().Get(flow.StopBackupPolicy)
+		taskFlow, err = task.GetRegistry().Get(fStopBackupPolicy)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil

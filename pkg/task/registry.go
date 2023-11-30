@@ -17,33 +17,38 @@ import (
 	"sync"
 
 	"github.com/pkg/errors"
+
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 var taskFlowRegistry *Registry
 var taskFlowRegistryOnce sync.Once
+var mu sync.Mutex
 
 func GetRegistry() *Registry {
 	taskFlowRegistryOnce.Do(func() {
 		taskFlowRegistry = &Registry{
-			Store: make(map[string]func() *TaskFlow),
+			Store: make(map[tasktypes.FlowName]func() *tasktypes.TaskFlow),
 		}
 	})
 	return taskFlowRegistry
 }
 
 type Registry struct {
-	Store map[string]func() *TaskFlow
+	Store map[tasktypes.FlowName]func() *tasktypes.TaskFlow
 }
 
-func (r *Registry) Register(name string, f func() *TaskFlow) {
+func (r *Registry) Register(name tasktypes.FlowName, f func() *tasktypes.TaskFlow) {
 	_, exists := r.Store[name]
 	if exists {
 		panic(fmt.Sprintf("Task flow %s already registered", name))
 	}
+	mu.Lock()
+	defer mu.Unlock()
 	r.Store[name] = f
 }
 
-func (r *Registry) Get(name string) (*TaskFlow, error) {
+func (r *Registry) Get(name tasktypes.FlowName) (*tasktypes.TaskFlow, error) {
 	f, exists := r.Store[name]
 	if !exists {
 		return nil, errors.Errorf("Task flow %s not registered", name)

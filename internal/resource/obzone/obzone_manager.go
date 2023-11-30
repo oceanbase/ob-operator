@@ -34,10 +34,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
-	flowname "github.com/oceanbase/ob-operator/pkg/task/const/flow/name"
-	taskname "github.com/oceanbase/ob-operator/pkg/task/const/task/name"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
-	"github.com/oceanbase/ob-operator/pkg/task/strategy"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -72,14 +70,14 @@ func (m *OBZoneManager) SetOperationContext(c *tasktypes.OperationContext) {
 	m.OBZone.Status.OperationContext = c
 }
 
-func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
+func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBZone.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obzone status")
-		return task.NewTaskFlow(m.OBZone.Status.OperationContext), nil
+		return tasktypes.NewTaskFlow(m.OBZone.Status.OperationContext), nil
 	}
 	// newly created zone
-	var taskFlow *task.TaskFlow
+	var taskFlow *tasktypes.TaskFlow
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
@@ -92,32 +90,32 @@ func (m *OBZoneManager) GetTaskFlow() (*task.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create obzone when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(flowname.PrepareOBZoneForBootstrap)
+			taskFlow, err = task.GetRegistry().Get(fPrepareOBZoneForBootstrap)
 		} else {
 			// created normally
 			m.Logger.Info("Create obzone when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(flowname.CreateOBZone)
+			taskFlow, err = task.GetRegistry().Get(fCreateOBZone)
 		}
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
 	case zonestatus.BootstrapReady:
-		taskFlow, err = task.GetRegistry().Get(flowname.MaintainOBZoneAfterBootstrap)
+		taskFlow, err = task.GetRegistry().Get(fMaintainOBZoneAfterBootstrap)
 	case zonestatus.AddOBServer:
-		taskFlow, err = task.GetRegistry().Get(flowname.AddOBServer)
+		taskFlow, err = task.GetRegistry().Get(fAddOBServer)
 	case zonestatus.DeleteOBServer:
-		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBServer)
+		taskFlow, err = task.GetRegistry().Get(fDeleteOBServer)
 	case zonestatus.Deleting:
-		taskFlow, err = task.GetRegistry().Get(flowname.DeleteOBZoneFinalizer)
+		taskFlow, err = task.GetRegistry().Get(fDeleteOBZoneFinalizer)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
 			return nil, errors.Wrap(err, "Get obcluster")
 		}
 		if len(obcluster.Status.OBZoneStatus) >= 3 {
-			return task.GetRegistry().Get(flowname.UpgradeOBZone)
+			return task.GetRegistry().Get(fUpgradeOBZone)
 		}
-		return task.GetRegistry().Get(flowname.ForceUpgradeOBZone)
+		return task.GetRegistry().Get(fForceUpgradeOBZone)
 		// TODO upgrade
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obzone")
@@ -281,37 +279,37 @@ func (m *OBZoneManager) FinishTask() {
 	m.OBZone.Status.OperationContext = nil
 }
 
-func (m *OBZoneManager) GetTaskFunc(name string) (tasktypes.TaskFunc, error) {
+func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
-	case taskname.CreateOBServer:
+	case tCreateOBServer:
 		return m.CreateOBServer, nil
-	case taskname.WaitOBServerBootstrapReady:
+	case tWaitOBServerBootstrapReady:
 		return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case taskname.WaitOBServerRunning:
+	case tWaitOBServerRunning:
 		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case taskname.AddZone:
+	case tAddZone:
 		return m.AddZone, nil
-	case taskname.StartOBZone:
+	case tStartOBZone:
 		return m.StartOBZone, nil
-	case taskname.DeleteOBServer:
+	case tDeleteOBServer:
 		return m.DeleteOBServer, nil
-	case taskname.DeleteAllOBServer:
+	case tDeleteAllOBServer:
 		return m.DeleteAllOBServer, nil
-	case taskname.WaitReplicaMatch:
+	case tWaitReplicaMatch:
 		return m.WaitReplicaMatch, nil
-	case taskname.WaitOBServerDeleted:
+	case tWaitOBServerDeleted:
 		return m.WaitOBServerDeleted, nil
-	case taskname.StopOBZone:
+	case tStopOBZone:
 		return m.StopOBZone, nil
-	case taskname.DeleteOBZoneInCluster:
+	case tDeleteOBZoneInCluster:
 		return m.DeleteOBZoneInCluster, nil
-	case taskname.OBClusterHealthCheck:
+	case tOBClusterHealthCheck:
 		return m.OBClusterHealthCheck, nil
-	case taskname.OBZoneHealthCheck:
+	case tOBZoneHealthCheck:
 		return m.OBZoneHealthCheck, nil
-	case taskname.UpgradeOBServer:
+	case tUpgradeOBServer:
 		return m.UpgradeOBServer, nil
-	case taskname.WaitOBServerUpgraded:
+	case tWaitOBServerUpgraded:
 		return m.WaitOBServerUpgraded, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
