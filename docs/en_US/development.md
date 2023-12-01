@@ -57,8 +57,8 @@ kubectl get crds
 kubectl get pods -n oceanbase-system
 ```
 you will get something like the following
-![crd](../asset/crd.jpg "crd")
-![controller-manager](../asset/controller-manager.jpg "controller-manager")
+![crd](../img/crd.jpg "crd")
+![controller-manager](../img/controller-manager.jpg "controller-manager")
 
 ## check logs
 After deploying the crds and controller-manager, ob-operator will handle OceanBase related objects lifecycle management, you may test your own business by create a cr and make some modifications, ob-operator will handle the certain event. To test everything works properly, you can use the following command to check log message.
