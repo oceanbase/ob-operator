@@ -2,7 +2,7 @@ apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenantBackupPolicy
 metadata:
   name: obtenantbackuppolicy-oss
-  # namespace: oceanbase
+  namespace: oceanbase
 spec:
   obClusterName: "obcluster"
   tenantName: "t1"
@@ -13,13 +13,13 @@ spec:
   logArchive:
     destination:
       type: "OSS"
-      path: "oss://operator-backup-data/archive-t1-1128?host=oss-cn-hangzhou.aliyuncs.com"
+      path: "oss://operator-backup-data/archive-t1?host=oss-cn-hangzhou.aliyuncs.com"
       ossAccessSecret: "oss-access"
     switchPieceInterval: "1d"
   dataBackup:
     destination:
       type: "OSS"
-      path: "oss://operator-backup-data/backup-t1-1128?host=oss-cn-hangzhou.aliyuncs.com"
+      path: "oss://operator-backup-data/backup-t1?host=oss-cn-hangzhou.aliyuncs.com"
       ossAccessSecret: "oss-access"
     fullCrontab: "30 0 * * 6"
     incrementalCrontab: "*/10 * * * *"

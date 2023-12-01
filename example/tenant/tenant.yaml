@@ -27,30 +27,30 @@ spec:
         minIops: 1024
         iopsWeight: 2
         logDiskSize: 4Gi
-    # - zone: zone2
-    #   type: 
-    #     name: Full
-    #     replica: 1
-    #     isActive: true
-    #   resource:
-    #     maxCPU: 1 
-    #     memorySize: 1Gi
-    #     minCPU: 1 
-    #     maxIops: 1024
-    #     minIops: 1024
-    #     iopsWeight: 2
-    #     logDiskSize: 4Gi 
-    # - zone: zone3
-    #   type: 
-    #     name: Full
-    #     replica: 1
-    #     isActive: true
-    #   priority: 3
-    #   resource:
-    #     maxCPU: 1 
-    #     memorySize: 1Gi
-    #     minCPU: 1
-    #     maxIops: 1024
-    #     minIops: 1024
-    #     iopsWeight: 2
-    #     logDiskSize: 4Gi 
+    - zone: zone2
+      type: 
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1 
+        memorySize: 1Gi
+        minCPU: 1 
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 4Gi 
+    - zone: zone3
+      type: 
+        name: Full
+        replica: 1
+        isActive: true
+      priority: 3
+      resource:
+        maxCPU: 1 
+        memorySize: 1Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 4Gi 
