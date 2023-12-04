@@ -4,9 +4,9 @@ metadata:
   name: obtenantbackuppolicy-oss
   namespace: oceanbase
 spec:
-  obClusterName: "obcluster"
+  obClusterName: "test"
   tenantName: "t1"
-  tenantSecret: "t1-ro"
+  tenantSecret: "t1-credential"
   jobKeepWindow: "1d"
   dataClean:
     recoveryWindow: "8d"
@@ -22,4 +22,4 @@ spec:
       path: "oss://operator-backup-data/backup-t1?host=oss-cn-hangzhou.aliyuncs.com"
       ossAccessSecret: "oss-access"
     fullCrontab: "30 0 * * 6"
-    incrementalCrontab: "*/10 * * * *"
+    incrementalCrontab: "30 1 * * *"

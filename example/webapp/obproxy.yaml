@@ -45,11 +45,11 @@ spec:
             - name: OB_CLUSTER
               value: metadb
             - name: CONFIG_URL
-              value: 'http://svc-ob-configserver.default.svc:8080/services?Action=GetObProxyConfig'
+              value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
             - name: PROXYRO_PASSWORD
               valueFrom: 
                 secretKeyRef:
-                  name: ob-user-proxyro
+                  name: sc-sys-proxyro
                   key: password
           resources:
             limits:

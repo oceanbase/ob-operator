@@ -45,11 +45,7 @@ userSecrets:
 topology:
   - zone: zone1
     replica: 1
-  - zone: zone2
-    replica: 1
-  - zone: zone3
-    replica: 1
-    tolerations:
-      - key: obtopo
-        value: zone
-        effect: NoSchedule
+  # - zone: zone2
+  #   replica: 1
+  # - zone: zone3
+  #   replica: 1
