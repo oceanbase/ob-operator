@@ -79,7 +79,7 @@ kubectl create secret -n oceanbase generic operator-password --from-literal=pass
 Using the following command to deploy OceanBase cluster.
 
 ```shell
-kubectl apply -f example/obcluster/obcluster.yaml
+kubectl apply -f example/quickstart/obcluster.yaml
 ```
 
 It may take a while to complete the whole process to deploy OceanBase cluster, you can use the following command to check whether it's finished. It may cost 2~3 minutes to bootstrap the cluster in usual.
