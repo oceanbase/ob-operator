@@ -35,9 +35,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/pkg/controller"
-	"github.com/oceanbase/ob-operator/pkg/controller/config"
-	"github.com/oceanbase/ob-operator/pkg/telemetry"
+	"github.com/oceanbase/ob-operator/internal/controller"
+	"github.com/oceanbase/ob-operator/internal/controller/config"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 	//+kubebuilder:scaffold:imports
 )
 

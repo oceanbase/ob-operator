@@ -49,7 +49,3 @@ topology:
   #   replica: 1
   # - zone: zone3
   #   replica: 1
-  #   tolerations:
-  #     - key: obtopo
-  #       value: zone
-  #       effect: NoSchedule

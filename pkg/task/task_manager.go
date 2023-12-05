@@ -22,7 +22,8 @@ import (
 	"github.com/pkg/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/task/status"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 var taskManager *TaskManager
@@ -38,26 +39,22 @@ func GetTaskManager() *TaskManager {
 	return taskManager
 }
 
-type TaskResult struct {
-	Status string
-	Error  error
-}
-
 type TaskManager struct {
 	ResultMap       sync.Map
 	Logger          *logr.Logger
 	TaskResultCache sync.Map
 }
 
-func (m *TaskManager) Submit(f func() error) string {
-	retCh := make(chan *TaskResult, 1)
-	taskId := uuid.New().String()
+func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
+	retCh := make(chan *tasktypes.TaskResult, 1)
+	// Notes: casting type here is important as equality of interface including type equality and value equality
+	taskId := tasktypes.TaskID(uuid.New().String())
 	m.ResultMap.Store(taskId, retCh)
 	m.TaskResultCache.Delete(taskId)
 	go func() {
 		defer func() {
 			if r := recover(); r != nil {
-				retCh <- &TaskResult{
+				retCh <- &tasktypes.TaskResult{
 					Status: taskstatus.Failed,
 					Error:  errors.Errorf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack())),
 				}
@@ -66,12 +63,12 @@ func (m *TaskManager) Submit(f func() error) string {
 		err := f()
 		if err != nil {
 			m.Logger.Error(err, "Run task got error", "taskId", taskId)
-			retCh <- &TaskResult{
+			retCh <- &tasktypes.TaskResult{
 				Status: taskstatus.Failed,
 				Error:  err,
 			}
 		}
-		retCh <- &TaskResult{
+		retCh <- &tasktypes.TaskResult{
 			Status: taskstatus.Successful,
 			Error:  nil,
 		}
@@ -79,12 +76,12 @@ func (m *TaskManager) Submit(f func() error) string {
 	return taskId
 }
 
-func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
+func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskResult, error) {
 	retChAny, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil, errors.Errorf("Task %s not exists", taskId)
 	}
-	retCh, ok := retChAny.(chan *TaskResult)
+	retCh, ok := retChAny.(chan *tasktypes.TaskResult)
 	if !ok {
 		return nil, errors.Errorf("Task %s not exists", taskId)
 	}
@@ -98,15 +95,15 @@ func (m *TaskManager) GetTaskResult(taskId string) (*TaskResult, error) {
 			return nil, nil
 		}
 	}
-	return result.(*TaskResult), nil
+	return result.(*tasktypes.TaskResult), nil
 }
 
-func (m *TaskManager) CleanTaskResult(taskId string) error {
+func (m *TaskManager) CleanTaskResult(taskId tasktypes.TaskID) error {
 	retChAny, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil
 	}
-	retCh, ok := retChAny.(chan *TaskResult)
+	retCh, ok := retChAny.(chan *tasktypes.TaskResult)
 	if !ok {
 		return nil
 	}

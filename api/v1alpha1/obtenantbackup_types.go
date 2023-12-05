@@ -18,7 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -43,14 +44,14 @@ type OBTenantBackupSpec struct {
 type OBTenantBackupStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Status           apitypes.BackupJobStatus `json:"status"`
-	Progress         string                   `json:"progress,omitempty"` // Not support yet
-	OperationContext *OperationContext        `json:"operationContext,omitempty"`
-	StartedAt        string                   `json:"startedAt,omitempty"`
-	EndedAt          string                   `json:"endedAt,omitempty"`
-	BackupJob        *model.OBBackupJob       `json:"backupJob,omitempty"`
-	ArchiveLogJob    *model.OBArchiveLogJob   `json:"archiveLogJob,omitempty"`
-	DataCleanJob     *model.OBBackupCleanJob  `json:"dataCleanJob,omitempty"`
+	Status           apitypes.BackupJobStatus    `json:"status"`
+	Progress         string                      `json:"progress,omitempty"` // Not support yet
+	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
+	StartedAt        string                      `json:"startedAt,omitempty"`
+	EndedAt          string                      `json:"endedAt,omitempty"`
+	BackupJob        *model.OBBackupJob          `json:"backupJob,omitempty"`
+	ArchiveLogJob    *model.OBArchiveLogJob      `json:"archiveLogJob,omitempty"`
+	DataCleanJob     *model.OBBackupCleanJob     `json:"dataCleanJob,omitempty"`
 }
 
 // fix: implementation of DeepCopyInto needed by zz_generated.deepcopy.go
@@ -59,7 +60,7 @@ func (in *OBTenantBackupStatus) DeepCopyInto(out *OBTenantBackupStatus) {
 	*out = *in
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(tasktypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.BackupJob != nil {
