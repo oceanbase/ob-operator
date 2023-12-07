@@ -12547,6 +12547,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -12740,10 +12748,14 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --manager-namespace=oceanbase-system
-        - --log-verbosity=0
+        - --log-verbosity=2
         command:
         - /manager
         env:
+        - name: TELEMETRY_DEBUG
+          value: "true"
+        - name: DISABLE_TELEMETRY
+          value: "true"
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
         image: oceanbase/ob-operator:2.1.0
