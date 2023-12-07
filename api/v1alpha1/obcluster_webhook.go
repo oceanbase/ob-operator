@@ -215,6 +215,14 @@ func (r *OBCluster) validateMutation() error {
 		} else if memoryLimit.AsApproximateFloat64() > r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size overflow", "memory limit exceeds observer's resource"))
 		}
+
+		if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum size of data storage should be larger than 3 times of memory limit"))
+		}
+
+		if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum size of redo log storage should be larger than 3 times of memory limit"))
+		}
 	}
 
 	// check datafile max size

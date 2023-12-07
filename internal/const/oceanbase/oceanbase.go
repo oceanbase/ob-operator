@@ -42,8 +42,8 @@ const (
 
 var (
 	MinMemorySize      = resource.MustParse("8Gi")
-	MinDataDiskSize    = resource.MustParse("25Gi")
-	MinRedoLogDiskSize = resource.MustParse("25Gi")
+	MinDataDiskSize    = resource.MustParse("30Gi")
+	MinRedoLogDiskSize = resource.MustParse("30Gi")
 	MinLogDiskSize     = resource.MustParse("10Gi")
 )
 
