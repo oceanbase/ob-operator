@@ -58,10 +58,9 @@ func (r *OBCluster) Default() {
 
 	obclusterlog.Info("fill in default values of obcluster")
 	parameterMap := make(map[string]apitypes.Parameter, 0)
-	memoryLimit := oceanbaseconst.DefaultMemoryLimitSize
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
 	if ok {
-		memoryLimit = fmt.Sprintf("%dG", memorySize*oceanbaseconst.DefaultMemoryLimitPercent/oceanbaseconst.GigaConverter/100)
+		memoryLimit := fmt.Sprintf("%dG", memorySize*oceanbaseconst.DefaultMemoryLimitPercent/oceanbaseconst.GigaConverter/100)
 		parameterMap["memory_limit"] = apitypes.Parameter{
 			Name:  "memory_limit",
 			Value: memoryLimit,
@@ -69,16 +68,14 @@ func (r *OBCluster) Default() {
 	} else {
 		obclusterlog.Error(errors.New("failed to parse memory size"), "parse observer's memory size failed")
 	}
-	datafileMaxSize := oceanbaseconst.DefaultDatafileMaxSize
-	datafileNextSize := oceanbaseconst.DefaultDatafileNextSize
 	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if ok {
-		datafileMaxSize = fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100)
+		datafileMaxSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100)
 		parameterMap["datafile_maxsize"] = apitypes.Parameter{
 			Name:  "datafile_maxsize",
 			Value: datafileMaxSize,
 		}
-		datafileNextSize = fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskExpandPercent/oceanbaseconst.GigaConverter/100)
+		datafileNextSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskExpandPercent/oceanbaseconst.GigaConverter/100)
 		parameterMap["datafile_next"] = apitypes.Parameter{
 			Name:  "datafile_next",
 			Value: datafileNextSize,
@@ -195,7 +192,7 @@ func (r *OBCluster) validateMutation() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "The minimum log storage size of OBCluster is "+oceanbaseconst.MinLogDiskSize.String()))
 	}
 
-	// 4 alidate memory size
+	// 4 Validate memory size
 	if r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() < oceanbaseconst.MinMemorySize.AsApproximateFloat64() {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.OBServerTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+oceanbaseconst.MinMemorySize.String()))
 	}
