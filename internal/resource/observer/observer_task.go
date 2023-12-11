@@ -14,6 +14,7 @@ package observer
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -219,7 +220,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 
 func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.PodSpec {
 	containers := make([]corev1.Container, 0)
-	observerContainer := m.createOBServerContainer()
+	observerContainer := m.createOBServerContainer(obcluster)
 	containers = append(containers, observerContainer)
 
 	// TODO, add monitor container
@@ -284,8 +285,10 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 
 	// resource info
 	monagentResource := corev1.ResourceList{}
-	monagentResource["cpu"] = m.OBServer.Spec.MonitorTemplate.Resource.Cpu
 	monagentResource["memory"] = m.OBServer.Spec.MonitorTemplate.Resource.Memory
+	if !m.OBServer.Spec.MonitorTemplate.Resource.Cpu.IsZero() {
+		monagentResource["cpu"] = m.OBServer.Spec.MonitorTemplate.Resource.Cpu
+	}
 	resources := corev1.ResourceRequirements{
 		Limits: monagentResource,
 	}
@@ -351,7 +354,7 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 }
 
 // TODO move hardcoded values to another file
-func (m *OBServerManager) createOBServerContainer() corev1.Container {
+func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster) corev1.Container {
 	// port info
 	ports := make([]corev1.ContainerPort, 0)
 	mysqlPort := corev1.ContainerPort{}
@@ -367,8 +370,10 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 
 	// resource info
 	observerResource := corev1.ResourceList{}
-	observerResource["cpu"] = m.OBServer.Spec.OBServerTemplate.Resource.Cpu
 	observerResource["memory"] = m.OBServer.Spec.OBServerTemplate.Resource.Memory
+	if !m.OBServer.Spec.OBServerTemplate.Resource.Cpu.IsZero() {
+		observerResource["cpu"] = m.OBServer.Spec.OBServerTemplate.Resource.Cpu
+	}
 	resources := corev1.ResourceRequirements{
 		Requests: observerResource,
 		Limits:   observerResource,
@@ -427,13 +432,14 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 		Name:  "CPU_COUNT",
 		Value: fmt.Sprintf("%d", cpuCount),
 	}
+
 	datafileSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if !ok {
-		m.Logger.Error(errors.New("Parse datafile size failed"), "failed to parse datafiel size")
+		m.Logger.Error(errors.New("Parse datafile size failed"), "failed to parse datafile size")
 	}
 	envDataFile := corev1.EnvVar{
 		Name:  "DATAFILE_SIZE",
-		Value: fmt.Sprintf("%dG", datafileSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100),
+		Value: fmt.Sprintf("%dG", datafileSize*oceanbaseconst.InitialDataDiskUsePercent/oceanbaseconst.GigaConverter/100),
 	}
 	clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
 	if !ok {
@@ -454,6 +460,27 @@ func (m *OBServerManager) createOBServerContainer() corev1.Container {
 	envZoneName := corev1.EnvVar{
 		Name:  "ZONE_NAME",
 		Value: m.OBServer.Spec.Zone,
+	}
+
+	startupParameters := make([]string, 0)
+	for _, parameter := range obcluster.Spec.Parameters {
+		reserved := false
+		for _, reservedParameter := range oceanbaseconst.ReservedParameters {
+			if parameter.Name == reservedParameter {
+				reserved = true
+				break
+			}
+		}
+		if !reserved {
+			startupParameters = append(startupParameters, fmt.Sprintf("%s='%s'", parameter.Name, parameter.Value))
+		}
+	}
+	if len(startupParameters) != 0 {
+		envExtraOpt := corev1.EnvVar{
+			Name:  "EXTRA_OPTION",
+			Value: strings.Join(startupParameters, ","),
+		}
+		env = append(env, envExtraOpt)
 	}
 	env = append(env, envLib)
 	env = append(env, envCpu)

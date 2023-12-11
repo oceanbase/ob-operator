@@ -12,7 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package oceanbase
 
+import "k8s.io/apimachinery/pkg/api/resource"
+
 var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "enable_rebalance", "enable_rereplication"}
+var ReservedParameters = [...]string{"cpu_count", "datafile_size", "log_disk_size", "enable_syslog_recycle", "max_syslog_file_count"}
 
 const (
 	BootstrapTimeoutSeconds       = 300
@@ -24,7 +27,24 @@ const (
 )
 
 const (
-	DefaultDiskUsePercent = 90
+	DefaultDiskExpandPercent  = 10
+	DefaultLogPercent         = 80
+	InitialDataDiskUsePercent = 20
+	DefaultDiskUsePercent     = 95
+	DefaultMemoryLimitPercent = 90
+)
+
+const (
+	DefaultMemoryLimitSize  = "0M"
+	DefaultDatafileMaxSize  = "0M"
+	DefaultDatafileNextSize = "1G"
+)
+
+var (
+	MinMemorySize      = resource.MustParse("8Gi")
+	MinDataDiskSize    = resource.MustParse("30Gi")
+	MinRedoLogDiskSize = resource.MustParse("30Gi")
+	MinLogDiskSize     = resource.MustParse("10Gi")
 )
 
 const (
