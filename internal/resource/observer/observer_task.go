@@ -285,8 +285,10 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 
 	// resource info
 	monagentResource := corev1.ResourceList{}
-	monagentResource["cpu"] = m.OBServer.Spec.MonitorTemplate.Resource.Cpu
 	monagentResource["memory"] = m.OBServer.Spec.MonitorTemplate.Resource.Memory
+	if !m.OBServer.Spec.MonitorTemplate.Resource.Cpu.IsZero() {
+		monagentResource["cpu"] = m.OBServer.Spec.MonitorTemplate.Resource.Cpu
+	}
 	resources := corev1.ResourceRequirements{
 		Limits: monagentResource,
 	}
@@ -368,8 +370,10 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 
 	// resource info
 	observerResource := corev1.ResourceList{}
-	observerResource["cpu"] = m.OBServer.Spec.OBServerTemplate.Resource.Cpu
 	observerResource["memory"] = m.OBServer.Spec.OBServerTemplate.Resource.Memory
+	if !m.OBServer.Spec.OBServerTemplate.Resource.Cpu.IsZero() {
+		observerResource["cpu"] = m.OBServer.Spec.OBServerTemplate.Resource.Cpu
+	}
 	resources := corev1.ResourceRequirements{
 		Requests: observerResource,
 		Limits:   observerResource,

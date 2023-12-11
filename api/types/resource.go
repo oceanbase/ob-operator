@@ -17,6 +17,6 @@ import (
 )
 
 type ResourceSpec struct {
-	Cpu    resource.Quantity `json:"cpu"`
+	Cpu    resource.Quantity `json:"cpu,omitempty"`
 	Memory resource.Quantity `json:"memory"`
 }

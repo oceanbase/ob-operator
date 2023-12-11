@@ -14,5 +14,5 @@ package types
 
 type MonitorTemplate struct {
 	Image    string        `json:"image"`
-	Resource *ResourceSpec `json:"resource,omitempty"`
+	Resource *ResourceSpec `json:"resource"`
 }
