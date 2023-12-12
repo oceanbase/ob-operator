@@ -36,3 +36,4 @@ deploy/*secret*
 # !vendor/**/zz_generated.*
 
 .vscode
+testreports

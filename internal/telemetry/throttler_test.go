@@ -15,6 +15,7 @@ package telemetry
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -48,7 +49,9 @@ var _ = Describe("Telemetry throttler", Ordered, Label("throttler"), func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		bts, err := io.ReadAll(res.Body)
 		Expect(err).ShouldNot(HaveOccurred())
-		fmt.Printf("%s\n", string(bts))
+		if os.Getenv("DEBUG_TEST") == "true" {
+			fmt.Printf("%s\n", string(bts))
+		}
 	})
 
 	It("Send telemetry record", func() {
@@ -68,6 +71,8 @@ var _ = Describe("Telemetry throttler", Ordered, Label("throttler"), func() {
 		Expect(err).ShouldNot(HaveOccurred())
 		bts, err := io.ReadAll(res.Body)
 		Expect(err).ShouldNot(HaveOccurred())
-		fmt.Printf("%s\n", string(bts))
+		if os.Getenv("DEBUG_TEST") == "true" {
+			fmt.Printf("%s\n", string(bts))
+		}
 	})
 })

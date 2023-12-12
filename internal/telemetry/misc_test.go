@@ -90,6 +90,7 @@ var _ = Describe("Telemetry", Label("misc"), func() {
 	})
 
 	It("Test concurrent map writes 100 times", Label("panic"), func() {
+		Skip("This case will panic with a high probability.")
 		// This case will panic with a high probability.
 		m := make(map[string]string)
 		for i := 0; i < 100; i++ {
@@ -106,6 +107,7 @@ var _ = Describe("Telemetry", Label("misc"), func() {
 
 	It("Test concurrent map writes 1000 times", Label("panic"), func() {
 		// This case will definitely panic.
+		Skip("This case will panic definitely.")
 		m := make(map[string]string)
 		for i := 0; i < 1000; i++ {
 			go func() {

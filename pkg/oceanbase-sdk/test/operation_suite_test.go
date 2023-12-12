@@ -48,6 +48,12 @@ func TestOperation(t *testing.T) {
 	RunSpecs(t, "Operation Suite")
 }
 
+var _ = BeforeSuite(func() {
+	if host == "" {
+		Skip("host is empty")
+	}
+})
+
 func printSlice[T any](s []T, extraMsg ...any) {
 	for _, msg := range extraMsg {
 		GinkgoWriter.Println("[TEST INFO]", msg)

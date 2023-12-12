@@ -15,6 +15,7 @@ package telemetry
 import (
 	"context"
 	"fmt"
+	"os"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -37,7 +38,9 @@ var _ = Describe("Telemetry", func() {
 		It("Test getHostMetrics", func() {
 			metrics := getHostMetrics()
 			Expect(metrics).ShouldNot(BeNil())
-			fmt.Printf("%+v\n", metrics)
+			if os.Getenv("DEBUG_TEST") == "true" {
+				fmt.Printf("%+v\n", metrics)
+			}
 		})
 
 		It("Cancel context multiple times", func() {
