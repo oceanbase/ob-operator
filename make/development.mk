@@ -22,7 +22,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 	DISABLE_TELEMETRY=true LOG_VERBOSITY=0 \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
 	ginkgo run --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
-	--output-dir=testreports --keep-going --json-report=report.json ./...
+	--output-dir=testreports --keep-going --json-report=report.json --label-filter='$(CASE_LABEL_FILTERS)' ./...
 
 .PHONY: testreport
 testreport: test ## Generate test reports

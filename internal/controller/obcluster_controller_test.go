@@ -44,7 +44,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		interval            = 1
 	)
 
-	Context("Create OBCluster", func() {
+	Context("Create OBCluster", Label("long-run"), func() {
 		It("Create OBCluster instance and ends with status running successfully", func() {
 			By("By creating a new OBCluster")
 			ctx := context.Background()
