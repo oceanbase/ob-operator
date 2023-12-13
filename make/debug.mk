@@ -39,4 +39,5 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run ./cmd/main.go --log-verbosity=${LOG_LEVEL}
+	@mkdir -p testreports/covdata
+	CGO_ENABLED=1 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run -cover -covermode=atomic ./cmd/main.go --log-verbosity=${LOG_LEVEL} 

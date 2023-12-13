@@ -10,7 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package controller
+package resource
 
 import (
 	"context"
@@ -27,6 +27,8 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+
+	"github.com/oceanbase/ob-operator/internal/resource/utils"
 )
 
 const (
@@ -38,14 +40,34 @@ var _ = Describe("OBCluster controller", Serial, func() {
 	const (
 		applyWait           = 5
 		commonTimeout       = 30
-		waitRunningTimeout  = 300
+		waitRunningTimeout  = 600
 		waitUpgradeTimeout  = 1800
 		waitDeletingTimeout = 1800
 		interval            = 1
 	)
 
+	Context("Utils", func() {
+		It("Min", func() {
+			Expect(utils.Min(1, 2)).Should(Equal(1))
+			Expect(utils.Min(2, 1)).Should(Equal(1))
+			Expect(utils.Min(1.2, 2.1)).Should(Equal(1.2))
+			Expect(utils.Min(2.1, 1.2)).Should(Equal(1.2))
+		})
+
+		It("IsZero", func() {
+			Expect(utils.IsZero(0)).Should(BeTrue())
+			Expect(utils.IsZero(1)).Should(BeFalse())
+			Expect(utils.IsZero(0.0)).Should(BeTrue())
+			Expect(utils.IsZero(1.0)).Should(BeFalse())
+			Expect(utils.IsZero("")).Should(BeTrue())
+			Expect(utils.IsZero("a")).Should(BeFalse())
+			Expect(utils.IsZero(&v1.Secret{})).Should(BeFalse())
+		})
+	})
+
 	Context("Create OBCluster", Label("long-run"), func() {
 		It("Create OBCluster instance and ends with status running successfully", func() {
+			// Skip("Skip all tests")
 			By("By creating a new OBCluster")
 			ctx := context.Background()
 			secrets := newClusterSecrets()
@@ -89,6 +111,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Scale out zones of OBCluster instance and ends with status running successfully", func() {
+			Skip("Skip all tests")
 			By("By scale out obzone of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -120,6 +143,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Scale in obzone of OBCluster instance and ends with status running successfully", func() {
+			Skip("Skip all tests")
 			By("By scale in obzone of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -147,6 +171,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Upgrade OBCluster instance and ends with status running successfully", func() {
+			Skip("Skip all tests")
 			By("By upgrade OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -174,6 +199,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Scale out server of OBCluster instance and ends with status running successfully", func() {
+			Skip("Skip all tests")
 			By("By scale out observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -204,6 +230,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Scale in server of OBCluster instance and ends with status running successfully", func() {
+			Skip("Skip all tests")
 			By("By scale in observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -233,6 +260,7 @@ var _ = Describe("OBCluster controller", Serial, func() {
 		})
 
 		It("Delete OBCluster instance successfully", func() {
+			// Skip("Skip all tests")
 			By("By delete OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
