@@ -62,11 +62,11 @@ func (r *OBTenantOperation) Default() {
 	tenant := &OBTenant{}
 	var targetTenantName string
 	var secondaryTenantName string
-	if r.Spec.Type == constants.TenantOpChangePwd {
+	if r.Spec.Type == constants.TenantOpChangePwd && r.Spec.ChangePwd != nil {
 		targetTenantName = r.Spec.ChangePwd.Tenant
-	} else if r.Spec.Type == constants.TenantOpFailover {
+	} else if r.Spec.Type == constants.TenantOpFailover && r.Spec.Failover != nil {
 		targetTenantName = r.Spec.Failover.StandbyTenant
-	} else if r.Spec.Type == constants.TenantOpSwitchover {
+	} else if r.Spec.Type == constants.TenantOpSwitchover && r.Spec.Switchover != nil {
 		targetTenantName = r.Spec.Switchover.PrimaryTenant
 		secondaryTenantName = r.Spec.Switchover.StandbyTenant
 	} else if (r.Spec.Type == constants.TenantOpUpgrade || r.Spec.Type == constants.TenantOpReplayLog) && r.Spec.TargetTenant != nil {
@@ -80,7 +80,7 @@ func (r *OBTenantOperation) Default() {
 			Name:      targetTenantName,
 		}, tenant)
 		if err != nil {
-			obtenantoperationlog.Error(err, "get tenant")
+			// obtenantoperationlog.Error(err, "get tenant")
 			return
 		}
 		firstMeta := tenant.GetObjectMeta()
@@ -198,7 +198,7 @@ func (r *OBTenantOperation) validateMutation() error {
 			tenant, err := r.checkTenantCRExistence(*r.Spec.TargetTenant)
 			if err != nil {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Failed to get target tenant of given name"))
-			} else if tenant.Status.TenantRole != constants.TenantRoleStandby {
+			} else if tenant.Status.TenantRole != constants.TenantRolePrimary {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "Standby tenant cannot be upgraded, please activate it first"))
 			}
 		}

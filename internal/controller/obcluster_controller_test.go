@@ -19,6 +19,7 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	v1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -32,7 +33,7 @@ const (
 	TestOBClusterName = "test"
 )
 
-var _ = Describe("OBCluster controller", func() {
+var _ = Describe("OBCluster controller", Serial, func() {
 
 	const (
 		applyWait           = 5
@@ -43,10 +44,23 @@ var _ = Describe("OBCluster controller", func() {
 		interval            = 1
 	)
 
-	Context("Create OBCluster", func() {
-		It("Should successfully create OBCluster instance and ends with Status running", func() {
+	Context("Create OBCluster", Label("long-run"), func() {
+		It("Create OBCluster instance and ends with status running successfully", func() {
 			By("By creating a new OBCluster")
 			ctx := context.Background()
+			secrets := newClusterSecrets()
+			for _, v := range secrets {
+				Expect(k8sClient.Create(ctx, v)).Should(Succeed())
+			}
+			for _, v := range secrets {
+				sec := &v1.Secret{}
+				Eventually(func() bool {
+					return k8sClient.Get(ctx, types.NamespacedName{
+						Namespace: DefaultNamespace,
+						Name:      v.GetName(),
+					}, sec) == nil
+				}, commonTimeout, interval).Should(BeTrue())
+			}
 			obcluster := newOBCluster(TestOBClusterName, 3, 1)
 			logf.Log.Info("create test obcluster")
 			Expect(k8sClient.Create(ctx, obcluster)).Should(Succeed())
@@ -74,7 +88,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully created")
 		})
 
-		It("Should successfully scale out obzone of OBCluster instance and ends with Status running", func() {
+		It("Scale out zones of OBCluster instance and ends with status running successfully", func() {
 			By("By scale out obzone of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -105,7 +119,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully scale out obzone")
 		})
 
-		It("Should successfully scale in obzone of OBCluster instance and ends with Status running", func() {
+		It("Scale in obzone of OBCluster instance and ends with status running successfully", func() {
 			By("By scale in obzone of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -132,7 +146,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully scale in obzone")
 		})
 
-		It("Should successfully upgrade OBCluster instance and ends with Status running", func() {
+		It("Upgrade OBCluster instance and ends with status running successfully", func() {
 			By("By upgrade OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -159,7 +173,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully upgrade obzone")
 		})
 
-		It("Should successfully scale out server of OBCluster instance and ends with Status running", func() {
+		It("Scale out server of OBCluster instance and ends with status running successfully", func() {
 			By("By scale out observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -189,7 +203,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully scale out observer")
 		})
 
-		It("Should successfully scale in server of OBCluster instance and ends with Status running", func() {
+		It("Scale in server of OBCluster instance and ends with status running successfully", func() {
 			By("By scale in observer of an OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -218,7 +232,7 @@ var _ = Describe("OBCluster controller", func() {
 			logf.Log.Info("obcluster successfully scale in observer")
 		})
 
-		It("Should successfully delete OBCluster instance", func() {
+		It("Delete OBCluster instance successfully", func() {
 			By("By delete OBCluster")
 			ctx := context.Background()
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -241,6 +255,21 @@ var _ = Describe("OBCluster controller", func() {
 				}
 				return false
 			}, waitRunningTimeout, interval).Should(BeTrue())
+
+			secrets := newClusterSecrets()
+			for _, v := range secrets {
+				Expect(k8sClient.Delete(ctx, v)).To(BeNil())
+			}
+			for _, v := range secrets {
+				sec := &v1.Secret{}
+				Eventually(func() bool {
+					err := k8sClient.Get(ctx, types.NamespacedName{
+						Namespace: DefaultNamespace,
+						Name:      v.GetName(),
+					}, sec)
+					return err != nil && kubeerrors.IsNotFound(err)
+				}, commonTimeout, interval).Should(BeTrue())
+			}
 			logf.Log.Info("obcluster successfully deleted")
 		})
 	})

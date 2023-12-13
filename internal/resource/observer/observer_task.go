@@ -418,7 +418,6 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		startOBServerCmd,
 	}
 
-	// TODO make a new image take environment variables as commandline option
 	env := make([]corev1.EnvVar, 0)
 	envLib := corev1.EnvVar{
 		Name:  "LD_LIBRARY_PATH",

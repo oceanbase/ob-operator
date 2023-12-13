@@ -22,9 +22,6 @@ import (
 
 func init() {
 	TelemetryDisabled = os.Getenv(DisableTelemetryEnvName) == "true"
-	if TelemetryDisabled {
-		return
-	}
 	if host, ok := os.LookupEnv(TelemetryReportHostEnvName); ok && host != "" && strings.HasPrefix(host, "http") {
 		if u, err := url.Parse(host); err == nil {
 			clt := http.Client{

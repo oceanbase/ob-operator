@@ -15,6 +15,7 @@ package controller
 import (
 	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -93,4 +94,40 @@ func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
 		},
 	}
 	return obcluster
+}
+
+func newClusterSecrets() []*v1.Secret {
+	return []*v1.Secret{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "root-secret",
+			Namespace: DefaultNamespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("AAaa__123"),
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "proxyro-secret",
+			Namespace: DefaultNamespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("AAaa__123"),
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "monitor-secret",
+			Namespace: DefaultNamespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("AAaa__123"),
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "operator-secret",
+			Namespace: DefaultNamespace,
+		},
+		Data: map[string][]byte{
+			"password": []byte("AAaa__123"),
+		},
+	}}
 }

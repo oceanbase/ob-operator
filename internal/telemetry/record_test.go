@@ -15,6 +15,7 @@ package telemetry
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -93,6 +94,8 @@ var _ = Describe("Telemetry record", func() {
 		record.Resource = v1alpha1.OBCluster{}
 		body, err = json.Marshal(record)
 		Expect(err).ShouldNot(HaveOccurred())
-		fmt.Printf("%s\n", string(body))
+		if os.Getenv("DEBUG_TEST") == "true" {
+			fmt.Printf("%s\n", string(body))
+		}
 	})
 })

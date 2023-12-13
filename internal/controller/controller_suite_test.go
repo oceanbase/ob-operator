@@ -76,7 +76,6 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	// TODO whether to deleted
 	// err = scheme.AddToScheme(scheme.Scheme)
 	// Expect(err).NotTo(HaveOccurred())
 
