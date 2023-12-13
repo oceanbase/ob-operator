@@ -67,10 +67,11 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 				Status: taskstatus.Failed,
 				Error:  err,
 			}
-		}
-		retCh <- &tasktypes.TaskResult{
-			Status: taskstatus.Successful,
-			Error:  nil,
+		} else {
+			retCh <- &tasktypes.TaskResult{
+				Status: taskstatus.Successful,
+				Error:  nil,
+			}
 		}
 	}()
 	return taskId
