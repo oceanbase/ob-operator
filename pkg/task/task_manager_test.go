@@ -37,47 +37,70 @@ func panickyTask() tasktypes.TaskError {
 	panic("panicky task")
 }
 
-var _ = Describe("Test TaskManager", func() {
+func longrunTask() tasktypes.TaskError {
+	time.Sleep(3 * time.Second)
+	return nil
+}
+
+var _ = Describe("Test TaskManager", Serial, func() {
 	It("Get TaskManager", func() {
 		Expect(GetTaskManager()).ShouldNot(BeNil())
 	})
 
 	It("Submit successful task", func() {
-		taskManager := GetTaskManager()
-		taskId := taskManager.Submit(successfulTask)
+		taskId := GetTaskManager().Submit(successfulTask)
 		Expect(taskId).ShouldNot(BeNil())
 
 		Eventually(func() bool {
-			result, err := taskManager.GetTaskResult(taskId)
-			return err == nil && result.Status == taskstatus.Successful
-		}, 300, 3).Should(BeTrue())
+			result, err := GetTaskManager().GetTaskResult(taskId)
+			return err == nil && result != nil && result.Status == taskstatus.Successful
+		}, 3, 1).Should(BeTrue())
 
-		Expect(taskManager.CleanTaskResult(taskId)).Should(Succeed())
+		Expect(GetTaskManager().CleanTaskResult(taskId)).Should(Succeed())
 	})
 
 	It("Submit failed task", func() {
-		taskManager := GetTaskManager()
-		taskId := taskManager.Submit(failedTask)
+		taskId := GetTaskManager().Submit(failedTask)
 		Expect(taskId).ShouldNot(BeNil())
 
 		Eventually(func() bool {
-			result, err := taskManager.GetTaskResult(taskId)
-			return err != nil && result.Status == taskstatus.Failed
-		}, 300, 3).Should(BeTrue())
+			defer GinkgoRecover()
+			result, err := GetTaskManager().GetTaskResult(taskId)
+			return err == nil && result != nil && result.Status == taskstatus.Failed
+		}, 3, 1).Should(BeTrue())
 
-		Expect(taskManager.CleanTaskResult(taskId)).Should(Succeed())
+		Expect(GetTaskManager().CleanTaskResult(taskId)).Should(Succeed())
 	})
 
 	It("Submit panicky task", func() {
-		taskManager := GetTaskManager()
-		taskId := taskManager.Submit(panickyTask)
+		taskId := GetTaskManager().Submit(panickyTask)
 		Expect(taskId).ShouldNot(BeNil())
 
 		Eventually(func() bool {
-			result, err := taskManager.GetTaskResult(taskId)
-			return err != nil && result.Status == taskstatus.Failed && strings.HasPrefix(err.Error(), "Observed a panic")
-		}, 300, 3).Should(BeTrue())
+			result, err := GetTaskManager().GetTaskResult(taskId)
+			return err == nil && result != nil && result.Status == taskstatus.Failed && strings.HasPrefix(result.Error.Error(), "Observed a panic")
+		}, 3, 1).Should(BeTrue())
 
-		Expect(taskManager.CleanTaskResult(taskId)).Should(Succeed())
+		Expect(GetTaskManager().CleanTaskResult(taskId)).Should(Succeed())
+	})
+
+	It("Submit long run task", func() {
+		taskId := GetTaskManager().Submit(longrunTask)
+		Expect(taskId).ShouldNot(BeNil())
+
+		Eventually(func() bool {
+			result, err := GetTaskManager().GetTaskResult(taskId)
+			return err == nil && result != nil && result.Status == taskstatus.Successful
+		}, 8, 1).Should(BeTrue())
+
+		Expect(GetTaskManager().CleanTaskResult(taskId)).Should(Succeed())
+	})
+
+	It("Submit 1e6 tasks", Label("long-run"), func() {
+		// 1e6 unit tasks take about 0.9G memory
+		for i := 0; i < 1e6; i++ {
+			taskId := GetTaskManager().Submit(longrunTask)
+			Expect(taskId).ShouldNot(BeNil())
+		}
 	})
 })

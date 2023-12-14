@@ -37,14 +37,14 @@ REPORT_PORT ?= 8480
 .PHONY: coverage
 coverage: test ## Generate test reports
 	@echo "generating test reports..."
-	@go tool cover -html=testreports/cover.out -o testreports/cover.html
+	@go tool cover -html=testreports/cover.profile -o testreports/cover.html
 	@cd testreports && python3 -m http.server --bind 0.0.0.0 $(REPORT_PORT)
 
 .PHONY: run-coverage
 run-coverage:  ## Generate integration test coverage report.
 	@go tool covdata textfmt -i=testreports/covdata -o=testreports/covdata.txt
 	@go tool cover -html=testreports/covdata.txt -o testreports/integration.html
-	@go tool cover -html=testreports/cover.out -o testreports/unit.html
+	@go tool cover -html=testreports/cover.profile -o testreports/unit.html
 	@cd testreports && python3 -m http.server --bind 0.0.0.0 $(REPORT_PORT)
 
 .PHONY: GOLANGCI_LINT
