@@ -193,11 +193,15 @@ func (m *OBParameterManager) HandleFailure() {
 	failureRule := operationContext.OnFailure
 	switch failureRule.Strategy {
 	case strategy.StartOver:
-		m.OBParameter.Status.Status = failureRule.NextTryStatus
-		m.OBParameter.Status.OperationContext.Idx = 0
-		m.OBParameter.Status.OperationContext.TaskStatus = ""
-		m.OBParameter.Status.OperationContext.TaskId = ""
-		m.OBParameter.Status.OperationContext.Task = ""
+		if m.OBParameter.Status.Status != failureRule.NextTryStatus {
+			m.OBParameter.Status.Status = failureRule.NextTryStatus
+			m.OBParameter.Status.OperationContext = nil
+		} else {
+			m.OBParameter.Status.OperationContext.Idx = 0
+			m.OBParameter.Status.OperationContext.TaskStatus = ""
+			m.OBParameter.Status.OperationContext.TaskId = ""
+			m.OBParameter.Status.OperationContext.Task = ""
+		}
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
 	case strategy.Pause:

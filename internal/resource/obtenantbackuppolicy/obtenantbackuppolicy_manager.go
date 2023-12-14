@@ -350,11 +350,15 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 		case "":
 			fallthrough
 		case strategy.StartOver:
-			m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(failureRule.NextTryStatus)
-			m.BackupPolicy.Status.OperationContext.Idx = 0
-			m.BackupPolicy.Status.OperationContext.TaskStatus = ""
-			m.BackupPolicy.Status.OperationContext.TaskId = ""
-			m.BackupPolicy.Status.OperationContext.Task = ""
+			if m.BackupPolicy.Status.Status != apitypes.BackupPolicyStatusType(failureRule.NextTryStatus) {
+				m.BackupPolicy.Status.Status = apitypes.BackupPolicyStatusType(failureRule.NextTryStatus)
+				m.BackupPolicy.Status.OperationContext = nil
+			} else {
+				m.BackupPolicy.Status.OperationContext.Idx = 0
+				m.BackupPolicy.Status.OperationContext.TaskStatus = ""
+				m.BackupPolicy.Status.OperationContext.TaskId = ""
+				m.BackupPolicy.Status.OperationContext.Task = ""
+			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:

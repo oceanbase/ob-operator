@@ -262,11 +262,15 @@ func (m *OBZoneManager) HandleFailure() {
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
 		case strategy.StartOver:
-			m.OBZone.Status.Status = failureRule.NextTryStatus
-			m.OBZone.Status.OperationContext.Idx = 0
-			m.OBZone.Status.OperationContext.TaskStatus = ""
-			m.OBZone.Status.OperationContext.TaskId = ""
-			m.OBZone.Status.OperationContext.Task = ""
+			if m.OBZone.Status.Status != failureRule.NextTryStatus {
+				m.OBZone.Status.Status = failureRule.NextTryStatus
+				m.OBZone.Status.OperationContext = nil
+			} else {
+				m.OBZone.Status.OperationContext.Idx = 0
+				m.OBZone.Status.OperationContext.TaskStatus = ""
+				m.OBZone.Status.OperationContext.TaskId = ""
+				m.OBZone.Status.OperationContext.Task = ""
+			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:

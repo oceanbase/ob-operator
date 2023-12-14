@@ -89,11 +89,15 @@ func (m *OBTenantBackupManager) HandleFailure() {
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
 		case "", strategy.StartOver:
-			m.Resource.Status.Status = apitypes.BackupJobStatus(failureRule.NextTryStatus)
-			operationContext.Idx = 0
-			operationContext.TaskStatus = ""
-			operationContext.TaskId = ""
-			operationContext.Task = ""
+			if m.Resource.Status.Status != apitypes.BackupJobStatus(failureRule.NextTryStatus) {
+				m.Resource.Status.Status = apitypes.BackupJobStatus(failureRule.NextTryStatus)
+				m.Resource.Status.OperationContext = nil
+			} else {
+				m.Resource.Status.OperationContext.Idx = 0
+				m.Resource.Status.OperationContext.TaskStatus = ""
+				m.Resource.Status.OperationContext.TaskId = ""
+				m.Resource.Status.OperationContext.Task = ""
+			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
