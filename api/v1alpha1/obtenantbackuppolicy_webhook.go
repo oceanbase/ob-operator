@@ -44,10 +44,10 @@ import (
 
 // log is for logging in this package.
 var backupLog = logf.Log.WithName("obtenantbackuppolicy-resource")
-var bakCtl client.Client
+var bakClt client.Client
 
 func (r *OBTenantBackupPolicy) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	bakCtl = mgr.GetClient()
+	bakClt = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -89,7 +89,7 @@ func (r *OBTenantBackupPolicy) Default() {
 	}
 	if r.Spec.TenantCRName != "" {
 		tenant := &OBTenant{}
-		err := bakCtl.Get(context.Background(), types.NamespacedName{
+		err := bakClt.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
 			Name:      r.Spec.TenantCRName,
 		}, tenant)
@@ -132,7 +132,7 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 	ctx := context.TODO()
 	if r.Spec.TenantCRName != "" {
 		tenant := &OBTenant{}
-		err = bakCtl.Get(ctx, types.NamespacedName{
+		err = bakClt.Get(ctx, types.NamespacedName{
 			Namespace: r.GetNamespace(),
 			Name:      r.Spec.TenantCRName,
 		}, tenant)
@@ -144,7 +144,7 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 			return nil, errors.New("tenant is not running")
 		}
 		policyList := &OBTenantBackupPolicyList{}
-		err = bakCtl.List(ctx, policyList, client.MatchingLabels{
+		err = bakClt.List(ctx, policyList, client.MatchingLabels{
 			oceanbaseconst.LabelTenantName:   r.Spec.TenantCRName,
 			oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
 			oceanbaseconst.LabelRefUID:       string(tenant.GetUID()),
@@ -224,7 +224,7 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 
 	if r.Spec.DataBackup.EncryptionSecret != "" {
 		sec := &v1.Secret{}
-		err := bakCtl.Get(context.Background(), types.NamespacedName{
+		err := bakClt.Get(context.Background(), types.NamespacedName{
 			Namespace: r.Namespace,
 			Name:      r.Spec.DataBackup.EncryptionSecret,
 		}, sec)
@@ -255,7 +255,7 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 
 		secret := &v1.Secret{}
-		err := bakCtl.Get(context.Background(), types.NamespacedName{
+		err := bakClt.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
 			Name:      r.Spec.DataBackup.Destination.OSSAccessSecret,
 		}, secret)
@@ -296,7 +296,7 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		}
 
 		secret := &v1.Secret{}
-		err := bakCtl.Get(context.Background(), types.NamespacedName{
+		err := bakClt.Get(context.Background(), types.NamespacedName{
 			Namespace: r.GetNamespace(),
 			Name:      r.Spec.LogArchive.Destination.OSSAccessSecret,
 		}, secret)

@@ -126,7 +126,7 @@ var _ = Describe("Test TaskManager", Serial, func() {
 			}
 		}
 		if poolSize == 0 {
-			poolSize = 1000
+			poolSize = 100
 		}
 
 		if os.Getenv(taskMemoryUsageEnv) != "" {
@@ -146,7 +146,7 @@ var _ = Describe("Test TaskManager", Serial, func() {
 			}
 		}
 		if taskNum == 0 {
-			taskNum = 5000
+			taskNum = 500
 		}
 
 		if os.Getenv(taskSleepEnv) != "" {

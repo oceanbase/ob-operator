@@ -21,7 +21,7 @@ test: manifests generate fmt vet envtest ## Run tests.
 	TEST_USE_EXISTING_CLUSTER=true TELEMETRY_REPORT_HOST=http://openwebapi.test.alipay.net \
 	DISABLE_TELEMETRY=true LOG_VERBOSITY=0 \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
-	go run github.com/onsi/ginkgo/v2/ginkgo -r --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
+	go run github.com/onsi/ginkgo/v2/ginkgo -r -v --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
 	--output-dir=testreports --keep-going --json-report=report.json --label-filter='!long-run'
 	
 .PHONY: test-all
@@ -29,7 +29,7 @@ test-all: manifests generate fmt vet envtest ## Run tests to get cpu and mem pro
 	TEST_USE_EXISTING_CLUSTER=true TELEMETRY_REPORT_HOST=http://openwebapi.test.alipay.net \
 	DISABLE_TELEMETRY=true LOG_VERBOSITY=0 \
 	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
-	go run github.com/onsi/ginkgo/v2/ginkgo -r --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
+	go run github.com/onsi/ginkgo/v2/ginkgo -r -v --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
 	--output-dir=testreports --keep-going --json-report=report.json --label-filter='$(CASE_LABEL_FILTERS)'
 
 REPORT_PORT ?= 8480
