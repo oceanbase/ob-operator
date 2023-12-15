@@ -33,6 +33,7 @@ type OBClusterSpec struct {
 
 	ClusterName      string                     `json:"clusterName"`
 	ClusterId        int64                      `json:"clusterId,omitempty"`
+	Standalone       bool                       `json:"standalone,omitempty"`
 	OBServerTemplate *OBServerTemplate          `json:"observer"`
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitor,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`

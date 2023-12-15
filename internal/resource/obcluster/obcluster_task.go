@@ -202,6 +202,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -237,9 +238,15 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 				Topology:         zone,
 			},
 		}
+		obzone.ObjectMeta.Annotations = make(map[string]string)
 		if independentVolumeAnnoExist {
-			obzone.ObjectMeta.Annotations = make(map[string]string)
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+		}
+		if singlePVCAnnoExist {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+		}
+		if m.OBCluster.Spec.Standalone {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 		}
 		m.Logger.Info("create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
@@ -308,10 +315,6 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
 	}
 	return err
-}
-
-func (m *OBClusterManager) CreateService() tasktypes.TaskError {
-	return nil
 }
 
 func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
@@ -877,6 +880,41 @@ func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
 					return errors.Wrap(err, "Create secret "+secret)
 				}
 			}
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
+	if m.OBCluster.Spec.Standalone {
+		err := m.Client.Create(m.Ctx, &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      m.OBCluster.GetName() + "-standalone-svc",
+				Namespace: m.OBCluster.GetNamespace(),
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: m.OBCluster.APIVersion,
+					Kind:       m.OBCluster.Kind,
+					Name:       m.OBCluster.GetName(),
+					UID:        m.OBCluster.GetUID(),
+				}},
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{{
+					Name:       "sql",
+					Protocol:   "tcp",
+					Port:       2881,
+					TargetPort: intstr.IntOrString{IntVal: 2881},
+				}},
+				Selector: map[string]string{
+					oceanbaseconst.LabelRefOBCluster: m.OBCluster.GetName(),
+				},
+				Type: corev1.ServiceTypeNodePort,
+			},
+		})
+		if err != nil {
+			return errors.Wrap(err, "Create service")
 		}
 	}
 	return nil

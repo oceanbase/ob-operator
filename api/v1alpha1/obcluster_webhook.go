@@ -141,6 +141,15 @@ func (r *OBCluster) validateMutation() error {
 
 	var allErrs field.ErrorList
 
+	// Validate standalone
+	if r.Spec.Standalone {
+		if len(r.Spec.Topology) != 1 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single zone"))
+		} else if r.Spec.Topology[0].Replica != 1 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single replica"))
+		}
+	}
+
 	// Validate userSecrets
 	if r.Spec.UserSecrets != nil {
 		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {

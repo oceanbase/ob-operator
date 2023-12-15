@@ -106,6 +106,8 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 		}
 	}
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -135,9 +137,15 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 				BackupVolume:     m.OBZone.Spec.BackupVolume,
 			},
 		}
+		observer.ObjectMeta.Annotations = make(map[string]string)
 		if independentVolumeAnnoExist {
-			observer.ObjectMeta.Annotations = make(map[string]string)
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+		}
+		if singlePVCAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+		}
+		if modeAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		m.Logger.Info("create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)

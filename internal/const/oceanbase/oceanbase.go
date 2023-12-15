@@ -73,6 +73,12 @@ const (
 
 const (
 	AnnotationsIndependentPVCLifecycle = "oceanbase.oceanbase.com/independent-pvc-lifecycle"
+	AnnotationsSinglePVC               = "oceanbase.oceanbase.com/single-pvc"
+	AnnotationsMode                    = "oceanbase.oceanbase.com/mode"
+)
+
+const (
+	ModeStandalone = "standalone"
 )
 
 const (

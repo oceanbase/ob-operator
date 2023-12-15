@@ -311,7 +311,7 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 	case tCreateUsers:
 		return m.CreateUsers, nil
 	case tCreateOBClusterService:
-		return m.CreateService, nil
+		return m.CreateServices, nil
 	case tMaintainOBParameter:
 		return m.MaintainOBParameter, nil
 	case tValidateUpgradeInfo:
