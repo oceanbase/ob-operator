@@ -14,7 +14,7 @@ package types
 
 type OBUserSecrets struct {
 	Root     string `json:"root"`
-	ProxyRO  string `json:"proxyro"`
-	Monitor  string `json:"monitor"`
+	ProxyRO  string `json:"proxyro,omitempty"`
+	Monitor  string `json:"monitor,omitempty"`
 	Operator string `json:"operator,omitempty"`
 }

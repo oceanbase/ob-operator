@@ -22,9 +22,11 @@ import (
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
 
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
@@ -838,5 +840,44 @@ func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
 	}
 	_ = m.Client.Delete(m.Ctx, contextSecret)
 	m.Recorder.Event(m.OBCluster, "Upgrade", "", "Restore essential parameters successfully")
+	return nil
+}
+
+func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
+	// Root secret should be checked by webhooks, missing root error should never occur
+	rootSec := &corev1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.OBCluster.Status.UserSecrets.Root,
+	}, rootSec)
+	if err != nil {
+		return errors.Wrap(err, "Get secret root")
+	}
+
+	secretList := []string{
+		m.OBCluster.Status.UserSecrets.Operator,
+		m.OBCluster.Status.UserSecrets.Monitor,
+		m.OBCluster.Status.UserSecrets.ProxyRO,
+	}
+	for _, secret := range secretList {
+		fetchedSec := &corev1.Secret{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBCluster.Namespace,
+			Name:      secret,
+		}, fetchedSec)
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				err := m.Client.Create(m.Ctx, &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{},
+					StringData: map[string]string{
+						"password": rand.String(16),
+					},
+				})
+				if err != nil {
+					return errors.Wrap(err, "Create secret "+secret)
+				}
+			}
+		}
+	}
 	return nil
 }

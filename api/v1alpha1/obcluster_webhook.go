@@ -141,28 +141,19 @@ func (r *OBCluster) validateMutation() error {
 
 	var allErrs field.ErrorList
 
-	// 0. Validate userSecrets
+	// Validate userSecrets
 	if r.Spec.UserSecrets != nil {
 		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
 			allErrs = append(allErrs, err)
 		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
-			allErrs = append(allErrs, err)
-		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
-			allErrs = append(allErrs, err)
-		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
-			allErrs = append(allErrs, err)
-		}
 	}
 
-	// 1. Validate Topology
+	// Validate Topology
 	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
 	}
 
-	// 2. Validate storageClasses
+	// Validate storageClasses
 	storageClassMapping := make(map[string]bool)
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass] = true
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass] = true
@@ -181,7 +172,7 @@ func (r *OBCluster) validateMutation() error {
 		}
 	}
 
-	// 3. Validate disk size
+	// Validate disk size
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinDataDiskSize.AsApproximateFloat64() {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum data storage size of OBCluster is "+oceanbaseconst.MinDataDiskSize.String()))
 	}
@@ -192,12 +183,12 @@ func (r *OBCluster) validateMutation() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "The minimum log storage size of OBCluster is "+oceanbaseconst.MinLogDiskSize.String()))
 	}
 
-	// 4 Validate memory size
+	// Validate memory size
 	if r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() < oceanbaseconst.MinMemorySize.AsApproximateFloat64() {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.OBServerTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+oceanbaseconst.MinMemorySize.String()))
 	}
 
-	// 5. Validate essential parameters
+	// Validate essential parameters
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	for _, parameter := range r.Spec.Parameters {
 		parameterMap[parameter.Name] = parameter

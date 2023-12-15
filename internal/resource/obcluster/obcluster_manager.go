@@ -14,6 +14,7 @@ package obcluster
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -58,6 +59,18 @@ func (m *OBClusterManager) InitStatus() {
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
 		OBZoneStatus: make([]apitypes.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
+		UserSecrets:  m.OBCluster.Spec.UserSecrets,
+	}
+	if status.UserSecrets != nil {
+		if status.UserSecrets.Monitor == "" {
+			status.UserSecrets.Monitor = strings.Join([]string{m.OBCluster.Name, "monitor"}, "-")
+		}
+		if status.UserSecrets.ProxyRO == "" {
+			status.UserSecrets.ProxyRO = strings.Join([]string{m.OBCluster.Name, "proxyro"}, "-")
+		}
+		if status.UserSecrets.Operator == "" {
+			status.UserSecrets.Operator = strings.Join([]string{m.OBCluster.Name, "operator"}, "-")
+		}
 	}
 	m.OBCluster.Status = status
 }
@@ -277,6 +290,8 @@ func (m *OBClusterManager) HandleFailure() {
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCheckAndCreateUserSecrets:
+		return m.CheckAndCreateUserSecrets, nil
 	case tCreateOBZone:
 		return m.CreateOBZone, nil
 	case tDeleteOBZone:

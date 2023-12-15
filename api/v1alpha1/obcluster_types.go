@@ -50,6 +50,7 @@ type OBClusterStatus struct {
 	Status           string                         `json:"status"`
 	OBZoneStatus     []apitypes.OBZoneReplicaStatus `json:"obzones"`
 	Parameters       []apitypes.Parameter           `json:"parameters"`
+	UserSecrets      *apitypes.OBUserSecrets        `json:"userSecrets"`
 }
 
 //+kubebuilder:object:root=true
