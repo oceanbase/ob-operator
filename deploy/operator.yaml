@@ -1871,6 +1871,8 @@ spec:
                   - value
                   type: object
                 type: array
+              standalone:
+                type: boolean
               topology:
                 items:
                   properties:
@@ -2820,8 +2822,6 @@ spec:
                   root:
                     type: string
                 required:
-                - monitor
-                - proxyro
                 - root
                 type: object
             required:
@@ -2905,11 +2905,25 @@ spec:
                 type: array
               status:
                 type: string
+              userSecrets:
+                properties:
+                  monitor:
+                    type: string
+                  operator:
+                    type: string
+                  proxyro:
+                    type: string
+                  root:
+                    type: string
+                required:
+                - root
+                type: object
             required:
             - image
             - obzones
             - parameters
             - status
+            - userSecrets
             type: object
         type: object
     served: true
@@ -12853,6 +12867,31 @@ metadata:
   namespace: oceanbase-system
 spec:
   selfSigned: {}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/created-by: ob-operator-generate
+    app.kubernetes.io/instance: controller-manager-metrics-monitor
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: servicemonitor
+    app.kubernetes.io/part-of: ob-operator-generate
+    control-plane: controller-manager
+  name: oceanbase-controller-manager-metrics-monitor
+  namespace: oceanbase-system
+spec:
+  endpoints:
+  - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    path: /metrics
+    port: https
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+  selector:
+    matchLabels:
+      control-plane: controller-manager
 ---
 apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
