@@ -646,15 +646,15 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		} else if err != nil {
 			m.Logger.Error(err, "Query observer info failed")
 		}
-		obunits, err := operationManager.ListUnitsWithServerIP(observerInfo.Ip)
-		if err != nil {
-			return errors.Wrapf(err, "List units on server "+observerInfo.Ip)
-		}
-		if len(obunits) == 0 {
-			m.Logger.Info("none of units left on observer, deleted")
-			deleted = true
-			break
-		}
+		// obunits, err := operationManager.ListUnitsWithServerIP(observerInfo.Ip)
+		// if err != nil {
+		// 	return errors.Wrapf(err, "List units on server "+observerInfo.Ip)
+		// }
+		// if len(obunits) == 0 {
+		// 	m.Logger.Info("none of units left on observer, deleted")
+		// 	deleted = true
+		// 	break
+		// }
 		time.Sleep(time.Second)
 	}
 	if !deleted {
