@@ -25,8 +25,8 @@ var cfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "oceanbase-helper",
-	Short: "oceanbaes helper tool",
-	Long:  "oceanbae helper tool, used for oceanbase operation",
+	Short: "oceanbase helper tool",
+	Long:  "oceanbase helper tool, used for oceanbase operation",
 }
 
 func Execute() {

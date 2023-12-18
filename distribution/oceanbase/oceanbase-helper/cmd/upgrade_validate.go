@@ -16,8 +16,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 	"github.com/pkg/errors"
@@ -29,7 +27,6 @@ import (
 var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "validate a version can be upgrade to current version",
-	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := validateUpgrade()
 		if err != nil {
@@ -45,23 +42,6 @@ func init() {
 	validateCmd.PersistentFlags().StringP("ob-installation-path", "p", "/home/admin/oceanbase", "oceanbase installation path")
 	_ = viper.BindPFlag("start-version", validateCmd.PersistentFlags().Lookup("start-version"))
 	_ = viper.BindPFlag("ob-installation-path", validateCmd.PersistentFlags().Lookup("ob-installation-path"))
-}
-
-func getCurrentVersion(oceanbaseInstallPath string) (string, error) {
-	output, err := exec.Command("bash", "-c", fmt.Sprintf("export LD_LIBRARY_PATH=%s/lib; %s/bin/observer -V", oceanbaseInstallPath, oceanbaseInstallPath)).CombinedOutput()
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to execute version command")
-	}
-	fmt.Println(string(output))
-	lines := strings.Split(string(output), "\n")
-	if len(lines) > 3 {
-		versionStr := strings.Split(lines[1], " ")
-		version := versionStr[len(versionStr)-1]
-		releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
-		return fmt.Sprintf("%s-%s", version[0:len(version)-1], releaseStr), nil
-	} else {
-		return "", errors.New("OB Version Formattion is Wrong")
-	}
 }
 
 func validateUpgrade() error {

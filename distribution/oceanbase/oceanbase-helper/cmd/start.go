@@ -33,6 +33,7 @@ const (
 	DefaultLogPath       = "/home/admin/log"
 	BackupConfigFileName = "observer.conf.bin"
 	ConfigFileName       = "observer.config.bin"
+	MinStandaloneVersion = "4.2.0.0"
 )
 
 const (
@@ -43,13 +44,7 @@ const (
 // startCmd represents the start command
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Start OceanBase",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := prepareDir()
 		if err != nil {
@@ -129,10 +124,24 @@ func startOBServerWithParam() error {
 	if !found {
 		extraOptStr = ""
 	}
+	standalone, found := os.LookupEnv("STANDALONE")
+	if found {
+		standalone = "true"
+	}
 	optStr := fmt.Sprintf("cpu_count=%s,datafile_size=%s,log_disk_size=%s,enable_syslog_recycle=true,max_syslog_file_count=4", cpuCountOpt, datafileSizeOpt, logDiskSizeOpt)
 	if extraOptStr != "" {
 		optStr = fmt.Sprintf("%s,%s", optStr, extraOptStr)
 	}
-	cmd := fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+	ver, err := getCurrentVersion(DefaultHomePath)
+	if err != nil {
+		return errors.Wrap(err, "Failed to get current version")
+	}
+	var cmd string
+	if ver > MinStandaloneVersion && standalone != "" {
+		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s -I 127.0.0.1 -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s --standalone", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+	} else {
+		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+	}
+	fmt.Println("Start commands: ", cmd)
 	return exec.Command("bash", "-c", cmd).Run()
 }
