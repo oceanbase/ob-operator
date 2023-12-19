@@ -31,7 +31,7 @@ endif
 
 ## Delve is a debugger for the Go programming language. More info: https://github.com/go-delve/delve
 run-delve: generate fmt vet manifests ## Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config 
-	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/main.go
+	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/manager/main.go
 	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager --continue -- -log-verbosity=${LOG_LEVEL}
 
 install-delve: ## Install delve, a debugger for the Go programming language. More info: https://github.com/go-delve/delve
@@ -39,4 +39,4 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 
 .PHONY: run
 run: manifests generate fmt vet ## Run a controller from your host.
-	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run ./cmd/main.go --log-verbosity=${LOG_LEVEL}
+	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run ./cmd/manager/main.go --log-verbosity=${LOG_LEVEL}

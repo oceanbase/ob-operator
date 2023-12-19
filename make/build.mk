@@ -2,7 +2,7 @@
 
 .PHONY: build
 build: manifests generate fmt vet ## Build manager binary.
-	go build -o bin/manager cmd/main.go
+	go build -o bin/manager cmd/manager/main.go
 
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
