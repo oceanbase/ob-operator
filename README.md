@@ -24,7 +24,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/operator.yaml
 ```
 
 * Development
@@ -38,7 +38,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.1
 ```
 
 #### Verify deployment
@@ -67,7 +67,7 @@ kubectl create secret generic operator-password --from-literal=password='operato
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
