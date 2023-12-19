@@ -23,8 +23,8 @@ import (
 	"github.com/spf13/viper"
 )
 
-// validateCmd represents the validate command
-var validateCmd = &cobra.Command{
+// upgradeValidateCmd represents the validate command
+var upgradeValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "validate a version can be upgrade to current version",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -37,11 +37,11 @@ var validateCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.AddCommand(validateCmd)
-	validateCmd.PersistentFlags().StringP("start-version", "s", "", "upgrade start version")
-	validateCmd.PersistentFlags().StringP("ob-installation-path", "p", "/home/admin/oceanbase", "oceanbase installation path")
-	_ = viper.BindPFlag("start-version", validateCmd.PersistentFlags().Lookup("start-version"))
-	_ = viper.BindPFlag("ob-installation-path", validateCmd.PersistentFlags().Lookup("ob-installation-path"))
+	upgradeCmd.AddCommand(upgradeValidateCmd)
+	upgradeValidateCmd.PersistentFlags().StringP("start-version", "s", "", "upgrade start version")
+	upgradeValidateCmd.PersistentFlags().StringP("ob-installation-path", "p", "/home/admin/oceanbase", "oceanbase installation path")
+	_ = viper.BindPFlag("start-version", upgradeValidateCmd.PersistentFlags().Lookup("start-version"))
+	_ = viper.BindPFlag("ob-installation-path", upgradeValidateCmd.PersistentFlags().Lookup("ob-installation-path"))
 }
 
 func validateUpgrade() error {

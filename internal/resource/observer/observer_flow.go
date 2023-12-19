@@ -43,6 +43,9 @@ func CreateOBServer() *tasktypes.TaskFlow {
 			Name:         fCreateOBServer,
 			Tasks:        []tasktypes.TaskName{tCreateOBPVC, tCreateOBPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: "Failed",
+			},
 		},
 	}
 }

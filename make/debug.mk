@@ -14,7 +14,7 @@ ifdef TENANT
 	$(if $(strip $(secretName)), $(eval pwd = $(shell kubectl -n ${NS} get secret $(secretName) -o jsonpath='{.data.password}' | base64 -d)), )
 	$(if $(strip $(pwd)), mysql -h$(nodeHost) -P2881 -A -uroot@$(tenantName) -p$(pwd) -Doceanbase, mysql -h$(nodeHost) -P2881 -A -uroot@$(tenantName) -Doceanbase)
 else
-	mysql -h$(nodeHost) -P2881 -A -uroot -p -Doceanbase -p$(pwd)
+	mysql -h$(nodeHost) -P2881 -A -uroot -p$(pwd)
 endif
 
 root-pwd:

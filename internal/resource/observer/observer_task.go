@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -60,6 +61,10 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 }
 
 func (m *OBServerManager) AddServer() tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		return nil
+	}
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -144,8 +149,7 @@ func (m *OBServerManager) CreateOBPod() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) generatePVCSpec(name string, storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
-	_ = name
+func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
 	pvcSpec := &corev1.PersistentVolumeClaimSpec{}
 	requestsResources := corev1.ResourceList{}
 	requestsResources["storage"] = storageSpec.Size
@@ -171,6 +175,14 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 	}
 	_, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
 	if singlePvcExist {
+		sumQuantity := resource.Quantity{}
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
+		storageSpec := &apitypes.StorageSpec{
+			StorageClass: m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+			Size:         sumQuantity,
+		}
 		pvc := &corev1.PersistentVolumeClaim{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            m.OBServer.Name,
@@ -178,6 +190,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 				OwnerReferences: ownerReferenceList,
 				Labels:          m.OBServer.Labels,
 			},
+			Spec: m.generatePVCSpec(storageSpec),
 		}
 		err := m.Client.Create(m.Ctx, pvc)
 		if err != nil {
@@ -192,7 +205,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 		}
 		pvc := &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
 		}
 		err := m.Client.Create(m.Ctx, pvc)
 		if err != nil {
@@ -207,7 +220,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 		}
 		pvc = &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
 		}
 		err = m.Client.Create(m.Ctx, pvc)
 		if err != nil {
@@ -222,7 +235,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 		}
 		pvc = &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
 		}
 		err = m.Client.Create(m.Ctx, pvc)
 		if err != nil {
@@ -248,6 +261,8 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		singleVolume.Name = m.OBServer.Name
 		singleVolumeSource.ClaimName = m.OBServer.Name
 		singleVolume.VolumeSource.PersistentVolumeClaim = singleVolumeSource
+
+		volumes = append(volumes, singleVolume)
 	} else {
 		volumeDataFile := corev1.Volume{}
 		volumeDataFileSource := &corev1.PersistentVolumeClaimVolumeSource{}
@@ -347,7 +362,7 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: obcluster.Spec.UserSecrets.Monitor,
+					Name: obcluster.Status.UserSecrets.Monitor,
 				},
 				Key: secretconst.PasswordKeyName,
 			},
@@ -385,8 +400,14 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	rpcPort.Name = oceanbaseconst.RpcPortName
 	rpcPort.ContainerPort = oceanbaseconst.RpcPort
 	rpcPort.Protocol = corev1.ProtocolTCP
+	infoPort := corev1.ContainerPort{}
+	infoPort.Name = "info"
+	infoPort.ContainerPort = 8080
+	infoPort.Protocol = corev1.ProtocolTCP
+
 	ports = append(ports, mysqlPort)
 	ports = append(ports, rpcPort)
+	ports = append(ports, infoPort)
 
 	// resource info
 	observerResource := corev1.ResourceList{}
@@ -521,6 +542,15 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)
 
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		envMode := corev1.EnvVar{
+			Name:  "STANDALONE",
+			Value: oceanbaseconst.ModeStandalone,
+		}
+		env = append(env, envMode)
+	}
+
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
 		Image:           m.OBServer.Spec.OBServerTemplate.Image,
@@ -628,6 +658,10 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		return nil
+	}
 	m.Logger.Info("wait observer active in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
@@ -663,6 +697,10 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
+	}
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		return nil
 	}
 	deleted := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {

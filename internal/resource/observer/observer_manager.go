@@ -119,6 +119,10 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeExist && mode == oceanbaseconst.ModeStandalone {
+		observerInfo.Ip = "127.0.0.1"
+	}
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -138,8 +142,8 @@ func (m *OBServerManager) retryUpdateStatus() error {
 }
 
 func (m *OBServerManager) setRecoveryStatus() {
-	mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if m.SupportStaticIp() || exist && mode == oceanbaseconst.ModeStandalone {
+	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
 		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
