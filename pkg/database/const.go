@@ -18,3 +18,7 @@ const (
 	DefaultConnMaxLifetime  = 0
 	DefaultConnMaxIdleTime  = 0
 )
+
+const (
+	DefaultLRUCacheSize = 1000
+)
