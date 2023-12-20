@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller-manager
+  namespace: system
+spec:
+  template:
+    spec:
+      containers:
+      - name: manager
+        args:
+        - "--health-probe-bind-address=:8081"
+        - "--metrics-bind-address=127.0.0.1:8080"
+        - "--leader-elect"
+        - "--manager-namespace=oceanbase-system"
+        - "--log-verbosity=2"
+        env:
+        - name: TELEMETRY_DEBUG
+          value: "true"
+        - name: DISABLE_TELEMETRY
+          value: "true"
+        - name: TELEMETRY_REPORT_HOST
+          value: "https://openwebapi.oceanbase.com"
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 10m
+            memory: 64Mi
