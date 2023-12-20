@@ -12705,7 +12705,7 @@ spec:
         env:
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
-        image: oceanbase/ob-operator:2.1.0
+        image: oceanbase/ob-operator:2.1.1
         livenessProbe:
           httpGet:
             path: /healthz

@@ -33,7 +33,7 @@ spec:
         - name: OCP_METADB_HOST
           value: $(SVC_OBPROXY_SERVICE_HOST)
         - name: OCP_METADB_PORT
-          value: $(SVC_OBPROXY_SERVICE_PORT)
+          value: $(SVC_OBPROXY_SERVICE_PORT_SQL)
         - name: OCP_METADB_USER
           value: root@metatenant#metadb
         - name: OCP_METADB_PASSWORD
