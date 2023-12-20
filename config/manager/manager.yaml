@@ -72,13 +72,6 @@ spec:
         - --leader-elect
         image: controller:latest
         name: manager
-        env:
-          - name: TELEMETRY_DEBUG
-            value: "true"
-          - name: DISABLE_TELEMETRY
-            value: "true"
-          - name: TELEMETRY_REPORT_HOST
-            value: "https://openwebapi.oceanbase.com"
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
