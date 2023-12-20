@@ -12745,17 +12745,13 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --manager-namespace=oceanbase-system
-        - --log-verbosity=2
+        - --log-verbosity=0
         command:
         - /manager
         env:
-        - name: TELEMETRY_DEBUG
-          value: "true"
-        - name: DISABLE_TELEMETRY
-          value: "true"
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
-        image: oceanbase/ob-operator:2.1.0
+        image: oceanbase/ob-operator:2.1.1
         livenessProbe:
           httpGet:
             path: /healthz
