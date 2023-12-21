@@ -13,14 +13,14 @@ See the Mulan PSL v2 for more details.
 package cli
 
 import (
-	"flag"
-	"fmt"
-	"os"
+	"log"
 	"path/filepath"
 
-	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
@@ -28,38 +28,29 @@ import (
 var kubeconfig *string
 var restConfig *rest.Config
 var clientset *kubernetes.Clientset
+var dynamicClient dynamic.Interface
+var mapper meta.RESTMapper
 
-var cfgFile string
+func initClients() {
+	home := homedir.HomeDir()
+	kubeconfig = rootCmd.PersistentFlags().StringP("kubecfonfig", "c", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
 
-var rootCmd = &cobra.Command{
-	Use:   "obocli",
-	Short: "OceanBase Operator CLI",
-	Long:  "OceanBase Operator CLI tool to manage OceanBase clusters, tenants, and backups.",
-}
-
-func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func init() {
-	if home := homedir.HomeDir(); home != "" {
-		kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
 	var err error
 	restConfig, err = clientcmd.BuildConfigFromFlags("", *kubeconfig)
 	if err != nil {
-		_, _ = fmt.Println(err.Error())
-		os.Exit(1)
+		log.Println(err.Error())
+		return
 	}
 	clientset, err = kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		_, _ = fmt.Println(err.Error())
-		os.Exit(1)
+		log.Println(err.Error())
+		return
 	}
+	dynamicClient = dynamic.NewForConfigOrDie(restConfig)
+	groupResources, err := restmapper.GetAPIGroupResources(clientset.DiscoveryClient)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	mapper = restmapper.NewDiscoveryRESTMapper(groupResources)
 }

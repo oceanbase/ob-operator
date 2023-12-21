@@ -13,15 +13,15 @@ See the Mulan PSL v2 for more details.
 package cli
 
 import (
-	"github.com/spf13/cobra"
+	"log"
+	"os"
+	"text/tabwriter"
 )
 
-func init() {
-	rootCmd.AddCommand(tenantCmd)
-}
+var tbw = tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+var tbLog = log.New(tbw, "", 0)
 
-var tenantCmd = &cobra.Command{
-	Use:   "tenant",
-	Short: "Manage OBTenant resources",
-	Run:   func(cmd *cobra.Command, args []string) {},
+func init() {
+	log.SetOutput(os.Stdout)
+	log.SetPrefix("[obocli] ")
 }

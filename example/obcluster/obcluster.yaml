@@ -51,9 +51,11 @@ spec:
       cpu: 1
       memory: 1Gi
 
-  # parameters:
-  #   - name: system_memory
-  #     value: 2G
+  parameters:
+    - name: system_memory
+      value: 2G
+    - name: memory_limit
+      value: 9G
   # backupVolume:
   #   volume:
   #     name: backup

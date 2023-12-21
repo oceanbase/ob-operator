@@ -13,15 +13,12 @@ See the Mulan PSL v2 for more details.
 package cli
 
 import (
-	"github.com/spf13/cobra"
+	"github.com/manifoldco/promptui"
 )
 
-func init() {
-	rootCmd.AddCommand(demoCmd)
-}
-
-var demoCmd = &cobra.Command{
-	Use:   "demo",
-	Short: "Set up demos for OceanBase Operator",
-	Run:   func(cmd *cobra.Command, args []string) {},
+var textTmpls = &promptui.PromptTemplates{
+	Prompt:  "{{ . }} ",
+	Valid:   "{{ . | green }} ",
+	Invalid: "{{ . | red }} ",
+	Success: "{{ . | bold }} ",
 }
