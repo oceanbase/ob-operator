@@ -99,3 +99,13 @@ func AnnotateOBServerPod() *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func ScaleUpOBServer() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fScaleUpOBServer,
+			Tasks:        []tasktypes.TaskName{tDeletePod, tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}

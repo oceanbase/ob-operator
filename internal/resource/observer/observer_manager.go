@@ -74,6 +74,8 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.UpgradeOBServerImage, nil
 	case tAnnotateOBServerPod:
 		return m.AnnotateOBServerPod, nil
+	case tDeletePod:
+		return m.DeletePod, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -187,6 +189,11 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get observer failed, check next time")
 			} else if observer == nil {
 				m.OBServer.Status.Status = serverstatus.AddServer
+			} else if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+				if pod.Spec.Containers[0].Resources.Limits.Cpu() != &m.OBServer.Spec.OBServerTemplate.Resource.Cpu ||
+					pod.Spec.Containers[0].Resources.Limits.Memory() != &m.OBServer.Spec.OBServerTemplate.Resource.Memory {
+					m.OBServer.Status.Status = serverstatus.ScaleUp
+				}
 			}
 		}
 
@@ -299,6 +306,9 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case serverstatus.AddServer:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be added to obcluster")
 		taskFlow, err = task.GetRegistry().Get(fAddServerInOB)
+	case serverstatus.ScaleUp:
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be scaled up")
+		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil

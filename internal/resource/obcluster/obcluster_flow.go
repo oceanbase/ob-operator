@@ -93,3 +93,13 @@ func UpgradeOBCluster() *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func ScaleUpOBZones() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fScaleUpOBZones,
+			Tasks:        []tasktypes.TaskName{tScaleUpOBZones, tWaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}

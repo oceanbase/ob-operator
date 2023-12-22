@@ -26,6 +26,7 @@ const (
 	fForceUpgradeOBZone           ttypes.FlowName = "force upgrade obzone"
 	fCreateOBZone                 ttypes.FlowName = "create obzone"
 	fDeleteOBZoneFinalizer        ttypes.FlowName = "delete obzone finalizer"
+	fScaleUpOBServers             ttypes.FlowName = "scale up observers"
 )
 
 // obzone tasks
@@ -45,4 +46,5 @@ const (
 	tDeleteOBZoneInCluster      ttypes.TaskName = "delete obzone in cluster"
 	tOBClusterHealthCheck       ttypes.TaskName = "obcluster health check"
 	tOBZoneHealthCheck          ttypes.TaskName = "obzone health check"
+	tScaleUpOBServers           ttypes.TaskName = "scale up observers"
 )

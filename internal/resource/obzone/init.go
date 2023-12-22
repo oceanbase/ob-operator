@@ -26,4 +26,5 @@ func init() {
 	task.GetRegistry().Register(fForceUpgradeOBZone, ForceUpgradeOBZone)
 	task.GetRegistry().Register(fMaintainOBZoneAfterBootstrap, MaintainOBZoneAfterBootstrap)
 	task.GetRegistry().Register(fDeleteOBZoneFinalizer, DeleteOBZoneFinalizer)
+	task.GetRegistry().Register(fScaleUpOBServers, ScaleUpOBServers)
 }

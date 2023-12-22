@@ -25,4 +25,5 @@ func init() {
 	task.GetRegistry().Register(fModifyOBZoneReplica, ModifyOBZoneReplica)
 	task.GetRegistry().Register(fMaintainOBParameter, MaintainOBParameter)
 	task.GetRegistry().Register(fUpgradeOBCluster, UpgradeOBCluster)
+	task.GetRegistry().Register(fScaleUpOBZones, ScaleUpOBZones)
 }

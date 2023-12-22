@@ -19,6 +19,7 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -724,4 +725,26 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	}
 	m.Logger.Info("observer deleted", "observer", observerInfo)
 	return nil
+}
+
+func (m *OBServerManager) DeletePod() tasktypes.TaskError {
+	m.Logger.Info("delete observer pod")
+	pod, err := m.getPod()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+	}
+	err = m.Client.Delete(m.Ctx, pod)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete pod of observer %s", m.OBServer.Name)
+	}
+
+	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+		time.Sleep(time.Second)
+		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
+		if err != nil && kubeerrors.IsNotFound(err) {
+			return nil
+		}
+	}
+
+	return errors.New("Timeout to wait pod deleted")
 }

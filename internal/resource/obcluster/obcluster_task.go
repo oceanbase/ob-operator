@@ -989,3 +989,47 @@ func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
 	}
 	return nil
 }
+
+func (m *OBClusterManager) ScaleUpOBZone() tasktypes.TaskError {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "list obzones")
+	}
+
+	for _, obzone := range obzoneList.Items {
+		if obzone.Spec.OBServerTemplate.Resource.Cpu != m.OBCluster.Spec.OBServerTemplate.Resource.Cpu ||
+			obzone.Spec.OBServerTemplate.Resource.Memory != m.OBCluster.Spec.OBServerTemplate.Resource.Memory {
+			obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
+			obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
+			err := m.Client.Update(m.Ctx, &obzone)
+			if err != nil {
+				return errors.Wrap(err, "update obzone")
+			}
+		}
+	}
+
+	// check status of obzones
+	const maxWaitTimes = 60
+	matched := true
+outer:
+	for i := 0; i < maxWaitTimes; i++ {
+		time.Sleep(time.Second * 3)
+		obzoneList, err = m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "list obzones")
+		}
+		for _, obzone := range obzoneList.Items {
+			if obzone.Status.Status != zonestatus.ScaleUpOBServer {
+				matched = false
+				continue outer
+			}
+		}
+		if matched {
+			break
+		}
+	}
+	if !matched {
+		return errors.New("scale up obzone failed")
+	}
+	return nil
+}

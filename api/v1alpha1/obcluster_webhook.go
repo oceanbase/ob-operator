@@ -122,8 +122,19 @@ func (r *OBCluster) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	_ = old
-	obclusterlog.Info("validate update", "name", r.Name)
+	oldCluster, ok := old.(*OBCluster)
+	if !ok {
+		return nil, errors.New("failed to convert old object to OBCluster")
+	}
+	if oldCluster.Spec.Standalone != r.Spec.Standalone {
+		return nil, errors.New("standalone mode cannot be changed")
+	}
+	if !oldCluster.Spec.Standalone && oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu {
+		return nil, errors.New("forbid to modify cpu quota of non-standalone cluster")
+	}
+	if !oldCluster.Spec.Standalone && oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory {
+		return nil, errors.New("forbid to modify memory quota of non-standalone cluster")
+	}
 
 	return nil, r.validateMutation()
 }

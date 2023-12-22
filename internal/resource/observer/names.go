@@ -26,6 +26,7 @@ const (
 	fRecoverOBServer                ttypes.FlowName = "recover observer"
 	fAddServerInOB                  ttypes.FlowName = "add observer in ob"
 	fAnnotateOBServerPod            ttypes.FlowName = "annotate observer pod"
+	fScaleUpOBServer                ttypes.FlowName = "scale up observer"
 )
 
 // observer tasks
@@ -42,4 +43,5 @@ const (
 	tWaitOBServerPodReady         ttypes.TaskName = "wait observer pod ready"
 	tWaitOBServerActiveInCluster  ttypes.TaskName = "wait observer active in cluster"
 	tUpgradeOBServerImage         ttypes.TaskName = "upgrade observer image"
+	tDeletePod                    ttypes.TaskName = "delete pod"
 )

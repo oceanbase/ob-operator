@@ -325,3 +325,47 @@ func (m *OBZoneManager) DeleteOBZoneInCluster() tasktypes.TaskError {
 	}
 	return nil
 }
+
+func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return err
+	}
+	for _, observer := range observerList.Items {
+		if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
+			observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
+			m.Logger.Info("scale up observer", "observer", observer.Name)
+			observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
+			observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
+			err = m.Client.Update(m.Ctx, &observer)
+			if err != nil {
+				return errors.Wrapf(err, "Scale up observer %s failed", observer.Name)
+			}
+		}
+	}
+
+	// check status of observers
+	const maxWaitTimes = 60
+	matched := true
+outer:
+	for i := 0; i < maxWaitTimes; i++ {
+		time.Sleep(time.Second * 3)
+		observerList, err := m.listOBServers()
+		if err != nil {
+			return errors.Wrap(err, "list obzones")
+		}
+		for _, obzone := range observerList.Items {
+			if obzone.Status.Status != serverstatus.ScaleUp {
+				matched = false
+				continue outer
+			}
+		}
+		if matched {
+			break
+		}
+	}
+	if !matched {
+		return errors.New("scale up observer failed")
+	}
+	return nil
+}

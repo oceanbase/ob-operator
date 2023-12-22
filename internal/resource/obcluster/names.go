@@ -26,6 +26,7 @@ const (
 	fUpgradeOBCluster                ttypes.FlowName = "upgrade ob cluster"
 	fMaintainOBParameter             ttypes.FlowName = "maintain ob parameter"
 	fDeleteOBClusterFinalizer        ttypes.FlowName = "delete obcluster finalizer"
+	fScaleUpOBZones                  ttypes.FlowName = "scale up obzones"
 )
 
 // obcluster tasks
@@ -53,4 +54,5 @@ const (
 	tFinishUpgrade              ttypes.TaskName = "execute upgrade post script"
 	tRestoreEssentialParameters ttypes.TaskName = "restore essential parameters"
 	tCreateServiceForMonitor    ttypes.TaskName = "create service for monitor"
+	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
 )

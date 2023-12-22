@@ -202,18 +202,20 @@ func (m *OBClusterManager) UpdateStatus() error {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
-			observerMatch := true
+		outer:
 			for _, zone := range m.OBCluster.Spec.Topology {
-				if !observerMatch {
-					break
-				}
 				for _, obzone := range obzoneList.Items {
+					if m.OBCluster.Spec.Standalone &&
+						(obzone.Spec.OBServerTemplate.Resource.Cpu != m.OBCluster.Spec.MonitorTemplate.Resource.Cpu ||
+							obzone.Spec.OBServerTemplate.Resource.Memory != m.OBCluster.Spec.MonitorTemplate.Resource.Memory) {
+						m.OBCluster.Status.Status = clusterstatus.ScaleUpOBZone
+						break outer
+					}
 					if zone.Zone == obzone.Spec.Topology.Zone {
 						if zone.Replica != len(obzone.Status.OBServerStatus) {
 							m.OBCluster.Status.Status = clusterstatus.ModifyOBZoneReplica
-							observerMatch = false
+							break outer
 						}
-						break
 					}
 				}
 			}
