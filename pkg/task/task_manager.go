@@ -18,6 +18,7 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -32,17 +33,21 @@ import (
 var taskManager *TaskManager
 var taskManagerOnce sync.Once
 
-const debugTaskEnv = "DEBUG_TASK"
-
 func taskManagerInit() {
+	taskPoolSize := defaultTaskPoolSize
+	if psEnv := os.Getenv(taskPoolSizeEnv); psEnv != "" {
+		if ps, err := strconv.Atoi(psEnv); err == nil {
+			taskPoolSize = ps
+		}
+	}
 	logger := log.FromContext(context.TODO())
 	taskManager = &TaskManager{
 		Logger: &logger,
-		tokens: make(chan struct{}, 10000),
+		tokens: make(chan struct{}, taskPoolSize),
 	}
 }
 
-func worker(f tasktypes.TaskFunc, ch chan<- *tasktypes.TaskResult, tokens chan struct{}) {
+func runTask(f tasktypes.TaskFunc, ch chan<- *tasktypes.TaskResult, tokens chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
 			ch <- &tasktypes.TaskResult{
@@ -90,7 +95,7 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 	m.ResultMap.Store(taskId, retCh)
 	m.TaskResultCache.Delete(taskId)
 
-	go worker(f, retCh, m.tokens)
+	go runTask(f, retCh, m.tokens)
 
 	if os.Getenv(debugTaskEnv) == "true" {
 		mu.Lock()
@@ -107,6 +112,7 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 			"NumGC", ms.NumGC,
 			"Running task workers", len(m.tokens),
 			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
 		)
 	}
 	return taskId
@@ -124,6 +130,7 @@ func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskRes
 			"NumGC", ms.NumGC,
 			"Running task workers", len(m.tokens),
 			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
 		)
 	}
 	retChAny, exists := m.ResultMap.Load(taskId)
@@ -174,6 +181,7 @@ func (m *TaskManager) CleanTaskResult(taskId tasktypes.TaskID) error {
 			"NumGC", ms.NumGC,
 			"Running task workers", len(m.tokens),
 			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
 		)
 	}
 
