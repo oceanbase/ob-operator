@@ -115,4 +115,31 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 			return err != nil && kubeerrors.IsNotFound(err)
 		}, 300, 1).Should(BeTrue())
 	})
+
+	It("Forbid to modify resources of Non-standalone cluster", func() {
+		cluster := newOBCluster("test", 1, 1)
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		By("Modify resources of Non-standalone cluster")
+		cluster.Spec.OBServerTemplate.Resource.Cpu = resource.MustParse("3")
+		Expect(k8sClient.Update(ctx, cluster)).ShouldNot(Succeed())
+		cluster = newOBCluster("test", 1, 1)
+		cluster.Spec.OBServerTemplate.Resource.Memory = resource.MustParse("20Gi")
+		Expect(k8sClient.Update(ctx, cluster)).ShouldNot(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("It's OK to modify resources of standalone cluster", func() {
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Spec.Standalone = true
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		By("Modify resources of standalone cluster")
+		cluster.Spec.OBServerTemplate.Resource.Cpu = resource.MustParse("3")
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+
+		cluster.Spec.OBServerTemplate.Resource.Memory = resource.MustParse("20Gi")
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
 })
