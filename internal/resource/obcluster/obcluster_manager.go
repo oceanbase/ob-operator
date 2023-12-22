@@ -108,6 +108,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fUpgradeOBCluster)
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBParameter)
+	case clusterstatus.ScaleUpOBZone:
+		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -206,8 +208,8 @@ func (m *OBClusterManager) UpdateStatus() error {
 			for _, zone := range m.OBCluster.Spec.Topology {
 				for _, obzone := range obzoneList.Items {
 					if m.OBCluster.Spec.Standalone &&
-						(obzone.Spec.OBServerTemplate.Resource.Cpu != m.OBCluster.Spec.MonitorTemplate.Resource.Cpu ||
-							obzone.Spec.OBServerTemplate.Resource.Memory != m.OBCluster.Spec.MonitorTemplate.Resource.Memory) {
+						(obzone.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+							obzone.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Memory) != 0) {
 						m.OBCluster.Status.Status = clusterstatus.ScaleUpOBZone
 						break outer
 					}
@@ -334,6 +336,8 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 		return m.CreateServiceForMonitor, nil
 	case tModifySysTenantReplica:
 		return m.ModifySysTenantReplica, nil
+	case tScaleUpOBZones:
+		return m.ScaleUpOBZone, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

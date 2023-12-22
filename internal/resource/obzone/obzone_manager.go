@@ -234,8 +234,8 @@ func (m *OBZoneManager) UpdateStatus() error {
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
 		} else if mode, exist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
 			for _, observer := range observerList.Items {
-				if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
-					observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
+				if observer.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+					observer.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Memory) != 0 {
 					m.OBZone.Status.Status = zonestatus.ScaleUpOBServer
 					break
 				}

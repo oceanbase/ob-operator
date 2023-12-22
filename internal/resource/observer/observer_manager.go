@@ -190,8 +190,8 @@ func (m *OBServerManager) UpdateStatus() error {
 			} else if observer == nil {
 				m.OBServer.Status.Status = serverstatus.AddServer
 			} else if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
-				if pod.Spec.Containers[0].Resources.Limits.Cpu() != &m.OBServer.Spec.OBServerTemplate.Resource.Cpu ||
-					pod.Spec.Containers[0].Resources.Limits.Memory() != &m.OBServer.Spec.OBServerTemplate.Resource.Memory {
+				if pod.Spec.Containers[0].Resources.Limits.Cpu().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
 					m.OBServer.Status.Status = serverstatus.ScaleUp
 				}
 			}
