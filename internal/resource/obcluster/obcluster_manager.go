@@ -260,11 +260,15 @@ func (m *OBClusterManager) HandleFailure() {
 	failureRule := operationContext.OnFailure
 	switch failureRule.Strategy {
 	case strategy.StartOver:
-		m.OBCluster.Status.Status = failureRule.NextTryStatus
-		m.OBCluster.Status.OperationContext.Idx = 0
-		m.OBCluster.Status.OperationContext.TaskStatus = ""
-		m.OBCluster.Status.OperationContext.TaskId = ""
-		m.OBCluster.Status.OperationContext.Task = ""
+		if m.OBCluster.Status.Status != failureRule.NextTryStatus {
+			m.OBCluster.Status.Status = failureRule.NextTryStatus
+			m.OBCluster.Status.OperationContext = nil
+		} else {
+			m.OBCluster.Status.OperationContext.Idx = 0
+			m.OBCluster.Status.OperationContext.TaskStatus = ""
+			m.OBCluster.Status.OperationContext.TaskId = ""
+			m.OBCluster.Status.OperationContext.Task = ""
+		}
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
 	case strategy.Pause:

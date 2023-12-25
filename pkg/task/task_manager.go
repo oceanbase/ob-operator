@@ -14,7 +14,11 @@ package task
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"runtime"
 	"runtime/debug"
+	"strconv"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -29,13 +33,48 @@ import (
 var taskManager *TaskManager
 var taskManagerOnce sync.Once
 
-func GetTaskManager() *TaskManager {
-	taskManagerOnce.Do(func() {
-		logger := log.FromContext(context.TODO())
-		taskManager = &TaskManager{
-			Logger: &logger,
+func taskManagerInit() {
+	taskPoolSize := defaultTaskPoolSize
+	if psEnv := os.Getenv(taskPoolSizeEnv); psEnv != "" {
+		if ps, err := strconv.Atoi(psEnv); err == nil {
+			taskPoolSize = ps
 		}
-	})
+	}
+	logger := log.FromContext(context.TODO())
+	taskManager = &TaskManager{
+		Logger: &logger,
+		tokens: make(chan struct{}, taskPoolSize),
+	}
+}
+
+func runTask(f tasktypes.TaskFunc, ch chan<- *tasktypes.TaskResult, tokens chan struct{}) {
+	defer func() {
+		if r := recover(); r != nil {
+			ch <- &tasktypes.TaskResult{
+				Status: taskstatus.Failed,
+				Error:  errors.Errorf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack())),
+			}
+		}
+		<-tokens
+	}()
+
+	tokens <- struct{}{}
+	err := f()
+	if err != nil {
+		ch <- &tasktypes.TaskResult{
+			Status: taskstatus.Failed,
+			Error:  err,
+		}
+	} else {
+		ch <- &tasktypes.TaskResult{
+			Status: taskstatus.Successful,
+			Error:  nil,
+		}
+	}
+}
+
+func GetTaskManager() *TaskManager {
+	taskManagerOnce.Do(taskManagerInit)
 	return taskManager
 }
 
@@ -43,6 +82,10 @@ type TaskManager struct {
 	ResultMap       sync.Map
 	Logger          *logr.Logger
 	TaskResultCache sync.Map
+
+	mu          sync.Mutex
+	workerCount uint32
+	tokens      chan struct{}
 }
 
 func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
@@ -51,32 +94,45 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 	taskId := tasktypes.TaskID(uuid.New().String())
 	m.ResultMap.Store(taskId, retCh)
 	m.TaskResultCache.Delete(taskId)
-	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				retCh <- &tasktypes.TaskResult{
-					Status: taskstatus.Failed,
-					Error:  errors.Errorf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack())),
-				}
-			}
-		}()
-		err := f()
-		if err != nil {
-			m.Logger.Error(err, "Run task got error", "taskId", taskId)
-			retCh <- &tasktypes.TaskResult{
-				Status: taskstatus.Failed,
-				Error:  err,
-			}
-		}
-		retCh <- &tasktypes.TaskResult{
-			Status: taskstatus.Successful,
-			Error:  nil,
-		}
-	}()
+
+	go runTask(f, retCh, m.tokens)
+
+	if os.Getenv(debugTaskEnv) == "true" {
+		mu.Lock()
+		m.workerCount++
+		mu.Unlock()
+
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+
+		m.Logger.Info("[Submit] Memory usage",
+			"Alloc", fmt.Sprintf("%v MiB", ms.Alloc>>20),
+			"TotalAlloc", fmt.Sprintf("%v MiB", ms.TotalAlloc>>20),
+			"Sys", fmt.Sprintf("%v MiB", ms.Sys>>20),
+			"NumGC", ms.NumGC,
+			"Running task workers", len(m.tokens),
+			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
+		)
+	}
 	return taskId
 }
 
 func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskResult, error) {
+	if os.Getenv(debugTaskEnv) == "true" {
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+
+		m.Logger.Info("[GetResult] Memory usage",
+			"Alloc", fmt.Sprintf("%v MiB", ms.Alloc>>20),
+			"TotalAlloc", fmt.Sprintf("%v MiB", ms.TotalAlloc>>20),
+			"Sys", fmt.Sprintf("%v MiB", ms.Sys>>20),
+			"NumGC", ms.NumGC,
+			"Running task workers", len(m.tokens),
+			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
+		)
+	}
 	retChAny, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil, errors.Errorf("Task %s not exists", taskId)
@@ -110,5 +166,24 @@ func (m *TaskManager) CleanTaskResult(taskId tasktypes.TaskID) error {
 	close(retCh)
 	m.ResultMap.Delete(taskId)
 	m.TaskResultCache.Delete(taskId)
+
+	if os.Getenv("DEBUG_TASK") == "true" {
+		mu.Lock()
+		m.workerCount--
+		mu.Unlock()
+		var ms runtime.MemStats
+		runtime.ReadMemStats(&ms)
+
+		m.Logger.Info("[Clean] Memory usage",
+			"Alloc", fmt.Sprintf("%v MiB", ms.Alloc>>20),
+			"TotalAlloc", fmt.Sprintf("%v MiB", ms.TotalAlloc>>20),
+			"Sys", fmt.Sprintf("%v MiB", ms.Sys>>20),
+			"NumGC", ms.NumGC,
+			"Running task workers", len(m.tokens),
+			"Total task workers", m.workerCount,
+			"Pool size", cap(m.tokens),
+		)
+	}
+
 	return nil
 }

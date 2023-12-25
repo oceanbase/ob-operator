@@ -119,11 +119,15 @@ func (m *OBTenantManager) HandleFailure() {
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
 		case strategy.StartOver:
-			m.OBTenant.Status.Status = failureRule.NextTryStatus
-			m.OBTenant.Status.OperationContext.Idx = 0
-			m.OBTenant.Status.OperationContext.TaskStatus = ""
-			m.OBTenant.Status.OperationContext.TaskId = ""
-			m.OBTenant.Status.OperationContext.Task = ""
+			if failureRule.NextTryStatus != m.OBTenant.Status.Status {
+				m.OBTenant.Status.Status = failureRule.NextTryStatus
+				m.OBTenant.Status.OperationContext = nil
+			} else {
+				m.OBTenant.Status.OperationContext.Idx = 0
+				m.OBTenant.Status.OperationContext.TaskStatus = ""
+				m.OBTenant.Status.OperationContext.TaskId = ""
+				m.OBTenant.Status.OperationContext.Task = ""
+			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:

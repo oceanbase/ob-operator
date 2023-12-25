@@ -331,11 +331,15 @@ func (m *OBServerManager) HandleFailure() {
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
 		case strategy.StartOver:
-			m.OBServer.Status.Status = failureRule.NextTryStatus
-			m.OBServer.Status.OperationContext.Idx = 0
-			m.OBServer.Status.OperationContext.TaskStatus = ""
-			m.OBServer.Status.OperationContext.TaskId = ""
-			m.OBServer.Status.OperationContext.Task = ""
+			if m.OBServer.Status.Status != failureRule.NextTryStatus {
+				m.OBServer.Status.Status = failureRule.NextTryStatus
+				m.OBServer.Status.OperationContext = nil
+			} else {
+				m.OBServer.Status.OperationContext.Idx = 0
+				m.OBServer.Status.OperationContext.TaskStatus = ""
+				m.OBServer.Status.OperationContext.TaskId = ""
+				m.OBServer.Status.OperationContext.Task = ""
+			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
