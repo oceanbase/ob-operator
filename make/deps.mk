@@ -8,18 +8,6 @@ $(LOCALBIN): ## Location to install dependencies to
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-YQ ?= $(LOCALBIN)/yq
-SEMVER ?= $(LOCALBIN)/semver
-
-yq: $(YQ) ## JSON/YAML processor
-$(YQ): 
-	curl -o $(LOCALBIN)/yq ${YQ_DOWNLOAD_URL}
-	chmod +x $(LOCALBIN)/yq
-
-semver: $(SEMVER) ## Semantic versioning tool
-$(SEMVER):
-	curl -o $(LOCALBIN)/semver ${SEMVER_DOWNLOAD_URL}
-	chmod +x $(LOCALBIN)/semver
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.0
@@ -46,7 +34,9 @@ envtest: $(ENVTEST) ## Download envtest-setup locally if necessary.
 $(ENVTEST): $(LOCALBIN)
 	test -s $(LOCALBIN)/setup-envtest || GOBIN=$(LOCALBIN) go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
 
+.PHONY: install-delve
+install-delve: ## Install delve, a debugger for the Go programming language. More info: https://github.com/go-delve/delve
+	go install github.com/go-delve/delve/cmd/dlv@master
+
 .PHONY: tools 
-tools: yq semver kustomize controller-gen envtest ## Download all tools
-
-
+tools: kustomize controller-gen envtest install-delve ## Download all tools

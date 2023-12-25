@@ -1,5 +1,7 @@
 ##@ Development
 
+LOG_LEVEL ?= 2
+
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
@@ -34,14 +36,14 @@ test-all: manifests generate fmt vet envtest ## Run all tests including long-run
 
 REPORT_PORT ?= 8480
 
-.PHONY: coverage
-coverage: test ## Generate test reports
+.PHONY: unit-coverage
+unit-coverage: test ## Generate unit test coverage report.
 	@echo "generating test reports..."
-	@go tool cover -html=testreports/cover.profile -o testreports/cover.html
+	@go tool cover -html=testreports/cover.profile -o testreports/unit.html
 	@cd testreports && python3 -m http.server --bind 0.0.0.0 $(REPORT_PORT)
 
-.PHONY: run-coverage
-run-coverage:  ## Generate integration test coverage report.
+.PHONY: intg-coverage
+intg-coverage:  ## Generate integration test coverage report.
 	@go tool covdata textfmt -i=testreports/covdata -o=testreports/covdata.txt
 	@go tool cover -html=testreports/covdata.txt -o testreports/integration.html
 	@go tool cover -html=testreports/cover.profile -o testreports/unit.html
@@ -62,3 +64,13 @@ commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 	chmod +x .git/hooks/pre-commit
 	echo "#!/bin/sh" > .git/hooks/pre-commit
 	echo "make lint" >> .git/hooks/pre-commit
+
+.PHONY: run-delve
+run-delve: generate fmt vet manifests ## Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config 
+	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/main.go
+	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager --continue -- -log-verbosity=${LOG_LEVEL}
+
+.PHONY: run-local
+run-local: manifests generate fmt vet ## Run a controller on your local host, with configurations in ~/.kube/config
+	@mkdir -p testreports/covdata
+	CGO_ENABLED=1 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run -cover -covermode=atomic ./cmd/main.go --log-verbosity=${LOG_LEVEL} 
