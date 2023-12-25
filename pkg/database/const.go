@@ -22,3 +22,7 @@ const (
 const (
 	DefaultLRUCacheSize = 1000
 )
+
+const (
+	dbConLRUCacheSizeEnv = "DB_CON_LRU_CACHE_SIZE"
+)
