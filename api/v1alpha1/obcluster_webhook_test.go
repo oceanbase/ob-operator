@@ -142,4 +142,22 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 
 		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
 	})
+
+	It("Validate existence of secrets", func() {
+		By("Create normal cluster")
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Spec.UserSecrets.Monitor = ""
+		cluster.Spec.UserSecrets.ProxyRO = ""
+		cluster.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+
+		cluster2 := newOBCluster("test2", 1, 1)
+		cluster2.Spec.UserSecrets.Monitor = "secret-that-does-not-exist"
+		cluster2.Spec.UserSecrets.ProxyRO = ""
+		cluster2.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+
+		cluster2.Spec.UserSecrets.Monitor = wrongKeySecret
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+	})
 })

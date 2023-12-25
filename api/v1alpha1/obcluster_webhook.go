@@ -166,6 +166,15 @@ func (r *OBCluster) validateMutation() error {
 		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
 			allErrs = append(allErrs, err)
 		}
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.Operator); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("operator"), r.Spec.UserSecrets.Operator, err.Error()))
+		}
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.Monitor); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("monitor"), r.Spec.UserSecrets.Monitor, err.Error()))
+		}
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.ProxyRO); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("proxyro"), r.Spec.UserSecrets.ProxyRO, err.Error()))
+		}
 	}
 
 	// Validate Topology
@@ -264,6 +273,30 @@ func (r *OBCluster) checkSecretExistence(ns, secretName, fieldName string) *fiel
 			return field.Invalid(field.NewPath("spec").Child("userSecrets").Child(fieldName), secretName, fmt.Sprintf("Given %s credential %s not found", fieldName, secretName))
 		}
 		return field.InternalError(field.NewPath("spec").Child("userSecrets").Child(fieldName), err)
+	}
+	if _, ok := secret.Data["password"]; !ok {
+		return field.Invalid(field.NewPath("spec").Child("userSecrets").Child(fieldName), secretName, fmt.Sprintf("password field not found in given credential %s ", secretName))
+	}
+	return nil
+}
+
+func (r *OBCluster) checkSecretWithRawError(ns, secretName string) error {
+	if secretName == "" {
+		return nil
+	}
+	secret := &v1.Secret{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: ns,
+		Name:      secretName,
+	}, secret)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	if _, ok := secret.Data["password"]; !ok {
+		return errors.New("password field not found in given credential")
 	}
 	return nil
 }
