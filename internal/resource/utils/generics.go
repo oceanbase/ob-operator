@@ -24,6 +24,13 @@ func IsZero[T comparable](val T) bool {
 	return val == *(new(T))
 }
 
+func Or[T comparable](a, b T) T {
+	if IsZero(a) {
+		return b
+	}
+	return a
+}
+
 func Min[T int | int64 | uint | uint64 | float64 | float32](a, b T) T {
 	if a < b {
 		return a

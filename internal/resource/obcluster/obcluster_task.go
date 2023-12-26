@@ -381,22 +381,37 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	return err
 }
 
+// Use Or for compatibility
 func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
-	err := m.createUser(oceanbaseconst.OperatorUser, m.OBCluster.Status.UserSecrets.Operator, oceanbaseconst.AllPrivilege)
+	var rootUser, proxyroUser, monitorUser, operatorUser string
+
+	if m.OBCluster.Status.UserSecrets != nil {
+		rootUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Root, m.OBCluster.Status.UserSecrets.Root)
+		proxyroUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.ProxyRO, m.OBCluster.Status.UserSecrets.ProxyRO)
+		monitorUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Monitor, m.OBCluster.Status.UserSecrets.Monitor)
+		operatorUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Operator, m.OBCluster.Status.UserSecrets.Operator)
+	} else {
+		rootUser = m.OBCluster.Spec.UserSecrets.Root
+		proxyroUser = m.OBCluster.Spec.UserSecrets.ProxyRO
+		monitorUser = m.OBCluster.Spec.UserSecrets.Monitor
+		operatorUser = m.OBCluster.Spec.UserSecrets.Operator
+	}
+
+	err := m.createUser(oceanbaseconst.OperatorUser, rootUser, oceanbaseconst.AllPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create root user")
+	}
+	err = m.createUser(oceanbaseconst.RootUser, operatorUser, oceanbaseconst.AllPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create operator user")
 	}
-	err = m.createUser(obagentconst.MonitorUser, m.OBCluster.Status.UserSecrets.Monitor, oceanbaseconst.SelectPrivilege)
+	err = m.createUser(obagentconst.MonitorUser, monitorUser, oceanbaseconst.SelectPrivilege)
 	if err != nil {
-		return errors.Wrap(err, "Create root user")
+		return errors.Wrap(err, "Create monitor user")
 	}
-	err = m.createUser(oceanbaseconst.ProxyUser, m.OBCluster.Status.UserSecrets.ProxyRO, oceanbaseconst.SelectPrivilege)
+	err = m.createUser(oceanbaseconst.ProxyUser, proxyroUser, oceanbaseconst.SelectPrivilege)
 	if err != nil {
-		return errors.Wrap(err, "Create root user")
-	}
-	err = m.createUser(oceanbaseconst.RootUser, m.OBCluster.Status.UserSecrets.Root, oceanbaseconst.AllPrivilege)
-	if err != nil {
-		return errors.Wrap(err, "Create root user")
+		return errors.Wrap(err, "Create proxyro user")
 	}
 	return nil
 }

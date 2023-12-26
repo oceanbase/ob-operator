@@ -2923,7 +2923,6 @@ spec:
             - obzones
             - parameters
             - status
-            - userSecrets
             type: object
         type: object
     served: true
