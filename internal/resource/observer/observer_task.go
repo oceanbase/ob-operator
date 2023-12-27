@@ -358,12 +358,16 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		Name:  obagentconst.EnvMonitorUser,
 		Value: obagentconst.MonitorUser,
 	}
+	monitorUser := obcluster.Spec.UserSecrets.Monitor
+	if obcluster.Status.UserSecrets != nil {
+		monitorUser = obcluster.Status.UserSecrets.Monitor
+	}
 	envMonitorPassword := corev1.EnvVar{
 		Name: obagentconst.EnvMonitorPASSWORD,
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: obcluster.Status.UserSecrets.Monitor,
+					Name: monitorUser,
 				},
 				Key: secretconst.PasswordKeyName,
 			},

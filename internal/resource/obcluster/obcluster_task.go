@@ -928,6 +928,9 @@ func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
+	if m.OBCluster.Status.UserSecrets == nil {
+		return nil
+	}
 	// Root secret should be checked by webhooks, missing root error should never occur
 	rootSec := &corev1.Secret{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{

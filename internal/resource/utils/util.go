@@ -50,7 +50,11 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 
 func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
 	logger.V(oceanbaseconst.LogLevelTrace).Info("Get cluster sys client", "obCluster", obcluster)
-	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Status.UserSecrets.Operator)
+	operatorUser := obcluster.Spec.UserSecrets.Operator
+	if obcluster.Status.UserSecrets != nil {
+		operatorUser = obcluster.Status.UserSecrets.Operator
+	}
+	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, operatorUser)
 }
 
 func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
@@ -148,7 +152,11 @@ func GetJob(c client.Client, namespace string, jobName string) (*batchv1.Job, er
 }
 
 func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
-	password, err := ReadPassword(c, obcluster.Namespace, obcluster.Status.UserSecrets.Root)
+	rootUser := obcluster.Spec.UserSecrets.Root
+	if obcluster.Status.UserSecrets != nil {
+		rootUser = obcluster.Status.UserSecrets.Root
+	}
+	password, err := ReadPassword(c, obcluster.Namespace, rootUser)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get root password")
 	}
