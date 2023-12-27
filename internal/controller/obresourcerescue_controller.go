@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	ctlconfig "github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 )
@@ -54,7 +54,7 @@ type OBResourceRescueReconciler struct {
 func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	rescue := oceanbasev1alpha1.OBResourceRescue{}
+	rescue := v1alpha1.OBResourceRescue{}
 	if err := r.Client.Get(ctx, req.NamespacedName, &rescue); err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -68,7 +68,7 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 
 	switch rescue.Spec.TargetKind {
 	case "OBCluster", "OBParameter", "OBServer", "OBZone", "OBTenant", "OBTenantBackupPolicy", "OBTenantBackup", "OBTenantRestore", "OBTenantOperation":
-		gvStr := "oceanbase.oceanbase.com/v1alpha1"
+		gvStr := v1alpha1.GroupVersion.String()
 		if rescue.Spec.TargetGV != "" {
 			gvStr = rescue.Spec.TargetGV
 		}
@@ -80,42 +80,49 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			return ctrl.Result{}, err
 		}
 
-		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-			uns, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Get(ctx, rescue.Spec.TargetResName, metav1.GetOptions{})
-			if err != nil {
-				logger.Error(err, "failed to get the target resource")
-				return err
-			}
+		uns, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Get(ctx, rescue.Spec.TargetResName, metav1.GetOptions{})
+		if err != nil {
+			logger.Error(err, "failed to get the target resource")
+			return ctrl.Result{}, err
+		}
 
-			switch rescue.Spec.Type {
-			case "delete":
-				uns.SetFinalizers(nil)
-				_, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Update(ctx, uns, metav1.UpdateOptions{})
+		switch rescue.Spec.Type {
+		case "delete":
+			uns.SetFinalizers(nil)
+			_, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Update(ctx, uns, metav1.UpdateOptions{})
+			if err != nil {
+				logger.Error(err, "failed to update finalizers of the target resource")
+				return ctrl.Result{}, err
+			}
+			if uns.GetDeletionTimestamp() == nil {
+				err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Delete(ctx, rescue.Spec.TargetResName, metav1.DeleteOptions{})
 				if err != nil {
-					logger.Error(err, "failed to update finalizers of the target resource")
-					return err
+					logger.Error(err, "failed to delete the target resource")
+					return ctrl.Result{}, err
 				}
-				if uns.GetDeletionTimestamp() == nil {
-					err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Delete(ctx, rescue.Spec.TargetResName, metav1.DeleteOptions{})
-					if err != nil {
-						logger.Error(err, "failed to delete the target resource")
-						return err
-					}
+			}
+		case "reset":
+			err := errors.Join(
+				unstructured.SetNestedField(uns.Object, nil, "status", "operationContext"),
+				unstructured.SetNestedField(uns.Object, rescue.Spec.TargetStatus, "status", "status"),
+			)
+			if err != nil {
+				logger.Error(err, "failed to reset fields of the target resource")
+				return ctrl.Result{}, err
+			}
+			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
+			if err != nil {
+				logger.Error(err, "failed to update status of the target resource")
+				return ctrl.Result{}, err
+			}
+		}
+
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			if err := r.Client.Get(ctx, req.NamespacedName, &rescue); err != nil {
+				if kubeerrors.IsNotFound(err) {
+					return nil
 				}
-			case "reset":
-				err := errors.Join(
-					unstructured.SetNestedField(uns.Object, nil, "status", "operationContext"),
-					unstructured.SetNestedField(uns.Object, rescue.Spec.TargetStatus, "status", "status"),
-				)
-				if err != nil {
-					logger.Error(err, "failed to reset fields of the target resource")
-					return err
-				}
-				_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
-				if err != nil {
-					logger.Error(err, "failed to update status of the target resource")
-					return err
-				}
+				return err
 			}
 			rescue.Status.Status = "Successful"
 			return r.Client.Status().Update(ctx, &rescue)
@@ -142,7 +149,8 @@ func (r *OBResourceRescueReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	}
 
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&oceanbasev1alpha1.OBResourceRescue{}).
+		WithEventFilter(preds).
+		For(&v1alpha1.OBResourceRescue{}).
 		Complete(r)
 }
 
