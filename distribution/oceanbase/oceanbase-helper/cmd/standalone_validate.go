@@ -22,20 +22,20 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(validateCmd)
-	validateCmd.AddCommand(validateStandaloneCmd)
+	rootCmd.AddCommand(standaloneCmd)
+	standaloneCmd.AddCommand(standaloneValidateCmd)
 }
 
-var validateCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "validate version and configs",
+var standaloneCmd = &cobra.Command{
+	Use:   "standalone",
+	Short: "Check conditions for standalone mode",
 	Run: func(cmd *cobra.Command, args []string) {
-		validateStandaloneCmd.Run(cmd, args)
+		standaloneValidateCmd.Run(cmd, args)
 	},
 }
 
-var validateStandaloneCmd = &cobra.Command{
-	Use:   "standalone",
+var standaloneValidateCmd = &cobra.Command{
+	Use:   "validate",
 	Short: "validate current version supports standalone mode",
 	Run: func(cmd *cobra.Command, args []string) {
 		ver, err := getCurrentVersion(DefaultHomePath)

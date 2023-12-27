@@ -64,6 +64,8 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 func (m *OBServerManager) AddServer() tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		m.Recorder.Event(m.OBServer, "SkipAddServer", "AddServer", "Skip add server in standalone mode")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Skip add server in standalone mode")
 		return nil
 	}
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()

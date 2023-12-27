@@ -108,7 +108,7 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fDeleteOBServer)
 	case zonestatus.Deleting:
 		taskFlow, err = task.GetRegistry().Get(fDeleteOBZoneFinalizer)
-	case zonestatus.ScaleUpOBServer:
+	case zonestatus.ScaleUp:
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServers)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
@@ -236,7 +236,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			for _, observer := range observerList.Items {
 				if observer.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
 					observer.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Memory) != 0 {
-					m.OBZone.Status.Status = zonestatus.ScaleUpOBServer
+					m.OBZone.Status.Status = zonestatus.ScaleUp
 					break
 				}
 			}

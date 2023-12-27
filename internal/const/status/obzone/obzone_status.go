@@ -22,5 +22,5 @@ const (
 	Upgrade           = "upgrade"
 	BootstrapReady    = "bootstrap ready"
 	FinalizerFinished = "finalizer finished"
-	ScaleUpOBServer   = "scale up observer"
+	ScaleUp           = "scale up"
 )

@@ -108,7 +108,7 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fUpgradeOBCluster)
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBParameter)
-	case clusterstatus.ScaleUpOBZone:
+	case clusterstatus.ScaleUp:
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
@@ -210,7 +210,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 					if m.OBCluster.Spec.Standalone &&
 						(obzone.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
 							obzone.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Memory) != 0) {
-						m.OBCluster.Status.Status = clusterstatus.ScaleUpOBZone
+						m.OBCluster.Status.Status = clusterstatus.ScaleUp
 						break outer
 					}
 					if zone.Zone == obzone.Spec.Topology.Zone {

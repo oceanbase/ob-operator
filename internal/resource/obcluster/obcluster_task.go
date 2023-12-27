@@ -293,8 +293,8 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	if m.OBCluster.Spec.Standalone {
 		var backoffLimit int32
 		var ttl int32 = 300
-		jobName := "check-version-" + rand.String(8)
-		checkVersionJob := &batchv1.Job{
+		jobName := "standalone-validate-" + rand.String(8)
+		standaloneValidateJob := &batchv1.Job{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      jobName,
 				Namespace: m.OBCluster.Namespace,
@@ -303,9 +303,9 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 				Template: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{{
-							Name:    "helper-check-standalone",
+							Name:    "helper-validate-standalone",
 							Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper validate standalone"},
+							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper standalone validate"},
 						}},
 						RestartPolicy: corev1.RestartPolicyNever,
 					},
@@ -316,7 +316,7 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 		}
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check version job", "job", jobName)
 
-		err = m.Client.Create(m.Ctx, checkVersionJob)
+		err = m.Client.Create(m.Ctx, standaloneValidateJob)
 		if err != nil {
 			return errors.Wrap(err, "Create check version job")
 		}
@@ -1037,7 +1037,7 @@ outer:
 			return errors.Wrap(err, "list obzones")
 		}
 		for _, obzone := range obzoneList.Items {
-			if obzone.Status.Status != zonestatus.ScaleUpOBServer {
+			if obzone.Status.Status != zonestatus.ScaleUp {
 				matched = false
 				continue outer
 			}
