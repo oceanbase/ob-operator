@@ -177,4 +177,11 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		Expect(cluster.Spec.UserSecrets.ProxyRO).ShouldNot(BeEmpty())
 		Expect(cluster.Spec.UserSecrets.Operator).ShouldNot(BeEmpty())
 	})
+
+	It("Validate single pvc with multiple storage classes", func() {
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Annotations[oceanbaseconst.AnnotationsSinglePVC] = "true"
+		cluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = "local-path-2"
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+	})
 })

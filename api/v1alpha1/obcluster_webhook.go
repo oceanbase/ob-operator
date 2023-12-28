@@ -127,8 +127,6 @@ var _ webhook.Validator = &OBCluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateCreate() (admission.Warnings, error) {
-	obclusterlog.Info("validate create", "name", r.Name)
-
 	return nil, r.validateMutation()
 }
 
@@ -208,6 +206,14 @@ func (r *OBCluster) validateMutation() error {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), key, fmt.Sprintf("storageClass %s not found", key)))
 			} else {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("observer").Child("storage").Child("storageClass"), err))
+			}
+		}
+	}
+	annos := r.GetAnnotations()
+	if annos != nil {
+		if _, ok := annos[oceanbaseconst.AnnotationsSinglePVC]; ok {
+			if len(storageClassMapping) > 1 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("*").Child("storageClass"), storageClassMapping, "singlePVC mode only support single storage class"))
 			}
 		}
 	}
