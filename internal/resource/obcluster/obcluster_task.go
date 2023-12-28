@@ -203,6 +203,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -245,8 +246,8 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 		if singlePVCAnnoExist {
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
 		}
-		if m.OBCluster.Spec.Standalone {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+		if modeAnnoExist {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		m.Logger.Info("create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
@@ -289,8 +290,10 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 		return errors.Wrap(err, "get oceanbase operation manager")
 	}
 
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
-	if m.OBCluster.Spec.Standalone {
+	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
 		var backoffLimit int32
 		var ttl int32 = 300
 		jobName := "standalone-validate-" + rand.String(8)
@@ -383,33 +386,19 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 
 // Use Or for compatibility
 func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
-	var rootUser, proxyroUser, monitorUser, operatorUser string
-
-	if m.OBCluster.Status.UserSecrets != nil {
-		rootUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Root, m.OBCluster.Status.UserSecrets.Root)
-		proxyroUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.ProxyRO, m.OBCluster.Status.UserSecrets.ProxyRO)
-		monitorUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Monitor, m.OBCluster.Status.UserSecrets.Monitor)
-		operatorUser = resourceutils.Or(m.OBCluster.Spec.UserSecrets.Operator, m.OBCluster.Status.UserSecrets.Operator)
-	} else {
-		rootUser = m.OBCluster.Spec.UserSecrets.Root
-		proxyroUser = m.OBCluster.Spec.UserSecrets.ProxyRO
-		monitorUser = m.OBCluster.Spec.UserSecrets.Monitor
-		operatorUser = m.OBCluster.Spec.UserSecrets.Operator
-	}
-
-	err := m.createUser(oceanbaseconst.OperatorUser, rootUser, oceanbaseconst.AllPrivilege)
+	err := m.createUser(oceanbaseconst.RootUser, m.OBCluster.Spec.UserSecrets.Root, oceanbaseconst.AllPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create root user")
 	}
-	err = m.createUser(oceanbaseconst.RootUser, operatorUser, oceanbaseconst.AllPrivilege)
+	err = m.createUser(oceanbaseconst.OperatorUser, m.OBCluster.Spec.UserSecrets.Operator, oceanbaseconst.AllPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create operator user")
 	}
-	err = m.createUser(obagentconst.MonitorUser, monitorUser, oceanbaseconst.SelectPrivilege)
+	err = m.createUser(obagentconst.MonitorUser, m.OBCluster.Spec.UserSecrets.Monitor, oceanbaseconst.SelectPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create monitor user")
 	}
-	err = m.createUser(oceanbaseconst.ProxyUser, proxyroUser, oceanbaseconst.SelectPrivilege)
+	err = m.createUser(oceanbaseconst.ProxyUser, m.OBCluster.Spec.UserSecrets.ProxyRO, oceanbaseconst.SelectPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create proxyro user")
 	}
@@ -928,23 +917,10 @@ func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
-	if m.OBCluster.Status.UserSecrets == nil {
-		return nil
-	}
-	// Root secret should be checked by webhooks, missing root error should never occur
-	rootSec := &corev1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBCluster.Namespace,
-		Name:      m.OBCluster.Status.UserSecrets.Root,
-	}, rootSec)
-	if err != nil {
-		return errors.Wrap(err, "Get secret root")
-	}
-
 	secretList := []string{
-		m.OBCluster.Status.UserSecrets.Operator,
-		m.OBCluster.Status.UserSecrets.Monitor,
-		m.OBCluster.Status.UserSecrets.ProxyRO,
+		m.OBCluster.Spec.UserSecrets.Operator,
+		m.OBCluster.Spec.UserSecrets.Monitor,
+		m.OBCluster.Spec.UserSecrets.ProxyRO,
 	}
 	for _, secret := range secretList {
 		fetchedSec := &corev1.Secret{}
@@ -973,7 +949,8 @@ func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
-	if m.OBCluster.Spec.Standalone {
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
 		err := m.Client.Create(m.Ctx, &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      m.OBCluster.GetName() + "-standalone-svc",

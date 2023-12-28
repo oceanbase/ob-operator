@@ -1748,8 +1748,6 @@ spec:
                   - value
                   type: object
                 type: array
-              standalone:
-                type: boolean
               topology:
                 items:
                   properties:
@@ -2782,19 +2780,6 @@ spec:
                 type: array
               status:
                 type: string
-              userSecrets:
-                properties:
-                  monitor:
-                    type: string
-                  operator:
-                    type: string
-                  proxyro:
-                    type: string
-                  root:
-                    type: string
-                required:
-                - root
-                type: object
             required:
             - image
             - obzones

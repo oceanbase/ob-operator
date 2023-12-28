@@ -104,7 +104,7 @@ func ScaleUpOBServer() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fScaleUpOBServer,
-			Tasks:        []tasktypes.TaskName{tDeletePod, tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}

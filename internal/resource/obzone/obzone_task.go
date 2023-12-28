@@ -343,29 +343,5 @@ func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
 			}
 		}
 	}
-
-	// check status of observers
-	const maxWaitTimes = 60
-	matched := true
-outer:
-	for i := 0; i < maxWaitTimes; i++ {
-		time.Sleep(time.Second * 3)
-		observerList, err := m.listOBServers()
-		if err != nil {
-			return errors.Wrap(err, "list obzones")
-		}
-		for _, obzone := range observerList.Items {
-			if obzone.Status.Status != serverstatus.ScaleUp {
-				matched = false
-				continue outer
-			}
-		}
-		if matched {
-			break
-		}
-	}
-	if !matched {
-		return errors.New("scale up observer failed")
-	}
 	return nil
 }

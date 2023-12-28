@@ -101,7 +101,7 @@ func ScaleUpOBServers() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fScaleUpOBServers,
-			Tasks:        []tasktypes.TaskName{tScaleUpOBServers, tWaitOBServerRunning},
+			Tasks:        []tasktypes.TaskName{tScaleUpOBServers, tWaitForOBServerScalingUp, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
 	}

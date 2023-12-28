@@ -14,7 +14,6 @@ package obcluster
 
 import (
 	"context"
-	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -27,6 +26,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -59,18 +59,6 @@ func (m *OBClusterManager) InitStatus() {
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
 		Status:       clusterstatus.New,
 		OBZoneStatus: make([]apitypes.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
-		UserSecrets:  m.OBCluster.Spec.UserSecrets,
-	}
-	if status.UserSecrets != nil {
-		if status.UserSecrets.Monitor == "" {
-			status.UserSecrets.Monitor = strings.Join([]string{m.OBCluster.Name, "monitor"}, "-")
-		}
-		if status.UserSecrets.ProxyRO == "" {
-			status.UserSecrets.ProxyRO = strings.Join([]string{m.OBCluster.Name, "proxyro"}, "-")
-		}
-		if status.UserSecrets.Operator == "" {
-			status.UserSecrets.Operator = strings.Join([]string{m.OBCluster.Name, "operator"}, "-")
-		}
 	}
 	m.OBCluster.Status = status
 }
@@ -204,10 +192,11 @@ func (m *OBClusterManager) UpdateStatus() error {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
+			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 		outer:
 			for _, zone := range m.OBCluster.Spec.Topology {
 				for _, obzone := range obzoneList.Items {
-					if m.OBCluster.Spec.Standalone &&
+					if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone &&
 						(obzone.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
 							obzone.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Memory) != 0) {
 						m.OBCluster.Status.Status = clusterstatus.ScaleUp

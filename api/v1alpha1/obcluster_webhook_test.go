@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
@@ -131,7 +132,7 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 
 	It("It's OK to modify resources of standalone cluster", func() {
 		cluster := newOBCluster("test", 1, 1)
-		cluster.Spec.Standalone = true
+		cluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
 		By("Modify resources of standalone cluster")
 		cluster.Spec.OBServerTemplate.Resource.Cpu = resource.MustParse("3")
@@ -159,5 +160,21 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 
 		cluster2.Spec.UserSecrets.Monitor = wrongKeySecret
 		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("Validate secrets creation and fetch them", func() {
+		By("Create normal cluster")
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Spec.UserSecrets.Monitor = ""
+		cluster.Spec.UserSecrets.ProxyRO = ""
+		cluster.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+
+		By("Check user secrets filling up situation")
+		Expect(cluster.Spec.UserSecrets.Monitor).ShouldNot(BeEmpty())
+		Expect(cluster.Spec.UserSecrets.ProxyRO).ShouldNot(BeEmpty())
+		Expect(cluster.Spec.UserSecrets.Operator).ShouldNot(BeEmpty())
 	})
 })

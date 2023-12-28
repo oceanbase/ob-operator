@@ -25,8 +25,10 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -106,6 +108,16 @@ func (r *OBCluster) Default() {
 		parameters = append(parameters, v)
 	}
 	r.Spec.Parameters = parameters
+
+	if r.Spec.UserSecrets.Monitor == "" {
+		r.Spec.UserSecrets.Monitor = "monitor-user-" + rand.String(6)
+	}
+	if r.Spec.UserSecrets.Operator == "" {
+		r.Spec.UserSecrets.Operator = "operator-user-" + rand.String(6)
+	}
+	if r.Spec.UserSecrets.ProxyRO == "" {
+		r.Spec.UserSecrets.ProxyRO = "proxyro-user-" + rand.String(6)
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -126,14 +138,12 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	if !ok {
 		return nil, errors.New("failed to convert old object to OBCluster")
 	}
-	if oldCluster.Spec.Standalone != r.Spec.Standalone {
-		return nil, errors.New("standalone mode cannot be changed")
-	}
-	if !oldCluster.Spec.Standalone && oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu {
-		return nil, errors.New("forbid to modify cpu quota of non-standalone cluster")
-	}
-	if !oldCluster.Spec.Standalone && oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory {
-		return nil, errors.New("forbid to modify memory quota of non-standalone cluster")
+	oldMode, existOld := oldCluster.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	mode, exist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	if existOld && exist && oldMode != mode {
+		return nil, errors.New("mode cannot be changed")
+	} else if oldMode != oceanbaseconst.ModeStandalone && (oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu || oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory) {
+		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
 	}
 
 	return nil, r.validateMutation()
@@ -151,9 +161,10 @@ func (r *OBCluster) validateMutation() error {
 	}
 
 	var allErrs field.ErrorList
+	mode, modeExist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
 
 	// Validate standalone
-	if r.Spec.Standalone {
+	if modeExist && mode == oceanbaseconst.ModeStandalone {
 		if len(r.Spec.Topology) != 1 {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single zone"))
 		} else if r.Spec.Topology[0].Replica != 1 {
@@ -299,4 +310,23 @@ func (r *OBCluster) checkSecretWithRawError(ns, secretName string) error {
 		return errors.New("password field not found in given credential")
 	}
 	return nil
+}
+
+func (r *OBCluster) createDefaultUserSecret(secretName string) error {
+	return clt.Create(context.Background(), &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: r.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: r.APIVersion,
+				Kind:       r.Kind,
+				Name:       r.GetName(),
+				UID:        r.GetUID(),
+			}},
+		},
+		Type: v1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"password": rand.String(16),
+		},
+	})
 }

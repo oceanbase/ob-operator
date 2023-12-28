@@ -47,4 +47,5 @@ const (
 	tOBClusterHealthCheck       ttypes.TaskName = "obcluster health check"
 	tOBZoneHealthCheck          ttypes.TaskName = "obzone health check"
 	tScaleUpOBServers           ttypes.TaskName = "scale up observers"
+	tWaitForOBServerScalingUp   ttypes.TaskName = "wait for observer scaling up"
 )

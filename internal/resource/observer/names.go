@@ -44,4 +44,5 @@ const (
 	tWaitOBServerActiveInCluster  ttypes.TaskName = "wait observer active in cluster"
 	tUpgradeOBServerImage         ttypes.TaskName = "upgrade observer image"
 	tDeletePod                    ttypes.TaskName = "delete pod"
+	tWaitForPodDeleted            ttypes.TaskName = "wait for pod being deleted"
 )

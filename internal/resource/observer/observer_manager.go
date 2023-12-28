@@ -76,6 +76,8 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.AnnotateOBServerPod, nil
 	case tDeletePod:
 		return m.DeletePod, nil
+	case tWaitForPodDeleted:
+		return m.WaitForPodDeleted, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}

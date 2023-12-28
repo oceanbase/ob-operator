@@ -360,16 +360,12 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		Name:  obagentconst.EnvMonitorUser,
 		Value: obagentconst.MonitorUser,
 	}
-	monitorUser := obcluster.Spec.UserSecrets.Monitor
-	if obcluster.Status.UserSecrets != nil {
-		monitorUser = obcluster.Status.UserSecrets.Monitor
-	}
 	envMonitorPassword := corev1.EnvVar{
 		Name: obagentconst.EnvMonitorPASSWORD,
 		ValueFrom: &corev1.EnvVarSource{
 			SecretKeyRef: &corev1.SecretKeySelector{
 				LocalObjectReference: corev1.LocalObjectReference{
-					Name: monitorUser,
+					Name: obcluster.Spec.UserSecrets.Monitor,
 				},
 				Key: secretconst.PasswordKeyName,
 			},
@@ -744,6 +740,11 @@ func (m *OBServerManager) DeletePod() tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to delete pod of observer %s", m.OBServer.Name)
 	}
 
+	return nil
+}
+
+func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
+	m.Logger.Info("wait for observer pod being deleted")
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
 		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
@@ -751,6 +752,5 @@ func (m *OBServerManager) DeletePod() tasktypes.TaskError {
 			return nil
 		}
 	}
-
-	return errors.New("Timeout to wait pod deleted")
+	return errors.New("Timeout to wait for pod being deleted")
 }
