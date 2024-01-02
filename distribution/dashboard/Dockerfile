@@ -1,6 +1,7 @@
 FROM node:16-alpine as builder-fe
 WORKDIR /workspace
 COPY ./ui .
+ENV NODE_OPTIONS=--max_old_space_size=3072
 RUN yarn --verbose
 RUN yarn build
 
