@@ -43,8 +43,13 @@ var standaloneValidateCmd = &cobra.Command{
 			fmt.Printf("Failed to get current version, %v \n", err)
 			os.Exit(1)
 		}
-		if ver < MinStandaloneVersion {
-			fmt.Printf("Current version %s is too low, please upgrade to %s first \n", ver, MinStandaloneVersion)
+		obv, err := ParseOceanBaseVersion(ver)
+		if err != nil {
+			fmt.Printf("Failed to parse current version, %v \n", err)
+			os.Exit(1)
+		}
+		if obv.Cmp(MinStandaloneVersion) < 0 {
+			fmt.Printf("Current version %s is too low, please upgrade to %s first \n", ver, MinStandaloneVersion.String())
 			os.Exit(1)
 		}
 	},

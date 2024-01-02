@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -56,4 +58,80 @@ var versionCmd = &cobra.Command{
 		}
 		fmt.Println(ver)
 	},
+}
+
+type OceanBaseVersion struct {
+	Major    int    `json:"major"`
+	Minor    int    `json:"minor"`
+	Patch    int    `json:"patch"`
+	SubPatch int    `json:"subPatch"`
+	Build    string `json:"build"`
+}
+
+func ParseOceanBaseVersion(version string) (*OceanBaseVersion, error) {
+	ver := &OceanBaseVersion{}
+	var err error
+	pattern := "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[0-9]+)?$"
+	regex := regexp.MustCompile(pattern)
+	if !regex.MatchString(version) {
+		return nil, errors.New("version format is wrong, should be like " + pattern + " but got " + version)
+	}
+
+	verStr := strings.Split(version, "-")
+	if len(verStr) > 1 {
+		ver.Build = verStr[1]
+	}
+
+	verStr = strings.Split(verStr[0], ".")
+	if len(verStr) < 3 {
+		return nil, errors.New("version format is wrong")
+	}
+
+	ver.Major, err = strconv.Atoi(verStr[0])
+	if err != nil {
+		return nil, err
+	}
+	ver.Minor, err = strconv.Atoi(verStr[1])
+	if err != nil {
+		return nil, err
+	}
+	ver.Patch, err = strconv.Atoi(verStr[2])
+	if err != nil {
+		return nil, err
+	}
+
+	if len(verStr) > 3 {
+		ver.SubPatch, err = strconv.Atoi(verStr[3])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return ver, nil
+}
+
+func (v *OceanBaseVersion) String() string {
+	verPart := strings.TrimRight(fmt.Sprintf("%d.%d.%d.%d", v.Major, v.Minor, v.Patch, v.SubPatch), ".")
+	if v.Build != "" {
+		return fmt.Sprintf("%s-%s", verPart, v.Build)
+	}
+	return verPart
+}
+
+func (v *OceanBaseVersion) Cmp(other *OceanBaseVersion) int {
+	if v.Major != other.Major {
+		return v.Major - other.Major
+	}
+	if v.Minor != other.Minor {
+		return v.Minor - other.Minor
+	}
+	if v.Patch != other.Patch {
+		return v.Patch - other.Patch
+	}
+	if v.SubPatch != other.SubPatch {
+		return v.SubPatch - other.SubPatch
+	}
+	if v.Build != other.Build {
+		return strings.Compare(v.Build, other.Build)
+	}
+	return 0
 }

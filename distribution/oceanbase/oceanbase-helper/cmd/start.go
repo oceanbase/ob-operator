@@ -33,7 +33,6 @@ const (
 	DefaultLogPath       = "/home/admin/log"
 	BackupConfigFileName = "observer.conf.bin"
 	ConfigFileName       = "observer.config.bin"
-	MinStandaloneVersion = "4.2.0.0"
 )
 
 const (
@@ -59,8 +58,11 @@ var startCmd = &cobra.Command{
 	},
 }
 
+var MinStandaloneVersion *OceanBaseVersion
+
 func init() {
 	rootCmd.AddCommand(startCmd)
+	MinStandaloneVersion, _ = ParseOceanBaseVersion("4.2.0.0")
 }
 
 func prepareDir() error {
@@ -136,8 +138,12 @@ func startOBServerWithParam() error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to get current version")
 	}
+	obv, err := ParseOceanBaseVersion(ver)
+	if err != nil {
+		return errors.Wrap(err, "Failed to parse current version")
+	}
 	var cmd string
-	if ver > MinStandaloneVersion && standalone != "" {
+	if standalone != "" && obv.Cmp(MinStandaloneVersion) >= 0 {
 		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname lo -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	} else {
 		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
