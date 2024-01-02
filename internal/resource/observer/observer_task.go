@@ -166,8 +166,8 @@ func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) cor
 
 func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	_, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	if !sepVolumeAnnoExist {
+	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	if !sepVolumeAnnoExist && sepVolumeAnnoVal == "true" {
 		ownerReference := metav1.OwnerReference{
 			APIVersion: m.OBServer.APIVersion,
 			Kind:       m.OBServer.Kind,
@@ -176,8 +176,8 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 		}
 		ownerReferenceList = append(ownerReferenceList, ownerReference)
 	}
-	_, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	if singlePvcExist {
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
 		sumQuantity := resource.Quantity{}
 		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
 		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
@@ -257,8 +257,8 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	// TODO, add monitor container
 	volumes := make([]corev1.Volume, 0)
 
-	_, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	if singlePvcExist {
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
 		singleVolume := corev1.Volume{}
 		singleVolumeSource := &corev1.PersistentVolumeClaimVolumeSource{}
 		singleVolume.Name = m.OBServer.Name
@@ -432,8 +432,8 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	volumeMountLog.MountPath = oceanbaseconst.LogPath
 
 	// set subpath
-	_, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	if singlePvcExist {
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
 		volumeMountDataFile.Name = m.OBServer.Name
 		volumeMountDataLog.Name = m.OBServer.Name
 		volumeMountLog.Name = m.OBServer.Name
