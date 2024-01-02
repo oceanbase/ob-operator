@@ -10,11 +10,16 @@ This section provides a step-by-step guide on how to use ob-operator to deploy a
 
 ### Prerequisites
 
-Before getting started, please ensure you have a functional Kubernetes cluster with at least 2 CPU cores, 10GB of memory, and 100GB of storage space available. 
+Before getting started, please ensure you have a functional Kubernetes cluster with at least 2 CPU cores, 10GB of memory, and 100GB of storage space available.
 
-ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certificate management. For instructions on installing cert-manager, please refer to the corresponding [installation](https://cert-manager.io/docs/installation/) documentation. 
+ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certificate management. For instructions on installing cert-manager, please refer to the corresponding [installation](https://cert-manager.io/docs/installation/) documentation.
+If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
-Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand.
+```shell
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/cert-manager.yaml
+```
+
+Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.
 
 ### Deploy ob-operator
 
@@ -23,11 +28,13 @@ Storage of OceanBase cluster in this example relies on [local-path-provisioner](
 You can deploy ob-operator in a Kubernetes cluster by executing the following command:
 
 * Stable
+
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/operator.yaml
 ```
 
 * Development
+
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
 ```
