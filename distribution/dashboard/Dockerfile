@@ -9,8 +9,7 @@ ARG GOPROXY=https://goproxy.io,direct
 ARG GOSUMDB=sum.golang.org
 WORKDIR /workspace
 COPY . .
-RUN make dep-install
-RUN make
+RUN make dep-install build
 
 # start build docker image
 FROM openanolis/anolisos:8.4-x86_64
