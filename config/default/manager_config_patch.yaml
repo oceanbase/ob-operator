@@ -14,9 +14,6 @@ spec:
         - "--leader-elect"
         - "--manager-namespace=oceanbase-system"
         - "--log-verbosity=0"
-        env:
-        - name: TELEMETRY_REPORT_HOST
-          value: "https://openwebapi.oceanbase.com"
         resources:
           limits:
             cpu: "1"
