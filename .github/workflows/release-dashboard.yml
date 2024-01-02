@@ -48,6 +48,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
+        config-inline: |
+          [worker.oci]
+            max-parallelism = 1
 
       - name: Set Version variables
         id: set_version_vars
