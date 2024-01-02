@@ -1,0 +1,6 @@
+bin/*
+log/*
+./nohup.out
+node_modules/
+playground/
+ui/dist/

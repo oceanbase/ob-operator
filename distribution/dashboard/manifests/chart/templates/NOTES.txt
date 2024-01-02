@@ -1,0 +1,15 @@
+Welcome to OceanBase dashboard
+
+1. After installing the dashboard chart, you can use `port-forward` to expose the dashboard outside like:
+
+  > kubectl port-forward -n {{ .Release.Namespace }} services/oceanbase-dashboard-{{ .Release.Name }} 18081:80 --address 0.0.0.0
+
+then you can visit the dashboard on http://$YOUR_SERVER_IP:18081
+
+2. Use the following command to get password for default admin user 
+
+  > echo $(kubectl get -n {{ .Release.Namespace }} secret {{ .Release.Name }}-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+
+Log in as default account:
+Username: admin
+Password: <Get from the above command>

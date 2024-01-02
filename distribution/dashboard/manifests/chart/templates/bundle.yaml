@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oceanbase-dashboard-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: oceanbase-dashboard-{{ .Release.Name }}
+    {{- include "oceanbase-dashboard.labels" . | nindent 4}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oceanbase-dashboard-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: oceanbase-dashboard-{{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-sa
+      containers:
+        - name: dashboard
+          image: oceanbasedev/oceanbase-dashboard:1.0.0
+          resources:
+            requests:
+              cpu: 100m
+              memory: 500Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+          ports:
+            - containerPort: 8080
+          env:
+            - name: USER_CREDENTIALS_SECRET
+              value: {{ .Values.userCredentials | default (nospace (cat .Release.Name "-user-credentials")) }}
+            - name: USER_NAMESPACE
+              value: {{ .Values.userNamespace | default .Release.Namespace }}
+        - name: prometheus
+          image: prom/prometheus
+          resources:
+            requests:
+              cpu: 100m
+              memory: 500Mi
+            limits:
+              cpu: 2
+              memory: 4Gi
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus/"
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/
+            - name: prometheus-storage-volume
+              mountPath: /prometheus/
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            defaultMode: 420
+            name: {{ .Release.Name }}-prometheus-server-conf
+
+        - name: prometheus-storage-volume
+          emptyDir: {}
