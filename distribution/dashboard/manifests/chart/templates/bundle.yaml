@@ -19,7 +19,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
         - name: dashboard
-          image: oceanbasedev/oceanbase-dashboard:1.0.0
+          image: oceanbasedev/oceanbase-dashboard:0.1.0
           resources:
             requests:
               cpu: 100m

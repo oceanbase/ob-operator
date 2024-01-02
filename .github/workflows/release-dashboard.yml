@@ -55,7 +55,8 @@ jobs:
 
       - name: Set Version variables
         id: set_version_vars
-        run: echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
 
       - name: Build and push oceanbase-dashboard w/o cache
         uses: docker/build-push-action@v2
@@ -67,4 +68,4 @@ jobs:
           tags: ${{ vars.DOCKER_PUSH_BASE }}/dashboard:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}
-            COMMIT_HASH=$GITHUB_SHA
+            COMMIT_HASH=${{ github.sha }}

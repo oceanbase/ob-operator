@@ -2,7 +2,7 @@ FROM node:16-alpine as builder-fe
 WORKDIR /workspace
 COPY ./ui .
 ENV NODE_OPTIONS=--max_old_space_size=5120
-RUN yarn --verbose
+RUN yarn
 RUN yarn build
 
 FROM golang:1.20.4 as builder-be
