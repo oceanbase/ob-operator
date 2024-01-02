@@ -14,6 +14,7 @@ package observer
 
 import (
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -76,6 +77,9 @@ func RecoverOBServer() *tasktypes.TaskFlow {
 			Name:         fRecoverOBServer,
 			Tasks:        []tasktypes.TaskName{tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				Strategy: strategy.RetryFromCurrent,
+			},
 		},
 	}
 }
