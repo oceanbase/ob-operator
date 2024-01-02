@@ -22,9 +22,11 @@ import (
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
 
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
@@ -200,6 +202,8 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	}
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -235,9 +239,15 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 				Topology:         zone,
 			},
 		}
+		obzone.ObjectMeta.Annotations = make(map[string]string)
 		if independentVolumeAnnoExist {
-			obzone.ObjectMeta.Annotations = make(map[string]string)
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+		}
+		if singlePVCAnnoExist {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+		}
+		if modeAnnoExist {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		m.Logger.Info("create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
@@ -280,23 +290,89 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 		return errors.Wrap(err, "get oceanbase operation manager")
 	}
 
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
-	connectAddress := manager.Connector.DataSource().GetAddress()
-	for _, zone := range obzoneList.Items {
-		serverIp := zone.Status.OBServerStatus[0].Server
-		for _, serverInfo := range zone.Status.OBServerStatus {
-			if serverInfo.Server == connectAddress {
-				serverIp = connectAddress
+	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
+		var backoffLimit int32
+		var ttl int32 = 300
+		jobName := "standalone-validate-" + rand.String(8)
+		standaloneValidateJob := &batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jobName,
+				Namespace: m.OBCluster.Namespace,
+			},
+			Spec: batchv1.JobSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{{
+							Name:    "helper-validate-standalone",
+							Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper standalone validate"},
+						}},
+						RestartPolicy: corev1.RestartPolicyNever,
+					},
+				},
+				BackoffLimit:            &backoffLimit,
+				TTLSecondsAfterFinished: &ttl,
+			},
+		}
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check version job", "job", jobName)
+
+		err = m.Client.Create(m.Ctx, standaloneValidateJob)
+		if err != nil {
+			return errors.Wrap(err, "Create check version job")
+		}
+
+		var jobObject *batchv1.Job
+		for {
+			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+			if err != nil {
+				m.Logger.Error(err, "Failed to get job")
+				return err
+			}
+			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job is still running")
+			} else {
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job finished")
+				break
 			}
 		}
-		serverInfo := &model.ServerInfo{
-			Ip:   serverIp,
-			Port: oceanbaseconst.RpcPort,
+
+		if jobObject.Status.Failed > 0 {
+			m.Logger.Info("Current image does not support standalone mode")
+			err := errors.New("Current image does not support standalone mode")
+			m.PrintErrEvent(err)
+			return err
 		}
+
+		m.Logger.Info("Bootstrap as standalone mode")
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-			Zone:   zone.Spec.Topology.Zone,
-			Server: serverInfo,
+			Zone: m.OBCluster.Spec.Topology[0].Zone,
+			Server: &model.ServerInfo{
+				Ip:   "127.0.0.1",
+				Port: oceanbaseconst.RpcPort,
+			},
 		})
+	} else {
+		connectAddress := manager.Connector.DataSource().GetAddress()
+		for _, zone := range obzoneList.Items {
+			serverIp := zone.Status.OBServerStatus[0].Server
+			for _, serverInfo := range zone.Status.OBServerStatus {
+				if serverInfo.Server == connectAddress {
+					serverIp = connectAddress
+				}
+			}
+			serverInfo := &model.ServerInfo{
+				Ip:   serverIp,
+				Port: oceanbaseconst.RpcPort,
+			}
+			bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
+				Zone:   zone.Spec.Topology.Zone,
+				Server: serverInfo,
+			})
+		}
 	}
 
 	err = manager.Bootstrap(bootstrapServers)
@@ -308,26 +384,23 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	return err
 }
 
-func (m *OBClusterManager) CreateService() tasktypes.TaskError {
-	return nil
-}
-
+// Use Or for compatibility
 func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
-	err := m.createUser(oceanbaseconst.OperatorUser, m.OBCluster.Spec.UserSecrets.Operator, oceanbaseconst.AllPrivilege)
+	err := m.createUser(oceanbaseconst.RootUser, m.OBCluster.Spec.UserSecrets.Root, oceanbaseconst.AllPrivilege)
+	if err != nil {
+		return errors.Wrap(err, "Create root user")
+	}
+	err = m.createUser(oceanbaseconst.OperatorUser, m.OBCluster.Spec.UserSecrets.Operator, oceanbaseconst.AllPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create operator user")
 	}
 	err = m.createUser(obagentconst.MonitorUser, m.OBCluster.Spec.UserSecrets.Monitor, oceanbaseconst.SelectPrivilege)
 	if err != nil {
-		return errors.Wrap(err, "Create root user")
+		return errors.Wrap(err, "Create monitor user")
 	}
 	err = m.createUser(oceanbaseconst.ProxyUser, m.OBCluster.Spec.UserSecrets.ProxyRO, oceanbaseconst.SelectPrivilege)
 	if err != nil {
-		return errors.Wrap(err, "Create root user")
-	}
-	err = m.createUser(oceanbaseconst.RootUser, m.OBCluster.Spec.UserSecrets.Root, oceanbaseconst.AllPrivilege)
-	if err != nil {
-		return errors.Wrap(err, "Create root user")
+		return errors.Wrap(err, "Create proxyro user")
 	}
 	return nil
 }
@@ -524,6 +597,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 
 	var jobObject *batchv1.Job
 	for {
+		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 		jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
 		if err != nil {
 			m.Logger.Error(err, "Failed to get job")
@@ -535,6 +609,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 			break
 		}
 	}
+
 	if jobObject.Status.Succeeded == 1 {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded")
 	} else {
@@ -838,5 +913,118 @@ func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
 	}
 	_ = m.Client.Delete(m.Ctx, contextSecret)
 	m.Recorder.Event(m.OBCluster, "Upgrade", "", "Restore essential parameters successfully")
+	return nil
+}
+
+func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
+	secretList := []string{
+		m.OBCluster.Spec.UserSecrets.Operator,
+		m.OBCluster.Spec.UserSecrets.Monitor,
+		m.OBCluster.Spec.UserSecrets.ProxyRO,
+	}
+	for _, secret := range secretList {
+		fetchedSec := &corev1.Secret{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBCluster.Namespace,
+			Name:      secret,
+		}, fetchedSec)
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				err := m.Client.Create(m.Ctx, &corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secret,
+						Namespace: m.OBCluster.Namespace,
+					},
+					StringData: map[string]string{
+						"password": rand.String(16),
+					},
+				})
+				if err != nil {
+					return errors.Wrap(err, "Create secret "+secret)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
+		err := m.Client.Create(m.Ctx, &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      m.OBCluster.GetName() + "-standalone-svc",
+				Namespace: m.OBCluster.GetNamespace(),
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: m.OBCluster.APIVersion,
+					Kind:       m.OBCluster.Kind,
+					Name:       m.OBCluster.GetName(),
+					UID:        m.OBCluster.GetUID(),
+				}},
+				Labels:      map[string]string{},
+				Annotations: map[string]string{},
+			},
+			Spec: corev1.ServiceSpec{
+				Ports: []corev1.ServicePort{{
+					Name:       "sql",
+					Protocol:   corev1.ProtocolTCP,
+					Port:       2881,
+					TargetPort: intstr.IntOrString{IntVal: 2881},
+				}},
+				Selector: map[string]string{
+					oceanbaseconst.LabelRefOBCluster: m.OBCluster.GetName(),
+				},
+				Type: corev1.ServiceTypeNodePort,
+			},
+		})
+		if err != nil {
+			m.Recorder.Event(m.OBCluster, "Warning", "Create standalone service failed", err.Error())
+			return errors.Wrap(err, "Create service")
+		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) ScaleUpOBZone() tasktypes.TaskError {
+	obzoneList, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "list obzones")
+	}
+
+	for _, obzone := range obzoneList.Items {
+		if obzone.Spec.OBServerTemplate.Resource.Cpu != m.OBCluster.Spec.OBServerTemplate.Resource.Cpu ||
+			obzone.Spec.OBServerTemplate.Resource.Memory != m.OBCluster.Spec.OBServerTemplate.Resource.Memory {
+			obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
+			obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
+			err := m.Client.Update(m.Ctx, &obzone)
+			if err != nil {
+				return errors.Wrap(err, "update obzone")
+			}
+		}
+	}
+
+	// check status of obzones
+	const maxWaitTimes = 60
+	matched := true
+outer:
+	for i := 0; i < maxWaitTimes; i++ {
+		time.Sleep(time.Second * 3)
+		obzoneList, err = m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "list obzones")
+		}
+		for _, obzone := range obzoneList.Items {
+			if obzone.Status.Status != zonestatus.ScaleUp {
+				matched = false
+				continue outer
+			}
+		}
+		if matched {
+			break
+		}
+	}
+	if !matched {
+		return errors.New("scale up obzone failed")
+	}
 	return nil
 }

@@ -25,8 +25,10 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -106,6 +108,16 @@ func (r *OBCluster) Default() {
 		parameters = append(parameters, v)
 	}
 	r.Spec.Parameters = parameters
+
+	if r.Spec.UserSecrets.Monitor == "" {
+		r.Spec.UserSecrets.Monitor = "monitor-user-" + rand.String(6)
+	}
+	if r.Spec.UserSecrets.Operator == "" {
+		r.Spec.UserSecrets.Operator = "operator-user-" + rand.String(6)
+	}
+	if r.Spec.UserSecrets.ProxyRO == "" {
+		r.Spec.UserSecrets.ProxyRO = "proxyro-user-" + rand.String(6)
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -115,15 +127,22 @@ var _ webhook.Validator = &OBCluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateCreate() (admission.Warnings, error) {
-	obclusterlog.Info("validate create", "name", r.Name)
-
 	return nil, r.validateMutation()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	_ = old
-	obclusterlog.Info("validate update", "name", r.Name)
+	oldCluster, ok := old.(*OBCluster)
+	if !ok {
+		return nil, errors.New("failed to convert old object to OBCluster")
+	}
+	oldMode, existOld := oldCluster.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	mode, exist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	if existOld && exist && oldMode != mode {
+		return nil, errors.New("mode cannot be changed")
+	} else if oldMode != oceanbaseconst.ModeStandalone && (oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu || oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory) {
+		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
+	}
 
 	return nil, r.validateMutation()
 }
@@ -140,29 +159,39 @@ func (r *OBCluster) validateMutation() error {
 	}
 
 	var allErrs field.ErrorList
+	mode, modeExist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
 
-	// 0. Validate userSecrets
+	// Validate standalone
+	if modeExist && mode == oceanbaseconst.ModeStandalone {
+		if len(r.Spec.Topology) != 1 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single zone"))
+		} else if r.Spec.Topology[0].Replica != 1 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single replica"))
+		}
+	}
+
+	// Validate userSecrets
 	if r.Spec.UserSecrets != nil {
 		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Root, "root"); err != nil {
 			allErrs = append(allErrs, err)
 		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.ProxyRO, "proxyro"); err != nil {
-			allErrs = append(allErrs, err)
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.Operator); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("operator"), r.Spec.UserSecrets.Operator, err.Error()))
 		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Operator, "operator"); err != nil {
-			allErrs = append(allErrs, err)
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.Monitor); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("monitor"), r.Spec.UserSecrets.Monitor, err.Error()))
 		}
-		if err := r.checkSecretExistence(r.Namespace, r.Spec.UserSecrets.Monitor, "monitor"); err != nil {
-			allErrs = append(allErrs, err)
+		if err := r.checkSecretWithRawError(r.Namespace, r.Spec.UserSecrets.ProxyRO); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("userSecrets").Child("proxyro"), r.Spec.UserSecrets.ProxyRO, err.Error()))
 		}
 	}
 
-	// 1. Validate Topology
+	// Validate Topology
 	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
 	}
 
-	// 2. Validate storageClasses
+	// Validate storageClasses
 	storageClassMapping := make(map[string]bool)
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass] = true
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass] = true
@@ -180,8 +209,16 @@ func (r *OBCluster) validateMutation() error {
 			}
 		}
 	}
+	annos := r.GetAnnotations()
+	if annos != nil {
+		if _, ok := annos[oceanbaseconst.AnnotationsSinglePVC]; ok {
+			if len(storageClassMapping) > 1 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("*").Child("storageClass"), storageClassMapping, "singlePVC mode only support single storage class"))
+			}
+		}
+	}
 
-	// 3. Validate disk size
+	// Validate disk size
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinDataDiskSize.AsApproximateFloat64() {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum data storage size of OBCluster is "+oceanbaseconst.MinDataDiskSize.String()))
 	}
@@ -192,12 +229,12 @@ func (r *OBCluster) validateMutation() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "The minimum log storage size of OBCluster is "+oceanbaseconst.MinLogDiskSize.String()))
 	}
 
-	// 4 Validate memory size
+	// Validate memory size
 	if r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() < oceanbaseconst.MinMemorySize.AsApproximateFloat64() {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.OBServerTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+oceanbaseconst.MinMemorySize.String()))
 	}
 
-	// 5. Validate essential parameters
+	// Validate essential parameters
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	for _, parameter := range r.Spec.Parameters {
 		parameterMap[parameter.Name] = parameter
@@ -254,5 +291,48 @@ func (r *OBCluster) checkSecretExistence(ns, secretName, fieldName string) *fiel
 		}
 		return field.InternalError(field.NewPath("spec").Child("userSecrets").Child(fieldName), err)
 	}
+	if _, ok := secret.Data["password"]; !ok {
+		return field.Invalid(field.NewPath("spec").Child("userSecrets").Child(fieldName), secretName, fmt.Sprintf("password field not found in given credential %s ", secretName))
+	}
 	return nil
+}
+
+func (r *OBCluster) checkSecretWithRawError(ns, secretName string) error {
+	if secretName == "" {
+		return nil
+	}
+	secret := &v1.Secret{}
+	err := tenantClt.Get(context.Background(), types.NamespacedName{
+		Namespace: ns,
+		Name:      secretName,
+	}, secret)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+		return err
+	}
+	if _, ok := secret.Data["password"]; !ok {
+		return errors.New("password field not found in given credential")
+	}
+	return nil
+}
+
+func (r *OBCluster) createDefaultUserSecret(secretName string) error {
+	return clt.Create(context.Background(), &v1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: r.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: r.APIVersion,
+				Kind:       r.Kind,
+				Name:       r.GetName(),
+				UID:        r.GetUID(),
+			}},
+		},
+		Type: v1.SecretTypeOpaque,
+		StringData: map[string]string{
+			"password": rand.String(16),
+		},
+	})
 }

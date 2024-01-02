@@ -75,15 +75,6 @@ resources:
   controller: true
   domain: oceanbase.com
   group: oceanbase
-  kind: OBUnit
-  path: github.com/oceanbase/ob-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: oceanbase.com
-  group: oceanbase
   kind: OBClusterBackup
   path: github.com/oceanbase/ob-operator/api/v1alpha1
   version: v1alpha1

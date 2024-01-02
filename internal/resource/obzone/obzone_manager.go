@@ -31,6 +31,7 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -107,6 +108,8 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fDeleteOBServer)
 	case zonestatus.Deleting:
 		taskFlow, err = task.GetRegistry().Get(fDeleteOBZoneFinalizer)
+	case zonestatus.ScaleUp:
+		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServers)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -229,6 +232,14 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need delete observer")
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
+		} else if mode, exist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+			for _, observer := range observerList.Items {
+				if observer.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+					observer.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Memory) != 0 {
+					m.OBZone.Status.Status = zonestatus.ScaleUp
+					break
+				}
+			}
 		}
 		// do nothing when observer match topology replica
 
@@ -291,6 +302,8 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 		return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case tWaitOBServerRunning:
 		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case tWaitForOBServerScalingUp:
+		return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case tAddZone:
 		return m.AddZone, nil
 	case tStartOBZone:
@@ -315,6 +328,8 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 		return m.UpgradeOBServer, nil
 	case tWaitOBServerUpgraded:
 		return m.WaitOBServerUpgraded, nil
+	case tScaleUpOBServers:
+		return m.ScaleUpOBServer, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

@@ -26,6 +26,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
@@ -95,6 +96,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fUpgradeOBCluster)
 	case clusterstatus.ModifyOBParameter:
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBParameter)
+	case clusterstatus.ScaleUp:
+		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -189,18 +192,21 @@ func (m *OBClusterManager) UpdateStatus() error {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
-			observerMatch := true
+			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+		outer:
 			for _, zone := range m.OBCluster.Spec.Topology {
-				if !observerMatch {
-					break
-				}
 				for _, obzone := range obzoneList.Items {
+					if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone &&
+						(obzone.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+							obzone.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Memory) != 0) {
+						m.OBCluster.Status.Status = clusterstatus.ScaleUp
+						break outer
+					}
 					if zone.Zone == obzone.Spec.Topology.Zone {
 						if zone.Replica != len(obzone.Status.OBServerStatus) {
 							m.OBCluster.Status.Status = clusterstatus.ModifyOBZoneReplica
-							observerMatch = false
+							break outer
 						}
-						break
 					}
 				}
 			}
@@ -277,6 +283,8 @@ func (m *OBClusterManager) HandleFailure() {
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCheckAndCreateUserSecrets:
+		return m.CheckAndCreateUserSecrets, nil
 	case tCreateOBZone:
 		return m.CreateOBZone, nil
 	case tDeleteOBZone:
@@ -296,7 +304,7 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 	case tCreateUsers:
 		return m.CreateUsers, nil
 	case tCreateOBClusterService:
-		return m.CreateService, nil
+		return m.CreateServices, nil
 	case tMaintainOBParameter:
 		return m.MaintainOBParameter, nil
 	case tValidateUpgradeInfo:
@@ -317,6 +325,8 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 		return m.CreateServiceForMonitor, nil
 	case tModifySysTenantReplica:
 		return m.ModifySysTenantReplica, nil
+	case tScaleUpOBZones:
+		return m.ScaleUpOBZone, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

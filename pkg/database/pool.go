@@ -13,28 +13,44 @@ See the Mulan PSL v2 for more details.
 package database
 
 import (
-	"sync"
+	"os"
+	"strconv"
+	"time"
 
+	"github.com/hashicorp/golang-lru/v2/expirable"
 	"github.com/pkg/errors"
 )
 
 var p = &pool{}
 
+func onCacheEvicted(_ string, value *Connector) {
+	_ = value.Close()
+}
+
+func init() {
+	cacheSize := DefaultLRUCacheSize
+	if sizeEnv := os.Getenv(dbConLRUCacheSizeEnv); sizeEnv != "" {
+		if sizeParsed, err := strconv.Atoi(sizeEnv); err == nil {
+			cacheSize = sizeParsed
+		}
+	}
+	p.Cache = expirable.NewLRU[string, *Connector](cacheSize, onCacheEvicted, time.Hour)
+}
+
 type pool struct {
-	// TODO: maintain cache size and data expiration, maybe change to a cache library.
-	Cache sync.Map
+	Cache *expirable.LRU[string, *Connector]
 }
 
 func GetConnector(dataSource DataSource) (*Connector, error) {
-	c, ok := p.Cache.Load(dataSource.ID())
-	if ok && c.(*Connector).IsAlive() {
-		return c.(*Connector), nil
+	c, ok := p.Cache.Get(dataSource.ID())
+	if ok && c.IsAlive() {
+		return c, nil
 	}
 	connector := NewConnector(dataSource)
 	err := connector.Init()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Init connector failed with datasource: %s", dataSource.String())
 	}
-	p.Cache.Store(dataSource.ID(), connector)
+	p.Cache.Add(dataSource.ID(), connector)
 	return connector, nil
 }

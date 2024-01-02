@@ -44,6 +44,9 @@ func CreateOBServer() *tasktypes.TaskFlow {
 			Name:         fCreateOBServer,
 			Tasks:        []tasktypes.TaskName{tCreateOBPVC, tCreateOBPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: "Failed",
+			},
 		},
 	}
 }
@@ -96,6 +99,16 @@ func AnnotateOBServerPod() *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAnnotateOBServerPod,
 			Tasks:        []tasktypes.TaskName{tAnnotateOBServerPod},
+			TargetStatus: serverstatus.Running,
+		},
+	}
+}
+
+func ScaleUpOBServer() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fScaleUpOBServer,
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}

@@ -46,6 +46,9 @@ type OBParameterStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 
 // OBParameter is the Schema for the obparameters API
 type OBParameter struct {

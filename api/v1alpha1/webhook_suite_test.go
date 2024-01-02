@@ -177,13 +177,19 @@ var _ = BeforeSuite(func() {
 	}
 
 	Expect(k8sClient.Create(ctx, newFakeStorageClass("local-path"))).Should(Succeed())
+	Expect(k8sClient.Create(ctx, newFakeStorageClass("local-path-2"))).Should(Succeed())
 	Eventually(func() bool {
 		sc := &storagev1.StorageClass{}
 		Expect(k8sClient.Get(ctx, types.NamespacedName{
 			Namespace: defaultNamespace,
 			Name:      "local-path",
 		}, sc)).Should(Succeed())
-		return sc != nil
+		sc2 := &storagev1.StorageClass{}
+		Expect(k8sClient.Get(ctx, types.NamespacedName{
+			Namespace: defaultNamespace,
+			Name:      "local-path-2",
+		}, sc2)).Should(Succeed())
+		return sc != nil && sc2 != nil
 	}, 300, 3).Should(BeTrue())
 
 })

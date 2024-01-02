@@ -81,8 +81,9 @@ func newOBCluster(name string, zoneNum int, serverNum int) *OBCluster {
 
 	obcluster := &OBCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: defaultNamespace,
+			Name:        name,
+			Namespace:   defaultNamespace,
+			Annotations: map[string]string{},
 		},
 		Spec: OBClusterSpec{
 			ClusterName:      name,

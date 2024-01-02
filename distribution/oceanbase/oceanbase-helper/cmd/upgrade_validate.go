@@ -16,8 +16,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 	"github.com/pkg/errors"
@@ -25,11 +23,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// validateCmd represents the validate command
-var validateCmd = &cobra.Command{
+// upgradeValidateCmd represents the validate command
+var upgradeValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "validate a version can be upgrade to current version",
-	Long:  "",
 	Run: func(cmd *cobra.Command, args []string) {
 		err := validateUpgrade()
 		if err != nil {
@@ -40,28 +37,11 @@ var validateCmd = &cobra.Command{
 }
 
 func init() {
-	upgradeCmd.AddCommand(validateCmd)
-	validateCmd.PersistentFlags().StringP("start-version", "s", "", "upgrade start version")
-	validateCmd.PersistentFlags().StringP("ob-installation-path", "p", "/home/admin/oceanbase", "oceanbase installation path")
-	_ = viper.BindPFlag("start-version", validateCmd.PersistentFlags().Lookup("start-version"))
-	_ = viper.BindPFlag("ob-installation-path", validateCmd.PersistentFlags().Lookup("ob-installation-path"))
-}
-
-func getCurrentVersion(oceanbaseInstallPath string) (string, error) {
-	output, err := exec.Command("bash", "-c", fmt.Sprintf("export LD_LIBRARY_PATH=%s/lib; %s/bin/observer -V", oceanbaseInstallPath, oceanbaseInstallPath)).CombinedOutput()
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to execute version command")
-	}
-	fmt.Println(string(output))
-	lines := strings.Split(string(output), "\n")
-	if len(lines) > 3 {
-		versionStr := strings.Split(lines[1], " ")
-		version := versionStr[len(versionStr)-1]
-		releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
-		return fmt.Sprintf("%s-%s", version[0:len(version)-1], releaseStr), nil
-	} else {
-		return "", errors.New("OB Version Formattion is Wrong")
-	}
+	upgradeCmd.AddCommand(upgradeValidateCmd)
+	upgradeValidateCmd.PersistentFlags().StringP("start-version", "s", "", "upgrade start version")
+	upgradeValidateCmd.PersistentFlags().StringP("ob-installation-path", "p", "/home/admin/oceanbase", "oceanbase installation path")
+	_ = viper.BindPFlag("start-version", upgradeValidateCmd.PersistentFlags().Lookup("start-version"))
+	_ = viper.BindPFlag("ob-installation-path", upgradeValidateCmd.PersistentFlags().Lookup("ob-installation-path"))
 }
 
 func validateUpgrade() error {

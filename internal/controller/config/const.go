@@ -18,7 +18,6 @@ const (
 	OBServerControllerName             = "observer-controller"
 	OBParameterControllerName          = "obparameter-controller"
 	OBTenantControllerName             = "obtenant-controller"
-	OBUnitControllerName               = "obunit-controller"
 	OBClusterBackupControllerName      = "obclusterbackup-controller"
 	OBTenantBackupControllerName       = "obtenantbackup-controller"
 	OBClusterRestoreControllerName     = "obclusterrestore-controller"

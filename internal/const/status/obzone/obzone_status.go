@@ -22,4 +22,5 @@ const (
 	Upgrade           = "upgrade"
 	BootstrapReady    = "bootstrap ready"
 	FinalizerFinished = "finalizer finished"
+	ScaleUp           = "scale up"
 )

@@ -74,6 +74,10 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.UpgradeOBServerImage, nil
 	case tAnnotateOBServerPod:
 		return m.AnnotateOBServerPod, nil
+	case tDeletePod:
+		return m.DeletePod, nil
+	case tWaitForPodDeleted:
+		return m.WaitForPodDeleted, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -119,6 +123,10 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeExist && mode == oceanbaseconst.ModeStandalone {
+		observerInfo.Ip = "127.0.0.1"
+	}
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -138,8 +146,9 @@ func (m *OBServerManager) retryUpdateStatus() error {
 }
 
 func (m *OBServerManager) setRecoveryStatus() {
-	if m.SupportStaticIp() {
-		m.Logger.Info("current cni supports specific static ip address, recover by recreate pod")
+	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
+		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
 		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
@@ -182,6 +191,11 @@ func (m *OBServerManager) UpdateStatus() error {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get observer failed, check next time")
 			} else if observer == nil {
 				m.OBServer.Status.Status = serverstatus.AddServer
+			} else if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+				if pod.Spec.Containers[0].Resources.Limits.Cpu().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
+					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
+					m.OBServer.Status.Status = serverstatus.ScaleUp
+				}
 			}
 		}
 
@@ -294,6 +308,9 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case serverstatus.AddServer:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be added to obcluster")
 		taskFlow, err = task.GetRegistry().Get(fAddServerInOB)
+	case serverstatus.ScaleUp:
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be scaled up")
+		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil

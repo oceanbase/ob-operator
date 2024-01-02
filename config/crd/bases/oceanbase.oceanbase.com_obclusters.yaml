@@ -2697,8 +2697,6 @@ spec:
                   root:
                     type: string
                 required:
-                - monitor
-                - proxyro
                 - root
                 type: object
             required:

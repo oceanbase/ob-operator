@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
@@ -114,5 +115,73 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 			}, c)
 			return err != nil && kubeerrors.IsNotFound(err)
 		}, 300, 1).Should(BeTrue())
+	})
+
+	It("Forbid to modify resources of Non-standalone cluster", func() {
+		cluster := newOBCluster("test", 1, 1)
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		By("Modify resources of Non-standalone cluster")
+		cluster.Spec.OBServerTemplate.Resource.Cpu = resource.MustParse("3")
+		Expect(k8sClient.Update(ctx, cluster)).ShouldNot(Succeed())
+		cluster = newOBCluster("test", 1, 1)
+		cluster.Spec.OBServerTemplate.Resource.Memory = resource.MustParse("20Gi")
+		Expect(k8sClient.Update(ctx, cluster)).ShouldNot(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("It's OK to modify resources of standalone cluster", func() {
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		By("Modify resources of standalone cluster")
+		cluster.Spec.OBServerTemplate.Resource.Cpu = resource.MustParse("3")
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+
+		cluster.Spec.OBServerTemplate.Resource.Memory = resource.MustParse("20Gi")
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("Validate existence of secrets", func() {
+		By("Create normal cluster")
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Spec.UserSecrets.Monitor = ""
+		cluster.Spec.UserSecrets.ProxyRO = ""
+		cluster.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+
+		cluster2 := newOBCluster("test2", 1, 1)
+		cluster2.Spec.UserSecrets.Monitor = "secret-that-does-not-exist"
+		cluster2.Spec.UserSecrets.ProxyRO = ""
+		cluster2.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+
+		cluster2.Spec.UserSecrets.Monitor = wrongKeySecret
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("Validate secrets creation and fetch them", func() {
+		By("Create normal cluster")
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Spec.UserSecrets.Monitor = ""
+		cluster.Spec.UserSecrets.ProxyRO = ""
+		cluster.Spec.UserSecrets.Operator = ""
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+
+		By("Check user secrets filling up situation")
+		Expect(cluster.Spec.UserSecrets.Monitor).ShouldNot(BeEmpty())
+		Expect(cluster.Spec.UserSecrets.ProxyRO).ShouldNot(BeEmpty())
+		Expect(cluster.Spec.UserSecrets.Operator).ShouldNot(BeEmpty())
+	})
+
+	It("Validate single pvc with multiple storage classes", func() {
+		cluster := newOBCluster("test", 1, 1)
+		cluster.Annotations[oceanbaseconst.AnnotationsSinglePVC] = "true"
+		cluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = "local-path-2"
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
 	})
 })

@@ -7,7 +7,6 @@ resources:
 - bases/oceanbase.oceanbase.com_observers.yaml
 - bases/oceanbase.oceanbase.com_obparameters.yaml
 - bases/oceanbase.oceanbase.com_obtenants.yaml
-- bases/oceanbase.oceanbase.com_obunits.yaml
 - bases/oceanbase.oceanbase.com_obclusterbackups.yaml
 - bases/oceanbase.oceanbase.com_obtenantbackups.yaml
 - bases/oceanbase.oceanbase.com_obclusterrestores.yaml
@@ -24,7 +23,6 @@ patchesStrategicMerge:
 # - patches/webhook_in_observers.yaml
 # - patches/webhook_in_obparameters.yaml
 - patches/webhook_in_obtenants.yaml
-# - patches/webhook_in_obunits.yaml
 # - patches/webhook_in_obclusterbackups.yaml
 # - patches/webhook_in_obtenantbackups.yaml
 # - patches/webhook_in_obclusterrestores.yaml
@@ -40,7 +38,6 @@ patchesStrategicMerge:
 # - patches/cainjection_in_observers.yaml
 # - patches/cainjection_in_obparameters.yaml
 - patches/cainjection_in_obtenants.yaml
-# - patches/cainjection_in_obunits.yaml
 # - patches/cainjection_in_obclusterbackups.yaml
 # - patches/cainjection_in_obtenantbackups.yaml
 # - patches/cainjection_in_obclusterrestores.yaml

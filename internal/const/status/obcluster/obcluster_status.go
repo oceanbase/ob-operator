@@ -22,4 +22,6 @@ const (
 	ModifyOBParameter   = "modify parameter"
 	Bootstrapped        = "bootstrapped"
 	FinalizerFinished   = "finalizer finished"
+	ScaleUp             = "scale up"
+	Failed              = "failed"
 )

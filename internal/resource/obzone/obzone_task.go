@@ -106,6 +106,8 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 		}
 	}
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -135,9 +137,15 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 				BackupVolume:     m.OBZone.Spec.BackupVolume,
 			},
 		}
+		observer.ObjectMeta.Annotations = make(map[string]string)
 		if independentVolumeAnnoExist {
-			observer.ObjectMeta.Annotations = make(map[string]string)
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+		}
+		if singlePVCAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+		}
+		if modeAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		m.Logger.Info("create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)
@@ -314,6 +322,26 @@ func (m *OBZoneManager) DeleteOBZoneInCluster() tasktypes.TaskError {
 	err = operationManager.DeleteZone(m.OBZone.Spec.Topology.Zone)
 	if err != nil {
 		return errors.Wrapf(err, "Delete obzone %s failed", m.OBZone.Spec.Topology.Zone)
+	}
+	return nil
+}
+
+func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return err
+	}
+	for _, observer := range observerList.Items {
+		if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
+			observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
+			m.Logger.Info("scale up observer", "observer", observer.Name)
+			observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
+			observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
+			err = m.Client.Update(m.Ctx, &observer)
+			if err != nil {
+				return errors.Wrapf(err, "Scale up observer %s failed", observer.Name)
+			}
+		}
 	}
 	return nil
 }

@@ -143,14 +143,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenant")
 		os.Exit(1)
 	}
-	if err = (&controller.OBUnitReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBUnitControllerName),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBUnit")
-		os.Exit(1)
-	}
 	if err = (&controller.OBTenantBackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),

@@ -22,10 +22,10 @@ func BootstrapOBCluster() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fBootstrapOBCluster,
-			Tasks:        []tasktypes.TaskName{tCreateOBZone, tWaitOBZoneBootstrapReady, tBootstrap},
+			Tasks:        []tasktypes.TaskName{tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneBootstrapReady, tBootstrap},
 			TargetStatus: clusterstatus.Bootstrapped,
 			OnFailure: tasktypes.FailureRule{
-				NextTryStatus: "new",
+				NextTryStatus: clusterstatus.Failed,
 			},
 		},
 	}
@@ -35,7 +35,7 @@ func MaintainOBClusterAfterBootstrap() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainOBClusterAfterBootstrap,
-			Tasks:        []tasktypes.TaskName{tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor},
+			Tasks:        []tasktypes.TaskName{tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -90,6 +90,16 @@ func UpgradeOBCluster() *tasktypes.TaskFlow {
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.Pause,
 			},
+		},
+	}
+}
+
+func ScaleUpOBZones() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fScaleUpOBZones,
+			Tasks:        []tasktypes.TaskName{tScaleUpOBZones, tWaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
 		},
 	}
 }

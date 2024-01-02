@@ -22,5 +22,6 @@ const (
 	Annotate          = "annotate"
 	BootstrapReady    = "bootstrap ready"
 	Deleting          = "deleting"
+	ScaleUp           = "scale up"
 	FinalizerFinished = "finalizer finished"
 )

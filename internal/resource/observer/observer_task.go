@@ -19,6 +19,8 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -60,6 +62,12 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 }
 
 func (m *OBServerManager) AddServer() tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		m.Recorder.Event(m.OBServer, "SkipAddServer", "AddServer", "Skip add server in standalone mode")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Skip add server in standalone mode")
+		return nil
+	}
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -144,8 +152,7 @@ func (m *OBServerManager) CreateOBPod() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) generatePVCSpec(name string, storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
-	_ = name
+func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
 	pvcSpec := &corev1.PersistentVolumeClaimSpec{}
 	requestsResources := corev1.ResourceList{}
 	requestsResources["storage"] = storageSpec.Size
@@ -159,8 +166,8 @@ func (m *OBServerManager) generatePVCSpec(name string, storageSpec *apitypes.Sto
 
 func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	_, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	if !sepVolumeAnnoExist {
+	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	if !sepVolumeAnnoExist && sepVolumeAnnoVal == "true" {
 		ownerReference := metav1.OwnerReference{
 			APIVersion: m.OBServer.APIVersion,
 			Kind:       m.OBServer.Kind,
@@ -169,50 +176,74 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 		}
 		ownerReferenceList = append(ownerReferenceList, ownerReference)
 	}
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
+		sumQuantity := resource.Quantity{}
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
+		storageSpec := &apitypes.StorageSpec{
+			StorageClass: m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+			Size:         sumQuantity,
+		}
+		pvc := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            m.OBServer.Name,
+				Namespace:       m.OBServer.Namespace,
+				OwnerReferences: ownerReferenceList,
+				Labels:          m.OBServer.Labels,
+			},
+			Spec: m.generatePVCSpec(storageSpec),
+		}
+		err := m.Client.Create(m.Ctx, pvc)
+		if err != nil {
+			return errors.Wrap(err, "Create single pvc of observer")
+		}
+	} else {
+		objectMeta := metav1.ObjectMeta{
+			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
+			Namespace:       m.OBServer.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          m.OBServer.Labels,
+		}
+		pvc := &corev1.PersistentVolumeClaim{
+			ObjectMeta: objectMeta,
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
+		}
+		err := m.Client.Create(m.Ctx, pvc)
+		if err != nil {
+			return errors.Wrap(err, "Create pvc of data file")
+		}
 
-	objectMeta := metav1.ObjectMeta{
-		Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
-		Namespace:       m.OBServer.Namespace,
-		OwnerReferences: ownerReferenceList,
-		Labels:          m.OBServer.Labels,
-	}
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: objectMeta,
-		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
-	}
-	err := m.Client.Create(m.Ctx, pvc)
-	if err != nil {
-		return errors.Wrap(err, "Create pvc of data file")
-	}
+		objectMeta = metav1.ObjectMeta{
+			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
+			Namespace:       m.OBServer.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          m.OBServer.Labels,
+		}
+		pvc = &corev1.PersistentVolumeClaim{
+			ObjectMeta: objectMeta,
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
+		}
+		err = m.Client.Create(m.Ctx, pvc)
+		if err != nil {
+			return errors.Wrap(err, "Create pvc of data log")
+		}
 
-	objectMeta = metav1.ObjectMeta{
-		Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
-		Namespace:       m.OBServer.Namespace,
-		OwnerReferences: ownerReferenceList,
-		Labels:          m.OBServer.Labels,
-	}
-	pvc = &corev1.PersistentVolumeClaim{
-		ObjectMeta: objectMeta,
-		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
-	}
-	err = m.Client.Create(m.Ctx, pvc)
-	if err != nil {
-		return errors.Wrap(err, "Create pvc of data log")
-	}
-
-	objectMeta = metav1.ObjectMeta{
-		Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
-		Namespace:       m.OBServer.Namespace,
-		OwnerReferences: ownerReferenceList,
-		Labels:          m.OBServer.Labels,
-	}
-	pvc = &corev1.PersistentVolumeClaim{
-		ObjectMeta: objectMeta,
-		Spec:       m.generatePVCSpec(fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix), m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
-	}
-	err = m.Client.Create(m.Ctx, pvc)
-	if err != nil {
-		return errors.Wrap(err, "Create pvc of log")
+		objectMeta = metav1.ObjectMeta{
+			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
+			Namespace:       m.OBServer.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          m.OBServer.Labels,
+		}
+		pvc = &corev1.PersistentVolumeClaim{
+			ObjectMeta: objectMeta,
+			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
+		}
+		err = m.Client.Create(m.Ctx, pvc)
+		if err != nil {
+			return errors.Wrap(err, "Create pvc of log")
+		}
 	}
 
 	return nil
@@ -224,31 +255,38 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	containers = append(containers, observerContainer)
 
 	// TODO, add monitor container
-	volumeDataFile := corev1.Volume{}
-	volumeDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
-	volumeDataFileSource := &corev1.PersistentVolumeClaimVolumeSource{
-		ClaimName: fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
-	}
-	volumeDataFile.VolumeSource.PersistentVolumeClaim = volumeDataFileSource
-
-	volumeDataLog := corev1.Volume{}
-	volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-	volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{
-		ClaimName: fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
-	}
-	volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
-
-	volumeLog := corev1.Volume{}
-	volumeLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
-	volumeLogSource := &corev1.PersistentVolumeClaimVolumeSource{
-		ClaimName: fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
-	}
-	volumeLog.VolumeSource.PersistentVolumeClaim = volumeLogSource
-
 	volumes := make([]corev1.Volume, 0)
-	volumes = append(volumes, volumeDataFile)
-	volumes = append(volumes, volumeDataLog)
-	volumes = append(volumes, volumeLog)
+
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
+		singleVolume := corev1.Volume{}
+		singleVolumeSource := &corev1.PersistentVolumeClaimVolumeSource{}
+		singleVolume.Name = m.OBServer.Name
+		singleVolumeSource.ClaimName = m.OBServer.Name
+		singleVolume.VolumeSource.PersistentVolumeClaim = singleVolumeSource
+
+		volumes = append(volumes, singleVolume)
+	} else {
+		volumeDataFile := corev1.Volume{}
+		volumeDataFileSource := &corev1.PersistentVolumeClaimVolumeSource{}
+		volumeDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
+		volumeDataFileSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
+		volumeDataFile.VolumeSource.PersistentVolumeClaim = volumeDataFileSource
+
+		volumeDataLog := corev1.Volume{}
+		volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+		volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
+		volumeDataLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+		volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
+
+		volumeLog := corev1.Volume{}
+		volumeLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
+		volumeLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
+		volumeLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
+		volumeLog.VolumeSource.PersistentVolumeClaim = volumeLogSource
+
+		volumes = append(volumes, volumeDataFile, volumeDataLog, volumeLog)
+	}
 
 	if m.OBServer.Spec.BackupVolume != nil {
 		volumes = append(volumes, *m.OBServer.Spec.BackupVolume.Volume)
@@ -365,8 +403,14 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	rpcPort.Name = oceanbaseconst.RpcPortName
 	rpcPort.ContainerPort = oceanbaseconst.RpcPort
 	rpcPort.Protocol = corev1.ProtocolTCP
+	infoPort := corev1.ContainerPort{}
+	infoPort.Name = "info"
+	infoPort.ContainerPort = 8080
+	infoPort.Protocol = corev1.ProtocolTCP
+
 	ports = append(ports, mysqlPort)
 	ports = append(ports, rpcPort)
+	ports = append(ports, infoPort)
 
 	// resource info
 	observerResource := corev1.ResourceList{}
@@ -381,14 +425,26 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 
 	// volume mounts
 	volumeMountDataFile := corev1.VolumeMount{}
-	volumeMountDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
 	volumeMountDataFile.MountPath = oceanbaseconst.DataPath
 	volumeMountDataLog := corev1.VolumeMount{}
-	volumeMountDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
 	volumeMountDataLog.MountPath = oceanbaseconst.ClogPath
 	volumeMountLog := corev1.VolumeMount{}
-	volumeMountLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
 	volumeMountLog.MountPath = oceanbaseconst.LogPath
+
+	// set subpath
+	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	if singlePvcExist && singlePvcAnnoVal == "true" {
+		volumeMountDataFile.Name = m.OBServer.Name
+		volumeMountDataLog.Name = m.OBServer.Name
+		volumeMountLog.Name = m.OBServer.Name
+		volumeMountDataFile.SubPath = oceanbaseconst.DataVolumeSuffix
+		volumeMountDataLog.SubPath = oceanbaseconst.ClogVolumeSuffix
+		volumeMountLog.SubPath = oceanbaseconst.LogVolumeSuffix
+	} else {
+		volumeMountDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
+		volumeMountDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+		volumeMountLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
+	}
 
 	volumeMounts := make([]corev1.VolumeMount, 0)
 	volumeMounts = append(volumeMounts, volumeMountDataFile)
@@ -488,6 +544,15 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envClusterName)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)
+
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		envMode := corev1.EnvVar{
+			Name:  "STANDALONE",
+			Value: oceanbaseconst.ModeStandalone,
+		}
+		env = append(env, envMode)
+	}
 
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
@@ -596,6 +661,10 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		return nil
+	}
 	m.Logger.Info("wait observer active in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
@@ -632,6 +701,10 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+		return nil
+	}
 	deleted := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
@@ -654,4 +727,30 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	}
 	m.Logger.Info("observer deleted", "observer", observerInfo)
 	return nil
+}
+
+func (m *OBServerManager) DeletePod() tasktypes.TaskError {
+	m.Logger.Info("delete observer pod")
+	pod, err := m.getPod()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+	}
+	err = m.Client.Delete(m.Ctx, pod)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to delete pod of observer %s", m.OBServer.Name)
+	}
+
+	return nil
+}
+
+func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
+	m.Logger.Info("wait for observer pod being deleted")
+	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+		time.Sleep(time.Second)
+		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
+		if err != nil && kubeerrors.IsNotFound(err) {
+			return nil
+		}
+	}
+	return errors.New("Timeout to wait for pod being deleted")
 }
