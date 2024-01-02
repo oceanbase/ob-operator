@@ -11,4 +11,15 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.1.1/ob-operator-2.1.1.tgz
     version: 2.1.1
-generated: "2023-12-20T07:26:35.420796665Z"
+  oceanbase-dashboard:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2024-01-02T13:02:51.221434482Z"
+    description: A Helm chart for OceanBase dashboard
+    digest: 642cbb020b9a7f194ba3a88da453aab612145d4e72fe1e584a5a29f9fa72548c
+    name: oceanbase-dashboard
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-1.0.0/oceanbase-dashboard-1.0.0.tgz
+    version: 1.0.0
+generated: "2024-01-02T13:02:51.221443609Z"
