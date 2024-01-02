@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: oceanbase-dashboard-{{ .Release.Name }}
+  labels:
+    {{- include "oceanbase-dashboard.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type | default "NodePort" }}
+  ports:
+    - port: {{ .Values.service.port | default 80 }}
+      targetPort: 8080
+      protocol: TCP
+      name: dashboard-backend
+  selector:
+    app: oceanbase-dashboard-{{ .Release.Name }}

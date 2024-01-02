@@ -1,0 +1,1552 @@
+basePath: /api/v1
+definitions:
+  common.KVPair:
+    properties:
+      key:
+        type: string
+      value:
+        type: string
+    type: object
+  common.ResourceSpec:
+    properties:
+      cpu:
+        type: integer
+      memory:
+        type: integer
+    type: object
+  common.StorageSpec:
+    properties:
+      size:
+        type: integer
+      storageClass:
+        type: string
+    type: object
+  param.BackupDestination:
+    properties:
+      ossAccessSecret:
+        type: string
+      path:
+        type: string
+      type:
+        type: string
+    type: object
+  param.CreateNamespaceParam:
+    properties:
+      namespace:
+        type: string
+    type: object
+  param.CreateOBClusterParam:
+    properties:
+      backupVolume:
+        $ref: '#/definitions/param.NFSVolumeSpec'
+      clusterId:
+        type: integer
+      clusterName:
+        type: string
+      monitor:
+        $ref: '#/definitions/param.MonitorSpec'
+      name:
+        type: string
+      namespace:
+        type: string
+      observer:
+        $ref: '#/definitions/param.OBServerSpec'
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      rootPassword:
+        type: string
+      topology:
+        items:
+          $ref: '#/definitions/param.ZoneTopology'
+        type: array
+    type: object
+  param.CreateOBTenantParam:
+    properties:
+      charset:
+        type: string
+      collate:
+        type: string
+      connectWhiteList:
+        type: string
+      credentials:
+        $ref: '#/definitions/param.TenantCredentials'
+      forceDelete:
+        type: boolean
+      obcluster:
+        type: string
+      pools:
+        items:
+          $ref: '#/definitions/param.ResourcePoolSpec'
+        type: array
+      source:
+        $ref: '#/definitions/param.TenantSourceSpec'
+      tenantName:
+        type: string
+      tenantRole:
+        type: string
+      unitNum:
+        type: integer
+    required:
+    - obcluster
+    - pools
+    - tenantName
+    - unitNum
+    type: object
+  param.LocalityType:
+    properties:
+      isActive:
+        type: boolean
+      name:
+        type: string
+      replica:
+        type: integer
+    required:
+    - isActive
+    - name
+    - replica
+    type: object
+  param.LoginParam:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  param.MetricQuery:
+    properties:
+      groupLabels:
+        items:
+          type: string
+        type: array
+      labels:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      metrics:
+        items:
+          type: string
+        type: array
+      queryRange:
+        $ref: '#/definitions/param.QueryRange'
+    type: object
+  param.MonitorSpec:
+    properties:
+      image:
+        type: string
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+    type: object
+  param.NFSVolumeSpec:
+    properties:
+      address:
+        type: string
+      path:
+        type: string
+    type: object
+  param.OBServerSpec:
+    properties:
+      image:
+        type: string
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+      storage:
+        $ref: '#/definitions/param.OBServerStorageSpec'
+    type: object
+  param.OBServerStorageSpec:
+    properties:
+      data:
+        $ref: '#/definitions/common.StorageSpec'
+      log:
+        $ref: '#/definitions/common.StorageSpec'
+      redoLog:
+        $ref: '#/definitions/common.StorageSpec'
+    type: object
+  param.QueryRange:
+    properties:
+      endTimestamp:
+        type: number
+      startTimestamp:
+        type: number
+      step:
+        type: integer
+    type: object
+  param.ResourcePoolSpec:
+    properties:
+      priority:
+        type: integer
+      resource:
+        $ref: '#/definitions/param.UnitConfig'
+      type:
+        $ref: '#/definitions/param.LocalityType'
+      zone:
+        type: string
+    required:
+    - resource
+    - zone
+    type: object
+  param.RestoreSourceSpec:
+    properties:
+      archiveSource:
+        $ref: '#/definitions/param.BackupDestination'
+      bakDataSource:
+        $ref: '#/definitions/param.BackupDestination'
+      bakEncryptionSecret:
+        type: string
+      cancel:
+        type: boolean
+      description:
+        type: string
+      replayLogUntil:
+        $ref: '#/definitions/param.RestoreUntilConfig'
+      sourceUri:
+        description: Deprecated
+        type: string
+      until:
+        $ref: '#/definitions/param.RestoreUntilConfig'
+    required:
+    - until
+    type: object
+  param.RestoreUntilConfig:
+    properties:
+      scn:
+        type: string
+      timestamp:
+        type: string
+      unlimited:
+        type: boolean
+    type: object
+  param.ScaleOBServerParam:
+    properties:
+      replicas:
+        type: integer
+    type: object
+  param.TenantCredentials:
+    properties:
+      root:
+        type: string
+      standbyRo:
+        type: string
+    type: object
+  param.TenantSourceSpec:
+    properties:
+      restore:
+        $ref: '#/definitions/param.RestoreSourceSpec'
+      tenant:
+        type: string
+    type: object
+  param.UnitConfig:
+    properties:
+      iopsWeight:
+        type: integer
+      logDiskSize:
+        type: string
+      maxCPU:
+        type: string
+      maxIops:
+        type: integer
+      memorySize:
+        type: string
+      minCPU:
+        type: string
+      minIops:
+        type: integer
+    required:
+    - maxCPU
+    - memorySize
+    type: object
+  param.UpdateOBTenantParam:
+    properties:
+      charset:
+        type: string
+      collate:
+        type: string
+      connectWhiteList:
+        type: string
+      credentials:
+        $ref: '#/definitions/param.TenantCredentials'
+      forceDelete:
+        type: boolean
+      obcluster:
+        type: string
+      pools:
+        items:
+          $ref: '#/definitions/param.ResourcePoolSpec'
+        type: array
+      source:
+        $ref: '#/definitions/param.TenantSourceSpec'
+      tenantName:
+        type: string
+      tenantRole:
+        type: string
+      unitNum:
+        type: integer
+    required:
+    - obcluster
+    - pools
+    - tenantName
+    - unitNum
+    type: object
+  param.UpgradeOBClusterParam:
+    properties:
+      image:
+        type: string
+    type: object
+  param.ZoneTopology:
+    properties:
+      nodeSelector:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      replicas:
+        type: integer
+      zone:
+        type: string
+    type: object
+  response.APIResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      successful:
+        type: boolean
+    type: object
+  response.DashboardInfo:
+    properties:
+      appName:
+        type: string
+      publicKey:
+        type: string
+      version:
+        type: string
+    type: object
+  response.K8sEvent:
+    properties:
+      count:
+        type: integer
+      firstOccur:
+        type: number
+      lastSeen:
+        type: number
+      message:
+        type: string
+      namespace:
+        type: string
+      object:
+        type: string
+      reason:
+        type: string
+      type:
+        type: string
+    type: object
+  response.K8sNode:
+    properties:
+      info:
+        $ref: '#/definitions/response.K8sNodeInfo'
+      resource:
+        $ref: '#/definitions/response.K8sNodeResource'
+    type: object
+  response.K8sNodeCondition:
+    properties:
+      message:
+        type: string
+      reason:
+        type: string
+      type:
+        type: string
+    type: object
+  response.K8sNodeInfo:
+    properties:
+      conditions:
+        items:
+          $ref: '#/definitions/response.K8sNodeCondition'
+        type: array
+      cri:
+        type: string
+      externalIP:
+        type: string
+      internalIP:
+        type: string
+      kernel:
+        type: string
+      labels:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      name:
+        type: string
+      os:
+        type: string
+      roles:
+        items:
+          type: string
+        type: array
+      status:
+        type: string
+      uptime:
+        type: number
+      version:
+        type: string
+    type: object
+  response.K8sNodeResource:
+    properties:
+      cpuFree:
+        type: number
+      cpuTotal:
+        type: number
+      cpuUsed:
+        type: number
+      memoryFree:
+        type: number
+      memoryTotal:
+        type: number
+      memoryUsed:
+        type: number
+    type: object
+  response.Metric:
+    properties:
+      labels:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      name:
+        type: string
+    type: object
+  response.MetricClass:
+    properties:
+      description:
+        type: string
+      metricGroups:
+        items:
+          $ref: '#/definitions/response.MetricGroup'
+        type: array
+      name:
+        type: string
+    type: object
+  response.MetricData:
+    properties:
+      metric:
+        $ref: '#/definitions/response.Metric'
+      values:
+        items:
+          $ref: '#/definitions/response.MetricValue'
+        type: array
+    type: object
+  response.MetricGroup:
+    properties:
+      description:
+        type: string
+      metrics:
+        items:
+          $ref: '#/definitions/response.MetricMeta'
+        type: array
+      name:
+        type: string
+    type: object
+  response.MetricMeta:
+    properties:
+      description:
+        type: string
+      key:
+        type: string
+      name:
+        type: string
+      unit:
+        type: string
+    type: object
+  response.MetricValue:
+    properties:
+      timestamp:
+        type: number
+      value:
+        type: number
+    type: object
+  response.Namespace:
+    properties:
+      namespace:
+        type: string
+      status:
+        type: string
+    type: object
+  response.OBCluster:
+    properties:
+      clusterId:
+        type: integer
+      clusterName:
+        type: string
+      createTime:
+        type: number
+      image:
+        type: string
+      metrics:
+        $ref: '#/definitions/response.OBMetrics'
+      name:
+        type: string
+      namespace:
+        type: string
+      status:
+        type: string
+      statusDetail:
+        type: string
+      topology:
+        items:
+          $ref: '#/definitions/response.OBZone'
+        type: array
+    type: object
+  response.OBClusterStastistic:
+    properties:
+      count:
+        type: integer
+      status:
+        type: string
+    type: object
+  response.OBMetrics:
+    properties:
+      cpuPercent:
+        type: integer
+      diskPercent:
+        type: integer
+      memoryPercent:
+        type: integer
+    type: object
+  response.OBServer:
+    properties:
+      address:
+        type: string
+      metrics:
+        $ref: '#/definitions/response.OBMetrics'
+      name:
+        type: string
+      namespace:
+        type: string
+      status:
+        type: string
+      statusDetail:
+        type: string
+    type: object
+  response.OBZone:
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+      nodeSelector:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      observers:
+        items:
+          $ref: '#/definitions/response.OBServer'
+        type: array
+      replicas:
+        type: integer
+      rootService:
+        type: string
+      status:
+        type: string
+      statusDetail:
+        type: string
+      zone:
+        type: string
+    type: object
+  response.StorageClass:
+    properties:
+      allowVolumeExpansion:
+        type: boolean
+      mountOptions:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      provisioner:
+        type: string
+      reclaimPolicy:
+        type: string
+      volumeBindingMode:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: OceanBase Dashboard
+  title: OceanBase Dashboard API
+  version: "1.0"
+paths:
+  /api/v1/cluster/events:
+    get:
+      consumes:
+      - application/json
+      description: list k8s events
+      operationId: ListK8sEvents
+      parameters:
+      - description: related object types
+        enum:
+        - OBCLUSTER
+        - OBTENANT
+        in: query
+        name: objectType
+        type: string
+      - description: event level
+        enum:
+        - NORMAL
+        - WARNING
+        in: query
+        name: type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.K8sEvent'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list k8s event
+      tags:
+      - Cluster
+  /api/v1/cluster/namespaces:
+    get:
+      consumes:
+      - application/json
+      description: list k8s namespaces
+      operationId: ListK8sNamespaces
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.Namespace'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list k8s namespaces
+      tags:
+      - Cluster
+    post:
+      consumes:
+      - application/json
+      description: create k8s namespace
+      operationId: CreateK8sNamespace
+      parameters:
+      - description: create obcluster request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.CreateNamespaceParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: create k8s namespace
+      tags:
+      - Cluster
+  /api/v1/cluster/nodes:
+    get:
+      consumes:
+      - application/json
+      description: list k8s nodes
+      operationId: ListK8sNodes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.K8sNode'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list k8s nodes
+      tags:
+      - Cluster
+  /api/v1/cluster/storageClasses:
+    get:
+      consumes:
+      - application/json
+      description: list k8s storage classes
+      operationId: ListK8sStorageClasses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.StorageClass'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list k8s storage classes
+      tags:
+      - Cluster
+  /api/v1/info:
+    get:
+      consumes:
+      - application/json
+      description: Get process info of OceanBase Dashboard, including process name
+        etc.
+      operationId: GetProcessInfo
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.DashboardInfo'
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get process info
+      tags:
+      - Info
+  /api/v1/login:
+    post:
+      consumes:
+      - application/json
+      description: User login and return access token with cookie.
+      operationId: Login
+      parameters:
+      - description: login
+        in: body
+        name: loginInfo
+        required: true
+        schema:
+          $ref: '#/definitions/param.LoginParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: User login
+      tags:
+      - User
+  /api/v1/logout:
+    post:
+      description: User logout and clear session.
+      operationId: Logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: User logout
+      tags:
+      - User
+  /api/v1/metrics:
+    get:
+      consumes:
+      - application/json
+      description: list all metrics meta info, return by groups
+      operationId: ListAllMetrics
+      parameters:
+      - description: metrics scope
+        enum:
+        - OBCLUSTER
+        - OBTENANT
+        in: query
+        name: scope
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.MetricClass'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list all metrics
+      tags:
+      - Metric
+  /api/v1/metrics/query:
+    post:
+      consumes:
+      - application/json
+      description: query metric data
+      operationId: QueryMetrics
+      parameters:
+      - description: metric query request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.MetricQuery'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.MetricData'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: query metrics
+      tags:
+      - Metric
+  /api/v1/obclusters:
+    get:
+      consumes:
+      - application/json
+      description: list obclusters
+      operationId: ListOBClusters
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.OBCluster'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list obclusters
+      tags:
+      - Obcluster
+    post:
+      consumes:
+      - application/json
+      description: create obcluster
+      operationId: CreateOBCluster
+      parameters:
+      - description: create obcluster request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.CreateOBClusterParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: create obcluster
+      tags:
+      - Obcluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: delete obcluster
+      operationId: DeleteOBCluster
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: delete obcluster
+      tags:
+      - Obcluster
+    get:
+      consumes:
+      - application/json
+      description: get obcluster detailed info
+      operationId: GetOBCluster
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get obcluster
+      tags:
+      - Obcluster
+    post:
+      consumes:
+      - application/json
+      description: upgrade obcluster
+      operationId: UpgradeOBCluster
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: upgrade obcluster request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.UpgradeOBClusterParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: upgrade obcluster
+      tags:
+      - Obcluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones:
+    post:
+      consumes:
+      - application/json
+      description: add obzone
+      operationId: AddOBZone
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: add obzone request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ZoneTopology'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: add obzone
+      tags:
+      - Obcluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}:
+    delete:
+      consumes:
+      - application/json
+      description: delete obzone
+      operationId: DeleteOBZone
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: obzone name
+        in: path
+        name: obzoneName
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: delete obzone
+      tags:
+      - Obcluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}/scale:
+    post:
+      consumes:
+      - application/json
+      description: scale observer
+      operationId: ScaleOBServer
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: obzone name
+        in: path
+        name: obzoneName
+        required: true
+        type: string
+      - description: scale observer request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ScaleOBServerParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: scale observer
+      tags:
+      - Obcluster
+  /api/v1/obclusters/statistic:
+    get:
+      consumes:
+      - application/json
+      description: get obcluster statistic info
+      operationId: GetOBClusterStatistic
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.OBClusterStastistic'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: get obcluster statistic
+      tags:
+      - Obcluster
+  /api/v1/obtenant/{namespace}/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an obtenant in a specific namespace, ask user to confrim
+        the deletion carefully
+      operationId: DeleteTenant
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete tenant
+      tags:
+      - Obtenant
+    get:
+      consumes:
+      - application/json
+      description: Get an obtenant in a specific namespace
+      operationId: GetTenant
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get tenant
+      tags:
+      - Obtenant
+    post:
+      consumes:
+      - application/json
+      description: Update an obtenant in a specific namespace
+      operationId: UpdateTenant
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: update obtenant request body, the same as CreateOBTenantParam
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.UpdateOBTenantParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update tenant
+      tags:
+      - Obtenant
+    put:
+      consumes:
+      - application/json
+      description: Create an obtenant in a specific namespace
+      operationId: CreateTenant
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: create obtenant request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.CreateOBTenantParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenants:
+    get:
+      consumes:
+      - application/json
+      description: List all tenants and return them
+      operationId: ListAllTenants
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all tenants
+      tags:
+      - Obtenant
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Cookie
+    type: apiKey
+swagger: "2.0"

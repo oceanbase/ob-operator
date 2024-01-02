@@ -1,0 +1,694 @@
+OBCLUSTER:
+- description: "\u6570\u636E\u5E93\u6027\u80FD"
+  metricGroups:
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+      key: sql_all_count
+      name: all
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Select \u8BED\u53E5\u6570"
+      key: sql_select_count
+      name: select
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Insert \u8BED\u53E5\u6570"
+      key: sql_insert_count
+      name: insert
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Update \u8BED\u53E5\u6570"
+      key: sql_update_count
+      name: update
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Replace \u8BED\u53E5\u6570"
+      key: sql_replace_count
+      name: replace
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Delete \u8BED\u53E5\u6570"
+      key: sql_delete_count
+      name: delete
+      unit: times/s
+    - description: "DDL, DCL, DTL \u7B49\u5176\u4ED6\u8BED\u53E5\u6570"
+      key: sql_other_count
+      name: other
+      unit: times/s
+    name: QPS
+  - description: "\u670D\u52A1\u7AEF\u6BCF\u6761 SQL \u8BED\u53E5\u5904\u7406\u5E73\
+      \u5747\u8017\u65F6"
+    metrics:
+    - description: "SQL \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_all_rt
+      name: all
+      unit: "\u03BCs"
+    - description: "Select \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_select_rt
+      name: select
+      unit: "\u03BCs"
+    - description: "Insert \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_insert_rt
+      name: insert
+      unit: "\u03BCs"
+    - description: "Update \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_update_rt
+      name: update
+      unit: "\u03BCs"
+    - description: "Replace \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_replace_rt
+      name: replace
+      unit: "\u03BCs"
+    - description: "Delete \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_delete_rt
+      name: delete
+      unit: "\u03BCs"
+    - description: "DDL, DCL, DTL \u7B49\u5176\u4ED6\u8BED\u53E5\u5E73\u5747\u5904\
+        \u7406\u8017\u65F6"
+      key: sql_other_rt
+      name: other
+      unit: "\u03BCs"
+    name: "\u67E5\u8BE2\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+      key: tps
+      name: all
+      unit: times/s
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u4E8B\u52A1\u6570"
+      key: transaction_commit_count
+      name: trans_commit_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u56DE\u6EDA\u4E8B\u52A1\u6570"
+      key: transaction_rollback_count
+      name: trans_rollback_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u8D85\u65F6\u4E8B\u52A1\u6570"
+      key: transaction_timeout_count
+      name: trans_timeout_count
+      unit: times/s
+    name: TPS
+  - description: "\u670D\u52A1\u7AEF\u6BCF\u4E2A\u4E8B\u52A1\u5E73\u5747\u5904\u7406\
+      \u65F6\u95F4"
+    metrics:
+    - description: "\u4E8B\u52A1\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: tps_rt
+      name: all
+      unit: "\u03BCs"
+    - description: "\u4E8B\u52A1\u5E73\u5747\u63D0\u4EA4\u8017\u65F6"
+      key: transaction_commit_rt
+      name: trans_commit_rt
+      unit: "\u03BCs"
+    - description: "\u4E8B\u52A1\u5E73\u5747\u56DE\u6EDA\u8017\u65F6"
+      key: transaction_rollback_rt
+      name: trans_rollback_rt
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u4F1A\u8BDD\u6570"
+    metrics:
+    - description: "\u5F53\u524D\u6D3B\u8DC3\u4F1A\u8BDD\u6570"
+      key: active_session
+      name: active_session
+      unit: ''
+    - description: "\u5F53\u524D\u4F1A\u8BDD\u6570"
+      key: all_session
+      name: all_session
+      unit: ''
+    name: "\u4F1A\u8BDD\u6570"
+  - description: "SQL \u8BF7\u6C42\u5728\u7B49\u5F85\u961F\u5217\u4E2D\u7684\u7B49\
+      \u5F85\u8017\u65F6"
+    metrics:
+    - description: "SQL \u5728\u7B49\u5F85\u961F\u5217\u4E2D\u7B49\u5F85\u8017\u65F6"
+      key: request_queue_time
+      name: queue_time
+      unit: "\u03BCs"
+    name: "\u8BF7\u6C42\u7B49\u5F85\u961F\u5217\u8017\u65F6"
+  - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u6570"
+      key: trans_commit_log_count
+      name: log_count
+      unit: times/s
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u6570"
+  - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u5927\u5C0F"
+    metrics:
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u5927\u5C0F"
+      key: clog_trans_log_total_size
+      name: log_size
+      unit: byte
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u91CF"
+  - description: "\u670D\u52A1\u7AEF\u5904\u7406\u4E8B\u52A1\u65E5\u5FD7\u7684\u5E73\
+      \u5747\u8017\u65F6"
+    metrics:
+    - description: "\u6BCF\u6B21\u4E8B\u52A1\u65E5\u5FD7\u5199\u76D8\u5E73\u5747\u8017\
+        \u65F6"
+      key: clog_write_disk_rt
+      name: write_disk
+      unit: "\u03BCs"
+    - description: "\u6BCF\u6B21\u4E8B\u52A1\u65E5\u5FD7\u7F51\u7EDC\u540C\u6B65\u5E73\
+        \u5747\u8017\u65F6"
+      key: trans_commit_log_sync_rt
+      name: sync_time
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u8017\u65F6"
+  - description: "\u5E73\u5747\u6BCF\u79D2 IO \u6B21\u6570"
+    metrics:
+    - description: "SSStore \u6BCF\u79D2\u8BFB\u6B21\u6570"
+      key: io_read_count
+      name: read
+      unit: times/s
+    - description: "SSStore \u6BCF\u79D2\u5199\u6B21\u6570"
+      key: io_write_count
+      name: write
+      unit: times/s
+    name: IOPS
+  - description: "\u5E73\u5747\u6BCF\u6B21 IO \u8017\u65F6"
+    metrics:
+    - description: "SSStore \u6BCF\u6B21\u8BFB\u53D6\u5E73\u5747\u8017\u65F6"
+      key: io_read_rt
+      name: read
+      unit: "\u03BCs"
+    - description: "SSStore \u6BCF\u6B21\u5199\u5165\u5E73\u5747\u8017\u65F6"
+      key: io_write_rt
+      name: write
+      unit: "\u03BCs"
+    name: "IO \u8017\u65F6"
+  - description: "\u5E73\u5747\u6BCF\u79D2 IO \u6570\u636E\u91CF"
+    metrics:
+    - description: "SSStore \u6BCF\u79D2\u8BFB\u53D6\u6570\u636E\u91CF"
+      key: io_read_size
+      name: read
+      unit: byte
+    - description: "SSStore \u6BCF\u79D2\u5199\u5165\u6570\u636E\u91CF"
+      key: io_write_size
+      name: write
+      unit: byte
+    name: "IO \u541E\u5410\u91CF"
+  - description: "\u5E73\u5747\u6BCF\u79D2\u6307\u5B9A\u7C7B\u578B\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u666E\u901A\u4E8B\u52A1\u6570"
+      key: transaction_single_partition_count
+      name: trans_single_partition_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5206\u5E03\u5F0F\u4E8B\u52A1\u6570"
+      key: transaction_multi_partition_count
+      name: trans_multi_partition_count
+      unit: times/s
+    name: "\u4E8B\u52A1\u6570\u91CF"
+  name: "\u6570\u636E\u5E93\u6027\u80FD"
+OBTENANT:
+- description: "\u6027\u80FD\u4E0ESQL"
+  metricGroups:
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+      key: sql_all_count
+      name: all
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Select \u8BED\u53E5\u6570"
+      key: sql_select_count
+      name: select
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Insert \u8BED\u53E5\u6570"
+      key: sql_insert_count
+      name: insert
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Update \u8BED\u53E5\u6570"
+      key: sql_update_count
+      name: update
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Replace \u8BED\u53E5\u6570"
+      key: sql_replace_count
+      name: replace
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406 Delete \u8BED\u53E5\u6570"
+      key: sql_delete_count
+      name: delete
+      unit: times/s
+    - description: "DDL, DCL, DTL \u7B49\u5176\u4ED6\u8BED\u53E5\u6570"
+      key: sql_other_count
+      name: other
+      unit: times/s
+    name: QPS
+  - description: "\u54CD\u5E94\u65F6\u95F4"
+    metrics:
+    - description: "SQL \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_all_rt
+      name: all
+      unit: "\u03BCs"
+    - description: "Select \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_select_rt
+      name: select
+      unit: "\u03BCs"
+    - description: "Insert \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_insert_rt
+      name: insert
+      unit: "\u03BCs"
+    - description: "Update \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_update_rt
+      name: update
+      unit: "\u03BCs"
+    - description: "Replace \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_replace_rt
+      name: replace
+      unit: "\u03BCs"
+    - description: "Delete \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_delete_rt
+      name: delete
+      unit: "\u03BCs"
+    - description: "DDL, DCL, DTL \u7B49\u5176\u4ED6\u8BED\u53E5\u5E73\u5747\u5904\
+        \u7406\u8017\u65F6"
+      key: sql_other_rt
+      name: other
+      unit: "\u03BCs"
+    name: "\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u4F1A\u8BDD\u6570"
+    metrics:
+    - description: "\u5F53\u524D\u6D3B\u8DC3\u4F1A\u8BDD\u6570"
+      key: active_session
+      name: active_session
+      unit: ''
+    - description: "\u5F53\u524D\u4F1A\u8BDD\u6570"
+      key: all_session
+      name: all_session
+      unit: ''
+    name: "\u4F1A\u8BDD\u6570"
+  - description: "SQL \u6267\u884C\u8BA1\u5212\u7C7B\u522B"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406\u672C\u5730\u6267\u884C\u6570"
+      key: sql_local_count
+      name: local
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406\u8FDC\u7A0B\u6267\u884C\u8BA1\u5212\u6570"
+      key: sql_remote_count
+      name: remote
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5904\u7406\u5206\u5E03\u5F0F\u6267\u884C\u8BA1\u5212\
+        \u6570"
+      key: sql_distributed_count
+      name: distributed
+      unit: times/s
+    name: "SQL \u6267\u884C\u8BA1\u5212\u7C7B\u522B"
+  - description: "\u6BCF\u79D2\u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: wait_event_count
+      name: all
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5185\u90E8\u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_internal_total_waits
+      name: internal_wait
+      unit: times/s
+    - description: "\u6BCF\u79D2\u540C\u6B65 RPC \u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_sync_rpc_total_waits
+      name: sync_rpc_wait
+      unit: times/s
+    - description: "\u6BCF\u79D2\u9501\u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_row_lock_wait_total_waits
+      name: row_lock_wait
+      unit: times/s
+    - description: "\u6BCF\u79D2 IO \u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_io_total_waits
+      name: io_wait
+      unit: times/s
+    - description: "\u6BCF\u79D2 latch \u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_latch_total_waits
+      name: latch_wait
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5176\u4ED6\u7B49\u5F85\u4E8B\u4EF6\u6B21\u6570"
+      key: system_event_other_total_waits
+      name: other_wait
+      unit: times/s
+    name: "\u7B49\u5F85\u4E8B\u4EF6"
+  - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+    metrics:
+    - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: wait_event_rt
+      name: all
+      unit: "\u03BCs"
+    - description: "\u5185\u90E8\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: system_event_internal_time_waited
+      name: internal_wait
+      unit: "\u03BCs"
+    - description: "\u540C\u6B65 RPC \u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: system_event_sync_rpc_time_waited
+      name: sync_rpc_wait
+      unit: "\u03BCs"
+    - description: "\u9501\u7B49\u5F85\u65F6\u95F4\u5E73\u5747\u8017\u65F6"
+      key: system_event_row_lock_wait_time_waited
+      name: row_lock_wait
+      unit: "\u03BCs"
+    - description: "IO \u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: system_event_io_time_waited
+      name: io_wait
+      unit: "\u03BCs"
+    - description: "latch \u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: system_event_latch_time_waited
+      name: latch_wait
+      unit: "\u03BCs"
+    - description: "\u5176\u4ED6\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: system_event_other_time_waited
+      name: other_wait
+      unit: "\u03BCs"
+    name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"
+  - description: "\u6BCF\u79D2 SQL \u8FDB\u5165\u7B49\u5F85\u961F\u5217\u4E2A\u6570"
+    metrics:
+    - description: "\u8FDB\u5165\u5904\u7406\u961F\u5217\u7684\u8BF7\u6C42\u6570\u91CF"
+      key: request_enqueue_count
+      name: request_enqueue_count
+      unit: times/s
+    - description: "\u4ECE\u5904\u7406\u961F\u5217\u51FA\u961F\u7684\u8BF7\u6C42\u6570\
+        \u91CF"
+      key: request_dequeue_count
+      name: request_dequeue_count
+      unit: times/s
+    name: "\u8BF7\u6C42\u7B49\u5F85\u961F\u5217"
+  - description: "SQL \u8BF7\u6C42\u5728\u7B49\u5F85\u961F\u5217\u4E2D\u7684\u7B49\
+      \u5F85\u8017\u65F6"
+    metrics:
+    - description: "SQL \u5728\u7B49\u5F85\u961F\u5217\u4E2D\u7B49\u5F85\u8017\u65F6"
+      key: request_queue_time
+      name: queue_time
+      unit: "\u03BCs"
+    name: "\u8BF7\u6C42\u7B49\u5F85\u961F\u5217\u8017\u65F6"
+  - description: "CPU\u4F7F\u7528\u7387"
+    metrics:
+    - description: "CPU\u4F7F\u7528\u7387"
+      key: ob_cpu_percent
+      name: cpu_rate
+      unit: '%'
+    name: "CPU\u4F7F\u7528\u7387"
+  - description: "\u79DF\u6237\u5185\u5B58\u4F7F\u7528\u767E\u5206\u6BD4"
+    metrics:
+    - description: "\u79DF\u6237\u5185\u5B58\u5DF2\u4F7F\u7528\u767E\u5206\u6BD4"
+      key: ob_memory_percent
+      name: memory_usage
+      unit: '%'
+    name: "\u5185\u5B58\u4F7F\u7528\u7387"
+  - description: "MEMStore\u4F7F\u7528\u767E\u5206\u6BD4"
+    metrics:
+    - description: "MEMStore\u4F7F\u7528\u767E\u5206\u6BD4"
+      key: memstore_percent
+      name: MEMStore_percent
+      unit: '%'
+    name: "MEMStore\u4F7F\u7528\u767E\u5206\u6BD4"
+  - description: "Rpc \u6536\u3001\u53D1\u5305\u8017\u65F6"
+    metrics:
+    - description: "Rpc \u6536\u5305\u5E73\u5747\u8017\u65F6"
+      key: rpc_packet_in_rt
+      name: in
+      unit: "\u03BCs"
+    - description: "Rpc \u53D1\u5305\u5E73\u5747\u8017\u65F6"
+      key: rpc_packet_out_rt
+      name: out
+      unit: "\u03BCs"
+    name: "Rpc \u5305\u8017\u65F6"
+  - description: "\u5355\u4F4D\u65F6\u95F4\u5185Rpc \u6536\u3001\u53D1\u5305byte\u6570\
+      \u636E\u91CF"
+    metrics:
+    - description: "Rpc \u6536\u5305\u541E\u5410\u91CF"
+      key: rpc_packet_in
+      name: in
+      unit: byte
+    - description: "Rpc \u53D1\u5305\u541E\u5410\u91CF"
+      key: rpc_packet_out
+      name: out
+      unit: byte
+    name: "Rpc \u5305\u541E\u5410\u91CF"
+  - description: "\u6253\u5F00\u7684\u6E38\u6807\u6570"
+    metrics:
+    - description: "\u6253\u5F00\u7684\u6E38\u6807\u6570"
+      key: opened_cursors_count
+      name: open_cursors
+      unit: ''
+    name: "\u6253\u5F00\u7684\u6E38\u6807\u6570"
+  name: "\u6027\u80FD\u4E0ESQL"
+- description: "\u4E8B\u52A1"
+  metricGroups:
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+      key: tps
+      name: all
+      unit: times/s
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u4E8B\u52A1\u6570"
+      key: transaction_commit_count
+      name: trans_commit_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u56DE\u6EDA\u4E8B\u52A1\u6570"
+      key: transaction_rollback_count
+      name: trans_rollback_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u8D85\u65F6\u4E8B\u52A1\u6570"
+      key: transaction_timeout_count
+      name: trans_timeout_count
+      unit: times/s
+    name: TPS
+  - description: "\u670D\u52A1\u7AEF\u6BCF\u4E2A\u4E8B\u52A1\u5E73\u5747\u5904\u7406\
+      \u65F6\u95F4"
+    metrics:
+    - description: "\u4E8B\u52A1\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: tps_rt
+      name: all
+      unit: "\u03BCs"
+    - description: "\u4E8B\u52A1\u5E73\u5747\u63D0\u4EA4\u8017\u65F6"
+      key: transaction_commit_rt
+      name: trans_commit_rt
+      unit: "\u03BCs"
+    - description: "\u4E8B\u52A1\u5E73\u5747\u56DE\u6EDA\u8017\u65F6"
+      key: transaction_rollback_rt
+      name: trans_rollback_rt
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u6570"
+      key: trans_commit_log_count
+      name: log_count
+      unit: times/s
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u6570"
+  - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u5927\u5C0F"
+    metrics:
+    - description: "\u6BCF\u79D2\u63D0\u4EA4\u7684\u4E8B\u52A1\u65E5\u5FD7\u5927\u5C0F"
+      key: clog_trans_log_total_size
+      name: log_size
+      unit: byte
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u91CF"
+  - description: "\u670D\u52A1\u7AEF\u5904\u7406\u4E8B\u52A1\u65E5\u5FD7\u7684\u5E73\
+      \u5747\u8017\u65F6"
+    metrics:
+    - description: "\u6BCF\u6B21\u4E8B\u52A1\u65E5\u5FD7\u7F51\u7EDC\u540C\u6B65\u5E73\
+        \u5747\u8017\u65F6"
+      key: trans_commit_log_sync_rt
+      name: sync_time
+      unit: "\u03BCs"
+    - description: "\u6BCF\u6B21\u4E8B\u52A1\u65E5\u5FD7\u5199\u76D8\u5E73\u5747\u8017\
+        \u65F6"
+      key: clog_write_disk_rt
+      name: write_disk
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u65E5\u5FD7\u8017\u65F6"
+  - description: "\u6BCF\u79D2\u4E8B\u52A1\u9501\u7B49\u5F85\u6B21\u6570"
+    metrics:
+    - description: "\u5199\u9501\u7B49\u5F85\u6210\u529F\u6B21\u6570"
+      key: memstore_write_lock_succ_count
+      name: success
+      unit: times/s
+    - description: "\u5199\u9501\u7B49\u5F85\u5931\u8D25\u6B21\u6570"
+      key: memstore_write_lock_fail_count
+      name: fail
+      unit: times/s
+    name: "\u4E8B\u52A1\u9501\u7B49\u5F85\u6B21\u6570"
+  - description: "\u6BCF\u4E2A\u4E8B\u52A1\u9501\u7B49\u5F85\u5E73\u5747\u8017\u65F6"
+    metrics:
+    - description: "\u5199\u9501\u5E73\u5747\u7B49\u5F85\u8017\u65F6"
+      key: memstore_write_lock_wait_time
+      name: wait_time
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u9501\u5E73\u5747\u7B49\u5F85\u65F6\u95F4"
+  - description: "\u5E73\u5747\u6BCF\u79D2\u6307\u5B9A\u7C7B\u578B\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u666E\u901A\u4E8B\u52A1\u6570"
+      key: transaction_single_partition_count
+      name: trans_single_partition_count
+      unit: times/s
+    - description: "\u6BCF\u79D2\u5206\u5E03\u5F0F\u4E8B\u52A1\u6570"
+      key: transaction_multi_partition_count
+      name: trans_multi_partition_count
+      unit: times/s
+    name: "\u4E8B\u52A1\u6570\u91CF"
+  name: "\u4E8B\u52A1"
+- description: "\u5B58\u50A8\u4E0E\u7F13\u5B58"
+  metricGroups:
+  - description: "OB \u53EF\u5199\u5165\u6570\u636E\u5185\u5B58"
+    metrics:
+    - description: "MEMStore \u603B\u5927\u5C0F"
+      key: total_memstore_used
+      name: total
+      unit: MB
+    - description: "\u6D3B\u8DC3 MEMStore \u5927\u5C0F"
+      key: active_memstore_used
+      name: active
+      unit: MB
+    - description: "\u89E6\u53D1\u5408\u5E76\u9608\u503C"
+      key: major_freeze_trigger
+      name: trigger
+      unit: MB
+    - description: "MEMStore\u7684limit"
+      key: memstore_limit
+      name: limit
+      unit: MB
+    name: MEMStore
+  - description: "\u5E73\u5747\u6BCF\u79D2 IO \u6B21\u6570"
+    metrics:
+    - description: "SSStore \u6BCF\u79D2\u8BFB\u6B21\u6570"
+      key: io_read_count
+      name: read
+      unit: times/s
+    - description: "SSStore \u6BCF\u79D2\u5199\u6B21\u6570"
+      key: io_write_count
+      name: write
+      unit: times/s
+    name: IOPS
+  - description: "\u5E73\u5747\u6BCF\u6B21 IO \u8017\u65F6"
+    metrics:
+    - description: "SSStore \u6BCF\u6B21\u8BFB\u53D6\u5E73\u5747\u8017\u65F6"
+      key: io_read_rt
+      name: read
+      unit: "\u03BCs"
+    - description: "SSStore \u6BCF\u6B21\u5199\u5165\u5E73\u5747\u8017\u65F6"
+      key: io_write_rt
+      name: write
+      unit: "\u03BCs"
+    name: "IO \u8017\u65F6"
+  - description: "\u5E73\u5747\u6BCF\u79D2 IO \u6570\u636E\u91CF"
+    metrics:
+    - description: "SSStore \u6BCF\u79D2\u8BFB\u53D6\u6570\u636E\u91CF"
+      key: io_read_size
+      name: read
+      unit: byte
+    - description: "SSStore \u6BCF\u79D2\u5199\u5165\u6570\u636E\u91CF"
+      key: io_write_size
+      name: write
+      unit: byte
+    name: "IO \u541E\u5410\u91CF"
+  - description: "\u7F13\u5B58\u5927\u5C0F"
+    metrics:
+    - description: "\u5757\u7F13\u5B58\u5927\u5C0F"
+      key: block_cache_size_mb
+      name: block_cache
+      unit: MB
+    - description: "\u884C\u7F13\u5B58\u5927\u5C0F"
+      key: row_cache_size_mb
+      name: row_cache
+      unit: MB
+    - description: "\u6267\u884C\u8BA1\u5212\u7F13\u5B58\u5927\u5C0F"
+      key: plan_cache_size_mb
+      name: plan_cache
+      unit: MB
+    - description: "Clog \u7F13\u5B58\u5927\u5C0F"
+      key: clog_cache_size_mb
+      name: clog_cache
+      unit: MB
+    - description: "bloom filter \u7F13\u5B58\u5927\u5C0F"
+      key: bloom_filter_cache_size_mb
+      name: bloom_filter_cache
+      unit: MB
+    - description: "location \u7F13\u5B58\u5927\u5C0F"
+      key: location_cache_size_mb
+      name: location_cache
+      unit: MB
+    name: "\u7F13\u5B58\u5927\u5C0F"
+  - description: "\u7F13\u5B58\u547D\u4E2D\u7387"
+    metrics:
+    - description: "\u5757\u7F13\u5B58\u547D\u4E2D\u7387"
+      key: block_cache_hit_ratio
+      name: block_cache
+      unit: '%'
+    - description: "\u884C\u7F13\u5B58\u547D\u4E2D\u7387"
+      key: row_cache_hit_ratio
+      name: row_cache
+      unit: '%'
+    - description: "\u6267\u884C\u8BA1\u5212\u7F13\u5B58\u547D\u4E2D\u7387"
+      key: plan_cache_hit_ratio
+      name: plan_cache
+      unit: '%'
+    - description: "Clog \u7F13\u5B58\u547D\u4E2D\u7387"
+      key: clog_cache_hit_ratio
+      name: clog_cache
+      unit: '%'
+    - description: "bloom filter \u7F13\u5B58\u547D\u4E2D\u7387"
+      key: bloom_filter_cache_hit_ratio
+      name: bloom_filter_cache
+      unit: '%'
+    - description: "location \u7F13\u5B58\u547D\u4E2D\u7387"
+      key: location_cache_hit_ratio
+      name: location_cache
+      unit: '%'
+    name: "\u7F13\u5B58\u547D\u4E2D\u7387"
+  - description: "\u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+    metrics:
+    - description: "\u5757\u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+      key: block_cache_req_total
+      name: block_cache
+      unit: ''
+    - description: "\u884C\u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+      key: row_cache_req_total
+      name: row_cache
+      unit: ''
+    - description: "Clog \u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+      key: clog_cache_req_total
+      name: clog_cache
+      unit: ''
+    - description: "bloom filter \u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+      key: bloom_filter_cache_req_total
+      name: bloom_filter_cache
+      unit: ''
+    - description: "location \u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+      key: location_cache_req_total
+      name: location_cache
+      unit: ''
+    name: "\u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
+  name: "\u5B58\u50A8\u4E0E\u7F13\u5B58"
+OBCLUSTER_OVERVIEW:
+- description: Cluster Overview
+  metricGroups:
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+      key: sql_all_count
+      name: query_count
+      unit: times/s
+    name: QPS
+  - description: "\u54CD\u5E94\u65F6\u95F4"
+    metrics:
+    - description: "SQL \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_all_rt
+      name: query_time
+      unit: "\u03BCs"
+    name: "\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+      key: tps
+      name: trans_count
+      unit: times/s
+    name: TPS
+  - description: "\u670D\u52A1\u7AEF\u6BCF\u4E2A\u4E8B\u52A1\u5E73\u5747\u5904\u7406\
+      \u65F6\u95F4"
+    metrics:
+    - description: "\u4E8B\u52A1\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: tps_rt
+      name: trans_time
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u4F1A\u8BDD\u6570"
+    metrics:
+    - description: "\u5F53\u524D\u6D3B\u8DC3\u4F1A\u8BDD\u6570"
+      key: active_session
+      name: active_session
+      unit: ''
+    name: "\u4F1A\u8BDD\u6570"
+  - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+    metrics:
+    - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: wait_event_rt
+      name: wait_time
+      unit: "\u03BCs"
+    name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"

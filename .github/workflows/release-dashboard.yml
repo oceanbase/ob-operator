@@ -1,0 +1,72 @@
+name: release dashboard
+
+on: 
+  push:
+    tags: 
+      - "dashboard-[0-9]+.[0-9]+.[0-9]+"
+
+env:
+  tagName: ${{ github.ref_name }}
+
+jobs:
+  release-dashboard-chart:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.6.0
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          mark_as_latest: false
+          skip_existing: true
+          charts_dir: ./distribution/dashboard/manifests
+  
+  release-oceanbase-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to Docker hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          config-inline: |
+            [worker.oci]
+              max-parallelism = 1
+
+      - name: Set Version variables
+        id: set_version_vars
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
+
+      - name: Build and push oceanbase-dashboard w/o cache
+        uses: docker/build-push-action@v2
+        with:
+          context: ./distribution/dashboard
+          platforms: linux/amd64,linux/arm64
+          file: ./distribution/dashboard/Dockerfile
+          push: true
+          tags: ${{ vars.DOCKER_PUSH_BASE }}/dashboard:${{ steps.set_version_vars.outputs.version }}
+          build-args: |
+            VERSION=${{ steps.set_version_vars.outputs.version }}
+            COMMIT_HASH=${{ github.sha }}
