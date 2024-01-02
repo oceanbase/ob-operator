@@ -67,4 +67,4 @@ jobs:
           tags: ${{ vars.DOCKER_PUSH_BASE }}/dashboard:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}
-            COMMIT_HASH=${{ GITHUB_SHA }}
+            COMMIT_HASH=$GITHUB_SHA
