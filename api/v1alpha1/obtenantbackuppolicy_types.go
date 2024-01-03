@@ -18,7 +18,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -44,7 +45,7 @@ type OBTenantBackupPolicySpec struct {
 // OBTenantBackupPolicyStatus defines the observed state of OBTenantBackupPolicy
 type OBTenantBackupPolicyStatus struct {
 	Status           apitypes.BackupPolicyStatusType `json:"status"`
-	OperationContext *OperationContext               `json:"operationContext,omitempty"`
+	OperationContext *tasktypes.OperationContext     `json:"operationContext,omitempty"`
 
 	ObservedGeneration   int64                   `json:"observedGeneration,omitempty"`
 	NextFull             string                  `json:"nextFull,omitempty"`
@@ -62,7 +63,7 @@ func (in *OBTenantBackupPolicyStatus) DeepCopyInto(out *OBTenantBackupPolicyStat
 	*out = *in
 	if in.OperationContext != nil {
 		in, out := &in.OperationContext, &out.OperationContext
-		*out = new(OperationContext)
+		*out = new(tasktypes.OperationContext)
 		(*in).DeepCopyInto(*out)
 	}
 	if in.TenantInfo != nil {

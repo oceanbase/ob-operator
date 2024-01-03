@@ -18,7 +18,17 @@ vet: ## Run go vet against code.
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
-	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" go test -timeout 60m  -v ./... -coverprofile cover.out
+	TEST_USE_EXISTING_CLUSTER=true TELEMETRY_REPORT_HOST=http://openwebapi.test.alipay.net \
+	DISABLE_TELEMETRY=true LOG_VERBOSITY=0 \
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
+	ginkgo run --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
+	--output-dir=testreports --keep-going --json-report=report.json --label-filter='$(CASE_LABEL_FILTERS)' ./...
+
+.PHONY: testreport
+testreport: test ## Generate test reports
+	@echo "generating test reports..."
+	@go tool cover -html=testreports/cover.profile -o testreports/cover.html
+	@cd testreports && python3 -m http.server --bind 0.0.0.0 8480
 
 .PHONY: GOLANGCI_LINT
 GOLANGCI_LINT ?= $(LOCALBIN)/golangci-lint

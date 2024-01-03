@@ -36,7 +36,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // log is for logging in this package.
@@ -228,48 +228,50 @@ func (r *OBTenant) validateMutation() error {
 		if res.ArchiveSource != nil && res.ArchiveSource.Type == constants.BackupDestTypeOSS {
 			if res.ArchiveSource.OSSAccessSecret == "" {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "Tenant restoring from OSS type backup data must have a OSSAccessSecret"))
-			}
-			secret := &v1.Secret{}
-			err := tenantClt.Get(context.Background(), types.NamespacedName{
-				Namespace: r.GetNamespace(),
-				Name:      res.ArchiveSource.OSSAccessSecret,
-			}, secret)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+			} else {
+				secret := &v1.Secret{}
+				err := tenantClt.Get(context.Background(), types.NamespacedName{
+					Namespace: r.GetNamespace(),
+					Name:      res.ArchiveSource.OSSAccessSecret,
+				}, secret)
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+					}
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), err))
+				} else {
+					if _, ok := secret.Data["accessId"]; !ok {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
+					}
+					if _, ok := secret.Data["accessKey"]; !ok {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
+					}
 				}
-				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), err))
-			}
-
-			if _, ok := secret.Data["accessId"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
-			}
-			if _, ok := secret.Data["accessKey"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("archiveSource").Child("ossAccessSecret"), res.ArchiveSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
 			}
 		}
 
 		if res.BakDataSource != nil && res.BakDataSource.Type == constants.BackupDestTypeOSS {
 			if res.BakDataSource.OSSAccessSecret == "" {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "Tenant restoring from OSS type backup data must have a OSSAccessSecret"))
-			}
-			secret := &v1.Secret{}
-			err := tenantClt.Get(context.Background(), types.NamespacedName{
-				Namespace: r.GetNamespace(),
-				Name:      res.BakDataSource.OSSAccessSecret,
-			}, secret)
-			if err != nil {
-				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+			} else {
+				secret := &v1.Secret{}
+				err := tenantClt.Get(context.Background(), types.NamespacedName{
+					Namespace: r.GetNamespace(),
+					Name:      res.BakDataSource.OSSAccessSecret,
+				}, secret)
+				if err != nil {
+					if apierrors.IsNotFound(err) {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "Given OSSAccessSecret not found"))
+					}
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), err))
+				} else {
+					if _, ok := secret.Data["accessId"]; !ok {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
+					}
+					if _, ok := secret.Data["accessKey"]; !ok {
+						allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
+					}
 				}
-				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), err))
-			}
-
-			if _, ok := secret.Data["accessId"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessId field not found in given OSSAccessSecret"))
-			}
-			if _, ok := secret.Data["accessKey"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore").Child("bakDataSource").Child("ossAccessSecret"), res.BakDataSource.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret"))
 			}
 		}
 	}

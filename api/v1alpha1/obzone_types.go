@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -28,22 +31,22 @@ type OBZoneSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	ClusterName      string            `json:"clusterName"`
-	ClusterId        int64             `json:"clusterId,omitempty"`
-	Topology         OBZoneTopology    `json:"topology"`
-	OBServerTemplate *OBServerTemplate `json:"observerTemplate"`
-	MonitorTemplate  *MonitorTemplate  `json:"monitorTemplate,omitempty"`
-	BackupVolume     *BackupVolumeSpec `json:"backupVolume,omitempty"`
+	ClusterName      string                     `json:"clusterName"`
+	ClusterId        int64                      `json:"clusterId,omitempty"`
+	Topology         apitypes.OBZoneTopology    `json:"topology"`
+	OBServerTemplate *OBServerTemplate          `json:"observerTemplate"`
+	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
+	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 }
 
 // OBZoneStatus defines the observed state of OBZone
 type OBZoneStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Image            string                  `json:"image"`
-	OperationContext *OperationContext       `json:"operationContext,omitempty"`
-	Status           string                  `json:"status"`
-	OBServerStatus   []OBServerReplicaStatus `json:"observers"`
+	Image            string                           `json:"image"`
+	OperationContext *tasktypes.OperationContext      `json:"operationContext,omitempty"`
+	Status           string                           `json:"status"`
+	OBServerStatus   []apitypes.OBServerReplicaStatus `json:"observers"`
 }
 
 //+kubebuilder:object:root=true

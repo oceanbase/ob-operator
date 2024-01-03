@@ -38,8 +38,8 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
-	"github.com/oceanbase/ob-operator/pkg/const/status/tenantstatus"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // log is for logging in this package.
@@ -210,6 +210,16 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	if r.Spec.TenantCRName == "" && r.Spec.TenantSecret == "" {
 		return field.Invalid(field.NewPath("spec").Child("tenantSecret"), r.Spec.TenantSecret, "tenantSecret is required when using tenantName")
 	}
+
+	err = r.validateBackupCrontab()
+	if err != nil {
+		return err
+	}
+	err = r.validateInterval()
+	if err != nil {
+		return err
+	}
+
 	ossPathPattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
 
 	if r.Spec.DataBackup.EncryptionSecret != "" {
@@ -259,20 +269,24 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 			}
 			return err
 		}
+		var allErrs field.ErrorList
 
 		if _, ok := secret.Data["accessId"]; !ok {
-			return field.Invalid(
+			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
 				r.Spec.DataBackup.Destination.OSSAccessSecret,
 				"accessId field not found in given OSSAccessSecret",
-			)
+			))
 		}
 		if _, ok := secret.Data["accessKey"]; !ok {
-			return field.Invalid(
+			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
 				r.Spec.DataBackup.Destination.OSSAccessSecret,
 				"accessKey field not found in given OSSAccessSecret",
-			)
+			))
+		}
+		if len(allErrs) != 0 {
+			return allErrs.ToAggregate()
 		}
 	}
 
@@ -297,30 +311,26 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 			return err
 		}
 
+		var allErrs field.ErrorList
 		if _, ok := secret.Data["accessId"]; !ok {
-			return field.Invalid(
+			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
 				r.Spec.LogArchive.Destination.OSSAccessSecret,
 				"accessId field not found in given OSSAccessSecret",
-			)
+			))
 		}
 		if _, ok := secret.Data["accessKey"]; !ok {
-			return field.Invalid(
+			allErrs = append(allErrs, field.Invalid(
 				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
 				r.Spec.LogArchive.Destination.OSSAccessSecret,
 				"accessKey field not found in given OSSAccessSecret",
-			)
+			))
+		}
+		if len(allErrs) != 0 {
+			return allErrs.ToAggregate()
 		}
 	}
 
-	err = r.validateBackupCrontab()
-	if err != nil {
-		return err
-	}
-	err = r.validateInterval()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

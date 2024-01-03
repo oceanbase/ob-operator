@@ -1778,11 +1778,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               observer:
                 properties:
@@ -1803,7 +1803,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -5550,11 +5549,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               nodeSelector:
                 additionalProperties:
@@ -5579,7 +5578,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -10922,11 +10920,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               observerTemplate:
                 properties:
@@ -10947,7 +10945,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -12547,6 +12544,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -12746,7 +12751,7 @@ spec:
         env:
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
-        image: oceanbase/ob-operator:2.1.0
+        image: oceanbase/ob-operator:2.1.1
         livenessProbe:
           httpGet:
             path: /healthz

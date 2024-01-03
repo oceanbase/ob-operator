@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	v1 "k8s.io/api/core/v1"
@@ -31,6 +32,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 // log is for logging in this package.
@@ -50,7 +54,58 @@ var _ webhook.Defaulter = &OBCluster{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBCluster) Default() {
-	// TODO(user): fill in your defaulting logic.
+	// fill default essential parameters, memory_limit, datafile_maxsize and datafile_next
+
+	obclusterlog.Info("fill in default values of obcluster")
+	parameterMap := make(map[string]apitypes.Parameter, 0)
+	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
+	if ok {
+		memoryLimit := fmt.Sprintf("%dG", memorySize*oceanbaseconst.DefaultMemoryLimitPercent/oceanbaseconst.GigaConverter/100)
+		parameterMap["memory_limit"] = apitypes.Parameter{
+			Name:  "memory_limit",
+			Value: memoryLimit,
+		}
+	} else {
+		obclusterlog.Error(errors.New("failed to parse memory size"), "parse observer's memory size failed")
+	}
+	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
+	if ok {
+		datafileMaxSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100)
+		parameterMap["datafile_maxsize"] = apitypes.Parameter{
+			Name:  "datafile_maxsize",
+			Value: datafileMaxSize,
+		}
+		datafileNextSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskExpandPercent/oceanbaseconst.GigaConverter/100)
+		parameterMap["datafile_next"] = apitypes.Parameter{
+			Name:  "datafile_next",
+			Value: datafileNextSize,
+		}
+	} else {
+		obclusterlog.Error(errors.New("failed to parse datafile size"), "parse observer's datafile size failed")
+	}
+	parameterMap["enable_syslog_recycle"] = apitypes.Parameter{
+		Name:  "enable_syslog_recycle",
+		Value: "true",
+	}
+	maxSysLogFileCount := int64(4)
+	logSize, ok := r.Spec.OBServerTemplate.Storage.LogStorage.Size.AsInt64()
+	if ok {
+		// observer has 4 types of log and one logfile limits at 256M considering about wf, maximum of 2G will be occupied for 1 syslog count
+		maxSysLogFileCount = logSize * oceanbaseconst.DefaultLogPercent / oceanbaseconst.GigaConverter / 100 / 2
+	}
+	parameterMap["max_syslog_file_count"] = apitypes.Parameter{
+		Name:  "max_syslog_file_count",
+		Value: fmt.Sprintf("%d", maxSysLogFileCount),
+	}
+
+	for _, parameter := range r.Spec.Parameters {
+		parameterMap[parameter.Name] = parameter
+	}
+	parameters := make([]apitypes.Parameter, 0)
+	for _, v := range parameterMap {
+		parameters = append(parameters, v)
+	}
+	r.Spec.Parameters = parameters
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -126,10 +181,56 @@ func (r *OBCluster) validateMutation() error {
 		}
 	}
 
-	// 3. Validate memory size
-	clusterMinMemory := resource.MustParse("8Gi")
-	if r.Spec.MonitorTemplate.Resource.Memory.AsApproximateFloat64() < clusterMinMemory.AsApproximateFloat64() {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.MonitorTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+clusterMinMemory.String()))
+	// 3. Validate disk size
+	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinDataDiskSize.AsApproximateFloat64() {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum data storage size of OBCluster is "+oceanbaseconst.MinDataDiskSize.String()))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinRedoLogDiskSize.AsApproximateFloat64() {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum redo log storage size of OBCluster is "+oceanbaseconst.MinRedoLogDiskSize.String()))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinLogDiskSize.AsApproximateFloat64() {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "The minimum log storage size of OBCluster is "+oceanbaseconst.MinLogDiskSize.String()))
+	}
+
+	// 4 Validate memory size
+	if r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() < oceanbaseconst.MinMemorySize.AsApproximateFloat64() {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.OBServerTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+oceanbaseconst.MinMemorySize.String()))
+	}
+
+	// 5. Validate essential parameters
+	parameterMap := make(map[string]apitypes.Parameter, 0)
+	for _, parameter := range r.Spec.Parameters {
+		parameterMap[parameter.Name] = parameter
+	}
+
+	// check memory limit
+	memoryLimitSize, ok := parameterMap["memory_limit"]
+	if ok {
+		memoryLimit, err := resource.ParseQuantity(memoryLimitSize.Value)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size", "Failed to parse memory limit"))
+		} else if memoryLimit.AsApproximateFloat64() > r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size overflow", "memory limit exceeds observer's resource"))
+		}
+
+		if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum size of data storage should be larger than 3 times of memory limit"))
+		}
+
+		if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum size of redo log storage should be larger than 3 times of memory limit"))
+		}
+	}
+
+	// check datafile max size
+	datafileMaxSize, ok := parameterMap["datafile_maxsize"]
+	if ok {
+		datafileMax, err := resource.ParseQuantity(datafileMaxSize.Value)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size", "Failed to parse datafile max size"))
+		} else if datafileMax.AsApproximateFloat64() > r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size overflow", "datafile maxsize exceeds observer's data storage size"))
+		}
 	}
 
 	if len(allErrs) == 0 {

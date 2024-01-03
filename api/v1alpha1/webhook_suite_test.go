@@ -29,8 +29,15 @@ import (
 	. "github.com/onsi/gomega"
 
 	admissionv1 "k8s.io/api/admission/v1"
+	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
+
 	//+kubebuilder:scaffold:imports
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -79,6 +86,12 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 
 	err = admissionv1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = corev1.AddToScheme(scheme)
+	Expect(err).NotTo(HaveOccurred())
+
+	err = storagev1.AddToScheme(scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -131,9 +144,52 @@ var _ = BeforeSuite(func() {
 		return nil
 	}).Should(Succeed())
 
+	secrets := []*corev1.Secret{{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      wrongKeySecret,
+			Namespace: defaultNamespace,
+		},
+		Data: map[string][]byte{
+			"passwd": []byte(rand.String(16)),
+		},
+	}, {
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      ossAccessSecret,
+			Namespace: defaultNamespace,
+		},
+		Data: map[string][]byte{
+			"accessId":  []byte(rand.String(32)),
+			"accessKey": []byte(rand.String(32)),
+		},
+	},
+		newClusterSecret(defaultSecretName),
+	}
+
+	for _, s := range secrets {
+		Expect(k8sClient.Create(ctx, s)).Should(Succeed())
+		Eventually(func() bool {
+			err := k8sClient.Get(ctx, types.NamespacedName{
+				Namespace: defaultNamespace,
+				Name:      s.GetName(),
+			}, &corev1.Secret{})
+			return err == nil
+		}, 300, 3).Should(BeTrue())
+	}
+
+	Expect(k8sClient.Create(ctx, newFakeStorageClass("local-path"))).Should(Succeed())
+	Eventually(func() bool {
+		sc := &storagev1.StorageClass{}
+		Expect(k8sClient.Get(ctx, types.NamespacedName{
+			Namespace: defaultNamespace,
+			Name:      "local-path",
+		}, sc)).Should(Succeed())
+		return sc != nil
+	}, 300, 3).Should(BeTrue())
+
 })
 
 var _ = AfterSuite(func() {
+	By("Clean auxiliary resources")
 	cancel()
 	By("tearing down the test environment")
 	err := testEnv.Stop()
