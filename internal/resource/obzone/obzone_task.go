@@ -167,6 +167,10 @@ func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
 	}
 	observerCount := 0
 	for _, observer := range observerList.Items {
+		// bugfix: if an observer is being deleted, it won't be deleted again or counted as a working observer
+		if observer.Status.Status == serverstatus.Deleting {
+			continue
+		}
 		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
 			m.Logger.Info("delete observer", "observer", observer)
 			err = m.Client.Delete(m.Ctx, &observer)

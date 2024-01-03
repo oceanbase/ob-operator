@@ -14,6 +14,7 @@ package obzone
 
 import (
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -63,6 +64,9 @@ func DeleteOBServer() *tasktypes.TaskFlow {
 			Name:         fDeleteOBServer,
 			Tasks:        []tasktypes.TaskName{tDeleteOBServer, tWaitReplicaMatch},
 			TargetStatus: zonestatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				Strategy: strategy.RetryFromCurrent,
+			},
 		},
 	}
 }
