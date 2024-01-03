@@ -5,6 +5,8 @@ metadata:
   namespace: oceanbase
   # annotations:
   #   "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
+  #   "oceanbase.oceanbase.com/single-pvc": "true"
+  #   "oceanbase.oceanbase.com/mode": "standalone"
 spec:
   clusterName: obcluster
   clusterId: 1

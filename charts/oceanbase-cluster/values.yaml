@@ -6,8 +6,7 @@ obAgentVersion: 4.2.1-100000092023101717
 annotations: 
   # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
   # "oceanbase.oceanbase.com/single-pvc": "true"
-
-standalone: false
+  # "oceanbase.oceanbase.com/mode": "standalone"
 
 storageClass: local-path
 
