@@ -1765,11 +1765,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               observer:
                 properties:
@@ -1790,7 +1790,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -3065,8 +3064,15 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.zone
+      name: ZoneName
+      type: string
     - jsonPath: .status.obStatus
       name: OBStatus
+      priority: 1
       type: string
     name: v1alpha1
     schema:
@@ -5530,11 +5536,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               nodeSelector:
                 additionalProperties:
@@ -5559,7 +5565,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -6711,6 +6716,8 @@ spec:
                     type: string
                   compatibility_mode:
                     type: string
+                  compatible:
+                    type: string
                   create_time:
                     type: string
                   gmt_create:
@@ -7185,6 +7192,8 @@ spec:
           spec:
             description: OBTenantOperationSpec defines the desired state of OBTenantOperation
             properties:
+              auxillaryTenant:
+                type: string
               changePwd:
                 properties:
                   secretRef:
@@ -7202,6 +7211,15 @@ spec:
                 required:
                 - standbyTenant
                 type: object
+              replayUntil:
+                properties:
+                  scn:
+                    type: string
+                  timestamp:
+                    type: string
+                  unlimited:
+                    type: boolean
+                type: object
               switchover:
                 properties:
                   primaryTenant:
@@ -7212,6 +7230,8 @@ spec:
                 - primaryTenant
                 - standbyTenant
                 type: object
+              targetTenant:
+                type: string
               type:
                 type: string
             required:
@@ -9247,6 +9267,12 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.topology.zone
+      name: ZoneName
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -10881,11 +10907,11 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                 required:
                 - image
+                - resource
                 type: object
               observerTemplate:
                 properties:
@@ -10906,7 +10932,6 @@ spec:
                         pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
                         x-kubernetes-int-or-string: true
                     required:
-                    - cpu
                     - memory
                     type: object
                   storage:
@@ -12506,6 +12531,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - storage.k8s.io
+  resources:
+  - storageclasses
+  verbs:
+  - get
+  - list
+  - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -12699,10 +12732,14 @@ spec:
         - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --manager-namespace={{ .Release.Namespace }}
-        - --log-verbosity=0
+        - --log-verbosity=2
         command:
         - /manager
         env:
+        - name: TELEMETRY_DEBUG
+          value: "true"
+        - name: DISABLE_TELEMETRY
+          value: "true"
         - name: TELEMETRY_REPORT_HOST
           value: https://openwebapi.oceanbase.com
         image: oceanbase/ob-operator:2.1.1
