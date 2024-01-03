@@ -14,20 +14,20 @@ ob-operator supports deployment using Helm. Before deploying ob-operator with th
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.1
 ```
 
 Parameters:
 
 * namespace: Namespace, can be customized. It is recommended to use "oceanbase-system" as the namespace.
 
-* version: ob-operator version number. It is recommended to use the latest version `2.1.2`.
+* version: ob-operator version number. It is recommended to use the latest version `2.1.1`.
 
 ## 2.2 Deploying with Configuration Files
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/operator.yaml
 ```
 * Development
 ```shell

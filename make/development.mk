@@ -64,6 +64,7 @@ commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 	chmod +x .git/hooks/pre-commit
 	echo "#!/bin/sh" > .git/hooks/pre-commit
 	echo "make lint" >> .git/hooks/pre-commit
+	echo "make export-operator export-charts" >> .git/hooks/pre-commit
 
 .PHONY: run-delve
 run-delve: generate fmt vet manifests ## Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config 

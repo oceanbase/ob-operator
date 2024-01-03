@@ -9,7 +9,7 @@ metadata:
   {{- toYaml .Values.annotations | nindent 4 }}
 spec:
   clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
-  clusterId: {{ .Values.clusterId | default 1 }}
+  clusterId: {{ .Values.clusterId | default (nospace (cat "1" (randNumeric 7))) }}
   userSecrets:
   {{- range $key, $value := .Values.userSecrets }}
     {{ $key }}: {{ $value | quote }}
