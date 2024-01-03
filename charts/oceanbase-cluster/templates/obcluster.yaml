@@ -17,7 +17,7 @@ spec:
   topology: 
     {{- toYaml .Values.topology | nindent 4 }}
   observer:
-    image: oceanbasedev/oceanbase-cloud-native-dev:4.2.1.2-102000042023120514-alpha.1
+    image: oceanbase/oceanbase-cloud-native:{{ .Chart.AppVersion }}
     {{- with .Values.observerConfig }}
     resource:
       {{- toYaml .resource | nindent 6 }}
