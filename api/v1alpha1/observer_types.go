@@ -38,7 +38,7 @@ type OBServerSpec struct {
 	NodeSelector     map[string]string          `json:"nodeSelector,omitempty"`
 	Affinity         *corev1.Affinity           `json:"affinity,omitempty"`
 	Tolerations      []corev1.Toleration        `json:"tolerations,omitempty"`
-	OBServerTemplate *OBServerTemplate          `json:"observerTemplate"`
+	OBServerTemplate *apitypes.OBServerTemplate `json:"observerTemplate"`
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 }

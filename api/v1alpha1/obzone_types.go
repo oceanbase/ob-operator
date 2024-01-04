@@ -34,7 +34,7 @@ type OBZoneSpec struct {
 	ClusterName      string                     `json:"clusterName"`
 	ClusterId        int64                      `json:"clusterId,omitempty"`
 	Topology         apitypes.OBZoneTopology    `json:"topology"`
-	OBServerTemplate *OBServerTemplate          `json:"observerTemplate"`
+	OBServerTemplate *apitypes.OBServerTemplate `json:"observerTemplate"`
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 }

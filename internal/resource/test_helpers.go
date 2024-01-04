@@ -54,7 +54,7 @@ func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {
 		},
 	}
 
-	observerTemplate := &v1alpha1.OBServerTemplate{
+	observerTemplate := &apitypes.OBServerTemplate{
 		Image:    DefaultImage,
 		Resource: observerResource,
 		Storage:  observerStorage,
