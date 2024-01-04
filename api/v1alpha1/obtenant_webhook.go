@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,6 +37,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
@@ -76,6 +78,10 @@ func (r *OBTenant) Default() {
 		r.Spec.TenantRole = constants.TenantRolePrimary
 	} else {
 		r.Spec.TenantRole = apitypes.TenantRole(strings.ToUpper(string(r.Spec.TenantRole)))
+	}
+
+	if r.Spec.Credentials.StandbyRO == "" {
+		r.Spec.Credentials.StandbyRO = "standby-ro-" + rand.String(8)
 	}
 }
 
@@ -169,6 +175,10 @@ func (r *OBTenant) validateMutation() error {
 			} else {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("root"), err))
 			}
+		} else {
+			if _, ok := secret.Data["password"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
+			}
 		}
 	}
 
@@ -179,10 +189,12 @@ func (r *OBTenant) validateMutation() error {
 			Name:      r.Spec.Credentials.StandbyRO,
 		}, secret)
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "Given standbyRo credential not found"))
-			} else {
+			if !apierrors.IsNotFound(err) {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("standbyRo"), err))
+			}
+		} else {
+			if _, ok := secret.Data["password"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
 			}
 		}
 	}
@@ -206,7 +218,29 @@ func (r *OBTenant) validateMutation() error {
 					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
 				}
 			}
+			cluster := &OBCluster{}
+			err = tenantClt.Get(context.Background(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      tenant.Spec.ClusterName,
+			}, cluster)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+				} else {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
+				}
+			}
+			clusterAnnotations := cluster.GetAnnotations()
+			if clusterAnnotations != nil {
+				if mode, exist := clusterAnnotations[oceanbaseconst.AnnotationsMode]; exist && mode == oceanbaseconst.ModeStandalone {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant is in a standalone cluster, which can not be a restore source"))
+				}
+			}
 		}
+	}
+
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind("OBTenant").GroupKind(), r.Name, allErrs)
 	}
 
 	// 2. Restore until with some limit must have a limit key

@@ -22,8 +22,10 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
@@ -1122,38 +1124,68 @@ func (m *OBTenantManager) CreateUserWithCredentials() tasktypes.TaskError {
 			}
 		}
 	}
+
 	if creds.StandbyRO != "" {
+		var standbyROPwd string
+		secret := &corev1.Secret{}
+		err = m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBTenant.GetNamespace(),
+			Name:      creds.StandbyRO,
+		}, secret)
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				secret.Name = creds.StandbyRO
+				secret.Namespace = m.OBTenant.GetNamespace()
+				secret.SetOwnerReferences([]metav1.OwnerReference{{
+					APIVersion: m.OBTenant.APIVersion,
+					Kind:       m.OBTenant.Kind,
+					Name:       m.OBTenant.GetName(),
+					UID:        m.OBTenant.GetUID(),
+				}})
+				standbyROPwd = rand.String(16)
+				secret.StringData = map[string]string{
+					"password": standbyROPwd,
+				}
+				err = m.Client.Create(m.Ctx, secret)
+				if err != nil {
+					m.Logger.Error(err, "Failed to create standbyRO password secret")
+					return err
+				}
+			} else {
+				m.Logger.Error(err, "Failed to get standbyRO password secret")
+				return err
+			}
+		}
+
+		if standbyROPwd == "" && secret != nil {
+			standbyROPwd = string(secret.Data["password"])
+		}
+
 		if con == nil {
 			con, err = m.getTenantClient()
 			if err != nil {
 				return err
 			}
 		}
-		standbyROPwd, err := resourceutils.ReadPassword(m.Client, m.OBTenant.Namespace, creds.StandbyRO)
-		if err != nil {
-			if client.IgnoreNotFound(err) != nil {
-				m.Logger.Error(err, "Failed to get standbyRO password secret")
+
+		if standbyROPwd != "" {
+			err = con.CreateUserWithPwd(oceanbaseconst.StandbyROUser, standbyROPwd)
+			if err != nil {
+				m.Logger.Error(err, "Failed to create standbyRO user with password")
 				return err
 			}
 		} else {
-			if standbyROPwd != "" {
-				err = con.CreateUserWithPwd(oceanbaseconst.StandbyROUser, standbyROPwd)
-				if err != nil {
-					m.Logger.Error(err, "Failed to create standbyRO user with password")
-					return err
-				}
-			} else {
-				err = con.CreateUser(oceanbaseconst.StandbyROUser)
-				if err != nil {
-					m.Logger.Error(err, "Failed to create standbyRO user")
-					return err
-				}
-			}
-			err = con.GrantPrivilege(oceanbaseconst.SelectPrivilege, oceanbaseconst.OceanbaseAllScope, oceanbaseconst.StandbyROUser)
+			err = con.CreateUser(oceanbaseconst.StandbyROUser)
 			if err != nil {
-				m.Logger.Error(err, "Failed to grant privilege to standbyRO")
+				m.Logger.Error(err, "Failed to create standbyRO user")
 				return err
 			}
+		}
+
+		err = con.GrantPrivilege(oceanbaseconst.SelectPrivilege, oceanbaseconst.OceanbaseAllScope, oceanbaseconst.StandbyROUser)
+		if err != nil {
+			m.Logger.Error(err, "Failed to grant privilege to standbyRO")
+			return err
 		}
 	}
 	return nil

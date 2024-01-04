@@ -10,14 +10,10 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1alpha1
-
-import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-)
+package types
 
 type OBServerTemplate struct {
-	Image    string                         `json:"image"`
-	Resource *apitypes.ResourceSpec         `json:"resource"`
-	Storage  *apitypes.OceanbaseStorageSpec `json:"storage"`
+	Image    string                `json:"image"`
+	Resource *ResourceSpec         `json:"resource"`
+	Storage  *OceanbaseStorageSpec `json:"storage"`
 }

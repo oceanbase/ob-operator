@@ -145,4 +145,24 @@ var _ = Describe("Test OBTenant Webhook", Label("webhook"), Serial, func() {
 		t.Spec.Source.Restore.BakDataSource.OSSAccessSecret = defaultSecretName
 		Expect(k8sClient.Create(ctx, t)).ShouldNot(Succeed())
 	})
+
+	It("Check primary tenant is in standalone cluster", func() {
+		standaloneClusterName := clusterName + "-standalone"
+		standaloneCluster := newOBCluster(clusterName+"-standalone", 1, 1)
+		standaloneCluster.Annotations = map[string]string{
+			"oceanbase.oceanbase.com/mode": "standalone",
+		}
+		Expect(k8sClient.Create(ctx, standaloneCluster)).Should(Succeed())
+
+		primaryTenantName := tenantName + "-standalone"
+		t := newOBTenant(primaryTenantName, standaloneClusterName)
+		Expect(k8sClient.Create(ctx, t)).Should(Succeed())
+
+		t2 := newOBTenant(tenantName+"-standalone2", clusterName)
+		t2.Spec.Source = &TenantSourceSpec{}
+		t2.Spec.Source.Tenant = &primaryTenantName
+		t2.Spec.TenantRole = "Standby"
+
+		Expect(k8sClient.Create(ctx, t2)).ShouldNot(Succeed())
+	})
 })
