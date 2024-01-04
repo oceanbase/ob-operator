@@ -27,6 +27,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -77,6 +78,10 @@ func (r *OBTenant) Default() {
 		r.Spec.TenantRole = constants.TenantRolePrimary
 	} else {
 		r.Spec.TenantRole = apitypes.TenantRole(strings.ToUpper(string(r.Spec.TenantRole)))
+	}
+
+	if r.Spec.Credentials.StandbyRO == "" {
+		r.Spec.Credentials.StandbyRO = "standby-ro-" + rand.String(8)
 	}
 }
 
@@ -170,6 +175,10 @@ func (r *OBTenant) validateMutation() error {
 			} else {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("root"), err))
 			}
+		} else {
+			if _, ok := secret.Data["password"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
+			}
 		}
 	}
 
@@ -180,10 +189,12 @@ func (r *OBTenant) validateMutation() error {
 			Name:      r.Spec.Credentials.StandbyRO,
 		}, secret)
 		if err != nil {
-			if apierrors.IsNotFound(err) {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "Given standbyRo credential not found"))
-			} else {
+			if !apierrors.IsNotFound(err) {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("credentials").Child("standbyRo"), err))
+			}
+		} else {
+			if _, ok := secret.Data["password"]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
 			}
 		}
 	}
