@@ -43,6 +43,12 @@ func objectSentry(object any) {
 		debugWrapper(processOBServer, server, "OBServer")
 	} else if zone, ok := object.(*v1alpha1.OBZone); ok {
 		debugWrapper(processOBZone, zone, "OBZone")
+	} else if restore, ok := object.(*v1alpha1.OBTenantRestore); ok {
+		debugWrapper(processOBTenantRestore, restore, "OBTenantRestore")
+	} else if policy, ok := object.(*v1alpha1.OBTenantBackupPolicy); ok {
+		debugWrapper(processOBTenantBackupPolicy, policy, "OBTenantBackupPolicy")
+	} else if backup, ok := object.(*v1alpha1.OBTenantBackup); ok {
+		debugWrapper(processOBTenantBackup, backup, "OBTenantBackup")
 	}
 }
 
@@ -75,6 +81,23 @@ func processOBZone(zone *v1alpha1.OBZone) {
 	if zone.Spec.BackupVolume != nil && zone.Spec.BackupVolume.Volume != nil && zone.Spec.BackupVolume.Volume.NFS != nil {
 		zone.Spec.BackupVolume.Volume.NFS.Server = md5Hash(zone.Spec.BackupVolume.Volume.NFS.Server)
 	}
+}
+
+func processOBTenantRestore(restore *v1alpha1.OBTenantRestore) {
+	restore.Status.RestoreProgress = nil
+}
+
+func processOBTenantBackup(backup *v1alpha1.OBTenantBackup) {
+	backup.Status.ArchiveLogJob = nil
+	backup.Status.BackupJob = nil
+	backup.Status.DataCleanJob = nil
+}
+
+func processOBTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) {
+	policy.Status.LatestArchiveLogJob = nil
+	policy.Status.LatestBackupCleanJob = nil
+	policy.Status.LatestFullBackupJob = nil
+	policy.Status.LatestIncrementalJob = nil
 }
 
 func debugWrapper[T runtime.Object](processor func(T), object T, objectType string) {
