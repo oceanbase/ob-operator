@@ -36,6 +36,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
@@ -206,7 +207,29 @@ func (r *OBTenant) validateMutation() error {
 					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
 				}
 			}
+			cluster := &OBCluster{}
+			err = tenantClt.Get(context.Background(), types.NamespacedName{
+				Namespace: r.GetNamespace(),
+				Name:      tenant.Spec.ClusterName,
+			}, cluster)
+			if err != nil {
+				if apierrors.IsNotFound(err) {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+				} else {
+					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
+				}
+			}
+			clusterAnnotations := cluster.GetAnnotations()
+			if clusterAnnotations != nil {
+				if mode, exist := clusterAnnotations[oceanbaseconst.AnnotationsMode]; exist && mode == oceanbaseconst.ModeStandalone {
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant is in a standalone cluster, which can not be a restore source"))
+				}
+			}
 		}
+	}
+
+	if len(allErrs) > 0 {
+		return apierrors.NewInvalid(GroupVersion.WithKind("OBTenant").GroupKind(), r.Name, allErrs)
 	}
 
 	// 2. Restore until with some limit must have a limit key
