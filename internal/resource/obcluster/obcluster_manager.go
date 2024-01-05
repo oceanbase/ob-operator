@@ -327,6 +327,8 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 		return m.ModifySysTenantReplica, nil
 	case tScaleUpOBZones:
 		return m.ScaleUpOBZone, nil
+	case tCheckAndCreateServiceAccount:
+		return m.CheckAndCreateServiceAccount, nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
