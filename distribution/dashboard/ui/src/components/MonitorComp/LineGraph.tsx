@@ -1,11 +1,11 @@
+import { POINT_NUMBER } from '@/constants';
 import { useRequestOfMonitor } from '@/hook/useRequestOfMonitor';
+import type { QueryRangeType } from '@/pages/Cluster/Detail/Monitor';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
 import { Empty, Spin } from 'antd';
-import type { QueryRangeType } from '@/pages/Cluster/Detail/Monitor';
-import { POINT_NUMBER } from '@/constants';
 import _ from 'lodash';
 import moment from 'moment';
 import { useRef, useState } from 'react';
@@ -21,9 +21,10 @@ export interface LineGraphProps {
   id: string;
   metrics: MetricType[];
   labels: { key: string; value: string }[];
-  queryRange:QueryRangeType;
+  queryRange: QueryRangeType;
   height?: number;
   isRefresh?: boolean;
+  type?: 'detail' | 'overview';
 }
 
 type queryRangeType = {
@@ -39,6 +40,7 @@ export default function LineGraph({
   queryRange,
   height = 186,
   isRefresh = false,
+  type,
 }: LineGraphProps) {
   const [, chooseClusterName] = getNSName();
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
@@ -51,13 +53,15 @@ export default function LineGraph({
   const groupLabels = _.uniq(labels.map((label) => label.key));
 
   const getQueryParms = () => {
-    let metricsKeys: string[] = [metrics[0].key];
+    let metricsKeys: string[] = [metrics[0].key],
+      realLabels = labels;
     if (chooseClusterName) {
       metricsKeys = metrics.map((metric: MetricType) => metric.key);
     }
+    if (type === 'overview') realLabels = [];
     return {
       groupLabels,
-      labels, //为空则查询全部集群
+      labels: realLabels, //为空则查询全部集群
       metrics: metricsKeys,
       queryRange,
     };
@@ -122,7 +126,7 @@ export default function LineGraph({
         lineInstanceDestroy();
         return;
       }
-      
+
       if (metricsData && metricsData.length > 0) {
         if (isEmpty) {
           setIsEmpty(false);
@@ -158,20 +162,19 @@ export default function LineGraph({
 
   //开启实时模式后处理
   useUpdateEffect(() => {
-    if(!isRefresh){
+    if (!isRefresh) {
       if (inViewport) {
         queryMetrics(getQueryParms());
       } else if (inViewportCount >= 1) {
         setInViewportCount(0);
       }
-    }else{
+    } else {
       // if(timerRef.current){
       //   clearTimeout(timerRef.current)
       // }
       queryMetrics(getQueryParms());
     }
-    
-  }, [labels,queryRange]);
+  }, [labels, queryRange]);
 
   return (
     <div style={{ height: `${height}px` }}>

@@ -37,9 +37,6 @@ const ClusterPage: React.FC = () => {
 
   return (
     <PageContainer
-    // header={{
-    //   title: '集群',
-    // }}
     >
       <Row gutter={[16, 16]}>
         <ClusterList
