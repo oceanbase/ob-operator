@@ -9,11 +9,13 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/oceanbase/oceanbase-dashboard/docs"
 	"github.com/oceanbase/oceanbase-dashboard/internal/middleware"
 	v1 "github.com/oceanbase/oceanbase-dashboard/internal/router/v1"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"github.com/oceanbase/oceanbase-dashboard/internal/server/constant"
 )
 
 func InitRoutes(router *gin.Engine) {
@@ -24,6 +26,8 @@ func InitRoutes(router *gin.Engine) {
 	store := cookie.NewStore([]byte(sessionSecret))
 	store.Options(sessions.Options{
 		HttpOnly: true,
+		MaxAge:   constant.DefaultSessionExpiration,
+		Path:     "/",
 	})
 	// use gin's crash free middleware
 	router.Use(

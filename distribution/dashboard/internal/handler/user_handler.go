@@ -89,6 +89,7 @@ func Logout(c *gin.Context) {
 	sess := sessions.Default(c)
 	usernameEntry := sess.Get("username")
 	sess.Clear()
+	sess.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
 	if err := sess.Save(); err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
