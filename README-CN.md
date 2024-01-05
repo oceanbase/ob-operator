@@ -100,6 +100,30 @@ kubectl get pods -o wide
 mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
+### OceanBase Dashboard
+我们很高兴地宣布推出创新的OceanBase Kubernetes Dashboard v0.1.0初始版本，这是一款旨在改善用户在Kubernetes上管理和监控OceanBase集群体验的先进工具。作为我们持续开发与改进承诺的一部分，我们自豪地向用户提供这个首个版本，同时我们也在积极开发新功能和增强未来的更新。
+
+安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
+```
+helm repo add ob-operator https://oceanbase.github.io/ob-operator/
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
+```
+
+![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-install.jpg)
+
+OceanBase Dashboard 成功安装之后, 会自动创建一个 admin 用户和随机密码，可以通过如下命令查看密码。
+```
+echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+```
+一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
+```
+kubectl get svc oceanbase-dashboard-ob-dashboard
+```
+![oceanbase-dashboard-service](./docs/img/oceanbase-dashboard-service.jpg)
+
+使用 admin 账号和查看到的密码登录。
+![oceanbase-dashboard-overview](./docs/img/oceanbase-dashboard-overview.jpg)
+
 ## 项目架构
 
 ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、全局的任务管理器实例以及解决长调度的任务流机制完成对 OceanBase 集群及相关应用的控制和管理。ob-operator 的架构大致如下图所示：
