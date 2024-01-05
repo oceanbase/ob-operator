@@ -120,11 +120,10 @@ A service of type NodePort is created by default, you can check the address and 
 ```
 kubectl get svc oceanbase-dashboard-ob-dashboard
 ```
-![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-service.jpg)
-![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-login.jpg)
+![oceanbase-dashboard-service](./docs/img/oceanbase-dashboard-service.jpg)
 
 Login with admin user and password
-![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-overview](./docs/img/oceanbase-dashboard-overview.jpg)
 
 ## Project Architecture
 
