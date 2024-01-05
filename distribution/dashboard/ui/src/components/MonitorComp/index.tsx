@@ -121,6 +121,7 @@ export default function MonitorComp({
                           queryRange={queryRange}
                           metrics={graphContainer.metrics}
                           labels={filterLabel}
+                          type={type}
                         />
                       </Card>
                     ),
