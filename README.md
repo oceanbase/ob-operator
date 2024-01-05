@@ -101,6 +101,30 @@ To connect, use the following command:
 mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
+### OceanBase Dashboard
+We are excited to unveil the initial release of our innovative OceanBase Kubernetes Dashboard v0.1.0, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. As part of our ongoing commitment to development and improvement, we are proud to offer this first version to our users while actively working on new features and enhancements for future updates.
+
+Deploy OceanBase Dashboard is pretty simple, just run the following commands
+```
+helm repo add ob-operator https://oceanbase.github.io/ob-operator/
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
+```
+
+![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-install.jpg)
+
+After OceanBase Dashboard is successfully installed, a default user admin is created with a random password, you can check the password using the command printed after installation.
+```
+echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+```
+A service of type NodePort is created by default, you can check the address and port and open it in browser
+```
+kubectl get svc oceanbase-dashboard-ob-dashboard
+```
+![oceanbase-dashboard-service](./docs/img/oceanbase-dashboard-service.jpg)
+
+Login with admin user and password
+![oceanbase-dashboard-overview](./docs/img/oceanbase-dashboard-overview.jpg)
+
 ## Project Architecture
 
 ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
@@ -144,7 +168,7 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 - [Architecture](docs/en_US/arch.md)
 - [Deploy ob-operators](docs/en_US/deploy.md)
 - [Development Guide](docs/en_US/development.md)
-- [User Manual](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367) in Chinese
+- [User Manual](https://en.oceanbase.com/docs/community-ob-operator-doc-en-10000000001123466)
 
 ## Getting Help
 
