@@ -1742,6 +1742,9 @@ spec:
                 - resource
                 - storage
                 type: object
+              serviceAccount:
+                default: default
+                type: string
               topology:
                 properties:
                   affinity:

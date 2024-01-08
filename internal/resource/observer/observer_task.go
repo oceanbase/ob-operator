@@ -167,7 +167,7 @@ func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) cor
 func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	if !sepVolumeAnnoExist && sepVolumeAnnoVal == "true" {
+	if !sepVolumeAnnoExist || sepVolumeAnnoVal != "true" {
 		ownerReference := metav1.OwnerReference{
 			APIVersion: m.OBServer.APIVersion,
 			Kind:       m.OBServer.Kind,
@@ -298,11 +298,12 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	}
 
 	podSpec := corev1.PodSpec{
-		Volumes:      volumes,
-		Containers:   containers,
-		NodeSelector: m.OBServer.Spec.NodeSelector,
-		Affinity:     m.OBServer.Spec.Affinity,
-		Tolerations:  m.OBServer.Spec.Tolerations,
+		Volumes:            volumes,
+		Containers:         containers,
+		NodeSelector:       m.OBServer.Spec.NodeSelector,
+		Affinity:           m.OBServer.Spec.Affinity,
+		Tolerations:        m.OBServer.Spec.Tolerations,
+		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
 	}
 	return podSpec
 }

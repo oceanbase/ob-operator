@@ -10,6 +10,7 @@ metadata:
 spec:
   clusterName: obcluster
   clusterId: 1
+  serviceAccount: "default"
   userSecrets:
     root: root-password
     proxyro: proxyro-password
