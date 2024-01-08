@@ -171,7 +171,3 @@ const (
 const (
 	TolerateServerPodNotReadyMinutes = 5
 )
-
-const (
-	OBClusterAccountNameSuffix = "-obsa"
-)
