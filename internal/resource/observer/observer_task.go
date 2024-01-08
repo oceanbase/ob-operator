@@ -297,15 +297,13 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		containers = append(containers, monitorContainer)
 	}
 
-	clusterName, _ := m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster]
-	saName := clusterName + oceanbaseconst.OBClusterAccountNameSuffix
 	podSpec := corev1.PodSpec{
 		Volumes:            volumes,
 		Containers:         containers,
 		NodeSelector:       m.OBServer.Spec.NodeSelector,
 		Affinity:           m.OBServer.Spec.Affinity,
 		Tolerations:        m.OBServer.Spec.Tolerations,
-		ServiceAccountName: saName,
+		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
 	}
 	return podSpec
 }

@@ -37,6 +37,8 @@ type OBZoneSpec struct {
 	OBServerTemplate *apitypes.OBServerTemplate `json:"observerTemplate"`
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
+	//+kubebuilder:default=default
+	ServiceAccount string `json:"serviceAccount,omitempty"`
 }
 
 // OBZoneStatus defines the observed state of OBZone

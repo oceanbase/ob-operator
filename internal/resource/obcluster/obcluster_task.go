@@ -237,6 +237,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 				MonitorTemplate:  m.OBCluster.Spec.MonitorTemplate,
 				BackupVolume:     m.OBCluster.Spec.BackupVolume,
 				Topology:         zone,
+				ServiceAccount:   m.OBCluster.Spec.ServiceAccount,
 			},
 		}
 		obzone.ObjectMeta.Annotations = make(map[string]string)
@@ -1025,35 +1026,6 @@ outer:
 	}
 	if !matched {
 		return errors.New("scale up obzone failed")
-	}
-	return nil
-}
-
-func (m *OBClusterManager) CheckAndCreateServiceAccount() tasktypes.TaskError {
-	sa := &corev1.ServiceAccount{}
-	saName := m.OBCluster.Name + oceanbaseconst.OBClusterAccountNameSuffix
-	if err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Name:      saName,
-		Namespace: m.OBCluster.Namespace,
-	}, sa); err != nil {
-		if kubeerrors.IsNotFound(err) {
-			if err := m.Client.Create(m.Ctx, &corev1.ServiceAccount{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      saName,
-					Namespace: m.OBCluster.Namespace,
-					OwnerReferences: []metav1.OwnerReference{{
-						APIVersion: m.OBCluster.APIVersion,
-						Kind:       m.OBCluster.Kind,
-						Name:       m.OBCluster.GetName(),
-						UID:        m.OBCluster.GetUID(),
-					}},
-				},
-			}); err != nil {
-				return errors.Wrap(err, "Create service account")
-			}
-		} else {
-			return errors.Wrap(err, "Get service account")
-		}
 	}
 	return nil
 }

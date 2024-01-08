@@ -10,6 +10,7 @@ metadata:
 spec:
   clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
   clusterId: {{ .Values.clusterId | default (nospace (cat "1" (randNumeric 7))) }}
+  serviceAccount: {{ .Values.serviceAccount | default "default" | quote }}
   userSecrets:
   {{- range $key, $value := .Values.userSecrets }}
     {{ $key }}: {{ $value | quote }}

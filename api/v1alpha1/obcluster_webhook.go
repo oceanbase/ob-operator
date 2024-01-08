@@ -118,6 +118,10 @@ func (r *OBCluster) Default() {
 	if r.Spec.UserSecrets.ProxyRO == "" {
 		r.Spec.UserSecrets.ProxyRO = "proxyro-user-" + rand.String(6)
 	}
+
+	if r.Spec.ServiceAccount == "" {
+		r.Spec.ServiceAccount = "default"
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
