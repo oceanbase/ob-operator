@@ -274,6 +274,21 @@ func (r *OBCluster) validateMutation() error {
 		}
 	}
 
+	if r.Spec.ServiceAccount != "" {
+		sa := v1.ServiceAccount{}
+		err := clt.Get(context.Background(), types.NamespacedName{
+			Name:      r.Spec.ServiceAccount,
+			Namespace: r.Namespace,
+		}, &sa)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("serviceAccount"), r.Spec.ServiceAccount, "service account not found"))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("serviceAccount"), err))
+			}
+		}
+	}
+
 	if len(allErrs) == 0 {
 		return nil
 	}

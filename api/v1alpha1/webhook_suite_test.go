@@ -192,6 +192,12 @@ var _ = BeforeSuite(func() {
 		return sc != nil && sc2 != nil
 	}, 300, 3).Should(BeTrue())
 
+	Expect(k8sClient.Create(ctx, &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "default",
+			Namespace: defaultNamespace,
+		},
+	})).Should(Succeed())
 })
 
 var _ = AfterSuite(func() {
