@@ -9,6 +9,5 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.GET("/obtenants", handler.ListAllTenants)
 	g.GET("/obtenant/:namespace/:name", handler.GetTenant)
 	g.PUT("/obtenant/:namespace/:name", handler.CreateTenant)
-	g.POST("/obtenant/:namespace/:name", handler.UpdateTenant)
 	g.DELETE("/obtenant/:namespace/:name", handler.DeleteTenant)
 }

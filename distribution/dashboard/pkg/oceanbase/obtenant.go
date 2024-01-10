@@ -56,9 +56,11 @@ func UpdateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	return t, nil
 }
 
-func ListAllOBTenants() (*v1alpha1.OBTenantList, error) {
+func ListAllOBTenants(labelSelector string) (*v1alpha1.OBTenantList, error) {
 	clt := client.GetClient()
-	tenantList, err := clt.DynamicClient.Resource(schema.OBTenantRes).List(context.TODO(), metav1.ListOptions{})
+	tenantList, err := clt.DynamicClient.Resource(schema.OBTenantRes).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: labelSelector,
+	})
 	if err != nil {
 		logger.Info("List all tenants", "err", err)
 		return nil, errors.Wrap(err, "List all tenants")

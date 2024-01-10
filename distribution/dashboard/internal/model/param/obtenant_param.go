@@ -1,18 +1,20 @@
 package param
 
 type CreateOBTenantParam struct {
+	Name             string `json:"name" binding:"required"`
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
-	ForceDelete      bool   `json:"forceDelete,omitempty"`
-	Charset          string `json:"charset,omitempty"`
-	Collate          string `json:"collate,omitempty"`
+	RootPassword     string `json:"rootPassword" binding:"required"`
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
+	Charset          string `json:"charset,omitempty"`
 
-	Pools       []ResourcePoolSpec `json:"pools" binding:"required"`
-	TenantRole  TenantRole         `json:"tenantRole,omitempty"`
-	Source      *TenantSourceSpec  `json:"source,omitempty"`
-	Credentials TenantCredentials  `json:"credentials,omitempty"`
+	UnitConfig *UnitConfig        `json:"unitConfig" binding:"required"`
+	Pools      []ResourcePoolSpec `json:"pools" binding:"required"`
+
+	// Enum: Primary, Standby
+	TenantRole TenantRole        `json:"tenantRole,omitempty"`
+	Source     *TenantSourceSpec `json:"source,omitempty"`
 }
 
 type UpdateOBTenantParam CreateOBTenantParam
@@ -20,20 +22,8 @@ type UpdateOBTenantParam CreateOBTenantParam
 type ResourcePoolSpec struct {
 	Zone     string `json:"zone" binding:"required"`
 	Priority int    `json:"priority,omitempty"`
-
-	Type       *LocalityType `json:"type,omitempty"`
-	UnitConfig *UnitConfig   `json:"resource" binding:"required"`
-}
-
-type LocalityType struct {
-	Name     string `json:"name" binding:"required"`
-	Replica  int    `json:"replica" binding:"required"`
-	IsActive bool   `json:"isActive" binding:"required"`
-}
-
-type TenantCredentials struct {
-	Root      string `json:"root,omitempty"`
-	StandbyRO string `json:"standbyRo,omitempty"`
+	// Enum: Readonly, Full
+	Type string `json:"type,omitempty"`
 }
 
 type TenantSourceSpec struct {
@@ -42,15 +32,15 @@ type TenantSourceSpec struct {
 }
 
 type RestoreSourceSpec struct {
-	ArchiveSource       *BackupDestination `json:"archiveSource,omitempty"`
-	BakDataSource       *BackupDestination `json:"bakDataSource,omitempty"`
-	BakEncryptionSecret string             `json:"bakEncryptionSecret,omitempty"`
+	// Enum: OSS, NFS
+	Type          BackupDestType `json:"type"`
+	ArchiveSource string         `json:"archiveSource"`
+	BakDataSource string         `json:"bakDataSource"`
+	OSSAccessID   string         `json:"ossAccessId,omitempty"`
+	OSSAccessKey  string         `json:"ossAccessKey,omitempty"`
 
-	SourceUri      string              `json:"sourceUri,omitempty"` // Deprecated
-	Until          RestoreUntilConfig  `json:"until" binding:"required"`
-	Description    *string             `json:"description,omitempty"`
-	ReplayLogUntil *RestoreUntilConfig `json:"replayLogUntil,omitempty"`
-	Cancel         bool                `json:"cancel,omitempty"`
+	BakEncryptionPassword string              `json:"bakEncryptionPassword,omitempty"`
+	Until                 *RestoreUntilConfig `json:"until,omitempty"`
 }
 
 type UnitConfig struct {
@@ -65,6 +55,61 @@ type UnitConfig struct {
 
 type RestoreUntilConfig struct {
 	Timestamp *string `json:"timestamp,omitempty"`
-	Scn       *string `json:"scn,omitempty"`
 	Unlimited bool    `json:"unlimited,omitempty"`
+}
+
+type ModifyUnitNumber struct {
+	UnitNumber int `json:"unitNum" binding:"required"`
+}
+
+type ChangeRootPassword struct {
+	RootPassword string `json:"rootPassword" binding:"required"`
+}
+
+type ReplayStandbyLog RestoreUntilConfig
+
+type ChangeTenantRole struct {
+	// Enum: Primary, Standby
+	TenantRole TenantRole `json:"tenantRole" binding:"required"`
+	Switchover bool       `json:"switchover,omitempty"`
+}
+
+type BackupPolicyBase struct {
+	// Enum: NFS, OSS
+	DestType      BackupDestType `json:"destType" binding:"required"`
+	ArchiveSource string         `json:"archiveSource"`
+	BakDataSource string         `json:"bakDataSource"`
+
+	ScheduleType  string         `json:"scheduleType" binding:"required"`
+	ScheduleDates []ScheduleDate `json:"scheduleDates"`
+
+	JobKeepWindow  string `json:"jobKeepWindow,omitempty"`
+	RecoveryWindow string `json:"recoveryWindow,omitempty"`
+	PieceInterval  string `json:"pieceInterval,omitempty"`
+}
+
+type CreateBackupPolicy struct {
+	BackupPolicyBase      `json:",inline"`
+	OSSAccessID           string `json:"ossAccessId,omitempty"`
+	OSSAccessKey          string `json:"ossAccessKey,omitempty"`
+	BakEncryptionPassword string `json:"bakEncryptionPassword,omitempty"`
+}
+
+type ScheduleDate struct {
+	Day int `json:"day" binding:"required"`
+	// Enum: Full, Incremental
+	BackupType string `json:"backupType" binding:"required"`
+}
+
+type UpdateBackupPolicy struct {
+	// Enum: Paused, Running
+	Status string `json:"status" binding:"required"`
+
+	// Enum: Weekly, Monthly
+	ScheduleType  string         `json:"scheduleType,omitempty"`
+	ScheduleDates []ScheduleDate `json:"scheduleDates,omitempty"`
+
+	JobKeepWindow  string `json:"jobKeepWindow,omitempty"`
+	RecoveryWindow string `json:"recoveryWindow,omitempty"`
+	PieceInterval  string `json:"pieceInterval,omitempty"`
 }

@@ -21,14 +21,43 @@ definitions:
       storageClass:
         type: string
     type: object
-  param.BackupDestination:
+  param.ChangeRootPassword:
     properties:
-      ossAccessSecret:
+      rootPassword:
         type: string
-      path:
+    required:
+    - rootPassword
+    type: object
+  param.CreateBackupPolicy:
+    properties:
+      archiveSource:
         type: string
-      type:
+      bakDataSource:
         type: string
+      bakEncryptionPassword:
+        type: string
+      destType:
+        description: 'Enum: NFS, OSS'
+        type: string
+      jobKeepWindow:
+        type: string
+      ossAccessId:
+        type: string
+      ossAccessKey:
+        type: string
+      pieceInterval:
+        type: string
+      recoveryWindow:
+        type: string
+      scheduleDates:
+        items:
+          $ref: '#/definitions/param.ScheduleDate'
+        type: array
+      scheduleType:
+        type: string
+    required:
+    - destType
+    - scheduleType
     type: object
   param.CreateNamespaceParam:
     properties:
@@ -66,46 +95,37 @@ definitions:
     properties:
       charset:
         type: string
-      collate:
-        type: string
       connectWhiteList:
         type: string
-      credentials:
-        $ref: '#/definitions/param.TenantCredentials'
-      forceDelete:
-        type: boolean
+      name:
+        type: string
       obcluster:
         type: string
       pools:
         items:
           $ref: '#/definitions/param.ResourcePoolSpec'
         type: array
+      rootPassword:
+        type: string
       source:
         $ref: '#/definitions/param.TenantSourceSpec'
       tenantName:
         type: string
       tenantRole:
+        description: 'Enum: Primary, Standby'
         type: string
+      unitConfig:
+        $ref: '#/definitions/param.UnitConfig'
       unitNum:
         type: integer
     required:
+    - name
     - obcluster
     - pools
+    - rootPassword
     - tenantName
+    - unitConfig
     - unitNum
-    type: object
-  param.LocalityType:
-    properties:
-      isActive:
-        type: boolean
-      name:
-        type: string
-      replica:
-        type: integer
-    required:
-    - isActive
-    - name
-    - replica
     type: object
   param.LoginParam:
     properties:
@@ -130,6 +150,13 @@ definitions:
         type: array
       queryRange:
         $ref: '#/definitions/param.QueryRange'
+    type: object
+  param.ModifyUnitNumber:
+    properties:
+      unitNum:
+        type: integer
+    required:
+    - unitNum
     type: object
   param.MonitorSpec:
     properties:
@@ -172,46 +199,45 @@ definitions:
       step:
         type: integer
     type: object
+  param.ReplayStandbyLog:
+    properties:
+      timestamp:
+        type: string
+      unlimited:
+        type: boolean
+    type: object
   param.ResourcePoolSpec:
     properties:
       priority:
         type: integer
-      resource:
-        $ref: '#/definitions/param.UnitConfig'
       type:
-        $ref: '#/definitions/param.LocalityType'
+        description: 'Enum: Readonly, Full'
+        type: string
       zone:
         type: string
     required:
-    - resource
     - zone
     type: object
   param.RestoreSourceSpec:
     properties:
       archiveSource:
-        $ref: '#/definitions/param.BackupDestination'
+        type: string
       bakDataSource:
-        $ref: '#/definitions/param.BackupDestination'
-      bakEncryptionSecret:
         type: string
-      cancel:
-        type: boolean
-      description:
+      bakEncryptionPassword:
         type: string
-      replayLogUntil:
-        $ref: '#/definitions/param.RestoreUntilConfig'
-      sourceUri:
-        description: Deprecated
+      ossAccessId:
+        type: string
+      ossAccessKey:
+        type: string
+      type:
+        description: 'Enum: OSS, NFS'
         type: string
       until:
         $ref: '#/definitions/param.RestoreUntilConfig'
-    required:
-    - until
     type: object
   param.RestoreUntilConfig:
     properties:
-      scn:
-        type: string
       timestamp:
         type: string
       unlimited:
@@ -222,12 +248,16 @@ definitions:
       replicas:
         type: integer
     type: object
-  param.TenantCredentials:
+  param.ScheduleDate:
     properties:
-      root:
+      backupType:
+        description: 'Enum: Full, Incremental'
         type: string
-      standbyRo:
-        type: string
+      day:
+        type: integer
+    required:
+    - backupType
+    - day
     type: object
   param.TenantSourceSpec:
     properties:
@@ -256,37 +286,26 @@ definitions:
     - maxCPU
     - memorySize
     type: object
-  param.UpdateOBTenantParam:
+  param.UpdateBackupPolicy:
     properties:
-      charset:
+      jobKeepWindow:
         type: string
-      collate:
+      pieceInterval:
         type: string
-      connectWhiteList:
+      recoveryWindow:
         type: string
-      credentials:
-        $ref: '#/definitions/param.TenantCredentials'
-      forceDelete:
-        type: boolean
-      obcluster:
-        type: string
-      pools:
+      scheduleDates:
         items:
-          $ref: '#/definitions/param.ResourcePoolSpec'
+          $ref: '#/definitions/param.ScheduleDate'
         type: array
-      source:
-        $ref: '#/definitions/param.TenantSourceSpec'
-      tenantName:
+      scheduleType:
+        description: 'Enum: Weekly, Monthly'
         type: string
-      tenantRole:
+      status:
+        description: 'Enum: Paused, Running'
         type: string
-      unitNum:
-        type: integer
     required:
-    - obcluster
-    - pools
-    - tenantName
-    - unitNum
+    - status
     type: object
   param.UpgradeOBClusterParam:
     properties:
@@ -525,6 +544,103 @@ definitions:
       statusDetail:
         type: string
     type: object
+  response.OBTenantBrief:
+    description: Brief information about OBTenant
+    properties:
+      clusterName:
+        description: Name of the cluster belonging to
+        type: string
+      createTime:
+        description: Creation time of the tenant
+        type: string
+      name:
+        description: Name of the resource
+        type: string
+      namespace:
+        description: Namespace of the resource
+        type: string
+      status:
+        description: Status of the tenant
+        type: string
+      tenantName:
+        description: Name of the tenant in the database
+        type: string
+      tenantRole:
+        description: 'Enum: Primary, Standby'
+        type: string
+      topology:
+        description: Topology of the tenant
+        items:
+          $ref: '#/definitions/response.OBTenantReplica'
+        type: array
+      unitNumber:
+        description: Number of units in every zone
+        type: integer
+    type: object
+  response.OBTenantDetail:
+    properties:
+      clusterName:
+        description: Name of the cluster belonging to
+        type: string
+      createTime:
+        description: Creation time of the tenant
+        type: string
+      name:
+        description: Name of the resource
+        type: string
+      namespace:
+        description: Namespace of the resource
+        type: string
+      primaryTenant:
+        type: string
+      restoreSource:
+        $ref: '#/definitions/response.RestoreSource'
+      rootCredential:
+        type: string
+      standbyROCredentail:
+        type: string
+      status:
+        description: Status of the tenant
+        type: string
+      tenantName:
+        description: Name of the tenant in the database
+        type: string
+      tenantRole:
+        description: 'Enum: Primary, Standby'
+        type: string
+      topology:
+        description: Topology of the tenant
+        items:
+          $ref: '#/definitions/response.OBTenantReplica'
+        type: array
+      unitNumber:
+        description: Number of units in every zone
+        type: integer
+    type: object
+  response.OBTenantReplica:
+    properties:
+      iopsWeight:
+        type: integer
+      logDiskSize:
+        type: string
+      maxCPU:
+        type: string
+      maxIops:
+        type: integer
+      memorySize:
+        type: string
+      minCPU:
+        type: string
+      minIops:
+        type: integer
+      priority:
+        type: integer
+      type:
+        description: 'Enum: Readonly, Full'
+        type: string
+      zone:
+        type: string
+    type: object
   response.OBZone:
     properties:
       name:
@@ -548,6 +664,22 @@ definitions:
       statusDetail:
         type: string
       zone:
+        type: string
+    type: object
+  response.RestoreSource:
+    properties:
+      archiveSource:
+        type: string
+      bakDataSource:
+        type: string
+      bakEncryptionSecret:
+        type: string
+      ossAccessSecret:
+        type: string
+      type:
+        description: 'Enum: OSS, NFS'
+        type: string
+      until:
         type: string
     type: object
   response.StorageClass:
@@ -1404,7 +1536,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1422,56 +1559,11 @@ paths:
       summary: Get tenant
       tags:
       - Obtenant
-    post:
-      consumes:
-      - application/json
-      description: Update an obtenant in a specific namespace
-      operationId: UpdateTenant
-      parameters:
-      - description: obtenant namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: obtenant name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: update obtenant request body, the same as CreateOBTenantParam
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/param.UpdateOBTenantParam'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Update tenant
-      tags:
-      - Obtenant
     put:
       consumes:
       - application/json
-      description: Create an obtenant in a specific namespace
+      description: Create an obtenant in a specific namespace, passwords should be
+        encrypted by AES
       operationId: CreateTenant
       parameters:
       - description: obtenant namespace
@@ -1514,12 +1606,34 @@ paths:
       summary: Create tenant
       tags:
       - Obtenant
-  /api/v1/obtenants:
-    get:
+  /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
+    put:
       consumes:
       - application/json
-      description: List all tenants and return them
-      operationId: ListAllTenants
+      description: Modify unit config of specific tenant
+      operationId: ModifyUnitConfig
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: target zone
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: new unit config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.UnitConfig'
       produces:
       - application/json
       responses:
@@ -1527,6 +1641,397 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Modify unit config of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/backupPolicy:
+    delete:
+      consumes:
+      - application/json
+      description: Delete backup policy of specific tenant
+      operationId: DeleteBackupPolicy
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Delete backup policy of specific tenant
+      tags:
+      - Obtenant
+    post:
+      consumes:
+      - application/json
+      description: Update backup policy of specific tenant
+      operationId: UpdateBackupPolicy
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: update backup policy request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.UpdateBackupPolicy'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Update backup policy of specific tenant
+      tags:
+      - Obtenant
+    put:
+      consumes:
+      - application/json
+      description: Create backup policy of specific tenant, passwords should be encrypted
+        by AES
+      operationId: CreateBackupPolicy
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: create backup policy request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.CreateBackupPolicy'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Create backup policy of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/logreplay:
+    post:
+      consumes:
+      - application/json
+      description: Replay standby log of specific standby tenant
+      operationId: ReplayStandbyLog
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: target timestamp to replay to
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ReplayStandbyLog'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Replay standby log of specific standby tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/role:
+    post:
+      consumes:
+      - application/json
+      description: Change tenant role of specific tenant, if a tenant is a standby
+        tenant, it can be changed to primary tenant, vice versa
+      operationId: ChangeTenantRole
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Change tenant role of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/rootPassword:
+    put:
+      consumes:
+      - application/json
+      description: Change root password of specific tenant, encrypted by AES
+      operationId: ChangeRootPassword
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: new password
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ChangeRootPassword'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Change root password of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/unitNumber:
+    put:
+      consumes:
+      - application/json
+      description: Modify unit number of specific tenant
+      operationId: ModifyUnitNumber
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: param containing unit number to modify
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ModifyUnitNumber'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Modify unit number of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/version:
+    post:
+      consumes:
+      - application/json
+      description: Upgrade tenant compatibility version of specific tenant to match
+        the version of cluster
+      operationId: UpgradeTenantVersion
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Upgrade tenant compatibility version of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenants:
+    get:
+      consumes:
+      - application/json
+      description: List all tenants and return them
+      operationId: ListAllTenants
+      parameters:
+      - description: obcluster to filter
+        in: query
+        name: obcluster
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.OBTenantBrief'
+                  type: array
+              type: object
         "400":
           description: Bad Request
           schema:
