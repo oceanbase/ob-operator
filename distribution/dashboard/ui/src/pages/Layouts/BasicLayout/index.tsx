@@ -46,6 +46,11 @@ const BasicLayout: React.FC = () => {
       link: '/cluster',
       icon: <IconFont type="cluster" />,
     },
+    {
+      title: '租户',
+      link: '/tenant',
+      icon: <IconFont type="tenant" />,
+    },
   ];
 
   const userMenu = (

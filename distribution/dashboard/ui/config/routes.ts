@@ -19,6 +19,16 @@ export default [
             name: '创建集群',
           },
           {
+            path:'tenant',
+            component:'Tenant',
+            name:'租户页'
+          },
+          {
+            path:'tenant/new',
+            component:'Tenant/New',
+            name:'创建租户'
+          },
+          {
             path: 'overview',
             component: 'Overview',
             name: '系统概览页',
@@ -56,6 +66,33 @@ export default [
             name: '概览页',
           },
         ],
+      },
+      {
+        path:'tenant/:tenantId',
+        component:'Tenant/Detail',
+        name:'租户详情',
+        routes:[
+          {
+            path: 'overview',
+            component: 'Tenant/Detail/Overview',
+            name: '概览页',
+          },
+          {
+            path: 'topo',
+            component: 'Tenant/Detail/Topo',
+            name: '租户拓扑图',
+          },
+          {
+            path:'monitor',
+            component:'Tenant/Detail/Monitor',
+            name:'租户详情监控'
+          },
+          {
+            path: '/tenant/:tenantId',
+            redirect: 'overview',
+            name: '概览页',
+          },
+        ]
       },
       {
         path: '/login',
