@@ -1460,7 +1460,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "[TODO] Create backup policy of specific tenant",
+                "summary": "Create backup policy of specific tenant",
                 "operationId": "CreateBackupPolicy",
                 "parameters": [
                     {
@@ -1537,7 +1537,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "[TODO] Update backup policy of specific tenant",
+                "summary": "Update backup policy of specific tenant",
                 "operationId": "UpdateBackupPolicy",
                 "parameters": [
                     {
@@ -1614,7 +1614,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "[TODO] Delete backup policy of specific tenant",
+                "summary": "Delete backup policy of specific tenant",
                 "operationId": "DeleteBackupPolicy",
                 "parameters": [
                     {
@@ -2875,17 +2875,11 @@ const docTemplate = `{
                 "jobKeepWindow": {
                     "type": "string"
                 },
-                "latestArchiveJob": {
-                    "$ref": "#/definitions/response.BackupJob"
+                "name": {
+                    "type": "string"
                 },
-                "latestCleanJob": {
-                    "$ref": "#/definitions/response.BackupJob"
-                },
-                "latestFullBackup": {
-                    "$ref": "#/definitions/response.BackupJob"
-                },
-                "latestIncrBackup": {
-                    "$ref": "#/definitions/response.BackupJob"
+                "namespace": {
+                    "type": "string"
                 },
                 "ossAccessSecret": {
                     "type": "string"
@@ -2906,6 +2900,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                },
+                "tenantName": {
                     "type": "string"
                 }
             }

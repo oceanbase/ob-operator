@@ -373,14 +373,10 @@ definitions:
         type: string
       jobKeepWindow:
         type: string
-      latestArchiveJob:
-        $ref: '#/definitions/response.BackupJob'
-      latestCleanJob:
-        $ref: '#/definitions/response.BackupJob'
-      latestFullBackup:
-        $ref: '#/definitions/response.BackupJob'
-      latestIncrBackup:
-        $ref: '#/definitions/response.BackupJob'
+      name:
+        type: string
+      namespace:
+        type: string
       ossAccessSecret:
         type: string
       pieceInterval:
@@ -394,6 +390,8 @@ definitions:
       scheduleType:
         type: string
       status:
+        type: string
+      tenantName:
         type: string
     required:
     - destType
@@ -1833,7 +1831,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: '[TODO] Delete backup policy of specific tenant'
+      summary: Delete backup policy of specific tenant
       tags:
       - Obtenant
     post:
@@ -1882,7 +1880,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: '[TODO] Update backup policy of specific tenant'
+      summary: Update backup policy of specific tenant
       tags:
       - Obtenant
     put:
@@ -1932,7 +1930,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: '[TODO] Create backup policy of specific tenant'
+      summary: Create backup policy of specific tenant
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/logreplay:

@@ -5,13 +5,12 @@ import "github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 type BackupPolicy struct {
 	param.BackupPolicyBase `json:",inline"`
 
-	Status              string     `json:"status"`
-	OSSAccessSecret     string     `json:"ossAccessSecret,omitempty"`
-	BakEncryptionSecret string     `json:"bakEncryptionSecret,omitempty"`
-	LatestFullBackup    *BackupJob `json:"latestFullBackup,omitempty"`
-	LatestIncrBackup    *BackupJob `json:"latestIncrBackup,omitempty"`
-	LatestArchiveJob    *BackupJob `json:"latestArchiveJob,omitempty"`
-	LatestCleanJob      *BackupJob `json:"latestCleanJob,omitempty"`
+	TenantName          string `json:"tenantName"`
+	Name                string `json:"name"`
+	Namespace           string `json:"namespace"`
+	Status              string `json:"status"`
+	OSSAccessSecret     string `json:"ossAccessSecret,omitempty"`
+	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
 }
 
 type BackupJob struct {

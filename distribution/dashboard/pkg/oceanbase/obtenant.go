@@ -106,7 +106,7 @@ func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenant
 	}
 	tenantUnstructured := &unstructured.Unstructured{Object: objMap}
 	tenantUnstructured.SetGroupVersionKind(schema.OBTenantOperationGVK)
-	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(op.Namespace).Create(context.TODO(), tenantUnstructured, metav1.CreateOptions{})
+	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantOperationGVR).Namespace(op.Namespace).Create(context.TODO(), tenantUnstructured, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("Create tenant operation", "err", err)
 		return nil, errors.Wrap(err, "Create tenant ooperation")
@@ -118,4 +118,73 @@ func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenant
 		return nil, errors.Wrap(err, "Convert unstructured tenant operation to typed")
 	}
 	return operation, nil
+}
+
+func GetTenantBackupPolicy(nn types.NamespacedName) (*v1alpha1.OBTenantBackupPolicy, error) {
+	clt := client.GetClient()
+	policy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).Get(context.TODO(), nn.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "Get tenant backup policy")
+	}
+	p := &v1alpha1.OBTenantBackupPolicy{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(policy.UnstructuredContent(), p)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured tenant backup policy to typed")
+	}
+	return p, nil
+}
+
+func CreateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
+	clt := client.GetClient()
+	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(policy)
+	if err != nil {
+		logger.Info("Convert tenant backup policy to unstructured", "err", err)
+		return nil, errors.Wrap(err, "Convert tenant backup policy to unstructured")
+	}
+	policyUnstructured := &unstructured.Unstructured{Object: objMap}
+	policyUnstructured.SetGroupVersionKind(schema.OBTenantBackupPolicyGVK)
+	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Create(context.TODO(), policyUnstructured, metav1.CreateOptions{})
+	if err != nil {
+		logger.Info("Create tenant backup policy", "err", err)
+		return nil, errors.Wrap(err, "Create tenant backup policy")
+	}
+	p := &v1alpha1.OBTenantBackupPolicy{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(newPolicy.UnstructuredContent(), p)
+	if err != nil {
+		logger.Info("Convert unstructured tenant backup policy to typed", "err", err)
+		return nil, errors.Wrap(err, "Convert unstructured tenant backup policy to typed")
+	}
+	return p, nil
+}
+
+func UpdateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
+	clt := client.GetClient()
+	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(policy)
+	if err != nil {
+		logger.Info("Convert tenant backup policy to unstructured", "err", err)
+		return nil, errors.Wrap(err, "Convert tenant backup policy to unstructured")
+	}
+	policyUnstructured := &unstructured.Unstructured{Object: objMap}
+	policyUnstructured.SetGroupVersionKind(schema.OBTenantBackupPolicyGVK)
+	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Update(context.TODO(), policyUnstructured, metav1.UpdateOptions{})
+	if err != nil {
+		logger.Info("Create tenant backup policy", "err", err)
+		return nil, errors.Wrap(err, "Create tenant backup policy")
+	}
+	p := &v1alpha1.OBTenantBackupPolicy{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(newPolicy.UnstructuredContent(), p)
+	if err != nil {
+		logger.Info("Convert unstructured tenant backup policy to typed", "err", err)
+		return nil, errors.Wrap(err, "Convert unstructured tenant backup policy to typed")
+	}
+	return p, nil
+}
+
+func DeleteTenantBackupPolicy(nn types.NamespacedName) error {
+	clt := client.GetClient()
+	err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).Delete(context.TODO(), nn.Name, metav1.DeleteOptions{})
+	if err != nil {
+		return errors.Wrap(err, "Delete tenant backup policy")
+	}
+	return nil
 }

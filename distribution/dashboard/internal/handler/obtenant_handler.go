@@ -372,7 +372,7 @@ func ChangeTenantRole(c *gin.Context) {
 
 // @ID CreateBackupPolicy
 // @Tags Obtenant
-// @Summary [TODO] Create backup policy of specific tenant
+// @Summary Create backup policy of specific tenant
 // @Description Create backup policy of specific tenant, passwords should be encrypted by AES
 // @Accept application/json
 // @Produce application/json
@@ -385,12 +385,37 @@ func ChangeTenantRole(c *gin.Context) {
 // @Param body body param.CreateBackupPolicy true "create backup policy request body"
 // @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [PUT]
 func CreateBackupPolicy(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	createPolicyParam := &param.CreateBackupPolicy{}
+	err = c.BindJSON(createPolicyParam)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	policy, err := oceanbase.CreateTenantBackupPolicy(types.NamespacedName{
+		Name:      nn.Name,
+		Namespace: nn.Namespace,
+	}, createPolicyParam)
+	if err != nil {
+		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
+			SendBadRequestResponse(c, nil, err)
+			return
+		} else {
+			SendInternalServerErrorResponse(c, nil, err)
+			return
+		}
+	}
+	SendSuccessfulResponse(c, policy)
 }
 
 // @ID UpdateBackupPolicy
 // @Tags Obtenant
-// @Summary [TODO] Update backup policy of specific tenant
+// @Summary Update backup policy of specific tenant
 // @Description Update backup policy of specific tenant
 // @Accept application/json
 // @Produce application/json
@@ -403,12 +428,37 @@ func CreateBackupPolicy(c *gin.Context) {
 // @Param body body param.UpdateBackupPolicy true "update backup policy request body"
 // @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [POST]
 func UpdateBackupPolicy(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	updatePolicyParam := &param.UpdateBackupPolicy{}
+	err = c.BindJSON(updatePolicyParam)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	policy, err := oceanbase.UpdateTenantBackupPolicy(types.NamespacedName{
+		Name:      nn.Name,
+		Namespace: nn.Namespace,
+	}, updatePolicyParam)
+	if err != nil {
+		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
+			SendBadRequestResponse(c, nil, err)
+			return
+		} else {
+			SendInternalServerErrorResponse(c, nil, err)
+			return
+		}
+	}
+	SendSuccessfulResponse(c, policy)
 }
 
 // @ID DeleteBackupPolicy
 // @Tags Obtenant
-// @Summary [TODO] Delete backup policy of specific tenant
+// @Summary Delete backup policy of specific tenant
 // @Description Delete backup policy of specific tenant
 // @Accept application/json
 // @Produce application/json
@@ -420,7 +470,21 @@ func UpdateBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [DELETE]
 func DeleteBackupPolicy(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	err = oceanbase.DeleteTenantBackupPolicy(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	})
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, nil)
 }
 
 // @ID ListBackupJobs
@@ -439,5 +503,11 @@ func DeleteBackupPolicy(c *gin.Context) {
 // @Param limit query int false "limit" default(10)
 // @Router /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs [GET]
 func ListBackupJobs(c *gin.Context) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
 	SendNotImplementedResponse(c, nil, nil)
 }
