@@ -1351,7 +1351,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1448,7 +1460,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Create backup policy of specific tenant",
+                "summary": "[TODO] Create backup policy of specific tenant",
                 "operationId": "CreateBackupPolicy",
                 "parameters": [
                     {
@@ -1479,7 +1491,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1513,7 +1537,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Update backup policy of specific tenant",
+                "summary": "[TODO] Update backup policy of specific tenant",
                 "operationId": "UpdateBackupPolicy",
                 "parameters": [
                     {
@@ -1544,7 +1568,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1578,7 +1614,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Delete backup policy of specific tenant",
+                "summary": "[TODO] Delete backup policy of specific tenant",
                 "operationId": "DeleteBackupPolicy",
                 "parameters": [
                     {
@@ -1672,7 +1708,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1708,7 +1756,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Change tenant role of specific tenant",
+                "summary": "[TODO] Change tenant role of specific tenant",
                 "operationId": "ChangeTenantRole",
                 "parameters": [
                     {
@@ -1730,7 +1778,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1802,7 +1862,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1874,7 +1946,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1932,7 +2016,112 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
                             "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenant/{namespace}/{name}/{type}/backupJobs": {
+            "get": {
+                "description": "List backup jobs of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "[TODO] List backup jobs of specific tenant",
+                "operationId": "ListBackupJobs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "FULL",
+                            "INCR",
+                            "CLEAN",
+                            "ARCHIVE"
+                        ],
+                        "type": "string",
+                        "description": "backup job type",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.BackupJob"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2011,7 +2200,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2606,6 +2807,106 @@ const docTemplate = `{
                 },
                 "successful": {
                     "type": "boolean"
+                }
+            }
+        },
+        "response.BackupJob": {
+            "type": "object",
+            "properties": {
+                "backupPolicyName": {
+                    "type": "string"
+                },
+                "encryptionSecret": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "description": "End time of the backup job, empty for ARCHIVE job",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Empty for Clean job",
+                    "type": "string"
+                },
+                "startTime": {
+                    "description": "Start time of the backup job, StartScnDisplay for ARCHIVE job",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusInDatabase": {
+                    "type": "string"
+                },
+                "tenantName": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Enum: FULL, INCR, ARCHIVE, CLEAN",
+                    "type": "string"
+                }
+            }
+        },
+        "response.BackupPolicy": {
+            "type": "object",
+            "required": [
+                "destType",
+                "scheduleType"
+            ],
+            "properties": {
+                "archiveSource": {
+                    "type": "string"
+                },
+                "bakDataSource": {
+                    "type": "string"
+                },
+                "bakEncryptionSecret": {
+                    "type": "string"
+                },
+                "destType": {
+                    "description": "Enum: NFS, OSS",
+                    "type": "string"
+                },
+                "jobKeepWindow": {
+                    "type": "string"
+                },
+                "latestArchiveJob": {
+                    "$ref": "#/definitions/response.BackupJob"
+                },
+                "latestCleanJob": {
+                    "$ref": "#/definitions/response.BackupJob"
+                },
+                "latestFullBackup": {
+                    "$ref": "#/definitions/response.BackupJob"
+                },
+                "latestIncrBackup": {
+                    "$ref": "#/definitions/response.BackupJob"
+                },
+                "ossAccessSecret": {
+                    "type": "string"
+                },
+                "pieceInterval": {
+                    "type": "string"
+                },
+                "recoveryWindow": {
+                    "type": "string"
+                },
+                "scheduleDates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/param.ScheduleDate"
+                    }
+                },
+                "scheduleType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },

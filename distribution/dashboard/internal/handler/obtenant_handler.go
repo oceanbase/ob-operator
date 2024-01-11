@@ -159,14 +159,34 @@ func DeleteTenant(c *gin.Context) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.ModifyUnitNumber true "param containing unit number to modify"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenant/{namespace}/{name}/unitNumber [PUT]
 // @Security ApiKeyAuth
 func ModifyUnitNumber(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	unitNumberParam := &param.ModifyUnitNumber{}
+	err = c.BindJSON(unitNumberParam)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	tenant, err := oceanbase.ModifyOBTenantUnitNumber(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	}, unitNumberParam.UnitNumber)
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
 }
 
 // @ID ModifyUnitConfig
@@ -179,14 +199,37 @@ func ModifyUnitNumber(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Param zone path string true "target zone"
 // @Param body body param.UnitConfig true "new unit config"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig [PUT]
 // @Security ApiKeyAuth
 func ModifyUnitConfig(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := struct {
+		param.NamespacedName `uri:"namespace,name"`
+		Zone                 string `uri:"zone"`
+	}{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	unitConfig := param.UnitConfig{}
+	err = c.BindJSON(&unitConfig)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	tenant, err := oceanbase.ModifyOBTenantUnitConfig(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	}, nn.Zone, &unitConfig)
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
 }
 
 // @ID ChangeRootPassword
@@ -198,14 +241,36 @@ func ModifyUnitConfig(c *gin.Context) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.ChangeRootPassword true "new password"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenant/{namespace}/{name}/rootPassword [PUT]
 // @Security ApiKeyAuth
 func ChangeRootPassword(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	passwordParam := &param.ChangeRootPassword{}
+	err = c.BindJSON(passwordParam)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+
+	tenant, err := oceanbase.ModifyOBTenantRootPassword(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	}, passwordParam.RootPassword)
+
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
 }
 
 // @ID ReplayStandbyLog
@@ -217,31 +282,38 @@ func ChangeRootPassword(c *gin.Context) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.ReplayStandbyLog true "target timestamp to replay to"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenant/{namespace}/{name}/logreplay [POST]
 // @Security ApiKeyAuth
 func ReplayStandbyLog(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
-}
-
-// @ID ChangeTenantRole
-// @Tags Obtenant
-// @Summary Change tenant role of specific tenant
-// @Description Change tenant role of specific tenant, if a tenant is a standby tenant, it can be changed to primary tenant, vice versa
-// @Accept application/json
-// @Produce application/json
-// @Success 200 object response.APIResponse
-// @Failure 400 object response.APIResponse
-// @Failure 401 object response.APIResponse
-// @Failure 500 object response.APIResponse
-// @Param namespace path string true "obtenant namespace"
-// @Param name path string true "obtenant name"
-// @Router /api/v1/obtenant/{namespace}/{name}/role [POST]
-func ChangeTenantRole(c *gin.Context) {
-	SendNotImplementedResponse(c, nil, nil)
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	logReplayParam := &param.ReplayStandbyLog{}
+	err = c.BindJSON(logReplayParam)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	if logReplayParam.Timestamp == nil {
+		SendBadRequestResponse(c, nil, fmt.Errorf("timestamp is required"))
+		return
+	}
+	tenant, err := oceanbase.ReplayStandbyLog(types.NamespacedName{
+		Name:      nn.Name,
+		Namespace: nn.Namespace,
+	}, *logReplayParam.Timestamp)
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
 }
 
 // @ID UpgradeTenantVersion
@@ -250,7 +322,7 @@ func ChangeTenantRole(c *gin.Context) {
 // @Description Upgrade tenant compatibility version of specific tenant to match the version of cluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
@@ -258,16 +330,53 @@ func ChangeTenantRole(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenant/{namespace}/{name}/version [POST]
 func UpgradeTenantVersion(c *gin.Context) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	tenant, err := oceanbase.UpgradeTenantVersion(types.NamespacedName{
+		Name:      nn.Name,
+		Namespace: nn.Namespace,
+	})
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
+}
+
+// @ID ChangeTenantRole
+// @Tags Obtenant
+// @Summary [TODO] Change tenant role of specific tenant
+// @Description Change tenant role of specific tenant, if a tenant is a standby tenant, it can be changed to primary tenant, vice versa
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenant/{namespace}/{name}/role [POST]
+func ChangeTenantRole(c *gin.Context) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
 	SendNotImplementedResponse(c, nil, nil)
 }
 
 // @ID CreateBackupPolicy
 // @Tags Obtenant
-// @Summary Create backup policy of specific tenant
+// @Summary [TODO] Create backup policy of specific tenant
 // @Description Create backup policy of specific tenant, passwords should be encrypted by AES
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.BackupPolicy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
@@ -281,11 +390,11 @@ func CreateBackupPolicy(c *gin.Context) {
 
 // @ID UpdateBackupPolicy
 // @Tags Obtenant
-// @Summary Update backup policy of specific tenant
+// @Summary [TODO] Update backup policy of specific tenant
 // @Description Update backup policy of specific tenant
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.BackupPolicy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
@@ -299,7 +408,7 @@ func UpdateBackupPolicy(c *gin.Context) {
 
 // @ID DeleteBackupPolicy
 // @Tags Obtenant
-// @Summary Delete backup policy of specific tenant
+// @Summary [TODO] Delete backup policy of specific tenant
 // @Description Delete backup policy of specific tenant
 // @Accept application/json
 // @Produce application/json
@@ -311,5 +420,24 @@ func UpdateBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [DELETE]
 func DeleteBackupPolicy(c *gin.Context) {
+	SendNotImplementedResponse(c, nil, nil)
+}
+
+// @ID ListBackupJobs
+// @Tags Obtenant
+// @Summary [TODO] List backup jobs of specific tenant
+// @Description List backup jobs of specific tenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]response.BackupJob}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Param type path string true "backup job type" Enums(FULL,INCR,CLEAN,ARCHIVE)
+// @Param limit query int false "limit" default(10)
+// @Router /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs [GET]
+func ListBackupJobs(c *gin.Context) {
 	SendNotImplementedResponse(c, nil, nil)
 }

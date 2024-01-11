@@ -1,14 +1,19 @@
 package oceanbase
 
 import (
+	"context"
 	"errors"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
+	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase/schema"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -117,8 +122,8 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 		OBTenantBrief: *buildBriefFromApiType(t),
 	}
 
-	rt.RootCredential = t.Spec.Credentials.Root
-	rt.StandbyROCredentail = t.Spec.Credentials.StandbyRO
+	rt.RootCredential = t.Status.Credentials.Root
+	rt.StandbyROCredentail = t.Status.Credentials.StandbyRO
 
 	if t.Status.Source != nil && t.Status.Source.Tenant != nil {
 		rt.PrimaryTenant = *t.Status.Source.Tenant
@@ -184,7 +189,7 @@ func CreateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 	return buildDetailFromApiType(tenant), nil
 }
 
-func UpdateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
+func updateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	var err error
 	tenant, err := oceanbase.GetOBTenant(nn)
 	if err != nil {
@@ -234,4 +239,150 @@ func GetOBTenant(nn types.NamespacedName) (*response.OBTenantDetail, error) {
 
 func DeleteOBTenant(nn types.NamespacedName) error {
 	return oceanbase.DeleteOBTenant(nn)
+}
+
+func ModifyOBTenantUnitNumber(nn types.NamespacedName, unitNumber int) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+
+	tenant.Spec.UnitNumber = unitNumber
+	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}
+
+func ModifyOBTenantUnitConfig(nn types.NamespacedName, zone string, unitConfig *param.UnitConfig) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	for i := range tenant.Spec.Pools {
+		if tenant.Spec.Pools[i].Zone == zone {
+			tenant.Spec.Pools[i].UnitConfig = &v1alpha1.UnitConfig{
+				MaxCPU:      resource.MustParse(unitConfig.MaxCPU),
+				MemorySize:  resource.MustParse(unitConfig.MemorySize),
+				MinCPU:      resource.MustParse(unitConfig.MinCPU),
+				LogDiskSize: resource.MustParse(unitConfig.LogDiskSize),
+				MaxIops:     unitConfig.MaxIops,
+				MinIops:     unitConfig.MinIops,
+				IopsWeight:  unitConfig.IopsWeight,
+			}
+			break
+		}
+	}
+	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}
+
+func ModifyOBTenantRootPassword(nn types.NamespacedName, rootPassword string) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	// create new secret
+	k8sclient := client.GetClient()
+	newRootSecretName := nn.Name + "-root-" + rand.String(6)
+	_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      newRootSecretName,
+			Namespace: nn.Namespace,
+		},
+		StringData: map[string]string{
+			"password": rootPassword,
+		},
+	}, v1.CreateOptions{})
+
+	changePwdOp := v1alpha1.OBTenantOperation{
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: nn.Name + "-change-root-pwd-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBTenantOperationSpec{
+			Type: apiconst.TenantOpChangePwd,
+			ChangePwd: &v1alpha1.OBTenantOpChangePwdSpec{
+				Tenant:    nn.Name,
+				SecretRef: newRootSecretName,
+			},
+		},
+	}
+	_, err = oceanbase.CreateOBTenantOperation(&changePwdOp)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}
+
+func ReplayStandbyLog(nn types.NamespacedName, timestamp string) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	if tenant.Status.TenantRole != apiconst.TenantRoleStandby {
+		return nil, errors.New("The tenant is not standby tenant")
+	}
+	replayLogOp := v1alpha1.OBTenantOperation{
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: nn.Name + "-replay-log-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBTenantOperationSpec{
+			Type: apiconst.TenantOpReplayLog,
+			ReplayUntil: &v1alpha1.RestoreUntilConfig{
+				Timestamp: &timestamp,
+			},
+			TargetTenant: &nn.Name,
+		},
+	}
+	_, err = oceanbase.CreateOBTenantOperation(&replayLogOp)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}
+
+func UpgradeTenantVersion(nn types.NamespacedName) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	if tenant.Status.TenantRole != apiconst.TenantRolePrimary {
+		return nil, errors.New("The tenant is not primary tenant")
+	}
+	upgradeOp := v1alpha1.OBTenantOperation{
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: nn.Name + "-upgrade-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBTenantOperationSpec{
+			Type:         apiconst.TenantOpUpgrade,
+			TargetTenant: &nn.Name,
+		},
+	}
+	_, err = oceanbase.CreateOBTenantOperation(&upgradeOp)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}
+
+func ChangeTenantRole(nn types.NamespacedName, p param.ChangeTenantRole) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: to be implemented
+	return buildDetailFromApiType(tenant), nil
 }

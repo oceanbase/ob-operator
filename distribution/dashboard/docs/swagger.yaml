@@ -331,6 +331,74 @@ definitions:
       successful:
         type: boolean
     type: object
+  response.BackupJob:
+    properties:
+      backupPolicyName:
+        type: string
+      encryptionSecret:
+        type: string
+      endTime:
+        description: End time of the backup job, empty for ARCHIVE job
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      path:
+        description: Empty for Clean job
+        type: string
+      startTime:
+        description: Start time of the backup job, StartScnDisplay for ARCHIVE job
+        type: string
+      status:
+        type: string
+      statusInDatabase:
+        type: string
+      tenantName:
+        type: string
+      type:
+        description: 'Enum: FULL, INCR, ARCHIVE, CLEAN'
+        type: string
+    type: object
+  response.BackupPolicy:
+    properties:
+      archiveSource:
+        type: string
+      bakDataSource:
+        type: string
+      bakEncryptionSecret:
+        type: string
+      destType:
+        description: 'Enum: NFS, OSS'
+        type: string
+      jobKeepWindow:
+        type: string
+      latestArchiveJob:
+        $ref: '#/definitions/response.BackupJob'
+      latestCleanJob:
+        $ref: '#/definitions/response.BackupJob'
+      latestFullBackup:
+        $ref: '#/definitions/response.BackupJob'
+      latestIncrBackup:
+        $ref: '#/definitions/response.BackupJob'
+      ossAccessSecret:
+        type: string
+      pieceInterval:
+        type: string
+      recoveryWindow:
+        type: string
+      scheduleDates:
+        items:
+          $ref: '#/definitions/param.ScheduleDate'
+        type: array
+      scheduleType:
+        type: string
+      status:
+        type: string
+    required:
+    - destType
+    - scheduleType
+    type: object
   response.DashboardInfo:
     properties:
       appName:
@@ -1588,7 +1656,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1604,6 +1677,67 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs:
+    get:
+      consumes:
+      - application/json
+      description: List backup jobs of specific tenant
+      operationId: ListBackupJobs
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: backup job type
+        enum:
+        - FULL
+        - INCR
+        - CLEAN
+        - ARCHIVE
+        in: path
+        name: type
+        required: true
+        type: string
+      - default: 10
+        description: limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.BackupJob'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: '[TODO] List backup jobs of specific tenant'
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
@@ -1640,7 +1774,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1694,7 +1833,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Delete backup policy of specific tenant
+      summary: '[TODO] Delete backup policy of specific tenant'
       tags:
       - Obtenant
     post:
@@ -1725,7 +1864,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.BackupPolicy'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1738,7 +1882,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Update backup policy of specific tenant
+      summary: '[TODO] Update backup policy of specific tenant'
       tags:
       - Obtenant
     put:
@@ -1770,7 +1914,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.BackupPolicy'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1783,7 +1932,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Create backup policy of specific tenant
+      summary: '[TODO] Create backup policy of specific tenant'
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/logreplay:
@@ -1815,7 +1964,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1857,7 +2011,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1870,7 +2029,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Change tenant role of specific tenant
+      summary: '[TODO] Change tenant role of specific tenant'
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/rootPassword:
@@ -1902,7 +2061,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1949,7 +2113,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1991,7 +2160,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
         "400":
           description: Bad Request
           schema:

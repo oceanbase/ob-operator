@@ -1,9 +1,5 @@
 package response
 
-import (
-	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
-)
-
 // @Description Brief information about OBTenant
 type OBTenantBrief struct {
 	Name        string            `json:"name"`        // Name of the resource
@@ -38,14 +34,6 @@ type OBTenantReplica struct {
 	MinIops     int    `json:"minIops,omitempty"`
 	IopsWeight  int    `json:"iopsWeight,omitempty"`
 	LogDiskSize string `json:"logDiskSize,omitempty"`
-}
-
-type BackupPolicy struct {
-	param.BackupPolicyBase `json:",inline"`
-
-	Status              string `json:"status"`
-	OSSAccessSecret     string `json:"ossAccessSecret,omitempty"`
-	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
 }
 
 type RestoreSource struct {

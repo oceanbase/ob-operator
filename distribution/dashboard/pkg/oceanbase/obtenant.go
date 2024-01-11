@@ -96,3 +96,26 @@ func DeleteOBTenant(nn types.NamespacedName) error {
 	}
 	return nil
 }
+
+func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenantOperation, error) {
+	clt := client.GetClient()
+	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(op)
+	if err != nil {
+		logger.Info("Convert tenant operation to unstructured", "err", err)
+		return nil, errors.Wrap(err, "Convert tenant operation to unstructured")
+	}
+	tenantUnstructured := &unstructured.Unstructured{Object: objMap}
+	tenantUnstructured.SetGroupVersionKind(schema.OBTenantOperationGVK)
+	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(op.Namespace).Create(context.TODO(), tenantUnstructured, metav1.CreateOptions{})
+	if err != nil {
+		logger.Info("Create tenant operation", "err", err)
+		return nil, errors.Wrap(err, "Create tenant ooperation")
+	}
+	operation := &v1alpha1.OBTenantOperation{}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(newTenant.UnstructuredContent(), operation)
+	if err != nil {
+		logger.Info("Convert unstructured tenant operation to typed", "err", err)
+		return nil, errors.Wrap(err, "Convert unstructured tenant operation to typed")
+	}
+	return operation, nil
+}

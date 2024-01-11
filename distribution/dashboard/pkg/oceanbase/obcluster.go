@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/pkg/const/oceanbase"
+	oceanbaseconst "github.com/oceanbase/oceanbase-dashboard/internal/business/constant"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase/schema"
 	"github.com/pkg/errors"

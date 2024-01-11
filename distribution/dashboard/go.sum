@@ -156,6 +156,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8m
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oceanbase/ob-operator v1.0.1-0.20231018063250-b69176dad6c2 h1:jxqpssjU1Q0ISmKEYLcrFhVSqi+dE4EAuqL2K4kSNz4=
 github.com/oceanbase/ob-operator v1.0.1-0.20231018063250-b69176dad6c2/go.mod h1:IuzbaDy/SfPWPmnzFpjIILTkDcttM/frGZgwsEIeu+o=
+github.com/oceanbase/ob-operator v1.0.1-0.20240103134417-b81dc590e65f h1:fCDg6dAzTBFqOT04URXoYof2vqcvEFqEVBuyzwcGcw4=
+github.com/oceanbase/ob-operator v1.0.1-0.20240103134417-b81dc590e65f/go.mod h1:0cC2wh+/lDWFUHgyH7ZiCZqWCo+dQcKHwFOTQQFGpGI=
 github.com/onsi/ginkgo/v2 v2.11.0 h1:WgqUCUt/lT6yXoQ8Wef0fsNn5cAuMK7+KT9UFRz2tcU=
 github.com/onsi/gomega v1.27.10 h1:naR28SdDFlqrG6kScpT8VWpu1xWY5nJRCF3XaYyBjhI=
 github.com/pelletier/go-toml/v2 v2.0.1/go.mod h1:r9LEWfGN8R5k0VXJ+0BkIe7MYkRdwZOjgMj2KwnJFUo=
