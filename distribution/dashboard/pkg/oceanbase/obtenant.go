@@ -133,7 +133,7 @@ func GetTenantBackupPolicy(nn types.NamespacedName) (*v1alpha1.OBTenantBackupPol
 		return nil, errors.Wrap(err, "Convert unstructured tenant backup policy to typed")
 	}
 	if len(p.Items) == 0 {
-		return nil, errors.New("Tenant backup policy not found")
+		return nil, nil
 	}
 	return &p.Items[0], nil
 }
