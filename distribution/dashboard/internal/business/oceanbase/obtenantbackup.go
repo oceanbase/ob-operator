@@ -9,6 +9,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -120,6 +121,21 @@ func buildBackupJobModelType(p *v1alpha1.OBTenantBackup) *response.BackupJob {
 	return res
 }
 
+func GetTenantBackupPolicy(nn types.NamespacedName) (*response.BackupPolicy, error) {
+	_, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, NewOBError(ErrorTypeNotFound, "Tenant not found")
+		}
+		return nil, NewOBError(ErrorTypeInternal, err.Error())
+	}
+	policy, err := oceanbase.GetTenantBackupPolicy(nn)
+	if err != nil {
+		return nil, NewOBError(ErrorTypeInternal, err.Error())
+	}
+	return buildBackupPolicyModelType(policy), nil
+}
+
 func CreateTenantBackupPolicy(nn types.NamespacedName, p *param.CreateBackupPolicy) (*response.BackupPolicy, error) {
 	tenant, err := oceanbase.GetOBTenant(nn)
 	if err != nil {
@@ -174,6 +190,25 @@ func DeleteTenantBackupPolicy(nn types.NamespacedName) error {
 	return oceanbase.DeleteTenantBackupPolicy(nn)
 }
 
-func ListBackupJobs(nn types.NamespacedName, jobType string, limit int) ([]response.BackupJob, error) {
-	return nil, nil
+func ListBackupJobs(nn types.NamespacedName, jobType string, limit int) ([]*response.BackupJob, error) {
+	policy, err := oceanbase.GetTenantBackupPolicy(nn)
+	if err != nil {
+		return nil, NewOBError(ErrorTypeInternal, err.Error())
+	}
+	listOption := metav1.ListOptions{}
+	if jobType != "" && jobType != "ALL" {
+		listOption.LabelSelector = oceanbaseconst.LabelRefBackupPolicy + "=" + policy.Name + "," + oceanbaseconst.LabelBackupType + "=" + jobType
+	} else {
+		listOption.LabelSelector = oceanbaseconst.LabelRefBackupPolicy + "=" + policy.Name
+	}
+	listOption.Limit = int64(limit)
+	jobs, err := oceanbase.ListBackupJobs(listOption)
+	if err != nil {
+		return nil, NewOBError(ErrorTypeInternal, err.Error())
+	}
+	res := make([]*response.BackupJob, 0)
+	for _, job := range jobs.Items {
+		res = append(res, buildBackupJobModelType(&job))
+	}
+	return res, nil
 }

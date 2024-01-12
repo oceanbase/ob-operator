@@ -1735,7 +1735,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: '[TODO] List backup jobs of specific tenant'
+      summary: List backup jobs of specific tenant
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
@@ -1832,6 +1832,49 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: Delete backup policy of specific tenant
+      tags:
+      - Obtenant
+    get:
+      consumes:
+      - application/json
+      description: Get backup policy of specific tenant
+      operationId: GetBackupPolicy
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.BackupPolicy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Get backup policy of specific tenant
       tags:
       - Obtenant
     post:
@@ -2027,7 +2070,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: '[TODO] Change tenant role of specific tenant'
+      summary: Change tenant role of specific tenant
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/rootPassword:

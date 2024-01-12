@@ -2,10 +2,13 @@ package handler
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	logger "github.com/sirupsen/logrus"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -29,7 +32,10 @@ func ListAllTenants(c *gin.Context) {
 	if c.Query("obcluster") != "" {
 		selector = fmt.Sprintf("ref-obcluster=%s", c.Query("obcluster"))
 	}
-	tenants, err := oceanbase.ListAllOBTenants(selector)
+	listOptions := metav1.ListOptions{
+		LabelSelector: selector,
+	}
+	tenants, err := oceanbase.ListAllOBTenants(listOptions)
 	if err != nil {
 		SendInternalServerErrorResponse(c, nil, err)
 		return
@@ -349,7 +355,7 @@ func UpgradeTenantVersion(c *gin.Context) {
 
 // @ID ChangeTenantRole
 // @Tags Obtenant
-// @Summary [TODO] Change tenant role of specific tenant
+// @Summary Change tenant role of specific tenant
 // @Description Change tenant role of specific tenant, if a tenant is a standby tenant, it can be changed to primary tenant, vice versa
 // @Accept application/json
 // @Produce application/json
@@ -367,7 +373,26 @@ func ChangeTenantRole(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	SendNotImplementedResponse(c, nil, nil)
+	p := param.ChangeTenantRole{}
+	err = c.BindJSON(&p)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	tenant, err := oceanbase.ChangeTenantRole(types.NamespacedName{
+		Name:      nn.Name,
+		Namespace: nn.Namespace,
+	}, &p)
+	if err != nil {
+		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
+			SendBadRequestResponse(c, nil, err)
+			return
+		} else {
+			SendInternalServerErrorResponse(c, nil, err)
+			return
+		}
+	}
+	SendSuccessfulResponse(c, tenant)
 }
 
 // @ID CreateBackupPolicy
@@ -487,9 +512,40 @@ func DeleteBackupPolicy(c *gin.Context) {
 	SendSuccessfulResponse(c, nil)
 }
 
+// @ID GetBackupPolicy
+// @Tags Obtenant
+// @Summary Get backup policy of specific tenant
+// @Description Get backup policy of specific tenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.BackupPolicy}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [GET]
+func GetBackupPolicy(c *gin.Context) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	resp, err := oceanbase.GetTenantBackupPolicy(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	})
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, resp)
+}
+
 // @ID ListBackupJobs
 // @Tags Obtenant
-// @Summary [TODO] List backup jobs of specific tenant
+// @Summary List backup jobs of specific tenant
 // @Description List backup jobs of specific tenant
 // @Accept application/json
 // @Produce application/json
@@ -503,11 +559,30 @@ func DeleteBackupPolicy(c *gin.Context) {
 // @Param limit query int false "limit" default(10)
 // @Router /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs [GET]
 func ListBackupJobs(c *gin.Context) {
-	nn := &param.NamespacedName{}
-	err := c.BindUri(nn)
+	p := struct {
+		param.NamespacedName `uri:"namespace,name"`
+		Type                 string `uri:"type"`
+	}{}
+	err := c.BindUri(p)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	SendNotImplementedResponse(c, nil, nil)
+	limit := 10
+	if c.Query("limit") != "" {
+		limit, err = strconv.Atoi(c.Query("limit"))
+		if err != nil {
+			SendBadRequestResponse(c, nil, err)
+			return
+		}
+	}
+	jobs, err := oceanbase.ListBackupJobs(types.NamespacedName{
+		Namespace: p.Namespace,
+		Name:      p.Name,
+	}, p.Type, limit)
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, jobs)
 }

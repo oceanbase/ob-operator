@@ -1449,6 +1449,74 @@ const docTemplate = `{
             }
         },
         "/api/v1/obtenant/{namespace}/{name}/backupPolicy": {
+            "get": {
+                "description": "Get backup policy of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Get backup policy of specific tenant",
+                "operationId": "GetBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "description": "Create backup policy of specific tenant, passwords should be encrypted by AES",
                 "consumes": [
@@ -1756,7 +1824,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "[TODO] Change tenant role of specific tenant",
+                "summary": "Change tenant role of specific tenant",
                 "operationId": "ChangeTenantRole",
                 "parameters": [
                     {
@@ -2064,7 +2132,7 @@ const docTemplate = `{
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "[TODO] List backup jobs of specific tenant",
+                "summary": "List backup jobs of specific tenant",
                 "operationId": "ListBackupJobs",
                 "parameters": [
                     {

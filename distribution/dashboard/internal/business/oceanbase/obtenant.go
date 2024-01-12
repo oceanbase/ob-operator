@@ -15,6 +15,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase/schema"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -217,8 +218,8 @@ func updateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ListAllOBTenants(labelSelector string) ([]*response.OBTenantBrief, error) {
-	tenantList, err := oceanbase.ListAllOBTenants(labelSelector)
+func ListAllOBTenants(listOptions metav1.ListOptions) ([]*response.OBTenantBrief, error) {
+	tenantList, err := oceanbase.ListAllOBTenants(listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -377,12 +378,36 @@ func UpgradeTenantVersion(nn types.NamespacedName) (*response.OBTenantDetail, er
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ChangeTenantRole(nn types.NamespacedName, p param.ChangeTenantRole) (*response.OBTenantDetail, error) {
+func ChangeTenantRole(nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
 	var err error
 	tenant, err := oceanbase.GetOBTenant(nn)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: to be implemented
+	if tenant.Status.TenantRole == apitypes.TenantRole(p.TenantRole) {
+		return nil, NewOBError(ErrorTypeBadRequest, "The tenant is already "+string(p.TenantRole))
+	}
+	if p.Switchover && (tenant.Status.Source == nil || tenant.Status.Source.Tenant == nil) {
+		return nil, NewOBError(ErrorTypeBadRequest, "The tenant has no primary tenant")
+	}
+	changeRoleOp := v1alpha1.OBTenantOperation{
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: nn.Name + "-change-role-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBTenantOperationSpec{},
+	}
+	if p.Switchover {
+		changeRoleOp.Spec.Type = apiconst.TenantOpSwitchover
+		changeRoleOp.Spec.Switchover.PrimaryTenant = *tenant.Status.Source.Tenant
+		changeRoleOp.Spec.Switchover.StandbyTenant = nn.Name
+	} else {
+		changeRoleOp.Spec.Type = apiconst.TenantOpFailover
+		changeRoleOp.Spec.Failover.StandbyTenant = nn.Name
+	}
+	_, err = oceanbase.CreateOBTenantOperation(&changeRoleOp)
+	if err != nil {
+		return nil, err
+	}
 	return buildDetailFromApiType(tenant), nil
 }
