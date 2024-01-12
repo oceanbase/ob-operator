@@ -613,11 +613,17 @@ definitions:
   response.OBTenantBrief:
     description: Brief information about OBTenant
     properties:
+      charset:
+        description: Charset of the tenant
+        type: string
       clusterName:
         description: Name of the cluster belonging to
         type: string
       createTime:
         description: Creation time of the tenant
+        type: string
+      locality:
+        description: Locality of the tenant units
         type: string
       name:
         description: Name of the resource
@@ -645,11 +651,17 @@ definitions:
     type: object
   response.OBTenantDetail:
     properties:
+      charset:
+        description: Charset of the tenant
+        type: string
       clusterName:
         description: Name of the cluster belonging to
         type: string
       createTime:
         description: Creation time of the tenant
+        type: string
+      locality:
+        description: Locality of the tenant units
         type: string
       name:
         description: Name of the resource

@@ -156,6 +156,8 @@ func buildBriefFromApiType(t *v1alpha1.OBTenant) *response.OBTenantBrief {
 	rt.TenantRole = string(t.Status.TenantRole)
 	rt.UnitNumber = t.Spec.UnitNumber
 	rt.Status = t.Status.Status
+	rt.Charset = t.Spec.Charset
+	rt.Locality = t.Status.TenantRecordInfo.Locality
 
 	for i := range t.Spec.Pools {
 		pool := t.Spec.Pools[i]
@@ -182,6 +184,52 @@ func CreateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 	t, err := buildOBTenantApiType(nn, p)
 	if err != nil {
 		return nil, err
+	}
+	if t.Spec.Credentials.Root != "" {
+		k8sclient := client.GetClient()
+		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      t.Spec.Credentials.Root,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": p.RootPassword,
+			},
+		}, v1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if t.Spec.Credentials.StandbyRO != "" {
+		k8sclient := client.GetClient()
+		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      t.Spec.Credentials.StandbyRO,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": rand.String(20),
+			},
+		}, v1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if t.Spec.Source != nil && t.Spec.Source.Restore != nil && t.Spec.Source.Restore.BakEncryptionSecret != "" &&
+		p.Source != nil && p.Source.Restore != nil && p.Source.Restore.BakEncryptionPassword != "" {
+		k8sclient := client.GetClient()
+		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      t.Spec.Credentials.Root,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": p.Source.Restore.BakEncryptionPassword,
+			},
+		}, v1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
 	}
 	tenant, err := oceanbase.CreateOBTenant(t)
 	if err != nil {

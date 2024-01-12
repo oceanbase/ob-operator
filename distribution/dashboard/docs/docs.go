@@ -3307,12 +3307,20 @@ const docTemplate = `{
             "description": "Brief information about OBTenant",
             "type": "object",
             "properties": {
+                "charset": {
+                    "description": "Charset of the tenant",
+                    "type": "string"
+                },
                 "clusterName": {
                     "description": "Name of the cluster belonging to",
                     "type": "string"
                 },
                 "createTime": {
                     "description": "Creation time of the tenant",
+                    "type": "string"
+                },
+                "locality": {
+                    "description": "Locality of the tenant units",
                     "type": "string"
                 },
                 "name": {
@@ -3351,12 +3359,20 @@ const docTemplate = `{
         "response.OBTenantDetail": {
             "type": "object",
             "properties": {
+                "charset": {
+                    "description": "Charset of the tenant",
+                    "type": "string"
+                },
                 "clusterName": {
                     "description": "Name of the cluster belonging to",
                     "type": "string"
                 },
                 "createTime": {
                     "description": "Creation time of the tenant",
+                    "type": "string"
+                },
+                "locality": {
+                    "description": "Locality of the tenant units",
                     "type": "string"
                 },
                 "name": {

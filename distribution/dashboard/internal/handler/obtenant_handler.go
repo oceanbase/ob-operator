@@ -213,10 +213,11 @@ func ModifyUnitNumber(c *gin.Context) {
 // @Security ApiKeyAuth
 func ModifyUnitConfig(c *gin.Context) {
 	nn := struct {
-		param.NamespacedName `uri:"namespace,name"`
-		Zone                 string `uri:"zone"`
+		Name      string `uri:"name"`
+		Namespace string `uri:"namespace"`
+		Zone      string `uri:"zone"`
 	}{}
-	err := c.BindUri(nn)
+	err := c.BindUri(&nn)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return
@@ -560,10 +561,11 @@ func GetBackupPolicy(c *gin.Context) {
 // @Router /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs [GET]
 func ListBackupJobs(c *gin.Context) {
 	p := struct {
-		param.NamespacedName `uri:"namespace,name"`
-		Type                 string `uri:"type"`
+		Namespace string `uri:"namespace"`
+		Name      string `uri:"name"`
+		Type      string `uri:"type"`
 	}{}
-	err := c.BindUri(p)
+	err := c.BindUri(&p)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return

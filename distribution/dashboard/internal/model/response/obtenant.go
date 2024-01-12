@@ -11,6 +11,8 @@ type OBTenantBrief struct {
 	Topology    []OBTenantReplica `json:"topology"`    // Topology of the tenant
 	Status      string            `json:"status"`      // Status of the tenant
 	CreateTime  string            `json:"createTime"`  // Creation time of the tenant
+	Locality    string            `json:"locality"`    // Locality of the tenant units
+	Charset     string            `json:"charset"`     // Charset of the tenant
 }
 
 type OBTenantDetail struct {
