@@ -15,6 +15,7 @@ package obparameter
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -158,7 +159,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 				Server: fmt.Sprintf("%s:%d", parameterInfo.SvrIp, parameterInfo.SvrPort),
 			}
 			parameterValues = append(parameterValues, parameterValue)
-			if parameterInfo.Value != m.OBParameter.Spec.Parameter.Value {
+			if strings.ToLower(parameterInfo.Value) != strings.ToLower(m.OBParameter.Spec.Parameter.Value) {
 				parameterMatched = false
 			}
 		}
