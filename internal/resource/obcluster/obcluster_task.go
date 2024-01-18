@@ -979,7 +979,7 @@ outer:
 	return nil
 }
 
-func (m *OBClusterManager) CheckImagePullReady() tasktypes.TaskError {
+func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 	jobName := "image-pull-ready-" + rand.String(8)
 	var ttl int32 = 120
 	var backoffLimit int32 = 32

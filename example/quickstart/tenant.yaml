@@ -1,11 +1,11 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenant
 metadata:
-  name: t1
+  name: demo-tenant
   namespace: default
 spec:
   obcluster: test
-  tenantName: t1
+  tenantName: demo_tenant
   unitNum: 1
   charset: utf8mb4
   connectWhiteList: "%"
