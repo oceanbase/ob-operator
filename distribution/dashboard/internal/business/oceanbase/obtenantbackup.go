@@ -1,6 +1,10 @@
 package oceanbase
 
 import (
+	"fmt"
+	"strconv"
+	"strings"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -25,7 +29,7 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 		JobKeepWindow: p.JobKeepWindow,
 		LogArchive: v1alpha1.LogArchiveConfig{
 			Destination: apitypes.BackupDestination{
-				Path:            p.ArchiveSource,
+				Path:            p.ArchivePath,
 				Type:            apitypes.BackupDestType(p.DestType),
 				OSSAccessSecret: "",
 			},
@@ -33,7 +37,7 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 		},
 		DataBackup: v1alpha1.DataBackupConfig{
 			Destination: apitypes.BackupDestination{
-				Path:            p.BakDataSource,
+				Path:            p.BakDataPath,
 				Type:            apitypes.BackupDestType(p.DestType),
 				OSSAccessSecret: "",
 			},
@@ -54,13 +58,35 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 		encryptionSecretName := nn.Name + "-backup-encryption-secret-" + rand.String(6)
 		policy.Spec.DataBackup.EncryptionSecret = encryptionSecretName
 	}
-	// TODO:
+
+	hourMinutes := strings.Split(p.ScheduleTime, ":")
+	crontabParts := fmt.Sprintf("%s %s", hourMinutes[1], hourMinutes[0])
+
 	if p.ScheduleType == "Weekly" {
-		policy.Spec.DataBackup.FullCrontab = "0 0 * * 0"
-		policy.Spec.DataBackup.IncrementalCrontab = "0 0 * * 1-6"
+		crontabParts += " * *"
+		fullCrontabWeekdays := make([]string, 0)
+		incrementalCrontabWeekdays := make([]string, 0)
+		for _, date := range p.ScheduleDates {
+			if date.BackupType == "Full" {
+				fullCrontabWeekdays = append(fullCrontabWeekdays, fmt.Sprint(date.Day%7))
+			} else if date.BackupType == "Incremental" {
+				incrementalCrontabWeekdays = append(incrementalCrontabWeekdays, fmt.Sprint(date.Day%7))
+			}
+		}
+		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
+		policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
 	} else if p.ScheduleType == "Monthly" {
-		policy.Spec.DataBackup.FullCrontab = "0 0 1 * *"
-		policy.Spec.DataBackup.IncrementalCrontab = "0 0 2-31 * *"
+		fullCrontabMonthdays := make([]string, 0)
+		incrementalCrontabMonthdays := make([]string, 0)
+		for _, date := range p.ScheduleDates {
+			if date.BackupType == "Full" {
+				fullCrontabMonthdays = append(fullCrontabMonthdays, fmt.Sprint(date.Day))
+			} else if date.BackupType == "Incremental" {
+				incrementalCrontabMonthdays = append(incrementalCrontabMonthdays, fmt.Sprint(date.Day))
+			}
+		}
+		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
+		policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
 	}
 	return policy
 }
@@ -68,11 +94,11 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.BackupPolicy {
 	res := &response.BackupPolicy{
 		BackupPolicyBase: param.BackupPolicyBase{
-			DestType:      param.BackupDestType(p.Spec.DataBackup.Destination.Type),
-			ArchiveSource: p.Spec.LogArchive.Destination.Path,
-			BakDataSource: p.Spec.DataBackup.Destination.Path,
-			// TODO:
+			DestType:       param.BackupDestType(p.Spec.DataBackup.Destination.Type),
+			ArchivePath:    p.Spec.LogArchive.Destination.Path,
+			BakDataPath:    p.Spec.DataBackup.Destination.Path,
 			ScheduleType:   "",
+			ScheduleTime:   "",
 			ScheduleDates:  []param.ScheduleDate{},
 			JobKeepWindow:  p.Spec.JobKeepWindow,
 			RecoveryWindow: p.Spec.DataClean.RecoveryWindow,
@@ -84,6 +110,75 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 		Status:              string(p.Status.Status),
 		OSSAccessSecret:     p.Spec.LogArchive.Destination.OSSAccessSecret,
 		BakEncryptionSecret: p.Spec.DataBackup.EncryptionSecret,
+	}
+
+	fullParts := strings.Split(p.Spec.DataBackup.FullCrontab, " ")
+	incrementalParts := strings.Split(p.Spec.DataBackup.IncrementalCrontab, " ")
+	res.ScheduleTime = fmt.Sprintf("%s:%s", fullParts[1], fullParts[0])
+	var fullDays, incrementalDays []string
+	var processDay func(day int) int
+
+	// Ends with "*", means the type is Monthly
+	if strings.HasSuffix(p.Spec.DataBackup.FullCrontab, "*") {
+		res.ScheduleType = "Monthly"
+		fullDays = strings.Split(fullParts[2], ",")
+		incrementalDays = strings.Split(incrementalParts[2], ",")
+		processDay = func(day int) int {
+			return day
+		}
+	} else {
+		res.ScheduleType = "Weekly"
+		fullDays = strings.Split(fullParts[4], ",")
+		incrementalDays = strings.Split(incrementalParts[4], ",")
+		// Crontab use 0-6 to represent Sunday to Saturday, but we use 1-7
+		processDay = func(day int) int {
+			if day == 0 {
+				return 7
+			}
+			return day
+		}
+	}
+	var i, j int
+	for i < len(fullDays) && j < len(incrementalDays) {
+		fullDay, _ := strconv.Atoi(fullDays[i])
+		incrementalDay, _ := strconv.Atoi(incrementalDays[j])
+		// It should not happen, but just in case
+		if fullDay == incrementalDay {
+			res.ScheduleDates = append(res.ScheduleDates, param.ScheduleDate{
+				Day:        processDay(fullDay),
+				BackupType: "Full",
+			})
+			i++
+			j++
+		} else if fullDay < incrementalDay {
+			res.ScheduleDates = append(res.ScheduleDates, param.ScheduleDate{
+				Day:        processDay(fullDay),
+				BackupType: "Full",
+			})
+			i++
+		} else {
+			res.ScheduleDates = append(res.ScheduleDates, param.ScheduleDate{
+				Day:        processDay(incrementalDay),
+				BackupType: "Incremental",
+			})
+			j++
+		}
+	}
+	for i < len(fullDays) {
+		fullDay, _ := strconv.Atoi(fullDays[i])
+		res.ScheduleDates = append(res.ScheduleDates, param.ScheduleDate{
+			Day:        processDay(fullDay),
+			BackupType: "Full",
+		})
+		i++
+	}
+	for j < len(incrementalDays) {
+		incrementalDay, _ := strconv.Atoi(incrementalDays[j])
+		res.ScheduleDates = append(res.ScheduleDates, param.ScheduleDate{
+			Day:        processDay(incrementalDay),
+			BackupType: "Incremental",
+		})
+		j++
 	}
 	return res
 }
@@ -187,7 +282,11 @@ func UpdateTenantBackupPolicy(nn types.NamespacedName, p *param.UpdateBackupPoli
 }
 
 func DeleteTenantBackupPolicy(nn types.NamespacedName) error {
-	return oceanbase.DeleteTenantBackupPolicy(nn)
+	policy, err := oceanbase.GetTenantBackupPolicy(nn)
+	if err != nil {
+		return NewOBError(ErrorTypeBadRequest, err.Error())
+	}
+	return oceanbase.DeleteTenantBackupPolicy(types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 }
 
 func ListBackupJobs(nn types.NamespacedName, jobType string, limit int) ([]*response.BackupJob, error) {

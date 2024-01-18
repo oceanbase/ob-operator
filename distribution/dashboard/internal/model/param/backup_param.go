@@ -2,12 +2,14 @@ package param
 
 type BackupPolicyBase struct {
 	// Enum: NFS, OSS
-	DestType      BackupDestType `json:"destType" binding:"required"`
-	ArchiveSource string         `json:"archiveSource"`
-	BakDataSource string         `json:"bakDataSource"`
+	DestType    BackupDestType `json:"destType" binding:"required"`
+	ArchivePath string         `json:"archivePath"`
+	BakDataPath string         `json:"bakDataPath"`
 
 	ScheduleType  string         `json:"scheduleType" binding:"required"`
 	ScheduleDates []ScheduleDate `json:"scheduleDates"`
+	// Description: HH:MM
+	ScheduleTime string `json:"scheduleTime,omitempty"`
 
 	JobKeepWindow  string `json:"jobKeepWindow,omitempty"`
 	RecoveryWindow string `json:"recoveryWindow,omitempty"`
