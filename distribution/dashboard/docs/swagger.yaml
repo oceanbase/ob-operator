@@ -30,9 +30,9 @@ definitions:
     type: object
   param.CreateBackupPolicy:
     properties:
-      archiveSource:
+      archivePath:
         type: string
-      bakDataSource:
+      bakDataPath:
         type: string
       bakEncryptionPassword:
         type: string
@@ -53,6 +53,9 @@ definitions:
         items:
           $ref: '#/definitions/param.ScheduleDate'
         type: array
+      scheduleTime:
+        description: 'Description: HH:MM'
+        type: string
       scheduleType:
         type: string
     required:
@@ -360,9 +363,9 @@ definitions:
     type: object
   response.BackupPolicy:
     properties:
-      archiveSource:
+      archivePath:
         type: string
-      bakDataSource:
+      bakDataPath:
         type: string
       bakEncryptionSecret:
         type: string
@@ -385,6 +388,9 @@ definitions:
         items:
           $ref: '#/definitions/param.ScheduleDate'
         type: array
+      scheduleTime:
+        description: 'Description: HH:MM'
+        type: string
       scheduleType:
         type: string
       status:

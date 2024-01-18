@@ -2427,10 +2427,10 @@ const docTemplate = `{
                 "scheduleType"
             ],
             "properties": {
-                "archiveSource": {
+                "archivePath": {
                     "type": "string"
                 },
-                "bakDataSource": {
+                "bakDataPath": {
                     "type": "string"
                 },
                 "bakEncryptionPassword": {
@@ -2460,6 +2460,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/param.ScheduleDate"
                     }
+                },
+                "scheduleTime": {
+                    "description": "Description: HH:MM",
+                    "type": "string"
                 },
                 "scheduleType": {
                     "type": "string"
@@ -2924,10 +2928,10 @@ const docTemplate = `{
                 "scheduleType"
             ],
             "properties": {
-                "archiveSource": {
+                "archivePath": {
                     "type": "string"
                 },
-                "bakDataSource": {
+                "bakDataPath": {
                     "type": "string"
                 },
                 "bakEncryptionSecret": {
@@ -2960,6 +2964,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/param.ScheduleDate"
                     }
+                },
+                "scheduleTime": {
+                    "description": "Description: HH:MM",
+                    "type": "string"
                 },
                 "scheduleType": {
                     "type": "string"
