@@ -268,22 +268,20 @@ definitions:
     type: object
   param.UnitConfig:
     properties:
+      cpuCount:
+        type: string
       iopsWeight:
         type: integer
       logDiskSize:
-        type: string
-      maxCPU:
         type: string
       maxIops:
         type: integer
       memorySize:
         type: string
-      minCPU:
-        type: string
       minIops:
         type: integer
     required:
-    - maxCPU
+    - cpuCount
     - memorySize
     type: object
   param.UpdateBackupPolicy:

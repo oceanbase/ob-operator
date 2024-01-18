@@ -69,9 +69,9 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 		}
 		if p.UnitConfig != nil {
 			apiPool.UnitConfig = &v1alpha1.UnitConfig{
-				MaxCPU:      resource.MustParse(p.UnitConfig.MaxCPU),
+				MaxCPU:      resource.MustParse(p.UnitConfig.CPUCount),
 				MemorySize:  resource.MustParse(p.UnitConfig.MemorySize),
-				MinCPU:      resource.MustParse(p.UnitConfig.MinCPU),
+				MinCPU:      resource.MustParse(p.UnitConfig.CPUCount),
 				LogDiskSize: resource.MustParse(p.UnitConfig.LogDiskSize),
 				MaxIops:     p.UnitConfig.MaxIops,
 				MinIops:     p.UnitConfig.MinIops,
@@ -314,9 +314,9 @@ func ModifyOBTenantUnitConfig(nn types.NamespacedName, zone string, unitConfig *
 	for i := range tenant.Spec.Pools {
 		if tenant.Spec.Pools[i].Zone == zone {
 			tenant.Spec.Pools[i].UnitConfig = &v1alpha1.UnitConfig{
-				MaxCPU:      resource.MustParse(unitConfig.MaxCPU),
+				MaxCPU:      resource.MustParse(unitConfig.CPUCount),
 				MemorySize:  resource.MustParse(unitConfig.MemorySize),
-				MinCPU:      resource.MustParse(unitConfig.MinCPU),
+				MinCPU:      resource.MustParse(unitConfig.CPUCount),
 				LogDiskSize: resource.MustParse(unitConfig.LogDiskSize),
 				MaxIops:     unitConfig.MaxIops,
 				MinIops:     unitConfig.MinIops,

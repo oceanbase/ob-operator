@@ -2783,26 +2783,23 @@ const docTemplate = `{
         "param.UnitConfig": {
             "type": "object",
             "required": [
-                "maxCPU",
+                "cpuCount",
                 "memorySize"
             ],
             "properties": {
+                "cpuCount": {
+                    "type": "string"
+                },
                 "iopsWeight": {
                     "type": "integer"
                 },
                 "logDiskSize": {
                     "type": "string"
                 },
-                "maxCPU": {
-                    "type": "string"
-                },
                 "maxIops": {
                     "type": "integer"
                 },
                 "memorySize": {
-                    "type": "string"
-                },
-                "minCPU": {
                     "type": "string"
                 },
                 "minIops": {
