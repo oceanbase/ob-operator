@@ -148,14 +148,27 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
 	}
 	var err error
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) != 0 {
+	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) != 0 {
+	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) != 0 {
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass))
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "forbid to shrink data storage size"))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "forbid to shrink log storage size"))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
 	}
 	if err != nil {
 		return nil, err
