@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import { useEffect, useState } from 'react';
 
-import { suffixSelector } from '.';
+import { SuffixSelector } from '.';
 const monitorTooltipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Monitor.TheImageShouldBeFully',
   defaultMessage:
@@ -130,7 +130,7 @@ export default function Monitor() {
               >
                 <InputNumber
                   min={1}
-                  addonAfter={suffixSelector}
+                  addonAfter={SuffixSelector}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Monitor.PleaseEnter',
                     defaultMessage: '请输入',

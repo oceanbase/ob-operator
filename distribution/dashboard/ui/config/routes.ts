@@ -61,6 +61,11 @@ export default [
             name:'集群详情监控'
           },
           {
+            path:'tenant',
+            component:'Cluster/Detail/Tenant',
+            name:'集群下的租户'
+          },
+          {
             path: '/cluster/:clusterId',
             redirect: 'overview',
             name: '概览页',

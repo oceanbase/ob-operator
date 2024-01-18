@@ -20,8 +20,8 @@ export async function logoutReq() {
 
 export async function infoReq() {
   return request('/api/v1/info', {
-    method: "GET",
-  })
+    method: 'GET',
+  });
 }
 
 /**
@@ -137,7 +137,7 @@ export async function createObclusterReq(body: any) {
 }
 
 export async function getObclusterListReq() {
-  const r = await request<API.ClusterList>('/api/v1/obclusters', {
+  const r = await request<API.ClusterListResponse>('/api/v1/obclusters', {
     method: 'GET',
   });
   if (r.successful) {
@@ -161,6 +161,21 @@ export async function getObclusterListReq() {
     return res;
   }
 
+  return [];
+}
+
+export async function getSimpleClusterList():Promise<API.SimpleClusterList>  {
+  const r = await request<API.ClusterListResponse>('/api/v1/obclusters', {
+    method: 'GET',
+  });
+  if (r.successful) {
+    return r.data.map((clusterDetail) => ({
+      clusterId:clusterDetail.clusterId,
+      name: clusterDetail.name,
+      namespace: clusterDetail.namespace,
+      topology: clusterDetail.topology,
+    }));
+  }
   return [];
 }
 

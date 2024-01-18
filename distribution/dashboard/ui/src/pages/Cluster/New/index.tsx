@@ -15,7 +15,7 @@ import Topo from './Topo';
 import { createObclusterReq } from '@/services';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey'
 
-export const suffixSelector = <div>GB</div>;
+export const SuffixSelector = <div>GB</div>;
 export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm();

@@ -25,6 +25,12 @@ const subSideMenus: MenuItem[] = [
     link: '/cluster',
     icon: <IconFont type="cluster" />,
   },
+  {
+    title: '租户',
+    key: 'tenant',
+    link: '/tenant',
+    icon: <IconFont type="tenant" />,
+  },
 ];
 
 const ClusterDetail: React.FC = () => {
@@ -62,6 +68,11 @@ const ClusterDetail: React.FC = () => {
       }),
       key: 'monitor',
       link: `/cluster/${clusterId}/monitor`,
+    },
+    {
+      title: '租户',
+      key: 'tenant',
+      link: `/cluster/${clusterId}/tenant`,
     },
   ];
   const userMenu = (

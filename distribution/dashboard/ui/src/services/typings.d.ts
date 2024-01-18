@@ -75,6 +75,17 @@ declare namespace API {
     topology: Topology[];
   } & ClusterInfo;
 
+  interface ClusterListResponse extends CommonResponse {
+    data: ClusterItem[];
+  }
+
+  type SimpleClusterList = {
+    name: string;
+    clusterId: number;
+    namespace: string;
+    topology: Topology[];
+  }[];
+
   type ClusterList = ClusterItem[];
 
   type modalType = 'upgrade' | 'addZone' | 'scaleServer';
@@ -91,8 +102,10 @@ declare namespace API {
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
 
   interface TenantDetail {
+    charset: string;
     clusterName: string;
     createTime: string;
+    locality: string;
     name: string;
     namespace: string;
     status: string;
@@ -120,7 +133,42 @@ declare namespace API {
     name: string;
   };
 
-  type TenantBody = {};
+  type TenantBody = {
+    connectWhiteList?: string;
+    name: string;
+    obcluster: string;
+    pools?: {
+      priority: number;
+      zone: string;
+    }[];
+    rootPassword: string;
+    source?: {
+      restore?: {
+        archiveSource: string;
+        bakDataSource: string;
+        bakEncryptionPassword?: string;
+        ossAccessId: string;
+        ossAccessKey: string;
+        type: string;
+        until?: {
+          timestamp?: string;
+          unlimited?: boolean;
+        };
+      };
+      tenant?: string;
+    };
+    tenantName: string;
+    tenantRole?: string;
+    unitConfig: {
+      iopsWeight?: number;
+      logDiskSize?: string;
+      cupNumber: number;
+      maxIops?: number;
+      memorySize: string;
+      minIops?: number;
+    };
+    unitNum: number;
+  };
   type TenantPolicy = {};
 
   interface CommonResponse {

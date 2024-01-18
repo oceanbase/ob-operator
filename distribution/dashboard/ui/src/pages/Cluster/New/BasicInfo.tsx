@@ -19,6 +19,7 @@ import AddNSModal from '@/components/customModal/AddNSModal';
 import { getNameSpaces } from '@/services';
 import copy from 'copy-to-clipboard';
 import { useState } from 'react';
+import PasswordInput from '@/components/PasswordInput';
 import {
   generateRandomPassword,
   passwordRules,
@@ -148,88 +149,12 @@ export default function BasicInfo({
             </Form.Item>
           </Col>
           <Col span={8} style={{ height: 48 }}>
-            <Tooltip
-              color="#fff"
-              overlayInnerStyle={{ color: 'rgba(0,0,0,.85)' }}
-              overlayClassName={styles.toolTipContent}
-              placement="bottomLeft"
-              title={
-                <ul>
-                  <li>
-                    {intl.formatMessage({
-                      id: 'OBDashboard.Cluster.New.BasicInfo.ToCharactersInLength',
-                      defaultMessage: '长度为 8~32 个字符',
-                    })}
-                  </li>
-                  <li>
-                    {intl.formatMessage({
-                      id: 'OBDashboard.Cluster.New.BasicInfo.CanOnlyContainLettersNumbers',
-                      defaultMessage:
-                        '只能包含字母、数字和特殊字符（~!@#%^&*_-+=|()',
-                    })}
-                    {}[]:;,.?/）
-                  </li>
-                  <li>
-                    {intl.formatMessage({
-                      id: 'OBDashboard.Cluster.New.BasicInfo.AtLeastUppercaseAndLowercase',
-                      defaultMessage:
-                        '大小写字母、数字和特殊字符都至少包含 2 个',
-                    })}
-                  </li>
-                </ul>
-              }
-            >
-              <Form.Item
-                label={intl.formatMessage({
-                  id: 'OBDashboard.Cluster.New.BasicInfo.Password',
-                  defaultMessage: '密码',
-                })}
-                name="rootPassword"
-                rules={passwordRules}
-                className={styles.passwordFormItem}
-                validateFirst
-              >
-                <Row gutter={8}>
-                  <Col style={{ flex: 1 }}>
-                    <Input.Password
-                      value={passwordVal}
-                      onChange={(val) => passwordChange(val.target.value)}
-                      placeholder={intl.formatMessage({
-                        id: 'OBDashboard.Cluster.New.BasicInfo.PleaseEnterOrGenerateRandomly',
-                        defaultMessage: '请输入或随机生成',
-                      })}
-                    />
-
-                    {textVisile && (
-                      <p style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
-                        {intl.formatMessage({
-                          id: 'OBDashboard.Cluster.New.BasicInfo.PleaseRememberThePasswordOr',
-                          defaultMessage: '请牢记密码，也可',
-                        })}
-                        <a onClick={passwordCopy}>
-                          {intl.formatMessage({
-                            id: 'OBDashboard.Cluster.New.BasicInfo.CopyPassword',
-                            defaultMessage: '复制密码',
-                          })}
-                        </a>
-                        {intl.formatMessage({
-                          id: 'OBDashboard.Cluster.New.BasicInfo.AndKeepItProperly',
-                          defaultMessage: '并妥善保存',
-                        })}
-                      </p>
-                    )}
-                  </Col>
-                  <Col>
-                    <Button onClick={genaretaPassword}>
-                      {intl.formatMessage({
-                        id: 'OBDashboard.Cluster.New.BasicInfo.RandomlyGenerated',
-                        defaultMessage: '随机生成',
-                      })}
-                    </Button>
-                  </Col>
-                </Row>
-              </Form.Item>
-            </Tooltip>
+              <PasswordInput 
+                value={passwordVal}
+                onChange={setPasswordVal}
+                form={form}
+                name='rootPassword'
+              />
           </Col>
           <Col span={8} style={{ height: 48 }}>
             <Tooltip
