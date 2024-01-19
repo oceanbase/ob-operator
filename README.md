@@ -16,7 +16,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.
@@ -30,7 +30,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 * Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
 ```
 
 * Development
@@ -45,7 +45,8 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.1
+helm repo update
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
 ```
 
 #### Verify deployment
@@ -62,19 +63,16 @@ oceanbase-controller-manager-86cfc8f7bf-4hfnj   2/2     Running   0          1m
 
 ### Deploy OceanBase Cluster
 
-Before creating an OceanBase cluster, you need to create several secrets to store specific users' passwords for OceanBase.
+Before creating an OceanBase cluster, you need to create necessary secret to store specific user's password for OceanBase.
 
 ```shell
 kubectl create secret generic root-password --from-literal=password='root_password'
-kubectl create secret generic proxyro-password --from-literal=password='proxyro_password'
-kubectl create secret generic monitor-password --from-literal=password='monitor_password'
-kubectl create secret generic operator-password --from-literal=password='operator_password'
 ```
 
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.1_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:

@@ -24,10 +24,12 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
@@ -295,59 +297,6 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 
 	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
 	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		var backoffLimit int32
-		var ttl int32 = 300
-		jobName := "standalone-validate-" + rand.String(8)
-		standaloneValidateJob := &batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      jobName,
-				Namespace: m.OBCluster.Namespace,
-			},
-			Spec: batchv1.JobSpec{
-				Template: corev1.PodTemplateSpec{
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{{
-							Name:    "helper-validate-standalone",
-							Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper standalone validate"},
-						}},
-						RestartPolicy: corev1.RestartPolicyNever,
-					},
-				},
-				BackoffLimit:            &backoffLimit,
-				TTLSecondsAfterFinished: &ttl,
-			},
-		}
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check version job", "job", jobName)
-
-		err = m.Client.Create(m.Ctx, standaloneValidateJob)
-		if err != nil {
-			return errors.Wrap(err, "Create check version job")
-		}
-
-		var jobObject *batchv1.Job
-		for {
-			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
-			if err != nil {
-				m.Logger.Error(err, "Failed to get job")
-				return err
-			}
-			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job is still running")
-			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job finished")
-				break
-			}
-		}
-
-		if jobObject.Status.Failed > 0 {
-			m.Logger.Info("Current image does not support standalone mode")
-			err := errors.New("Current image does not support standalone mode")
-			m.PrintErrEvent(err)
-			return err
-		}
-
 		m.Logger.Info("Bootstrap as standalone mode")
 		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
 			Zone: m.OBCluster.Spec.Topology[0].Zone,
@@ -1026,6 +975,161 @@ outer:
 	}
 	if !matched {
 		return errors.New("scale up obzone failed")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
+	jobName := "image-pull-ready-" + rand.String(8)
+	var ttl int32 = 120
+	var backoffLimit int32 = 32
+	checkImagePullJob := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      jobName,
+			Namespace: m.OBCluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind:       m.OBCluster.Kind,
+				APIVersion: m.OBCluster.APIVersion,
+				Name:       m.OBCluster.Name,
+				UID:        m.OBCluster.UID,
+			}},
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{{
+						Name:    "helper-check-image-pull-ready",
+						Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+						Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
+					}},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			TTLSecondsAfterFinished: &ttl,
+			BackoffLimit:            &backoffLimit,
+		},
+	}
+	err := m.Client.Create(m.Ctx, checkImagePullJob)
+	if err != nil {
+		return errors.Wrap(err, "Create check image pull job")
+	}
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check image pull job", "job", jobName)
+
+	imagePullReady := false
+	var checkImagePullReadyMaxTimes = 8000
+	labelSelector := metav1.FormatLabelSelector(checkImagePullJob.Spec.Selector)
+	selector, err := labels.Parse(labelSelector)
+	if err != nil {
+		return errors.Wrap(err, "Parse label selector")
+	}
+	for i := 0; i < checkImagePullReadyMaxTimes; i++ {
+		podList := &corev1.PodList{}
+		err = m.Client.List(m.Ctx, podList, &client.ListOptions{
+			LabelSelector: selector,
+		})
+		if err != nil {
+			return errors.Wrap(err, "List pods")
+		}
+		if len(podList.Items) == 0 {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("No pod found for check image pull job")
+			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			continue
+		}
+		pod := podList.Items[0]
+		switch pod.Status.Phase {
+		case corev1.PodFailed:
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job failed")
+			return errors.New("Check image pull job failed")
+		case corev1.PodSucceeded, corev1.PodRunning:
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job finished")
+			imagePullReady = true
+			break
+		case corev1.PodPending, corev1.PodUnknown:
+			for _, containerStatus := range pod.Status.ContainerStatuses {
+				if containerStatus.State.Waiting != nil {
+					switch containerStatus.State.Waiting.Reason {
+					case "ErrImagePull", "ImagePullBackOff":
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait to pull image", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
+					default:
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is waiting", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
+					}
+					time.Sleep(time.Second * 10)
+				} else if containerStatus.State.Running != nil || containerStatus.State.Terminated != nil {
+					m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is running or terminated")
+					imagePullReady = true
+					break
+				}
+			}
+		}
+	}
+	if !imagePullReady {
+		return errors.New("Image pull not ready")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
+	var err error
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
+		var backoffLimit int32
+		var ttl int32 = 300
+		jobName := "standalone-validate-" + rand.String(8)
+		standaloneValidateJob := &batchv1.Job{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      jobName,
+				Namespace: m.OBCluster.Namespace,
+				OwnerReferences: []metav1.OwnerReference{{
+					Kind:       m.OBCluster.Kind,
+					APIVersion: m.OBCluster.APIVersion,
+					Name:       m.OBCluster.Name,
+					UID:        m.OBCluster.UID,
+				}},
+			},
+			Spec: batchv1.JobSpec{
+				Template: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{{
+							Name:    "helper-validate-standalone",
+							Image:   m.OBCluster.Spec.OBServerTemplate.Image,
+							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper standalone validate"},
+						}},
+						RestartPolicy: corev1.RestartPolicyNever,
+					},
+				},
+				BackoffLimit:            &backoffLimit,
+				TTLSecondsAfterFinished: &ttl,
+			},
+		}
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check version job", "job", jobName)
+
+		err = m.Client.Create(m.Ctx, standaloneValidateJob)
+		if err != nil {
+			return errors.Wrap(err, "Create check version job")
+		}
+
+		var jobObject *batchv1.Job
+		var maxCheckTimes = 600
+		for i := 0; i < maxCheckTimes; i++ {
+			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+			if err != nil {
+				m.Logger.Error(err, "Failed to get job")
+				return err
+			}
+			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job is still running")
+			} else {
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job finished")
+				break
+			}
+		}
+		if jobObject.Status.Failed > 0 {
+			m.Logger.Info("Current image does not support standalone mode")
+			err := errors.New("Current image does not support standalone mode")
+			m.PrintErrEvent(err)
+			return err
+		}
 	}
 	return nil
 }

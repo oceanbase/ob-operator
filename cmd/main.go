@@ -53,6 +53,15 @@ func init() {
 	//+kubebuilder:scaffold:scheme
 }
 
+func customLevelEncoder(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+	switch level {
+	case -2:
+		enc.AppendString("TRACE")
+	default:
+		enc.AppendString(level.CapitalString())
+	}
+}
+
 func main() {
 	var namespace string
 	var managerNamespace string
@@ -73,6 +82,11 @@ func main() {
 	opts := zap.Options{
 		Development: logVerbosity > 0,
 		Level:       zapcore.Level(-logVerbosity),
+		EncoderConfigOptions: []zap.EncoderConfigOption{
+			func(ec *zapcore.EncoderConfig) {
+				ec.EncodeLevel = customLevelEncoder
+			},
+		},
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
