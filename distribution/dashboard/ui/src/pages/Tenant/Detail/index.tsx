@@ -3,13 +3,29 @@ import { logoutReq } from '@/services';
 import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
-import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
-import { Outlet, history, useLocation } from '@umijs/max';
+import { BasicLayout, IconFont } from '@oceanbase/ui';
+import { Outlet, history, useLocation, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
+const subSideMenus: MenuItem[] = [
+  {
+    title: '概览',
+    key: 'overview',
+    link: '/overview',
+    icon: <IconFont type="overview" />,
+  },
+  {
+    title: '租户',
+    key: 'tenant',
+    link: '/tenant',
+    icon: <IconFont type="tenant" />,
+  },
+];
 
-const BasicLayout: React.FC = () => {
+const TenantDetail: React.FC = () => {
+  const params = useParams();
+  const user = localStorage.getItem('user');
   const location = useLocation();
-  const user = localStorage.getItem('user')
+  const { clusterId } = params;
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -18,39 +34,21 @@ const BasicLayout: React.FC = () => {
       }
     },
   });
-
-  // const Title = () => (
-  //   <img
-  //     style={{ height: 20, marginLeft: -16, paddingLeft: 6,cursor:'pointer' }}
-  //     onClick={()=>history.push('/')}
-  //     src="https://www.gartner.com/pi/vendorimages/oceanbase_1640501555454.png"
-  //   />
-  // );
-
   const menus: MenuItem[] = [
     {
-      title: intl.formatMessage({
-        id: 'dashboard.Layouts.BasicLayout.Overview',
-        defaultMessage: '概览',
-      }),
-      link: '/overview',
-      icon: <IconFont type="overview" />,
+      title: '概览',
+      link: `/tenant/${clusterId}`,
     },
     {
-      title: intl.formatMessage({
-        id: 'dashboard.Layouts.BasicLayout.Cluster',
-        defaultMessage: '集群',
-      }),
-      link: '/cluster',
-      icon: <IconFont type="cluster" />,
+      title:'拓扑图',
+      link: `/tenant/${clusterId}/topo`,
     },
     {
-      title: '租户',
-      link: '/tenant',
-      icon: <IconFont type="tenant" />,
+      title: '性能监控',
+      key: 'monitor',
+      link: `/tenant/${clusterId}/monitor`,
     },
   ];
-
   const userMenu = (
     <Menu
       onClick={() => {
@@ -65,17 +63,13 @@ const BasicLayout: React.FC = () => {
       </Menu.Item>
     </Menu>
   );
-
   return (
     <div>
-      <OBLayout
+      <BasicLayout
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
-        menus={menus}
-        defaultSelectedKeys={['/overview']}
-        location={location}
         topHeader={{
-          username: user || 'admin',
+          username: user || '',
           userMenu,
           showLocale: true,
           locales: ['zh-CN', 'en-US'],
@@ -84,11 +78,15 @@ const BasicLayout: React.FC = () => {
             version: '1.0.0',
           },
         }}
+        menus={menus}
+        location={location}
+        subSideMenus={subSideMenus}
+        subSideMenuProps={{ selectedKeys: ['/tenant'] }}
       >
         <Outlet />
-      </OBLayout>
+      </BasicLayout>
     </div>
   );
 };
 
-export default BasicLayout;
+export default TenantDetail;

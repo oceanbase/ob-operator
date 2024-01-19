@@ -36,8 +36,7 @@ const ClusterPage: React.FC = () => {
   const handleAddCluster = () => navigate('new');
 
   return (
-    <PageContainer
-    >
+    <PageContainer>
       <Row gutter={[16, 16]}>
         <ClusterList
           clusterList={clusterList}

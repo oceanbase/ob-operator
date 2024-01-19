@@ -39,7 +39,7 @@ declare namespace API {
     rootService: string;
     statusDetail: string;
     nodeSelector: NodeSelector[];
-    servers:Server[]
+    servers: Server[];
   };
 
   type Server = {
@@ -49,7 +49,7 @@ declare namespace API {
     statusDetail: string;
     address: string;
     metrics: Metrics;
-    zone?:string; //所属zone
+    zone?: string; //所属zone
   };
 
   type ClusterDetail = {
@@ -57,7 +57,7 @@ declare namespace API {
     zones: Zone[];
     servers: Server[];
     metrics: Metrics;
-    status?:'running' | 'operating'
+    status?: 'running' | 'operating';
   };
 
   type Topology = {
@@ -75,6 +75,17 @@ declare namespace API {
     topology: Topology[];
   } & ClusterInfo;
 
+  interface ClusterListResponse extends CommonResponse {
+    data: ClusterItem[];
+  }
+
+  type SimpleClusterList = {
+    name: string;
+    clusterId: number;
+    namespace: string;
+    topology: Topology[];
+  }[];
+
   type ClusterList = ClusterItem[];
 
   type modalType = 'upgrade' | 'addZone' | 'scaleServer';
@@ -89,4 +100,113 @@ declare namespace API {
   type EventType = 'NORMAL' | 'WARNING';
 
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
+
+  interface TenantDetail {
+    charset: string;
+    clusterName: string;
+    createTime: string;
+    locality: string;
+    name: string;
+    namespace: string;
+    status: string;
+    tenantName: string;
+    tenantRole: string;
+    topology: [
+      {
+        iopsWeight: 0;
+        logDiskSize: string;
+        maxCPU: string;
+        maxIops: 0;
+        memorySize: string;
+        minCPU: string;
+        minIops: 0;
+        priority: 0;
+        type: string;
+        zone: string;
+      },
+    ];
+    unitNumber: 0;
+  }
+
+  type NamespaceAndName = {
+    ns: string;
+    name: string;
+  };
+
+  type TenantBody = {
+    connectWhiteList?: string;
+    name: string;
+    obcluster: string;
+    pools?: {
+      priority: number;
+      zone: string;
+    }[];
+    rootPassword: string;
+    source?: {
+      restore?: {
+        archiveSource: string;
+        bakDataSource: string;
+        bakEncryptionPassword?: string;
+        ossAccessId: string;
+        ossAccessKey: string;
+        type: string;
+        until?: {
+          timestamp?: string;
+          unlimited?: boolean;
+        };
+      };
+      tenant?: string;
+    };
+    tenantName: string;
+    tenantRole?: string;
+    unitConfig: {
+      iopsWeight?: number;
+      logDiskSize?: string;
+      cupNumber: number;
+      maxIops?: number;
+      memorySize: string;
+      minIops?: number;
+    };
+    unitNum: number;
+  };
+  type TenantPolicy = {};
+
+  interface CommonResponse {
+    data: any;
+    message: string;
+    successful: boolean;
+  }
+
+  interface TenantsListResponse extends CommonResponse {
+    data: TenantDetail[];
+  }
+
+  interface TenantInfoType extends CommonResponse {
+    data: {
+      clusterName: string;
+    };
+  }
+
+  type ReplayLogType = {
+    timestamp: number;
+    unlimited: boolean;
+  };
+
+  type RootPassword = {
+    rootPassword: string;
+  };
+
+  type UnitNumber = {
+    unitNum: number;
+  };
+
+  type UnitConfig = {
+    iopsWeight: number;
+    logDiskSize: string;
+    maxCPU: string;
+    maxIops: number;
+    memorySize: string;
+    minCPU: string;
+    minIops: number;
+  };
 }
