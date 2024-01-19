@@ -55,8 +55,7 @@ const defaultQueryRange = {
 
 //查询和sql语句有些类似，label相当于过滤条件，就是where label1=xxx and label2 = xxx
 export default function Monitor() {
-  const clusterName = location.hash.split('&')[1].split('=')[1].split('/')[0];
-  const [[ns, name]] = useState(getNSName());
+  const [[ns, name, clusterName]] = useState(getNSName());
   const [isRefresh, setIsRefresh] = useState<boolean>(false);
   const [realTime, setRealTime] = useState<string>(getDate());
   const timerRef = useRef<NodeJS.Timeout>();
@@ -147,8 +146,8 @@ export default function Monitor() {
         isRefresh={isRefresh}
         queryRange={queryRange}
         filterLabel={filterLabel}
-        type='detail'
-        queryScope='OBCLUSTER'
+        type="detail"
+        queryScope="OBCLUSTER"
       />
     </div>
   );

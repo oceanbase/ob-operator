@@ -237,6 +237,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 				MonitorTemplate:  m.OBCluster.Spec.MonitorTemplate,
 				BackupVolume:     m.OBCluster.Spec.BackupVolume,
 				Topology:         zone,
+				ServiceAccount:   m.OBCluster.Spec.ServiceAccount,
 			},
 		}
 		obzone.ObjectMeta.Annotations = make(map[string]string)

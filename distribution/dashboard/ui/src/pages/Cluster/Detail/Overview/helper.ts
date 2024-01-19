@@ -11,11 +11,12 @@ const getNSName = () => {
     res: string[] = [];
   if (!pathArr.length) return res;
   for (let path of pathArr) {
-    if (path.split('&').length === 2) {
-      const [ns, name] = path.split('&');
+    if (path.split('&').length === 3) {
+      const [ns, name,clusterName] = path.split('&');
       if (ns.split('=')[0] === 'ns' && name.split('=')[0] === 'nm') {
         res[0] = ns.split('=')[1];
         res[1] = name.split('=')[1];
+        res[2] = clusterName.split('=')[1];
       }
       return res;
     }

@@ -6,11 +6,12 @@ import zhCN from 'antd/locale/zh_CN';
 import { useState } from 'react';
 
 import styles from './index.less';
-//可以在这里做一些前置处理
-//header可以放在这个地方
+
+//前置处理
 const PreLayout: React.FC = () => {
   const [locale] = useState<Locale>(zhCN);
   const navigate = useNavigate();
+
   return (
     <ConfigProvider navigate={navigate}>
       <div className={styles.rootContainer}>

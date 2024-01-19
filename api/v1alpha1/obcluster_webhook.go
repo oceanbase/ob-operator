@@ -118,6 +118,10 @@ func (r *OBCluster) Default() {
 	if r.Spec.UserSecrets.ProxyRO == "" {
 		r.Spec.UserSecrets.ProxyRO = "proxyro-user-" + rand.String(6)
 	}
+
+	if r.Spec.ServiceAccount == "" {
+		r.Spec.ServiceAccount = "default"
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -267,6 +271,21 @@ func (r *OBCluster) validateMutation() error {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size", "Failed to parse datafile max size"))
 		} else if datafileMax.AsApproximateFloat64() > r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size overflow", "datafile maxsize exceeds observer's data storage size"))
+		}
+	}
+
+	if r.Spec.ServiceAccount != "" {
+		sa := v1.ServiceAccount{}
+		err := clt.Get(context.Background(), types.NamespacedName{
+			Name:      r.Spec.ServiceAccount,
+			Namespace: r.Namespace,
+		}, &sa)
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("serviceAccount"), r.Spec.ServiceAccount, "service account not found"))
+			} else {
+				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("serviceAccount"), err))
+			}
 		}
 	}
 

@@ -15,8 +15,10 @@ package v1alpha1
 import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -183,5 +185,22 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		cluster.Annotations[oceanbaseconst.AnnotationsSinglePVC] = "true"
 		cluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = "local-path-2"
 		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+	})
+
+	It("Validate service account binding", func() {
+		cluster := newOBCluster("test-cluster-sa", 1, 1)
+		cluster.Spec.ServiceAccount = "non-exist"
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+
+		saName := "test-sa"
+		err := k8sClient.Create(ctx, &corev1.ServiceAccount{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      saName,
+				Namespace: defaultNamespace,
+			},
+		})
+		Expect(err).Should(BeNil())
+		cluster.Spec.ServiceAccount = saName
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
 	})
 })

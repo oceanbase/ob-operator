@@ -1748,6 +1748,9 @@ spec:
                   - value
                   type: object
                 type: array
+              serviceAccount:
+                default: default
+                type: string
               topology:
                 items:
                   properties:

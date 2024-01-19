@@ -135,6 +135,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 				OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
 				MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
 				BackupVolume:     m.OBZone.Spec.BackupVolume,
+				ServiceAccount:   m.OBZone.Spec.ServiceAccount,
 			},
 		}
 		observer.ObjectMeta.Annotations = make(map[string]string)

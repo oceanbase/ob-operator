@@ -1871,6 +1871,9 @@ spec:
                   - value
                   type: object
                 type: array
+              serviceAccount:
+                default: default
+                type: string
               topology:
                 items:
                   properties:
@@ -5642,6 +5645,9 @@ spec:
                 - resource
                 - storage
                 type: object
+              serviceAccount:
+                default: default
+                type: string
               tolerations:
                 items:
                   description: The pod this Toleration is attached to tolerates any
@@ -10959,6 +10965,9 @@ spec:
                 - resource
                 - storage
                 type: object
+              serviceAccount:
+                default: default
+                type: string
               topology:
                 properties:
                   affinity:
@@ -12064,6 +12073,14 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - ""
   resources:

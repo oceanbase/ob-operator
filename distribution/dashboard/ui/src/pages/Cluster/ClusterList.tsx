@@ -99,7 +99,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link to={`ns=${record.namespace}&nm=${record.name}`}>{value}</Link>
+      <Link to={`ns=${record.namespace}&nm=${record.name}&clusterName=${record.clusterName}`}>{value}</Link>
     ),
   },
   {

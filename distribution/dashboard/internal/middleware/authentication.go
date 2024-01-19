@@ -46,10 +46,8 @@ func LoginRequired() gin.HandlerFunc {
 		}
 		expriration := time.Unix(expr.(int64), 0)
 		if expriration.Before(time.Now()) {
-			c.AbortWithStatusJSON(401, gin.H{
-				"message": "login expired, please login again",
-			})
 			session.Clear()
+			session.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
 			err := session.Save()
 			if err != nil {
 				log.Errorf("failed to save session: %v", err)
@@ -58,6 +56,9 @@ func LoginRequired() gin.HandlerFunc {
 				})
 			}
 			store.GetCache().Delete(username)
+			c.AbortWithStatusJSON(401, gin.H{
+				"message": "login expired, please login again",
+			})
 			return
 		}
 		c.Next()

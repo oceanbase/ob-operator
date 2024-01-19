@@ -6,8 +6,6 @@ import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
 import { Outlet, history, useLocation } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import styles from './index.less'
-import { useEffect } from 'react';
 
 const BasicLayout: React.FC = () => {
   const location = useLocation();
@@ -69,7 +67,7 @@ const BasicLayout: React.FC = () => {
   );
 
   return (
-    <div className={styles.rootContainer}>
+    <div>
       <OBLayout
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}

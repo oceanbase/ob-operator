@@ -2581,6 +2581,9 @@ spec:
                 - resource
                 - storage
                 type: object
+              serviceAccount:
+                default: default
+                type: string
               tolerations:
                 items:
                   description: The pod this Toleration is attached to tolerates any
