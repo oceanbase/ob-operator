@@ -55,7 +55,7 @@ func ListAllTenants(c *gin.Context) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name} [GET]
+// @Router /api/v1/obtenants/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
 func GetTenant(c *gin.Context) {
 	nn := &param.NamespacedName{}
@@ -92,25 +92,19 @@ func GetTenant(c *gin.Context) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name} [PUT]
+// @Router /api/v1/obtenants [PUT]
 // @Security ApiKeyAuth
 func CreateTenant(c *gin.Context) {
-	nn := &param.NamespacedName{}
-	err := c.BindUri(nn)
-	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
-	}
 	tenantParam := &param.CreateOBTenantParam{}
-	err = c.BindJSON(tenantParam)
+	err := c.BindJSON(tenantParam)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
 	logger.Infof("Create obtenant: %+v", tenantParam)
 	tenant, err := oceanbase.CreateOBTenant(types.NamespacedName{
-		Namespace: nn.Namespace,
-		Name:      nn.Name,
+		Namespace: tenantParam.Name,
+		Name:      tenantParam.Namespace,
 	}, tenantParam)
 	if err != nil {
 		SendInternalServerErrorResponse(c, nil, err)
@@ -131,7 +125,7 @@ func CreateTenant(c *gin.Context) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name} [DELETE]
+// @Router /api/v1/obtenants/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
 func DeleteTenant(c *gin.Context) {
 	nn := &param.NamespacedName{}
@@ -156,21 +150,7 @@ func DeleteTenant(c *gin.Context) {
 	SendSuccessfulResponse(c, nil)
 }
 
-// @ID ModifyUnitNumber
-// @Tags Obtenant
-// @Summary Modify unit number of specific tenant
-// @Description Modify unit number of specific tenant
-// @Accept application/json
-// @Produce application/json
-// @Param namespace path string true "obtenant namespace"
-// @Param name path string true "obtenant name"
-// @Param body body param.ModifyUnitNumber true "param containing unit number to modify"
-// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
-// @Failure 400 object response.APIResponse
-// @Failure 401 object response.APIResponse
-// @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name}/unitNumber [PUT]
-// @Security ApiKeyAuth
+// @Deprecated: use PatchTenant instead
 func ModifyUnitNumber(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -195,22 +175,7 @@ func ModifyUnitNumber(c *gin.Context) {
 	SendSuccessfulResponse(c, tenant)
 }
 
-// @ID ModifyUnitConfig
-// @Tags Obtenant
-// @Summary Modify unit config of specific tenant
-// @Description Modify unit config of specific tenant
-// @Accept application/json
-// @Produce application/json
-// @Param namespace path string true "obtenant namespace"
-// @Param name path string true "obtenant name"
-// @Param zone path string true "target zone"
-// @Param body body param.UnitConfig true "new unit config"
-// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
-// @Failure 400 object response.APIResponse
-// @Failure 401 object response.APIResponse
-// @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig [PUT]
-// @Security ApiKeyAuth
+// @Deprecated: use PatchTenant instead
 func ModifyUnitConfig(c *gin.Context) {
 	nn := struct {
 		Name      string `uri:"name"`
@@ -239,6 +204,49 @@ func ModifyUnitConfig(c *gin.Context) {
 	SendSuccessfulResponse(c, tenant)
 }
 
+// @ID PatchTenant
+// @Tags Obtenant
+// @Summary Patch tenant's configuration
+// @Description Patch tenant's configuration
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Param body body param.PatchTenant true "patch tenant body"
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obtenants/{namespace}/{name} [PATCH]
+// @Security ApiKeyAuth
+func PatchTenant(c *gin.Context) {
+	nn := param.NamespacedName{}
+	err := c.BindUri(&nn)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	patch := param.PatchTenant{}
+	err = c.BindJSON(&patch)
+	if err != nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	if patch.UnitNumber == nil && patch.UnitConfig == nil {
+		SendBadRequestResponse(c, nil, err)
+		return
+	}
+	tenant, err := oceanbase.PatchTenant(types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	}, &patch)
+	if err != nil {
+		SendInternalServerErrorResponse(c, nil, err)
+		return
+	}
+	SendSuccessfulResponse(c, tenant)
+}
+
 // @ID ChangeRootPassword
 // @Tags Obtenant
 // @Summary Change root password of specific tenant
@@ -252,7 +260,7 @@ func ModifyUnitConfig(c *gin.Context) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name}/rootPassword [PUT]
+// @Router /api/v1/obtenants/{namespace}/{name}/rootPassword [POST]
 // @Security ApiKeyAuth
 func ChangeRootPassword(c *gin.Context) {
 	nn := &param.NamespacedName{}
@@ -293,7 +301,7 @@ func ChangeRootPassword(c *gin.Context) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenant/{namespace}/{name}/logreplay [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/logreplay [POST]
 // @Security ApiKeyAuth
 func ReplayStandbyLog(c *gin.Context) {
 	nn := &param.NamespacedName{}
@@ -335,7 +343,8 @@ func ReplayStandbyLog(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Router /api/v1/obtenant/{namespace}/{name}/version [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/version [POST]
+// @Security ApiKeyAuth
 func UpgradeTenantVersion(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -366,7 +375,8 @@ func UpgradeTenantVersion(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Router /api/v1/obtenant/{namespace}/{name}/role [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/role [POST]
+// @Security ApiKeyAuth
 func ChangeTenantRole(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -409,7 +419,8 @@ func ChangeTenantRole(c *gin.Context) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.CreateBackupPolicy true "create backup policy request body"
-// @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [PUT]
+// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [PUT]
+// @Security ApiKeyAuth
 func CreateBackupPolicy(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -452,7 +463,8 @@ func CreateBackupPolicy(c *gin.Context) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.UpdateBackupPolicy true "update backup policy request body"
-// @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [POST]
+// @Security ApiKeyAuth
 func UpdateBackupPolicy(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -494,7 +506,8 @@ func UpdateBackupPolicy(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [DELETE]
+// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [DELETE]
+// @Security ApiKeyAuth
 func DeleteBackupPolicy(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -525,7 +538,8 @@ func DeleteBackupPolicy(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Router /api/v1/obtenant/{namespace}/{name}/backupPolicy [GET]
+// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [GET]
+// @Security ApiKeyAuth
 func GetBackupPolicy(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
@@ -558,7 +572,8 @@ func GetBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Param type path string true "backup job type" Enums(FULL,INCR,CLEAN,ARCHIVE)
 // @Param limit query int false "limit" default(10)
-// @Router /api/v1/obtenant/{namespace}/{name}/backup/{type}/jobs [GET]
+// @Router /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs [GET]
+// @Security ApiKeyAuth
 func ListBackupJobs(c *gin.Context) {
 	p := struct {
 		Namespace string `uri:"namespace"`

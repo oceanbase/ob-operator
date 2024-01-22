@@ -459,3 +459,39 @@ func ChangeTenantRole(nn types.NamespacedName, p *param.ChangeTenantRole) (*resp
 	}
 	return buildDetailFromApiType(tenant), nil
 }
+
+func PatchTenant(nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
+	var err error
+	tenant, err := oceanbase.GetOBTenant(nn)
+	if err != nil {
+		return nil, err
+	}
+	if p.UnitNumber != nil {
+		tenant.Spec.UnitNumber = *p.UnitNumber
+	}
+	if p.UnitConfig != nil {
+		for _, pool := range p.UnitConfig.Pools {
+			for i := range tenant.Spec.Pools {
+				if tenant.Spec.Pools[i].Zone == pool.Zone {
+					tenant.Spec.Pools[i].Priority = pool.Priority
+					tenant.Spec.Pools[i].Type.Name = pool.Type
+					tenant.Spec.Pools[i].UnitConfig = &v1alpha1.UnitConfig{
+						MaxCPU:      resource.MustParse(p.UnitConfig.UnitConfig.CPUCount),
+						MemorySize:  resource.MustParse(p.UnitConfig.UnitConfig.MemorySize),
+						MinCPU:      resource.MustParse(p.UnitConfig.UnitConfig.CPUCount),
+						IopsWeight:  p.UnitConfig.UnitConfig.IopsWeight,
+						MaxIops:     p.UnitConfig.UnitConfig.MaxIops,
+						MinIops:     p.UnitConfig.UnitConfig.MinIops,
+						LogDiskSize: resource.MustParse(p.UnitConfig.UnitConfig.LogDiskSize),
+					}
+					break
+				}
+			}
+		}
+	}
+	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	if err != nil {
+		return nil, err
+	}
+	return buildDetailFromApiType(tenant), nil
+}

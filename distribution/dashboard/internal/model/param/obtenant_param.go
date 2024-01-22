@@ -2,6 +2,7 @@ package param
 
 type CreateOBTenantParam struct {
 	Name             string `json:"name" binding:"required"`
+	Namespace        string `json:"namespace" binding:"required"`
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
@@ -71,4 +72,14 @@ type ChangeTenantRole struct {
 	// Enum: Primary, Standby
 	TenantRole TenantRole `json:"tenantRole" binding:"required"`
 	Switchover bool       `json:"switchover,omitempty"`
+}
+
+type PatchUnitConfig struct {
+	UnitConfig *UnitConfig        `json:"unitConfig" binding:"required"`
+	Pools      []ResourcePoolSpec `json:"pools" binding:"required"`
+}
+
+type PatchTenant struct {
+	UnitNumber *int             `json:"unitNum,omitempty"`
+	UnitConfig *PatchUnitConfig `json:"unitConfig,omitempty"`
 }

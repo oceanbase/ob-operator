@@ -102,6 +102,8 @@ definitions:
         type: string
       name:
         type: string
+      namespace:
+        type: string
       obcluster:
         type: string
       pools:
@@ -123,6 +125,7 @@ definitions:
         type: integer
     required:
     - name
+    - namespace
     - obcluster
     - pools
     - rootPassword
@@ -153,13 +156,6 @@ definitions:
         type: array
       queryRange:
         $ref: '#/definitions/param.QueryRange'
-    type: object
-  param.ModifyUnitNumber:
-    properties:
-      unitNum:
-        type: integer
-    required:
-    - unitNum
     type: object
   param.MonitorSpec:
     properties:
@@ -192,6 +188,25 @@ definitions:
         $ref: '#/definitions/common.StorageSpec'
       redoLog:
         $ref: '#/definitions/common.StorageSpec'
+    type: object
+  param.PatchTenant:
+    properties:
+      unitConfig:
+        $ref: '#/definitions/param.PatchUnitConfig'
+      unitNum:
+        type: integer
+    type: object
+  param.PatchUnitConfig:
+    properties:
+      pools:
+        items:
+          $ref: '#/definitions/param.ResourcePoolSpec'
+        type: array
+      unitConfig:
+        $ref: '#/definitions/param.UnitConfig'
+    required:
+    - pools
+    - unitConfig
     type: object
   param.QueryRange:
     properties:
@@ -1554,7 +1569,101 @@ paths:
       summary: get obcluster statistic
       tags:
       - Obcluster
-  /api/v1/obtenant/{namespace}/{name}:
+  /api/v1/obtenants:
+    get:
+      consumes:
+      - application/json
+      description: List all tenants and return them
+      operationId: ListAllTenants
+      parameters:
+      - description: obcluster to filter
+        in: query
+        name: obcluster
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.OBTenantBrief'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all tenants
+      tags:
+      - Obtenant
+    put:
+      consumes:
+      - application/json
+      description: Create an obtenant in a specific namespace, passwords should be
+        encrypted by AES
+      operationId: CreateTenant
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: create obtenant request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.CreateOBTenantParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenants/{namespace}/{name}:
     delete:
       consumes:
       - application/json
@@ -1641,12 +1750,11 @@ paths:
       summary: Get tenant
       tags:
       - Obtenant
-    put:
+    patch:
       consumes:
       - application/json
-      description: Create an obtenant in a specific namespace, passwords should be
-        encrypted by AES
-      operationId: CreateTenant
+      description: Patch tenant's configuration
+      operationId: PatchTenant
       parameters:
       - description: obtenant namespace
         in: path
@@ -1658,12 +1766,12 @@ paths:
         name: name
         required: true
         type: string
-      - description: create obtenant request body
+      - description: patch tenant body
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/param.CreateOBTenantParam'
+          $ref: '#/definitions/param.PatchTenant'
       produces:
       - application/json
       responses:
@@ -1690,67 +1798,10 @@ paths:
             $ref: '#/definitions/response.APIResponse'
       security:
       - ApiKeyAuth: []
-      summary: Create tenant
+      summary: Patch tenant's configuration
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
-    put:
-      consumes:
-      - application/json
-      description: Modify unit config of specific tenant
-      operationId: ModifyUnitConfig
-      parameters:
-      - description: obtenant namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: obtenant name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: target zone
-        in: path
-        name: zone
-        required: true
-        type: string
-      - description: new unit config
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/param.UnitConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.OBTenantDetail'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Modify unit config of specific tenant
-      tags:
-      - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/backup/{type}/jobs:
+  /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs:
     get:
       consumes:
       - application/json
@@ -1808,10 +1859,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: List backup jobs of specific tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/backupPolicy:
+  /api/v1/obtenants/{namespace}/{name}/backupPolicy:
     delete:
       consumes:
       - application/json
@@ -1847,6 +1900,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Delete backup policy of specific tenant
       tags:
       - Obtenant
@@ -1890,6 +1945,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get backup policy of specific tenant
       tags:
       - Obtenant
@@ -1939,6 +1996,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Update backup policy of specific tenant
       tags:
       - Obtenant
@@ -1989,10 +2048,12 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create backup policy of specific tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/logreplay:
+  /api/v1/obtenants/{namespace}/{name}/logreplay:
     post:
       consumes:
       - application/json
@@ -2044,7 +2105,7 @@ paths:
       summary: Replay standby log of specific standby tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/role:
+  /api/v1/obtenants/{namespace}/{name}/role:
     post:
       consumes:
       - application/json
@@ -2086,11 +2147,13 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Change tenant role of specific tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/rootPassword:
-    put:
+  /api/v1/obtenants/{namespace}/{name}/rootPassword:
+    post:
       consumes:
       - application/json
       description: Change root password of specific tenant, encrypted by AES
@@ -2141,59 +2204,7 @@ paths:
       summary: Change root password of specific tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/unitNumber:
-    put:
-      consumes:
-      - application/json
-      description: Modify unit number of specific tenant
-      operationId: ModifyUnitNumber
-      parameters:
-      - description: obtenant namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: obtenant name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: param containing unit number to modify
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/param.ModifyUnitNumber'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.OBTenantDetail'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Modify unit number of specific tenant
-      tags:
-      - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/version:
+  /api/v1/obtenants/{namespace}/{name}/version:
     post:
       consumes:
       - application/json
@@ -2235,49 +2246,9 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/response.APIResponse'
-      summary: Upgrade tenant compatibility version of specific tenant
-      tags:
-      - Obtenant
-  /api/v1/obtenants:
-    get:
-      consumes:
-      - application/json
-      description: List all tenants and return them
-      operationId: ListAllTenants
-      parameters:
-      - description: obcluster to filter
-        in: query
-        name: obcluster
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/response.OBTenantBrief'
-                  type: array
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
       security:
       - ApiKeyAuth: []
-      summary: List all tenants
+      summary: Upgrade tenant compatibility version of specific tenant
       tags:
       - Obtenant
 securityDefinitions:
