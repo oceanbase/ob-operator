@@ -11,7 +11,7 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.PUT("/obtenant/:namespace/:name", handler.CreateTenant)
 	g.DELETE("/obtenant/:namespace/:name", handler.DeleteTenant)
 
-	g.PUT("/obtenant/:namespace/:name/unitNumber", handler.ModifyUnitNumber)
+	g.PATCH("/obtenant/:namespace/:name/unitNumber", handler.ModifyUnitNumber)
 	g.PUT("/obtenant/:namespace/:name/:zone/unitConfig", handler.ModifyUnitConfig)
 	g.PUT("/obtenant/:namespace/:name/rootPassword", handler.ChangeRootPassword)
 
@@ -23,5 +23,5 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.PUT("/obtenant/:namespace/:name/backupPolicy", handler.CreateBackupPolicy)
 	g.POST("/obtenant/:namespace/:name/backupPolicy", handler.UpdateBackupPolicy)
 	g.DELETE("/obtenant/:namespace/:name/backupPolicy", handler.DeleteBackupPolicy)
-	g.GET("/obtenant/:namespace/:name/:type/backupJobs", handler.ListBackupJobs)
+	g.GET("/obtenant/:namespace/:name/backup/:type/jobs", handler.ListBackupJobs)
 }

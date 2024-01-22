@@ -558,7 +558,7 @@ func GetBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Param type path string true "backup job type" Enums(FULL,INCR,CLEAN,ARCHIVE)
 // @Param limit query int false "limit" default(10)
-// @Router /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs [GET]
+// @Router /api/v1/obtenant/{namespace}/{name}/backup/{type}/jobs [GET]
 func ListBackupJobs(c *gin.Context) {
 	p := struct {
 		Namespace string `uri:"namespace"`

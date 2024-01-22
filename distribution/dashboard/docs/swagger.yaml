@@ -1693,7 +1693,64 @@ paths:
       summary: Create tenant
       tags:
       - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/{type}/backupJobs:
+  /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
+    put:
+      consumes:
+      - application/json
+      description: Modify unit config of specific tenant
+      operationId: ModifyUnitConfig
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: target zone
+        in: path
+        name: zone
+        required: true
+        type: string
+      - description: new unit config
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.UnitConfig'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBTenantDetail'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Modify unit config of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenant/{namespace}/{name}/backup/{type}/jobs:
     get:
       consumes:
       - application/json
@@ -1752,63 +1809,6 @@ paths:
           schema:
             $ref: '#/definitions/response.APIResponse'
       summary: List backup jobs of specific tenant
-      tags:
-      - Obtenant
-  /api/v1/obtenant/{namespace}/{name}/{zone}/unitConfig:
-    put:
-      consumes:
-      - application/json
-      description: Modify unit config of specific tenant
-      operationId: ModifyUnitConfig
-      parameters:
-      - description: obtenant namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: obtenant name
-        in: path
-        name: name
-        required: true
-        type: string
-      - description: target zone
-        in: path
-        name: zone
-        required: true
-        type: string
-      - description: new unit config
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/param.UnitConfig'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.OBTenantDetail'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Modify unit config of specific tenant
       tags:
       - Obtenant
   /api/v1/obtenant/{namespace}/{name}/backupPolicy:

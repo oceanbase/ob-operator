@@ -172,8 +172,8 @@ func UpdateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.
 	policyUnstructured.SetGroupVersionKind(schema.OBTenantBackupPolicyGVK)
 	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Update(context.TODO(), policyUnstructured, metav1.UpdateOptions{})
 	if err != nil {
-		logger.Info("Create tenant backup policy", "err", err)
-		return nil, errors.Wrap(err, "Create tenant backup policy")
+		logger.Info("Update tenant backup policy", "err", err)
+		return nil, errors.Wrap(err, "Update tenant backup policy")
 	}
 	p := &v1alpha1.OBTenantBackupPolicy{}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(newPolicy.UnstructuredContent(), p)
@@ -195,13 +195,13 @@ func DeleteTenantBackupPolicy(nn types.NamespacedName) error {
 
 func ListBackupJobs(listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {
 	clt := client.GetClient()
-	tenantList, err := clt.DynamicClient.Resource(schema.OBTenantBackupGVR).List(context.TODO(), listOption)
+	backupJobList, err := clt.DynamicClient.Resource(schema.OBTenantBackupGVR).List(context.TODO(), listOption)
 	if err != nil {
 		logger.Info("List backup jobs", "err", err)
 		return nil, errors.Wrap(err, "List backup jobs")
 	}
 	list := &v1alpha1.OBTenantBackupList{}
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(tenantList.UnstructuredContent(), list)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(backupJobList.UnstructuredContent(), list)
 	if err != nil {
 		logger.Info("Convert backup jobs", "err", err)
 		return nil, errors.Wrap(err, "Convert backup jobs")
