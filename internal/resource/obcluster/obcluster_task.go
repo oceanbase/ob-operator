@@ -1022,6 +1022,7 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Parse label selector")
 	}
+outerLoop:
 	for i := 0; i < checkImagePullReadyMaxTimes; i++ {
 		podList := &corev1.PodList{}
 		err = m.Client.List(m.Ctx, podList, &client.ListOptions{
@@ -1043,8 +1044,9 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 		case corev1.PodSucceeded, corev1.PodRunning:
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job finished")
 			imagePullReady = true
-			break
+			break outerLoop
 		case corev1.PodPending, corev1.PodUnknown:
+			// if every container has pulled its image, break outer loop
 			for _, containerStatus := range pod.Status.ContainerStatuses {
 				if containerStatus.State.Waiting != nil {
 					switch containerStatus.State.Waiting.Reason {
@@ -1053,13 +1055,14 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 					default:
 						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is waiting", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
 					}
-					time.Sleep(time.Second * 10)
+					time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+					continue outerLoop
 				} else if containerStatus.State.Running != nil || containerStatus.State.Terminated != nil {
 					m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is running or terminated")
-					imagePullReady = true
-					break
 				}
 			}
+			imagePullReady = true
+			break outerLoop
 		}
 	}
 	if !imagePullReady {
