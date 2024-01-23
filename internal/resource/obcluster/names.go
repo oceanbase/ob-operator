@@ -31,6 +31,8 @@ const (
 
 // obcluster tasks
 const (
+	tCheckImageReady           ttypes.TaskName = "check image ready"
+	tCheckClusterMode          ttypes.TaskName = "check cluster mode"
 	tCheckAndCreateUserSecrets ttypes.TaskName = "check and create user secrets"
 	tCreateOBZone              ttypes.TaskName = "create obzone"
 	tDeleteOBZone              ttypes.TaskName = "delete obzone"

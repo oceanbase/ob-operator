@@ -283,6 +283,10 @@ func (m *OBClusterManager) HandleFailure() {
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCheckImageReady:
+		return m.CheckImageReady, nil
+	case tCheckClusterMode:
+		return m.CheckClusterMode, nil
 	case tCheckAndCreateUserSecrets:
 		return m.CheckAndCreateUserSecrets, nil
 	case tCreateOBZone:

@@ -16,7 +16,7 @@ spec:
   pools:
     - zone: zone1
       type: 
-        name: FUll 
+        name: Full 
         replica: 1
         isActive: true
       resource:
