@@ -247,7 +247,7 @@ func PatchTenant(c *gin.Context) {
 	SendSuccessfulResponse(c, tenant)
 }
 
-// @ID ChangeRootPassword
+// @ID ChangeUserPassword
 // @Tags Obtenant
 // @Summary Change root password of specific tenant
 // @Description Change root password of specific tenant, encrypted by AES
@@ -255,31 +255,34 @@ func PatchTenant(c *gin.Context) {
 // @Produce application/json
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Param body body param.ChangeRootPassword true "new password"
+// @Param body body param.ChangeUserPassword true "new password"
 // @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obtenants/{namespace}/{name}/rootPassword [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/userCredentials [POST]
 // @Security ApiKeyAuth
-func ChangeRootPassword(c *gin.Context) {
+func ChangeUserPassword(c *gin.Context) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	passwordParam := &param.ChangeRootPassword{}
+	passwordParam := &param.ChangeUserPassword{}
 	err = c.BindJSON(passwordParam)
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-
+	if passwordParam.User != "root" {
+		SendBadRequestResponse(c, nil, fmt.Errorf("only root user is supported"))
+		return
+	}
 	tenant, err := oceanbase.ModifyOBTenantRootPassword(types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
-	}, passwordParam.RootPassword)
+	}, passwordParam.Password)
 
 	if err != nil {
 		SendInternalServerErrorResponse(c, nil, err)

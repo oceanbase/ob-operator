@@ -12,7 +12,7 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.DELETE("/obtenant/:namespace/:name", handler.DeleteTenant)
 	g.PATCH("/obtenant/:namespace/:name", handler.PatchTenant)
 
-	g.POST("/obtenant/:namespace/:name/rootPassword", handler.ChangeRootPassword)
+	g.POST("/obtenant/:namespace/:name/userCredentials", handler.ChangeUserPassword)
 	g.POST("/obtenant/:namespace/:name/logreplay", handler.ReplayStandbyLog)
 	g.POST("/obtenant/:namespace/:name/version", handler.UpgradeTenantVersion)
 	g.POST("/obtenant/:namespace/:name/role", handler.ChangeTenantRole)

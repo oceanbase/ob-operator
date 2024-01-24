@@ -21,12 +21,17 @@ definitions:
       storageClass:
         type: string
     type: object
-  param.ChangeRootPassword:
+  param.ChangeUserPassword:
     properties:
-      rootPassword:
+      Password:
+        type: string
+      User:
+        description: 'Description: The user name of the database account, only root
+          is supported now.'
         type: string
     required:
-    - rootPassword
+    - Password
+    - User
     type: object
   param.CreateBackupPolicy:
     properties:
@@ -2152,12 +2157,12 @@ paths:
       summary: Change tenant role of specific tenant
       tags:
       - Obtenant
-  /api/v1/obtenants/{namespace}/{name}/rootPassword:
+  /api/v1/obtenants/{namespace}/{name}/userCredentials:
     post:
       consumes:
       - application/json
       description: Change root password of specific tenant, encrypted by AES
-      operationId: ChangeRootPassword
+      operationId: ChangeUserPassword
       parameters:
       - description: obtenant namespace
         in: path
@@ -2174,7 +2179,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/param.ChangeRootPassword'
+          $ref: '#/definitions/param.ChangeUserPassword'
       produces:
       - application/json
       responses:

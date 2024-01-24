@@ -2157,7 +2157,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/obtenants/{namespace}/{name}/rootPassword": {
+        "/api/v1/obtenants/{namespace}/{name}/userCredentials": {
             "post": {
                 "security": [
                     {
@@ -2175,7 +2175,7 @@ const docTemplate = `{
                     "Obtenant"
                 ],
                 "summary": "Change root password of specific tenant",
-                "operationId": "ChangeRootPassword",
+                "operationId": "ChangeUserPassword",
                 "parameters": [
                     {
                         "type": "string",
@@ -2197,7 +2197,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/param.ChangeRootPassword"
+                            "$ref": "#/definitions/param.ChangeUserPassword"
                         }
                     }
                 ],
@@ -2351,13 +2351,18 @@ const docTemplate = `{
                 }
             }
         },
-        "param.ChangeRootPassword": {
+        "param.ChangeUserPassword": {
             "type": "object",
             "required": [
-                "rootPassword"
+                "Password",
+                "User"
             ],
             "properties": {
-                "rootPassword": {
+                "Password": {
+                    "type": "string"
+                },
+                "User": {
+                    "description": "Description: The user name of the database account, only root is supported now.",
                     "type": "string"
                 }
             }
