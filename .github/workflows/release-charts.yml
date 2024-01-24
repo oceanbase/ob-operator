@@ -27,3 +27,4 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           mark_as_latest: false
+          skip_existing: true
