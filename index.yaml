@@ -31,7 +31,7 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.1.0/ob-operator-2.1.0.tgz
     version: 2.1.0
-  - apiVersion: v1alpha1
+  - apiVersion: v2
     appVersion: 2.0.0
     created: "2023-09-26T07:44:53.215816175Z"
     description: A Helm chart for OB-Operator
