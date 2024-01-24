@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   ob-operator:
   - apiVersion: v2
+    appVersion: 2.1.2
+    created: "2024-01-24T03:59:06.855558948Z"
+    description: A Helm chart for OB-Operator
+    digest: bfca863483bfb0b427a598094c0ed195bfc72d90feabe8b71e7dfcadbf426ccd
+    name: ob-operator
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.1.2/ob-operator-2.1.2.tgz
+    version: 2.1.2
+  - apiVersion: v2
     appVersion: 2.1.1
     created: "2023-12-20T07:26:35.420787047Z"
     description: A Helm chart for OB-Operator
@@ -11,6 +21,17 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.1.1/ob-operator-2.1.1.tgz
     version: 2.1.1
+  oceanbase-cluster:
+  - apiVersion: v2
+    appVersion: 4.2.1.1-101010012023111012
+    created: "2024-01-24T03:59:06.977930147Z"
+    description: A Helm chart for Kubernetes to deploy OceanBase cluster
+    digest: 1a6d0a5a2c37efa24449da987263ab439288c2f92c4b65dad238bd6988b9a6fb
+    name: oceanbase-cluster
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.2.1-sp.1-101010012023111012/oceanbase-cluster-4.2.1-sp.1-101010012023111012.tgz
+    version: 4.2.1-sp.1-101010012023111012
   oceanbase-dashboard:
   - apiVersion: v2
     appVersion: 1.0.0
@@ -32,4 +53,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2024-01-03T07:39:33.849347887Z"
+generated: "2024-01-24T03:59:06.97794843Z"
