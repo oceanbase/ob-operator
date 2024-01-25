@@ -35,7 +35,7 @@ func ListAllTenants(c *gin.Context) {
 	listOptions := metav1.ListOptions{
 		LabelSelector: selector,
 	}
-	tenants, err := oceanbase.ListAllOBTenants(listOptions)
+	tenants, err := oceanbase.ListAllOBTenants(c, listOptions)
 	if err != nil {
 		SendInternalServerErrorResponse(c, nil, err)
 		return
@@ -64,7 +64,7 @@ func GetTenant(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.GetOBTenant(types.NamespacedName{
+	tenant, err := oceanbase.GetOBTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -102,7 +102,7 @@ func CreateTenant(c *gin.Context) {
 		return
 	}
 	logger.Infof("Create obtenant: %+v", tenantParam)
-	tenant, err := oceanbase.CreateOBTenant(types.NamespacedName{
+	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
 		Namespace: tenantParam.Name,
 		Name:      tenantParam.Namespace,
 	}, tenantParam)
@@ -134,7 +134,7 @@ func DeleteTenant(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	err = oceanbase.DeleteOBTenant(types.NamespacedName{
+	err = oceanbase.DeleteOBTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -164,7 +164,7 @@ func ModifyUnitNumber(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.ModifyOBTenantUnitNumber(types.NamespacedName{
+	tenant, err := oceanbase.ModifyOBTenantUnitNumber(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, unitNumberParam.UnitNumber)
@@ -193,7 +193,7 @@ func ModifyUnitConfig(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.ModifyOBTenantUnitConfig(types.NamespacedName{
+	tenant, err := oceanbase.ModifyOBTenantUnitConfig(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, nn.Zone, &unitConfig)
@@ -236,7 +236,7 @@ func PatchTenant(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.PatchTenant(types.NamespacedName{
+	tenant, err := oceanbase.PatchTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, &patch)
@@ -279,7 +279,7 @@ func ChangeUserPassword(c *gin.Context) {
 		SendBadRequestResponse(c, nil, fmt.Errorf("only root user is supported"))
 		return
 	}
-	tenant, err := oceanbase.ModifyOBTenantRootPassword(types.NamespacedName{
+	tenant, err := oceanbase.ModifyOBTenantRootPassword(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, passwordParam.Password)
@@ -323,7 +323,7 @@ func ReplayStandbyLog(c *gin.Context) {
 		SendBadRequestResponse(c, nil, fmt.Errorf("timestamp is required"))
 		return
 	}
-	tenant, err := oceanbase.ReplayStandbyLog(types.NamespacedName{
+	tenant, err := oceanbase.ReplayStandbyLog(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}, *logReplayParam.Timestamp)
@@ -355,7 +355,7 @@ func UpgradeTenantVersion(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.UpgradeTenantVersion(types.NamespacedName{
+	tenant, err := oceanbase.UpgradeTenantVersion(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	})
@@ -394,7 +394,7 @@ func ChangeTenantRole(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	tenant, err := oceanbase.ChangeTenantRole(types.NamespacedName{
+	tenant, err := oceanbase.ChangeTenantRole(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}, &p)
@@ -438,7 +438,7 @@ func CreateBackupPolicy(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	policy, err := oceanbase.CreateTenantBackupPolicy(types.NamespacedName{
+	policy, err := oceanbase.CreateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}, createPolicyParam)
@@ -482,7 +482,7 @@ func UpdateBackupPolicy(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	policy, err := oceanbase.UpdateTenantBackupPolicy(types.NamespacedName{
+	policy, err := oceanbase.UpdateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}, updatePolicyParam)
@@ -519,7 +519,7 @@ func DeleteBackupPolicy(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	err = oceanbase.DeleteTenantBackupPolicy(types.NamespacedName{
+	err = oceanbase.DeleteTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -551,7 +551,7 @@ func GetBackupPolicy(c *gin.Context) {
 		SendBadRequestResponse(c, nil, err)
 		return
 	}
-	resp, err := oceanbase.GetTenantBackupPolicy(types.NamespacedName{
+	resp, err := oceanbase.GetTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -597,7 +597,7 @@ func ListBackupJobs(c *gin.Context) {
 			return
 		}
 	}
-	jobs, err := oceanbase.ListBackupJobs(types.NamespacedName{
+	jobs, err := oceanbase.ListBackupJobs(c, types.NamespacedName{
 		Namespace: p.Namespace,
 		Name:      p.Name,
 	}, p.Type, limit)

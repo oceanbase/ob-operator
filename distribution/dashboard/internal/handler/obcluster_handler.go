@@ -22,7 +22,7 @@ import (
 // @Router /api/v1/obclusters/statistic [GET]
 func GetOBClusterStatistic(c *gin.Context) {
 	// return mock data
-	obclusterStastics, err := oceanbase.GetOBClusterStatistic()
+	obclusterStastics, err := oceanbase.GetOBClusterStatistic(c)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -44,7 +44,7 @@ func GetOBClusterStatistic(c *gin.Context) {
 // @Router /api/v1/obclusters [GET]
 // @Security ApiKeyAuth
 func ListOBClusters(c *gin.Context) {
-	obclusters, err := oceanbase.ListOBClusters()
+	obclusters, err := oceanbase.ListOBClusters(c)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -73,7 +73,7 @@ func GetOBCluster(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	obcluster, err := oceanbase.GetOBCluster(obclusterIdentity)
+	obcluster, err := oceanbase.GetOBCluster(c, obclusterIdentity)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -107,7 +107,7 @@ func CreateOBCluster(c *gin.Context) {
 		return
 	}
 	logger.Debugf("Create obcluster: %v", param)
-	err = oceanbase.CreateOBCluster(param)
+	err = oceanbase.CreateOBCluster(c, param)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -142,7 +142,7 @@ func UpgradeOBCluster(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	err = oceanbase.UpgradeObCluster(obclusterIdentity, updateParam)
+	err = oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -171,7 +171,7 @@ func DeleteOBCluster(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	err = oceanbase.DeleteOBCluster(obclusterIdentity)
+	err = oceanbase.DeleteOBCluster(c, obclusterIdentity)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -206,7 +206,7 @@ func AddOBZone(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	err = oceanbase.AddOBZone(obclusterIdentity, param)
+	err = oceanbase.AddOBZone(c, obclusterIdentity, param)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -242,7 +242,7 @@ func ScaleOBServer(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	err = oceanbase.ScaleOBServer(obzoneIdentity, scaleParam)
+	err = oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)
@@ -272,7 +272,7 @@ func DeleteOBZone(c *gin.Context) {
 	if err != nil {
 		SendBadRequestResponse(c, nil, err)
 	}
-	err = oceanbase.DeleteOBZone(obzoneIdentity)
+	err = oceanbase.DeleteOBZone(c, obzoneIdentity)
 	if err != nil {
 		logHandlerError(c, err)
 		SendInternalServerErrorResponse(c, nil, err)

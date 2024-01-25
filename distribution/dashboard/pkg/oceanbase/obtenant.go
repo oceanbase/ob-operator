@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func CreateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
+func CreateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	clt := client.GetClient()
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(tenant)
 	if err != nil {
@@ -24,7 +24,7 @@ func CreateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	}
 	tenantUnstructured := &unstructured.Unstructured{Object: objMap}
 	tenantUnstructured.SetGroupVersionKind(schema.OBTenantResKind)
-	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(tenant.Namespace).Create(context.TODO(), tenantUnstructured, metav1.CreateOptions{})
+	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(tenant.Namespace).Create(ctx, tenantUnstructured, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("Create tenant", "err", err)
 		return nil, errors.Wrap(err, "Create tenant")
@@ -38,14 +38,14 @@ func CreateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	return t, nil
 }
 
-func UpdateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
+func UpdateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	clt := client.GetClient()
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(tenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "Convert tenant to unstructured")
 	}
 	unstructuredTenant := &unstructured.Unstructured{Object: objMap}
-	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(tenant.Namespace).Update(context.TODO(), unstructuredTenant, metav1.UpdateOptions{})
+	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(tenant.Namespace).Update(ctx, unstructuredTenant, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Update tenant")
 	}
@@ -57,9 +57,9 @@ func UpdateOBTenant(tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
 	return t, nil
 }
 
-func ListAllOBTenants(listOptions metav1.ListOptions) (*v1alpha1.OBTenantList, error) {
+func ListAllOBTenants(ctx context.Context, listOptions metav1.ListOptions) (*v1alpha1.OBTenantList, error) {
 	clt := client.GetClient()
-	tenantList, err := clt.DynamicClient.Resource(schema.OBTenantRes).List(context.TODO(), listOptions)
+	tenantList, err := clt.DynamicClient.Resource(schema.OBTenantRes).List(ctx, listOptions)
 	if err != nil {
 		logger.Info("List all tenants", "err", err)
 		return nil, errors.Wrap(err, "List all tenants")
@@ -73,9 +73,9 @@ func ListAllOBTenants(listOptions metav1.ListOptions) (*v1alpha1.OBTenantList, e
 	return list, nil
 }
 
-func GetOBTenant(nn types.NamespacedName) (*v1alpha1.OBTenant, error) {
+func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*v1alpha1.OBTenant, error) {
 	clt := client.GetClient()
-	tenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(nn.Namespace).Get(context.TODO(), nn.Name, metav1.GetOptions{})
+	tenant, err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(nn.Namespace).Get(ctx, nn.Name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Get tenant")
 	}
@@ -87,16 +87,16 @@ func GetOBTenant(nn types.NamespacedName) (*v1alpha1.OBTenant, error) {
 	return t, nil
 }
 
-func DeleteOBTenant(nn types.NamespacedName) error {
+func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
 	clt := client.GetClient()
-	err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(nn.Namespace).Delete(context.TODO(), nn.Name, metav1.DeleteOptions{})
+	err := clt.DynamicClient.Resource(schema.OBTenantRes).Namespace(nn.Namespace).Delete(ctx, nn.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return errors.Wrap(err, "Delete tenant")
 	}
 	return nil
 }
 
-func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenantOperation, error) {
+func CreateOBTenantOperation(ctx context.Context, op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenantOperation, error) {
 	clt := client.GetClient()
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(op)
 	if err != nil {
@@ -105,7 +105,7 @@ func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenant
 	}
 	tenantUnstructured := &unstructured.Unstructured{Object: objMap}
 	tenantUnstructured.SetGroupVersionKind(schema.OBTenantOperationGVK)
-	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantOperationGVR).Namespace(op.Namespace).Create(context.TODO(), tenantUnstructured, metav1.CreateOptions{})
+	newTenant, err := clt.DynamicClient.Resource(schema.OBTenantOperationGVR).Namespace(op.Namespace).Create(ctx, tenantUnstructured, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("Create tenant operation", "err", err)
 		return nil, errors.Wrap(err, "Create tenant ooperation")
@@ -119,9 +119,9 @@ func CreateOBTenantOperation(op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenant
 	return operation, nil
 }
 
-func GetTenantBackupPolicy(nn types.NamespacedName) (*v1alpha1.OBTenantBackupPolicy, error) {
+func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*v1alpha1.OBTenantBackupPolicy, error) {
 	clt := client.GetClient()
-	policy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).List(context.TODO(), metav1.ListOptions{
+	policy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: oceanbaseconst.LabelTenantName + "=" + nn.Name,
 	})
 	if err != nil {
@@ -138,7 +138,7 @@ func GetTenantBackupPolicy(nn types.NamespacedName) (*v1alpha1.OBTenantBackupPol
 	return &p.Items[0], nil
 }
 
-func CreateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
+func CreateTenantBackupPolicy(ctx context.Context, policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
 	clt := client.GetClient()
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(policy)
 	if err != nil {
@@ -147,7 +147,7 @@ func CreateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.
 	}
 	policyUnstructured := &unstructured.Unstructured{Object: objMap}
 	policyUnstructured.SetGroupVersionKind(schema.OBTenantBackupPolicyGVK)
-	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Create(context.TODO(), policyUnstructured, metav1.CreateOptions{})
+	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Create(ctx, policyUnstructured, metav1.CreateOptions{})
 	if err != nil {
 		logger.Info("Create tenant backup policy", "err", err)
 		return nil, errors.Wrap(err, "Create tenant backup policy")
@@ -161,7 +161,7 @@ func CreateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.
 	return p, nil
 }
 
-func UpdateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
+func UpdateTenantBackupPolicy(ctx context.Context, policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
 	clt := client.GetClient()
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(policy)
 	if err != nil {
@@ -170,7 +170,7 @@ func UpdateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.
 	}
 	policyUnstructured := &unstructured.Unstructured{Object: objMap}
 	policyUnstructured.SetGroupVersionKind(schema.OBTenantBackupPolicyGVK)
-	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Update(context.TODO(), policyUnstructured, metav1.UpdateOptions{})
+	newPolicy, err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(policy.Namespace).Update(ctx, policyUnstructured, metav1.UpdateOptions{})
 	if err != nil {
 		logger.Info("Update tenant backup policy", "err", err)
 		return nil, errors.Wrap(err, "Update tenant backup policy")
@@ -184,18 +184,18 @@ func UpdateTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.
 	return p, nil
 }
 
-func DeleteTenantBackupPolicy(nn types.NamespacedName) error {
+func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
 	clt := client.GetClient()
-	err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).Delete(context.TODO(), nn.Name, metav1.DeleteOptions{})
+	err := clt.DynamicClient.Resource(schema.OBTenantBackupPolicyGVR).Namespace(nn.Namespace).Delete(ctx, nn.Name, metav1.DeleteOptions{})
 	if err != nil {
 		return errors.Wrap(err, "Delete tenant backup policy")
 	}
 	return nil
 }
 
-func ListBackupJobs(listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {
+func ListBackupJobs(ctx context.Context, listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {
 	clt := client.GetClient()
-	backupJobList, err := clt.DynamicClient.Resource(schema.OBTenantBackupGVR).List(context.TODO(), listOption)
+	backupJobList, err := clt.DynamicClient.Resource(schema.OBTenantBackupGVR).List(ctx, listOption)
 	if err != nil {
 		logger.Info("List backup jobs", "err", err)
 		return nil, errors.Wrap(err, "List backup jobs")
