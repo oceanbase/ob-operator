@@ -1223,14 +1223,14 @@
                 }
             }
         },
-        "/api/v1/obtenant/{namespace}/{name}": {
+        "/api/v1/obtenants": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get an obtenant in a specific namespace",
+                "description": "List all tenants and return them",
                 "consumes": [
                     "application/json"
                 ],
@@ -1240,29 +1240,36 @@
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Get tenant",
-                "operationId": "GetTenant",
+                "summary": "List all tenants",
+                "operationId": "ListAllTenants",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "obtenant namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "obtenant name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
+                        "description": "obcluster to filter",
+                        "name": "obcluster",
+                        "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.OBTenantBrief"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1291,7 +1298,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Create an obtenant in a specific namespace",
+                "description": "Create an obtenant in a specific namespace, passwords should be encrypted by AES",
                 "consumes": [
                     "application/json"
                 ],
@@ -1332,7 +1339,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1354,14 +1373,16 @@
                         }
                     }
                 }
-            },
-            "post": {
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}": {
+            "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Update an obtenant in a specific namespace",
+                "description": "Get an obtenant in a specific namespace",
                 "consumes": [
                     "application/json"
                 ],
@@ -1371,8 +1392,8 @@
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "Update tenant",
-                "operationId": "UpdateTenant",
+                "summary": "Get tenant",
+                "operationId": "GetTenant",
                 "parameters": [
                     {
                         "type": "string",
@@ -1387,22 +1408,25 @@
                         "name": "name",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "update obtenant request body, the same as CreateOBTenantParam",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/param.UpdateOBTenantParam"
-                        }
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1485,16 +1509,14 @@
                         }
                     }
                 }
-            }
-        },
-        "/api/v1/obtenants": {
-            "get": {
+            },
+            "patch": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List all tenants and return them",
+                "description": "Patch tenant's configuration",
                 "consumes": [
                     "application/json"
                 ],
@@ -1504,13 +1526,766 @@
                 "tags": [
                     "Obtenant"
                 ],
-                "summary": "List all tenants",
-                "operationId": "ListAllTenants",
+                "summary": "Patch tenant's configuration",
+                "operationId": "PatchTenant",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "patch tenant body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.PatchTenant"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List backup jobs of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "List backup jobs of specific tenant",
+                "operationId": "ListBackupJobs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "enum": [
+                            "FULL",
+                            "INCR",
+                            "CLEAN",
+                            "ARCHIVE"
+                        ],
+                        "type": "string",
+                        "description": "backup job type",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "limit",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.BackupJob"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/backupPolicy": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get backup policy of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Get backup policy of specific tenant",
+                "operationId": "GetBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create backup policy of specific tenant, passwords should be encrypted by AES",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Create backup policy of specific tenant",
+                "operationId": "CreateBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "create backup policy request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.CreateBackupPolicy"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Update backup policy of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Update backup policy of specific tenant",
+                "operationId": "UpdateBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "update backup policy request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.UpdateBackupPolicy"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.BackupPolicy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete backup policy of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Delete backup policy of specific tenant",
+                "operationId": "DeleteBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/logreplay": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Replay standby log of specific standby tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Replay standby log of specific standby tenant",
+                "operationId": "ReplayStandbyLog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "target timestamp to replay to",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ReplayStandbyLog"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/role": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Change tenant role of specific tenant, if a tenant is a standby tenant, it can be changed to primary tenant, vice versa",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Change tenant role of specific tenant",
+                "operationId": "ChangeTenantRole",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/userCredentials": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Change root password of specific tenant, encrypted by AES",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Change root password of specific tenant",
+                "operationId": "ChangeUserPassword",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "new password",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ChangeUserPassword"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/version": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Upgrade tenant compatibility version of specific tenant to match the version of cluster",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Upgrade tenant compatibility version of specific tenant",
+                "operationId": "UpgradeTenantVersion",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1569,16 +2344,68 @@
                 }
             }
         },
-        "param.BackupDestination": {
+        "param.ChangeUserPassword": {
             "type": "object",
+            "required": [
+                "Password",
+                "User"
+            ],
             "properties": {
-                "ossAccessSecret": {
+                "Password": {
                     "type": "string"
                 },
-                "path": {
+                "User": {
+                    "description": "Description: The user name of the database account, only root is supported now.",
+                    "type": "string"
+                }
+            }
+        },
+        "param.CreateBackupPolicy": {
+            "type": "object",
+            "required": [
+                "destType",
+                "scheduleType"
+            ],
+            "properties": {
+                "archivePath": {
                     "type": "string"
                 },
-                "type": {
+                "bakDataPath": {
+                    "type": "string"
+                },
+                "bakEncryptionPassword": {
+                    "type": "string"
+                },
+                "destType": {
+                    "description": "Enum: NFS, OSS",
+                    "type": "string"
+                },
+                "jobKeepWindow": {
+                    "type": "string"
+                },
+                "ossAccessId": {
+                    "type": "string"
+                },
+                "ossAccessKey": {
+                    "type": "string"
+                },
+                "pieceInterval": {
+                    "type": "string"
+                },
+                "recoveryWindow": {
+                    "type": "string"
+                },
+                "scheduleDates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/param.ScheduleDate"
+                    }
+                },
+                "scheduleTime": {
+                    "description": "Description: HH:MM",
+                    "type": "string"
+                },
+                "scheduleType": {
                     "type": "string"
                 }
             }
@@ -1635,26 +2462,27 @@
         "param.CreateOBTenantParam": {
             "type": "object",
             "required": [
+                "name",
+                "namespace",
                 "obcluster",
                 "pools",
+                "rootPassword",
                 "tenantName",
+                "unitConfig",
                 "unitNum"
             ],
             "properties": {
                 "charset": {
                     "type": "string"
                 },
-                "collate": {
-                    "type": "string"
-                },
                 "connectWhiteList": {
                     "type": "string"
                 },
-                "credentials": {
-                    "$ref": "#/definitions/param.TenantCredentials"
+                "name": {
+                    "type": "string"
                 },
-                "forceDelete": {
-                    "type": "boolean"
+                "namespace": {
+                    "type": "string"
                 },
                 "obcluster": {
                     "type": "string"
@@ -1665,6 +2493,9 @@
                         "$ref": "#/definitions/param.ResourcePoolSpec"
                     }
                 },
+                "rootPassword": {
+                    "type": "string"
+                },
                 "source": {
                     "$ref": "#/definitions/param.TenantSourceSpec"
                 },
@@ -1672,28 +2503,13 @@
                     "type": "string"
                 },
                 "tenantRole": {
+                    "description": "Enum: Primary, Standby",
                     "type": "string"
+                },
+                "unitConfig": {
+                    "$ref": "#/definitions/param.UnitConfig"
                 },
                 "unitNum": {
-                    "type": "integer"
-                }
-            }
-        },
-        "param.LocalityType": {
-            "type": "object",
-            "required": [
-                "isActive",
-                "name",
-                "replica"
-            ],
-            "properties": {
-                "isActive": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "replica": {
                     "type": "integer"
                 }
             }
@@ -1785,6 +2601,35 @@
                 }
             }
         },
+        "param.PatchTenant": {
+            "type": "object",
+            "properties": {
+                "unitConfig": {
+                    "$ref": "#/definitions/param.PatchUnitConfig"
+                },
+                "unitNum": {
+                    "type": "integer"
+                }
+            }
+        },
+        "param.PatchUnitConfig": {
+            "type": "object",
+            "required": [
+                "pools",
+                "unitConfig"
+            ],
+            "properties": {
+                "pools": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/param.ResourcePoolSpec"
+                    }
+                },
+                "unitConfig": {
+                    "$ref": "#/definitions/param.UnitConfig"
+                }
+            }
+        },
         "param.QueryRange": {
             "type": "object",
             "properties": {
@@ -1799,21 +2644,29 @@
                 }
             }
         },
+        "param.ReplayStandbyLog": {
+            "type": "object",
+            "properties": {
+                "timestamp": {
+                    "type": "string"
+                },
+                "unlimited": {
+                    "type": "boolean"
+                }
+            }
+        },
         "param.ResourcePoolSpec": {
             "type": "object",
             "required": [
-                "resource",
                 "zone"
             ],
             "properties": {
                 "priority": {
                     "type": "integer"
                 },
-                "resource": {
-                    "$ref": "#/definitions/param.UnitConfig"
-                },
                 "type": {
-                    "$ref": "#/definitions/param.LocalityType"
+                    "description": "Enum: Readonly, Full",
+                    "type": "string"
                 },
                 "zone": {
                     "type": "string"
@@ -1822,30 +2675,24 @@
         },
         "param.RestoreSourceSpec": {
             "type": "object",
-            "required": [
-                "until"
-            ],
             "properties": {
                 "archiveSource": {
-                    "$ref": "#/definitions/param.BackupDestination"
+                    "type": "string"
                 },
                 "bakDataSource": {
-                    "$ref": "#/definitions/param.BackupDestination"
-                },
-                "bakEncryptionSecret": {
                     "type": "string"
                 },
-                "cancel": {
-                    "type": "boolean"
-                },
-                "description": {
+                "bakEncryptionPassword": {
                     "type": "string"
                 },
-                "replayLogUntil": {
-                    "$ref": "#/definitions/param.RestoreUntilConfig"
+                "ossAccessId": {
+                    "type": "string"
                 },
-                "sourceUri": {
-                    "description": "Deprecated",
+                "ossAccessKey": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Enum: OSS, NFS",
                     "type": "string"
                 },
                 "until": {
@@ -1856,9 +2703,6 @@
         "param.RestoreUntilConfig": {
             "type": "object",
             "properties": {
-                "scn": {
-                    "type": "string"
-                },
                 "timestamp": {
                     "type": "string"
                 },
@@ -1875,14 +2719,19 @@
                 }
             }
         },
-        "param.TenantCredentials": {
+        "param.ScheduleDate": {
             "type": "object",
+            "required": [
+                "backupType",
+                "day"
+            ],
             "properties": {
-                "root": {
+                "backupType": {
+                    "description": "Enum: Full, Incremental",
                     "type": "string"
                 },
-                "standbyRo": {
-                    "type": "string"
+                "day": {
+                    "type": "integer"
                 }
             }
         },
@@ -1900,17 +2749,17 @@
         "param.UnitConfig": {
             "type": "object",
             "required": [
-                "maxCPU",
+                "cpuCount",
                 "memorySize"
             ],
             "properties": {
+                "cpuCount": {
+                    "type": "string"
+                },
                 "iopsWeight": {
                     "type": "integer"
                 },
                 "logDiskSize": {
-                    "type": "string"
-                },
-                "maxCPU": {
                     "type": "string"
                 },
                 "maxIops": {
@@ -1919,58 +2768,39 @@
                 "memorySize": {
                     "type": "string"
                 },
-                "minCPU": {
-                    "type": "string"
-                },
                 "minIops": {
                     "type": "integer"
                 }
             }
         },
-        "param.UpdateOBTenantParam": {
+        "param.UpdateBackupPolicy": {
             "type": "object",
             "required": [
-                "obcluster",
-                "pools",
-                "tenantName",
-                "unitNum"
+                "status"
             ],
             "properties": {
-                "charset": {
+                "jobKeepWindow": {
                     "type": "string"
                 },
-                "collate": {
+                "pieceInterval": {
                     "type": "string"
                 },
-                "connectWhiteList": {
+                "recoveryWindow": {
                     "type": "string"
                 },
-                "credentials": {
-                    "$ref": "#/definitions/param.TenantCredentials"
-                },
-                "forceDelete": {
-                    "type": "boolean"
-                },
-                "obcluster": {
-                    "type": "string"
-                },
-                "pools": {
+                "scheduleDates": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/param.ResourcePoolSpec"
+                        "$ref": "#/definitions/param.ScheduleDate"
                     }
                 },
-                "source": {
-                    "$ref": "#/definitions/param.TenantSourceSpec"
-                },
-                "tenantName": {
+                "scheduleType": {
+                    "description": "Enum: Weekly, Monthly",
                     "type": "string"
                 },
-                "tenantRole": {
+                "status": {
+                    "description": "Enum: Paused, Running",
                     "type": "string"
-                },
-                "unitNum": {
-                    "type": "integer"
                 }
             }
         },
@@ -2008,6 +2838,107 @@
                 },
                 "successful": {
                     "type": "boolean"
+                }
+            }
+        },
+        "response.BackupJob": {
+            "type": "object",
+            "properties": {
+                "backupPolicyName": {
+                    "type": "string"
+                },
+                "encryptionSecret": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "description": "End time of the backup job, empty for ARCHIVE job",
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "path": {
+                    "description": "Empty for Clean job",
+                    "type": "string"
+                },
+                "startTime": {
+                    "description": "Start time of the backup job, StartScnDisplay for ARCHIVE job",
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusInDatabase": {
+                    "type": "string"
+                },
+                "tenantName": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Enum: FULL, INCR, ARCHIVE, CLEAN",
+                    "type": "string"
+                }
+            }
+        },
+        "response.BackupPolicy": {
+            "type": "object",
+            "required": [
+                "destType",
+                "scheduleType"
+            ],
+            "properties": {
+                "archivePath": {
+                    "type": "string"
+                },
+                "bakDataPath": {
+                    "type": "string"
+                },
+                "bakEncryptionSecret": {
+                    "type": "string"
+                },
+                "destType": {
+                    "description": "Enum: NFS, OSS",
+                    "type": "string"
+                },
+                "jobKeepWindow": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "ossAccessSecret": {
+                    "type": "string"
+                },
+                "pieceInterval": {
+                    "type": "string"
+                },
+                "recoveryWindow": {
+                    "type": "string"
+                },
+                "scheduleDates": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/param.ScheduleDate"
+                    }
+                },
+                "scheduleTime": {
+                    "description": "Description: HH:MM",
+                    "type": "string"
+                },
+                "scheduleType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tenantName": {
+                    "type": "string"
                 }
             }
         },
@@ -2339,6 +3270,159 @@
                 }
             }
         },
+        "response.OBTenantBrief": {
+            "description": "Brief information about OBTenant",
+            "type": "object",
+            "properties": {
+                "charset": {
+                    "description": "Charset of the tenant",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "Name of the cluster belonging to",
+                    "type": "string"
+                },
+                "createTime": {
+                    "description": "Creation time of the tenant",
+                    "type": "string"
+                },
+                "locality": {
+                    "description": "Locality of the tenant units",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the resource",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace of the resource",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status of the tenant",
+                    "type": "string"
+                },
+                "tenantName": {
+                    "description": "Name of the tenant in the database",
+                    "type": "string"
+                },
+                "tenantRole": {
+                    "description": "Enum: Primary, Standby",
+                    "type": "string"
+                },
+                "topology": {
+                    "description": "Topology of the tenant",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OBTenantReplica"
+                    }
+                },
+                "unitNumber": {
+                    "description": "Number of units in every zone",
+                    "type": "integer"
+                }
+            }
+        },
+        "response.OBTenantDetail": {
+            "type": "object",
+            "properties": {
+                "charset": {
+                    "description": "Charset of the tenant",
+                    "type": "string"
+                },
+                "clusterName": {
+                    "description": "Name of the cluster belonging to",
+                    "type": "string"
+                },
+                "createTime": {
+                    "description": "Creation time of the tenant",
+                    "type": "string"
+                },
+                "locality": {
+                    "description": "Locality of the tenant units",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the resource",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace of the resource",
+                    "type": "string"
+                },
+                "primaryTenant": {
+                    "type": "string"
+                },
+                "restoreSource": {
+                    "$ref": "#/definitions/response.RestoreSource"
+                },
+                "rootCredential": {
+                    "type": "string"
+                },
+                "standbyROCredentail": {
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status of the tenant",
+                    "type": "string"
+                },
+                "tenantName": {
+                    "description": "Name of the tenant in the database",
+                    "type": "string"
+                },
+                "tenantRole": {
+                    "description": "Enum: Primary, Standby",
+                    "type": "string"
+                },
+                "topology": {
+                    "description": "Topology of the tenant",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OBTenantReplica"
+                    }
+                },
+                "unitNumber": {
+                    "description": "Number of units in every zone",
+                    "type": "integer"
+                }
+            }
+        },
+        "response.OBTenantReplica": {
+            "type": "object",
+            "properties": {
+                "iopsWeight": {
+                    "type": "integer"
+                },
+                "logDiskSize": {
+                    "type": "string"
+                },
+                "maxCPU": {
+                    "type": "string"
+                },
+                "maxIops": {
+                    "type": "integer"
+                },
+                "memorySize": {
+                    "type": "string"
+                },
+                "minCPU": {
+                    "type": "string"
+                },
+                "minIops": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "type": {
+                    "description": "Enum: Readonly, Full",
+                    "type": "string"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
         "response.OBZone": {
             "type": "object",
             "properties": {
@@ -2373,6 +3457,30 @@
                     "type": "string"
                 },
                 "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.RestoreSource": {
+            "type": "object",
+            "properties": {
+                "archiveSource": {
+                    "type": "string"
+                },
+                "bakDataSource": {
+                    "type": "string"
+                },
+                "bakEncryptionSecret": {
+                    "type": "string"
+                },
+                "ossAccessSecret": {
+                    "type": "string"
+                },
+                "type": {
+                    "description": "Enum: OSS, NFS",
+                    "type": "string"
+                },
+                "until": {
                     "type": "string"
                 }
             }

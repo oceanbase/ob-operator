@@ -7,10 +7,11 @@ import (
 	logger "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	clusterstatus "github.com/oceanbase/ob-operator/pkg/const/status/obcluster"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/common"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/constant"
+	clusterstatus "github.com/oceanbase/oceanbase-dashboard/internal/business/enums/obcluster"
 	modelcommon "github.com/oceanbase/oceanbase-dashboard/internal/model/common"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
@@ -129,20 +130,20 @@ func buildOBServerTemplate(observerSpec *param.OBServerSpec) *v1alpha1.OBServerT
 	}
 	observerTemplate := &v1alpha1.OBServerTemplate{
 		Image: observerSpec.Image,
-		Resource: &v1alpha1.ResourceSpec{
+		Resource: &apitypes.ResourceSpec{
 			Cpu:    *apiresource.NewQuantity(observerSpec.Resource.Cpu, apiresource.DecimalSI),
 			Memory: *apiresource.NewQuantity(observerSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
 		},
-		Storage: &v1alpha1.OceanbaseStorageSpec{
-			DataStorage: &v1alpha1.StorageSpec{
+		Storage: &apitypes.OceanbaseStorageSpec{
+			DataStorage: &apitypes.StorageSpec{
 				StorageClass: observerSpec.Storage.Data.StorageClass,
 				Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
 			},
-			RedoLogStorage: &v1alpha1.StorageSpec{
+			RedoLogStorage: &apitypes.StorageSpec{
 				StorageClass: observerSpec.Storage.RedoLog.StorageClass,
 				Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
 			},
-			LogStorage: &v1alpha1.StorageSpec{
+			LogStorage: &apitypes.StorageSpec{
 				StorageClass: observerSpec.Storage.Log.StorageClass,
 				Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
 			},
@@ -151,13 +152,13 @@ func buildOBServerTemplate(observerSpec *param.OBServerSpec) *v1alpha1.OBServerT
 	return observerTemplate
 }
 
-func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *v1alpha1.MonitorTemplate {
+func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTemplate {
 	if monitorSpec == nil {
 		return nil
 	}
-	monitorTemplate := &v1alpha1.MonitorTemplate{
+	monitorTemplate := &apitypes.MonitorTemplate{
 		Image: monitorSpec.Image,
-		Resource: &v1alpha1.ResourceSpec{
+		Resource: &apitypes.ResourceSpec{
 			Cpu:    *apiresource.NewQuantity(monitorSpec.Resource.Cpu, apiresource.DecimalSI),
 			Memory: *apiresource.NewQuantity(monitorSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
 		},
@@ -165,11 +166,11 @@ func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *v1alpha1.MonitorTempl
 	return monitorTemplate
 }
 
-func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *v1alpha1.BackupVolumeSpec {
+func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *apitypes.BackupVolumeSpec {
 	if nfsVolumeSpec == nil {
 		return nil
 	}
-	backupVolume := &v1alpha1.BackupVolumeSpec{
+	backupVolume := &apitypes.BackupVolumeSpec{
 		Volume: &corev1.Volume{
 			Name: "ob-backup",
 			VolumeSource: corev1.VolumeSource{
@@ -184,10 +185,10 @@ func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *v1alpha1.BackupVolum
 	return backupVolume
 }
 
-func buildOBClusterTopology(topology []param.ZoneTopology) []v1alpha1.OBZoneTopology {
-	obzoneTopology := make([]v1alpha1.OBZoneTopology, 0)
+func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopology {
+	obzoneTopology := make([]apitypes.OBZoneTopology, 0)
 	for _, zone := range topology {
-		obzoneTopology = append(obzoneTopology, v1alpha1.OBZoneTopology{
+		obzoneTopology = append(obzoneTopology, apitypes.OBZoneTopology{
 			Zone:         zone.Zone,
 			NodeSelector: common.KVsToMap(zone.NodeSelector),
 			Replica:      zone.Replicas,
@@ -196,10 +197,10 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []v1alpha1.OBZoneTopo
 	return obzoneTopology
 }
 
-func buildOBClusterParameters(parameters []modelcommon.KVPair) []v1alpha1.Parameter {
-	obparameters := make([]v1alpha1.Parameter, 0)
+func buildOBClusterParameters(parameters []modelcommon.KVPair) []apitypes.Parameter {
+	obparameters := make([]apitypes.Parameter, 0)
 	for _, parameter := range parameters {
-		obparameters = append(obparameters, v1alpha1.Parameter{
+		obparameters = append(obparameters, apitypes.Parameter{
 			Name:  parameter.Key,
 			Value: parameter.Value,
 		})
@@ -212,8 +213,8 @@ func generateUUID() string {
 	return parts[len(parts)-1]
 }
 
-func generateUserSecrets(clusterName string, clusterId int64) *v1alpha1.OBUserSecrets {
-	return &v1alpha1.OBUserSecrets{
+func generateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSecrets {
+	return &apitypes.OBUserSecrets{
 		Root:     fmt.Sprintf("%s-%d-root-%s", clusterName, clusterId, generateUUID()),
 		ProxyRO:  fmt.Sprintf("%s-%d-proxyro-%s", clusterName, clusterId, generateUUID()),
 		Monitor:  fmt.Sprintf("%s-%d-monitor-%s", clusterName, clusterId, generateUUID()),
@@ -305,7 +306,7 @@ func DeleteOBZone(obzoneIdentity *param.OBZoneIdentity) error {
 	if obcluster.Status.Status != clusterstatus.Running {
 		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
 	}
-	newTopology := make([]v1alpha1.OBZoneTopology, 0)
+	newTopology := make([]apitypes.OBZoneTopology, 0)
 	found := false
 	for _, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone != obzoneIdentity.OBZoneName {
@@ -334,7 +335,7 @@ func AddOBZone(obclusterIdentity *param.K8sObjectIdentity, zone *param.ZoneTopol
 			return errors.Errorf("obzone %s already exists", zone.Zone)
 		}
 	}
-	obcluster.Spec.Topology = append(obcluster.Spec.Topology, v1alpha1.OBZoneTopology{
+	obcluster.Spec.Topology = append(obcluster.Spec.Topology, apitypes.OBZoneTopology{
 		Zone:         zone.Zone,
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
