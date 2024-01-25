@@ -135,6 +135,8 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 			kind = "OBCluster"
 		case "OBTENANT":
 			kind = "OBTenant"
+		default:
+			kind = queryEventParam.ObjectType
 		}
 		selectors = append(selectors, fmt.Sprintf("involvedObject.kind=%s", kind))
 	}
@@ -149,6 +151,9 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 		selectors = append(selectors, fmt.Sprintf("type=%s", eventType))
 	}
 	ns := corev1.NamespaceAll
+	if queryEventParam.Namespace != "" {
+		ns = queryEventParam.Namespace
+	}
 	if len(selectors) > 0 {
 		listOptions.FieldSelector = strings.Join(selectors, ",")
 	}
