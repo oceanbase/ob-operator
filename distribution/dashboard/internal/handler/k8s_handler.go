@@ -14,6 +14,7 @@ import (
 // @Produce application/json
 // @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT)
 // @Param type query string false "event level" Enums(NORMAL, WARNING)
+// @Param name query string false "Object name" string
 // @Success 200 object response.APIResponse{data=[]response.K8sEvent}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -24,6 +25,7 @@ func ListK8sEvents(c *gin.Context) {
 	queryEventParam := &param.QueryEventParam{
 		ObjectType: c.Query("objectType"),
 		Type:       c.Query("type"),
+		Name:       c.Query("name"),
 	}
 	events, err := k8s.ListEvents(queryEventParam)
 	if err != nil {

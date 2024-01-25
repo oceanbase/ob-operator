@@ -378,6 +378,7 @@ func UpgradeTenantVersion(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
+// @Param body body param.ChangeTenantRole true "target role to change to"
 // @Router /api/v1/obtenants/{namespace}/{name}/role [POST]
 // @Security ApiKeyAuth
 func ChangeTenantRole(c *gin.Context) {

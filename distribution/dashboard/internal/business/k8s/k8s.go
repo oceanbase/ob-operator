@@ -11,8 +11,10 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/resource"
+
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -121,16 +123,39 @@ func extractNodeResource(node *corev1.Node) *response.K8sNodeResource {
 
 func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
 	events := make([]response.K8sEvent, 0)
-	eventList, err := resource.ListAllEvents()
+	listOptions := &metav1.ListOptions{}
+	var selectors []string
+	if queryEventParam.Name != "" {
+		selectors = append(selectors, fmt.Sprintf("involvedObject.name=%s", queryEventParam.Name))
+	}
+	if queryEventParam.ObjectType != "" {
+		var kind string
+		switch queryEventParam.ObjectType {
+		case "OBCLUSTER":
+			kind = "OBCluster"
+		case "OBTENANT":
+			kind = "OBTenant"
+		}
+		selectors = append(selectors, fmt.Sprintf("involvedObject.kind=%s", kind))
+	}
+	if queryEventParam.Type != "" {
+		var eventType string
+		switch queryEventParam.Type {
+		case "NORMAL":
+			eventType = "Normal"
+		case "WARNING":
+			eventType = "Warning"
+		}
+		selectors = append(selectors, fmt.Sprintf("type=%s", eventType))
+	}
+	ns := corev1.NamespaceAll
+	if len(selectors) > 0 {
+		listOptions.FieldSelector = strings.Join(selectors, ",")
+	}
+	eventList, err := resource.ListEvents(ns, listOptions)
 	logger.Infof("query events with param: %v", queryEventParam)
 	if err == nil {
 		for _, event := range eventList.Items {
-			if queryEventParam.ObjectType != "" && strings.ToLower(event.InvolvedObject.Kind) != strings.ToLower(queryEventParam.ObjectType) {
-				continue
-			}
-			if queryEventParam.Type != "" && strings.ToLower(event.Type) != strings.ToLower(queryEventParam.Type) {
-				continue
-			}
 			events = append(events, response.K8sEvent{
 				Namespace:  event.Namespace,
 				Type:       event.Type,

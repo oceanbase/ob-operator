@@ -54,6 +54,12 @@ const docTemplate = `{
                         "description": "event level",
                         "name": "type",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object name",
+                        "name": "name",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2115,6 +2121,15 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "description": "target role to change to",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ChangeTenantRole"
+                        }
                     }
                 ],
                 "responses": {
@@ -2347,6 +2362,21 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "storageClass": {
+                    "type": "string"
+                }
+            }
+        },
+        "param.ChangeTenantRole": {
+            "type": "object",
+            "required": [
+                "tenantRole"
+            ],
+            "properties": {
+                "switchover": {
+                    "type": "boolean"
+                },
+                "tenantRole": {
+                    "description": "Enum: Primary, Standby",
                     "type": "string"
                 }
             }
@@ -3226,6 +3256,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/response.OBZone"
                     }
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },
@@ -3391,6 +3424,9 @@ const docTemplate = `{
                 "unitNumber": {
                     "description": "Number of units in every zone",
                     "type": "integer"
+                },
+                "version": {
+                    "type": "string"
                 }
             }
         },

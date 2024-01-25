@@ -21,6 +21,16 @@ definitions:
       storageClass:
         type: string
     type: object
+  param.ChangeTenantRole:
+    properties:
+      switchover:
+        type: boolean
+      tenantRole:
+        description: 'Enum: Primary, Standby'
+        type: string
+    required:
+    - tenantRole
+    type: object
   param.ChangeUserPassword:
     properties:
       Password:
@@ -602,6 +612,8 @@ definitions:
         items:
           $ref: '#/definitions/response.OBZone'
         type: array
+      version:
+        type: string
     type: object
   response.OBClusterStastistic:
     properties:
@@ -718,6 +730,8 @@ definitions:
       unitNumber:
         description: Number of units in every zone
         type: integer
+      version:
+        type: string
     type: object
   response.OBTenantReplica:
     properties:
@@ -831,6 +845,10 @@ paths:
         - WARNING
         in: query
         name: type
+        type: string
+      - description: Object name
+        in: query
+        name: name
         type: string
       produces:
       - application/json
@@ -2128,6 +2146,12 @@ paths:
         name: name
         required: true
         type: string
+      - description: target role to change to
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ChangeTenantRole'
       produces:
       - application/json
       responses:

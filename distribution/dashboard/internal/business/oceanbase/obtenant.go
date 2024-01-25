@@ -122,7 +122,6 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
 		OBTenantBrief: *buildBriefFromApiType(t),
 	}
-
 	rt.RootCredential = t.Status.Credentials.Root
 	rt.StandbyROCredentail = t.Status.Credentials.StandbyRO
 

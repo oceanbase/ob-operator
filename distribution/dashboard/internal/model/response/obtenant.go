@@ -19,6 +19,7 @@ type OBTenantDetail struct {
 	OBTenantBrief       `json:",inline"`
 	RootCredential      string `json:"rootCredential"`
 	StandbyROCredentail string `json:"standbyROCredentail"`
+	Version             string `json:"version"`
 
 	PrimaryTenant string         `json:"primaryTenant"`
 	RestoreSource *RestoreSource `json:"restoreSource,omitempty"`
