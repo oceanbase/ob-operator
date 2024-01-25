@@ -16,9 +16,9 @@ import (
 
 type K8sResourceClient[T runtimeclient.Object] interface {
 	List(ctx context.Context, namespace string, list runtimeclient.ObjectList, opts v1.ListOptions) error
-	Get(ctx context.Context, namespace, name string, opts v1.GetOptions) (*T, error)
-	Create(ctx context.Context, obj *T, opts v1.CreateOptions) (*T, error)
-	Update(ctx context.Context, obj *T, opts v1.UpdateOptions) (*T, error)
+	Get(ctx context.Context, namespace, name string, opts v1.GetOptions) (T, error)
+	Create(ctx context.Context, obj T, opts v1.CreateOptions) (T, error)
+	Update(ctx context.Context, obj T, opts v1.UpdateOptions) (T, error)
 	Delete(ctx context.Context, namespace, name string, opts v1.DeleteOptions) error
 }
 
@@ -54,67 +54,61 @@ func (c dynamicResourceClient[T]) List(ctx context.Context, namespace string, li
 }
 
 // Get gets the object with the given namespace, name and options
-func (c dynamicResourceClient[T]) Get(ctx context.Context, namespace, name string, opts v1.GetOptions) (*T, error) {
+func (c dynamicResourceClient[T]) Get(ctx context.Context, namespace, name string, opts v1.GetOptions) (T, error) {
 	obj, err := c.client.Namespace(namespace).Get(ctx, name, opts)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 	var item T
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &item)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
-	return &item, nil
+	return item, nil
 }
 
-func (c dynamicResourceClient[T]) Create(ctx context.Context, obj *T, opts v1.CreateOptions) (*T, error) {
-	if obj == nil {
-		return nil, errors.New(fmt.Sprintf("the %s is nil", c.kind))
-	}
-	if (*obj).GetName() == "" {
-		return nil, errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
+func (c dynamicResourceClient[T]) Create(ctx context.Context, obj T, opts v1.CreateOptions) (T, error) {
+	if obj.GetName() == "" {
+		return *new(T), errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
 	}
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 
 	unstructuredObj := &unstructured.Unstructured{
 		Object: objMap,
 	}
 	unstructuredObj.SetGroupVersionKind(c.gvr.GroupVersion().WithKind(c.kind))
-	res, err := c.client.Namespace((*obj).GetNamespace()).Create(ctx, unstructuredObj, opts)
+	res, err := c.client.Namespace(obj.GetNamespace()).Create(ctx, unstructuredObj, opts)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), obj)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 	return obj, nil
 }
 
-func (c dynamicResourceClient[T]) Update(ctx context.Context, obj *T, opts v1.UpdateOptions) (*T, error) {
-	if obj == nil {
-		return nil, errors.New(fmt.Sprintf("the %s is nil", c.kind))
-	}
-	if (*obj).GetName() == "" {
-		return nil, errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
+func (c dynamicResourceClient[T]) Update(ctx context.Context, obj T, opts v1.UpdateOptions) (T, error) {
+	if obj.GetName() == "" {
+		return *new(T), errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
 	}
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 
-	res, err := c.client.Namespace((*obj).GetNamespace()).Update(ctx, &unstructured.Unstructured{
+	res, err := c.client.Namespace(obj.GetNamespace()).Update(ctx, &unstructured.Unstructured{
 		Object: unstructuredObj,
 	}, opts)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(res.UnstructuredContent(), obj)
 	if err != nil {
-		return nil, err
+		return *new(T), err
 	}
 	return obj, nil
 }
