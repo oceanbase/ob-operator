@@ -2,9 +2,9 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/oceanbase/oceanbase-dashboard/internal/handler"
+	h "github.com/oceanbase/oceanbase-dashboard/internal/handler"
 )
 
 func InitInfoRoutes(g *gin.RouterGroup) {
-	g.GET("/info", handler.GetProcessInfo)
+	g.GET("/info", h.W(h.GetProcessInfo))
 }

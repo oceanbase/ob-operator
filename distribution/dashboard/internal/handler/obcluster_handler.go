@@ -6,7 +6,9 @@ import (
 
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
+	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	crypto "github.com/oceanbase/oceanbase-dashboard/pkg/crypto"
+	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID GetOBClusterStatistic
@@ -20,15 +22,14 @@ import (
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/statistic [GET]
-func GetOBClusterStatistic(c *gin.Context) {
+func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, error) {
 	// return mock data
 	obclusterStastics, err := oceanbase.GetOBClusterStatistic(c)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, obclusterStastics)
+		return nil, err
 	}
+	return obclusterStastics, nil
 }
 
 // @ID ListOBClusters
@@ -43,14 +44,13 @@ func GetOBClusterStatistic(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [GET]
 // @Security ApiKeyAuth
-func ListOBClusters(c *gin.Context) {
+func ListOBClusters(c *gin.Context) ([]response.OBCluster, error) {
 	obclusters, err := oceanbase.ListOBClusters(c)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, obclusters)
+		return nil, err
 	}
+	return obclusters, nil
 }
 
 // @ID GetOBCluster
@@ -67,19 +67,18 @@ func ListOBClusters(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [GET]
 // @Security ApiKeyAuth
-func GetOBCluster(c *gin.Context) {
+func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	obcluster, err := oceanbase.GetOBCluster(c, obclusterIdentity)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, obcluster)
+		return nil, err
 	}
+	return obcluster, nil
 }
 
 // @ID CreateOBCluster
@@ -95,25 +94,23 @@ func GetOBCluster(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [POST]
 // @Security ApiKeyAuth
-func CreateOBCluster(c *gin.Context) {
+func CreateOBCluster(c *gin.Context) (any, error) {
 	param := &param.CreateOBClusterParam{}
 	err := c.Bind(param)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	logger.Debugf("Create obcluster: %v", param)
 	err = oceanbase.CreateOBCluster(c, param)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, err
 	}
+	return nil, nil
 }
 
 // @ID UpgradeOBCluster
@@ -131,24 +128,23 @@ func CreateOBCluster(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [POST]
 // @Security ApiKeyAuth
-func UpgradeOBCluster(c *gin.Context) {
+func UpgradeOBCluster(c *gin.Context) (any, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	updateParam := &param.UpgradeOBClusterParam{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = c.Bind(updateParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, err
 	}
+	return nil, nil
 }
 
 // @ID DeleteOBCluster
@@ -165,19 +161,18 @@ func UpgradeOBCluster(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteOBCluster(c *gin.Context) {
+func DeleteOBCluster(c *gin.Context) (any, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteOBCluster(c, obclusterIdentity)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, oberr.NewInternal(err.Error())
 	}
+	return nil, nil
 }
 
 // @ID AddOBZone
@@ -195,24 +190,23 @@ func DeleteOBCluster(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones [POST]
 // @Security ApiKeyAuth
-func AddOBZone(c *gin.Context) {
+func AddOBZone(c *gin.Context) (any, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	param := &param.ZoneTopology{}
 	err = c.Bind(param)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.AddOBZone(c, obclusterIdentity, param)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, err
 	}
+	return nil, nil
 }
 
 // @ID ScaleOBServer
@@ -231,24 +225,23 @@ func AddOBZone(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}/scale [POST]
 // @Security ApiKeyAuth
-func ScaleOBServer(c *gin.Context) {
+func ScaleOBServer(c *gin.Context) (any, error) {
 	obzoneIdentity := &param.OBZoneIdentity{}
 	err := c.BindUri(obzoneIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	scaleParam := &param.ScaleOBServerParam{}
 	err = c.Bind(scaleParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, err
 	}
+	return nil, nil
 }
 
 // @ID DeleteOBZone
@@ -266,17 +259,16 @@ func ScaleOBServer(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName} [DELETE]
 // @Security ApiKeyAuth
-func DeleteOBZone(c *gin.Context) {
+func DeleteOBZone(c *gin.Context) (any, error) {
 	obzoneIdentity := &param.OBZoneIdentity{}
 	err := c.BindUri(obzoneIdentity)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteOBZone(c, obzoneIdentity)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nil)
+		return nil, err
 	}
+	return nil, nil
 }

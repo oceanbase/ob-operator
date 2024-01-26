@@ -8,20 +8,22 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
-type Handler func(c *gin.Context) (interface{}, errors.ObError)
+type Handler[T any] func(c *gin.Context) (T, error)
 
-type Wrapper func(h Handler) gin.HandlerFunc
-
-func ErrorWrapper(h Handler) gin.HandlerFunc {
+func W[T any](h Handler[T]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		res, err := h(c)
 		statusCode := http.StatusOK
 		var errMsg string
 		if err != nil {
-			statusCode = err.Status()
+			if obe := err.(errors.ObError); obe != nil {
+				statusCode = obe.Status()
+			} else {
+				statusCode = http.StatusInternalServerError
+			}
 			errMsg = err.Error()
 			// ensure that the response is nil
-			res = nil
+			res = *new(T)
 		}
 		c.JSON(statusCode, &response.APIResponse{
 			Data:       res,

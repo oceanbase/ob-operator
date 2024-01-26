@@ -2,17 +2,17 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/oceanbase/oceanbase-dashboard/internal/handler"
+	h "github.com/oceanbase/oceanbase-dashboard/internal/handler"
 )
 
 func InitOBClusterRoutes(g *gin.RouterGroup) {
-	g.GET("/obclusters/statistic", handler.GetOBClusterStatistic)
-	g.GET("/obclusters", handler.ListOBClusters)
-	g.POST("/obclusters", handler.CreateOBCluster)
-	g.GET("/obclusters/namespace/:namespace/name/:name", handler.GetOBCluster)
-	g.POST("/obclusters/namespace/:namespace/name/:name", handler.UpgradeOBCluster)
-	g.DELETE("/obclusters/namespace/:namespace/name/:name", handler.DeleteOBCluster)
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", handler.AddOBZone)
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", handler.ScaleOBServer)
-	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", handler.DeleteOBZone)
+	g.GET("/obclusters/statistic", h.W(h.GetOBClusterStatistic))
+	g.GET("/obclusters", h.W(h.ListOBClusters))
+	g.POST("/obclusters", h.W(h.CreateOBCluster))
+	g.GET("/obclusters/namespace/:namespace/name/:name", h.W(h.GetOBCluster))
+	g.POST("/obclusters/namespace/:namespace/name/:name", h.W(h.UpgradeOBCluster))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.W(h.DeleteOBCluster))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.W(h.AddOBZone))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.W(h.ScaleOBServer))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.W(h.DeleteOBZone))
 }

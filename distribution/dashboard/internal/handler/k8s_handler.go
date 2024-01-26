@@ -4,6 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/k8s"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
+	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
+	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID ListK8sEvents
@@ -21,19 +23,19 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/events [GET]
 // @Security ApiKeyAuth
-func ListK8sEvents(c *gin.Context) {
+func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 	queryEventParam := &param.QueryEventParam{
 		ObjectType: c.Query("objectType"),
 		Type:       c.Query("type"),
 		Name:       c.Query("name"),
+		Namespace:  c.Query("namespace"),
 	}
 	events, err := k8s.ListEvents(queryEventParam)
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, events)
+		return nil, err
 	}
+	return events, nil
 }
 
 // @ID ListK8sNodes
@@ -48,14 +50,13 @@ func ListK8sEvents(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/nodes [GET]
 // @Security ApiKeyAuth
-func ListK8sNodes(c *gin.Context) {
+func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 	nodes, err := k8s.ListNodes()
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, nodes)
+		return nil, err
 	}
+	return nodes, nil
 }
 
 // @ID ListK8sNamespaces
@@ -70,14 +71,13 @@ func ListK8sNodes(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/namespaces [GET]
 // @Security ApiKeyAuth
-func ListK8sNamespaces(c *gin.Context) {
+func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
 	namespaces, err := k8s.ListNamespaces()
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, namespaces)
+		return nil, err
 	}
+	return namespaces, nil
 }
 
 // @ID ListK8sStorageClasses
@@ -92,14 +92,13 @@ func ListK8sNamespaces(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/storageClasses [GET]
 // @Security ApiKeyAuth
-func ListK8sStorageClasses(c *gin.Context) {
+func ListK8sStorageClasses(c *gin.Context) ([]response.StorageClass, error) {
 	storageClasses, err := k8s.ListStorageClasses()
 	if err != nil {
 		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-	} else {
-		SendSuccessfulResponse(c, storageClasses)
+		return nil, err
 	}
+	return storageClasses, nil
 }
 
 // @ID CreateK8sNamespace
@@ -115,19 +114,17 @@ func ListK8sStorageClasses(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/namespaces [POST]
 // @Security ApiKeyAuth
-func CreateK8sNamespace(c *gin.Context) {
+func CreateK8sNamespace(c *gin.Context) (any, error) {
 	param := &param.CreateNamespaceParam{}
 	err := c.Bind(param)
 	if err != nil {
 		logHandlerError(c, err)
-		SendBadRequestResponse(c, nil, err)
-	} else {
-		err = k8s.CreateNamespace(param)
-		if err != nil {
-			logHandlerError(c, err)
-			SendInternalServerErrorResponse(c, nil, err)
-		} else {
-			SendSuccessfulResponse(c, nil)
-		}
+		return nil, oberr.NewBadRequest(err.Error())
 	}
+	err = k8s.CreateNamespace(param)
+	if err != nil {
+		logHandlerError(c, err)
+		return nil, err
+	}
+	return nil, nil
 }

@@ -7,6 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
+	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
+	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	logger "github.com/sirupsen/logrus"
@@ -27,7 +30,7 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants [GET]
 // @Security ApiKeyAuth
-func ListAllTenants(c *gin.Context) {
+func ListAllTenants(c *gin.Context) ([]*response.OBTenantBrief, error) {
 	selector := ""
 	if c.Query("obcluster") != "" {
 		selector = fmt.Sprintf("ref-obcluster=%s", c.Query("obcluster"))
@@ -37,10 +40,9 @@ func ListAllTenants(c *gin.Context) {
 	}
 	tenants, err := oceanbase.ListAllOBTenants(c, listOptions)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenants)
+	return tenants, nil
 }
 
 // @ID GetTenant
@@ -57,12 +59,11 @@ func ListAllTenants(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
-func GetTenant(c *gin.Context) {
+func GetTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.GetOBTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
@@ -70,13 +71,11 @@ func GetTenant(c *gin.Context) {
 	})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			SendNotFoundResponse(c, nil, err)
-			return
+			return nil, oberr.NewNotFound(err.Error())
 		}
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID CreateTenant
@@ -94,12 +93,11 @@ func GetTenant(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants [PUT]
 // @Security ApiKeyAuth
-func CreateTenant(c *gin.Context) {
+func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	tenantParam := &param.CreateOBTenantParam{}
 	err := c.BindJSON(tenantParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Create obtenant: %+v", tenantParam)
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
@@ -107,10 +105,9 @@ func CreateTenant(c *gin.Context) {
 		Name:      tenantParam.Namespace,
 	}, tenantParam)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID DeleteTenant
@@ -127,12 +124,11 @@ func CreateTenant(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteTenant(c *gin.Context) {
+func DeleteTenant(c *gin.Context) (interface{}, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteOBTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
@@ -141,42 +137,37 @@ func DeleteTenant(c *gin.Context) {
 	if err != nil {
 		logHandlerError(c, err)
 		if kubeerrors.IsNotFound(err) {
-			SendNotFoundResponse(c, nil, err)
-			return
+			return nil, oberr.NewNotFound(err.Error())
 		}
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, nil)
+	return nil, nil
 }
 
 // @Deprecated: use PatchTenant instead
-func ModifyUnitNumber(c *gin.Context) {
+func ModifyUnitNumber(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	unitNumberParam := &param.ModifyUnitNumber{}
 	err = c.BindJSON(unitNumberParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.ModifyOBTenantUnitNumber(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, unitNumberParam.UnitNumber)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @Deprecated: use PatchTenant instead
-func ModifyUnitConfig(c *gin.Context) {
+func ModifyUnitConfig(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := struct {
 		Name      string `uri:"name"`
 		Namespace string `uri:"namespace"`
@@ -184,24 +175,21 @@ func ModifyUnitConfig(c *gin.Context) {
 	}{}
 	err := c.BindUri(&nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	unitConfig := param.UnitConfig{}
 	err = c.BindJSON(&unitConfig)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.ModifyOBTenantUnitConfig(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, nn.Zone, &unitConfig)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID PatchTenant
@@ -219,32 +207,28 @@ func ModifyUnitConfig(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name} [PATCH]
 // @Security ApiKeyAuth
-func PatchTenant(c *gin.Context) {
+func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := param.NamespacedName{}
 	err := c.BindUri(&nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	patch := param.PatchTenant{}
 	err = c.BindJSON(&patch)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	if patch.UnitNumber == nil && patch.UnitConfig == nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.PatchTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	}, &patch)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID ChangeUserPassword
@@ -262,22 +246,19 @@ func PatchTenant(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/userCredentials [POST]
 // @Security ApiKeyAuth
-func ChangeUserPassword(c *gin.Context) {
+func ChangeUserPassword(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	passwordParam := &param.ChangeUserPassword{}
 	err = c.BindJSON(passwordParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	if passwordParam.User != "root" {
-		SendBadRequestResponse(c, nil, fmt.Errorf("only root user is supported"))
-		return
+		return nil, oberr.NewBadRequest("only root user is supported")
 	}
 	tenant, err := oceanbase.ModifyOBTenantRootPassword(c, types.NamespacedName{
 		Namespace: nn.Namespace,
@@ -285,10 +266,9 @@ func ChangeUserPassword(c *gin.Context) {
 	}, passwordParam.Password)
 
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID ReplayStandbyLog
@@ -306,32 +286,28 @@ func ChangeUserPassword(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/logreplay [POST]
 // @Security ApiKeyAuth
-func ReplayStandbyLog(c *gin.Context) {
+func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	logReplayParam := &param.ReplayStandbyLog{}
 	err = c.BindJSON(logReplayParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	if logReplayParam.Timestamp == nil {
-		SendBadRequestResponse(c, nil, fmt.Errorf("timestamp is required"))
-		return
+		return nil, oberr.NewBadRequest("timestamp is required")
 	}
 	tenant, err := oceanbase.ReplayStandbyLog(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	}, *logReplayParam.Timestamp)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID UpgradeTenantVersion
@@ -348,22 +324,20 @@ func ReplayStandbyLog(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenants/{namespace}/{name}/version [POST]
 // @Security ApiKeyAuth
-func UpgradeTenantVersion(c *gin.Context) {
+func UpgradeTenantVersion(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.UpgradeTenantVersion(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
 	})
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID ChangeTenantRole
@@ -381,18 +355,16 @@ func UpgradeTenantVersion(c *gin.Context) {
 // @Param body body param.ChangeTenantRole true "target role to change to"
 // @Router /api/v1/obtenants/{namespace}/{name}/role [POST]
 // @Security ApiKeyAuth
-func ChangeTenantRole(c *gin.Context) {
+func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	p := param.ChangeTenantRole{}
 	err = c.BindJSON(&p)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	tenant, err := oceanbase.ChangeTenantRole(c, types.NamespacedName{
 		Name:      nn.Name,
@@ -400,14 +372,12 @@ func ChangeTenantRole(c *gin.Context) {
 	}, &p)
 	if err != nil {
 		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			SendBadRequestResponse(c, nil, err)
-			return
+			return nil, oberr.NewBadRequest(err.Error())
 		} else {
-			SendInternalServerErrorResponse(c, nil, err)
-			return
+			return nil, oberr.NewInternal(err.Error())
 		}
 	}
-	SendSuccessfulResponse(c, tenant)
+	return tenant, nil
 }
 
 // @ID CreateBackupPolicy
@@ -425,18 +395,16 @@ func ChangeTenantRole(c *gin.Context) {
 // @Param body body param.CreateBackupPolicy true "create backup policy request body"
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [PUT]
 // @Security ApiKeyAuth
-func CreateBackupPolicy(c *gin.Context) {
+func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	createPolicyParam := &param.CreateBackupPolicy{}
 	err = c.BindJSON(createPolicyParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	policy, err := oceanbase.CreateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
@@ -444,14 +412,12 @@ func CreateBackupPolicy(c *gin.Context) {
 	}, createPolicyParam)
 	if err != nil {
 		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			SendBadRequestResponse(c, nil, err)
-			return
+			return nil, oberr.NewBadRequest(err.Error())
 		} else {
-			SendInternalServerErrorResponse(c, nil, err)
-			return
+			return nil, oberr.NewInternal(err.Error())
 		}
 	}
-	SendSuccessfulResponse(c, policy)
+	return policy, nil
 }
 
 // @ID UpdateBackupPolicy
@@ -469,18 +435,16 @@ func CreateBackupPolicy(c *gin.Context) {
 // @Param body body param.UpdateBackupPolicy true "update backup policy request body"
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [POST]
 // @Security ApiKeyAuth
-func UpdateBackupPolicy(c *gin.Context) {
+func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	updatePolicyParam := &param.UpdateBackupPolicy{}
 	err = c.BindJSON(updatePolicyParam)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	policy, err := oceanbase.UpdateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
@@ -488,14 +452,12 @@ func UpdateBackupPolicy(c *gin.Context) {
 	}, updatePolicyParam)
 	if err != nil {
 		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			SendBadRequestResponse(c, nil, err)
-			return
+			return nil, oberr.NewBadRequest(err.Error())
 		} else {
-			SendInternalServerErrorResponse(c, nil, err)
-			return
+			return nil, oberr.NewInternal(err.Error())
 		}
 	}
-	SendSuccessfulResponse(c, policy)
+	return policy, nil
 }
 
 // @ID DeleteBackupPolicy
@@ -512,22 +474,20 @@ func UpdateBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [DELETE]
 // @Security ApiKeyAuth
-func DeleteBackupPolicy(c *gin.Context) {
+func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, nil)
+	return nil, nil
 }
 
 // @ID GetBackupPolicy
@@ -544,22 +504,20 @@ func DeleteBackupPolicy(c *gin.Context) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [GET]
 // @Security ApiKeyAuth
-func GetBackupPolicy(c *gin.Context) {
+func GetBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
-	resp, err := oceanbase.GetTenantBackupPolicy(c, types.NamespacedName{
+	policy, err := oceanbase.GetTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, resp)
+	return policy, nil
 }
 
 // @ID ListBackupJobs
@@ -578,7 +536,7 @@ func GetBackupPolicy(c *gin.Context) {
 // @Param limit query int false "limit" default(10)
 // @Router /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs [GET]
 // @Security ApiKeyAuth
-func ListBackupJobs(c *gin.Context) {
+func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 	p := struct {
 		Namespace string `uri:"namespace"`
 		Name      string `uri:"name"`
@@ -586,15 +544,13 @@ func ListBackupJobs(c *gin.Context) {
 	}{}
 	err := c.BindUri(&p)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return nil, oberr.NewBadRequest(err.Error())
 	}
 	limit := 10
 	if c.Query("limit") != "" {
 		limit, err = strconv.Atoi(c.Query("limit"))
 		if err != nil {
-			SendBadRequestResponse(c, nil, err)
-			return
+			return nil, oberr.NewBadRequest(err.Error())
 		}
 	}
 	jobs, err := oceanbase.ListBackupJobs(c, types.NamespacedName{
@@ -602,8 +558,7 @@ func ListBackupJobs(c *gin.Context) {
 		Name:      p.Name,
 	}, p.Type, limit)
 	if err != nil {
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return nil, oberr.NewInternal(err.Error())
 	}
-	SendSuccessfulResponse(c, jobs)
+	return jobs, nil
 }
