@@ -231,6 +231,9 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*respo
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}
+	if policy == nil {
+		return nil, nil
+	}
 	return buildBackupPolicyModelType(policy), nil
 }
 
