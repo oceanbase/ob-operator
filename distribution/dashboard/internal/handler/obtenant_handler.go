@@ -226,7 +226,7 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		Name:      nn.Name,
 	}, &patch)
 	if err != nil {
-		return nil, oberr.NewInternal(err.Error())
+		return nil, err
 	}
 	return tenant, nil
 }
@@ -371,11 +371,7 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 		Namespace: nn.Namespace,
 	}, &p)
 	if err != nil {
-		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			return nil, oberr.NewBadRequest(err.Error())
-		} else {
-			return nil, oberr.NewInternal(err.Error())
-		}
+		return nil, err
 	}
 	return tenant, nil
 }
@@ -411,11 +407,7 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 		Namespace: nn.Namespace,
 	}, createPolicyParam)
 	if err != nil {
-		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			return nil, oberr.NewBadRequest(err.Error())
-		} else {
-			return nil, oberr.NewInternal(err.Error())
-		}
+		return nil, err
 	}
 	return policy, nil
 }
@@ -451,11 +443,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 		Namespace: nn.Namespace,
 	}, updatePolicyParam)
 	if err != nil {
-		if oceanbase.Is(err, oceanbase.ErrorTypeBadRequest) {
-			return nil, oberr.NewBadRequest(err.Error())
-		} else {
-			return nil, oberr.NewInternal(err.Error())
-		}
+		return nil, err
 	}
 	return policy, nil
 }

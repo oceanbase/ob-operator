@@ -10,6 +10,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
+	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase/schema"
@@ -432,10 +433,10 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 		return nil, err
 	}
 	if tenant.Status.TenantRole == apitypes.TenantRole(p.TenantRole) {
-		return nil, NewOBError(ErrorTypeBadRequest, "The tenant is already "+string(p.TenantRole))
+		return nil, oberr.NewBadRequest("The tenant is already " + string(p.TenantRole))
 	}
 	if p.Switchover && (tenant.Status.Source == nil || tenant.Status.Source.Tenant == nil) {
-		return nil, NewOBError(ErrorTypeBadRequest, "The tenant has no primary tenant")
+		return nil, oberr.NewBadRequest("The tenant has no primary tenant")
 	}
 	changeRoleOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
