@@ -88,7 +88,16 @@ declare namespace API {
 
   type ClusterList = ClusterItem[];
 
-  type modalType = 'upgrade' | 'addZone' | 'scaleServer';
+  type ModalType =
+    | 'upgrade'
+    | 'addZone'
+    | 'scaleServer'
+    | 'modifyUnit'
+    | 'changePassword'
+    | 'logReplay'
+    | 'activateTenant'
+    | 'switchTenant'
+    | 'upgradeTenant'
 
   type QueryMetricsType = {
     groupLabels: string[];
@@ -101,6 +110,8 @@ declare namespace API {
 
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
 
+  type TenantRole = 'Primary' | 'Standby'
+
   interface TenantDetail {
     charset: string;
     clusterName: string;
@@ -110,7 +121,7 @@ declare namespace API {
     namespace: string;
     status: string;
     tenantName: string;
-    tenantRole: string;
+    tenantRole: TenantRole;
     topology: [
       {
         iopsWeight: 0;
@@ -158,7 +169,7 @@ declare namespace API {
       tenant?: string;
     };
     tenantName: string;
-    tenantRole?: string;
+    tenantRole?: TenantRole;
     unitConfig: {
       iopsWeight?: number;
       logDiskSize?: string;
@@ -183,17 +194,52 @@ declare namespace API {
 
   interface TenantInfoType extends CommonResponse {
     data: {
+      charset: string;
       clusterName: string;
+      createTime: string;
+      locality: string;
+      name: string;
+      namespace: string;
+      primaryTenant: string;
+      restoreSource: {
+        archiveSource: string;
+        bakDataSource: string;
+        bakEncryptionSecret: string;
+        ossAccessSecret: string;
+        type: string;
+        until: string;
+      };
+      rootCredential: string;
+      standbyROCredentail: string;
+      status: string;
+      tenantName: string;
+      tenantRole: TenantRole;
+      topology: [
+        {
+          iopsWeight: 0;
+          logDiskSize: string;
+          maxCPU: string;
+          maxIops: 0;
+          memorySize: string;
+          minCPU: string;
+          minIops: 0;
+          priority: 0;
+          type: string;
+          zone: string;
+        },
+      ];
+      unitNumber: 0;
     };
   }
 
   type ReplayLogType = {
-    timestamp: number;
+    timestamp: string;
     unlimited: boolean;
   };
 
-  type RootPassword = {
-    rootPassword: string;
+  type UserCredentials = {
+    User: string;
+    Password: string;
   };
 
   type UnitNumber = {
@@ -209,4 +255,45 @@ declare namespace API {
     minCPU: string;
     minIops: number;
   };
+
+  type PatchTenantConfiguration = {
+    unitConfig?: {
+      pools?: {
+        priority: number;
+        zone: string;
+      }[];
+      unitConfig?: UnitConfig;
+    };
+    unitNum?: number;
+  };
+
+  type InfoType = {
+    charset: string;
+    clusterName: string;
+    tenantName: string;
+    tenantRole: TenantRole;
+    unitNumber: number;
+    status: string;
+    name: string;
+    namespace: string;
+    locality: string;
+    style?: any;
+  };
+  interface TenantsListResponse extends CommonResponse {
+    data: TenantDetail[];
+  }
+
+  interface TenantBasicInfoResponse  extends CommonResponse {
+    data:TenantBasicInfo
+  }
+
+  type TenantBasicInfo = {
+    info:InfoType,
+    source?: {
+      primaryTenant?: string;
+      archiveSource?: string;
+      bakDataSource?: string;
+      until?: string;
+    };
+  }
 }

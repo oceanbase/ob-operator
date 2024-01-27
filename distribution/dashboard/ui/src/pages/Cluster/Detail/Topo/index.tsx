@@ -30,7 +30,7 @@ const Topo: React.FC = () => {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //当前运维弹窗类型
-  const modalType = useRef<API.modalType>('addZone');
+  const modalType = useRef<API.ModalType>('addZone');
   //当前点击的节点id
   const currentId = useRef<string>('');
   const graph = useRef<any>(null);

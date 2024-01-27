@@ -1,13 +1,12 @@
 import { PageContainer } from '@ant-design/pro-components';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Row } from 'antd';
-import { useNavigate } from '@umijs/max';
 import { useState } from 'react';
 
-import MonitorComp from '@/components/MonitorComp';
+import EventsTable from '@/components/EventsTable';
 import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
-import EventsTable from '@/components/EventsTable';
 
 import type { QueryRangeType } from '../Cluster/Detail/Monitor';
 
@@ -20,15 +19,19 @@ const defaultQueryRange: QueryRangeType = {
 export default function TenantPage() {
   const [filterLabel, setFilterLabel] = useState([]);
   const navigate = useNavigate();
-  const { data: tenantsList } = useRequest(getAllTenants, {});
+  const { data: tenantsListResponse } = useRequest(getAllTenants, {});
   const handleAddCluster = () => navigate('new');
+  const tenantsList = tenantsListResponse?.data
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
-        <TenantsList
-          tenantsList={[]}
-          turnToCreateTenant={handleAddCluster}
-        />
+        {tenantsList && (
+          <TenantsList
+            tenantsList={tenantsList}
+            turnToCreateTenant={handleAddCluster}
+          />
+        )}
+
         <EventsTable objectType="OBTENANT" />
       </Row>
       {/* <MonitorComp
