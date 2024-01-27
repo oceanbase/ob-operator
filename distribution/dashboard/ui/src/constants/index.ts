@@ -42,6 +42,8 @@ const REFRESH_FREQUENCY = 15;
 // 监控点位数量
 const POINT_NUMBER = 15;
 
+const SUFFIX_UNIT = 'GB'
+
 export {
   badgeIMgMap,
   clusterImgMap,
@@ -51,5 +53,6 @@ export {
   zoneImgMap,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
-  POINT_NUMBER
+  POINT_NUMBER,
+  SUFFIX_UNIT
 };

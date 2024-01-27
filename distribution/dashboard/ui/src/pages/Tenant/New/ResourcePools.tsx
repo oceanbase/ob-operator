@@ -1,7 +1,7 @@
-import { SuffixSelector } from '@/pages/Cluster/New';
 import { Card, Checkbox, Col, Form, InputNumber, Row } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
+import { SUFFIX_UNIT } from '@/constants';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
@@ -85,7 +85,7 @@ export default function ResourcePools({
                 label="Memory"
               >
                 <InputNumber
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder="请输入"
                   style={{ width: '100%' }}
                 />
@@ -94,7 +94,7 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item name={['unitConfig', 'logDiskSize']} label="日志磁盘">
                 <InputNumber
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder="请输入"
                   style={{ width: '100%' }}
                 />
