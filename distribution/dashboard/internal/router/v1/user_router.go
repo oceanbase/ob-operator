@@ -6,6 +6,6 @@ import (
 )
 
 func InitUserRoutes(g *gin.RouterGroup) {
-	g.POST("/login", h.W(h.Login))
-	g.POST("/logout", h.W(h.Logout))
+	g.POST("/login", h.Wrap(h.Login))
+	g.POST("/logout", h.Wrap(h.Logout))
 }

@@ -8,7 +8,7 @@ import (
 	metricconst "github.com/oceanbase/oceanbase-dashboard/internal/business/metric/constant"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
-	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	buzerr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID ListAllMetrics
@@ -30,12 +30,10 @@ func ListMetricMetas(c *gin.Context) ([]response.MetricClass, error) {
 	scope := c.Query("scope")
 	if scope != metricconst.ScopeCluster && scope != metricconst.ScopeTenant && scope != metricconst.ScopeClusterOverview {
 		err := errors.New("invalid scope")
-		logHandlerError(c, err)
-		return nil, oberr.NewBadRequest(err.Error())
+		return nil, buzerr.NewBadRequest(err.Error())
 	}
 	metricClasses, err := metric.ListMetricClasses(scope, language)
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return metricClasses, nil
@@ -58,8 +56,7 @@ func QueryMetrics(c *gin.Context) ([]response.MetricData, error) {
 	queryParam := &param.MetricQuery{}
 	err := c.Bind(queryParam)
 	if err != nil {
-		logHandlerError(c, err)
-		return nil, oberr.NewBadRequest(err.Error())
+		return nil, buzerr.NewBadRequest(err.Error())
 	}
 	metricDatas := metric.QueryMetricData(queryParam)
 	return metricDatas, nil

@@ -6,5 +6,5 @@ import (
 )
 
 func InitInfoRoutes(g *gin.RouterGroup) {
-	g.GET("/info", h.W(h.GetProcessInfo))
+	g.GET("/info", h.Wrap(h.GetProcessInfo))
 }

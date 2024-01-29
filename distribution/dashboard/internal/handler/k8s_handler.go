@@ -5,7 +5,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/k8s"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
-	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	buzerr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID ListK8sEvents
@@ -32,7 +32,6 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 	}
 	events, err := k8s.ListEvents(queryEventParam)
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return events, nil
@@ -53,7 +52,6 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 	nodes, err := k8s.ListNodes()
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return nodes, nil
@@ -74,7 +72,6 @@ func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
 	namespaces, err := k8s.ListNamespaces()
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return namespaces, nil
@@ -95,7 +92,6 @@ func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
 func ListK8sStorageClasses(c *gin.Context) ([]response.StorageClass, error) {
 	storageClasses, err := k8s.ListStorageClasses()
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return storageClasses, nil
@@ -118,12 +114,10 @@ func CreateK8sNamespace(c *gin.Context) (any, error) {
 	param := &param.CreateNamespaceParam{}
 	err := c.Bind(param)
 	if err != nil {
-		logHandlerError(c, err)
-		return nil, oberr.NewBadRequest(err.Error())
+		return nil, buzerr.NewBadRequest(err.Error())
 	}
 	err = k8s.CreateNamespace(param)
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return nil, nil

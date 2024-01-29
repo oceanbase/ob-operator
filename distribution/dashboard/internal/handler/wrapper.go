@@ -3,14 +3,25 @@ package handler
 import (
 	"net/http"
 
+	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 )
 
 type Handler[T any] func(c *gin.Context) (T, error)
 
-func W[T any](h Handler[T]) gin.HandlerFunc {
+func logHandlerError(c *gin.Context, err error) {
+	logger.
+		WithField("Method", c.Request.Method).
+		WithField("Request URI", c.Request.RequestURI).
+		WithField("Request ID", requestid.Get(c)).
+		WithError(err).
+		Error("handler error")
+}
+
+func Wrap[T any](h Handler[T]) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		res, err := h(c)
 		statusCode := http.StatusOK
@@ -22,6 +33,7 @@ func W[T any](h Handler[T]) gin.HandlerFunc {
 				statusCode = http.StatusInternalServerError
 			}
 			errMsg = err.Error()
+			logHandlerError(c, err)
 			// ensure that the response is nil
 			res = *new(T)
 		}

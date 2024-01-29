@@ -6,6 +6,6 @@ import (
 )
 
 func InitMetricRoutes(g *gin.RouterGroup) {
-	g.GET("/metrics", h.W(h.ListMetricMetas))
-	g.POST("/metrics/query", h.W(h.QueryMetrics))
+	g.GET("/metrics", h.Wrap(h.ListMetricMetas))
+	g.POST("/metrics/query", h.Wrap(h.QueryMetrics))
 }

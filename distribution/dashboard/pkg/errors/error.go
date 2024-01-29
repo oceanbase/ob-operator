@@ -5,21 +5,21 @@ import (
 	"net/http"
 )
 
-type oberror struct {
+type buzerror struct {
 	errorType ErrorType
 	message   string
-	children  []*oberror
+	children  []*buzerror
 }
 
-func (e *oberror) Error() string {
+func (e *buzerror) Error() string {
 	return fmt.Sprintf("Error %s: %s", e.errorType, e.message)
 }
 
-func (e *oberror) IsType(errType ErrorType) bool {
+func (e *buzerror) IsType(errType ErrorType) bool {
 	return e.errorType == errType
 }
 
-func (e *oberror) Contains(errType ErrorType) bool {
+func (e *buzerror) Contains(errType ErrorType) bool {
 	if e.errorType == errType {
 		return true
 	}
@@ -31,13 +31,13 @@ func (e *oberror) Contains(errType ErrorType) bool {
 	return false
 }
 
-func (e *oberror) Wrap(err error) ObError {
+func (e *buzerror) Wrap(err error) ObError {
 	if err == nil {
 		return e
 	}
-	obErr, ok := err.(*oberror)
+	obErr, ok := err.(*buzerror)
 	if !ok {
-		obErr = &oberror{
+		obErr = &buzerror{
 			errorType: e.errorType,
 			message:   err.Error(),
 		}
@@ -46,11 +46,11 @@ func (e *oberror) Wrap(err error) ObError {
 	return e
 }
 
-func (e *oberror) Type() ErrorType {
+func (e *buzerror) Type() ErrorType {
 	return e.errorType
 }
 
-func (e *oberror) Status() int {
+func (e *buzerror) Status() int {
 	switch e.errorType {
 	case ErrBadRequest:
 		return http.StatusBadRequest

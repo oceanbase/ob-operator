@@ -27,7 +27,6 @@ var (
 func GetProcessInfo(c *gin.Context) (*response.DashboardInfo, error) {
 	pubBytes, err := crypto.PublicKeyToBytes()
 	if err != nil {
-		logHandlerError(c, err)
 		return nil, err
 	}
 	return &response.DashboardInfo{

@@ -12,7 +12,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/server/constant"
 	"github.com/oceanbase/oceanbase-dashboard/internal/store"
 	crypto "github.com/oceanbase/oceanbase-dashboard/pkg/crypto"
-	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	buzerr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 
 	v1 "k8s.io/api/core/v1"
@@ -35,35 +35,33 @@ import (
 func Login(c *gin.Context) (string, error) {
 	loginParams := &param.LoginParam{}
 	if err := c.BindJSON(loginParams); err != nil {
-		return "", oberr.NewBadRequest(err.Error())
+		return "", buzerr.NewBadRequest(err.Error())
 	}
 	credentials, err := getDashboardUserCredentials(c)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			logHandlerError(c, err)
-			return "", oberr.NewBadRequest(err.Error())
+			return "", buzerr.NewBadRequest(err.Error())
 		} else {
-			return "", oberr.NewInternal(err.Error())
+			return "", buzerr.NewInternal(err.Error())
 		}
 	}
 	fetchedPwdRaw, exist := credentials.Data[loginParams.Username]
 	if !exist {
-		return "", oberr.NewBadRequest("username or password is incorrect")
+		return "", buzerr.NewBadRequest("username or password is incorrect")
 	}
 	fetchedPwd := string(fetchedPwdRaw)
 	decryptedPwd, err := crypto.DecryptWithPrivateKey(loginParams.Password)
 	if err != nil {
-		return "", oberr.NewBadRequest(err.Error())
+		return "", buzerr.NewBadRequest(err.Error())
 	}
 	if fetchedPwd != decryptedPwd {
-		return "", oberr.NewBadRequest("username or password is incorrect")
+		return "", buzerr.NewBadRequest("username or password is incorrect")
 	}
 	sess := sessions.Default(c)
 	sess.Set("username", loginParams.Username)
 	sess.Set("expiration", time.Now().Add(constant.DefaultSessionExpiration*time.Second).Unix())
 	if err := sess.Save(); err != nil {
-		logHandlerError(c, err)
-		return "", oberr.NewInternal(err.Error())
+		return "", buzerr.NewInternal(err.Error())
 	}
 	store.GetCache().Store(loginParams.Username, struct{}{})
 	return "login successfully", nil
@@ -86,8 +84,7 @@ func Logout(c *gin.Context) (string, error) {
 	sess.Clear()
 	sess.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
 	if err := sess.Save(); err != nil {
-		logHandlerError(c, err)
-		return "", oberr.NewInternal(err.Error())
+		return "", buzerr.NewInternal(err.Error())
 	}
 	if usernameEntry != nil {
 		store.GetCache().Delete(usernameEntry.(string))

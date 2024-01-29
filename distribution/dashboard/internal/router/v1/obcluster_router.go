@@ -6,13 +6,13 @@ import (
 )
 
 func InitOBClusterRoutes(g *gin.RouterGroup) {
-	g.GET("/obclusters/statistic", h.W(h.GetOBClusterStatistic))
-	g.GET("/obclusters", h.W(h.ListOBClusters))
-	g.POST("/obclusters", h.W(h.CreateOBCluster))
-	g.GET("/obclusters/namespace/:namespace/name/:name", h.W(h.GetOBCluster))
-	g.POST("/obclusters/namespace/:namespace/name/:name", h.W(h.UpgradeOBCluster))
-	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.W(h.DeleteOBCluster))
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.W(h.AddOBZone))
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.W(h.ScaleOBServer))
-	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.W(h.DeleteOBZone))
+	g.GET("/obclusters/statistic", h.Wrap(h.GetOBClusterStatistic))
+	g.GET("/obclusters", h.Wrap(h.ListOBClusters))
+	g.POST("/obclusters", h.Wrap(h.CreateOBCluster))
+	g.GET("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.GetOBCluster))
+	g.POST("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.UpgradeOBCluster))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.DeleteOBCluster))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.Wrap(h.AddOBZone))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.Wrap(h.ScaleOBServer))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone))
 }
