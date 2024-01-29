@@ -56,16 +56,9 @@ export default {
         {
           iopsWeight: 0,
           logDiskSize: 'string',
-<<<<<<< Updated upstream
-          maxCPU: 'string',
-          maxIops: 0,
-          memorySize: 'string',
-          minCPU: 'string',
-=======
           cpuCount: 1,
           maxIops: 0,
           memorySize: 'string',
->>>>>>> Stashed changes
           minIops: 0,
           priority: 0,
           type: 'string',
@@ -77,8 +70,6 @@ export default {
     message: 'string',
     successful: true,
   },
-<<<<<<< Updated upstream
-=======
   '/api/v1/obtenants/test/test/backupPolicy': {
     data: {
       archivePath: 'string',
@@ -129,5 +120,4 @@ export default {
     message: 'string',
     successful: true,
   },
->>>>>>> Stashed changes
 };
