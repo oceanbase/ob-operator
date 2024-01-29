@@ -17,8 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -42,8 +40,7 @@ type OBResourceRescueSpec struct {
 type OBResourceRescueStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
-	Status           string                      `json:"status"`
+	Status string `json:"status"`
 }
 
 //+kubebuilder:object:root=true

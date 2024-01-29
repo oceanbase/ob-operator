@@ -61,51 +61,10 @@ spec:
           status:
             description: OBResourceRescueStatus defines the observed state of OBResourceRescue
             properties:
-              operationContext:
+              status:
                 description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
-                properties:
-                  failureRule:
-                    properties:
-                      failureStatus:
-                        type: string
-                      failureStrategy:
-                        type: string
-                      maxRetry:
-                        type: integer
-                      retryCount:
-                        type: integer
-                    required:
-                    - failureStatus
-                    - failureStrategy
-                    type: object
-                  idx:
-                    type: integer
-                  name:
-                    type: string
-                  targetStatus:
-                    type: string
-                  task:
-                    type: string
-                  taskId:
-                    type: string
-                  taskStatus:
-                    type: string
-                  tasks:
-                    items:
-                      type: string
-                    type: array
-                required:
-                - idx
-                - name
-                - targetStatus
-                - task
-                - taskId
-                - taskStatus
-                - tasks
-                type: object
-              status:
                 type: string
             required:
             - status
