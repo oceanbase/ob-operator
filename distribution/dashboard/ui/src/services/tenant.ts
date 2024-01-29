@@ -1,11 +1,13 @@
 import { request } from '@umijs/max';
 
-const tenantPrefix = '/api/v1/obtenant';
+const tenantPrefix = '/api/v1/obtenants';
 
 export async function getAllTenants(
-  obcluster: string,
+  obcluster?: string,
 ): Promise<API.TenantsListResponse> {
-  return request(`/api/v1/obtenants?obcluster=${obcluster}`, {
+  let query = '';
+  if (obcluster) query = `?obcluster=${obcluster}`;
+  return request(`${tenantPrefix}${query}`, {
     method: 'GET',
   });
 }
@@ -13,10 +15,38 @@ export async function getAllTenants(
 export async function getTenant({
   ns,
   name,
-}: API.NamespaceAndName): Promise<API.TenantInfoType> {
-  return request(`${tenantPrefix}/${ns}/${name}`, {
+}: API.NamespaceAndName): Promise<API.TenantBasicInfoResponse> {
+  let r = await request(`${tenantPrefix}/${ns}/${name}`, {
     method: 'GET',
-  });
+  })
+  let res:API.TenantBasicInfo = {
+    info:{
+      charset:'',
+      clusterName:'',
+      tenantName:'',
+      tenantRole:'',
+      unitNumber:0,
+      status:'',
+      name:'',
+      namespace:'',
+      locality:''
+    },
+    source:{}
+  };
+  if(r.successful){
+    Object.keys(res.info).forEach((key)=>{
+      res.info[key] = r.data[key]
+    }) 
+    if(r.data.primaryTenant)res.source!.primaryTenant = r.data.primaryTenant;
+    if(r.data.restoreSource?.archiveSource)res.source!.archiveSource = r.data.restoreSource.archiveSource;
+    if(r.data.restoreSource?.bakDataSource)res.source!.bakDataSource = r.data.restoreSource.bakDataSource;
+    if(r.data.restoreSource?.until)res.source!.until = r.data.restoreSource.until;
+    return {
+      ...r,
+      data:res
+    }
+  }
+  return r
 }
 
 export async function createTenant({
@@ -92,9 +122,9 @@ export async function changeTenantPassword({
   ns,
   name,
   ...body
-}: API.NamespaceAndName & API.RootPassword): Promise<API.CommonResponse> {
-  return request(`${tenantPrefix}/${ns}/${name}/rootPassword`, {
-    method: 'PUT',
+}: API.NamespaceAndName & API.UserCredentials): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}/userCredentials`, {
+    method: 'POST',
     data: body,
   });
 }
@@ -130,6 +160,18 @@ export async function modifyUnitConfig({
 } & API.UnitConfig): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/${zone}`, {
     method: 'PUT',
+    data: body,
+  });
+}
+
+export async function patchTenantConfiguration({
+  ns,
+  name,
+  ...body
+}: API.NamespaceAndName &
+  API.PatchTenantConfiguration): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}`, {
+    method: 'PATCH',
     data: body,
   });
 }

@@ -23,7 +23,7 @@ const ClusterOverview: React.FC = () => {
   const chooseZoneName = useRef<string>('');
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //当前运维弹窗类型
-  const modalType = useRef<API.modalType>('addZone');
+  const modalType = useRef<API.ModalType>('addZone');
   const { data: clusterDetail, run: getClusterDetail } = useRequest(
     getClusterDetailReq,
     {

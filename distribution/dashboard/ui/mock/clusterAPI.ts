@@ -1,5 +1,5 @@
 export default {
-  '/cluster/events': {
+  '/api/v1/cluster/events': {
     data: [
       {
         namespace: 'oceanbase',

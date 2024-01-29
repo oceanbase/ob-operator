@@ -10,8 +10,8 @@ import {
   Tooltip,
 } from 'antd';
 import { useEffect, useState } from 'react';
+import { SUFFIX_UNIT } from '@/constants';
 
-import { SuffixSelector } from '.';
 const monitorTooltipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Monitor.TheImageShouldBeFully',
   defaultMessage:
@@ -130,7 +130,7 @@ export default function Monitor() {
               >
                 <InputNumber
                   min={1}
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Monitor.PleaseEnter',
                     defaultMessage: '请输入',

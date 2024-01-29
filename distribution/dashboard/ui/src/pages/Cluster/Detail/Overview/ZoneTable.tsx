@@ -12,7 +12,7 @@ interface ZoneTableProps {
   zones: API.Zone[];
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
   chooseZoneRef: React.MutableRefObject<string>;
-  typeRef: React.MutableRefObject<API.modalType>;
+  typeRef: React.MutableRefObject<API.ModalType>;
   setChooseServerNum: React.Dispatch<React.SetStateAction<number>>;
 }
 

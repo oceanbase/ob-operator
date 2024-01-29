@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { Card, Col, Form, Input, InputNumber, Row, Tooltip } from 'antd';
 
 import ClassSelect from '@/components/ClassSelect';
-import { SuffixSelector } from './index';
+import { SUFFIX_UNIT } from '@/constants';
 import styles from './index.less';
 
 const observerToolTipText = intl.formatMessage({
@@ -86,7 +86,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={10}
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -114,7 +114,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -152,7 +152,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -183,7 +183,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={SuffixSelector}
+                  addonAfter={<div>{SUFFIX_UNIT}</div>}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
