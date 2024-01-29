@@ -18,35 +18,41 @@ export async function getTenant({
 }: API.NamespaceAndName): Promise<API.TenantBasicInfoResponse> {
   let r = await request(`${tenantPrefix}/${ns}/${name}`, {
     method: 'GET',
-  })
-  let res:API.TenantBasicInfo = {
-    info:{
-      charset:'',
-      clusterName:'',
-      tenantName:'',
-      tenantRole:'',
-      unitNumber:0,
-      status:'',
-      name:'',
-      namespace:'',
-      locality:''
+  });
+  let res: API.TenantBasicInfo = {
+    info: {
+      charset: '',
+      clusterName: '',
+      tenantName: '',
+      tenantRole: '',
+      unitNumber: 0,
+      status: '',
+      name: '',
+      namespace: '',
+      locality: '',
     },
-    source:{}
+    source: {},
+    replicas: [],
   };
-  if(r.successful){
-    Object.keys(res.info).forEach((key)=>{
-      res.info[key] = r.data[key]
-    }) 
-    if(r.data.primaryTenant)res.source!.primaryTenant = r.data.primaryTenant;
-    if(r.data.restoreSource?.archiveSource)res.source!.archiveSource = r.data.restoreSource.archiveSource;
-    if(r.data.restoreSource?.bakDataSource)res.source!.bakDataSource = r.data.restoreSource.bakDataSource;
-    if(r.data.restoreSource?.until)res.source!.until = r.data.restoreSource.until;
+  if (r.successful) {
+    Object.keys(res.info).forEach((key) => {
+      res.info[key] = r.data[key];
+    });
+    if (r.data.primaryTenant) res.source!.primaryTenant = r.data.primaryTenant;
+    if (r.data.restoreSource?.archiveSource)
+      res.source!.archiveSource = r.data.restoreSource.archiveSource;
+    if (r.data.restoreSource?.bakDataSource)
+      res.source!.bakDataSource = r.data.restoreSource.bakDataSource;
+    if (r.data.restoreSource?.until)
+      res.source!.until = r.data.restoreSource.until;
+
+    res.replicas = r.data.topology;
     return {
       ...r,
-      data:res
-    }
+      data: res,
+    };
   }
-  return r
+  return r;
 }
 
 export async function createTenant({
@@ -78,7 +84,7 @@ export async function createPolicyOfTenant({
   });
 }
 
-export async function UpdatePolicyOfTenant({
+export async function updatePolicyOfTenant({
   ns,
   name,
   ...body
@@ -89,7 +95,7 @@ export async function UpdatePolicyOfTenant({
   });
 }
 
-export async function DeletePolicyOfTenant({
+export async function deletePolicyOfTenant({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.CommonResponse> {
@@ -98,8 +104,65 @@ export async function DeletePolicyOfTenant({
   });
 }
 
+export async function getBackupPolicy({
+  ns,
+  name,
+}: API.NamespaceAndName): Promise<API.BackupPolicyResponse> {
+  let r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
+  let res: API.BackupPolicy = {
+    destType: '',
+    archivePath: '',
+    bakDataPath: '',
+    scheduleType: '',
+    scheduleTime: '',
+    scheduleDates: [],
+  };
+  if (r.successful) {
+    Object.keys(res).forEach((key) => {
+      res[key] = r.data[key];
+    });
+    return {
+      ...r,
+      data: res,
+    };
+  }
+  return r;
+}
+
+export async function getBackupJobs({
+  ns,
+  name,
+  type,
+  limit,
+}: API.NamespaceAndName & {
+  type: API.JobType;
+  limit?: number;
+}): Promise<API.BackupJobsResponse> {
+  let r = await request(
+    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs?limit=${limit || 10}`,
+  );
+  let res: API.BackupJob[] = [];
+  if (r.successful) {
+    res = r.data.map((job: API.BackupJob) => ({
+      encryptionSecret: job.encryptionSecret,
+      endTime: job.endTime,
+      name: job.name,
+      path: job.path,
+      startTime: job.startTime,
+      status: job.status,
+      statusInDatabase: job.statusInDatabase,
+      type: job.type,
+    }));
+    return {
+      ...r,
+      data: res,
+    };
+  }
+  return r;
+}
+
 // 备租户回放日志
-export async function ReplayLogOfTenant({
+export async function replayLogOfTenant({
   ns,
   name,
   ...body

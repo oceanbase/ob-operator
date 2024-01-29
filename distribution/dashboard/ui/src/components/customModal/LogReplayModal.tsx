@@ -1,5 +1,5 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { ReplayLogOfTenant } from '@/services/tenant';
+import { replayLogOfTenant } from '@/services/tenant';
 import { Form,message,DatePicker,TimePicker } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -25,7 +25,7 @@ export default function LogReplayModal({
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
-    const res = await ReplayLogOfTenant({ namespace, name, ...values });
+    const res = await replayLogOfTenant({ namespace, name, ...values });
     if (res.successful) {
       message.success(res.message);
       successCallback();

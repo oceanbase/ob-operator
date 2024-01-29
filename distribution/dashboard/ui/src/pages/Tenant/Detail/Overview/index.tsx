@@ -1,15 +1,23 @@
+import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { deleteTenent, getTenant } from '@/services/tenant';
+import {
+  deleteTenent,
+  getBackupJobs,
+  getBackupPolicy,
+  getTenant,
+} from '@/services/tenant';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Row, Tooltip, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
+import Backups from './Backups';
 import BasicInfo from './BasicInfo';
+import Replicas from './Replicas';
 import styles from './index.less';
 
 type OperateItemConfigType = {
@@ -55,7 +63,16 @@ export default function TenantOverview() {
     },
   );
 
+  const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
+    defaultParams: [{ name, ns }],
+  });
+  const { data: backupJobsResponse } = useRequest(getBackupJobs, {
+    defaultParams: [{ name, ns, type: 'FULL' }],
+  });
+
   const tenantDetail = tenantDetailResponse?.data;
+  const backupPolicy = backupPolicyResponse?.data;
+  const backupJobs = backupJobsResponse?.data;
   const operateListConfig: OperateItemConfigType[] = [
     {
       text: 'Unit规格管理',
@@ -101,7 +118,7 @@ export default function TenantOverview() {
     {
       text: '租户版本升级',
       onClick: () => openOperateModal('upgradeTenant'),
-      show:tenantDetail?.info.tenantRole === 'Primary',
+      show: tenantDetail?.info.tenantRole === 'Primary',
       isMore: true,
     },
   ];
@@ -155,11 +172,24 @@ export default function TenantOverview() {
   return (
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
-        <Row gutter={[16, 16]}>
+        <Row justify="start" gutter={[16, 16]}>
           {tenantDetail && (
             <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
           )}
+
+          {tenantDetail && tenantDetail.replicas && (
+            <Replicas replicaList={tenantDetail.replicas} />
+          )}
+          <EventsTable
+            objectType="OBTENANT"
+            cardType="proCard"
+            collapsible={true}
+          />
+          {backupPolicy && backupJobs && (
+            <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
+          )}
         </Row>
+
         <OperateModal
           type={modalType.current}
           visible={operateModalVisible}

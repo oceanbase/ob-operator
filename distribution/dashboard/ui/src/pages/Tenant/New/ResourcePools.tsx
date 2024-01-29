@@ -57,7 +57,7 @@ export default function ResourcePools({
           <Row gutter={[16, 32]}>
             <Col span={8}>
               <Form.Item
-                name={['unitConfig', 'cpuNumber']}
+                name={['unitConfig', 'cpuCount']}
                 rules={[
                   {
                     required: true,

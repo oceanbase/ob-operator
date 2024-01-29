@@ -1,4 +1,5 @@
 import { intl } from '@/utils/intl';
+import { ProCard } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
 import { Card, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -16,6 +17,12 @@ interface DataType {
   lastSeen: string;
   count: number;
   message: string;
+}
+
+interface EventsTableProps {
+  objectType?: API.EventObjectType;
+  cardType?: 'card' | 'proCard';
+  collapsible?: boolean;
 }
 
 const columns: ColumnsType<DataType> = [
@@ -122,23 +129,50 @@ const columns: ColumnsType<DataType> = [
 
 export default function EventsTable({
   objectType,
-}: {
-  objectType?: API.EventObjectType;
-}) {
+  cardType,
+  collapsible,
+}: EventsTableProps) {
   const { data } = useRequest(getEventsReq, {
     defaultParams: objectType && [{ objectType }],
   });
+
+  const CustomCard = (props) => {
+    const { title } = props;
+    return (
+      <>
+        {cardType === 'proCard' ? (
+          <ProCard title={title} collapsible={collapsible}>
+            {props.children}
+          </ProCard>
+        ) : (
+          <Card>
+            {title}
+            {props.children}
+          </Card>
+        )}
+      </>
+    );
+  };
+
   return (
     <Col span={24}>
-      <Card>
-        <h2>
-          {intl.formatMessage({
-            id: 'OBDashboard.components.EventsTable.Event',
-            defaultMessage: '事件',
-          })}
-        </h2>
-        <Table rowKey="id" pagination={{simple:true}} columns={columns} dataSource={data} />
-      </Card>
+      <CustomCard
+        title={
+          <h2>
+            {intl.formatMessage({
+              id: 'OBDashboard.components.EventsTable.Event',
+              defaultMessage: '事件',
+            })}
+          </h2>
+        }
+      >
+        <Table
+          rowKey="id"
+          pagination={{ simple: true }}
+          columns={columns}
+          dataSource={data}
+        />
+      </CustomCard>
     </Col>
   );
 }
