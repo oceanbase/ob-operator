@@ -308,10 +308,16 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	} else {
 		connectAddress := manager.Connector.DataSource().GetAddress()
 		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].ServiceIP
+			serverIp := zone.Status.OBServerStatus[0].Server
+			if zone.Status.OBServerStatus[0].ServiceIP != "" {
+				serverIp = zone.Status.OBServerStatus[0].ServiceIP
+			}
 			for _, serverInfo := range zone.Status.OBServerStatus {
 				if serverInfo.Server == connectAddress {
-					serverIp = serverInfo.ServiceIP
+					serverIp = serverInfo.Server
+					if serverInfo.ServiceIP != "" {
+						serverIp = serverInfo.ServiceIP
+					}
 				}
 			}
 			serverInfo := &model.ServerInfo{

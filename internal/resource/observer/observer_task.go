@@ -867,35 +867,38 @@ outer:
 	return errors.Errorf("Timeout to wait for pvc resized")
 }
 func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
-	m.Logger.Info("create observer service")
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.OBServer.Name,
-			Namespace: m.OBServer.Namespace,
-			Labels:    m.OBServer.Labels,
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: m.OBServer.APIVersion,
-				Kind:       m.OBServer.Kind,
-				Name:       m.OBServer.Name,
-				UID:        m.OBServer.GetUID(),
-			}},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: m.OBServer.Labels,
-			Ports: []corev1.ServicePort{{
-				Name:       "sql",
-				Port:       oceanbaseconst.SqlPort,
-				TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.SqlPort},
-			}, {
-				Name:       "rpc",
-				Port:       oceanbaseconst.RpcPort,
-				TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.RpcPort},
-			}},
-		},
-	}
-	err := m.Client.Create(m.Ctx, svc)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to create observer service")
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeService {
+		m.Logger.Info("create observer service")
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      m.OBServer.Name,
+				Namespace: m.OBServer.Namespace,
+				Labels:    m.OBServer.Labels,
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: m.OBServer.APIVersion,
+					Kind:       m.OBServer.Kind,
+					Name:       m.OBServer.Name,
+					UID:        m.OBServer.GetUID(),
+				}},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: m.OBServer.Labels,
+				Ports: []corev1.ServicePort{{
+					Name:       "sql",
+					Port:       oceanbaseconst.SqlPort,
+					TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.SqlPort},
+				}, {
+					Name:       "rpc",
+					Port:       oceanbaseconst.RpcPort,
+					TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.RpcPort},
+				}},
+			},
+		}
+		err := m.Client.Create(m.Ctx, svc)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to create observer service")
+		}
 	}
 	return nil
 }

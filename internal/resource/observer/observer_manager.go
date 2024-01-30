@@ -193,12 +193,17 @@ func (m *OBServerManager) UpdateStatus() error {
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
 
-			svc := &corev1.Service{}
-			err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
-			if err != nil {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
-			} else if svc != nil {
-				m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
+			if m.OBServer.Status.ServiceIp == "" {
+				mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+				if modeAnnoExist && mode == oceanbaseconst.ModeService {
+					svc := &corev1.Service{}
+					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+					if err != nil {
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
+					} else if svc != nil {
+						m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
+					}
+				}
 			}
 		}
 		pvcs, err := m.getPVCs()
