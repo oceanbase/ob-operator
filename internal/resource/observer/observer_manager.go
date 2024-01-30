@@ -54,6 +54,8 @@ type OBServerManager struct {
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCreateOBServerSvc:
+		return m.CreateOBServerSvc, nil
 	case tCreateOBPVC:
 		return m.CreateOBPVC, nil
 	case tCreateOBPod:
@@ -115,7 +117,7 @@ func (m *OBServerManager) SupportStaticIp() bool {
 	case oceanbaseconst.CNICalico:
 		return true
 	default:
-		return false
+		return m.OBServer.Status.ServiceIp != ""
 	}
 }
 
@@ -128,6 +130,9 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
+	}
+	if m.OBServer.Status.ServiceIp != "" {
+		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeExist && mode == oceanbaseconst.ModeStandalone {
@@ -169,7 +174,6 @@ func (m *OBServerManager) UpdateStatus() error {
 	} else if m.OBServer.Status.Status == "Failed" {
 		return nil
 	} else {
-		// get Pod status and update
 		pod, err := m.getPod()
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
@@ -188,6 +192,14 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
+
+			svc := &corev1.Service{}
+			err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+			if err != nil {
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
+			} else if svc != nil {
+				m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
+			}
 		}
 		pvcs, err := m.getPVCs()
 		if err != nil {
@@ -398,6 +410,15 @@ func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 		return nil, errors.Wrap(err, "get pod")
 	}
 	return pod, nil
+}
+
+func (m *OBServerManager) getSvc() (*corev1.Service, error) {
+	svc := &corev1.Service{}
+	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+	if err != nil {
+		return nil, errors.Wrap(err, "get svc")
+	}
+	return svc, nil
 }
 
 func (m *OBServerManager) getOBCluster() (*v1alpha1.OBCluster, error) {

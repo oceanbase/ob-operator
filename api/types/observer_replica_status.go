@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package types
 
 type OBServerReplicaStatus struct {
-	Server string `json:"server"`
-	Status string `json:"status"`
+	Server    string `json:"server"`
+	Status    string `json:"status"`
+	ServiceIP string `json:"serviceIP,omitempty"`
 }

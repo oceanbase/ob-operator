@@ -55,6 +55,7 @@ type OBServerStatus struct {
 	PodPhase         corev1.PodPhase             `json:"podPhase"`
 	Ready            bool                        `json:"ready"`
 	PodIp            string                      `json:"podIp"`
+	ServiceIp        string                      `json:"serviceIp,omitempty"`
 	NodeIp           string                      `json:"nodeIp"`
 	OBStatus         string                      `json:"obStatus,omitempty"`
 	StartServiceTime int64                       `json:"startServiceTime,omitempty"`

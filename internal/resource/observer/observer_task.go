@@ -77,6 +77,9 @@ func (m *OBServerManager) AddServer() tasktypes.TaskError {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	if m.OBServer.Status.ServiceIp != "" {
+		serverInfo.Ip = m.OBServer.Status.ServiceIp
+	}
 	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
 	if obs != nil {
 		m.Logger.Info("Observer already exists in obcluster")
@@ -517,6 +520,20 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		Name:  "ZONE_NAME",
 		Value: m.OBServer.Spec.Zone,
 	}
+	envSvcIp := corev1.EnvVar{
+		Name:  "SVC_IP",
+		Value: m.OBServer.Status.PodIp,
+	}
+	svc, err := m.getSvc()
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("svc not found")
+		} else {
+			m.Logger.Error(err, "Failed to get svc")
+		}
+	} else if svc != nil {
+		envSvcIp.Value = svc.Spec.ClusterIP
+	}
 
 	startupParameters := make([]string, 0)
 	for _, parameter := range obcluster.Spec.Parameters {
@@ -545,6 +562,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envClusterName)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)
+	env = append(env, envSvcIp)
 
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
@@ -580,6 +598,9 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	if m.OBServer.Status.ServiceIp != "" {
+		observerInfo.Ip = m.OBServer.Status.ServiceIp
+	}
 	observer, err := operationManager.GetServer(observerInfo)
 	if err != nil {
 		return err
@@ -591,7 +612,7 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 			m.Logger.Info("need to delete observer")
 			err = operationManager.DeleteServer(observerInfo)
 			if err != nil {
-				return errors.Wrapf(err, "Failed to delete observer %s", m.OBServer.Status.PodIp)
+				return errors.Wrapf(err, "Failed to delete observer %s", observerInfo.Ip)
 			}
 		}
 	} else {
@@ -671,6 +692,9 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
 	}
+	if m.OBServer.Status.ServiceIp != "" {
+		observerInfo.Ip = m.OBServer.Status.ServiceIp
+	}
 	active := false
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
@@ -701,6 +725,9 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.PodIp,
 		Port: oceanbaseconst.RpcPort,
+	}
+	if m.OBServer.Status.ServiceIp != "" {
+		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
@@ -838,4 +865,37 @@ outer:
 		return nil
 	}
 	return errors.Errorf("Timeout to wait for pvc resized")
+}
+func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
+	m.Logger.Info("create observer service")
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      m.OBServer.Name,
+			Namespace: m.OBServer.Namespace,
+			Labels:    m.OBServer.Labels,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: m.OBServer.APIVersion,
+				Kind:       m.OBServer.Kind,
+				Name:       m.OBServer.Name,
+				UID:        m.OBServer.GetUID(),
+			}},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: m.OBServer.Labels,
+			Ports: []corev1.ServicePort{{
+				Name:       "sql",
+				Port:       oceanbaseconst.SqlPort,
+				TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.SqlPort},
+			}, {
+				Name:       "rpc",
+				Port:       oceanbaseconst.RpcPort,
+				TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.RpcPort},
+			}},
+		},
+	}
+	err := m.Client.Create(m.Ctx, svc)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to create observer service")
+	}
+	return nil
 }

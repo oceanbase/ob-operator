@@ -33,6 +33,7 @@ const (
 // observer tasks
 const (
 	tWaitOBClusterBootstrapped    ttypes.TaskName = "wait obcluster bootstrapped"
+	tCreateOBServerSvc            ttypes.TaskName = "create observer svc"
 	tCreateOBPVC                  ttypes.TaskName = "create observer pvc"
 	tCreateOBPod                  ttypes.TaskName = "create observer pod"
 	tAnnotateOBServerPod          ttypes.TaskName = "annotate observer pod"

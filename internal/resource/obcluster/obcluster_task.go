@@ -308,10 +308,10 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	} else {
 		connectAddress := manager.Connector.DataSource().GetAddress()
 		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].Server
+			serverIp := zone.Status.OBServerStatus[0].ServiceIP
 			for _, serverInfo := range zone.Status.OBServerStatus {
 				if serverInfo.Server == connectAddress {
-					serverIp = connectAddress
+					serverIp = serverInfo.ServiceIP
 				}
 			}
 			serverInfo := &model.ServerInfo{
@@ -1007,9 +1007,10 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Name:    "helper-check-image-pull-ready",
-						Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-						Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
+						Name:            "helper-check-image-pull-ready",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
+						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
 					}},
 					RestartPolicy: corev1.RestartPolicyNever,
 				},

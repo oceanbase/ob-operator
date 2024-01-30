@@ -204,10 +204,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 	// handle upgrade
 	allServerVersionSync := true
 	for _, observer := range observerList.Items {
-		observerReplicaStatusList = append(observerReplicaStatusList, apitypes.OBServerReplicaStatus{
-			Server: observer.Status.PodIp,
-			Status: observer.Status.Status,
-		})
+		observerReplica := apitypes.OBServerReplicaStatus{
+			Server:    observer.Status.PodIp,
+			Status:    observer.Status.Status,
+			ServiceIP: observer.Status.ServiceIp,
+		}
+		observerReplicaStatusList = append(observerReplicaStatusList, observerReplica)
 		if observer.Status.Status != serverstatus.Unrecoverable {
 			availableReplica++
 		}
