@@ -3,7 +3,7 @@ package errors
 import "fmt"
 
 func New(errType ErrorType, message string) ObError {
-	return &buzerror{
+	return &httpErr{
 		errorType: errType,
 		message:   message,
 	}

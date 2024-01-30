@@ -5,7 +5,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/k8s"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
-	buzerr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	httpErr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID ListK8sEvents
@@ -114,7 +114,7 @@ func CreateK8sNamespace(c *gin.Context) (any, error) {
 	param := &param.CreateNamespaceParam{}
 	err := c.Bind(param)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = k8s.CreateNamespace(param)
 	if err != nil {

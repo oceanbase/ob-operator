@@ -8,7 +8,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	crypto "github.com/oceanbase/oceanbase-dashboard/pkg/crypto"
-	buzerr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	httpErr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 )
 
 // @ID GetOBClusterStatistic
@@ -69,7 +69,7 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	obcluster, err := oceanbase.GetOBCluster(c, obclusterIdentity)
 	if err != nil {
@@ -95,11 +95,11 @@ func CreateOBCluster(c *gin.Context) (any, error) {
 	param := &param.CreateOBClusterParam{}
 	err := c.Bind(param)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Debugf("Create obcluster: %v", param)
 	err = oceanbase.CreateOBCluster(c, param)
@@ -129,11 +129,11 @@ func UpgradeOBCluster(c *gin.Context) (any, error) {
 	updateParam := &param.UpgradeOBClusterParam{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = c.Bind(updateParam)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
 	if err != nil {
@@ -160,11 +160,11 @@ func DeleteOBCluster(c *gin.Context) (any, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteOBCluster(c, obclusterIdentity)
 	if err != nil {
-		return nil, buzerr.NewInternal(err.Error())
+		return nil, httpErr.NewInternal(err.Error())
 	}
 	return nil, nil
 }
@@ -188,12 +188,12 @@ func AddOBZone(c *gin.Context) (any, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	param := &param.ZoneTopology{}
 	err = c.Bind(param)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.AddOBZone(c, obclusterIdentity, param)
 	if err != nil {
@@ -222,12 +222,12 @@ func ScaleOBServer(c *gin.Context) (any, error) {
 	obzoneIdentity := &param.OBZoneIdentity{}
 	err := c.BindUri(obzoneIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	scaleParam := &param.ScaleOBServerParam{}
 	err = c.Bind(scaleParam)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 	if err != nil {
@@ -255,7 +255,7 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 	obzoneIdentity := &param.OBZoneIdentity{}
 	err := c.BindUri(obzoneIdentity)
 	if err != nil {
-		return nil, buzerr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	err = oceanbase.DeleteOBZone(c, obzoneIdentity)
 	if err != nil {
