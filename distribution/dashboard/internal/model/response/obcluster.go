@@ -47,4 +47,5 @@ type OBCluster struct {
 	CreateTime   float64    `json:"createTime"`
 	Image        string     `json:"image"`
 	Metrics      *OBMetrics `json:"metrics"`
+	Version      string     `json:"version"`
 }

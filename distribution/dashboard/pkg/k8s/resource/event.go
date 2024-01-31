@@ -8,16 +8,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func ListAllEvents() (*corev1.EventList, error) {
+func ListAllEvents(listOptions *metav1.ListOptions) (*corev1.EventList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Events(corev1.NamespaceAll).List(context.TODO(), metav1.ListOptions{
-		TimeoutSeconds: &timeout,
-	})
+	return client.ClientSet.CoreV1().Events(corev1.NamespaceAll).List(context.TODO(), *listOptions)
 }
 
-func ListEvents(namespace string) (*corev1.EventList, error) {
+func ListEvents(namespace string, listOptions *metav1.ListOptions) (*corev1.EventList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Events(namespace).List(context.TODO(), metav1.ListOptions{
-		TimeoutSeconds: &timeout,
-	})
+	return client.ClientSet.CoreV1().Events(namespace).List(context.TODO(), *listOptions)
 }

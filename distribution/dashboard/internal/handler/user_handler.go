@@ -12,6 +12,7 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/server/constant"
 	"github.com/oceanbase/oceanbase-dashboard/internal/store"
 	crypto "github.com/oceanbase/oceanbase-dashboard/pkg/crypto"
+	httpErr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 
 	v1 "k8s.io/api/core/v1"
@@ -31,47 +32,39 @@ import (
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/login [POST]
-func Login(c *gin.Context) {
+func Login(c *gin.Context) (string, error) {
 	loginParams := &param.LoginParam{}
 	if err := c.BindJSON(loginParams); err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return "", httpErr.NewBadRequest(err.Error())
 	}
 	credentials, err := getDashboardUserCredentials(c)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
-			logHandlerError(c, err)
-			SendBadRequestResponse(c, nil, err)
+			return "", httpErr.NewBadRequest(err.Error())
 		} else {
-			SendInternalServerErrorResponse(c, nil, err)
+			return "", httpErr.NewInternal(err.Error())
 		}
-		return
 	}
 	fetchedPwdRaw, exist := credentials.Data[loginParams.Username]
 	if !exist {
-		SendBadRequestResponse(c, nil, errors.New("username or password is incorrect"))
-		return
+		return "", httpErr.NewBadRequest("username or password is incorrect")
 	}
 	fetchedPwd := string(fetchedPwdRaw)
 	decryptedPwd, err := crypto.DecryptWithPrivateKey(loginParams.Password)
 	if err != nil {
-		SendBadRequestResponse(c, nil, err)
-		return
+		return "", httpErr.NewBadRequest(err.Error())
 	}
 	if fetchedPwd != decryptedPwd {
-		SendBadRequestResponse(c, nil, errors.New("username or password is incorrect"))
-		return
+		return "", httpErr.NewBadRequest("username or password is incorrect")
 	}
 	sess := sessions.Default(c)
 	sess.Set("username", loginParams.Username)
 	sess.Set("expiration", time.Now().Add(constant.DefaultSessionExpiration*time.Second).Unix())
 	if err := sess.Save(); err != nil {
-		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return "", httpErr.NewInternal(err.Error())
 	}
 	store.GetCache().Store(loginParams.Username, struct{}{})
-	SendSuccessfulResponse(c, "login successfully")
+	return "login successfully", nil
 }
 
 // @ID Logout
@@ -85,20 +78,18 @@ func Login(c *gin.Context) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/logout [POST]
 // @Security ApiKeyAuth
-func Logout(c *gin.Context) {
+func Logout(c *gin.Context) (string, error) {
 	sess := sessions.Default(c)
 	usernameEntry := sess.Get("username")
 	sess.Clear()
 	sess.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
 	if err := sess.Save(); err != nil {
-		logHandlerError(c, err)
-		SendInternalServerErrorResponse(c, nil, err)
-		return
+		return "", httpErr.NewInternal(err.Error())
 	}
 	if usernameEntry != nil {
 		store.GetCache().Delete(usernameEntry.(string))
 	}
-	SendSuccessfulResponse(c, "logout successfully")
+	return "logout successfully", nil
 }
 
 func getDashboardUserCredentials(c context.Context) (*v1.Secret, error) {

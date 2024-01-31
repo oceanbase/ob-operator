@@ -10,6 +10,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
+	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase/schema"
@@ -122,7 +123,6 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
 		OBTenantBrief: *buildBriefFromApiType(t),
 	}
-
 	rt.RootCredential = t.Status.Credentials.Root
 	rt.StandbyROCredentail = t.Status.Credentials.StandbyRO
 
@@ -180,7 +180,7 @@ func buildBriefFromApiType(t *v1alpha1.OBTenant) *response.OBTenantBrief {
 	return rt
 }
 
-func CreateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
+func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	t, err := buildOBTenantApiType(nn, p)
 	if err != nil {
 		return nil, err
@@ -231,16 +231,16 @@ func CreateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 			return nil, err
 		}
 	}
-	tenant, err := oceanbase.CreateOBTenant(t)
+	tenant, err := oceanbase.CreateOBTenant(ctx, t)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func updateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
+func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -249,12 +249,12 @@ func updateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 		return nil, err
 	}
 	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		tenant, err := oceanbase.GetOBTenant(nn)
+		tenant, err := oceanbase.GetOBTenant(ctx, nn)
 		if err != nil {
 			return err
 		}
 		tenant.Spec = t.Spec
-		tenant, err = oceanbase.UpdateOBTenant(tenant)
+		tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
 		if err != nil {
 			return err
 		}
@@ -266,8 +266,8 @@ func updateOBTenant(nn types.NamespacedName, p *param.CreateOBTenantParam) (*res
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ListAllOBTenants(listOptions metav1.ListOptions) ([]*response.OBTenantBrief, error) {
-	tenantList, err := oceanbase.ListAllOBTenants(listOptions)
+func ListAllOBTenants(ctx context.Context, listOptions metav1.ListOptions) ([]*response.OBTenantBrief, error) {
+	tenantList, err := oceanbase.ListAllOBTenants(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -278,36 +278,36 @@ func ListAllOBTenants(listOptions metav1.ListOptions) ([]*response.OBTenantBrief
 	return tenants, nil
 }
 
-func GetOBTenant(nn types.NamespacedName) (*response.OBTenantDetail, error) {
-	tenant, err := oceanbase.GetOBTenant(nn)
+func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func DeleteOBTenant(nn types.NamespacedName) error {
-	return oceanbase.DeleteOBTenant(nn)
+func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
+	return oceanbase.DeleteOBTenant(ctx, nn)
 }
 
-func ModifyOBTenantUnitNumber(nn types.NamespacedName, unitNumber int) (*response.OBTenantDetail, error) {
+func ModifyOBTenantUnitNumber(ctx context.Context, nn types.NamespacedName, unitNumber int) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
 
 	tenant.Spec.UnitNumber = unitNumber
-	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ModifyOBTenantUnitConfig(nn types.NamespacedName, zone string, unitConfig *param.UnitConfig) (*response.OBTenantDetail, error) {
+func ModifyOBTenantUnitConfig(ctx context.Context, nn types.NamespacedName, zone string, unitConfig *param.UnitConfig) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -325,16 +325,16 @@ func ModifyOBTenantUnitConfig(nn types.NamespacedName, zone string, unitConfig *
 			break
 		}
 	}
-	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ModifyOBTenantRootPassword(nn types.NamespacedName, rootPassword string) (*response.OBTenantDetail, error) {
+func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, rootPassword string) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -364,16 +364,16 @@ func ModifyOBTenantRootPassword(nn types.NamespacedName, rootPassword string) (*
 			},
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(&changePwdOp)
+	_, err = oceanbase.CreateOBTenantOperation(ctx, &changePwdOp)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ReplayStandbyLog(nn types.NamespacedName, timestamp string) (*response.OBTenantDetail, error) {
+func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, timestamp string) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -393,16 +393,16 @@ func ReplayStandbyLog(nn types.NamespacedName, timestamp string) (*response.OBTe
 			TargetTenant: &nn.Name,
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(&replayLogOp)
+	_, err = oceanbase.CreateOBTenantOperation(ctx, &replayLogOp)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func UpgradeTenantVersion(nn types.NamespacedName) (*response.OBTenantDetail, error) {
+func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -419,24 +419,24 @@ func UpgradeTenantVersion(nn types.NamespacedName) (*response.OBTenantDetail, er
 			TargetTenant: &nn.Name,
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(&upgradeOp)
+	_, err = oceanbase.CreateOBTenantOperation(ctx, &upgradeOp)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ChangeTenantRole(nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
+func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
 	if tenant.Status.TenantRole == apitypes.TenantRole(p.TenantRole) {
-		return nil, NewOBError(ErrorTypeBadRequest, "The tenant is already "+string(p.TenantRole))
+		return nil, oberr.NewBadRequest("The tenant is already " + string(p.TenantRole))
 	}
 	if p.Switchover && (tenant.Status.Source == nil || tenant.Status.Source.Tenant == nil) {
-		return nil, NewOBError(ErrorTypeBadRequest, "The tenant has no primary tenant")
+		return nil, oberr.NewBadRequest("The tenant has no primary tenant")
 	}
 	changeRoleOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
@@ -453,16 +453,16 @@ func ChangeTenantRole(nn types.NamespacedName, p *param.ChangeTenantRole) (*resp
 		changeRoleOp.Spec.Type = apiconst.TenantOpFailover
 		changeRoleOp.Spec.Failover.StandbyTenant = nn.Name
 	}
-	_, err = oceanbase.CreateOBTenantOperation(&changeRoleOp)
+	_, err = oceanbase.CreateOBTenantOperation(ctx, &changeRoleOp)
 	if err != nil {
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
 }
 
-func PatchTenant(nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
+func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(nn)
+	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -489,7 +489,7 @@ func PatchTenant(nn types.NamespacedName, p *param.PatchTenant) (*response.OBTen
 			}
 		}
 	}
-	tenant, err = oceanbase.UpdateOBTenant(tenant)
+	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}

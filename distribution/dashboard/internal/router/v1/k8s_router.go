@@ -2,13 +2,13 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/oceanbase/oceanbase-dashboard/internal/handler"
+	h "github.com/oceanbase/oceanbase-dashboard/internal/handler"
 )
 
 func InitK8sRoutes(g *gin.RouterGroup) {
-	g.GET("/cluster/events", handler.ListK8sEvents)
-	g.GET("/cluster/nodes", handler.ListK8sNodes)
-	g.GET("/cluster/namespaces", handler.ListK8sNamespaces)
-	g.GET("/cluster/storageClasses", handler.ListK8sStorageClasses)
-	g.POST("/cluster/namespaces", handler.CreateK8sNamespace)
+	g.GET("/cluster/events", h.Wrap(h.ListK8sEvents))
+	g.GET("/cluster/nodes", h.Wrap(h.ListK8sNodes))
+	g.GET("/cluster/namespaces", h.Wrap(h.ListK8sNamespaces))
+	g.GET("/cluster/storageClasses", h.Wrap(h.ListK8sStorageClasses))
+	g.POST("/cluster/namespaces", h.Wrap(h.CreateK8sNamespace))
 }
