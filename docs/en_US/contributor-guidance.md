@@ -2,10 +2,6 @@
 
 Welcome and thank you for your interest in contributing to our project! We are excited to have you join our community and look forward to your valuable contributions. This document serves as a guide to help you get started with contributing to our project in a way that is efficient and aligns with our community principles.
 
-## Introduction to the Project
-
-The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase database cluster and related resources on Kubernetes.
-
 By contributing to our project, you'll help achieve simplicity of controlling OceanBase resource like clusters, tenants, backups and so on, making its users more easier to manage OceanBase database and combine on various versions or distributions of Kubernetes.
 
 Whether you are fixing bugs, adding new features, or improving documentation, your work will make a significant impact on the project and its users.
@@ -38,11 +34,11 @@ Here is a brief overview of how you can contribute to our project:
 
 6. Write Tests: Ensure your changes are tested. We strive to maintain a high level of code quality and reliability.
 
-7. Document Your Work: Update existing documentation or create new documentation as needed. Good documentation is just as important as good code.
+7. Document Your Work: Update existing documents or create new documents as needed. Good documentation is just as important as good code.
 
-8. Create a Pull Request: Once your changes are ready, submit a pull request. Provide a clear description of the problem and solution, including any relevant issue numbers.
+8. Create a Pull Request: Once your changes are ready, submit a pull request. Provide a clear description of the problem and solution, including any relevant issues\.
 
-9. Code Review: Engage with the code review process, addressing any feedback provided by the project maintainers.
+9. Polish the Code: Engage with the code review process, addressing any feedback provided by the project maintainers.
 
 10. Get Merged: Once your pull request has been approved, it will be merged into the main codebase.
 

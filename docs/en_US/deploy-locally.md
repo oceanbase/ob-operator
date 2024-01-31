@@ -8,7 +8,7 @@
 
 ## Software requirements
 
-You should install following two software before we start. Installation instructions could be found on their sites. You can get minkube by brew install minikube if you develop on macOS.
+You need to install the following softwares before getting started. Installation instructions can be found on their websites. You can get minkube by brew install minikube if you develop on macOS.
 * [kubernetes/minikube](https://github.com/kubernetes/minikube): Run kubernetes locally
 * [Docker desktop](https://www.docker.com/products/docker-desktop/): Manage container development locally
 * [kubectl](https://kubernetes.io/docs/tasks/tools/#kubectl): Kubernetes CLI (optional if you prefer minikube kubectl)
@@ -31,7 +31,7 @@ minikube config set disk-size 120GB
 minikube config set memory 10GB
 ```
 
-Here we go! Just type `minikube start` and enter, we could see it starts fetching necessary images. After it says initialization is finished, we could type `kubectl get pods -A` (or `minikube kubectl -- get pods -A`) to see all pods in minikube cluster.
+Here we go! Just type `minikube start` and enter, we can see it starts fetching necessary images. After it says initialization is finished, we can type `kubectl get pods -A` (or `minikube kubectl -- get pods -A`) to see all pods in minikube cluster.
 
 Tips: Perform `minikube dashboard` to open kubernetes dashboard, everything in the cluster could be more clear.
 
