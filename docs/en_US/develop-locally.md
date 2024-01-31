@@ -8,7 +8,7 @@ ob-operator depends on [kubebuilder](https://kubebuilder.io/introduction), an op
 
 ## Disable Webhook and CertManager
 
-There are many configuration items that marked by `[CERTMANAGER]` and `[WEBHOOK]` in the two files `config/crd/kustomization.yaml` and `config/default/kustomization.yaml`. The are used to enable and configure webhooks in real kubernetes deployment. Because we want to run controller manager locally, we need to disable them.
+There are many configuration items that marked by `[CERTMANAGER]` and `[WEBHOOK]` in the two files `config/crd/kustomization.yaml` and `config/default/kustomization.yaml`. They are used to enable and configure webhooks in real kubernetes deployment. Because we want to run controller manager locally, we need to disable them.
 
 You could just apply the latest `deploy/operator.yaml` manifest and delete the following resources to deploy CRDs and make controller manager uninstalled. 
 
@@ -21,7 +21,7 @@ kubectl delete -n oceanbase-system deployments.apps oceanbase-controller-manager
 
 ## Self-signed Certificate
 
-It's necessary for node hosting controller manager to have a TLS certificate. In the real kubernetes cluster, the cert-manager will inject the sign into the controller manager pod. On our laptop, we need self-signed one:
+It's necessary for node hosting controller manager to have a TLS certificate. In the real kubernetes cluster, the cert-manager will inject the sign into the controller manager pod. On our laptop, we need self-sign one:
 
 ```shell
 mkdir -p /tmp/k8s-webhook-server/serving-certs
@@ -43,7 +43,7 @@ make run-local &> bin/run.log
 
 ## Debug locally
 
-Though print debugging is enough for most cases, there are quite some cases that are not obvious from printed information. So we could debug with go debugging tool [delve](https://github.com/go-delve/delve).
+Though print debugging is enough for most cases, there are quite some cases that are not obvious from printed information. We could debug with go debugging tool [delve](https://github.com/go-delve/delve).
 
 `install-delve` command is declared in `make/debug.mk`, we can type `make install-delve` to get it. The help message of it can be glanced, 
 
