@@ -1,3 +1,4 @@
+import { getInitialObjOfKeys } from '@/utils/helper';
 import { request } from '@umijs/max';
 
 const tenantPrefix = '/api/v1/obtenants';
@@ -19,25 +20,24 @@ export async function getTenant({
   let r = await request(`${tenantPrefix}/${ns}/${name}`, {
     method: 'GET',
   });
+  let infoKeys = [
+    'charset',
+    'clusterName',
+    'tenantName',
+    'tenantRole',
+    'unitNumber',
+    'status',
+    'name',
+    'namespace',
+    'locality',
+  ];
   let res: API.TenantBasicInfo = {
-    info: {
-      charset: '',
-      clusterName: '',
-      tenantName: '',
-      tenantRole: '',
-      unitNumber: 0,
-      status: '',
-      name: '',
-      namespace: '',
-      locality: '',
-    },
+    info: {},
     source: {},
     replicas: [],
   };
   if (r.successful) {
-    Object.keys(res.info).forEach((key) => {
-      res.info[key] = r.data[key];
-    });
+    res.info = getInitialObjOfKeys(r.data,infoKeys)
     if (r.data.primaryTenant) res.source!.primaryTenant = r.data.primaryTenant;
     if (r.data.restoreSource?.archiveSource)
       res.source!.archiveSource = r.data.restoreSource.archiveSource;
@@ -121,10 +121,7 @@ export async function getBackupPolicy({
   if (r.successful) {
     return {
       ...r,
-      data: keys.reduce((pre, cur) => {
-        pre[cur] = r.data[cur];
-        return pre;
-      }, {}),
+      data: getInitialObjOfKeys(r.data, keys),
     };
   }
   return r;
@@ -134,7 +131,7 @@ export async function getBackupJobs({
   ns,
   name,
   type,
-  limit = 10
+  limit = 10,
 }: API.NamespaceAndName & {
   type: API.JobType;
   limit?: number;
