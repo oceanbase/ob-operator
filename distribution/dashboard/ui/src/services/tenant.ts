@@ -109,21 +109,22 @@ export async function getBackupPolicy({
   name,
 }: API.NamespaceAndName): Promise<API.BackupPolicyResponse> {
   let r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
-  let res: API.BackupPolicy = {
-    destType: '',
-    archivePath: '',
-    bakDataPath: '',
-    scheduleType: '',
-    scheduleTime: '',
-    scheduleDates: [],
-  };
+  const keys = [
+    'destType',
+    'archivePath',
+    'bakDataPath',
+    'scheduleType',
+    'scheduleTime',
+    'scheduleDates',
+  ];
+
   if (r.successful) {
-    Object.keys(res).forEach((key) => {
-      res[key] = r.data[key];
-    });
     return {
       ...r,
-      data: res,
+      data: keys.reduce((pre, cur) => {
+        pre[cur] = r.data[cur];
+        return pre;
+      }, {}),
     };
   }
   return r;
@@ -133,13 +134,13 @@ export async function getBackupJobs({
   ns,
   name,
   type,
-  limit,
+  limit = 10
 }: API.NamespaceAndName & {
   type: API.JobType;
   limit?: number;
 }): Promise<API.BackupJobsResponse> {
   let r = await request(
-    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs?limit=${limit || 10}`,
+    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs?limit=${limit}`,
   );
   let res: API.BackupJob[] = [];
   if (r.successful) {
