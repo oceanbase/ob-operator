@@ -30,6 +30,13 @@ import (
 // log is for logging in this package.
 var obresourcerescuelog = logf.Log.WithName("obresourcerescue-resource")
 
+var rescueTypeMapping = map[string]struct{}{
+	"delete": {},
+	"reset":  {},
+	"retry":  {},
+	"skip":   {},
+}
+
 func (r *OBResourceRescue) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
@@ -100,8 +107,8 @@ func (r *OBResourceRescue) validateMutation() (admission.Warnings, error) {
 	}
 	if r.Spec.Type == "" {
 		errList = append(errList, field.Required(field.NewPath("spec", "type"), "type is required"))
-	} else if r.Spec.Type != "delete" && r.Spec.Type != "reset" {
-		errList = append(errList, field.Invalid(field.NewPath("spec", "type"), r.Spec.Type, "type must be delete or reset"))
+	} else if _, exist := rescueTypeMapping[r.Spec.Type]; !exist {
+		errList = append(errList, field.Invalid(field.NewPath("spec", "type"), r.Spec.Type, "unsupported rescue type"))
 	} else if r.Spec.Type == "reset" && r.Spec.TargetStatus == "" {
 		errList = append(errList, field.Required(field.NewPath("spec", "targetStatus"), "targetStatus is required when type is reset"))
 	}

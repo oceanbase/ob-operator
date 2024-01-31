@@ -115,6 +115,43 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				logger.Error(err, "failed to update status of the target resource")
 				return ctrl.Result{}, err
 			}
+		case "retry":
+			// operationContext.TaskStatus = taskstatus.Pending
+			// operationContext.FailureRule.RetryCount = 0
+			err := errors.Join(
+				unstructured.SetNestedField(uns.Object, "Pending", "status", "operationContext", "taskStatus"),
+				unstructured.SetNestedField(uns.Object, 0, "status", "operationContext", "failureRule", "retryCount"),
+			)
+			if err != nil {
+				logger.Error(err, "failed to set operationContext fields of the target resource")
+				return ctrl.Result{}, err
+			}
+			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
+			if err != nil {
+				logger.Error(err, "failed to update status of the target resource")
+				return ctrl.Result{}, err
+			}
+		case "skip":
+			// operationContext.Idx += 1
+			idx, exist, err := unstructured.NestedInt64(uns.Object, "status", "operationContext", "idx")
+			if err != nil {
+				logger.Error(err, "failed to get idx of the target resource")
+				return ctrl.Result{}, err
+			}
+			if !exist {
+				logger.Error(err, "operationContext.idx not exist")
+				return ctrl.Result{}, nil
+			}
+			err = unstructured.SetNestedField(uns.Object, idx+1, "status", "operationContext", "idx")
+			if err != nil {
+				logger.Error(err, "failed to reset fields of the target resource")
+				return ctrl.Result{}, err
+			}
+			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
+			if err != nil {
+				logger.Error(err, "failed to update status of the target resource")
+				return ctrl.Result{}, err
+			}
 		}
 
 		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
