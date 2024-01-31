@@ -1,5 +1,6 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
+import { clone } from 'lodash';
 export function formatNewTenantForm(
   originFormData: any,
   clusterName: string,
@@ -64,4 +65,27 @@ export function formatNewTenantForm(
   console.log('result', result);
 
   return result;
+}
+/**
+ * encrypt ossAccessId,ossAccessKey,bakEncryptionPassword
+ *
+ * format scheduleDates
+ */
+export function formatNewBackupForm(originFormData: any, publicKey: string) {
+  let formData = clone(originFormData);
+  if (formData.bakEncryptionPassword) {
+    formData.bakEncryptionPassword = encryptText(
+      originFormData.bakEncryptionPassword,
+      publicKey,
+    );
+  }
+  formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
+  formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
+  formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:MM');
+  delete formData.scheduleDates.days;
+  formData.scheduleDates = Object.keys(formData.scheduleDates).map((key) => ({
+    day: Number(key),
+    backupType: formData.scheduleDates[key],
+  }));
+  return formData;
 }

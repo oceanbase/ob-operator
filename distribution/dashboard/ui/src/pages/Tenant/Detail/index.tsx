@@ -14,6 +14,12 @@ const subSideMenus: MenuItem[] = [
     icon: <IconFont type="overview" />,
   },
   {
+    title: '集群',
+    key: 'cluster',
+    link: '/cluster',
+    icon: <IconFont type="cluster" />,
+  },
+  {
     title: '租户',
     key: 'tenant',
     link: '/tenant',
@@ -25,7 +31,8 @@ const TenantDetail: React.FC = () => {
   const params = useParams();
   const user = localStorage.getItem('user');
   const location = useLocation();
-  const { clusterId } = params;
+  const { tenantId } = params;
+  
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -37,17 +44,21 @@ const TenantDetail: React.FC = () => {
   const menus: MenuItem[] = [
     {
       title: '概览',
-      link: `/tenant/${clusterId}`,
+      link: `/tenant/${tenantId}`,
     },
     {
       title:'拓扑图',
-      link: `/tenant/${clusterId}/topo`,
+      link: `/tenant/${tenantId}/topo`,
     },
     {
-      title: '性能监控',
-      key: 'monitor',
-      link: `/tenant/${clusterId}/monitor`,
-    },
+      title:'备份',
+      link:`/tenant/${tenantId}/backup`
+    }
+    // {
+    //   title: '性能监控',
+    //   key: 'monitor',
+    //   link: `/tenant/${clusterId}/monitor`,
+    // },
   ];
   const userMenu = (
     <Menu

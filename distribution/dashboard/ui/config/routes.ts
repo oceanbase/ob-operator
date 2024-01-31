@@ -88,6 +88,16 @@ export default [
             name: '租户拓扑图',
           },
           {
+            path: 'backup',
+            component: 'Tenant/Detail/Backup',
+            name: '租户备份',
+          },
+          {
+            path: 'backup/new',
+            component: 'Tenant/Detail/NewBackup',
+            name: '新建租户备份',
+          },
+          {
             path:'monitor',
             component:'Tenant/Detail/Monitor',
             name:'租户详情监控'

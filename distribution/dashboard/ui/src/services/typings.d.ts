@@ -204,7 +204,35 @@ declare namespace API {
     };
     unitNum: number;
   };
-  type TenantPolicy = {};
+  type TenantPolicy = {
+    archivePath: string;
+    bakDataPath: string;
+    bakEncryptionPassword?: string;
+    destType: 'NFS' | 'OSS';
+    jobKeepWindow?: number;
+    ossAccessId: string;
+    ossAccessKey: string;
+    pieceInterval?: number;
+    recoveryWindow?: number;
+    scheduleDates: {
+      backupType: 'Full' | 'Incremental';
+      day: number;
+    }[];
+    scheduleTime: string;
+    scheduleType: 'Weekly' | 'Monthly';
+  };
+
+  type UpdateTenantPolicy = {
+    jobKeepWindow: number;
+    pieceInterval: number;
+    recoveryWindow: number;
+    scheduleDates: {
+      backupType: 'Full' | 'Incremental';
+      day: number;
+    }[];
+    scheduleType: 'Weekly' | 'Monthly';
+    status: string;
+  };
 
   interface CommonResponse {
     data: any;
@@ -249,6 +277,33 @@ declare namespace API {
       topology: ReplicaDetailType[];
       unitNumber: number;
     };
+  }
+
+  interface BackupPolicy {
+    archivePath: string;
+    bakDataPath: string;
+    bakEncryptionSecret: string;
+    destType: string;
+    jobKeepWindow: string;
+    name: string;
+    namespace: string;
+    ossAccessSecret: string;
+    pieceInterval: string;
+    recoveryWindow: string;
+    scheduleDates: [
+      {
+        backupType: string;
+        day: number;
+      },
+    ];
+    scheduleTime: string;
+    scheduleType: string;
+    status: string;
+    tenantName: string;
+  }
+
+  interface BackupPolicyResponse extends CommonResponse {
+    data: BackupPolicy;
   }
 
   type ReplayLogType = {

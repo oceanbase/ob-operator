@@ -85,7 +85,7 @@ export default function ResourcePools({
                 label="Memory"
               >
                 <InputNumber
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder="请输入"
                   style={{ width: '100%' }}
                 />
@@ -94,7 +94,7 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item name={['unitConfig', 'logDiskSize']} label="日志磁盘">
                 <InputNumber
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder="请输入"
                   style={{ width: '100%' }}
                 />
