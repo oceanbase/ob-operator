@@ -11,7 +11,7 @@ Enjoy your summer of code!
 * Project Description: The primary method to manage CRDs of ob-operator currently is manipulating YAML manifests which is not easy enough for new-coming users to get started. We'd like to provide features such as component installation, demo setup and resource management within a CLI tool.
 * Required Skills: Golang, Kubernetes
 * Project Size: medium/large
-* Expected Outcomes: A complete CLI tool that helps to install necessary components, set up demo clusters and control creations, updates and deletions of CRDs such as clusters, tenants and backups. 
+* Expected Outcomes: A complete CLI tool that helps to install necessary components, set up demo clusters and manage creation, update and deletion of CRDs such as clusters, tenants and backups. 
 * References: 
   * [kubernetes/client-go](https://github.com/kubernetes/client-go)
   * [spf13/cobra](https://github.com/spf13/cobra)
