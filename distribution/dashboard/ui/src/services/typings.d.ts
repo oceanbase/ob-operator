@@ -97,7 +97,7 @@ declare namespace API {
     | 'logReplay'
     | 'activateTenant'
     | 'switchTenant'
-    | 'upgradeTenant'
+    | 'upgradeTenant';
 
   type QueryMetricsType = {
     groupLabels: string[];
@@ -110,7 +110,21 @@ declare namespace API {
 
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
 
-  type TenantRole = 'Primary' | 'Standby'
+  type TenantRole = 'Primary' | 'Standby';
+
+  type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
+
+  type ReplicaDetailType = {
+    iopsWeight: number;
+    logDiskSize: string;
+    maxIops: number;
+    memorySize: string;
+    cpuCount: number;
+    minIops: number;
+    priority: number;
+    type: string;
+    zone: string;
+  };
 
   interface TenantDetail {
     charset: string;
@@ -122,22 +136,32 @@ declare namespace API {
     status: string;
     tenantName: string;
     tenantRole: TenantRole;
-    topology: [
-      {
-        iopsWeight: 0;
-        logDiskSize: string;
-        maxCPU: string;
-        maxIops: 0;
-        memorySize: string;
-        minCPU: string;
-        minIops: 0;
-        priority: 0;
-        type: string;
-        zone: string;
-      },
-    ];
-    unitNumber: 0;
+    topology: ReplicaDetailType[];
+    unitNumber: number;
   }
+
+  interface BackupPolicy {
+    destType: string;
+    archivePath: string;
+    bakDataPath: string;
+    scheduleType: string;
+    scheduleTime: string;
+    scheduleDates: {
+      backupType: string;
+      day: number;
+    }[];
+  }
+
+  interface BackupJob {
+    encryptionSecret: string;
+    endTime: string;
+    name: string;
+    path: string;
+    startTime: string;
+    status: string;
+    statusInDatabase: string;
+    type: string;
+  }[]
 
   type NamespaceAndName = {
     ns: string;
@@ -173,7 +197,7 @@ declare namespace API {
     unitConfig: {
       iopsWeight?: number;
       logDiskSize?: string;
-      cupNumber: number;
+      cpuCount: number;
       maxIops?: number;
       memorySize: string;
       minIops?: number;
@@ -190,6 +214,14 @@ declare namespace API {
 
   interface TenantsListResponse extends CommonResponse {
     data: TenantDetail[];
+  }
+
+  interface BackupPolicyResponse extends CommonResponse {
+    data: BackupPolicy;
+  }
+
+  interface BackupJobsResponse extends CommonResponse {
+    data:BackupJob[];
   }
 
   interface TenantInfoType extends CommonResponse {
@@ -214,21 +246,8 @@ declare namespace API {
       status: string;
       tenantName: string;
       tenantRole: TenantRole;
-      topology: [
-        {
-          iopsWeight: 0;
-          logDiskSize: string;
-          maxCPU: string;
-          maxIops: 0;
-          memorySize: string;
-          minCPU: string;
-          minIops: 0;
-          priority: 0;
-          type: string;
-          zone: string;
-        },
-      ];
-      unitNumber: 0;
+      topology: ReplicaDetailType[];
+      unitNumber: number;
     };
   }
 
@@ -249,10 +268,9 @@ declare namespace API {
   type UnitConfig = {
     iopsWeight: number;
     logDiskSize: string;
-    maxCPU: string;
     maxIops: number;
     memorySize: string;
-    minCPU: string;
+    cpuCount: number;
     minIops: number;
   };
 
@@ -283,17 +301,18 @@ declare namespace API {
     data: TenantDetail[];
   }
 
-  interface TenantBasicInfoResponse  extends CommonResponse {
-    data:TenantBasicInfo
+  interface TenantBasicInfoResponse extends CommonResponse {
+    data: TenantBasicInfo;
   }
 
   type TenantBasicInfo = {
-    info:InfoType,
+    info: InfoType;
     source?: {
       primaryTenant?: string;
       archiveSource?: string;
       bakDataSource?: string;
       until?: string;
     };
-  }
+    replicas?: ReplicaDetailType[];
+  };
 }
