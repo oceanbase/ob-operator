@@ -35,6 +35,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	ctlconfig "github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 )
 
 // OBResourceRescueReconciler reconciles a OBResourceRescue object
@@ -132,17 +133,9 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				return ctrl.Result{}, err
 			}
 		case "skip":
-			// operationContext.Idx += 1
-			idx, exist, err := unstructured.NestedInt64(uns.Object, "status", "operationContext", "idx")
-			if err != nil {
-				logger.Error(err, "failed to get idx of the target resource")
-				return ctrl.Result{}, err
-			}
-			if !exist {
-				logger.Error(err, "operationContext.idx not exist")
-				return ctrl.Result{}, nil
-			}
-			err = unstructured.SetNestedField(uns.Object, idx+1, "status", "operationContext", "idx")
+			// operationContext.TaskStatus = taskstatus.Successful
+			// When coordinator finds that the task status is `successful`, it will go on the following steps.
+			err = unstructured.SetNestedField(uns.Object, taskstatus.Successful, "status", "operationContext", "taskStatus")
 			if err != nil {
 				logger.Error(err, "failed to reset fields of the target resource")
 				return ctrl.Result{}, err
