@@ -164,8 +164,7 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 ## Documents
 
 - [Architecture](docs/en_US/arch.md)
-- [Deploy ob-operators](docs/en_US/deploy.md)
-- [Development Guide](docs/en_US/development.md)
+- [Contributor Guidance](docs/en_US/contributor-guidance.md)
 - [User Manual](https://en.oceanbase.com/docs/community-ob-operator-doc-en-10000000001123466)
 
 ## Getting Help
