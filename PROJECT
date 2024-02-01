@@ -75,25 +75,7 @@ resources:
   controller: true
   domain: oceanbase.com
   group: oceanbase
-  kind: OBClusterBackup
-  path: github.com/oceanbase/ob-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: oceanbase.com
-  group: oceanbase
   kind: OBTenantBackup
-  path: github.com/oceanbase/ob-operator/api/v1alpha1
-  version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: oceanbase.com
-  group: oceanbase
-  kind: OBClusterRestore
   path: github.com/oceanbase/ob-operator/api/v1alpha1
   version: v1alpha1
 - api:
@@ -125,6 +107,19 @@ resources:
   domain: oceanbase.com
   group: oceanbase
   kind: OBTenantOperation
+  path: github.com/oceanbase/ob-operator/api/v1alpha1
+  version: v1alpha1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oceanbase.com
+  group: oceanbase
+  kind: OBResourceRescue
   path: github.com/oceanbase/ob-operator/api/v1alpha1
   version: v1alpha1
   webhooks:

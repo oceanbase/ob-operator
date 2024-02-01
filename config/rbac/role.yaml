@@ -226,6 +226,32 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obresourcerescues
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obresourcerescues/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obresourcerescues/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - observers
   verbs:
   - create

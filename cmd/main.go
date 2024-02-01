@@ -189,6 +189,10 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBTenantOperation")
 		os.Exit(1)
 	}
+	if err = (controller.NewOBResourceRescueReconciler(mgr)).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "OBResourceRescue")
+		os.Exit(1)
+	}
 	if os.Getenv("DISABLE_WEBHOOKS") != "true" {
 		if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
@@ -204,6 +208,10 @@ func main() {
 		}
 		if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
+			os.Exit(1)
+		}
+		if err = (&v1alpha1.OBResourceRescue{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBResourceRescue")
 			os.Exit(1)
 		}
 	}
