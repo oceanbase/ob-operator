@@ -27,6 +27,7 @@ const (
 	fCreateOBZone                 ttypes.FlowName = "create obzone"
 	fDeleteOBZoneFinalizer        ttypes.FlowName = "delete obzone finalizer"
 	fScaleUpOBServers             ttypes.FlowName = "scale up observers"
+	fResizePVC                    ttypes.FlowName = "resize pvc"
 )
 
 // obzone tasks
@@ -48,4 +49,6 @@ const (
 	tOBZoneHealthCheck          ttypes.TaskName = "obzone health check"
 	tScaleUpOBServers           ttypes.TaskName = "scale up observers"
 	tWaitForOBServerScalingUp   ttypes.TaskName = "wait for observer scaling up"
+	tResizePVC                  ttypes.TaskName = "resize pvc"
+	tWaitForOBServerResizingPVC ttypes.TaskName = "wait for observer to resize pvc"
 )

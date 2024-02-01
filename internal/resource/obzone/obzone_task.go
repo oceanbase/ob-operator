@@ -350,3 +350,25 @@ func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
 	}
 	return nil
 }
+
+func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return err
+	}
+	for _, observer := range observerList.Items {
+		if observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
+			observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
+			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+			m.Logger.Info("resize observer", "observer", observer.Name)
+			observer.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size
+			observer.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size
+			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+			err = m.Client.Update(m.Ctx, &observer)
+			if err != nil {
+				return errors.Wrapf(err, "Resize observer %s failed", observer.Name)
+			}
+		}
+	}
+	return nil
+}

@@ -27,6 +27,7 @@ const (
 	fMaintainOBParameter             ttypes.FlowName = "maintain ob parameter"
 	fDeleteOBClusterFinalizer        ttypes.FlowName = "delete obcluster finalizer"
 	fScaleUpOBZones                  ttypes.FlowName = "scale up obzones"
+	fResizePVC                       ttypes.FlowName = "resize pvc"
 )
 
 // obcluster tasks
@@ -57,4 +58,5 @@ const (
 	tRestoreEssentialParameters ttypes.TaskName = "restore essential parameters"
 	tCreateServiceForMonitor    ttypes.TaskName = "create service for monitor"
 	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
+	tResizePVC                  ttypes.TaskName = "resize pvc"
 )

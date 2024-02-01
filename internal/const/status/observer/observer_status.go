@@ -23,5 +23,6 @@ const (
 	BootstrapReady    = "bootstrap ready"
 	Deleting          = "deleting"
 	ScaleUp           = "scale up"
+	ResizePVC         = "resize pvc"
 	FinalizerFinished = "finalizer finished"
 )

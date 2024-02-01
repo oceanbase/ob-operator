@@ -935,48 +935,57 @@ func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) ScaleUpOBZone() tasktypes.TaskError {
-	obzoneList, err := m.listOBZones()
-	if err != nil {
-		return errors.Wrap(err, "list obzones")
-	}
+type obzoneChanger func(*v1alpha1.OBZone)
 
-	for _, obzone := range obzoneList.Items {
-		if obzone.Spec.OBServerTemplate.Resource.Cpu != m.OBCluster.Spec.OBServerTemplate.Resource.Cpu ||
-			obzone.Spec.OBServerTemplate.Resource.Memory != m.OBCluster.Spec.OBServerTemplate.Resource.Memory {
-			obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
-			obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
-			err := m.Client.Update(m.Ctx, &obzone)
-			if err != nil {
-				return errors.Wrap(err, "update obzone")
-			}
-		}
-	}
+func (m *OBClusterManager) scaleUpOBZoneChanger(obzone *v1alpha1.OBZone) {
+	obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
+	obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
+}
 
-	// check status of obzones
-	const maxWaitTimes = 60
-	matched := true
-outer:
-	for i := 0; i < maxWaitTimes; i++ {
-		time.Sleep(time.Second * 3)
-		obzoneList, err = m.listOBZones()
+func (m *OBClusterManager) resizePVCChanger(obzone *v1alpha1.OBZone) {
+	obzone.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size
+	obzone.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size
+	obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+}
+
+func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, status string, timeoutSeconds int) tasktypes.TaskFunc {
+	return func() tasktypes.TaskError {
+		obzoneList, err := m.listOBZones()
 		if err != nil {
 			return errors.Wrap(err, "list obzones")
 		}
 		for _, obzone := range obzoneList.Items {
-			if obzone.Status.Status != zonestatus.ScaleUp {
-				matched = false
-				continue outer
+			changer(&obzone)
+			err = m.Client.Update(m.Ctx, &obzone)
+			if err != nil {
+				return errors.Wrap(err, "update obzone")
 			}
 		}
-		if matched {
-			break
+
+		// check status of obzones
+		matched := true
+	outer:
+		for i := 0; i < timeoutSeconds; i++ {
+			time.Sleep(time.Second)
+			obzoneList, err = m.listOBZones()
+			if err != nil {
+				return errors.Wrap(err, "list obzones")
+			}
+			for _, obzone := range obzoneList.Items {
+				if obzone.Status.Status != zonestatus.ScaleUp {
+					matched = false
+					continue outer
+				}
+			}
+			if matched {
+				break
+			}
 		}
+		if !matched {
+			return errors.New("failed to wait for status of obzone to be " + status)
+		}
+		return nil
 	}
-	if !matched {
-		return errors.New("scale up obzone failed")
-	}
-	return nil
 }
 
 func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {

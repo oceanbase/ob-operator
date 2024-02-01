@@ -110,3 +110,13 @@ func ScaleUpOBServers() *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func ResizePVC() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fResizePVC,
+			Tasks:        []tasktypes.TaskName{tResizePVC, tWaitForOBServerResizingPVC, tWaitOBServerRunning},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}
