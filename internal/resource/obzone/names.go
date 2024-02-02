@@ -27,7 +27,7 @@ const (
 	fCreateOBZone                 ttypes.FlowName = "create obzone"
 	fDeleteOBZoneFinalizer        ttypes.FlowName = "delete obzone finalizer"
 	fScaleUpOBServers             ttypes.FlowName = "scale up observers"
-	fResizePVC                    ttypes.FlowName = "resize pvc"
+	fResizePVC                    ttypes.FlowName = "resize pvc for obzone"
 )
 
 // obzone tasks

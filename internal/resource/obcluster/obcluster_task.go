@@ -972,7 +972,7 @@ func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, st
 				return errors.Wrap(err, "list obzones")
 			}
 			for _, obzone := range obzoneList.Items {
-				if obzone.Status.Status != zonestatus.ScaleUp {
+				if obzone.Status.Status != status {
 					matched = false
 					continue outer
 				}

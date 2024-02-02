@@ -465,7 +465,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
-	readinessProbe.FailureThreshold = 10
+	readinessProbe.FailureThreshold = 32
 
 	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
 

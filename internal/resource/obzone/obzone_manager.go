@@ -240,6 +240,9 @@ func (m *OBZoneManager) UpdateStatus() error {
 					m.OBZone.Status.Status = zonestatus.ScaleUp
 					break
 				}
+			}
+		} else {
+			for _, observer := range observerList.Items {
 				if m.doStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ResizePVC
 					break

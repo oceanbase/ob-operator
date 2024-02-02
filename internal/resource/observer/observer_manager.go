@@ -442,7 +442,7 @@ func (m *OBServerManager) ArchiveResource() {
 
 func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
-	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: string(m.OBServer.GetUID())})
+	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
 	if err != nil {
 		return nil, errors.Wrap(err, "list pvc")
 	}

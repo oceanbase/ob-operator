@@ -27,7 +27,7 @@ const (
 	fAddServerInOB                  ttypes.FlowName = "add observer in ob"
 	fAnnotateOBServerPod            ttypes.FlowName = "annotate observer pod"
 	fScaleUpOBServer                ttypes.FlowName = "scale up observer"
-	fResizePVC                      ttypes.FlowName = "resize pvc"
+	fResizePVC                      ttypes.FlowName = "resize pvc for observer"
 )
 
 // observer tasks
