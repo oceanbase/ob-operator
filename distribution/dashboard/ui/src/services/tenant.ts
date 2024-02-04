@@ -74,21 +74,23 @@ export async function deleteTenent({
     method: 'DELETE',
   });
 }
-// 创建特定租户的备份策略，密码应采用AES加密 没有body??
-export async function createPolicyOfTenant({
-  ns,
-  name,
-}: API.NamespaceAndName): Promise<API.CommonResponse> {
-  return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
-    method: 'PUT',
-  });
-}
 
-export async function updatePolicyOfTenant({
+export async function createBackupPolicyOfTenant({
   ns,
   name,
   ...body
 }: API.NamespaceAndName & API.TenantPolicy): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
+    method: 'PUT',
+    data:body
+  });
+}
+
+export async function updateBackupPolicyOfTenant({
+  ns,
+  name,
+  ...body
+}: API.NamespaceAndName & API.UpdateTenantPolicy): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
     method: 'POST',
     data: body,

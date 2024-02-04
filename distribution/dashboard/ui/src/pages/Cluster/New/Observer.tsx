@@ -86,7 +86,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={10}
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -114,7 +114,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -152,7 +152,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -183,7 +183,7 @@ export default function Observer({ storageClasses, form }: any) {
               >
                 <InputNumber
                   min={30}
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',

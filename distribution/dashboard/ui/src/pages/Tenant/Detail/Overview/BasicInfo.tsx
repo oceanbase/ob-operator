@@ -1,6 +1,6 @@
 import { colorMap } from '@/constants';
 import { ProCard } from '@ant-design/pro-components';
-import { Col, Descriptions, Tag } from 'antd';
+import { Col, Descriptions, Row, Tag } from 'antd';
 
 export default function BasicInfo({ info, source }: API.TenantBasicInfo) {
   const { style } = info;
@@ -24,33 +24,35 @@ export default function BasicInfo({ info, source }: API.TenantBasicInfo) {
   };
 
   return (
-    <Col span={24}>
-      <ProCard style={style}>
-        <Descriptions column={5} title="基本信息">
-          {Object.keys(InfoConfig).map(
-            (key: keyof typeof InfoConfig, index) => {
-              return (
-                <Descriptions.Item key={index} label={InfoConfig[key]}>
-                  {key !== 'status' ? (
-                    info[key]
-                  ) : (
-                    <Tag color={colorMap.get(info[key])}>{info[key]}</Tag>
-                  )}
-                </Descriptions.Item>
-              );
-            },
-          )}
-        </Descriptions>
-        {source && (
-          <Descriptions title="租户资源">
-            {Object.keys(SourceConfig).map((key, index) => (
-              <Descriptions.Item label={SourceConfig[key]} key={index}>
-                {source[key]}
-              </Descriptions.Item>
-            ))}
+    <Row style={{ marginBottom: 24 }} gutter={[16, 16]}>
+      <Col span={24}>
+        <ProCard style={style}>
+          <Descriptions column={5} title="基本信息">
+            {Object.keys(InfoConfig).map(
+              (key: keyof typeof InfoConfig, index) => {
+                return (
+                  <Descriptions.Item key={index} label={InfoConfig[key]}>
+                    {key !== 'status' ? (
+                      info[key]
+                    ) : (
+                      <Tag color={colorMap.get(info[key])}>{info[key]}</Tag>
+                    )}
+                  </Descriptions.Item>
+                );
+              },
+            )}
           </Descriptions>
-        )}
-      </ProCard>
-    </Col>
+          {source && (
+            <Descriptions title="租户资源">
+              {Object.keys(SourceConfig).map((key, index) => (
+                <Descriptions.Item label={SourceConfig[key]} key={index}>
+                  {source[key]}
+                </Descriptions.Item>
+              ))}
+            </Descriptions>
+          )}
+        </ProCard>
+      </Col>
+    </Row>
   );
 }

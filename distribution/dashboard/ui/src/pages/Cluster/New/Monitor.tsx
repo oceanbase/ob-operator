@@ -130,7 +130,7 @@ export default function Monitor() {
               >
                 <InputNumber
                   min={1}
-                  addonAfter={<div>{SUFFIX_UNIT}</div>}
+                  addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Monitor.PleaseEnter',
                     defaultMessage: '请输入',
