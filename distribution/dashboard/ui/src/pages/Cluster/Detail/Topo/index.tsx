@@ -5,7 +5,7 @@ import { createNodeFromReact } from '@antv/g6-react-node';
 import { useRequest, useUpdateEffect } from 'ahooks';
 import { message } from 'antd';
 import _ from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
@@ -17,7 +17,12 @@ import type { OperateType } from './constants';
 import { clusterOperate, serverOperate, zoneOperate } from './constants';
 import { appenAutoShapeListener, checkIsSame, getServerNumber } from './helper';
 
-const Topo: React.FC = () => {
+interface TopoProps {
+  tenantTopoData?: API.ReplicaDetailType[];
+  HeaderComp?: ReactElement;
+}
+
+export default function Topo({ tenantTopoData, HeaderComp }: TopoProps) {
   const modelRef = useRef<HTMLInputElement>(null);
   const [visible, setVisible] = useState<boolean>(false);
   const [operateList, setOprateList] = useState<OperateType>(clusterOperate);
@@ -75,7 +80,7 @@ const Topo: React.FC = () => {
     const res = await deleteObcluster({ ns, name });
     if (res.successful) {
       message.success(res.message);
-      getTopoData({ ns, name, useFor: 'topo' });
+      getTopoData({ ns, name, useFor: 'topo', tenantTopoData });
     }
   };
   //删除Zone
@@ -87,7 +92,7 @@ const Topo: React.FC = () => {
     });
     if (res.successful) {
       message.success(res.message);
-      getTopoData({ ns, name, useFor: 'topo' });
+      getTopoData({ ns, name, useFor: 'topo', tenantTopoData });
     }
   };
   //初始化g6
@@ -183,7 +188,7 @@ const Topo: React.FC = () => {
   const mouseLeave = () => setInModal(false);
   //运维操作成功后重新获取数据
   const operateSuccess = () => {
-    getTopoData({ ns, name, useFor: 'topo' });
+    getTopoData({ ns, name, useFor: 'topo', tenantTopoData });
   };
 
   //用于数据更新后重新渲染视图
@@ -193,7 +198,7 @@ const Topo: React.FC = () => {
     if (originTopoData.topoData.status === 'operating') {
       if (!operateDisable) setOperateDisable(true);
       checkStatusTimer = setInterval(() => {
-        getTopoData({ ns, name, useFor: 'topo' });
+        getTopoData({ ns, name, useFor: 'topo', tenantTopoData });
       }, 3000);
     } else {
       if (operateDisable) setOperateDisable(false);
@@ -233,7 +238,7 @@ const Topo: React.FC = () => {
       modelRef.current.addEventListener('mouseenter', mouseEnter);
       modelRef.current.addEventListener('mouseleave', mouseLeave);
     }
-    getTopoData({ ns, name, useFor: 'topo' });
+    getTopoData({ ns, name, useFor: 'topo', tenantTopoData });
 
     return () => {
       modelRef.current?.removeEventListener('mouseenter', mouseEnter);
@@ -244,14 +249,15 @@ const Topo: React.FC = () => {
   // 针对不同状态的node 使用不同的图片
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
-      {originTopoData && (
-        <BasicInfo
-          style={{ backgroundColor: '#f5f8fe' }}
-          {...(originTopoData.basicInfo as API.ClusterInfo)}
-        />
-      )}
-
-      <div id="topoContainer"></div>
+      {HeaderComp
+        ? HeaderComp
+        : originTopoData && (
+            <BasicInfo
+              style={{ backgroundColor: '#f5f8fe' }}
+              {...(originTopoData.basicInfo as API.ClusterInfo)}
+            />
+          )}
+      <div style={{ height: '100%' }} id="topoContainer"></div>
       {useMemo(
         () => (
           <MoreModal
@@ -277,6 +283,4 @@ const Topo: React.FC = () => {
       />
     </div>
   );
-};
-
-export default Topo;
+}

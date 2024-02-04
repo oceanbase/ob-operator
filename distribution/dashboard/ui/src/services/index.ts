@@ -183,16 +183,18 @@ export async function getClusterDetailReq({
   ns,
   name,
   useFor,
+  tenantTopoData
 }: {
   ns: string;
   name: string;
   useFor?: string;
+  tenantTopoData?:API.ReplicaDetailType[]
 }) {
   const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
     method: 'GET',
   });
   if (r.successful) {
-    if (useFor === 'topo') return formatTopoData(r.data);
+    if (useFor === 'topo') return formatTopoData(r.data,tenantTopoData);
     return formatClusterData(r.data);
   }
   return r.data;

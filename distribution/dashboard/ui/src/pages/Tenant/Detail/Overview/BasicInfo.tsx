@@ -2,8 +2,11 @@ import { colorMap } from '@/constants';
 import { ProCard } from '@ant-design/pro-components';
 import { Col, Descriptions, Row, Tag } from 'antd';
 
-export default function BasicInfo({ info, source }: API.TenantBasicInfo) {
-  const { style } = info;
+export default function BasicInfo({
+  info,
+  source,
+  style,
+}: API.TenantBasicInfo & { style?: React.CSSProperties }) {
   const InfoConfig = {
     name: '资源名',
     namespace: '命名空间',

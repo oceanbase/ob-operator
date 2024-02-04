@@ -75,7 +75,7 @@ export default {
     successful: true,
   },
 
-  '/obclusters/namespace/oceanbase/name/test': {
+  '/api/v1/obclusters/namespace/test/name/test': {
     data: {
       namespace: 'oceanbase',
       createTime: 'string',
