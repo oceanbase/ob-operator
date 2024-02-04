@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: oceanbase-sysbench-2
+  namespace: oceanbase
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 0
+  template:
+    spec:
+      containers:
+        - name: sysbench
+          image: oceanbasedev/sysbench-cloud-native:0.0.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: MYSQL_HOST
+              value: $(SVC_OBPROXY_SERVICE_HOST)
+            - name: MYSQL_PORT
+              value: "2883"
+            - name: MYSQL_DB
+              value: test
+            - name: MYSQL_USER
+              value: root@sysbenchtenant
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sc-tenant-root
+                  key: password
+            - name: TABLE_SIZE
+              value: "100000"
+            - name: TABLE_NUM
+              value: "10"
+            - name: THREADS
+              value: "100"
+            - name: TEST_TIME
+              value: "30"
+          command:
+            - "/bin/bash"
+          args:
+            - "-c"
+            - "sysbench /usr/share/sysbench/oltp_read_write.lua --mysql-db=$MYSQL_DB --mysql-port=$MYSQL_PORT --mysql-host=$MYSQL_HOST --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --table-size=$TABLE_SIZE --tables=$TABLE_NUM cleanup && sysbench /usr/share/sysbench/oltp_read_write.lua --mysql-db=$MYSQL_DB --mysql-host=$MYSQL_HOST --mysql-port=$MYSQL_PORT --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --table-size=$TABLE_SIZE --tables=$TABLE_NUM prepare && sysbench /usr/share/sysbench/oltp_read_write.lua --mysql-db=$MYSQL_DB --mysql-host=$MYSQL_HOST --mysql-port=$MYSQL_PORT --mysql-user=$MYSQL_USER --mysql-password=$MYSQL_PASSWORD --table-size=$TABLE_SIZE --tables=$TABLE_NUM --threads=$THREADS --time=$TEST_TIME --report-interval=10 --db-ps-mode=disable run"
+      restartPolicy: Never

@@ -1,0 +1,45 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: sysbenchcluster
+  namespace: oceanbase
+spec:
+  clusterName: sysbenchcluster
+  clusterId: 1
+  userSecrets:
+    root: sc-sys-root
+    proxyro: sc-sys-proxyro
+    monitor: sc-sys-monitor
+    operator: sc-sys-operator
+  topology:
+    - zone: zone1
+      replica: 1
+    - zone: zone2
+      replica: 1
+    - zone: zone3
+      replica: 1
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.2.1.3-103000032023122818
+    resource:
+      cpu: 2
+      memory: 16Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  monitor:
+    image: oceanbase/obagent:4.2.1-100000092023101717
+    resource:
+      cpu: 1
+      memory: 1Gi
+  parameters:
+    - name: system_memory
+      value: 1G
+    - name: obconfig_url
+      value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=ObRootServiceInfo&ObCluster=sysbenchcluster'
