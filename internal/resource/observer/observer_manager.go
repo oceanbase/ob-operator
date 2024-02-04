@@ -80,7 +80,7 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.DeletePod, nil
 	case tWaitForPodDeleted:
 		return m.WaitForPodDeleted, nil
-	case tResizePVC:
+	case tExpandPVC:
 		return m.ResizePVC, nil
 	case tWaitForPVCResized:
 		return m.WaitForPVCResized, nil
@@ -206,8 +206,8 @@ func (m *OBServerManager) UpdateStatus() error {
 					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
 					m.OBServer.Status.Status = serverstatus.ScaleUp
 				}
-			} else if pvcs != nil && len(pvcs.Items) > 0 && m.doStorageExpand(pvcs) {
-				m.OBServer.Status.Status = serverstatus.ResizePVC
+			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
+				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}
 
@@ -323,9 +323,9 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case serverstatus.ScaleUp:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be scaled up")
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
-	case serverstatus.ResizePVC:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to resize pvc")
-		taskFlow, err = task.GetRegistry().Get(fResizePVC)
+	case serverstatus.ExpandPVC:
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to expand pvc")
+		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil
@@ -449,7 +449,7 @@ func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	return pvcs, nil
 }
 
-func (m *OBServerManager) doStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
+func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
 	for _, pvc := range pvcs.Items {
 		switch {
 		case strings.HasSuffix(pvc.Name, oceanbaseconst.DataVolumeSuffix):

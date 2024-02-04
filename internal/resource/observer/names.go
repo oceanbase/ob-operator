@@ -27,7 +27,7 @@ const (
 	fAddServerInOB                  ttypes.FlowName = "add observer in ob"
 	fAnnotateOBServerPod            ttypes.FlowName = "annotate observer pod"
 	fScaleUpOBServer                ttypes.FlowName = "scale up observer"
-	fResizePVC                      ttypes.FlowName = "resize pvc for observer"
+	fExpandPVC                      ttypes.FlowName = "expand pvc for observer"
 )
 
 // observer tasks
@@ -46,6 +46,6 @@ const (
 	tUpgradeOBServerImage         ttypes.TaskName = "upgrade observer image"
 	tDeletePod                    ttypes.TaskName = "delete pod"
 	tWaitForPodDeleted            ttypes.TaskName = "wait for pod being deleted"
-	tResizePVC                    ttypes.TaskName = "resize pvc"
+	tExpandPVC                    ttypes.TaskName = "expand pvc"
 	tWaitForPVCResized            ttypes.TaskName = "wait for pvc being resized"
 )

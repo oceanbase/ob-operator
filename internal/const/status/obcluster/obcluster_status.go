@@ -23,6 +23,6 @@ const (
 	Bootstrapped        = "bootstrapped"
 	FinalizerFinished   = "finalizer finished"
 	ScaleUp             = "scale up"
-	ResizePVC           = "resize pvc"
+	ExpandPVC           = "expand pvc"
 	Failed              = "failed"
 )

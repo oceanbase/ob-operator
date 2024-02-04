@@ -937,12 +937,12 @@ func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
 
 type obzoneChanger func(*v1alpha1.OBZone)
 
-func (m *OBClusterManager) scaleUpOBZoneChanger(obzone *v1alpha1.OBZone) {
+func (m *OBClusterManager) changeZonesWhenScaling(obzone *v1alpha1.OBZone) {
 	obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
 	obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
 }
 
-func (m *OBClusterManager) resizePVCChanger(obzone *v1alpha1.OBZone) {
+func (m *OBClusterManager) changeZonesWhenExpandingPVC(obzone *v1alpha1.OBZone) {
 	obzone.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size
 	obzone.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size
 	obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size

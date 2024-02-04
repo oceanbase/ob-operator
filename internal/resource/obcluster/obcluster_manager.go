@@ -98,8 +98,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBParameter)
 	case clusterstatus.ScaleUp:
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
-	case clusterstatus.ResizePVC:
-		taskFlow, err = task.GetRegistry().Get(fResizePVC)
+	case clusterstatus.ExpandPVC:
+		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -198,12 +198,12 @@ func (m *OBClusterManager) UpdateStatus() error {
 		outer:
 			for _, zone := range m.OBCluster.Spec.Topology {
 				for _, obzone := range obzoneList.Items {
-					if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.doCalcResourceChange(&obzone) {
+					if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.checkIfCalcResourceChange(&obzone) {
 						m.OBCluster.Status.Status = clusterstatus.ScaleUp
 						break outer
 					}
-					if m.doStorageSizeExpand(&obzone) {
-						m.OBCluster.Status.Status = clusterstatus.ResizePVC
+					if m.checkIfStorageSizeExpand(&obzone) {
+						m.OBCluster.Status.Status = clusterstatus.ExpandPVC
 						break outer
 					}
 					if zone.Zone == obzone.Spec.Topology.Zone {
@@ -334,9 +334,9 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 	case tModifySysTenantReplica:
 		return m.ModifySysTenantReplica, nil
 	case tScaleUpOBZones:
-		return m.modifyOBZonesAndCheckStatus(m.scaleUpOBZoneChanger, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tResizePVC:
-		return m.modifyOBZonesAndCheckStatus(m.resizePVCChanger, zonestatus.ResizePVC, oceanbaseconst.DefaultStateWaitTimeout), nil
+		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case tExpandPVC:
+		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout), nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}

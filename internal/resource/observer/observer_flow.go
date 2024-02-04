@@ -117,8 +117,8 @@ func ScaleUpOBServer() *tasktypes.TaskFlow {
 func ResizePVC() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fResizePVC,
-			Tasks:        []tasktypes.TaskName{tResizePVC, tWaitForPVCResized},
+			Name:         fExpandPVC,
+			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitForPVCResized},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.StartOver,

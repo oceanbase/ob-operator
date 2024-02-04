@@ -27,5 +27,5 @@ func init() {
 	task.GetRegistry().Register(fAnnotateOBServerPod, AnnotateOBServerPod)
 	task.GetRegistry().Register(fAddServerInOB, AddServerInOB)
 	task.GetRegistry().Register(fScaleUpOBServer, ScaleUpOBServer)
-	task.GetRegistry().Register(fResizePVC, ResizePVC)
+	task.GetRegistry().Register(fExpandPVC, ResizePVC)
 }

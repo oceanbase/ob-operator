@@ -23,5 +23,5 @@ const (
 	BootstrapReady    = "bootstrap ready"
 	FinalizerFinished = "finalizer finished"
 	ScaleUp           = "scale up"
-	ResizePVC         = "resize pvc"
+	ExpandPVC         = "expand pvc"
 )
