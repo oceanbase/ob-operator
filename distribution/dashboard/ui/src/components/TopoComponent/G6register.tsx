@@ -1,12 +1,35 @@
 //@ts-nocheck
+import G6 from '@antv/g6';
 import { Group, Image, Rect, Text } from '@antv/g6-react-node';
 
 import moreImg from '@/assets/more.svg';
 
-
 const nodeWidth = 150;
 const nodeheight = 48;
 
+const tooltip = new G6.Tooltip({
+  offsetX: 10,
+  offsetY: 20,
+  shouldBegin: (e) => {
+    return Boolean(e.item.getModel().tooltipInfo);
+  },
+  getContent(e) {
+    const outDiv = document.createElement('div');
+    const { tooltipInfo } = e.item.getModel();
+    outDiv.style.width = '180px';
+    outDiv.innerHTML = `
+      <ul>
+        ${
+          tooltipInfo &&
+          Object.keys(tooltipInfo)
+            .map((key) => `<li>${key}:${tooltipInfo[key]}</li>`)
+            .join('')
+        }
+      </ul>`;
+    return outDiv;
+  },
+  itemTypes: ['node'],
+});
 
 function config(width: number, height: number) {
   return {
@@ -58,6 +81,7 @@ function config(width: number, height: number) {
         [0, 0.5],
       ],
     },
+    plugins: [tooltip],
     nodeStateStyles: {
       hover: {
         fill: '#fff',
@@ -95,11 +119,13 @@ const reactStyles = {
 
 function ReactNode(handleClick?: any) {
   return ({ cfg }: any) => {
-    const { label, status } = cfg;
+    const { label, status, typeText, disable } = cfg;
     return (
       <Group>
         <Rect
-          style={{ ...reactStyles }}
+          style={
+            disable ? { ...reactStyles, fill: '#d9d9d9' } : { ...reactStyles }
+          }
           name="container"
         >
           <Image
@@ -126,6 +152,20 @@ function ReactNode(handleClick?: any) {
           >
             {label}
           </Text>
+          {typeText && (
+            <Text
+              style={{
+                position: 'absolute',
+                fontSize: 8,
+                x: nodeWidth / 2 - 12,
+                y: nodeheight / 2 + 12,
+                fill: 'rgb(0,0,0,.85)',
+              }}
+              name="clusterTitle"
+            >
+              {`(${typeText})`}
+            </Text>
+          )}
           <Image
             style={{
               position: 'absolute',
@@ -151,7 +191,7 @@ function ReactNode(handleClick?: any) {
           </Text>
           {cfg.type !== 'server' && (
             <Image
-              onClick={handleClick}
+              onClick={disable ? null : handleClick}
               id={cfg.label}
               style={{
                 position: 'absolute',
@@ -159,7 +199,7 @@ function ReactNode(handleClick?: any) {
                 y: 16,
                 width: 2.5,
                 height: 16,
-                cursor: 'pointer',
+                cursor: disable ? 'auto' : 'pointer',
                 img: moreImg,
               }}
               name="moreImg"

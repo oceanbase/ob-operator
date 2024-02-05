@@ -1,5 +1,5 @@
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
-import { formatTopoData } from '@/pages/Cluster/Detail/Topo/helper';
+import { formatTopoData } from '@/components/TopoComponent/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
 import _ from 'lodash';
@@ -183,16 +183,18 @@ export async function getClusterDetailReq({
   ns,
   name,
   useFor,
+  tenantReplicas
 }: {
   ns: string;
   name: string;
   useFor?: string;
+  tenantReplicas?:API.ReplicaDetailType[]
 }) {
   const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
     method: 'GET',
   });
   if (r.successful) {
-    if (useFor === 'topo') return formatTopoData(r.data);
+    if (useFor === 'topo') return formatTopoData(r.data,tenantReplicas);
     return formatClusterData(r.data);
   }
   return r.data;

@@ -24,6 +24,13 @@ type TopoServer = API.Server & {
   badgeImg: string;
 };
 
+type TooltipInfo = {
+  cpuCount: number;
+  memorySize: string;
+  maxIops: number;
+  minIops: number;
+};
+
 type GraphNodeType = {
   id: string;
   label: string;
@@ -31,6 +38,9 @@ type GraphNodeType = {
   type: string;
   img: string;
   badgeImg: string;
+  disable: boolean;
+  typeText?: string;
+  tooltipInfo?: TooltipInfo;
   children?: GraphNodeType[];
 };
 
@@ -82,7 +92,7 @@ const propsToEventMap = {
 };
 
 /**
- * 监听mouseenter和mouseleave事件时，evt.shape为null(g6本身如此)
+ * When listening to mouseenter and mouseleave events, evt.shape is null (g6 itself)
  */
 export function appenAutoShapeListener(graph: Graph) {
   Object.entries(propsToEventMap).forEach(([eventName, propName]) => {
@@ -99,7 +109,24 @@ export function appenAutoShapeListener(graph: Graph) {
   });
 }
 
-function getChildren(zoneList: any) {
+function getZoneTypeText(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
+  return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
+}
+
+function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
+  let targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
+  if (targetZone) {
+    return {
+      cpuCount: targetZone.cpuCount,
+      memorySize: targetZone.memorySize,
+      minIops: targetZone.minIops,
+      maxIops: targetZone.maxIops,
+    };
+  }
+  return;
+}
+
+function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
   let children = [];
   for (let zone of zoneList) {
     let temp: GraphNodeType = {
@@ -109,12 +136,27 @@ function getChildren(zoneList: any) {
       type: 'zone',
       img: '',
       badgeImg: '',
+      disable: false,
     };
-    temp.id = zone.name + zone.namespace; //k8s里是通过name+ns查询资源 所以ns+name是唯一的
+    let typeText = getZoneTypeText(zone, tenantReplicas || []);
+    let tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
+    temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
     temp.img = zoneImgMap.get(zone.status);
     temp.badgeImg = badgeIMgMap.get(zone.status);
+    if (typeText) {
+      temp.typeText = typeText;
+    }
+    if (tooltipInfo) {
+      temp.tooltipInfo = tooltipInfo;
+    }
+    if (
+      tenantReplicas &&
+      !tenantReplicas.find((item) => item.zone === zone.zone)
+    ) {
+      temp.disable = true;
+    }
     temp.children = zone.observers.map((server: TopoServer) => {
       return {
         id: server.name + server.namespace,
@@ -123,6 +165,7 @@ function getChildren(zoneList: any) {
         type: 'server',
         img: serverImgMap.get(server.status),
         badgeImg: badgeIMgMap.get(server.status),
+        disable: temp.disable,
       };
     });
     children.push(temp);
@@ -134,6 +177,7 @@ function getChildren(zoneList: any) {
  */
 export const formatTopoData = (
   responseData: any,
+  tenantReplicas?: API.ReplicaDetailType[],
 ): {
   topoData: GraphNodeType;
   basicInfo: BasicInfoType;
@@ -150,8 +194,9 @@ export const formatTopoData = (
     children: [],
     img: clusterImgMap.get(responseData.status),
     badgeImg: badgeIMgMap.get(responseData.status),
+    disable: false,
   };
-  topoData.children = getChildren(responseData.topology);
+  topoData.children = getChildren(responseData.topology, tenantReplicas);
 
   let basicInfo: BasicInfoType = {
     name: responseData.name,
@@ -167,11 +212,10 @@ export const formatTopoData = (
 };
 
 /**
- * 判断新旧topoData属性值是否完全相同
+ * Determine whether the old and new topoData attribute values are exactly the same
  */
 export const checkIsSame = (oldTopoData: any, newTopoData: any): boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
-  //判断children
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
     let newZone = newTopoData.children[idx];
