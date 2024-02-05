@@ -103,3 +103,13 @@ func ScaleUpOBZones() *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func ResizePVC() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fExpandPVC,
+			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}

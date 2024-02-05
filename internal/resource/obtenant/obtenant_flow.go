@@ -31,7 +31,7 @@ func CreateTenant() *tasktypes.TaskFlow {
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
-				NextTryStatus: tenantstatus.CreatingTenant,
+				NextTryStatus: tenantstatus.Failed,
 			},
 		},
 	}

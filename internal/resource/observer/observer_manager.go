@@ -14,6 +14,7 @@ package observer
 
 import (
 	"context"
+	"strings"
 
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -22,6 +23,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
@@ -78,6 +80,10 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.DeletePod, nil
 	case tWaitForPodDeleted:
 		return m.WaitForPodDeleted, nil
+	case tExpandPVC:
+		return m.ResizePVC, nil
+	case tWaitForPVCResized:
+		return m.WaitForPVCResized, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -183,6 +189,10 @@ func (m *OBServerManager) UpdateStatus() error {
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
 		}
+		pvcs, err := m.getPVCs()
+		if err != nil {
+			m.Logger.Info("get pvc failed: " + err.Error())
+		}
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("check observer in obcluster")
@@ -196,6 +206,8 @@ func (m *OBServerManager) UpdateStatus() error {
 					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
 					m.OBServer.Status.Status = serverstatus.ScaleUp
 				}
+			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
+				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}
 
@@ -311,6 +323,9 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case serverstatus.ScaleUp:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be scaled up")
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
+	case serverstatus.ExpandPVC:
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to expand pvc")
+		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil
@@ -423,4 +438,41 @@ func (m *OBServerManager) ArchiveResource() {
 	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
+}
+
+func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
+	pvcs := &corev1.PersistentVolumeClaimList{}
+	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
+	if err != nil {
+		return nil, errors.Wrap(err, "list pvc")
+	}
+	return pvcs, nil
+}
+
+func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
+	for _, pvc := range pvcs.Items {
+		switch {
+		case strings.HasSuffix(pvc.Name, oceanbaseconst.DataVolumeSuffix):
+			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
+				return true
+			}
+		case strings.HasSuffix(pvc.Name, oceanbaseconst.ClogVolumeSuffix):
+			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+				return true
+			}
+		case strings.HasSuffix(pvc.Name, oceanbaseconst.LogVolumeSuffix):
+			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
+				return true
+			}
+		case pvc.Name == m.OBServer.Name:
+			sum := resource.Quantity{}
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
+			if pvc.Spec.Resources.Requests.Storage().Cmp(sum) < 0 {
+				return true
+			}
+		}
+	}
+	return false
 }

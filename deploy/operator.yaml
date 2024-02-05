@@ -17,106 +17,6 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.13.0
-  name: obclusterbackups.oceanbase.oceanbase.com
-spec:
-  group: oceanbase.oceanbase.com
-  names:
-    kind: OBClusterBackup
-    listKind: OBClusterBackupList
-    plural: obclusterbackups
-    singular: obclusterbackup
-  scope: Namespaced
-  versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        description: OBClusterBackup is the Schema for the obclusterbackups API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: OBClusterBackupSpec defines the desired state of OBClusterBackup
-            properties:
-              foo:
-                description: Foo is an example field of OBClusterBackup. Edit obclusterbackup_types.go
-                  to remove/update
-                type: string
-            type: object
-          status:
-            description: OBClusterBackupStatus defines the observed state of OBClusterBackup
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
-  name: obclusterrestores.oceanbase.oceanbase.com
-spec:
-  group: oceanbase.oceanbase.com
-  names:
-    kind: OBClusterRestore
-    listKind: OBClusterRestoreList
-    plural: obclusterrestores
-    singular: obclusterrestore
-  scope: Namespaced
-  versions:
-  - name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        description: OBClusterRestore is the Schema for the obclusterrestores API
-        properties:
-          apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-            type: string
-          kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: OBClusterRestoreSpec defines the desired state of OBClusterRestore
-            properties:
-              foo:
-                description: Foo is an example field of OBClusterRestore. Edit obclusterrestore_types.go
-                  to remove/update
-                type: string
-            type: object
-          status:
-            description: OBClusterRestoreStatus defines the observed state of OBClusterRestore
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  annotations:
-    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
-    controller-gen.kubebuilder.io/version: v0.13.0
   name: obclusters.oceanbase.oceanbase.com
 spec:
   conversion:
@@ -3054,6 +2954,93 @@ spec:
                 type: string
             required:
             - parameter
+            - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.13.0
+  name: obresourcerescues.oceanbase.oceanbase.com
+spec:
+  conversion:
+    strategy: Webhook
+    webhook:
+      clientConfig:
+        service:
+          name: oceanbase-webhook-service
+          namespace: oceanbase-system
+          path: /convert
+      conversionReviewVersions:
+      - v1
+  group: oceanbase.oceanbase.com
+  names:
+    kind: OBResourceRescue
+    listKind: OBResourceRescueList
+    plural: obresourcerescues
+    singular: obresourcerescue
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OBResourceRescue is the Schema for the obresourcerescues API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OBResourceRescueSpec defines the desired state of OBResourceRescue
+            properties:
+              namespace:
+                type: string
+              targetGV:
+                type: string
+              targetKind:
+                type: string
+              targetResName:
+                type: string
+              targetStatus:
+                type: string
+              type:
+                type: string
+            required:
+            - targetKind
+            - targetResName
+            - type
+            type: object
+          status:
+            description: OBResourceRescueStatus defines the observed state of OBResourceRescue
+            properties:
+              status:
+                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
+                  of cluster Important: Run "make" to regenerate code after modifying
+                  this file'
+                type: string
+            required:
             - status
             type: object
         type: object
@@ -12254,6 +12241,32 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obresourcerescues
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obresourcerescues/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obresourcerescues/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - observers
   verbs:
   - create
@@ -12630,6 +12643,18 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
+  name: oceanbase-operator-metrics
+  namespace: oceanbase-system
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    control-plane: controller-manager
+---
+apiVersion: v1
+kind: Service
+metadata:
   labels:
     app.kubernetes.io/component: webhook
     app.kubernetes.io/created-by: ob-operator-generate
@@ -12691,7 +12716,7 @@ spec:
       containers:
       - args:
         - --health-probe-bind-address=:8081
-        - --metrics-bind-address=127.0.0.1:8080
+        - --metrics-bind-address=:8080
         - --leader-elect
         - --manager-namespace=oceanbase-system
         - --log-verbosity=0
@@ -12840,6 +12865,26 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obresourcerescue
+  failurePolicy: Fail
+  name: mobresourcerescue.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obresourcerescues
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obtenant
   failurePolicy: Fail
   name: mobtenant.kb.io
@@ -12928,6 +12973,26 @@ webhooks:
     - UPDATE
     resources:
     - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: oceanbase-webhook-service
+      namespace: oceanbase-system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obresourcerescue
+  failurePolicy: Fail
+  name: vobresourcerescue.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obresourcerescues
   sideEffects: None
 - admissionReviewVersions:
   - v1

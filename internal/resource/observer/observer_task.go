@@ -465,7 +465,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
 	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
 	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
-	readinessProbe.FailureThreshold = 10
+	readinessProbe.FailureThreshold = 32
 
 	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
 
@@ -754,4 +754,88 @@ func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
 		}
 	}
 	return errors.New("Timeout to wait for pod being deleted")
+}
+
+func (m *OBServerManager) ResizePVC() tasktypes.TaskError {
+	observerPVC, err := m.getPVCs()
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get pvc list of observer %s", m.OBServer.Name)
+	}
+
+	for _, pvc := range observerPVC.Items {
+		switch pvc.Name {
+		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
+			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size
+			err = m.Client.Update(m.Ctx, &pvc)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+			}
+		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
+			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+			err = m.Client.Update(m.Ctx, &pvc)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+			}
+		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
+			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size
+			err = m.Client.Update(m.Ctx, &pvc)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+			}
+		case m.OBServer.Name: // single pvc
+			sum := resource.Quantity{}
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
+			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = sum
+			err = m.Client.Update(m.Ctx, &pvc)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBServerManager) WaitForPVCResized() tasktypes.TaskError {
+outer:
+	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+		time.Sleep(time.Second)
+
+		observerPVC, err := m.getPVCs()
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get pvc of observer %s", m.OBServer.Name)
+		}
+		for _, pvc := range observerPVC.Items {
+			switch pvc.Name {
+			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
+				if m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					continue outer
+				}
+			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
+				if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					continue outer
+				}
+			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
+				if m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					continue outer
+				}
+			case m.OBServer.Name:
+				sum := resource.Quantity{}
+				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
+				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
+				if sum.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					continue outer
+				}
+			}
+		}
+		// all pvc resized
+		return nil
+	}
+	return errors.Errorf("Timeout to wait for pvc resized")
 }

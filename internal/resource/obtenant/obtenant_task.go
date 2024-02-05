@@ -23,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -107,13 +108,28 @@ func (m *OBTenantManager) CheckTenantTask() tasktypes.TaskError {
 
 func (m *OBTenantManager) CheckPoolAndConfigTask() tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
-
+	client, err := m.getClusterSysClient()
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Get sys client when checking and applying tenant '%s' pool and config", tenantName))
+	}
+	params, err := client.GetParameter("__min_full_resource_pool_memory", nil)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Get parameter __min_full_resource_pool_memory when checking and applying tenant '%s' pool and config", tenantName))
+	}
+	if len(params) == 0 {
+		return errors.New("Getting parameter __min_full_resource_pool_memory returns empty result")
+	}
+	minPoolMemory := params[0].Value
+	minPoolMemoryQuant, err := resource.ParseQuantity(minPoolMemory)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Parse quantity when checking and applying tenant '%s' pool and config", tenantName))
+	}
 	for _, pool := range m.OBTenant.Spec.Pools {
 		unitName := m.generateUnitName(pool.Zone)
 		poolName := m.generatePoolName(pool.Zone)
 		poolExist, err := m.poolExist(poolName)
 		if err != nil {
-			m.Logger.Error(err, "Check Resource Pool Exist", "tenantName", tenantName, "poolName", poolName)
+			m.Logger.Error(err, "Check resource pool exist", "tenantName", tenantName, "poolName", poolName)
 			return err
 		}
 		if poolExist {
@@ -122,10 +138,15 @@ func (m *OBTenantManager) CheckPoolAndConfigTask() tasktypes.TaskError {
 
 		unitExist, err := m.unitConfigV4Exist(unitName)
 		if err != nil {
-			m.Logger.Error(err, "Check UnitConfig Exist Failed", "tenantName", tenantName, "unitName", unitName)
+			m.Logger.Error(err, "Check unit config exist failed", "tenantName", tenantName, "unitName", unitName)
 			return err
 		}
 		if unitExist {
+			return err
+		}
+		if pool.UnitConfig.MemorySize.Cmp(minPoolMemoryQuant) < 0 {
+			err = errors.New("pool memory size is less than min_full_resource_pool_memory")
+			m.Logger.Error(err, "Check pool memory size", "tenantName", tenantName, "poolName", poolName)
 			return err
 		}
 	}
