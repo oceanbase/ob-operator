@@ -202,5 +202,21 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		Expect(err).Should(BeNil())
 		cluster.Spec.ServiceAccount = saName
 		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+	})
+
+	It("Validate memory limit", func() {
+		cluster := newOBCluster("test-memory", 1, 1)
+		cluster.Spec.OBServerTemplate.Resource.Memory = resource.MustParse("16Gi")
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		for _, param := range cluster.Spec.Parameters {
+			if param.Name == "memory_limit" {
+				innerMemory := resource.MustParse(param.Value)
+				expectedMemory := resource.MustParse("15884M") // 15.5G
+				Expect(innerMemory.Value()).Should(Equal(expectedMemory.Value()))
+			}
+		}
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
 	})
 })

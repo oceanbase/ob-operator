@@ -23,7 +23,8 @@ const (
 	DefaultStateWaitTimeout       = 300
 	TimeConsumingStateWaitTimeout = 3600
 	ServerDeleteTimeoutSeconds    = 86400
-	GigaConverter                 = 1073741824
+	GigaConverter                 = 1 << 30
+	MegaConverter                 = 1 << 20
 )
 
 const (

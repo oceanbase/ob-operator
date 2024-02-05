@@ -62,7 +62,9 @@ func (r *OBCluster) Default() {
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
 	if ok {
-		memoryLimit := fmt.Sprintf("%dG", memorySize*oceanbaseconst.DefaultMemoryLimitPercent/oceanbaseconst.GigaConverter/100)
+		podOverhead := resource.MustParse("500Mi")
+		actualMemorySize := memorySize - podOverhead.Value()
+		memoryLimit := fmt.Sprintf("%dM", actualMemorySize/oceanbaseconst.MegaConverter)
 		parameterMap["memory_limit"] = apitypes.Parameter{
 			Name:  "memory_limit",
 			Value: memoryLimit,
