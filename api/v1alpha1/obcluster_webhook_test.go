@@ -213,7 +213,7 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		for _, param := range cluster.Spec.Parameters {
 			if param.Name == "memory_limit" {
 				innerMemory := resource.MustParse(param.Value)
-				expectedMemory := resource.MustParse("15884M") // 15.5G
+				expectedMemory := resource.MustParse("14745M") // floor(16 * 1024 * 0.9)
 				Expect(innerMemory.Value()).Should(Equal(expectedMemory.Value()))
 			}
 		}
