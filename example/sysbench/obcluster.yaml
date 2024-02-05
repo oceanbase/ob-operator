@@ -21,7 +21,7 @@ spec:
   observer:
     image: oceanbase/oceanbase-cloud-native:4.2.1.3-103000032023122818
     resource:
-      cpu: 2
+      cpu: 4
       memory: 16Gi
     storage:
       dataStorage:

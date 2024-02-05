@@ -129,7 +129,10 @@ spec:
         ports:
         - containerPort: 9090
           protocol: TCP
-        resources: {}
+        resources: 
+          limits:
+            memory: 2Gi
+            cpu: "1"
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
