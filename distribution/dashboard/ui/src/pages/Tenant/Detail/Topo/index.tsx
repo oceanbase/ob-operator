@@ -1,5 +1,5 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import TopoComponent from '@/pages/Cluster/Detail/Topo';
+import TopoComponent from '@/components/TopoComponent';
 import { getTenant } from '@/services/tenant';
 import { useRequest } from 'ahooks';
 import BasicInfo from '../Overview/BasicInfo';
@@ -14,8 +14,8 @@ export default function Topo() {
     <div>
       {tenantTopoData && (
         <TopoComponent
-          tenantTopoData={tenantTopoData.replicas}
-          HeaderComp={
+          tenantReplicas={tenantTopoData.replicas}
+          header={
             <BasicInfo
               info={tenantTopoData.info}
               source={tenantTopoData.source}

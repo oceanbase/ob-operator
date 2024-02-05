@@ -92,7 +92,7 @@ const propsToEventMap = {
 };
 
 /**
- * 监听mouseenter和mouseleave事件时，evt.shape为null(g6本身如此)
+ * When listening to mouseenter and mouseleave events, evt.shape is null (g6 itself)
  */
 export function appenAutoShapeListener(graph: Graph) {
   Object.entries(propsToEventMap).forEach(([eventName, propName]) => {
@@ -126,7 +126,7 @@ function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
   return;
 }
 
-function getChildren(zoneList: any, tenantTopoData?: API.ReplicaDetailType[]) {
+function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
   let children = [];
   for (let zone of zoneList) {
     let temp: GraphNodeType = {
@@ -138,9 +138,9 @@ function getChildren(zoneList: any, tenantTopoData?: API.ReplicaDetailType[]) {
       badgeImg: '',
       disable: false,
     };
-    let typeText = getZoneTypeText(zone, tenantTopoData || []);
-    let tooltipInfo = getTooltipInfo(zone, tenantTopoData || []);
-    temp.id = zone.name + zone.namespace; //k8s里是通过name+ns查询资源 所以ns+name是唯一的
+    let typeText = getZoneTypeText(zone, tenantReplicas || []);
+    let tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
+    temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
     temp.img = zoneImgMap.get(zone.status);
@@ -152,8 +152,8 @@ function getChildren(zoneList: any, tenantTopoData?: API.ReplicaDetailType[]) {
       temp.tooltipInfo = tooltipInfo;
     }
     if (
-      tenantTopoData &&
-      !tenantTopoData.find((item) => item.zone === zone.zone)
+      tenantReplicas &&
+      !tenantReplicas.find((item) => item.zone === zone.zone)
     ) {
       temp.disable = true;
     }
@@ -177,7 +177,7 @@ function getChildren(zoneList: any, tenantTopoData?: API.ReplicaDetailType[]) {
  */
 export const formatTopoData = (
   responseData: any,
-  tenantTopoData?: API.ReplicaDetailType[],
+  tenantReplicas?: API.ReplicaDetailType[],
 ): {
   topoData: GraphNodeType;
   basicInfo: BasicInfoType;
@@ -196,7 +196,7 @@ export const formatTopoData = (
     badgeImg: badgeIMgMap.get(responseData.status),
     disable: false,
   };
-  topoData.children = getChildren(responseData.topology, tenantTopoData);
+  topoData.children = getChildren(responseData.topology, tenantReplicas);
 
   let basicInfo: BasicInfoType = {
     name: responseData.name,
@@ -212,11 +212,10 @@ export const formatTopoData = (
 };
 
 /**
- * 判断新旧topoData属性值是否完全相同
+ * Determine whether the old and new topoData attribute values are exactly the same
  */
 export const checkIsSame = (oldTopoData: any, newTopoData: any): boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
-  //判断children
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
     let newZone = newTopoData.children[idx];
