@@ -21,7 +21,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 10Gi
+        memorySize: 7.5Gi
     - zone: zone2
       type:
         name: Full
@@ -29,7 +29,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 10Gi
+        memorySize: 7.5Gi
     - zone: zone3
       type:
         name: Full
@@ -37,4 +37,4 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 10Gi
+        memorySize: 7.5Gi

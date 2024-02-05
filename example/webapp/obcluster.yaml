@@ -22,7 +22,7 @@ spec:
     image: oceanbase/oceanbase-cloud-native:4.2.1.1-101010012023111012
     resource:
       cpu: 2
-      memory: 10Gi
+      memory: 16Gi
     storage:
       dataStorage:
         storageClass: local-path
