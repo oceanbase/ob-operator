@@ -3,6 +3,7 @@ import {
   SCHEDULE_TYPE_OPTIONS,
   WEEK_OPTIONS,
 } from '@/constants/schedule';
+import { intl } from '@/utils/intl';
 import { Checkbox, Radio } from 'antd';
 import styles from './index.less';
 
@@ -43,6 +44,7 @@ export default function ScheduleSelectComp({
         optionType="button"
         buttonStyle="solid"
       />
+
       <ul className={styles.container}>
         {(params.mode === 'Weekly' ? WEEK_OPTIONS : MONTH_OPTIONS).map(
           (item, index) => (
@@ -71,7 +73,10 @@ export default function ScheduleSelectComp({
             indeterminate={params.days.length > 0 && params.days.length < 7}
             style={{ marginLeft: 14, marginTop: 8 }}
           >
-            全选
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.NewBackup.ScheduleSelectComp.SelectAll',
+              defaultMessage: '全选',
+            })}
           </Checkbox>
         )}
       </ul>

@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
@@ -15,7 +16,12 @@ export default function ActivateTenantModal({
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
-        message.success('激活备租户成功');
+        message.success(
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.ActivateTenantModal.TheStandbyTenantHasBeen',
+            defaultMessage: '激活备租户成功',
+          }),
+        );
         setVisible(false);
         successCallback();
       }
@@ -29,12 +35,20 @@ export default function ActivateTenantModal({
 
   return (
     <CustomModal
-      title={'激活备租户'}
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.ActivateTenantModal.ActivateASecondaryTenant',
+        defaultMessage: '激活备租户',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
     >
-      <p>备租户升主之后可接受外界读写请求，确定要激活吗？</p>
+      <p>
+        {intl.formatMessage({
+          id: 'Dashboard.components.customModal.ActivateTenantModal.AfterTheStandbyTenantIs',
+          defaultMessage: '备租户升主之后可接受外界读写请求，确定要激活吗？',
+        })}
+      </p>
     </CustomModal>
   );
 }

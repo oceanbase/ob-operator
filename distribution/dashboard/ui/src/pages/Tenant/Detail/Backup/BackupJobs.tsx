@@ -1,5 +1,6 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { getBackupJobs } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Card, Col, Tabs } from 'antd';
@@ -23,22 +24,34 @@ export default function BackupJobs() {
   const items: TabsProps['items'] = [
     {
       key: 'FULL',
-      label: '全量备份',
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupJobs.FullBackup',
+        defaultMessage: '全量备份',
+      }),
       children: <JobTable dataSource={backupJobs} />,
     },
     {
       key: 'INCR',
-      label: '增量备份',
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupJobs.IncrementalBackup',
+        defaultMessage: '增量备份',
+      }),
       children: <JobTable dataSource={backupJobs} />,
     },
     {
       key: 'ARCHIVE',
-      label: '日志归档',
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupJobs.LogArchiving',
+        defaultMessage: '日志归档',
+      }),
       children: <JobTable dataSource={backupJobs} />,
     },
     {
       key: 'CLEAN',
-      label: '数据清理',
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupJobs.DataCleansing',
+        defaultMessage: '数据清理',
+      }),
       children: <JobTable dataSource={backupJobs} />,
     },
   ];

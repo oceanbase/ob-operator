@@ -2,6 +2,7 @@ import {
   generateRandomPassword,
   passwordRules,
 } from '@/pages/Cluster/New/helper';
+import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
 import { Button, Col, Form, Input, Row, Tooltip, message } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
@@ -45,7 +46,12 @@ export default function PasswordInput({
   const passwordCopy = () => {
     if (value) {
       copy(value);
-      message.success('复制成功');
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.components.PasswordInput.CopiedSuccessfully',
+          defaultMessage: '复制成功',
+        }),
+      );
     }
   };
 
@@ -60,14 +66,33 @@ export default function PasswordInput({
       placement="bottomLeft"
       title={
         <ul>
-          <li>长度为 8~32 个字符</li>
-          <li>只能包含字母、数字和特殊字符（~!@#%^&*_-+=|(){}[]:;,.?/）</li>
-          <li>大小写字母、数字和特殊字符都至少包含 2 个</li>
+          <li>
+            {intl.formatMessage({
+              id: 'Dashboard.components.PasswordInput.ToCharactersInLength',
+              defaultMessage: '长度为 8~32 个字符',
+            })}
+          </li>
+          <li>
+            {intl.formatMessage({
+              id: 'Dashboard.components.PasswordInput.CanOnlyContainLettersNumbers',
+              defaultMessage: '只能包含字母、数字和特殊字符（~!@#%^&*_-+=|()',
+            })}
+            {}[]:;,.?/）
+          </li>
+          <li>
+            {intl.formatMessage({
+              id: 'Dashboard.components.PasswordInput.AtLeastUppercaseAndLowercase',
+              defaultMessage: '大小写字母、数字和特殊字符都至少包含 2 个',
+            })}
+          </li>
         </ul>
       }
     >
       <Form.Item
-        label={'密码'}
+        label={intl.formatMessage({
+          id: 'Dashboard.components.PasswordInput.Password',
+          defaultMessage: '密码',
+        })}
         name="rootPassword"
         rules={passwordRules}
         className={styles.passwordFormItem}
@@ -78,19 +103,39 @@ export default function PasswordInput({
             <Input.Password
               value={value}
               onChange={(val) => onChange(val.target.value)}
-              placeholder={'请输入或随机生成'}
+              placeholder={intl.formatMessage({
+                id: 'Dashboard.components.PasswordInput.PleaseEnterOrGenerateRandomly',
+                defaultMessage: '请输入或随机生成',
+              })}
             />
 
             {textVisile && (
               <p style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
-                请牢记密码，也可
-                <a onClick={passwordCopy}>复制密码</a>
-                并妥善保存
+                {intl.formatMessage({
+                  id: 'Dashboard.components.PasswordInput.PleaseRememberThePasswordOr',
+                  defaultMessage: '请牢记密码，也可',
+                })}
+
+                <a onClick={passwordCopy}>
+                  {intl.formatMessage({
+                    id: 'Dashboard.components.PasswordInput.CopyPassword',
+                    defaultMessage: '复制密码',
+                  })}
+                </a>
+                {intl.formatMessage({
+                  id: 'Dashboard.components.PasswordInput.AndKeepItProperly',
+                  defaultMessage: '并妥善保存',
+                })}
               </p>
             )}
           </Col>
           <Col>
-            <Button onClick={genaretaPassword}>随机生成</Button>
+            <Button onClick={genaretaPassword}>
+              {intl.formatMessage({
+                id: 'Dashboard.components.PasswordInput.RandomlyGenerated',
+                defaultMessage: '随机生成',
+              })}
+            </Button>
           </Col>
         </Row>
       </Form.Item>

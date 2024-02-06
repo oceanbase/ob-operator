@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
@@ -15,7 +16,12 @@ export default function UpgradeTenantModal({
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
-        message.success('租户版本升级成功');
+        message.success(
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.UpgradeTenantModal.TheTenantVersionHasBeen',
+            defaultMessage: '租户版本升级成功',
+          }),
+        );
         setVisible(false);
         successCallback();
       }
@@ -29,12 +35,21 @@ export default function UpgradeTenantModal({
 
   return (
     <CustomModal
-      title="租户版本升级"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.UpgradeTenantModal.TenantVersionUpgrade',
+        defaultMessage: '租户版本升级',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
     >
-      <p>当前租户的版本为 xxxx，集群的版本为xxx，确定升级租户吗？</p>
+      <p>
+        {intl.formatMessage({
+          id: 'Dashboard.components.customModal.UpgradeTenantModal.TheCurrentTenantVersionIs',
+          defaultMessage:
+            '当前租户的版本为 xxxx，集群的版本为xxx，确定升级租户吗？',
+        })}
+      </p>
     </CustomModal>
   );
 }

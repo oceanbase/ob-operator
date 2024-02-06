@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
@@ -15,7 +16,12 @@ export default function SwitchTenantModal({
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
-        message.success('激活备租户成功');
+        message.success(
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.SwitchTenantModal.TheStandbyTenantHasBeen',
+            defaultMessage: '激活备租户成功',
+          }),
+        );
         setVisible(false);
         successCallback();
       }
@@ -29,13 +35,20 @@ export default function SwitchTenantModal({
 
   return (
     <CustomModal
-      title="主备切换"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.SwitchTenantModal.ActiveStandbySwitchover',
+        defaultMessage: '主备切换',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
     >
       <p>
-        主备切换后，原备租户将成为新的主租户，原主租户将成为新的备租户，确定要切换吗？
+        {intl.formatMessage({
+          id: 'Dashboard.components.customModal.SwitchTenantModal.AfterThePrimaryAndSecondary',
+          defaultMessage:
+            '主备切换后，原备租户将成为新的主租户，原主租户将成为新的备租户，确定要切换吗？',
+        })}
       </p>
     </CustomModal>
   );

@@ -1,6 +1,7 @@
 import { WEEK_TEXT_MAP } from '@/constants/schedule';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
@@ -62,8 +63,8 @@ export default function NewBackup() {
   const tenantDetail = tenantDetailResponse?.data;
 
   /**
-   * When the scheduling cycle changes, 
-   * ensure that the backup data method 
+   * When the scheduling cycle changes,
+   * ensure that the backup data method
    * can be changed accordingly.
    */
   useUpdateEffect(() => {
@@ -86,7 +87,10 @@ export default function NewBackup() {
     <PageContainer
       style={{ paddingBottom: 70 }}
       header={{
-        title: '创建租户备份策略',
+        title: intl.formatMessage({
+          id: 'Dashboard.Detail.NewBackup.CreateATenantBackupPolicy',
+          defaultMessage: '创建租户备份策略',
+        }),
         onBack: () => navigate(`/tenant/ns=${ns}&nm=${name}/backup`),
       }}
       footer={[
@@ -94,35 +98,59 @@ export default function NewBackup() {
           onClick={() => navigate(`/tenant/ns=${ns}&nm=${name}/backup`)}
           key="cancel"
         >
-          取消
+          {intl.formatMessage({
+            id: 'Dashboard.Detail.NewBackup.Cancel',
+            defaultMessage: '取消',
+          })}
         </Button>,
         <Button key="submit" onClick={() => form.submit()}>
-          提交
+          {intl.formatMessage({
+            id: 'Dashboard.Detail.NewBackup.Submit',
+            defaultMessage: '提交',
+          })}
         </Button>,
       ]}
     >
       {tenantDetail && (
         <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
       )}
+
       <Form initialValues={initialValues} form={form} onFinish={handleSubmit}>
         <Card style={{ marginBottom: 24 }}>
           <Row>
             <Col span={24}>
               <Space direction="vertical">
-                <h3>备份策略配置</h3>
+                <h3>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.BackupPolicyConfiguration',
+                    defaultMessage: '备份策略配置',
+                  })}
+                </h3>
                 <Row gutter={[16, 32]}>
                   <Col span={8}>
                     <Form.Item
                       name={['destType']}
-                      label="备份类型"
+                      label={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.BackupType',
+                        defaultMessage: '备份类型',
+                      })}
                       rules={[
                         {
                           required: true,
-                          message: '请选择备份类型',
+                          message: intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.SelectABackupType',
+                            defaultMessage: '请选择备份类型',
+                          }),
                         },
                       ]}
                     >
-                      <Select placeholder="请选择" options={distType} />
+                      <Select
+                        placeholder={intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseSelect',
+                          defaultMessage: '请选择',
+                        })}
+                        options={distType}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -132,11 +160,19 @@ export default function NewBackup() {
                       rules={[
                         {
                           required: true,
-                          message: '请输入 OSS AccessID',
+                          message: intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.EnterOssAccessid',
+                            defaultMessage: '请输入 OSS AccessID',
+                          }),
                         },
                       ]}
                     >
-                      <Password placeholder="请输入" />
+                      <Password
+                        placeholder={intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
@@ -146,39 +182,69 @@ export default function NewBackup() {
                       rules={[
                         {
                           required: true,
-                          message: '请输入 OSS AccessKey',
+                          message: intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.EnterOssAccesskey',
+                            defaultMessage: '请输入 OSS AccessKey',
+                          }),
                         },
                       ]}
                     >
-                      <Password placeholder="请输入" />
+                      <Password
+                        placeholder={intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
                     <Form.Item
-                      label="日志归档路径"
+                      label={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.LogArchivePath',
+                        defaultMessage: '日志归档路径',
+                      })}
                       name={['archiveSource']}
                       rules={[
                         {
                           required: true,
-                          message: '请输入日志归档路径',
+                          message: intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.EnterTheLogArchivePath',
+                            defaultMessage: '请输入日志归档路径',
+                          }),
                         },
                       ]}
                     >
-                      <Input placeholder="请输入" />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={8}>
                     <Form.Item
-                      label="数据备份路径"
+                      label={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.DataBackupPath',
+                        defaultMessage: '数据备份路径',
+                      })}
                       name={['bakDataSource']}
                       rules={[
                         {
                           required: true,
-                          message: '请输入数据备份路径',
+                          message: intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.EnterTheDataBackupPath',
+                            defaultMessage: '请输入数据备份路径',
+                          }),
                         },
                       ]}
                     >
-                      <Input placeholder="请输入" />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </Form.Item>
                   </Col>
                 </Row>
@@ -186,14 +252,26 @@ export default function NewBackup() {
             </Col>
             <Col span={12}>
               <Space direction="vertical">
-                <h3>调度周期</h3>
+                <h3>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.SchedulingCycle',
+                    defaultMessage: '调度周期',
+                  })}
+                </h3>
 
                 <Form.Item
                   rules={[
                     () => ({
                       validator: (_: any, value: ParamsType) => {
                         if (!value.days.length) {
-                          return Promise.reject(new Error('请选择调度周期'));
+                          return Promise.reject(
+                            new Error(
+                              intl.formatMessage({
+                                id: 'Dashboard.Detail.NewBackup.SelectASchedulingCycle',
+                                defaultMessage: '请选择调度周期',
+                              }),
+                            ),
+                          );
                         }
                         return Promise.resolve();
                       },
@@ -207,9 +285,22 @@ export default function NewBackup() {
             </Col>
             <Col span={12}>
               <Space direction="vertical">
-                <h3>调度时间</h3>
+                <h3>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.SchedulingTime',
+                    defaultMessage: '调度时间',
+                  })}
+                </h3>
                 <Form.Item
-                  rules={[{ required: true, message: '请选择调度时间' }]}
+                  rules={[
+                    {
+                      required: true,
+                      message: intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.SelectASchedulingTime',
+                        defaultMessage: '请选择调度时间',
+                      }),
+                    },
+                  ]}
                   name={'scheduleTime'}
                 >
                   <TimePicker />
@@ -218,8 +309,18 @@ export default function NewBackup() {
             </Col>
             <Col span={24}>
               <Space direction="vertical">
-                <h3>备份数据方式</h3>
-                <p>建议至少配置 1 个全量备份</p>
+                <h3>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.BackupData',
+                    defaultMessage: '备份数据方式',
+                  })}
+                </h3>
+                <p>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.WeRecommendThatYouConfigure',
+                    defaultMessage: '建议至少配置 1 个全量备份',
+                  })}
+                </p>
                 {scheduleValue?.days
                   .sort((pre: number, cur: number) => pre - cur)
                   .map((day: number, index: number) => (
@@ -233,8 +334,18 @@ export default function NewBackup() {
                       key={index}
                     >
                       <Radio.Group defaultValue="Full">
-                        <Radio value="Full"> 全量 </Radio>
-                        <Radio value="Incremental"> 增量 </Radio>
+                        <Radio value="Full">
+                          {intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.FullQuantity',
+                            defaultMessage: '全量',
+                          })}
+                        </Radio>
+                        <Radio value="Incremental">
+                          {intl.formatMessage({
+                            id: 'Dashboard.Detail.NewBackup.Increment',
+                            defaultMessage: '增量',
+                          })}
+                        </Radio>
                       </Radio.Group>
                     </Form.Item>
                   ))}
@@ -245,7 +356,12 @@ export default function NewBackup() {
         <Card
           title={
             <Space>
-              <span>高级配置</span>
+              <span>
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration',
+                  defaultMessage: '高级配置',
+                })}
+              </span>
               <Switch
                 onChange={() => setIsExpand(!isExpand)}
                 checked={isExpand}
@@ -257,40 +373,67 @@ export default function NewBackup() {
           {isExpand && (
             <Row>
               <Col className={styles.column} span={24}>
-                <label className={styles.labelText}>加密备份：</label>
+                <label className={styles.labelText}>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.EncryptedBackup',
+                    defaultMessage: '加密备份：',
+                  })}
+                </label>
                 <Switch
                   className={styles.switch}
                   onChange={() => setPassInputExpand(!passInputExpand)}
                   checked={passInputExpand}
                 />
+
                 {passInputExpand && (
                   <Form.Item
-                    label="加密密码"
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Detail.NewBackup.EncryptedPassword',
+                      defaultMessage: '加密密码',
+                    })}
                     rules={[
                       {
                         required: true,
-                        message: '请输入加密密码',
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.EnterAnEncryptionPassword',
+                          defaultMessage: '请输入加密密码',
+                        }),
                       },
                     ]}
                     name={['bakEncryptionPassword']}
                   >
-                    <Password style={{ width: 216 }} placeholder="请输入" />
+                    <Password
+                      style={{ width: 216 }}
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                        defaultMessage: '请输入',
+                      })}
+                    />
                   </Form.Item>
                 )}
               </Col>
               <Col className={styles.column} span={24}>
-                <label className={styles.labelText}>备份任务保留：</label>
+                <label className={styles.labelText}>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.BackupTaskRetention',
+                    defaultMessage: '备份任务保留：',
+                  })}
+                </label>
                 <Switch
                   className={styles.switch}
                   onChange={() => setJobInputExpand(!jobInputExpand)}
                   checked={jobInputExpand}
                 />
+
                 {jobInputExpand && (
                   <Form.Item
                     rules={[
                       {
                         required: true,
-                        message: '请输入备份任务保留天数',
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.PleaseEnterTheRetentionDays',
+                          defaultMessage: '请输入备份任务保留天数',
+                        }),
                       },
                     ]}
                     name={['jobKeepWindow']}
@@ -300,18 +443,27 @@ export default function NewBackup() {
                 )}
               </Col>
               <Col className={styles.column} span={24}>
-                <label className={styles.labelText}>数据恢复窗口：</label>
+                <label className={styles.labelText}>
+                  {intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.DataRecoveryWindow',
+                    defaultMessage: '数据恢复窗口：',
+                  })}
+                </label>
                 <Switch
                   className={styles.switch}
                   onChange={() => setRecoveryInputExpand(!recoveryInputExpand)}
                   checked={recoveryInputExpand}
                 />
+
                 {recoveryInputExpand && (
                   <Form.Item
                     rules={[
                       {
                         required: true,
-                        message: '请输入数据恢复窗口：',
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.EnterTheDataRecoveryWindow',
+                          defaultMessage: '请输入数据恢复窗口：',
+                        }),
                       },
                     ]}
                     name={['recoveryWindow']}
@@ -320,7 +472,13 @@ export default function NewBackup() {
                   </Form.Item>
                 )}
               </Col>
-              <Form.Item name={['pieceInterval']} label="归档切片间隔">
+              <Form.Item
+                name={['pieceInterval']}
+                label={intl.formatMessage({
+                  id: 'Dashboard.Detail.NewBackup.ArchiveSliceInterval',
+                  defaultMessage: '归档切片间隔',
+                })}
+              >
                 <InputNumber min={1} max={7} />
               </Form.Item>
             </Row>

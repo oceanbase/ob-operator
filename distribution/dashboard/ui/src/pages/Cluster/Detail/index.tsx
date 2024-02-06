@@ -26,7 +26,10 @@ const subSideMenus: MenuItem[] = [
     icon: <IconFont type="cluster" />,
   },
   {
-    title: '租户',
+    title: intl.formatMessage({
+      id: 'Dashboard.Cluster.Detail.Tenant',
+      defaultMessage: '租户',
+    }),
     key: 'tenant',
     link: '/tenant',
     icon: <IconFont type="tenant" />,
@@ -70,11 +73,15 @@ const ClusterDetail: React.FC = () => {
       link: `/cluster/${clusterId}/monitor`,
     },
     {
-      title: '租户',
+      title: intl.formatMessage({
+        id: 'Dashboard.Cluster.Detail.Tenant',
+        defaultMessage: '租户',
+      }),
       key: 'tenant',
       link: `/cluster/${clusterId}/tenant`,
     },
   ];
+
   const userMenu = (
     <Menu
       onClick={() => {
@@ -89,6 +96,7 @@ const ClusterDetail: React.FC = () => {
       </Menu.Item>
     </Menu>
   );
+
   return (
     <div>
       <BasicLayout

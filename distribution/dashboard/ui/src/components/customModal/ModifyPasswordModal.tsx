@@ -1,7 +1,8 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { changeTenantPassword } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 import type { CommonModalType } from '.';
-import { changeTenantPassword } from '@/services/tenant';
 import CustomModal from '.';
 
 type FieldType = {
@@ -26,17 +27,20 @@ export default function ModifyPasswordModal({
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
     //User?
-    const res = await changeTenantPassword({ namespace, name, ...values })
-      if (res.successful) {
-        message.success(res.message);
-        successCallback();
-        form.resetFields();
-        setVisible(false);
-      }
+    const res = await changeTenantPassword({ namespace, name, ...values });
+    if (res.successful) {
+      message.success(res.message);
+      successCallback();
+      form.resetFields();
+      setVisible(false);
+    }
   };
   return (
     <CustomModal
-      title="修改 root 密码"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.ModifyPasswordModal.ModifyRootPassword',
+        defaultMessage: '修改 root 密码',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
@@ -48,28 +52,50 @@ export default function ModifyPasswordModal({
         autoComplete="off"
       >
         <Form.Item<FieldType>
-          label="输入新密码"
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyPasswordModal.EnterANewPassword',
+            defaultMessage: '输入新密码',
+          })}
           name="Password"
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
+                defaultMessage: '请输入',
+              }),
             },
           ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item<FieldType>
-          label="再次输入"
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyPasswordModal.EnterAgain',
+            defaultMessage: '再次输入',
+          })}
           name="Password"
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
+                defaultMessage: '请输入',
+              }),
             },
           ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Form>
     </CustomModal>

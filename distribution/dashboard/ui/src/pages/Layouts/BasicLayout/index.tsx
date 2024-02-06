@@ -9,7 +9,7 @@ import { useRequest } from 'ahooks';
 
 const BasicLayout: React.FC = () => {
   const location = useLocation();
-  const user = localStorage.getItem('user')
+  const user = localStorage.getItem('user');
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -45,7 +45,10 @@ const BasicLayout: React.FC = () => {
       icon: <IconFont type="cluster" />,
     },
     {
-      title: '租户',
+      title: intl.formatMessage({
+        id: 'Dashboard.Layouts.BasicLayout.Tenant',
+        defaultMessage: '租户',
+      }),
       link: '/tenant',
       icon: <IconFont type="tenant" />,
     },

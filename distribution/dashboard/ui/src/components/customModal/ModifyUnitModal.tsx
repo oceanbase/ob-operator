@@ -1,5 +1,6 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { Form, InputNumber, message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -35,7 +36,10 @@ export default function ModifyUnitModal({
   };
   return (
     <CustomModal
-      title="修改 Unit 数量"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.ModifyUnitModal.ModifyTheNumberOfUnits',
+        defaultMessage: '修改 Unit 数量',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
@@ -47,16 +51,27 @@ export default function ModifyUnitModal({
         autoComplete="off"
       >
         <Form.Item<FieldType>
-          label="Unit 数量"
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyUnitModal.NumberOfUnits',
+            defaultMessage: 'Unit 数量',
+          })}
           name="unitNum"
           rules={[
             {
               required: true,
-              message: '请输入 Unit 数量',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyUnitModal.PleaseEnterTheNumberOf',
+                defaultMessage: '请输入 Unit 数量',
+              }),
             },
           ]}
         >
-          <InputNumber placeholder="请输入" />
+          <InputNumber
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Form>
     </CustomModal>

@@ -9,6 +9,7 @@ import {
   getBackupPolicy,
   getTenant,
 } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
@@ -44,7 +45,12 @@ export default function TenantOverview() {
   const handleDelete = async () => {
     const res = await deleteTenent({ ns, name });
     if (res.successful) {
-      message.success('删除成功');
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Overview.DeletedSuccessfully',
+          defaultMessage: '删除成功',
+        }),
+      );
       history.push('/tenant');
     }
   };
@@ -75,48 +81,72 @@ export default function TenantOverview() {
   const backupJobs = backupJobsResponse?.data;
   const operateListConfig: OperateItemConfigType[] = [
     {
-      text: 'Unit规格管理',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
+        defaultMessage: 'Unit规格管理',
+      }),
       onClick: () => openOperateModal('changeUnitCount'),
       show: tenantDetail?.info.tenantRole === 'Primary',
       isMore: false,
     },
     {
-      text: '修改密码',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.ChangePassword',
+        defaultMessage: '修改密码',
+      }),
       onClick: () => openOperateModal('changePassword'),
       show: tenantDetail?.info.tenantRole === 'Primary',
       isMore: false,
     },
     {
-      text: '删除租户',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.DeleteTenant',
+        defaultMessage: '删除租户',
+      }),
       onClick: () =>
         showDeleteConfirm({
           onOk: handleDelete,
-          title: '你确定要删除该租户吗？',
+          title: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.AreYouSureYouWant',
+            defaultMessage: '你确定要删除该租户吗？',
+          }),
         }),
       show: true,
       isMore: false,
       danger: true,
     },
     {
-      text: '激活备租户',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.ActivateASecondaryTenant',
+        defaultMessage: '激活备租户',
+      }),
       onClick: () => openOperateModal('activateTenant'),
       show: tenantDetail?.info.tenantRole === 'Standby',
       isMore: true,
     },
     {
-      text: '主备切换',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.ActiveStandbySwitchover',
+        defaultMessage: '主备切换',
+      }),
       onClick: () => openOperateModal('switchTenant'),
       show: Boolean(tenantDetail?.source?.primaryTenant),
       isMore: true,
     },
     {
-      text: '备租户回放日志',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.StandbyTenantPlaybackLog',
+        defaultMessage: '备租户回放日志',
+      }),
       onClick: () => openOperateModal('logReplay'),
       show: tenantDetail?.info.tenantRole === 'Standby',
       isMore: true,
     },
     {
-      text: '租户版本升级',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.TenantVersionUpgrade',
+        defaultMessage: '租户版本升级',
+      }),
       onClick: () => openOperateModal('upgradeTenant'),
       show: tenantDetail?.info.tenantRole === 'Primary',
       isMore: true,
@@ -134,6 +164,7 @@ export default function TenantOverview() {
         ))}
     </ul>
   );
+
   const operateSuccess = () => {
     setTimeout(() => {
       getTenantDetail({ ns, name });
@@ -142,7 +173,10 @@ export default function TenantOverview() {
   const header = () => {
     let container = document.getElementById('tenant-detail-container');
     return {
-      title: '概览',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Overview',
+        defaultMessage: '概览',
+      }),
       extra: [
         ...operateListConfig
           .filter((item) => item.show && !item.isMore)
@@ -180,11 +214,13 @@ export default function TenantOverview() {
           {tenantDetail && tenantDetail.replicas && (
             <Replicas replicaList={tenantDetail.replicas} />
           )}
+
           <EventsTable
             objectType="OBTENANT"
             cardType="proCard"
             collapsible={true}
           />
+
           {backupPolicy && backupJobs && (
             <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
           )}
