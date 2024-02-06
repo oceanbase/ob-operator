@@ -1,14 +1,14 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBTenant
 metadata:
-  name: metatenant
+  name: sysbenchtenant
   namespace: oceanbase
 spec:
-  obcluster: metadb
-  tenantName: metatenant
+  obcluster: sysbenchcluster
+  tenantName: sysbenchtenant
   credentials:
-    root: sc-metatenant-root
-    standbyRo: sc-metatenant-standbyro
+    root: sc-tenant-root
+    standbyRo: sc-tenant-standbyro
   unitNum: 1
   charset: utf8mb4
   connectWhiteList: '%'
@@ -21,7 +21,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 8Gi
+        memorySize: 7.5Gi
     - zone: zone2
       type:
         name: Full
@@ -29,7 +29,7 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 8Gi
+        memorySize: 7.5Gi
     - zone: zone3
       type:
         name: Full
@@ -37,4 +37,4 @@ spec:
         isActive: true
       resource:
         maxCPU: 4
-        memorySize: 8Gi
+        memorySize: 7.5Gi

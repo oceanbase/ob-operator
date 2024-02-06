@@ -43,9 +43,11 @@ spec:
             - name: APP_NAME
               value: helloworld
             - name: OB_CLUSTER
-              value: metadb
+              value: sysbenchcluster
             - name: CONFIG_URL
               value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
+            - name: RS_LIST
+              value: ""
             - name: PROXYRO_PASSWORD
               valueFrom: 
                 secretKeyRef:
@@ -53,8 +55,8 @@ spec:
                   key: password
           resources:
             limits:
-              memory: 2Gi
-              cpu: "1"
+              memory: 1Gi
+              cpu: 500m
             requests: 
               memory: 200Mi
-              cpu: 200m
+              cpu: 100m

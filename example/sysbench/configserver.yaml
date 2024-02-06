@@ -4,14 +4,12 @@ metadata:
   name: svc-ob-configserver
   namespace: oceanbase
 spec:
-  type: NodePort
   selector:
     app: ob-configserver
   ports:
     - name: "http"
       port: 8080
       targetPort: 8080
-      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -35,6 +33,8 @@ spec:
             - containerPort: 8080
               name: "http"
           env:
+            - name: GIN_MODE
+              value: release
             - name: DATABASE_TYPE
               value: sqlite3
             - name: SVC_ADDRESS
@@ -43,10 +43,8 @@ spec:
               value: $(SVC_OB_CONFIGSERVER_SERVICE_PORT)
           resources:
             limits:
-              memory: 2Gi
-              cpu: "1"
+              memory: 1Gi
+              cpu: 500m
             requests: 
               memory: 200Mi
               cpu: 100m
-
-
