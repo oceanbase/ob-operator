@@ -32,7 +32,7 @@ export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //当前运维弹窗类型
-  const modalType = useRef<API.ModalType>('modifyUnit');
+  const modalType = useRef<API.ModalType>('changeUnitCount');
 
   const [[ns, name]] = useState(getNSName());
 
@@ -76,7 +76,7 @@ export default function TenantOverview() {
   const operateListConfig: OperateItemConfigType[] = [
     {
       text: 'Unit规格管理',
-      onClick: () => openOperateModal('modifyUnit'),
+      onClick: () => openOperateModal('changeUnitCount'),
       show: tenantDetail?.info.tenantRole === 'Primary',
       isMore: false,
     },

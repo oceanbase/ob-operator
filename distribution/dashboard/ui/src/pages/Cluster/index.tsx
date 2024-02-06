@@ -9,8 +9,7 @@ import MonitorComp from '@/components/MonitorComp';
 import ClusterList from './ClusterList';
 // import Monitor from './Monitor';
 import { getObclusterListReq } from '@/services';
-import type { LabelType } from './Detail/Monitor';
-import type { QueryRangeType } from './Detail/Monitor';
+import type { LabelType, QueryRangeType } from './Detail/Monitor';
 
 const defaultQueryRange:QueryRangeType = {
   step: 20,
@@ -44,7 +43,11 @@ const ClusterPage: React.FC = () => {
         />
         <EventsTable objectType="OBCLUSTER" />
       </Row>
-      <MonitorComp filterLabel={clusterNames} queryScope='OBCLUSTER_OVERVIEW' type='overview' queryRange={defaultQueryRange}/>
+      <MonitorComp 
+        filterLabel={clusterNames} 
+        queryScope='OBCLUSTER_OVERVIEW' 
+        type='overview' 
+        queryRange={defaultQueryRange}/>
     </PageContainer>
   );
 };

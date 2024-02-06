@@ -8,6 +8,7 @@ import ScaleModal from './ScaleModal';
 import SwitchTenantModal from './SwitchTenantModal';
 import UpgradeModal from './UpgradeModal';
 import UpgradeTenantModal from './UpgradeTenantModal';
+import ModifyUnitDetailModal from './ModifyUnitDetailModal';
 
 interface OperateModalProps {
   type: API.ModalType;
@@ -28,12 +29,8 @@ export default function OperateModal({
     return <ScaleModal {...props} />;
   }
 
-  if (type === 'upgrade') {
+  if (type === 'upgradeCluster') {
     return <UpgradeModal {...props} />;
-  }
-
-  if (type === 'modifyUnit') {
-    return <ModifyUnitModal {...props} />;
   }
 
   if (type === 'changePassword') {
@@ -52,6 +49,14 @@ export default function OperateModal({
 
   if (type === 'upgradeTenant') {
     return <UpgradeTenantModal {...props} />;
+  }
+
+  if(type === 'modifyUnitSpecification'){
+    return <ModifyUnitDetailModal {...props} />
+  }
+
+  if(type === 'changeUnitCount'){
+    return <ModifyUnitModal {...props} />;
   }
 
   return;

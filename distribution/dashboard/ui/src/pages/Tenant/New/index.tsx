@@ -10,7 +10,7 @@ import { formatNewTenantForm } from '../helper';
 import BasicInfo from './BasicInfo';
 import ResourcePools from './ResourcePools';
 import TenantSource from './TenantSource';
-// 新建租户页
+// New tenant page
 export default function New() {
   const navigate = useNavigate();
   const publicKey = usePublicKey();
@@ -20,13 +20,12 @@ export default function New() {
 
   const { data: clusterList = [] } = useRequest(getSimpleClusterList);
 
-  //选中的集群资源名
+  //Selected cluster resource name
   const clusterName = clusterList.filter(
     (cluster) => cluster.clusterId === selectClusterId,
   )[0]?.name;
-  //namespace最后提交的时候确认
+  
   const onFinish = async (values: any) => {
-    console.log('values', values);
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
@@ -49,7 +48,7 @@ export default function New() {
       header={{
         title: '创建租户',
         onBack: () => {
-          navigate('/tenant');
+          history.back()
         },
       }}
       footer={[

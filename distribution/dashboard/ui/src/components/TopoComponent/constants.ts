@@ -1,7 +1,7 @@
 import { intl } from '@/utils/intl';
-type OperateType = { value: string; label: string }[];
+type OperateTypeLabel = { value: string; label: string }[];
 
-const clusterOperate: OperateType = [
+const clusterOperate: OperateTypeLabel = [
   {
     value: 'addZone',
     label: intl.formatMessage({
@@ -25,7 +25,7 @@ const clusterOperate: OperateType = [
   },
 ];
 
-const zoneOperate: OperateType = [
+const zoneOperate: OperateTypeLabel = [
   {
     value: 'scaleServer',
     label: intl.formatMessage({
@@ -42,7 +42,7 @@ const zoneOperate: OperateType = [
   },
 ];
 
-const serverOperate: OperateType = [
+const serverOperate: OperateTypeLabel = [
   // {
   //   value: 'add',
   //   label: intl.formatMessage({
@@ -66,5 +66,25 @@ const serverOperate: OperateType = [
   // },
 ];
 
-export { clusterOperate, serverOperate, zoneOperate };
-export type { OperateType };
+const clusterOperateOfTenant: OperateTypeLabel = [
+  {
+    value: 'changeUnitCount',
+    label: '修改 Unit 数量',
+  },
+];
+
+const zoneOperateOfTenant: OperateTypeLabel = [
+  {
+    value: 'modifyUnitSpecification',
+    label: '调整 Unit 规格',
+  },
+];
+
+export {
+  clusterOperate,
+  clusterOperateOfTenant,
+  serverOperate,
+  zoneOperate,
+  zoneOperateOfTenant,
+};
+export type { OperateTypeLabel };

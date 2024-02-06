@@ -2,11 +2,9 @@ import styles from './index.less';
 
 interface MoreModalProps {
   visible: boolean;
-  //   setVisible: (prop: boolean) => void;
-  ItemClick: (value: string, id: string) => void;
+  ItemClick: (value: API.ModalType) => void;
   list: { value: string; label: string }[];
   innerRef: any;
-  id: string;
   disable: boolean;
 }
 
@@ -15,7 +13,6 @@ export default function MoreModal({
   list,
   ItemClick,
   innerRef,
-  id,
   disable,
 }: MoreModalProps) {
   return (
@@ -24,7 +21,15 @@ export default function MoreModal({
       className={visible ? `${styles.moreContainer}` : `${styles.hidden}`}
     >
       {list.map((item, index) => (
-        <li style={disable ? {color:'rgba(0, 0, 0, 0.45)',cursor:'not-allowed'} : {}} onClick={!disable ? () => ItemClick(item.value, id) : ()=>{}} key={index}>
+        <li
+          style={
+            disable
+              ? { color: 'rgba(0, 0, 0, 0.45)', cursor: 'not-allowed' }
+              : {}
+          }
+          onClick={!disable ? () => ItemClick(item.value as API.ModalType) : () => {}}
+          key={index}
+        >
           {item.label}
         </li>
       ))}

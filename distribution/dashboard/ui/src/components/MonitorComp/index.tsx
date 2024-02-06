@@ -18,7 +18,7 @@ import styles from './index.less';
 // obzone
 
 interface MonitorCompProps {
-  filterLabel: { key: string; value: string }[];
+  filterLabel: API.MetricsLabels;
   queryRange: QueryRangeType;
   isRefresh?: boolean;
   queryScope:API.EventObjectType;
