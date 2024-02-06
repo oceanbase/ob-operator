@@ -20,18 +20,12 @@ export type MetricType = {
 export interface LineGraphProps {
   id: string;
   metrics: MetricType[];
-  labels: { key: string; value: string }[];
+  labels: API.MetricsLabels;
   queryRange: QueryRangeType;
   height?: number;
   isRefresh?: boolean;
   type?: 'detail' | 'overview';
 }
-
-type queryRangeType = {
-  endTimestamp: number;
-  startTimestamp: number;
-  step: number; //每个点位间隔时间s 例如 半小时1800s 间隔step 30s 返回60个点位
-};
 
 export default function LineGraph({
   id,

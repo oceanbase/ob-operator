@@ -2,7 +2,7 @@ import { SUFFIX_UNIT } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
 
-import { Form, InputNumber, message } from 'antd';
+import { Col, Form, InputNumber, Row, message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 export default function ModifyUnitDetailModal({
@@ -51,7 +51,7 @@ export default function ModifyUnitDetailModal({
             },
           ]}
         >
-          <InputNumber addonAfter='核' placeholder="请输入" />
+          <InputNumber addonAfter="核" placeholder="请输入" />
         </Form.Item>
         <Form.Item
           label="Memory"
@@ -68,12 +68,18 @@ export default function ModifyUnitDetailModal({
         <Form.Item label="LogDiskSize" name="logDiskSize">
           <InputNumber addonAfter={SUFFIX_UNIT} placeholder="请输入" />
         </Form.Item>
-        <Form.Item label="min iops" name="minIops">
-          <InputNumber placeholder="请输入" />
-        </Form.Item>
-        <Form.Item label="max iops" name="maxIops">
-          <InputNumber placeholder="请输入" />
-        </Form.Item>
+        <Row gutter={24}>
+          <Col>
+            <Form.Item label="min iops" name="minIops">
+              <InputNumber placeholder="请输入" />
+            </Form.Item>
+          </Col>
+          <Col>
+            <Form.Item label="max iops" name="maxIops">
+              <InputNumber placeholder="请输入" />
+            </Form.Item>
+          </Col>
+        </Row>
         <Form.Item label="iops权重" name="iopsWeight">
           <InputNumber placeholder="请输入" />
         </Form.Item>

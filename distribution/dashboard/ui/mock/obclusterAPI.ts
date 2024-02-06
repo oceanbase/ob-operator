@@ -80,7 +80,7 @@ export default {
       namespace: 'oceanbase',
       createTime: 'string',
       name: 'test',
-      status: 'operating',
+      status: 'running',
       image: 'oceanbasedev/oceanbase-cn:4.1.0.1-test',
       metrics: {
         cpuPercent: 10,
@@ -93,7 +93,7 @@ export default {
           namespace: 'topology',
           zone: 'zone1',
           replicas: '2',
-          status: 'deleting',
+          status: 'running',
           rootService: '1.1.1.1',
           nodeSelector: [
             {
@@ -120,7 +120,7 @@ export default {
           namespace: 'topology2',
           zone: 'zone2',
           replicas: '1',
-          status: 'deleting',
+          status: 'running',
           rootService: '1.1.1.1',
           nodeSelector: [
             {
@@ -132,7 +132,7 @@ export default {
             {
               name: 'obcluster-obzone2-xxxxxx',
               namespace: 'observers2',
-              status: 'deleting',
+              status: 'running',
               address: '1.1.12.2',
               metrics: {
                 cpuPercent: '40',

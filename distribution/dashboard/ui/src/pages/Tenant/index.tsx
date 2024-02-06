@@ -5,10 +5,12 @@ import { Row } from 'antd';
 import { useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
+import MonitorComp from '@/components/MonitorComp';
 import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
 
-import type { QueryRangeType } from '../Cluster/Detail/Monitor';
+
+import type { LabelType, QueryRangeType } from '../Cluster/Detail/Monitor';
 
 const defaultQueryRange: QueryRangeType = {
   step: 20,
@@ -17,9 +19,18 @@ const defaultQueryRange: QueryRangeType = {
 };
 // 租户概览页
 export default function TenantPage() {
-  const [filterLabel, setFilterLabel] = useState([]);
+  const [filterLabel, setFilterLabel] = useState<LabelType[]>([]);
   const navigate = useNavigate();
-  const { data: tenantsListResponse } = useRequest(getAllTenants, {});
+  const { data: tenantsListResponse } = useRequest(getAllTenants, {
+    onSuccess:({data,successful})=>{
+      if(successful){
+        setFilterLabel(data.map((item)=>({
+          key:'tenant_name',
+          value:item.tenantName
+        })));
+      }
+    }
+  });
   const handleAddCluster = () => navigate('new');
   const tenantsList = tenantsListResponse?.data
   return (
@@ -34,12 +45,12 @@ export default function TenantPage() {
 
         <EventsTable objectType="OBTENANT" />
       </Row>
-      {/* <MonitorComp
+      <MonitorComp
         filterLabel={filterLabel}
-        queryScope="OBCLUSTER_OVERVIEW"
+        queryScope="OBTENANT"
         type="overview"
         queryRange={defaultQueryRange}
-      /> */}
+      />
     </PageContainer>
   );
 }

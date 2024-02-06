@@ -6,7 +6,7 @@ import type { ColumnsType } from 'antd/es/table';
 import styles from './index.less';
 
 interface TenantsListProps {
-  tenantsList: API.TenantsListResponse | undefined;
+  tenantsList: API.TenantDetail[] | undefined;
   turnToCreateTenant: () => void;
 }
 

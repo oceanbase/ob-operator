@@ -89,19 +89,31 @@ declare namespace API {
   type ClusterList = ClusterItem[];
 
   type ModalType =
-    | 'upgrade'
+    | 'upgradeCluster'
     | 'addZone'
     | 'scaleServer'
-    | 'modifyUnit'
     | 'changePassword'
     | 'logReplay'
     | 'activateTenant'
     | 'switchTenant'
-    | 'upgradeTenant';
+    | 'upgradeTenant'
+    | 'changeUnitCount'
+    | 'modifyUnitSpecification'
+    | 'deleteCluster'
+    | 'deleteZone'
 
+  type LableKeys =
+    | 'ob_cluster_name'
+    | 'ob_cluster_id'
+    | 'tenant_name'
+    | 'tenant_id'
+    | 'svr_ip'
+    | 'obzone';
+
+  type MetricsLabels = { key: LableKeys; value: string }[];
   type QueryMetricsType = {
     groupLabels: string[];
-    labels: { key: string; value: string }[];
+    labels: MetricsLabels;
     metrics: string[];
     queryRange: { endTimestamp: number; startTimestamp: number; step: number };
   };
@@ -161,7 +173,8 @@ declare namespace API {
     status: string;
     statusInDatabase: string;
     type: string;
-  }[]
+  }
+  [];
 
   type NamespaceAndName = {
     ns: string;
@@ -249,7 +262,7 @@ declare namespace API {
   }
 
   interface BackupJobsResponse extends CommonResponse {
-    data:BackupJob[];
+    data: BackupJob[];
   }
 
   interface TenantInfoType extends CommonResponse {

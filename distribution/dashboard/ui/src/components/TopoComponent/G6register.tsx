@@ -37,9 +37,9 @@ function config(width: number, height: number) {
     width,
     height,
     linkCenter: true,
-    // fitCenter: true,
+    fitViewPadding: [-350,24,24,24],
     fitView: true,
-    maxZoom: 2,
+    maxZoom: 1.6,
     minZoom: 0.2,
     layout: {
       type: 'compactBox',

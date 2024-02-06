@@ -13,8 +13,14 @@ import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
 import { deleteObcluster, deleteObzone, getClusterDetailReq } from '@/services';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode, config } from './G6register';
-import type { OperateType } from './constants';
-import { clusterOperate, serverOperate, zoneOperate } from './constants';
+import type { OperateTypeLabel } from './constants';
+import {
+  clusterOperate,
+  clusterOperateOfTenant,
+  serverOperate,
+  zoneOperate,
+  zoneOperateOfTenant,
+} from './constants';
 import { appenAutoShapeListener, checkIsSame, getServerNumber } from './helper';
 
 interface TopoProps {
@@ -24,9 +30,14 @@ interface TopoProps {
 
 //Cluster topology diagram component
 export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
+  const clusterOperateList = tenantReplicas
+    ? clusterOperateOfTenant
+    : clusterOperate;
+  const zoneOperateList = tenantReplicas ? zoneOperateOfTenant : zoneOperate;
   const modelRef = useRef<HTMLInputElement>(null);
   const [visible, setVisible] = useState<boolean>(false);
-  const [operateList, setOprateList] = useState<OperateType>(clusterOperate);
+  const [operateList, setOprateList] =
+    useState<OperateTypeLabel>(clusterOperateList);
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [operateDisable, setOperateDisable] = useState<boolean>(false);
@@ -59,10 +70,10 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
     if (modelRef.current) {
       switch (evt.item?._cfg?.model?.type) {
         case 'cluster':
-          setOprateList(clusterOperate);
+          setOprateList(clusterOperateList);
           break;
         case 'zone':
-          setOprateList(zoneOperate);
+          setOprateList(zoneOperateList);
           chooseZoneName.current = evt.item?._cfg?.model?.label as string;
           break;
         case 'server':
@@ -114,7 +125,7 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
           attrs: {
             stroke: style!.stroke,
             path: [
-              ['M', startPoint.x, startPoint.y], //M: Move to 
+              ['M', startPoint.x, startPoint.y], //M: Move to
               ['L', startPoint.x, (startPoint.y + endPoint.y) / 2], // L:line to
               ['L', endPoint.x, (startPoint.y + endPoint.y) / 2],
               ['L', endPoint.x, endPoint.y],
@@ -127,7 +138,7 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
     });
 
     /**
-     * There are exceptions in the registration of some events, 
+     * There are exceptions in the registration of some events,
      * such as mouseleave. You can manually monitor the registration here.
      */
     graph.current.on('node:mouseleave', () => {
@@ -144,13 +155,14 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
   /**
    * Call up the operation and maintenance operation modal
    */
-  const ItemClickOperate = (operate: string) => {
+  const ItemClickOperate = (operate: API.ModalType) => {
+    
     if (operate === 'addZone') {
       modalType.current = 'addZone';
       setOperateModalVisible(true);
     }
     if (operate === 'upgradeCluster') {
-      modalType.current = 'upgrade';
+      modalType.current = 'upgradeCluster';
       setOperateModalVisible(true);
     }
 
@@ -178,6 +190,15 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
         }),
         onOk: zoneDelete,
       });
+    }
+    if(operate === 'changeUnitCount'){
+      modalType.current = 'changeUnitCount'
+      setOperateModalVisible(true);
+    }
+
+    if(operate === 'modifyUnitSpecification'){
+      modalType.current = 'modifyUnitSpecification'
+      setOperateModalVisible(true);
     }
   };
 
@@ -215,13 +236,13 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
   }, [originTopoData]);
 
   /**
-   * Mouseleave will be triggered when the modal is opened, 
+   * Mouseleave will be triggered when the modal is opened,
    * so the modal cannot be closed in the callback function of mouseleave.
    *
    * Solution:
    * Maintain two variables inModa and inNode
-   * When both variables are false, that is, 
-   * the mouse is neither in the modal nor the node, 
+   * When both variables are false, that is,
+   * the mouse is neither in the modal nor the node,
    * and the modal is hidden.
    *
    * Disadvantages: Variables change too frequently, performance is not friendly
@@ -261,7 +282,6 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
       {useMemo(
         () => (
           <MoreModal
-            id={currentId.current}
             innerRef={modelRef}
             visible={visible}
             list={operateList}
