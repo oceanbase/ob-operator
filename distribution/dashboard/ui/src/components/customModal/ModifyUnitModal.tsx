@@ -1,6 +1,6 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
-import { Form, Input, message } from 'antd';
+import { Form, InputNumber, message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -56,7 +56,7 @@ export default function ModifyUnitModal({
             },
           ]}
         >
-          <Input placeholder="请输入" />
+          <InputNumber placeholder="请输入" />
         </Form.Item>
       </Form>
     </CustomModal>
