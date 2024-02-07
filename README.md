@@ -59,7 +59,6 @@ To begin, you'll need to generate a `terraform.tfvars` file, which will hold the
 cd deploy/terraform
 ./generate_k8s_cluster_tfvars.sh
 ```
-Please follow any on-screen instructions to provide necessary details during the generation process.
 
 2. Initialize Terraform:
 This step will ensure that Terraform has all the necessary plugins and modules to manage the resources. Use the following command to initialize the terraform environment.
