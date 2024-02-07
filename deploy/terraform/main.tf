@@ -46,16 +46,6 @@ resource "kubernetes_namespace" "oceanbase-system" {
   }
 }
 
-resource "kubernetes_namespace" "oceanbase" {
-  lifecycle {
-    ignore_changes = [metadata]
-  }
-
-  metadata {
-    name = "oceanbase"
-  }
-}
-
 resource "time_sleep" "wait_30_seconds" {
   depends_on = [kubernetes_namespace.oceanbase-system]
 
