@@ -1,6 +1,7 @@
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getSimpleClusterList } from '@/services';
 import { createTenant } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -24,7 +25,7 @@ export default function New() {
   const clusterName = clusterList.filter(
     (cluster) => cluster.clusterId === selectClusterId,
   )[0]?.name;
-  
+
   const onFinish = async (values: any) => {
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
@@ -34,9 +35,15 @@ export default function New() {
       ...formatNewTenantForm(values, clusterName, publicKey),
     });
     if (res.successful) {
-      message.success('创建租户成功', 3);
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.Tenant.New.TenantCreatedSuccessfully',
+          defaultMessage: '创建租户成功',
+        }),
+        3,
+      );
       form.resetFields();
-      history.back()
+      history.back();
     }
   };
 
@@ -46,17 +53,26 @@ export default function New() {
   return (
     <PageContainer
       header={{
-        title: '创建租户',
+        title: intl.formatMessage({
+          id: 'Dashboard.Tenant.New.CreateATenant',
+          defaultMessage: '创建租户',
+        }),
         onBack: () => {
-          history.back()
+          history.back();
         },
       }}
       footer={[
         <Button onClick={() => navigate('/tenant')} key="cancel">
-          取消
+          {intl.formatMessage({
+            id: 'Dashboard.Tenant.New.Cancel',
+            defaultMessage: '取消',
+          })}
         </Button>,
         <Button key="submit" onClick={() => form.submit()}>
-          提交
+          {intl.formatMessage({
+            id: 'Dashboard.Tenant.New.Submit',
+            defaultMessage: '提交',
+          })}
         </Button>,
       ]}
     >

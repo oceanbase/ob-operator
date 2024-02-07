@@ -1,6 +1,7 @@
 import { SUFFIX_UNIT } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 
 import { Col, Form, InputNumber, Row, message } from 'antd';
 import type { CommonModalType } from '.';
@@ -30,7 +31,10 @@ export default function ModifyUnitDetailModal({
   };
   return (
     <CustomModal
-      title="调整 Unit 规格"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.ModifyUnitDetailModal.AdjustUnitSpecifications',
+        defaultMessage: '调整 Unit 规格',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
@@ -47,11 +51,23 @@ export default function ModifyUnitDetailModal({
           rules={[
             {
               required: true,
-              message: '请输入 CPU 核数',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterTheNumberOfCpu',
+                defaultMessage: '请输入 CPU 核数',
+              }),
             },
           ]}
         >
-          <InputNumber addonAfter="核" placeholder="请输入" />
+          <InputNumber
+            addonAfter={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.Nuclear',
+              defaultMessage: '核',
+            })}
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
           label="Memory"
@@ -59,29 +75,65 @@ export default function ModifyUnitDetailModal({
           rules={[
             {
               required: true,
-              message: '请输入 Memory',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterMemory',
+                defaultMessage: '请输入 Memory',
+              }),
             },
           ]}
         >
-          <InputNumber addonAfter={SUFFIX_UNIT} placeholder="请输入" />
+          <InputNumber
+            addonAfter={SUFFIX_UNIT}
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item label="LogDiskSize" name="logDiskSize">
-          <InputNumber addonAfter={SUFFIX_UNIT} placeholder="请输入" />
+          <InputNumber
+            addonAfter={SUFFIX_UNIT}
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Row gutter={24}>
           <Col>
             <Form.Item label="min iops" name="minIops">
-              <InputNumber placeholder="请输入" />
+              <InputNumber
+                placeholder={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
           <Col>
             <Form.Item label="max iops" name="maxIops">
-              <InputNumber placeholder="请输入" />
+              <InputNumber
+                placeholder={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
         </Row>
-        <Form.Item label="iops权重" name="iopsWeight">
-          <InputNumber placeholder="请输入" />
+        <Form.Item
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyUnitDetailModal.IopsWeight',
+            defaultMessage: 'iops权重',
+          })}
+          name="iopsWeight"
+        >
+          <InputNumber
+            placeholder={intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Form>
     </CustomModal>

@@ -1,6 +1,7 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { replayLogOfTenant } from '@/services/tenant';
-import { Form,message,DatePicker,TimePicker } from 'antd';
+import { intl } from '@/utils/intl';
+import { DatePicker, Form, TimePicker, message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -35,7 +36,10 @@ export default function LogReplayModal({
   };
   return (
     <CustomModal
-      title="备租户日志回放"
+      title={intl.formatMessage({
+        id: 'Dashboard.components.customModal.LogReplayModal.StandbyTenantLogPlayback',
+        defaultMessage: '备租户日志回放',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
@@ -47,24 +51,36 @@ export default function LogReplayModal({
         autoComplete="off"
       >
         <Form.Item<FieldType>
-          label="恢复日期"
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.LogReplayModal.RecoveryDate',
+            defaultMessage: '恢复日期',
+          })}
           name="date"
           rules={[
             {
               required: true,
-              message: '请选择恢复日期',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.LogReplayModal.SelectARecoveryDate',
+                defaultMessage: '请选择恢复日期',
+              }),
             },
           ]}
         >
           <DatePicker />
         </Form.Item>
         <Form.Item<FieldType>
-          label="时分秒"
+          label={intl.formatMessage({
+            id: 'Dashboard.components.customModal.LogReplayModal.MinutesAndSeconds',
+            defaultMessage: '时分秒',
+          })}
           name="time"
           rules={[
             {
               required: true,
-              message: '请选择恢复时间',
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.LogReplayModal.SelectARecoveryTime',
+                defaultMessage: '请选择恢复时间',
+              }),
             },
           ]}
         >

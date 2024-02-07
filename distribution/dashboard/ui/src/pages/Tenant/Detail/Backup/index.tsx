@@ -1,6 +1,7 @@
 import EmptyImg from '@/assets/empty.svg';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { getBackupPolicy, getTenant } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -41,8 +42,12 @@ export default function Backup() {
             alt="empty"
             style={{ marginBottom: 24, height: 100, width: 110 }}
           />
+
           <p style={{ color: '#8592ad', marginBottom: 24 }}>
-            该租户尚未创建备份策略，是否立即创建？
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Backup.TheTenantHasNotCreated',
+              defaultMessage: '该租户尚未创建备份策略，是否立即创建？',
+            })}
           </p>
           <Button
             type="primary"
@@ -50,7 +55,10 @@ export default function Backup() {
               history.push(`/tenant/ns=${ns}&nm=${name}/backup/new`)
             }
           >
-            立即创建
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Backup.CreateNow',
+              defaultMessage: '立即创建',
+            })}
           </Button>
         </Card>
       ) : (
@@ -58,6 +66,7 @@ export default function Backup() {
           {tenantDetail && (
             <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
           )}
+
           <BackupConfiguration />
           <BackupJobs />
         </Row>

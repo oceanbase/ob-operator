@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { Modal } from 'antd';
 import { ReactNode } from 'react';
 
@@ -24,6 +25,14 @@ export default function CustomModal(props: CustomModalProps) {
       title={title}
       open={isOpen}
       onOk={handleOk}
+      okText={intl.formatMessage({
+        id: 'Dashboard.components.customModal.Ok',
+        defaultMessage: '确定',
+      })}
+      cancelText={intl.formatMessage({
+        id: 'Dashboard.components.customModal.Cancel',
+        defaultMessage: '取消',
+      })}
       onCancel={handleCancel}
     >
       {props.children}

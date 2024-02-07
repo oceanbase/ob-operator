@@ -8,19 +8,28 @@ import { Outlet, history, useLocation, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 const subSideMenus: MenuItem[] = [
   {
-    title: '概览',
+    title: intl.formatMessage({
+      id: 'Dashboard.Tenant.Detail.Overview',
+      defaultMessage: '概览',
+    }),
     key: 'overview',
     link: '/overview',
     icon: <IconFont type="overview" />,
   },
   {
-    title: '集群',
+    title: intl.formatMessage({
+      id: 'Dashboard.Tenant.Detail.Cluster',
+      defaultMessage: '集群',
+    }),
     key: 'cluster',
     link: '/cluster',
     icon: <IconFont type="cluster" />,
   },
   {
-    title: '租户',
+    title: intl.formatMessage({
+      id: 'Dashboard.Tenant.Detail.Tenant',
+      defaultMessage: '租户',
+    }),
     key: 'tenant',
     link: '/tenant',
     icon: <IconFont type="tenant" />,
@@ -32,7 +41,7 @@ const TenantDetail: React.FC = () => {
   const user = localStorage.getItem('user');
   const location = useLocation();
   const { tenantId } = params;
-  
+
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -43,17 +52,26 @@ const TenantDetail: React.FC = () => {
   });
   const menus: MenuItem[] = [
     {
-      title: '概览',
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.Overview',
+        defaultMessage: '概览',
+      }),
       link: `/tenant/${tenantId}`,
     },
     {
-      title:'拓扑图',
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.TopologyDiagram',
+        defaultMessage: '拓扑图',
+      }),
       link: `/tenant/${tenantId}/topo`,
     },
     {
-      title:'备份',
-      link:`/tenant/${tenantId}/backup`
-    }
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.Backup',
+        defaultMessage: '备份',
+      }),
+      link: `/tenant/${tenantId}/backup`,
+    },
     // {
     //   title: '性能监控',
     //   key: 'monitor',
@@ -74,6 +92,7 @@ const TenantDetail: React.FC = () => {
       </Menu.Item>
     </Menu>
   );
+
   return (
     <div>
       <BasicLayout

@@ -1,7 +1,8 @@
+import { SUFFIX_UNIT } from '@/constants';
+import { intl } from '@/utils/intl';
 import { Card, Checkbox, Col, Form, InputNumber, Row } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
-import { SUFFIX_UNIT } from '@/constants';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
@@ -37,9 +38,16 @@ export default function ResourcePools({
           style={{ marginRight: 24 }}
           onChange={(e) => setIsChecked(!e.target.value)}
         />
+
         <Col span={8}>
-          <Form.Item  name={['pools', name, 'priority']} label="权重">
-            <InputNumber style={{width:'100%'}} disabled={!isChecked} />
+          <Form.Item
+            name={['pools', name, 'priority']}
+            label={intl.formatMessage({
+              id: 'Dashboard.Tenant.New.ResourcePools.Weight',
+              defaultMessage: '权重',
+            })}
+          >
+            <InputNumber style={{ width: '100%' }} disabled={!isChecked} />
           </Form.Item>
         </Col>
       </div>
@@ -50,7 +58,12 @@ export default function ResourcePools({
     .filter((cluster) => cluster.clusterId === selectClusterId)[0]
     ?.topology.map((zone) => ({ zone: zone.name }));
   return (
-    <Card title="资源池">
+    <Card
+      title={intl.formatMessage({
+        id: 'Dashboard.Tenant.New.ResourcePools.ResourcePool',
+        defaultMessage: '资源池',
+      })}
+    >
       <Row>
         <p>Unit config</p>
         <div className={styles.unitConfigContainer}>
@@ -61,14 +74,27 @@ export default function ResourcePools({
                 rules={[
                   {
                     required: true,
-                    message: '请输入 CPU (核)',
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnterCpuCore',
+                      defaultMessage: '请输入 CPU (核)',
+                    }),
                   },
                 ]}
                 label="CPU"
               >
                 <InputNumber
-                  addonAfter={<div>核</div>}
-                  placeholder="请输入"
+                  addonAfter={
+                    <div>
+                      {intl.formatMessage({
+                        id: 'Dashboard.Tenant.New.ResourcePools.Nuclear',
+                        defaultMessage: '核',
+                      })}
+                    </div>
+                  }
+                  placeholder={intl.formatMessage({
+                    id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -79,23 +105,38 @@ export default function ResourcePools({
                 rules={[
                   {
                     required: true,
-                    message: '请输入Memory size',
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.ResourcePools.EnterMemorySize',
+                      defaultMessage: '请输入Memory size',
+                    }),
                   },
                 ]}
                 label="Memory"
               >
                 <InputNumber
                   addonAfter={SUFFIX_UNIT}
-                  placeholder="请输入"
+                  placeholder={intl.formatMessage({
+                    id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item name={['unitConfig', 'logDiskSize']} label="日志磁盘">
+              <Form.Item
+                name={['unitConfig', 'logDiskSize']}
+                label={intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.ResourcePools.LogDisk',
+                  defaultMessage: '日志磁盘',
+                })}
+              >
                 <InputNumber
                   addonAfter={SUFFIX_UNIT}
-                  placeholder="请输入"
+                  placeholder={intl.formatMessage({
+                    id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
                   style={{ width: '100%' }}
                 />
               </Form.Item>
@@ -111,15 +152,32 @@ export default function ResourcePools({
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="iops 权重" name={['unitConfig', 'iopsWeight']}>
-                <InputNumber placeholder="请输入" style={{ width: '100%' }} />
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.ResourcePools.IopsWeight',
+                  defaultMessage: 'iops 权重',
+                })}
+                name={['unitConfig', 'iopsWeight']}
+              >
+                <InputNumber
+                  placeholder={intl.formatMessage({
+                    id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
           </Row>
         </div>
       </Row>
       <Row>
-        <h1>Zone优先级</h1>
+        <h1>
+          {intl.formatMessage({
+            id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
+            defaultMessage: 'Zone优先级',
+          })}
+        </h1>
 
         {targetZoneList &&
           targetZoneList.map((item, index) => (

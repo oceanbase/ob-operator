@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { Link } from '@umijs/max';
 import { Button, Col, Table } from 'antd';
@@ -12,7 +13,10 @@ interface TenantsListProps {
 
 const columns: ColumnsType<API.TenantDetail> = [
   {
-    title: '资源名',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.ResourceName',
+      defaultMessage: '资源名',
+    }),
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
@@ -20,22 +24,34 @@ const columns: ColumnsType<API.TenantDetail> = [
     ),
   },
   {
-    title: '命名空间',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.Namespace',
+      defaultMessage: '命名空间',
+    }),
     dataIndex: 'namespace',
     key: 'namespace',
   },
   {
-    title: '所属集群',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.Cluster',
+      defaultMessage: '所属集群',
+    }),
     dataIndex: 'clusterName',
     key: 'clusterName',
   },
   {
-    title: '租户名',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.TenantName',
+      defaultMessage: '租户名',
+    }),
     dataIndex: 'tenantName',
     key: 'tenantName',
   },
   {
-    title: '租户角色',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.TenantRole',
+      defaultMessage: '租户角色',
+    }),
     dataIndex: 'tenantRole',
     key: 'tenantRole',
   },
@@ -45,17 +61,26 @@ const columns: ColumnsType<API.TenantDetail> = [
     key: 'locality',
   },
   {
-    title: 'Unit 数量',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.NumberOfUnits',
+      defaultMessage: 'Unit 数量',
+    }),
     dataIndex: 'unitNumber',
     key: 'unitNumber',
   },
   {
-    title: '状态',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.Status',
+      defaultMessage: '状态',
+    }),
     dataIndex: 'status',
     key: 'status',
   },
   {
-    title: '创建时间',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.CreationTime',
+      defaultMessage: '创建时间',
+    }),
     dataIndex: 'createTime',
     key: 'createTime',
   },
@@ -69,9 +94,17 @@ export default function TenantsList({
     <Col span={24}>
       <ProCard>
         <div className={styles.clusterHeader}>
-          <h2>租户列表</h2>
+          <h2>
+            {intl.formatMessage({
+              id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
+              defaultMessage: '租户列表',
+            })}
+          </h2>
           <Button onClick={turnToCreateTenant} type="primary">
-            创建租户
+            {intl.formatMessage({
+              id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
+              defaultMessage: '创建租户',
+            })}
           </Button>
         </div>
         <Table
