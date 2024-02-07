@@ -53,7 +53,7 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 
 The required configuration files are conveniently located within the `deploy/terraform` directory of our repository.
 
-1. **Generate Configuration Variables:**
+1. Generate Configuration Variables:
 To begin, you'll need to generate a `terraform.tfvars` file, which will hold the configuration specifics of your Kubernetes cluster. Use the following commands to create this file.
 ```shell
 cd deploy/terraform
@@ -61,13 +61,13 @@ cd deploy/terraform
 ```
 Please follow any on-screen instructions to provide necessary details during the generation process.
 
-2. **Initialize Terraform:**
+2. Initialize Terraform:
 This step will ensure that Terraform has all the necessary plugins and modules to manage the resources. Use the following command to initialize the terraform environment.
 ```
 terraform init
 ```
 
-3. **Apply Configuration:**
+3. Apply Configuration:
 The final step is to deploy ob-operator. Execute the following command and Terraform will begin the deployment process
 ```
 terraform apply
