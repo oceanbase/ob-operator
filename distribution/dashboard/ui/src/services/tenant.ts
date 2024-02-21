@@ -56,11 +56,9 @@ export async function getTenant({
 }
 
 export async function createTenant({
-  ns,
-  name,
   ...body
-}: API.NamespaceAndName & API.TenantBody): Promise<API.CommonResponse> {
-  return request(`${tenantPrefix}/${ns}/${name}`, {
+}: API.TenantBody): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}`, {
     method: 'PUT',
     data: body,
   });

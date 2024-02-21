@@ -1,8 +1,9 @@
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { Link } from '@umijs/max';
-import { Button, Col, Table } from 'antd';
+import { Button, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { colorMap } from '@/constants';
 
 import styles from './index.less';
 
@@ -75,6 +76,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'status',
     key: 'status',
+    render:(value)=><Tag color={colorMap.get(value)}>{value} </Tag>,
   },
   {
     title: intl.formatMessage({

@@ -13,46 +13,50 @@ import zoneRunning from '@/assets/zone/running.svg';
 
 //统一状态常量和颜色
 const status = ['running', 'deleting', 'operating'];
-const colorMap = new Map();
-const clusterImgMap = new Map();
-const serverImgMap = new Map();
-const zoneImgMap = new Map();
-const badgeIMgMap = new Map();
+const colorMap = new Map([
+  ['running', 'geekblue'],
+  ['deleting', 'volcano'],
+  ['operating', 'gold'],
+  ['creating', 'blue'],
+]);
+const clusterImgMap = new Map([
+  ['running', clusterRunning],
+  ['deleting', clusterOperating],
+  ['operating', clusterDeleting],
+]);
+const serverImgMap = new Map([
+  ['running', serverRunning],
+  ['deleting', serverDeleting],
+  ['operating', serverOperating],
+]);
+const zoneImgMap = new Map([
+  ['running', zoneRunning],
+  ['deleting', zoneDeleting],
+  ['operating', zoneOperating],
+]);
+const badgeIMgMap = new Map([
+  ['running', badgeRunning],
+  ['deleting', badgeDeleting],
+  ['operating', badgeOperating],
+]);
 
-
-colorMap.set('running', 'geekblue');
-colorMap.set('deleting', 'volcano');
-colorMap.set('operating', 'gold');
-clusterImgMap.set('running', clusterRunning);
-clusterImgMap.set('deleting', clusterOperating);
-clusterImgMap.set('operating', clusterDeleting);
-serverImgMap.set('running', serverRunning);
-serverImgMap.set('deleting', serverDeleting);
-serverImgMap.set('operating', serverOperating);
-zoneImgMap.set('running', zoneRunning);
-zoneImgMap.set('deleting', zoneDeleting);
-zoneImgMap.set('operating', zoneOperating);
-badgeIMgMap.set('running', badgeRunning);
-badgeIMgMap.set('deleting', badgeDeleting);
-badgeIMgMap.set('operating', badgeOperating);
-
-const REFRESH_CLUSTER_TIME = 10000
+const REFRESH_CLUSTER_TIME = 10000;
 // 性能监控自动刷新时间 15s
 const REFRESH_FREQUENCY = 15;
 // 监控点位数量
 const POINT_NUMBER = 15;
 
-const SUFFIX_UNIT = 'GB'
+const SUFFIX_UNIT = 'GB';
 
 export {
+  POINT_NUMBER,
+  REFRESH_CLUSTER_TIME,
+  REFRESH_FREQUENCY,
+  SUFFIX_UNIT,
   badgeIMgMap,
   clusterImgMap,
   colorMap,
   serverImgMap,
   status,
   zoneImgMap,
-  REFRESH_CLUSTER_TIME,
-  REFRESH_FREQUENCY,
-  POINT_NUMBER,
-  SUFFIX_UNIT
 };

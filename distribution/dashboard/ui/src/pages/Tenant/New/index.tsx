@@ -31,7 +31,7 @@ export default function New() {
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
     const res = await createTenant({
-      ns,
+      namespace:ns,
       ...formatNewTenantForm(values, clusterName, publicKey),
     });
     if (res.successful) {

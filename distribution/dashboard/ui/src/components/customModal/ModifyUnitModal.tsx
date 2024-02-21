@@ -2,6 +2,7 @@ import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Form, InputNumber, message } from 'antd';
+import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -12,8 +13,9 @@ type FieldType = {
 export default function ModifyUnitModal({
   visible,
   setVisible,
+  defaultValue = 1,
   successCallback,
-}: CommonModalType) {
+}: CommonModalType & { defaultValue: number }) {
   const [form] = Form.useForm();
 
   const handleSubmit = async () => {
@@ -26,14 +28,31 @@ export default function ModifyUnitModal({
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
-    const res = await patchTenantConfiguration({ namespace, name, ...values });
+    const res = await patchTenantConfiguration({
+      ns: namespace,
+      name,
+      ...values,
+    });
     if (res.successful) {
-      message.success(res.message);
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyUnitModal.ModifiedSuccessfully',
+            defaultMessage: '修改成功',
+          }),
+      );
       successCallback();
       form.resetFields();
       setVisible(false);
     }
   };
+
+  useEffect(() => {
+    if (defaultValue !== form.getFieldValue('unitNum')) {
+      form.resetFields();
+    }
+  }, [defaultValue]);
+
   return (
     <CustomModal
       title={intl.formatMessage({
@@ -46,6 +65,7 @@ export default function ModifyUnitModal({
     >
       <Form
         form={form}
+        initialValues={{ unitNum: defaultValue }}
         onFinish={onFinish}
         style={{ maxWidth: 600 }}
         autoComplete="off"
