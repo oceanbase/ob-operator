@@ -11,6 +11,8 @@ type httpErr struct {
 	children  []*httpErr
 }
 
+var _ ObError = &httpErr{}
+
 func (e *httpErr) Error() string {
 	return fmt.Sprintf("Error %s: %s", e.errorType, e.message)
 }

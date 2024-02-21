@@ -247,13 +247,13 @@ func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	if logReplayParam.Timestamp == nil {
-		return nil, httpErr.NewBadRequest("timestamp is required")
+	if !logReplayParam.Unlimited && logReplayParam.Timestamp == nil {
+		return nil, httpErr.NewBadRequest("timestamp is required if the restore is limited")
 	}
 	tenant, err := oceanbase.ReplayStandbyLog(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
-	}, *logReplayParam.Timestamp)
+	}, logReplayParam)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -315,6 +315,9 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 	err = c.BindJSON(&p)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if !p.Failover != p.Switchover {
+		return nil, httpErr.NewBadRequest("one and only one of failover and switchover can be true")
 	}
 	tenant, err := oceanbase.ChangeTenantRole(c, types.NamespacedName{
 		Name:      nn.Name,

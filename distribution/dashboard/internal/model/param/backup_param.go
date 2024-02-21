@@ -12,8 +12,8 @@ type ScheduleBase struct {
 type BackupPolicyBase struct {
 	// Enum: NFS, OSS
 	DestType    BackupDestType `json:"destType" binding:"required" example:"NFS"`
-	ArchivePath string         `json:"archivePath"`
-	BakDataPath string         `json:"bakDataPath"`
+	ArchivePath string         `json:"archivePath" binding:"required"`
+	BakDataPath string         `json:"bakDataPath" binding:"required"`
 
 	ScheduleBase `json:",inline"`
 

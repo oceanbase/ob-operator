@@ -346,7 +346,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, timestamp string) (*response.OBTenantDetail, error) {
+func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param.ReplayStandbyLog) (*response.OBTenantDetail, error) {
 	var err error
 	tenant, err := oceanbase.GetOBTenant(ctx, nn)
 	if err != nil {
@@ -357,13 +357,14 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, timestamp st
 	}
 	replayLogOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-replay-log-" + rand.String(6),
-			Namespace:    nn.Namespace,
+			Name:      nn.Name + "-replay-log-" + rand.String(6),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
 			Type: apiconst.TenantOpReplayLog,
 			ReplayUntil: &v1alpha1.RestoreUntilConfig{
-				Timestamp: &timestamp,
+				Timestamp: param.Timestamp,
+				Unlimited: param.Unlimited,
 			},
 			TargetTenant: &nn.Name,
 		},
@@ -386,8 +387,8 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 	}
 	upgradeOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-upgrade-" + rand.String(6),
-			Namespace:    nn.Namespace,
+			Name:      nn.Name + "-upgrade-" + rand.String(6),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
 			Type:         apiconst.TenantOpUpgrade,
@@ -407,26 +408,30 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 	if err != nil {
 		return nil, err
 	}
-	if tenant.Status.TenantRole == apitypes.TenantRole(p.TenantRole) {
-		return nil, oberr.NewBadRequest("The tenant is already " + string(p.TenantRole))
+	if tenant.Status.TenantRole == apiconst.TenantRolePrimary && p.Failover {
+		return nil, oberr.NewBadRequest("The tenant is already PRIMARY")
 	}
 	if p.Switchover && (tenant.Status.Source == nil || tenant.Status.Source.Tenant == nil) {
 		return nil, oberr.NewBadRequest("The tenant has no primary tenant")
 	}
 	changeRoleOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-change-role-" + rand.String(6),
-			Namespace:    nn.Namespace,
+			Name:      nn.Name + "-change-role-" + rand.String(6),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{},
 	}
 	if p.Switchover {
 		changeRoleOp.Spec.Type = apiconst.TenantOpSwitchover
-		changeRoleOp.Spec.Switchover.PrimaryTenant = *tenant.Status.Source.Tenant
-		changeRoleOp.Spec.Switchover.StandbyTenant = nn.Name
-	} else {
+		changeRoleOp.Spec.Switchover = &v1alpha1.OBTenantOpSwitchoverSpec{
+			PrimaryTenant: *tenant.Status.Source.Tenant,
+			StandbyTenant: nn.Name,
+		}
+	} else if p.Failover {
 		changeRoleOp.Spec.Type = apiconst.TenantOpFailover
-		changeRoleOp.Spec.Failover.StandbyTenant = nn.Name
+		changeRoleOp.Spec.Failover = &v1alpha1.OBTenantOpFailoverSpec{
+			StandbyTenant: nn.Name,
+		}
 	}
 	_, err = oceanbase.CreateOBTenantOperation(ctx, &changeRoleOp)
 	if err != nil {
