@@ -13,55 +13,33 @@ import (
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/param"
 	"github.com/oceanbase/oceanbase-dashboard/internal/model/response"
 	oberr "github.com/oceanbase/oceanbase-dashboard/pkg/errors"
+	"github.com/oceanbase/oceanbase-dashboard/pkg/k8s/client"
 	"github.com/oceanbase/oceanbase-dashboard/pkg/oceanbase"
 
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *param.CreateBackupPolicy) *v1alpha1.OBTenantBackupPolicy {
-	policy := &v1alpha1.OBTenantBackupPolicy{}
-	policy.Name = nn.Name + "-backup-policy"
-	policy.Namespace = nn.Namespace
-	policy.Spec = v1alpha1.OBTenantBackupPolicySpec{
-		ObClusterName: obcluster,
-		TenantCRName:  nn.Name,
-		JobKeepWindow: p.JobKeepWindow,
-		LogArchive: v1alpha1.LogArchiveConfig{
-			Destination: apitypes.BackupDestination{
-				Path:            p.ArchivePath,
-				Type:            apitypes.BackupDestType(p.DestType),
-				OSSAccessSecret: "",
-			},
-			SwitchPieceInterval: "1d",
-		},
-		DataBackup: v1alpha1.DataBackupConfig{
-			Destination: apitypes.BackupDestination{
-				Path:            p.BakDataPath,
-				Type:            apitypes.BackupDestType(p.DestType),
-				OSSAccessSecret: "",
-			},
-			FullCrontab:        "",
-			IncrementalCrontab: "",
-			EncryptionSecret:   "",
-		},
-		DataClean: v1alpha1.CleanPolicy{
-			RecoveryWindow: p.RecoveryWindow,
-		},
-	}
-	if p.DestType == "OSS" && p.OSSAccessID != "" && p.OSSAccessKey != "" {
-		ossSecretName := nn.Name + "-backup-oss-secret-" + rand.String(6)
-		policy.Spec.LogArchive.Destination.OSSAccessSecret = ossSecretName
-		policy.Spec.DataBackup.Destination.OSSAccessSecret = ossSecretName
-	}
-	if p.BakEncryptionPassword != "" {
-		encryptionSecretName := nn.Name + "-backup-encryption-secret-" + rand.String(6)
-		policy.Spec.DataBackup.EncryptionSecret = encryptionSecretName
-	}
+func numberToDay(n int) string {
+	return fmt.Sprintf("%dd", n)
+}
 
+func dayToNumber(day string) int {
+	if !strings.HasSuffix(day, "d") {
+		return 0
+	}
+	n, err := strconv.Atoi(day[:len(day)-1])
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p param.ScheduleBase) {
 	hourMinutes := strings.Split(p.ScheduleTime, ":")
 	crontabParts := fmt.Sprintf("%s %s", hourMinutes[1], hourMinutes[0])
 
@@ -77,7 +55,11 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 			}
 		}
 		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
-		policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
+		if len(incrementalCrontabWeekdays) > 0 {
+			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
+		} else {
+			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " *"
+		}
 	} else if p.ScheduleType == "Monthly" {
 		fullCrontabMonthdays := make([]string, 0)
 		incrementalCrontabMonthdays := make([]string, 0)
@@ -89,32 +71,16 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 			}
 		}
 		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
-		policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
+		if len(incrementalCrontabMonthdays) > 0 {
+			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
+		} else {
+			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, "*", "* *"}, " ")
+		}
 	}
-	return policy
 }
 
-func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.BackupPolicy {
-	res := &response.BackupPolicy{
-		BackupPolicyBase: param.BackupPolicyBase{
-			DestType:       param.BackupDestType(p.Spec.DataBackup.Destination.Type),
-			ArchivePath:    p.Spec.LogArchive.Destination.Path,
-			BakDataPath:    p.Spec.DataBackup.Destination.Path,
-			ScheduleType:   "",
-			ScheduleTime:   "",
-			ScheduleDates:  []param.ScheduleDate{},
-			JobKeepWindow:  p.Spec.JobKeepWindow,
-			RecoveryWindow: p.Spec.DataClean.RecoveryWindow,
-			PieceInterval:  p.Spec.LogArchive.SwitchPieceInterval,
-		},
-		TenantName:          p.Spec.TenantCRName,
-		Name:                p.Name,
-		Namespace:           p.Namespace,
-		Status:              string(p.Status.Status),
-		OSSAccessSecret:     p.Spec.LogArchive.Destination.OSSAccessSecret,
-		BakEncryptionSecret: p.Spec.DataBackup.EncryptionSecret,
-	}
-
+func getScheduleDatesFromPolicy(p *v1alpha1.OBTenantBackupPolicy) param.ScheduleBase {
+	res := param.ScheduleBase{}
 	fullParts := strings.Split(p.Spec.DataBackup.FullCrontab, " ")
 	incrementalParts := strings.Split(p.Spec.DataBackup.IncrementalCrontab, " ")
 	res.ScheduleTime = fmt.Sprintf("%s:%s", fullParts[1], fullParts[0])
@@ -186,6 +152,69 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 	return res
 }
 
+func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *param.CreateBackupPolicy) *v1alpha1.OBTenantBackupPolicy {
+	policy := &v1alpha1.OBTenantBackupPolicy{}
+	policy.Name = nn.Name + "-backup-policy"
+	policy.Namespace = nn.Namespace
+	policy.Spec = v1alpha1.OBTenantBackupPolicySpec{
+		ObClusterName: obcluster,
+		TenantCRName:  nn.Name,
+		TenantName:    nn.Name, // It's tricky to use the deprecated field
+		JobKeepWindow: numberToDay(p.JobKeepWindow),
+		LogArchive: v1alpha1.LogArchiveConfig{
+			Destination: apitypes.BackupDestination{
+				Path:            p.ArchivePath,
+				Type:            apitypes.BackupDestType(p.DestType),
+				OSSAccessSecret: "",
+			},
+			SwitchPieceInterval: "1d",
+		},
+		DataBackup: v1alpha1.DataBackupConfig{
+			Destination: apitypes.BackupDestination{
+				Path:            p.BakDataPath,
+				Type:            apitypes.BackupDestType(p.DestType),
+				OSSAccessSecret: "",
+			},
+			FullCrontab:        "",
+			IncrementalCrontab: "",
+			EncryptionSecret:   "",
+		},
+		DataClean: v1alpha1.CleanPolicy{
+			RecoveryWindow: numberToDay(p.RecoveryWindow),
+		},
+	}
+
+	setScheduleDatesToPolicy(policy, p.ScheduleBase)
+
+	return policy
+}
+
+func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.BackupPolicy {
+	res := &response.BackupPolicy{
+		BackupPolicyBase: param.BackupPolicyBase{
+			DestType:    param.BackupDestType(p.Spec.DataBackup.Destination.Type),
+			ArchivePath: p.Spec.LogArchive.Destination.Path,
+			BakDataPath: p.Spec.DataBackup.Destination.Path,
+			ScheduleBase: param.ScheduleBase{
+				ScheduleType:  "",
+				ScheduleTime:  "",
+				ScheduleDates: []param.ScheduleDate{},
+			},
+			JobKeepWindow:  dayToNumber(p.Spec.JobKeepWindow),
+			RecoveryWindow: dayToNumber(p.Spec.DataClean.RecoveryWindow),
+			PieceInterval:  dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
+		},
+		TenantName:          p.Spec.TenantCRName,
+		Name:                p.Name,
+		Namespace:           p.Namespace,
+		Status:              string(p.Status.Status),
+		OSSAccessSecret:     p.Spec.LogArchive.Destination.OSSAccessSecret,
+		BakEncryptionSecret: p.Spec.DataBackup.EncryptionSecret,
+	}
+	res.ScheduleBase = getScheduleDatesFromPolicy(p)
+	return res
+}
+
 func buildBackupJobModelType(p *v1alpha1.OBTenantBackup) *response.BackupJob {
 	if p == nil {
 		return nil
@@ -210,11 +239,17 @@ func buildBackupJobModelType(p *v1alpha1.OBTenantBackup) *response.BackupJob {
 	}
 	switch p.Spec.Type {
 	case apiconst.BackupJobTypeFull, apiconst.BackupJobTypeIncr:
-		res.StatusInDatabase = p.Status.BackupJob.Status
+		if p.Status.BackupJob != nil {
+			res.StatusInDatabase = p.Status.BackupJob.Status
+		}
 	case apiconst.BackupJobTypeArchive:
-		res.StatusInDatabase = p.Status.ArchiveLogJob.Status
+		if p.Status.ArchiveLogJob != nil {
+			res.StatusInDatabase = p.Status.ArchiveLogJob.Status
+		}
 	case apiconst.BackupJobTypeClean:
-		res.StatusInDatabase = p.Status.DataCleanJob.Status
+		if p.Status.DataCleanJob != nil {
+			res.StatusInDatabase = p.Status.DataCleanJob.Status
+		}
 	}
 	return res
 }
@@ -249,6 +284,44 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		return nil, oberr.NewBadRequest("Tenant is not running")
 	}
 	backupPolicy := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, p)
+
+	if p.DestType == "OSS" && p.OSSAccessID != "" && p.OSSAccessKey != "" {
+		ossSecretName := nn.Name + "-backup-oss-secret-" + rand.String(6)
+		backupPolicy.Spec.LogArchive.Destination.OSSAccessSecret = ossSecretName
+		backupPolicy.Spec.DataBackup.Destination.OSSAccessSecret = ossSecretName
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      ossSecretName,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"accessId":  p.OSSAccessID,
+				"accessKey": p.OSSAccessKey,
+			},
+		}
+		_, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+	}
+	if p.BakEncryptionPassword != "" {
+		encryptionSecretName := nn.Name + "-backup-encryption-secret-" + rand.String(6)
+		backupPolicy.Spec.DataBackup.EncryptionSecret = encryptionSecretName
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      encryptionSecretName,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": p.BakEncryptionPassword,
+			},
+		}
+		_, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+	}
+
 	policy, err := oceanbase.CreateTenantBackupPolicy(ctx, backupPolicy)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
@@ -271,15 +344,37 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	if err != nil {
 		return nil, oberr.NewBadRequest(err.Error())
 	}
-	policy.Spec.JobKeepWindow = p.JobKeepWindow
-	policy.Spec.DataClean.RecoveryWindow = p.RecoveryWindow
-	policy.Spec.LogArchive.SwitchPieceInterval = p.PieceInterval
-	if p.Status == "Paused" {
-		policy.Spec.Suspend = true
+	if p.JobKeepWindow != 0 {
+		policy.Spec.JobKeepWindow = numberToDay(p.JobKeepWindow)
 	}
-	if p.Status == "Running" {
+	if p.RecoveryWindow != 0 {
+		policy.Spec.DataClean.RecoveryWindow = numberToDay(p.RecoveryWindow)
+	}
+	if p.PieceInterval != 0 {
+		policy.Spec.LogArchive.SwitchPieceInterval = numberToDay(p.PieceInterval)
+	}
+
+	if strings.ToUpper(p.Status) == "PAUSED" {
+		policy.Spec.Suspend = true
+	} else if strings.ToUpper(p.Status) == "RUNNING" {
 		policy.Spec.Suspend = false
 	}
+
+	schedule := p.ScheduleBase
+	if schedule.ScheduleDates != nil || schedule.ScheduleTime != "" || schedule.ScheduleType != "" {
+		overlaySchedule := getScheduleDatesFromPolicy(policy)
+		if schedule.ScheduleType != "" {
+			overlaySchedule.ScheduleType = schedule.ScheduleType
+		}
+		if schedule.ScheduleTime != "" {
+			overlaySchedule.ScheduleTime = schedule.ScheduleTime
+		}
+		if schedule.ScheduleDates != nil {
+			overlaySchedule.ScheduleDates = schedule.ScheduleDates
+		}
+		setScheduleDatesToPolicy(policy, overlaySchedule)
+	}
+
 	np, err := oceanbase.UpdateTenantBackupPolicy(ctx, policy)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
@@ -299,6 +394,9 @@ func ListBackupJobs(ctx context.Context, nn types.NamespacedName, jobType string
 	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
+	}
+	if policy == nil {
+		return nil, nil
 	}
 	listOption := metav1.ListOptions{}
 	if jobType != "" && jobType != "ALL" {

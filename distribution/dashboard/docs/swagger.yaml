@@ -33,15 +33,15 @@ definitions:
     type: object
   param.ChangeUserPassword:
     properties:
-      Password:
+      password:
         type: string
-      User:
+      user:
         description: 'Description: The user name of the database account, only root
           is supported now.'
         type: string
     required:
-    - Password
-    - User
+    - password
+    - user
     type: object
   param.CreateBackupPolicy:
     properties:
@@ -50,32 +50,43 @@ definitions:
       bakDataPath:
         type: string
       bakEncryptionPassword:
+        example: encryptedPassword
         type: string
       destType:
         description: 'Enum: NFS, OSS'
+        example: NFS
         type: string
       jobKeepWindow:
-        type: string
+        example: 5
+        type: integer
       ossAccessId:
+        example: encryptedPassword
         type: string
       ossAccessKey:
+        example: encryptedPassword
         type: string
       pieceInterval:
-        type: string
+        example: 1
+        type: integer
       recoveryWindow:
-        type: string
+        example: 3
+        type: integer
       scheduleDates:
         items:
           $ref: '#/definitions/param.ScheduleDate'
         type: array
       scheduleTime:
-        description: 'Description: HH:MM'
+        description: |-
+          Description: HH:MM
+          Example: 04:00
+        example: "04:00"
         type: string
       scheduleType:
+        description: 'Enum: Weekly, Monthly'
+        example: Weekly
         type: string
     required:
     - destType
-    - scheduleType
     type: object
   param.CreateNamespaceParam:
     properties:
@@ -285,8 +296,11 @@ definitions:
     properties:
       backupType:
         description: 'Enum: Full, Incremental'
+        example: Full
         type: string
       day:
+        description: 'Description: 1-31 for monthly, 1-7 for weekly'
+        example: 3
         type: integer
     required:
     - backupType
@@ -320,23 +334,31 @@ definitions:
   param.UpdateBackupPolicy:
     properties:
       jobKeepWindow:
-        type: string
+        example: 5
+        type: integer
       pieceInterval:
-        type: string
+        example: 1
+        type: integer
       recoveryWindow:
-        type: string
+        example: 3
+        type: integer
       scheduleDates:
         items:
           $ref: '#/definitions/param.ScheduleDate'
         type: array
+      scheduleTime:
+        description: |-
+          Description: HH:MM
+          Example: 04:00
+        example: "04:00"
+        type: string
       scheduleType:
         description: 'Enum: Weekly, Monthly'
+        example: Weekly
         type: string
       status:
-        description: 'Enum: Paused, Running'
+        description: 'Enum: PAUSED, RUNNING'
         type: string
-    required:
-    - status
     type: object
   param.UpgradeOBClusterParam:
     properties:
@@ -401,9 +423,11 @@ definitions:
         type: string
       destType:
         description: 'Enum: NFS, OSS'
+        example: NFS
         type: string
       jobKeepWindow:
-        type: string
+        example: 5
+        type: integer
       name:
         type: string
       namespace:
@@ -411,17 +435,24 @@ definitions:
       ossAccessSecret:
         type: string
       pieceInterval:
-        type: string
+        example: 1
+        type: integer
       recoveryWindow:
-        type: string
+        example: 3
+        type: integer
       scheduleDates:
         items:
           $ref: '#/definitions/param.ScheduleDate'
         type: array
       scheduleTime:
-        description: 'Description: HH:MM'
+        description: |-
+          Description: HH:MM
+          Example: 04:00
+        example: "04:00"
         type: string
       scheduleType:
+        description: 'Enum: Weekly, Monthly'
+        example: Weekly
         type: string
       status:
         type: string
@@ -429,7 +460,6 @@ definitions:
         type: string
     required:
     - destType
-    - scheduleType
     type: object
   response.DashboardInfo:
     properties:
@@ -1641,16 +1671,6 @@ paths:
         encrypted by AES
       operationId: CreateTenant
       parameters:
-      - description: obtenant namespace
-        in: path
-        name: namespace
-        required: true
-        type: string
-      - description: obtenant name
-        in: path
-        name: name
-        required: true
-        type: string
       - description: create obtenant request body
         in: body
         name: body
@@ -1973,7 +1993,7 @@ paths:
       summary: Get backup policy of specific tenant
       tags:
       - Obtenant
-    post:
+    patch:
       consumes:
       - application/json
       description: Update backup policy of specific tenant

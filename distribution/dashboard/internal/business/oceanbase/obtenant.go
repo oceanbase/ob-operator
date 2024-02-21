@@ -20,7 +20,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/client-go/util/retry"
 )
 
 func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam) (*v1alpha1.OBTenant, error) {
@@ -46,15 +45,27 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			Source: &v1alpha1.TenantSourceSpec{},
 		},
 	}
-	if p.RootPassword != "" {
-		t.Spec.Credentials.Root = p.Name + "-root-" + rand.String(6)
-	}
-	t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
 
 	if len(p.Pools) == 0 {
-		return nil, errors.New("pools is empty")
+		return nil, oberr.NewBadRequest("pools is empty")
 	}
-	// if len(p.Pools) > 0 {
+	if p.UnitConfig == nil {
+		return nil, oberr.NewBadRequest("unit config is nil")
+	}
+
+	cpuCount, err := resource.ParseQuantity(p.UnitConfig.CPUCount)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+	}
+	memorySize, err := resource.ParseQuantity(p.UnitConfig.MemorySize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
+	}
+	logDiskSize, err := resource.ParseQuantity(p.UnitConfig.LogDiskSize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+	}
+
 	t.Spec.Pools = make([]v1alpha1.ResourcePoolSpec, 0, len(p.Pools))
 	for i := range p.Pools {
 		apiPool := v1alpha1.ResourcePoolSpec{
@@ -68,19 +79,18 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			Replica:  1,
 			IsActive: true,
 		}
-		if p.UnitConfig != nil {
-			apiPool.UnitConfig = &v1alpha1.UnitConfig{
-				MaxCPU:      resource.MustParse(p.UnitConfig.CPUCount),
-				MemorySize:  resource.MustParse(p.UnitConfig.MemorySize),
-				MinCPU:      resource.MustParse(p.UnitConfig.CPUCount),
-				LogDiskSize: resource.MustParse(p.UnitConfig.LogDiskSize),
-				MaxIops:     p.UnitConfig.MaxIops,
-				MinIops:     p.UnitConfig.MinIops,
-				IopsWeight:  p.UnitConfig.IopsWeight,
-			}
+		apiPool.UnitConfig = &v1alpha1.UnitConfig{
+			MaxCPU:      cpuCount,
+			MemorySize:  memorySize,
+			MinCPU:      cpuCount,
+			LogDiskSize: logDiskSize,
+			MaxIops:     p.UnitConfig.MaxIops,
+			MinIops:     p.UnitConfig.MinIops,
+			IopsWeight:  p.UnitConfig.IopsWeight,
 		}
 		t.Spec.Pools = append(t.Spec.Pools, apiPool)
 	}
+
 	if p.Source != nil {
 		t.Spec.Source = &v1alpha1.TenantSourceSpec{
 			Tenant:  p.Source.Tenant,
@@ -98,16 +108,6 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			t.Spec.Source.Restore.ArchiveSource.Path = p.Source.Restore.ArchiveSource
 			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
 			t.Spec.Source.Restore.BakDataSource.Path = p.Source.Restore.BakDataSource
-
-			if p.Source.Restore.BakEncryptionPassword != "" {
-				t.Spec.Credentials.Root = p.Name + "-bak-encryption-" + rand.String(6)
-			}
-
-			if p.Source.Restore.OSSAccessID != "" && p.Source.Restore.OSSAccessKey != "" {
-				ossName := p.Name + "-oss-access-" + rand.String(6)
-				t.Spec.Source.Restore.ArchiveSource.OSSAccessSecret = ossName
-				t.Spec.Source.Restore.BakDataSource.OSSAccessSecret = ossName
-			}
 
 			if p.Source.Restore.Until != nil {
 				t.Spec.Source.Restore.Until.Timestamp = p.Source.Restore.Until.Timestamp
@@ -180,64 +180,6 @@ func buildBriefFromApiType(t *v1alpha1.OBTenant) *response.OBTenantBrief {
 	return rt
 }
 
-func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
-	t, err := buildOBTenantApiType(nn, p)
-	if err != nil {
-		return nil, err
-	}
-	if t.Spec.Credentials.Root != "" {
-		k8sclient := client.GetClient()
-		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      t.Spec.Credentials.Root,
-				Namespace: nn.Namespace,
-			},
-			StringData: map[string]string{
-				"password": p.RootPassword,
-			},
-		}, v1.CreateOptions{})
-		if err != nil {
-			return nil, err
-		}
-	}
-	if t.Spec.Credentials.StandbyRO != "" {
-		k8sclient := client.GetClient()
-		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      t.Spec.Credentials.StandbyRO,
-				Namespace: nn.Namespace,
-			},
-			StringData: map[string]string{
-				"password": rand.String(20),
-			},
-		}, v1.CreateOptions{})
-		if err != nil {
-			return nil, err
-		}
-	}
-	if t.Spec.Source != nil && t.Spec.Source.Restore != nil && t.Spec.Source.Restore.BakEncryptionSecret != "" &&
-		p.Source != nil && p.Source.Restore != nil && p.Source.Restore.BakEncryptionPassword != "" {
-		k8sclient := client.GetClient()
-		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      t.Spec.Credentials.Root,
-				Namespace: nn.Namespace,
-			},
-			StringData: map[string]string{
-				"password": p.Source.Restore.BakEncryptionPassword,
-			},
-		}, v1.CreateOptions{})
-		if err != nil {
-			return nil, err
-		}
-	}
-	tenant, err := oceanbase.CreateOBTenant(ctx, t)
-	if err != nil {
-		return nil, err
-	}
-	return buildDetailFromApiType(tenant), nil
-}
-
 func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	var err error
 	tenant, err := oceanbase.GetOBTenant(ctx, nn)
@@ -248,18 +190,93 @@ func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		tenant, err := oceanbase.GetOBTenant(ctx, nn)
+
+	tenant.Spec = t.Spec
+	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildDetailFromApiType(tenant), nil
+}
+
+func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
+	t, err := buildOBTenantApiType(nn, p)
+	if err != nil {
+		return nil, err
+	}
+	if p.RootPassword != "" {
+		t.Spec.Credentials.Root = p.Name + "-root-" + rand.String(6)
+	}
+
+	k8sclient := client.GetClient()
+	if t.Spec.Credentials.Root != "" {
+		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+			ObjectMeta: v1.ObjectMeta{
+				Name:      t.Spec.Credentials.Root,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": p.RootPassword,
+			},
+		}, v1.CreateOptions{})
 		if err != nil {
-			return err
+			return nil, oberr.NewInternal(err.Error())
 		}
-		tenant.Spec = t.Spec
-		tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
-		if err != nil {
-			return err
+	}
+	t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
+	_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      t.Spec.Credentials.StandbyRO,
+			Namespace: nn.Namespace,
+		},
+		StringData: map[string]string{
+			"password": rand.String(20),
+		},
+	}, v1.CreateOptions{})
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+
+	if p.Source != nil && p.Source.Restore != nil {
+		if p.Source.Restore.BakEncryptionPassword != "" {
+			secretName := p.Name + "-bak-encryption-" + rand.String(6)
+			t.Spec.Source.Restore.BakEncryptionSecret = secretName
+			_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      secretName,
+					Namespace: nn.Namespace,
+				},
+				StringData: map[string]string{
+					"password": p.Source.Restore.BakEncryptionPassword,
+				},
+			}, v1.CreateOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
 		}
-		return nil
-	})
+
+		if p.Source.Restore.OSSAccessID != "" && p.Source.Restore.OSSAccessKey != "" {
+			ossSecretName := p.Name + "-oss-access-" + rand.String(6)
+			t.Spec.Source.Restore.ArchiveSource.OSSAccessSecret = ossSecretName
+			t.Spec.Source.Restore.BakDataSource.OSSAccessSecret = ossSecretName
+			_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      ossSecretName,
+					Namespace: nn.Namespace,
+				},
+				StringData: map[string]string{
+					"accessId":  p.Source.Restore.OSSAccessID,
+					"accessKey": p.Source.Restore.OSSAccessKey,
+				},
+			}, v1.CreateOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+	}
+
+	tenant, err := oceanbase.CreateOBTenant(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -290,48 +307,6 @@ func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
 	return oceanbase.DeleteOBTenant(ctx, nn)
 }
 
-func ModifyOBTenantUnitNumber(ctx context.Context, nn types.NamespacedName, unitNumber int) (*response.OBTenantDetail, error) {
-	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
-	if err != nil {
-		return nil, err
-	}
-
-	tenant.Spec.UnitNumber = unitNumber
-	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-	return buildDetailFromApiType(tenant), nil
-}
-
-func ModifyOBTenantUnitConfig(ctx context.Context, nn types.NamespacedName, zone string, unitConfig *param.UnitConfig) (*response.OBTenantDetail, error) {
-	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
-	if err != nil {
-		return nil, err
-	}
-	for i := range tenant.Spec.Pools {
-		if tenant.Spec.Pools[i].Zone == zone {
-			tenant.Spec.Pools[i].UnitConfig = &v1alpha1.UnitConfig{
-				MaxCPU:      resource.MustParse(unitConfig.CPUCount),
-				MemorySize:  resource.MustParse(unitConfig.MemorySize),
-				MinCPU:      resource.MustParse(unitConfig.CPUCount),
-				LogDiskSize: resource.MustParse(unitConfig.LogDiskSize),
-				MaxIops:     unitConfig.MaxIops,
-				MinIops:     unitConfig.MinIops,
-				IopsWeight:  unitConfig.IopsWeight,
-			}
-			break
-		}
-	}
-	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
-	if err != nil {
-		return nil, err
-	}
-	return buildDetailFromApiType(tenant), nil
-}
-
 func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, rootPassword string) (*response.OBTenantDetail, error) {
 	var err error
 	tenant, err := oceanbase.GetOBTenant(ctx, nn)
@@ -341,7 +316,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 	// create new secret
 	k8sclient := client.GetClient()
 	newRootSecretName := nn.Name + "-root-" + rand.String(6)
-	_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(context.TODO(), &corev1.Secret{
+	_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      newRootSecretName,
 			Namespace: nn.Namespace,
@@ -353,8 +328,8 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 
 	changePwdOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-change-root-pwd-",
-			Namespace:    nn.Namespace,
+			Name:      nn.Name + "-change-root-pwd-" + rand.String(6),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
 			Type: apiconst.TenantOpChangePwd,
@@ -382,7 +357,7 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, timestamp st
 	}
 	replayLogOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-replay-log-",
+			GenerateName: nn.Name + "-replay-log-" + rand.String(6),
 			Namespace:    nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
@@ -411,7 +386,7 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 	}
 	upgradeOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-upgrade-",
+			GenerateName: nn.Name + "-upgrade-" + rand.String(6),
 			Namespace:    nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
@@ -440,7 +415,7 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 	}
 	changeRoleOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			GenerateName: nn.Name + "-change-role-",
+			GenerateName: nn.Name + "-change-role-" + rand.String(6),
 			Namespace:    nn.Namespace,
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{},
@@ -470,19 +445,31 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 		tenant.Spec.UnitNumber = *p.UnitNumber
 	}
 	if p.UnitConfig != nil {
+		cpuCount, err := resource.ParseQuantity(p.UnitConfig.UnitConfig.CPUCount)
+		if err != nil {
+			return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+		}
+		memorySize, err := resource.ParseQuantity(p.UnitConfig.UnitConfig.MemorySize)
+		if err != nil {
+			return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
+		}
+		logDiskSize, err := resource.ParseQuantity(p.UnitConfig.UnitConfig.LogDiskSize)
+		if err != nil {
+			return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+		}
 		for _, pool := range p.UnitConfig.Pools {
 			for i := range tenant.Spec.Pools {
 				if tenant.Spec.Pools[i].Zone == pool.Zone {
 					tenant.Spec.Pools[i].Priority = pool.Priority
 					tenant.Spec.Pools[i].Type.Name = pool.Type
 					tenant.Spec.Pools[i].UnitConfig = &v1alpha1.UnitConfig{
-						MaxCPU:      resource.MustParse(p.UnitConfig.UnitConfig.CPUCount),
-						MemorySize:  resource.MustParse(p.UnitConfig.UnitConfig.MemorySize),
-						MinCPU:      resource.MustParse(p.UnitConfig.UnitConfig.CPUCount),
+						MaxCPU:      cpuCount,
+						MemorySize:  memorySize,
+						MinCPU:      cpuCount,
 						IopsWeight:  p.UnitConfig.UnitConfig.IopsWeight,
 						MaxIops:     p.UnitConfig.UnitConfig.MaxIops,
 						MinIops:     p.UnitConfig.UnitConfig.MinIops,
-						LogDiskSize: resource.MustParse(p.UnitConfig.UnitConfig.LogDiskSize),
+						LogDiskSize: logDiskSize,
 					}
 					break
 				}

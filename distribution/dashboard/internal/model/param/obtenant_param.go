@@ -64,8 +64,8 @@ type ModifyUnitNumber struct {
 
 type ChangeUserPassword struct {
 	// Description: The user name of the database account, only root is supported now.
-	User     string `json:"User" binding:"required"`
-	Password string `json:"Password" binding:"required"`
+	User     string `json:"user" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type ReplayStandbyLog RestoreUntilConfig
