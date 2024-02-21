@@ -2347,16 +2347,12 @@
         },
         "param.ChangeTenantRole": {
             "type": "object",
-            "required": [
-                "tenantRole"
-            ],
             "properties": {
-                "switchover": {
+                "failover": {
                     "type": "boolean"
                 },
-                "tenantRole": {
-                    "description": "Enum: Primary, Standby",
-                    "type": "string"
+                "switchover": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2379,6 +2375,8 @@
         "param.CreateBackupPolicy": {
             "type": "object",
             "required": [
+                "archivePath",
+                "bakDataPath",
                 "destType"
             ],
             "properties": {
@@ -2673,7 +2671,8 @@
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2700,6 +2699,11 @@
         },
         "param.RestoreSourceSpec": {
             "type": "object",
+            "required": [
+                "archiveSource",
+                "bakDataSource",
+                "type"
+            ],
             "properties": {
                 "archiveSource": {
                     "type": "string"
@@ -2729,7 +2733,8 @@
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2920,6 +2925,8 @@
         "response.BackupPolicy": {
             "type": "object",
             "required": [
+                "archivePath",
+                "bakDataPath",
                 "destType"
             ],
             "properties": {

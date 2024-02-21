@@ -2354,16 +2354,12 @@ const docTemplate = `{
         },
         "param.ChangeTenantRole": {
             "type": "object",
-            "required": [
-                "tenantRole"
-            ],
             "properties": {
-                "switchover": {
+                "failover": {
                     "type": "boolean"
                 },
-                "tenantRole": {
-                    "description": "Enum: Primary, Standby",
-                    "type": "string"
+                "switchover": {
+                    "type": "boolean"
                 }
             }
         },
@@ -2386,6 +2382,8 @@ const docTemplate = `{
         "param.CreateBackupPolicy": {
             "type": "object",
             "required": [
+                "archivePath",
+                "bakDataPath",
                 "destType"
             ],
             "properties": {
@@ -2680,7 +2678,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2707,6 +2706,11 @@ const docTemplate = `{
         },
         "param.RestoreSourceSpec": {
             "type": "object",
+            "required": [
+                "archiveSource",
+                "bakDataSource",
+                "type"
+            ],
             "properties": {
                 "archiveSource": {
                     "type": "string"
@@ -2736,7 +2740,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2927,6 +2932,8 @@ const docTemplate = `{
         "response.BackupPolicy": {
             "type": "object",
             "required": [
+                "archivePath",
+                "bakDataPath",
                 "destType"
             ],
             "properties": {

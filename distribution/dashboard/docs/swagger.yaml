@@ -23,13 +23,10 @@ definitions:
     type: object
   param.ChangeTenantRole:
     properties:
+      failover:
+        type: boolean
       switchover:
         type: boolean
-      tenantRole:
-        description: 'Enum: Primary, Standby'
-        type: string
-    required:
-    - tenantRole
     type: object
   param.ChangeUserPassword:
     properties:
@@ -86,6 +83,8 @@ definitions:
         example: Weekly
         type: string
     required:
+    - archivePath
+    - bakDataPath
     - destType
     type: object
   param.CreateNamespaceParam:
@@ -246,6 +245,7 @@ definitions:
   param.ReplayStandbyLog:
     properties:
       timestamp:
+        example: "2024-02-23 17:47:00"
         type: string
       unlimited:
         type: boolean
@@ -279,10 +279,15 @@ definitions:
         type: string
       until:
         $ref: '#/definitions/param.RestoreUntilConfig'
+    required:
+    - archiveSource
+    - bakDataSource
+    - type
     type: object
   param.RestoreUntilConfig:
     properties:
       timestamp:
+        example: "2024-02-23 17:47:00"
         type: string
       unlimited:
         type: boolean
@@ -459,6 +464,8 @@ definitions:
       tenantName:
         type: string
     required:
+    - archivePath
+    - bakDataPath
     - destType
     type: object
   response.DashboardInfo:
