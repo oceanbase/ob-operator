@@ -3,7 +3,7 @@ name: build ob-operator
 on: 
   push:
     branches:
-      - '*_dev'
+      - master
 
 env:
   GO_VERSION: "1.20"

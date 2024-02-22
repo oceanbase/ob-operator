@@ -2,7 +2,7 @@ name: addlicense
 on:
   pull_request:
     branches:
-      - 2.0.x_dev
+      - master
 
 jobs:
   addlicense:
