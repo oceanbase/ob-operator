@@ -24,7 +24,7 @@ export interface LineGraphProps {
   queryRange: QueryRangeType;
   height?: number;
   isRefresh?: boolean;
-  type?: 'detail' | 'overview';
+  type?: API.MonitorUserFor;
 }
 
 export default function LineGraph({
@@ -34,7 +34,7 @@ export default function LineGraph({
   queryRange,
   height = 186,
   isRefresh = false,
-  type,
+  type = 'DETAIL',
 }: LineGraphProps) {
   const [, chooseClusterName] = getNSName();
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
@@ -52,12 +52,13 @@ export default function LineGraph({
     if (chooseClusterName) {
       metricsKeys = metrics.map((metric: MetricType) => metric.key);
     }
-    if (type === 'overview') realLabels = [];
+    if (type === 'OVERVIEW') realLabels = [];
     return {
       groupLabels,
       labels: realLabels, //为空则查询全部集群
       metrics: metricsKeys,
       queryRange,
+      type
     };
   };
 
@@ -66,7 +67,8 @@ export default function LineGraph({
     for (let metric of metricsData) {
       values.push(metric.value);
     }
-
+    console.log('metricsData',metricsData);
+    
     const config = {
       data: metricsData,
       xField: 'date',

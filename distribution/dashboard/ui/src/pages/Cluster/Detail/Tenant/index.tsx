@@ -50,7 +50,7 @@ export default function Tenant() {
         <EventsTable objectType="OBTENANT" />
         <MonitorComp
           queryRange={defaultQueryRange}
-          type="detail"
+          type="DETAIL"
           queryScope="OBTENANT"
           filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
         />
