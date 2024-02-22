@@ -1,6 +1,9 @@
 name: build ob-operator
 
-on: 
+on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
       - master
