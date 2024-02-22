@@ -513,5 +513,6 @@
   "Dashboard.components.customModal.Ok": "确定",
   "Dashboard.components.customModal.Cancel": "取消",
   "Dashboard.components.customModal.ModifyPasswordModal.TheTwoInputsAreInconsistent": "两次输入不一致",
-  "Dashboard.components.customModal.ModifyUnitModal.ModifiedSuccessfully": "修改成功"
+  "Dashboard.components.customModal.ModifyUnitModal.ModifiedSuccessfully": "修改成功",
+  "Dashboard.Detail.NewBackup.CreatedSuccessfully": "创建成功"
 }

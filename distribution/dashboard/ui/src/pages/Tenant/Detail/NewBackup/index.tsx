@@ -51,7 +51,13 @@ export default function NewBackup() {
       ...formatNewBackupForm(values, publicKey),
     });
     if (res.successful) {
-      message.success('创建成功', 3);
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.NewBackup.CreatedSuccessfully',
+          defaultMessage: '创建成功',
+        }),
+        3,
+      );
       form.resetFields();
       history.back();
     }
