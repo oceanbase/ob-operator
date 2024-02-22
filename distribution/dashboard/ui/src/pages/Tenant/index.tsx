@@ -48,7 +48,7 @@ export default function TenantPage() {
       <MonitorComp
         filterLabel={filterLabel}
         queryScope="OBTENANT"
-        type="overview"
+        type="OVERVIEW"
         queryRange={defaultQueryRange}
       />
     </PageContainer>

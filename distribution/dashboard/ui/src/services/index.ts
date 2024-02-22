@@ -1,5 +1,5 @@
-import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatTopoData } from '@/components/TopoComponent/helper';
+import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
 import _ from 'lodash';
@@ -164,13 +164,13 @@ export async function getObclusterListReq() {
   return [];
 }
 
-export async function getSimpleClusterList():Promise<API.SimpleClusterList>  {
+export async function getSimpleClusterList(): Promise<API.SimpleClusterList> {
   const r = await request<API.ClusterListResponse>('/api/v1/obclusters', {
     method: 'GET',
   });
   if (r.successful) {
     return r.data.map((clusterDetail) => ({
-      clusterId:clusterDetail.clusterId,
+      clusterId: clusterDetail.clusterId,
       name: clusterDetail.name,
       namespace: clusterDetail.namespace,
       topology: clusterDetail.topology,
@@ -183,18 +183,18 @@ export async function getClusterDetailReq({
   ns,
   name,
   useFor,
-  tenantReplicas
+  tenantReplicas,
 }: {
   ns: string;
   name: string;
   useFor?: string;
-  tenantReplicas?:API.ReplicaDetailType[]
+  tenantReplicas?: API.ReplicaDetailType[];
 }) {
   const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
     method: 'GET',
   });
   if (r.successful) {
-    if (useFor === 'topo') return formatTopoData(r.data,tenantReplicas);
+    if (useFor === 'topo') return formatTopoData(r.data, tenantReplicas);
     return formatClusterData(r.data);
   }
   return r.data;
@@ -389,7 +389,7 @@ export async function getAllMetrics(type: API.EventObjectType) {
 }
 
 // //时间戳换算成时间
-export async function queryMetricsReq(data: API.QueryMetricsType) {
+export async function queryMetricsReq({ type, ...data }: API.QueryMetricsType) {
   const r = await request('/api/v1/metrics/query', {
     method: 'POST',
     data,
@@ -400,7 +400,11 @@ export async function queryMetricsReq(data: API.QueryMetricsType) {
       metric.values.forEach((item) => {
         // item.date = moment.unix(item.timestamp).format('YYYY-MM-DD HH:mm:ss');
         item.date = item.timestamp * 1000;
-        item.name = metric.metric.name;
+        if (type === 'OVERVIEW') {
+          item.name = metric.metric.labels[0]?.value || '';
+        } else {
+          item.name = metric.metric.name;
+        }
       });
     });
     let res = _.flatten(r.data.map((metric) => metric.values));

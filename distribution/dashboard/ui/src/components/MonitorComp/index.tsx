@@ -22,7 +22,7 @@ interface MonitorCompProps {
   queryRange: QueryRangeType;
   isRefresh?: boolean;
   queryScope:API.EventObjectType;
-  type: 'detail' | 'overview';
+  type: API.MonitorUserFor;
 }
 
 export default function MonitorComp({

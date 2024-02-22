@@ -46,7 +46,7 @@ const ClusterPage: React.FC = () => {
       <MonitorComp 
         filterLabel={clusterNames} 
         queryScope='OBCLUSTER_OVERVIEW' 
-        type='overview' 
+        type='OVERVIEW' 
         queryRange={defaultQueryRange}/>
     </PageContainer>
   );

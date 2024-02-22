@@ -116,9 +116,12 @@ declare namespace API {
     labels: MetricsLabels;
     metrics: string[];
     queryRange: { endTimestamp: number; startTimestamp: number; step: number };
+    type:MonitorUserFor;
   };
 
   type EventType = 'NORMAL' | 'WARNING';
+
+  type MonitorUserFor = 'OVERVIEW' | 'DETAIL';
 
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
 

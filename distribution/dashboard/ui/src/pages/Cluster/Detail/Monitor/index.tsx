@@ -146,7 +146,7 @@ export default function Monitor() {
         isRefresh={isRefresh}
         queryRange={queryRange}
         filterLabel={filterLabel}
-        type="detail"
+        type="DETAIL"
         queryScope="OBCLUSTER"
       />
     </div>
