@@ -70,14 +70,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
     label: tenant.name,
     value: tenant.name,
   }));
-  console.log('tenantList', tenantList);
 
-  const onChange = (date, dateString) => {
-    console.log(date, dateString);
-  };
-  const onChangea = (time: Dayjs, timeString: string) => {
-    console.log(time, timeString);
-  };
   useEffect(() => {
     if (synchronizeChecked && clusterName) {
       getTenants(clusterName);
@@ -335,7 +328,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                       ]}
                       name={['source', 'restore', 'until', 'date']}
                     >
-                      <DatePicker onChange={onChange} />
+                      <DatePicker />
                     </Form.Item>
                   </Col>
                   <Col span={12}>
@@ -357,7 +350,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                       })}
                       name={['source', 'restore', 'until', 'time']}
                     >
-                      <TimePicker onChange={onChangea} />
+                      <TimePicker />
                     </Form.Item>
                   </Col>
                 </Row>

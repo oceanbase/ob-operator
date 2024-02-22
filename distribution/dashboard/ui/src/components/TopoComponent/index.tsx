@@ -25,11 +25,18 @@ import { appenAutoShapeListener, checkIsSame, getServerNumber } from './helper';
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
+  namespace?: string;
+  clusterNameOfKubectl?: string; // k8s resource name
   header?: ReactElement;
 }
 
 //Cluster topology diagram component
-export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
+export default function TopoComponent({
+  tenantReplicas,
+  header,
+  namespace,
+  clusterNameOfKubectl,
+}: TopoProps) {
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -41,7 +48,11 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [operateDisable, setOperateDisable] = useState<boolean>(false);
-  const [[ns, name]] = useState(getNSName());
+  const [[ns, name]] = useState(
+    namespace && clusterNameOfKubectl
+      ? [namespace, clusterNameOfKubectl]
+      : getNSName(),
+  );
   //Control the visibility of operation and maintenance modal
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
@@ -156,7 +167,6 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
    * Call up the operation and maintenance operation modal
    */
   const ItemClickOperate = (operate: API.ModalType) => {
-    
     if (operate === 'addZone') {
       modalType.current = 'addZone';
       setOperateModalVisible(true);
@@ -191,13 +201,13 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
         onOk: zoneDelete,
       });
     }
-    if(operate === 'changeUnitCount'){
-      modalType.current = 'changeUnitCount'
+    if (operate === 'changeUnitCount') {
+      modalType.current = 'changeUnitCount';
       setOperateModalVisible(true);
     }
 
-    if(operate === 'modifyUnitSpecification'){
-      modalType.current = 'modifyUnitSpecification'
+    if (operate === 'modifyUnitSpecification') {
+      modalType.current = 'modifyUnitSpecification';
       setOperateModalVisible(true);
     }
   };
@@ -259,6 +269,7 @@ export default function TopoComponent({ tenantReplicas, header }: TopoProps) {
       modelRef.current.addEventListener('mouseenter', mouseEnter);
       modelRef.current.addEventListener('mouseleave', mouseLeave);
     }
+
     getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
 
     return () => {

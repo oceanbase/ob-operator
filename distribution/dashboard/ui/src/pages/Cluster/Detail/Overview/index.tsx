@@ -21,6 +21,7 @@ const ClusterOverview: React.FC = () => {
     useState<boolean>(false);
   const [[ns, name]] = useState(getNSName());
   const chooseZoneName = useRef<string>('');
+  const timerRef = useRef<NodeJS.Timeout>()
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //当前运维弹窗类型
   const modalType = useRef<API.ModalType>('addZone');
@@ -31,9 +32,11 @@ const ClusterOverview: React.FC = () => {
       onSuccess: (data) => {
         setChooseClusterName(data.info.clusterName);
         if (data.status === 'operating') {
-          setTimeout(() => {
+          timerRef.current = setTimeout(() => {
             getClusterDetail({ ns, name });
           }, REFRESH_CLUSTER_TIME);
+        }else if(timerRef.current){
+          clearTimeout(timerRef.current)
         }
       },
     },
@@ -111,6 +114,12 @@ const ClusterOverview: React.FC = () => {
 
   useEffect(() => {
     getClusterDetail({ ns, name });
+
+    return ()=>{
+      if(timerRef.current){
+        clearTimeout(timerRef.current)
+      }
+    }
   }, []);
 
   return (

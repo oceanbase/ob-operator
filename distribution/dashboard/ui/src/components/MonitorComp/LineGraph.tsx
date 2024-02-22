@@ -67,7 +67,6 @@ export default function LineGraph({
     for (let metric of metricsData) {
       values.push(metric.value);
     }
-    console.log('metricsData',metricsData);
     
     const config = {
       data: metricsData,

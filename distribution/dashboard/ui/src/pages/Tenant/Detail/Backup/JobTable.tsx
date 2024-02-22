@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import type { TableProps } from 'antd';
-import { Table } from 'antd';
+import { Table, Tooltip } from 'antd';
 
 interface JobTableProps {
   dataSource: API.BackupJob[];
@@ -11,11 +11,27 @@ const columns: TableProps<API.BackupJob>['columns'] = [
     title: 'name',
     dataIndex: 'name',
     key: 'name',
+    ellipsis: true,
+    render: (value) => {
+      return (
+        <Tooltip placement='topLeft' title={value}>
+          <span>{value}</span>
+        </Tooltip>
+      );
+    },
   },
   {
     title: 'path',
     dataIndex: 'path',
     key: 'path',
+    ellipsis: true,
+    render: (value) => {
+      return (
+        <Tooltip placement='topLeft' title={value}>
+          <span>{value}</span>
+        </Tooltip>
+      );
+    },
   },
   {
     title: intl.formatMessage({

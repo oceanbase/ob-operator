@@ -10,11 +10,14 @@ export default function Topo() {
     defaultParams: [{ ns, name }],
   });
   const tenantTopoData = tenantResponse?.data;
+  
   return (
     <div>
       {tenantTopoData && (
         <TopoComponent
           tenantReplicas={tenantTopoData.replicas}
+          clusterNameOfKubectl={tenantTopoData.info.clusterName}
+          namespace={tenantTopoData.info.namespace}
           header={
             <BasicInfo
               info={tenantTopoData.info}
