@@ -1,9 +1,12 @@
 name: build ob-operator
 
-on: 
+on:
+  pull_request:
+    branches:
+      - master
   push:
     branches:
-      - '*_dev'
+      - master
 
 env:
   GO_VERSION: "1.20"
