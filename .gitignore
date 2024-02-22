@@ -37,3 +37,8 @@ deploy/*secret*
 
 .vscode
 testreports
+
+log/*
+./nohup.out
+node_modules/
+ui/dist/
