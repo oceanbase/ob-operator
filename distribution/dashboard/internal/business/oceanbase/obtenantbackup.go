@@ -110,6 +110,10 @@ func getScheduleDatesFromPolicy(p *v1alpha1.OBTenantBackupPolicy) param.Schedule
 	var i, j int
 	for i < len(fullDays) && j < len(incrementalDays) {
 		fullDay, _ := strconv.Atoi(fullDays[i])
+		if incrementalDays[j] == "*" {
+			j = len(incrementalDays)
+			break
+		}
 		incrementalDay, _ := strconv.Atoi(incrementalDays[j])
 		// It should not happen, but just in case
 		if fullDay == incrementalDay {
