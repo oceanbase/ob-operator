@@ -144,8 +144,9 @@ const (
 )
 
 const (
-	LabelTenantName = "oceanbase.oceanbase.com/tenant-name"
-	LabelBackupType = "oceanbase.oceanbase.com/backup-type"
+	LabelTenantName   = "oceanbase.oceanbase.com/tenant-name"
+	LabelSecondTenant = "oceanbase.oceanbase.com/second-tenant"
+	LabelBackupType   = "oceanbase.oceanbase.com/backup-type"
 )
 
 const (
