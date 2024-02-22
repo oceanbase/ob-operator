@@ -32,9 +32,9 @@ type OperateItemConfigType = {
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
-  //当前运维弹窗类型
+  //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
-
+  const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const [[ns, name]] = useState(getNSName());
 
   const openOperateModal = (type: API.ModalType) => {
@@ -59,11 +59,16 @@ export default function TenantOverview() {
     getTenant,
     {
       manual: true,
-      onSuccess: ({ data }) => {
-        if (data.info.status === 'operating') {
-          setTimeout(() => {
-            getTenantDetail({ ns, name });
-          }, REFRESH_CLUSTER_TIME);
+      onSuccess: ({ data, successful }) => {
+        if (successful) {
+          if (data.info.unitNumber) {
+            setDefaultUnitCount(data.info.unitNumber)
+          }
+          if (data.info.status === 'operating') {
+            setTimeout(() => {
+              getTenantDetail({ ns, name });
+            }, REFRESH_CLUSTER_TIME);
+          }
         }
       },
     },
@@ -79,6 +84,7 @@ export default function TenantOverview() {
   const tenantDetail = tenantDetailResponse?.data;
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
+
   const operateListConfig: OperateItemConfigType[] = [
     {
       text: intl.formatMessage({
@@ -86,7 +92,7 @@ export default function TenantOverview() {
         defaultMessage: 'Unit规格管理',
       }),
       onClick: () => openOperateModal('changeUnitCount'),
-      show: tenantDetail?.info.tenantRole === 'Primary',
+      show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: false,
     },
     {
@@ -95,7 +101,7 @@ export default function TenantOverview() {
         defaultMessage: '修改密码',
       }),
       onClick: () => openOperateModal('changePassword'),
-      show: tenantDetail?.info.tenantRole === 'Primary',
+      show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: false,
     },
     {
@@ -121,7 +127,7 @@ export default function TenantOverview() {
         defaultMessage: '激活备租户',
       }),
       onClick: () => openOperateModal('activateTenant'),
-      show: tenantDetail?.info.tenantRole === 'Standby',
+      show: tenantDetail?.info.tenantRole === 'STANDBY',
       isMore: true,
     },
     {
@@ -139,7 +145,7 @@ export default function TenantOverview() {
         defaultMessage: '备租户回放日志',
       }),
       onClick: () => openOperateModal('logReplay'),
-      show: tenantDetail?.info.tenantRole === 'Standby',
+      show: tenantDetail?.info.tenantRole === 'STANDBY',
       isMore: true,
     },
     {
@@ -148,7 +154,7 @@ export default function TenantOverview() {
         defaultMessage: '租户版本升级',
       }),
       onClick: () => openOperateModal('upgradeTenant'),
-      show: tenantDetail?.info.tenantRole === 'Primary',
+      show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: true,
     },
   ];
@@ -231,6 +237,7 @@ export default function TenantOverview() {
           visible={operateModalVisible}
           setVisible={setOperateModalVisible}
           successCallback={operateSuccess}
+          defaultValue={defaultUnitCount}
         />
       </PageContainer>
     </div>

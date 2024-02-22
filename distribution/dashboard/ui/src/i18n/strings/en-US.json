@@ -410,7 +410,7 @@
   "Dashboard.Tenant.New.ResourcePools.Weight": "Weight",
   "Dashboard.Tenant.New.ResourcePools.ResourcePool": "Resource Pool",
   "Dashboard.Tenant.New.ResourcePools.PleaseEnterCpuCore": "Please enter CPU (core)",
-  "Dashboard.Tenant.New.ResourcePools.Nuclear": "Nuclear",
+  "Dashboard.Tenant.New.ResourcePools.Nuclear": "Core",
   "Dashboard.Tenant.New.ResourcePools.PleaseEnter": "Please enter",
   "Dashboard.Tenant.New.ResourcePools.EnterMemorySize": "Enter Memory size",
   "Dashboard.Tenant.New.ResourcePools.LogDisk": "Log disk",
@@ -511,5 +511,7 @@
   "Dashboard.pages.Tenant.TenantsList.CreateATenant": "Create a tenant",
   "Dashboard.components.customModal.LineGraphModal.Cancel": "Cancel",
   "Dashboard.components.customModal.Ok": "OK",
-  "Dashboard.components.customModal.Cancel": "Cancel"
+  "Dashboard.components.customModal.Cancel": "Cancel",
+  "Dashboard.components.customModal.ModifyPasswordModal.TheTwoInputsAreInconsistent": "The two inputs are inconsistent.",
+  "Dashboard.components.customModal.ModifyUnitModal.ModifiedSuccessfully": "Modified successfully"
 }

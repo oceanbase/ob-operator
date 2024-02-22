@@ -56,7 +56,7 @@ export default function ResourcePools({
 
   const targetZoneList = clusterList
     .filter((cluster) => cluster.clusterId === selectClusterId)[0]
-    ?.topology.map((zone) => ({ zone: zone.name }));
+    ?.topology.map((zone) => ({ zone: zone.zone }));
   return (
     <Card
       title={intl.formatMessage({
@@ -64,8 +64,8 @@ export default function ResourcePools({
         defaultMessage: '资源池',
       })}
     >
-      <Row>
-        <p>Unit config</p>
+      <div>
+        <h3>Unit config</h3>
         <div className={styles.unitConfigContainer}>
           <Row gutter={[16, 32]}>
             <Col span={8}>
@@ -143,12 +143,12 @@ export default function ResourcePools({
             </Col>
             <Col span={8}>
               <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
-                <InputNumber placeholder="min" style={{ width: '100%' }} />
+                <InputNumber min={1024} placeholder="min" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
-                <InputNumber placeholder="max" style={{ width: '100%' }} />
+                <InputNumber min={1024} placeholder="max" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col span={8}>
@@ -170,20 +170,20 @@ export default function ResourcePools({
             </Col>
           </Row>
         </div>
-      </Row>
-      <Row>
-        <h1>
-          {intl.formatMessage({
-            id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
-            defaultMessage: 'Zone优先级',
-          })}
-        </h1>
-
-        {targetZoneList &&
-          targetZoneList.map((item, index) => (
+      </div>
+      {targetZoneList && (
+        <Row>
+          <h3>
+            {intl.formatMessage({
+              id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
+              defaultMessage: 'Zone优先级',
+            })}
+          </h3>
+          {targetZoneList.map((item, index) => (
             <ZoneItem key={index} name={item.zone} />
           ))}
-      </Row>
+        </Row>
+      )}
     </Card>
   );
 }

@@ -122,7 +122,7 @@ declare namespace API {
 
   type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
 
-  type TenantRole = 'Primary' | 'Standby';
+  type TenantRole = 'PRIMARY' | 'STANDBY';
 
   type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
 
@@ -181,9 +181,19 @@ declare namespace API {
     name: string;
   };
 
+  type UnitConfig = {
+    iopsWeight?: number;
+    logDiskSize?: string;
+    cpuCount: string;
+    maxIops?: number;
+    memorySize: string;
+    minIops?: number;
+  }
+
   type TenantBody = {
     connectWhiteList?: string;
     name: string;
+    namespace?:string;
     obcluster: string;
     pools?: {
       priority: number;
@@ -207,14 +217,7 @@ declare namespace API {
     };
     tenantName: string;
     tenantRole?: TenantRole;
-    unitConfig: {
-      iopsWeight?: number;
-      logDiskSize?: string;
-      cpuCount: number;
-      maxIops?: number;
-      memorySize: string;
-      minIops?: number;
-    };
+    unitConfig: UnitConfig;
     unitNum: number;
   };
   type TenantPolicy = {

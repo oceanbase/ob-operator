@@ -511,5 +511,7 @@
   "Dashboard.pages.Tenant.TenantsList.CreateATenant": "创建租户",
   "Dashboard.components.customModal.LineGraphModal.Cancel": "取消",
   "Dashboard.components.customModal.Ok": "确定",
-  "Dashboard.components.customModal.Cancel": "取消"
+  "Dashboard.components.customModal.Cancel": "取消",
+  "Dashboard.components.customModal.ModifyPasswordModal.TheTwoInputsAreInconsistent": "两次输入不一致",
+  "Dashboard.components.customModal.ModifyUnitModal.ModifiedSuccessfully": "修改成功"
 }

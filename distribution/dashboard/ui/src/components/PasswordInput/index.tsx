@@ -34,7 +34,7 @@ export default function PasswordInput({
       setTextVisible(true);
     } catch (err: any) {
       const { errorFields } = err;
-      if (errorFields[0].errors.length) setTextVisible(false);
+      if (errorFields[0]?.errors.length) setTextVisible(false);
     }
   };
   const genaretaPassword = () => {

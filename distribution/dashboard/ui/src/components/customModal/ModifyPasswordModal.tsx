@@ -26,8 +26,12 @@ export default function ModifyPasswordModal({
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
-    //User?
-    const res = await changeTenantPassword({ namespace, name, ...values });
+    const res = await changeTenantPassword({
+      ns: namespace,
+      name,
+      User: 'root',
+      Password: values.password,
+    });
     if (res.successful) {
       message.success(res.message);
       successCallback();
@@ -56,7 +60,7 @@ export default function ModifyPasswordModal({
             id: 'Dashboard.components.customModal.ModifyPasswordModal.EnterANewPassword',
             defaultMessage: '输入新密码',
           })}
-          name="Password"
+          name="password"
           rules={[
             {
               required: true,
@@ -67,7 +71,7 @@ export default function ModifyPasswordModal({
             },
           ]}
         >
-          <Input
+          <Input.Password
             placeholder={intl.formatMessage({
               id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
               defaultMessage: '请输入',
@@ -79,7 +83,8 @@ export default function ModifyPasswordModal({
             id: 'Dashboard.components.customModal.ModifyPasswordModal.EnterAgain',
             defaultMessage: '再次输入',
           })}
-          name="Password"
+          name="passwordAgain"
+          validateTrigger="onBlur"
           rules={[
             {
               required: true,
@@ -88,9 +93,27 @@ export default function ModifyPasswordModal({
                 defaultMessage: '请输入',
               }),
             },
+            () => ({
+              validator(_: any, value: string) {
+                if (
+                  form.getFieldValue('password') &&
+                  value !== form.getFieldValue('password')
+                ) {
+                  return Promise.reject(
+                    new Error(
+                      intl.formatMessage({
+                        id: 'Dashboard.components.customModal.ModifyPasswordModal.TheTwoInputsAreInconsistent',
+                        defaultMessage: '两次输入不一致',
+                      }),
+                    ),
+                  );
+                }
+                return Promise.resolve();
+              },
+            }),
           ]}
         >
-          <Input
+          <Input.Password
             placeholder={intl.formatMessage({
               id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
               defaultMessage: '请输入',

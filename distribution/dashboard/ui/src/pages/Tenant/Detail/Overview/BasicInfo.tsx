@@ -1,4 +1,4 @@
-import { colorMap } from '@/constants';
+import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { Col, Descriptions, Row, Tag } from 'antd';
@@ -84,7 +84,7 @@ export default function BasicInfo({
                     {key !== 'status' ? (
                       info[key]
                     ) : (
-                      <Tag color={colorMap.get(info[key])}>{info[key]}</Tag>
+                      <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
                     )}
                   </Descriptions.Item>
                 );

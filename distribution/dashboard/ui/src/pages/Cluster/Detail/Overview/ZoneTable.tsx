@@ -4,7 +4,7 @@ import { Col, Table, Tag, message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
-import { colorMap } from '@/constants';
+import { COLOR_MAP } from '@/constants';
 import { deleteObzone } from '@/services';
 import { getNSName } from './helper';
 
@@ -70,7 +70,7 @@ export default function ZoneTable({
         }),
         dataIndex: 'status',
         key: 'status',
-        render: (value) => <Tag color={colorMap.get(value)}>{value} </Tag>,
+        render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
       },
       {
         title: intl.formatMessage({

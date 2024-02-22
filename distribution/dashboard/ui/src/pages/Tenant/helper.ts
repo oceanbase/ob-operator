@@ -1,6 +1,23 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
 import { clone } from 'lodash';
+
+const isExist = (val: string | number | undefined): boolean => {
+  if (typeof val === 'number') return true;
+  return !!val;
+};
+const formatUnitConfig = (unitConfig: any): API.UnitConfig => {
+  let _unitConfig = clone(unitConfig);
+  _unitConfig['cpuCount'] = String(_unitConfig['cpuCount']);
+  if (isExist(_unitConfig['logDiskSize'])) {
+    _unitConfig['logDiskSize'] = _unitConfig['logDiskSize'] + 'Gi';
+  }
+  if (isExist(_unitConfig['memorySize'])) {
+    _unitConfig['memorySize'] = _unitConfig['memorySize'] + 'Gi';
+  }
+  return _unitConfig;
+};
+
 export function formatNewTenantForm(
   originFormData: any,
   clusterName: string,
@@ -17,6 +34,7 @@ export function formatNewTenantForm(
         .map((zone) => ({
           zone,
           priority: originFormData[key]?.[zone]?.priority,
+          type: 'Full',
         }))
         .filter((item) => item.priority);
     } else if (key === 'source') {
@@ -29,14 +47,16 @@ export function formatNewTenantForm(
         let { until } = originFormData[key]['restore'];
         result[key]['restore'] = {
           ...originFormData[key]['restore'],
-          ossAccessId: encryptText(
-            originFormData[key]['restore'].ossAccessId,
-            publicKey,
-          ),
-          ossAccessKey: encryptText(
-            originFormData[key]['restore'].ossAccessKey,
-            publicKey,
-          ),
+          ossAccessId:originFormData[key]['restore'].ossAccessId,
+          ossAccessKey:originFormData[key]['restore'].ossAccessKey,
+          // ossAccessId: encryptText(
+          //   originFormData[key]['restore'].ossAccessId,
+          //   publicKey,
+          // ),
+          // ossAccessKey: encryptText(
+          //   originFormData[key]['restore'].ossAccessKey,
+          //   publicKey,
+          // ),
           until:
             until && until.date && until.time
               ? {
@@ -48,22 +68,24 @@ export function formatNewTenantForm(
               : { unlimited: true },
         };
         if (originFormData[key]['restore'].bakEncryptionPassword) {
-          result[key]['restore']['bakEncryptionPassword'] = encryptText(
-            originFormData[key]['restore'].bakEncryptionPassword,
-            publicKey,
-          );
+          result[key]['restore']['bakEncryptionPassword'] = originFormData[key]['restore'].bakEncryptionPassword
+          // result[key]['restore']['bakEncryptionPassword'] = encryptText(
+          //   originFormData[key]['restore'].bakEncryptionPassword,
+          //   publicKey,
+          // );
         } else {
           delete result[key]['restore']['bakEncryptionPassword'];
         }
       }
     } else if (key === 'rootPassword') {
-      result[key] = encryptText(originFormData[key], publicKey);
+      result[key] = originFormData[key];
+      // result[key] = encryptText(originFormData[key], publicKey);
+    } else if (key === 'unitConfig') {
+      result[key] = formatUnitConfig(originFormData[key]);
     } else {
       result[key] = originFormData[key];
     }
   });
-  console.log('result', result);
-
   return result;
 }
 /**
@@ -74,13 +96,16 @@ export function formatNewTenantForm(
 export function formatNewBackupForm(originFormData: any, publicKey: string) {
   let formData = clone(originFormData);
   if (formData.bakEncryptionPassword) {
-    formData.bakEncryptionPassword = encryptText(
-      originFormData.bakEncryptionPassword,
-      publicKey,
-    );
+    formData.bakEncryptionPassword = originFormData.bakEncryptionPassword;
+    // formData.bakEncryptionPassword = encryptText(
+    //   originFormData.bakEncryptionPassword,
+    //   publicKey,
+    // );
   }
-  formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
-  formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
+  formData.ossAccessId = originFormData.ossAccessId;
+  formData.ossAccessKey = originFormData.ossAccessKey;
+  // formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
+  // formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
   formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:MM');
   delete formData.scheduleDates.days;
   formData.scheduleDates = Object.keys(formData.scheduleDates).map((key) => ({
