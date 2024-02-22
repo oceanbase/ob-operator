@@ -169,7 +169,7 @@ function ReactNode(handleClick?: any) {
           <Image
             style={{
               position: 'absolute',
-              img: cfg.badgeImg,
+              img: disable ? null : cfg.badgeImg,
               x: nodeWidth / 2 - 25,
               y: nodeheight / 2 + 10,
               width: 12,

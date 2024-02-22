@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
-import { Col, Descriptions, Table } from 'antd';
+import { Col, Descriptions, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface BackupsProps {
@@ -35,7 +35,6 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       title: 'name',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
     },
     {
       title: intl.formatMessage({
@@ -44,7 +43,6 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       }),
       dataIndex: 'status',
       key: 'status',
-      width: 120,
     },
     {
       title: intl.formatMessage({
@@ -53,7 +51,6 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       }),
       dataIndex: 'statusInDatabase',
       key: 'statusInDatabase',
-      width: 120,
     },
     {
       title: intl.formatMessage({
@@ -62,19 +59,22 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       }),
       dataIndex: 'string',
       key: 'string',
-      width: 120,
     },
     {
       title: 'path',
       dataIndex: 'path',
       key: 'path',
-      width: 120,
+      ellipsis: true,
+      render: (val) => (
+        <Tooltip placement="topLeft" title={val}>
+          <span>{val}</span>
+        </Tooltip>
+      ),
     },
     {
       title: 'encryptionSecret',
       dataIndex: 'encryptionSecret',
       key: 'encryptionSecret',
-      width: 120,
     },
     {
       title: intl.formatMessage({
@@ -83,7 +83,6 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       }),
       dataIndex: 'startTime',
       key: 'startTime',
-      width: 120,
     },
     {
       title: intl.formatMessage({
@@ -92,7 +91,6 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       }),
       dataIndex: 'endTime',
       key: 'endTime',
-      width: 120,
     },
   ];
 

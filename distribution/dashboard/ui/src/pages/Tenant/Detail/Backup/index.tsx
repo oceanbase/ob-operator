@@ -66,7 +66,6 @@ export default function Backup() {
           {tenantDetail && (
             <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
           )}
-
           <BackupConfiguration />
           <BackupJobs />
         </Row>

@@ -1,4 +1,5 @@
 import { WEEK_TEXT_MAP } from '@/constants/schedule';
+import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
@@ -22,6 +23,7 @@ import {
 } from 'antd';
 import { clone } from 'lodash';
 import { useState } from 'react';
+import { formatNewBackupForm } from '../../helper';
 import BasicInfo from '../Overview/BasicInfo';
 import type { ParamsType } from './ScheduleSelectComp';
 import ScheduleSelectComp from './ScheduleSelectComp';
@@ -35,6 +37,7 @@ export default function NewBackup() {
   const [passInputExpand, setPassInputExpand] = useState(false);
   const [jobInputExpand, setJobInputExpand] = useState(false);
   const [recoveryInputExpand, setRecoveryInputExpand] = useState(false);
+  const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const distType = [
     { label: 'OSS', value: 'OSS' },
@@ -42,9 +45,19 @@ export default function NewBackup() {
   ];
 
   const handleSubmit = async (values: any) => {
-    const res = await createBackupPolicyOfTenant(values);
+    const res = await createBackupPolicyOfTenant({
+      ns,
+      name,
+      ...formatNewBackupForm(values, publicKey),
+    });
     if (res.successful) {
-      message.success(res.message, 3);
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.NewBackup.CreatedSuccessfully',
+          defaultMessage: '创建成功',
+        }),
+        3,
+      );
       form.resetFields();
       history.back();
     }
@@ -203,7 +216,7 @@ export default function NewBackup() {
                         id: 'Dashboard.Detail.NewBackup.LogArchivePath',
                         defaultMessage: '日志归档路径',
                       })}
-                      name={['archiveSource']}
+                      name={['archivePath']}
                       rules={[
                         {
                           required: true,
@@ -228,7 +241,7 @@ export default function NewBackup() {
                         id: 'Dashboard.Detail.NewBackup.DataBackupPath',
                         defaultMessage: '数据备份路径',
                       })}
-                      name={['bakDataSource']}
+                      name={['bakDataPath']}
                       rules={[
                         {
                           required: true,

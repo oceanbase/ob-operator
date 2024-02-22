@@ -27,10 +27,8 @@ export default function Tenant() {
   );
   const { data: clusterDetail } = useRequest(getClusterDetailReq, {
     defaultParams: [{ name, ns }],
-    onSuccess: (res) => {
-      if (res?.info?.name) {
-        getTenantsList(res.name);
-      }
+    onSuccess: () => {
+      getTenantsList(name)
     },
   });
   const tenantsList = tenantsListResponse?.data;

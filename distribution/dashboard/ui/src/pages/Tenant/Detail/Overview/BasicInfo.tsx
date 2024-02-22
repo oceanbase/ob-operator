@@ -66,6 +66,13 @@ export default function BasicInfo({
     until: 'until',
   };
 
+  const checkSource = (source:any)=>{
+    Object.keys(source).forEach((key)=>{
+      if(source[key])return true
+    })
+    return false
+  }
+
   return (
     <Row style={{ marginBottom: 24 }} gutter={[16, 16]}>
       <Col span={24}>
@@ -91,7 +98,7 @@ export default function BasicInfo({
               },
             )}
           </Descriptions>
-          {source && (
+          {checkSource(source) && (
             <Descriptions
               title={intl.formatMessage({
                 id: 'Dashboard.Detail.Overview.BasicInfo.TenantResources',

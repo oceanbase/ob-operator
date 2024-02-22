@@ -107,10 +107,13 @@ export function formatNewBackupForm(originFormData: any, publicKey: string) {
   // formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
   // formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
   formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:MM');
+  formData.scheduleType = formData.scheduleDates.mode;
   delete formData.scheduleDates.days;
+  delete formData.scheduleDates.mode;
   formData.scheduleDates = Object.keys(formData.scheduleDates).map((key) => ({
     day: Number(key),
     backupType: formData.scheduleDates[key],
   }));
   return formData;
 }
+
