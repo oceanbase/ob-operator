@@ -1,8 +1,8 @@
 import {
-  badgeIMgMap,
-  clusterImgMap,
-  serverImgMap,
-  zoneImgMap,
+  BADGE_IMG_MAP,
+  CLUSTER_IMG_MAP,
+  SERVER_IMG_MAP,
+  ZONE_IMG_MAP,
 } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Graph, IG6GraphEvent, INode, IShape } from '@antv/g6';
@@ -143,8 +143,8 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
-    temp.img = zoneImgMap.get(zone.status);
-    temp.badgeImg = badgeIMgMap.get(zone.status);
+    temp.img = ZONE_IMG_MAP.get(zone.status);
+    temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
     if (typeText) {
       temp.typeText = typeText;
     }
@@ -163,8 +163,8 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
         label: server.address,
         status: server.status,
         type: 'server',
-        img: serverImgMap.get(server.status),
-        badgeImg: badgeIMgMap.get(server.status),
+        img: SERVER_IMG_MAP.get(server.status),
+        badgeImg: BADGE_IMG_MAP.get(server.status),
         disable: temp.disable,
       };
     });
@@ -192,8 +192,8 @@ export const formatTopoData = (
     status: responseData.status,
     type: 'cluster',
     children: [],
-    img: clusterImgMap.get(responseData.status),
-    badgeImg: badgeIMgMap.get(responseData.status),
+    img: CLUSTER_IMG_MAP.get(responseData.status),
+    badgeImg: BADGE_IMG_MAP.get(responseData.status),
     disable: false,
   };
   topoData.children = getChildren(responseData.topology, tenantReplicas);

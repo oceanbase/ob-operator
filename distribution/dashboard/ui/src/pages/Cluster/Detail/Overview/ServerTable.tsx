@@ -3,7 +3,7 @@ import { ProCard } from '@ant-design/pro-components';
 import { Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
-import { colorMap } from '@/constants';
+import { COLOR_MAP } from '@/constants';
 
 const getServerColums = () => {
   const serverColums: ColumnsType<API.Server> = [
@@ -71,7 +71,7 @@ const getServerColums = () => {
       }),
       dataIndex: 'status',
       key: 'status',
-      render: (value) => <Tag color={colorMap.get(value)}>{value} </Tag>,
+      render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
     },
     // 目前不支持删除指定server
     // {

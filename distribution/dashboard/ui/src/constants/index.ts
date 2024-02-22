@@ -12,29 +12,29 @@ import zoneOperating from '@/assets/zone/operating.svg';
 import zoneRunning from '@/assets/zone/running.svg';
 
 //统一状态常量和颜色
-const status = ['running', 'deleting', 'operating'];
-const colorMap = new Map([
+const STATUS = ['running', 'deleting', 'operating'];
+const COLOR_MAP = new Map([
   ['running', 'geekblue'],
   ['deleting', 'volcano'],
   ['operating', 'gold'],
   ['creating', 'blue'],
 ]);
-const clusterImgMap = new Map([
+const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
   ['deleting', clusterOperating],
   ['operating', clusterDeleting],
 ]);
-const serverImgMap = new Map([
+const SERVER_IMG_MAP = new Map([
   ['running', serverRunning],
   ['deleting', serverDeleting],
   ['operating', serverOperating],
 ]);
-const zoneImgMap = new Map([
+const ZONE_IMG_MAP = new Map([
   ['running', zoneRunning],
   ['deleting', zoneDeleting],
   ['operating', zoneOperating],
 ]);
-const badgeIMgMap = new Map([
+const BADGE_IMG_MAP = new Map([
   ['running', badgeRunning],
   ['deleting', badgeDeleting],
   ['operating', badgeOperating],
@@ -53,10 +53,10 @@ export {
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
   SUFFIX_UNIT,
-  badgeIMgMap,
-  clusterImgMap,
-  colorMap,
-  serverImgMap,
-  status,
-  zoneImgMap,
+  BADGE_IMG_MAP,
+  CLUSTER_IMG_MAP,
+  COLOR_MAP,
+  SERVER_IMG_MAP,
+  STATUS,
+  ZONE_IMG_MAP,
 };

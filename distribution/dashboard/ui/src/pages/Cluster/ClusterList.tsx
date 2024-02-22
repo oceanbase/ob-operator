@@ -5,7 +5,7 @@ import { Link } from '@umijs/max';
 import { Button, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
-import { colorMap } from '@/constants';
+import { COLOR_MAP } from '@/constants';
 import { useEffect } from 'react';
 import styles from './index.less';
 interface DataType {
@@ -117,7 +117,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value) => <Tag color={colorMap.get(value)}>{value} </Tag>,
+    render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
   },
   {
     title: intl.formatMessage({
