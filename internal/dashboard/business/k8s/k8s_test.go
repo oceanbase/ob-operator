@@ -1,36 +1,37 @@
 package k8s
 
 import (
-	"testing"
-
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-func TestListEvents(t *testing.T) {
-	events, err := ListEvents(&param.QueryEventParam{
-		ObjectType: "Pod",
-		Type:       "Normal",
-		Namespace:  "kube-system",
+var _ = Describe("K8s", func() {
+	It("Test ListEvents", func() {
+		events, err := ListEvents(&param.QueryEventParam{
+			ObjectType: "Pod",
+			Type:       "Normal",
+			Namespace:  "kube-system",
+		})
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(events).ShouldNot(BeNil())
 	})
-	assert.Nil(t, err)
-	assert.NotNil(t, events)
-}
 
-func TestListNamespaces(t *testing.T) {
-	namespaces, err := ListNamespaces()
-	assert.Nil(t, err)
-	assert.NotNil(t, namespaces)
-}
+	It("Test ListNamespaces", func() {
+		namespaces, err := ListNamespaces()
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(namespaces).ShouldNot(BeNil())
+	})
 
-func TestListNodes(t *testing.T) {
-	nodes, err := ListNodes()
-	assert.Nil(t, err)
-	assert.NotNil(t, nodes)
-}
+	It("Test ListNodes", func() {
+		nodes, err := ListNodes()
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(nodes).ShouldNot(BeNil())
+	})
 
-func TestListStorageClasses(t *testing.T) {
-	scs, err := ListStorageClasses()
-	assert.Nil(t, err)
-	assert.NotNil(t, scs)
-}
+	It("Test ListStorageClasses", func() {
+		scs, err := ListStorageClasses()
+		Expect(err).ShouldNot(HaveOccurred())
+		Expect(scs).ShouldNot(BeNil())
+	})
+})
