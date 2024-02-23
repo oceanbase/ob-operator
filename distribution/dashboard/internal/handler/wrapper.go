@@ -27,7 +27,7 @@ func Wrap[T any](h Handler[T]) gin.HandlerFunc {
 		statusCode := http.StatusOK
 		var errMsg string
 		if err != nil {
-			if obe := err.(errors.ObError); obe != nil {
+			if obe, ok := err.(errors.ObError); ok && obe != nil {
 				statusCode = obe.Status()
 			} else {
 				statusCode = http.StatusInternalServerError

@@ -43,6 +43,17 @@ func ListAllTenants(c *gin.Context) ([]*response.OBTenantBrief, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	if len(tenants) == 0 && c.Query("obcluster") != "" {
+		allTenants, err := oceanbase.ListAllOBTenants(c, metav1.ListOptions{})
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+		for i := range allTenants {
+			if allTenants[i].ClusterName == c.Query("obcluster") {
+				tenants = append(tenants, allTenants[i])
+			}
+		}
+	}
 	return tenants, nil
 }
 
