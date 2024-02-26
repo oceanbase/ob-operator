@@ -1,4 +1,4 @@
-name: build ob-operator
+name: build images
 
 on:
   pull_request:
@@ -28,4 +28,7 @@ jobs:
         run: go mod vendor
 
       - name: go build ob-operator
-        run: go build -o bin/manager cmd/main.go
+        run: go build -o bin/manager cmd/operator/main.go
+      
+      - name: go build oceanbase-dashboard
+        run: go build -o bin/oceanbase-dashboard cmd/dashboard/main.go
