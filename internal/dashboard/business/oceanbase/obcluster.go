@@ -8,6 +8,11 @@ import (
 	logger "github.com/sirupsen/logrus"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
@@ -17,10 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/oceanbase"
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -118,7 +119,7 @@ func ListOBClusters(ctx context.Context) ([]response.OBCluster, error) {
 	for _, obcluster := range obclusterList.Items {
 		resp, err := buildOBClusterResponse(ctx, &obcluster)
 		if err != nil {
-			// TODO: add log here
+			logger.Errorf("failed to build obcluster response: %v", err)
 		}
 		obclusters = append(obclusters, *resp)
 	}
@@ -367,7 +368,7 @@ func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic,
 		statisticStatus := getStatisticStatus(&obcluster)
 		cnt, found := statusMap[statisticStatus]
 		if found {
-			cnt = cnt + 1
+			cnt++
 		} else {
 			cnt = 1
 		}

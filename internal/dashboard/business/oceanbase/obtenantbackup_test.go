@@ -1,11 +1,11 @@
 package oceanbase
 
 import (
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 var _ = Describe("OBTenantBackup", func() {

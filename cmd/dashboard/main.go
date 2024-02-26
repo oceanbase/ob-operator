@@ -3,9 +3,10 @@ package main
 import (
 	"os"
 
+	logger "github.com/sirupsen/logrus"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/server"
 	"github.com/oceanbase/ob-operator/pkg/log"
-	logger "github.com/sirupsen/logrus"
 )
 
 func init() {
@@ -34,14 +35,14 @@ func init() {
 // @in header
 // @name Cookie
 func main() {
-	HTTPServer := server.NewHTTPServer()
-	err := HTTPServer.RegisterRouter()
+	httpServer := server.NewHTTPServer()
+	err := httpServer.RegisterRouter()
 	if err != nil {
 		logger.WithError(err).Errorln("Register router failed")
 		os.Exit(1)
 	}
 	logger.Info("Successfully registered router")
-	err = HTTPServer.Run()
+	err = httpServer.Run()
 	if err != nil {
 		logger.WithError(err).Errorln("Start server failed")
 		os.Exit(1)

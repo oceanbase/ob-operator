@@ -6,10 +6,10 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 	"github.com/oceanbase/ob-operator/internal/store"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // authentication

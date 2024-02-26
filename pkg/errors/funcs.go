@@ -9,7 +9,7 @@ func New(errType ErrorType, message string) ObError {
 	}
 }
 
-func Newf(errType ErrorType, format string, args ...interface{}) ObError {
+func Newf(errType ErrorType, format string, args ...any) ObError {
 	return New(errType, fmt.Sprintf(format, args...))
 }
 
@@ -17,6 +17,6 @@ func Wrap(err error, errType ErrorType, message string) ObError {
 	return New(errType, message).Wrap(err)
 }
 
-func Wrapf(err error, errType ErrorType, format string, args ...interface{}) ObError {
+func Wrapf(err error, errType ErrorType, format string, args ...any) ObError {
 	return Wrap(err, errType, fmt.Sprintf(format, args...))
 }

@@ -4,9 +4,14 @@ import (
 	"context"
 	"errors"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -14,12 +19,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam) (*v1alpha1.OBTenant, error) {
@@ -283,7 +282,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ListAllOBTenants(ctx context.Context, listOptions metav1.ListOptions) ([]*response.OBTenantBrief, error) {
+func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*response.OBTenantBrief, error) {
 	tenantList, err := oceanbase.ListAllOBTenants(ctx, listOptions)
 	if err != nil {
 		return nil, err
@@ -325,6 +324,9 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 			"password": rootPassword,
 		},
 	}, v1.CreateOptions{})
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
 
 	changePwdOp := v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{

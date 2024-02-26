@@ -8,16 +8,16 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	v1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 	"github.com/oceanbase/ob-operator/internal/store"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-
-	v1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // @ID Login
@@ -41,9 +41,8 @@ func Login(c *gin.Context) (string, error) {
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return "", httpErr.NewBadRequest(err.Error())
-		} else {
-			return "", httpErr.NewInternal(err.Error())
 		}
+		return "", httpErr.NewInternal(err.Error())
 	}
 	fetchedPwdRaw, exist := credentials.Data[loginParams.Username]
 	if !exist {

@@ -5,9 +5,10 @@ import (
 
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/errors"
-	logger "github.com/sirupsen/logrus"
 )
 
 type Handler[T any] func(c *gin.Context) (T, error)

@@ -4,16 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
-	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 const (
@@ -134,6 +135,9 @@ func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		return nil, errors.Wrap(err, "List obzones")
 	}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &obzoneList)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured to obzone list")
+	}
 	return &obzoneList, nil
 }
 
@@ -148,5 +152,8 @@ func ListOBServersOfOBZone(ctx context.Context, obzone *v1alpha1.OBZone) (*v1alp
 		return nil, errors.Wrap(err, "List observers")
 	}
 	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &observerList)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured to observer list")
+	}
 	return &observerList, nil
 }

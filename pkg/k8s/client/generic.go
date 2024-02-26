@@ -69,7 +69,7 @@ func (c dynamicResourceClient[T]) Get(ctx context.Context, namespace, name strin
 
 func (c dynamicResourceClient[T]) Create(ctx context.Context, obj T, opts v1.CreateOptions) (T, error) {
 	if obj.GetName() == "" {
-		return *new(T), errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
+		return *new(T), fmt.Errorf("the name of %s is empty", c.kind)
 	}
 	objMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
@@ -93,7 +93,7 @@ func (c dynamicResourceClient[T]) Create(ctx context.Context, obj T, opts v1.Cre
 
 func (c dynamicResourceClient[T]) Update(ctx context.Context, obj T, opts v1.UpdateOptions) (T, error) {
 	if obj.GetName() == "" {
-		return *new(T), errors.New(fmt.Sprintf("the name of %s is empty", c.kind))
+		return *new(T), fmt.Errorf("the name of %s is empty", c.kind)
 	}
 	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {

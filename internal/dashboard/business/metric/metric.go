@@ -10,6 +10,10 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/pkg/errors"
+	logger "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
 	"github.com/oceanbase/ob-operator/internal/bindata"
 	bizcommon "github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	bizconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
@@ -18,9 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/external"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/pkg/errors"
-	logger "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 )
 
 var metricExprConfig map[string]string

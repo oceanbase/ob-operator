@@ -3,9 +3,10 @@ package resource
 import (
 	"context"
 
-	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 func ListAllPods() (*corev1.PodList, error) {

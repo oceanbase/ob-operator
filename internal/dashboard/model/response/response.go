@@ -1,7 +1,7 @@
 package response
 
 type APIResponse struct {
-	Data       interface{} `json:"data"`
-	Message    string      `json:"message"`
-	Successful bool        `json:"successful"`
+	Data       any    `json:"data"`
+	Message    string `json:"message"`
+	Successful bool   `json:"successful"`
 }

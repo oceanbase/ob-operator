@@ -105,11 +105,11 @@ func extractNodeResource(node *corev1.Node) *response.K8sNodeResource {
 			for _, container := range pod.Spec.Containers {
 				cpuRequest, found := container.Resources.Requests[ResourceCpu]
 				if found {
-					cpuRequested = cpuRequested + cpuRequest.AsApproximateFloat64()
+					cpuRequested += cpuRequest.AsApproximateFloat64()
 				}
 				memoryRequest, found := container.Resources.Requests[ResourceMemory]
 				if found {
-					memoryRequested = memoryRequested + memoryRequest.AsApproximateFloat64()/constant.GB
+					memoryRequested += memoryRequest.AsApproximateFloat64() / constant.GB
 				}
 			}
 		}
@@ -202,7 +202,6 @@ func ListNodes() ([]response.K8sNode, error) {
 				Resource: extractNodeResource(&node),
 			})
 		}
-
 	}
 	return nodes, err
 }
@@ -235,7 +234,6 @@ func ListStorageClasses() ([]response.StorageClass, error) {
 				MountOptions:         storageClass.MountOptions,
 			})
 		}
-
 	}
 	return storageClasses, err
 }

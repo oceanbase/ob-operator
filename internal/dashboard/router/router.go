@@ -61,7 +61,6 @@ func InitRoutes(router *gin.Engine) {
 	v1.InitK8sRoutes(v1Group)
 	v1.InitMetricRoutes(v1Group)
 	v1.InitOBClusterRoutes(v1Group)
-	v1.InitOBZoneRoutes(v1Group)
 	v1.InitUserRoutes(v1Group)
 	v1.InitOBTenantRoutes(v1Group)
 }

@@ -24,7 +24,7 @@ var (
 // @Success 200 object response.APIResponse{data=response.DashboardInfo}
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/info [GET]
-func GetProcessInfo(c *gin.Context) (*response.DashboardInfo, error) {
+func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 	pubBytes, err := crypto.PublicKeyToBytes()
 	if err != nil {
 		return nil, err

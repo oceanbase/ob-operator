@@ -1,9 +1,10 @@
 package k8s
 
 import (
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 var _ = Describe("K8s", func() {

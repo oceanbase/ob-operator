@@ -38,7 +38,7 @@ type ScheduleDate struct {
 
 type UpdateBackupPolicy struct {
 	// Enum: PAUSED, RUNNING
-	Status string `json:"status,omitempty" exmaple:"PAUSED"`
+	Status string `json:"status,omitempty" example:"PAUSED"`
 
 	ScheduleBase `json:",inline,omitempty"`
 

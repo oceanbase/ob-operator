@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -49,7 +50,7 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/nodes [GET]
 // @Security ApiKeyAuth
-func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
+func ListK8sNodes(_ *gin.Context) ([]response.K8sNode, error) {
 	nodes, err := k8s.ListNodes()
 	if err != nil {
 		return nil, err
@@ -69,7 +70,7 @@ func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/namespaces [GET]
 // @Security ApiKeyAuth
-func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
+func ListK8sNamespaces(_ *gin.Context) ([]response.Namespace, error) {
 	namespaces, err := k8s.ListNamespaces()
 	if err != nil {
 		return nil, err
@@ -89,7 +90,7 @@ func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/storageClasses [GET]
 // @Security ApiKeyAuth
-func ListK8sStorageClasses(c *gin.Context) ([]response.StorageClass, error) {
+func ListK8sStorageClasses(_ *gin.Context) ([]response.StorageClass, error) {
 	storageClasses, err := k8s.ListStorageClasses()
 	if err != nil {
 		return nil, err

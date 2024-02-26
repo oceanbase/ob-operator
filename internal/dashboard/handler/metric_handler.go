@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/metric"
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"

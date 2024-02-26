@@ -391,7 +391,7 @@ func (r *OBCluster) validateStorageClassAllowExpansion(storageClassName string) 
 		return err
 	}
 	if sc.AllowVolumeExpansion == nil || !*sc.AllowVolumeExpansion {
-		return errors.New(fmt.Sprintf("storage class %s does not allow volume expansion", storageClassName))
+		return fmt.Errorf("storage class %s does not allow volume expansion", storageClassName)
 	}
 	return nil
 }

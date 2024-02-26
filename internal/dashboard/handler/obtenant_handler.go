@@ -6,16 +6,15 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	logger "github.com/sirupsen/logrus"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // @ID ListAllTenants
@@ -134,7 +133,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteTenant(c *gin.Context) (interface{}, error) {
+func DeleteTenant(c *gin.Context) (any, error) {
 	nn := &param.NamespacedName{}
 	err := c.BindUri(nn)
 	if err != nil {

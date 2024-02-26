@@ -56,7 +56,7 @@ $(GOLANGCI_LINT):
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run linting.
-	$(GOLANGCI_LINT) run -v --timeout=10m
+	$(GOLANGCI_LINT) run -v --timeout=10m --max-same-issues=1000
 
 .PHONY: commit-hook
 commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
