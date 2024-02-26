@@ -87,6 +87,7 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 func (r *OBZoneReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBZone{}).
+		Owns(&v1alpha1.OBServer{}).
 		WithEventFilter(preds).
 		Complete(r)
 }

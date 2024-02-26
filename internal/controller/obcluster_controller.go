@@ -97,6 +97,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *OBClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBCluster{}).
+		Owns(&v1alpha1.OBZone{}).Owns(&v1alpha1.OBParameter{}).
 		WithEventFilter(preds).
 		Complete(r)
 }
