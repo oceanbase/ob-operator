@@ -2402,7 +2402,7 @@ const docTemplate = `{
                     "type": "string",
                     "example": "NFS"
                 },
-                "jobKeepWindow": {
+                "jobKeepDays": {
                     "type": "integer",
                     "example": 5
                 },
@@ -2414,11 +2414,11 @@ const docTemplate = `{
                     "type": "string",
                     "example": "encryptedPassword"
                 },
-                "pieceInterval": {
+                "pieceIntervalDays": {
                     "type": "integer",
                     "example": 1
                 },
-                "recoveryWindow": {
+                "recoveryDays": {
                     "type": "integer",
                     "example": 3
                 },
@@ -2951,7 +2951,7 @@ const docTemplate = `{
                     "type": "string",
                     "example": "NFS"
                 },
-                "jobKeepWindow": {
+                "jobKeepDays": {
                     "type": "integer",
                     "example": 5
                 },
@@ -2964,11 +2964,11 @@ const docTemplate = `{
                 "ossAccessSecret": {
                     "type": "string"
                 },
-                "pieceInterval": {
+                "pieceIntervalDays": {
                     "type": "integer",
                     "example": 1
                 },
-                "recoveryWindow": {
+                "recoveryDays": {
                     "type": "integer",
                     "example": 3
                 },

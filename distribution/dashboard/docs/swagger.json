@@ -2395,7 +2395,7 @@
                     "type": "string",
                     "example": "NFS"
                 },
-                "jobKeepWindow": {
+                "jobKeepDays": {
                     "type": "integer",
                     "example": 5
                 },
@@ -2407,11 +2407,11 @@
                     "type": "string",
                     "example": "encryptedPassword"
                 },
-                "pieceInterval": {
+                "pieceIntervalDays": {
                     "type": "integer",
                     "example": 1
                 },
-                "recoveryWindow": {
+                "recoveryDays": {
                     "type": "integer",
                     "example": 3
                 },
@@ -2944,7 +2944,7 @@
                     "type": "string",
                     "example": "NFS"
                 },
-                "jobKeepWindow": {
+                "jobKeepDays": {
                     "type": "integer",
                     "example": 5
                 },
@@ -2957,11 +2957,11 @@
                 "ossAccessSecret": {
                     "type": "string"
                 },
-                "pieceInterval": {
+                "pieceIntervalDays": {
                     "type": "integer",
                     "example": 1
                 },
-                "recoveryWindow": {
+                "recoveryDays": {
                     "type": "integer",
                     "example": 3
                 },

@@ -53,7 +53,7 @@ definitions:
         description: 'Enum: NFS, OSS'
         example: NFS
         type: string
-      jobKeepWindow:
+      jobKeepDays:
         example: 5
         type: integer
       ossAccessId:
@@ -62,10 +62,10 @@ definitions:
       ossAccessKey:
         example: encryptedPassword
         type: string
-      pieceInterval:
+      pieceIntervalDays:
         example: 1
         type: integer
-      recoveryWindow:
+      recoveryDays:
         example: 3
         type: integer
       scheduleDates:
@@ -430,7 +430,7 @@ definitions:
         description: 'Enum: NFS, OSS'
         example: NFS
         type: string
-      jobKeepWindow:
+      jobKeepDays:
         example: 5
         type: integer
       name:
@@ -439,10 +439,10 @@ definitions:
         type: string
       ossAccessSecret:
         type: string
-      pieceInterval:
+      pieceIntervalDays:
         example: 1
         type: integer
-      recoveryWindow:
+      recoveryDays:
         example: 3
         type: integer
       scheduleDates:

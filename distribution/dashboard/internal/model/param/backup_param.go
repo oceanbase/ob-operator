@@ -17,9 +17,9 @@ type BackupPolicyBase struct {
 
 	ScheduleBase `json:",inline"`
 
-	JobKeepWindow  int `json:"jobKeepWindow,omitempty" example:"5"`
-	RecoveryWindow int `json:"recoveryWindow,omitempty" example:"3"`
-	PieceInterval  int `json:"pieceInterval,omitempty" example:"1"`
+	JobKeepDays       int `json:"jobKeepDays,omitempty" example:"5"`
+	RecoveryDays      int `json:"recoveryDays,omitempty" example:"3"`
+	PieceIntervalDays int `json:"pieceIntervalDays,omitempty" example:"1"`
 }
 
 type CreateBackupPolicy struct {

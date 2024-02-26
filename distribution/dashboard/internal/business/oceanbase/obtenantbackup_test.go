@@ -35,8 +35,8 @@ func TestCreateOBTenantBackupPolicyWeekly(t *testing.T) {
 				ScheduleDates: scheduleDates,
 				ScheduleTime:  "04:00",
 			},
-			JobKeepWindow:  3,
-			RecoveryWindow: 7,
+			JobKeepDays:  3,
+			RecoveryDays: 7,
 		},
 	}
 	policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
@@ -95,8 +95,8 @@ func TestCreateOBTenantBackupPolicyMonthly(t *testing.T) {
 				ScheduleDates: scheduleDates,
 				ScheduleTime:  "04:00",
 			},
-			JobKeepWindow:  3,
-			RecoveryWindow: 7,
+			JobKeepDays:  3,
+			RecoveryDays: 7,
 		},
 	}
 	policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)

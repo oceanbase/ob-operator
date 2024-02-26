@@ -164,7 +164,7 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 		ObClusterName: obcluster,
 		TenantCRName:  nn.Name,
 		TenantName:    nn.Name, // It's tricky to use the deprecated field
-		JobKeepWindow: numberToDay(p.JobKeepWindow),
+		JobKeepWindow: numberToDay(p.JobKeepDays),
 		LogArchive: v1alpha1.LogArchiveConfig{
 			Destination: apitypes.BackupDestination{
 				Path:            p.ArchivePath,
@@ -184,7 +184,7 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 			EncryptionSecret:   "",
 		},
 		DataClean: v1alpha1.CleanPolicy{
-			RecoveryWindow: numberToDay(p.RecoveryWindow),
+			RecoveryWindow: numberToDay(p.RecoveryDays),
 		},
 	}
 
@@ -204,9 +204,9 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 				ScheduleTime:  "",
 				ScheduleDates: []param.ScheduleDate{},
 			},
-			JobKeepWindow:  dayToNumber(p.Spec.JobKeepWindow),
-			RecoveryWindow: dayToNumber(p.Spec.DataClean.RecoveryWindow),
-			PieceInterval:  dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
+			JobKeepDays:       dayToNumber(p.Spec.JobKeepWindow),
+			RecoveryDays:      dayToNumber(p.Spec.DataClean.RecoveryWindow),
+			PieceIntervalDays: dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
 		},
 		TenantName:          p.Spec.TenantCRName,
 		Name:                p.Name,
