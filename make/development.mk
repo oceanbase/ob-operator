@@ -58,6 +58,15 @@ $(GOLANGCI_LINT):
 lint: $(GOLANGCI_LINT) ## Run linting.
 	$(GOLANGCI_LINT) run -v --timeout=10m --max-same-issues=1000
 
+.PHONY: ADD_LICENSE_CHECKER
+ADD_LICENSE_CHECKER ?= $(LOCALBIN)/addlicense
+$(ADD_LICENSE_CHECKER):
+	GOBIN=$(LOCALBIN) go install github.com/google/addlicense@latest
+
+.PHONY: license-check
+license-check: $(ADD_LICENSE_CHECKER) ## Check whether all license headers are present.
+	find . -type f -name "*.go" -not -path "./distribution/*" -not -path "**/generated/*" | xargs addlicense -check
+
 .PHONY: commit-hook
 commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 	touch .git/hooks/pre-commit

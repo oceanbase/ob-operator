@@ -20,9 +20,9 @@ GOFILES ?= $(shell git ls-files '*.go')
 GOTEST_PACKAGES = $(shell go list ./... | grep -v -f tests/excludes.txt)
 UNFMT_FILES ?= $(shell gofmt -l -s $(filter-out , $(GOFILES)))
 
-.PHONY: doc
-doc: dep-install ## Generate swagger docs
-	swag init -g cmd/dashboard/main.go -o internal/dashboard/swagger
+.PHONY: dashboard-doc
+dashboard-doc: dep-install ## Generate swagger docs
+	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
 
 .PHONY: build-dashboard
 build-dashboard: ## Build oceanbase-dashboard
@@ -30,7 +30,7 @@ build-dashboard: ## Build oceanbase-dashboard
 
 .PHONY: gen-bindata
 gen-bindata: ## Generate bindata
-	go-bindata -o internal/bindata/bindata.go -pkg bindata internal/assets/...
+	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
 
 .PHONY: clean
 clean: ## Clean build
