@@ -1325,20 +1325,6 @@ const docTemplate = `{
                 "operationId": "CreateTenant",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "obtenant namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "obtenant name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
                         "description": "create obtenant request body",
                         "name": "body",
                         "in": "body",
@@ -1860,7 +1846,68 @@ const docTemplate = `{
                     }
                 }
             },
-            "post": {
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete backup policy of specific tenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "Delete backup policy of specific tenant",
+                "operationId": "DeleteBackupPolicy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
                 "security": [
                     {
                         "ApiKeyAuth": []
@@ -1920,67 +1967,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
-                        }
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
-                "description": "Delete backup policy of specific tenant",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Obtenant"
-                ],
-                "summary": "Delete backup policy of specific tenant",
-                "operationId": "DeleteBackupPolicy",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "obtenant namespace",
-                        "name": "namespace",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "obtenant name",
-                        "name": "name",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
                         }
                     },
                     "400": {
@@ -2368,30 +2354,26 @@ const docTemplate = `{
         },
         "param.ChangeTenantRole": {
             "type": "object",
-            "required": [
-                "tenantRole"
-            ],
             "properties": {
-                "switchover": {
+                "failover": {
                     "type": "boolean"
                 },
-                "tenantRole": {
-                    "description": "Enum: Primary, Standby",
-                    "type": "string"
+                "switchover": {
+                    "type": "boolean"
                 }
             }
         },
         "param.ChangeUserPassword": {
             "type": "object",
             "required": [
-                "Password",
-                "User"
+                "password",
+                "user"
             ],
             "properties": {
-                "Password": {
+                "password": {
                     "type": "string"
                 },
-                "User": {
+                "user": {
                     "description": "Description: The user name of the database account, only root is supported now.",
                     "type": "string"
                 }
@@ -2400,8 +2382,9 @@ const docTemplate = `{
         "param.CreateBackupPolicy": {
             "type": "object",
             "required": [
-                "destType",
-                "scheduleType"
+                "archivePath",
+                "bakDataPath",
+                "destType"
             ],
             "properties": {
                 "archivePath": {
@@ -2411,26 +2394,33 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "bakEncryptionPassword": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "encryptedPassword"
                 },
                 "destType": {
                     "description": "Enum: NFS, OSS",
-                    "type": "string"
+                    "type": "string",
+                    "example": "NFS"
                 },
-                "jobKeepWindow": {
-                    "type": "string"
+                "jobKeepDays": {
+                    "type": "integer",
+                    "example": 5
                 },
                 "ossAccessId": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "encryptedPassword"
                 },
                 "ossAccessKey": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "encryptedPassword"
                 },
-                "pieceInterval": {
-                    "type": "string"
+                "pieceIntervalDays": {
+                    "type": "integer",
+                    "example": 1
                 },
-                "recoveryWindow": {
-                    "type": "string"
+                "recoveryDays": {
+                    "type": "integer",
+                    "example": 3
                 },
                 "scheduleDates": {
                     "type": "array",
@@ -2439,11 +2429,14 @@ const docTemplate = `{
                     }
                 },
                 "scheduleTime": {
-                    "description": "Description: HH:MM",
-                    "type": "string"
+                    "description": "Description: HH:MM\nExample: 04:00",
+                    "type": "string",
+                    "example": "04:00"
                 },
                 "scheduleType": {
-                    "type": "string"
+                    "description": "Enum: Weekly, Monthly",
+                    "type": "string",
+                    "example": "Weekly"
                 }
             }
         },
@@ -2685,7 +2678,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2712,6 +2706,11 @@ const docTemplate = `{
         },
         "param.RestoreSourceSpec": {
             "type": "object",
+            "required": [
+                "archiveSource",
+                "bakDataSource",
+                "type"
+            ],
             "properties": {
                 "archiveSource": {
                     "type": "string"
@@ -2741,7 +2740,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "timestamp": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2024-02-23 17:47:00"
                 },
                 "unlimited": {
                     "type": "boolean"
@@ -2765,10 +2765,13 @@ const docTemplate = `{
             "properties": {
                 "backupType": {
                     "description": "Enum: Full, Incremental",
-                    "type": "string"
+                    "type": "string",
+                    "example": "Full"
                 },
                 "day": {
-                    "type": "integer"
+                    "description": "Description: 1-31 for monthly, 1-7 for weekly",
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },
@@ -2812,18 +2815,18 @@ const docTemplate = `{
         },
         "param.UpdateBackupPolicy": {
             "type": "object",
-            "required": [
-                "status"
-            ],
             "properties": {
                 "jobKeepWindow": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 5
                 },
                 "pieceInterval": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 1
                 },
                 "recoveryWindow": {
-                    "type": "string"
+                    "type": "integer",
+                    "example": 3
                 },
                 "scheduleDates": {
                     "type": "array",
@@ -2831,12 +2834,18 @@ const docTemplate = `{
                         "$ref": "#/definitions/param.ScheduleDate"
                     }
                 },
+                "scheduleTime": {
+                    "description": "Description: HH:MM\nExample: 04:00",
+                    "type": "string",
+                    "example": "04:00"
+                },
                 "scheduleType": {
                     "description": "Enum: Weekly, Monthly",
-                    "type": "string"
+                    "type": "string",
+                    "example": "Weekly"
                 },
                 "status": {
-                    "description": "Enum: Paused, Running",
+                    "description": "Enum: PAUSED, RUNNING",
                     "type": "string"
                 }
             }
@@ -2923,8 +2932,9 @@ const docTemplate = `{
         "response.BackupPolicy": {
             "type": "object",
             "required": [
-                "destType",
-                "scheduleType"
+                "archivePath",
+                "bakDataPath",
+                "destType"
             ],
             "properties": {
                 "archivePath": {
@@ -2938,10 +2948,12 @@ const docTemplate = `{
                 },
                 "destType": {
                     "description": "Enum: NFS, OSS",
-                    "type": "string"
+                    "type": "string",
+                    "example": "NFS"
                 },
-                "jobKeepWindow": {
-                    "type": "string"
+                "jobKeepDays": {
+                    "type": "integer",
+                    "example": 5
                 },
                 "name": {
                     "type": "string"
@@ -2952,11 +2964,13 @@ const docTemplate = `{
                 "ossAccessSecret": {
                     "type": "string"
                 },
-                "pieceInterval": {
-                    "type": "string"
+                "pieceIntervalDays": {
+                    "type": "integer",
+                    "example": 1
                 },
-                "recoveryWindow": {
-                    "type": "string"
+                "recoveryDays": {
+                    "type": "integer",
+                    "example": 3
                 },
                 "scheduleDates": {
                     "type": "array",
@@ -2965,11 +2979,14 @@ const docTemplate = `{
                     }
                 },
                 "scheduleTime": {
-                    "description": "Description: HH:MM",
-                    "type": "string"
+                    "description": "Description: HH:MM\nExample: 04:00",
+                    "type": "string",
+                    "example": "04:00"
                 },
                 "scheduleType": {
-                    "type": "string"
+                    "description": "Enum: Weekly, Monthly",
+                    "type": "string",
+                    "example": "Weekly"
                 },
                 "status": {
                     "type": "string"

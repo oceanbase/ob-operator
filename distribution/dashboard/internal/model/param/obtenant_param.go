@@ -34,9 +34,9 @@ type TenantSourceSpec struct {
 
 type RestoreSourceSpec struct {
 	// Enum: OSS, NFS
-	Type          BackupDestType `json:"type"`
-	ArchiveSource string         `json:"archiveSource"`
-	BakDataSource string         `json:"bakDataSource"`
+	Type          BackupDestType `json:"type" binding:"required"`
+	ArchiveSource string         `json:"archiveSource" binding:"required"`
+	BakDataSource string         `json:"bakDataSource" binding:"required"`
 	OSSAccessID   string         `json:"ossAccessId,omitempty"`
 	OSSAccessKey  string         `json:"ossAccessKey,omitempty"`
 
@@ -54,26 +54,21 @@ type UnitConfig struct {
 }
 
 type RestoreUntilConfig struct {
-	Timestamp *string `json:"timestamp,omitempty"`
+	Timestamp *string `json:"timestamp,omitempty" example:"2024-02-23 17:47:00"`
 	Unlimited bool    `json:"unlimited,omitempty"`
-}
-
-type ModifyUnitNumber struct {
-	UnitNumber int `json:"unitNum" binding:"required"`
 }
 
 type ChangeUserPassword struct {
 	// Description: The user name of the database account, only root is supported now.
-	User     string `json:"User" binding:"required"`
-	Password string `json:"Password" binding:"required"`
+	User     string `json:"user" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type ReplayStandbyLog RestoreUntilConfig
 
 type ChangeTenantRole struct {
-	// Enum: Primary, Standby
-	TenantRole TenantRole `json:"tenantRole" binding:"required"`
-	Switchover bool       `json:"switchover,omitempty"`
+	Failover   bool `json:"failover,omitempty"`
+	Switchover bool `json:"switchover,omitempty"`
 }
 
 type PatchUnitConfig struct {

@@ -27,14 +27,16 @@ func TestCreateOBTenantBackupPolicyWeekly(t *testing.T) {
 	}}
 	p := param.CreateBackupPolicy{
 		BackupPolicyBase: param.BackupPolicyBase{
-			DestType:       "NFS",
-			ArchivePath:    "archive/t1",
-			BakDataPath:    "backup/t1",
-			ScheduleType:   "Weekly",
-			ScheduleDates:  scheduleDates,
-			ScheduleTime:   "04:00",
-			JobKeepWindow:  "3d",
-			RecoveryWindow: "7d",
+			DestType:    "NFS",
+			ArchivePath: "archive/t1",
+			BakDataPath: "backup/t1",
+			ScheduleBase: param.ScheduleBase{
+				ScheduleType:  "Weekly",
+				ScheduleDates: scheduleDates,
+				ScheduleTime:  "04:00",
+			},
+			JobKeepDays:  3,
+			RecoveryDays: 7,
 		},
 	}
 	policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
@@ -85,14 +87,16 @@ func TestCreateOBTenantBackupPolicyMonthly(t *testing.T) {
 	}}
 	p := param.CreateBackupPolicy{
 		BackupPolicyBase: param.BackupPolicyBase{
-			DestType:       "NFS",
-			ArchivePath:    "archive/t1",
-			BakDataPath:    "backup/t1",
-			ScheduleType:   "Monthly",
-			ScheduleDates:  scheduleDates,
-			ScheduleTime:   "04:00",
-			JobKeepWindow:  "3d",
-			RecoveryWindow: "7d",
+			DestType:    "NFS",
+			ArchivePath: "archive/t1",
+			BakDataPath: "backup/t1",
+			ScheduleBase: param.ScheduleBase{
+				ScheduleType:  "Monthly",
+				ScheduleDates: scheduleDates,
+				ScheduleTime:  "04:00",
+			},
+			JobKeepDays:  3,
+			RecoveryDays: 7,
 		},
 	}
 	policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)

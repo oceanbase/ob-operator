@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/oceanbase-dashboard/internal/business/oceanbase"
@@ -41,6 +42,17 @@ func ListAllTenants(c *gin.Context) ([]*response.OBTenantBrief, error) {
 	tenants, err := oceanbase.ListAllOBTenants(c, listOptions)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
+	}
+	if len(tenants) == 0 && c.Query("obcluster") != "" {
+		allTenants, err := oceanbase.ListAllOBTenants(c, metav1.ListOptions{})
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+		for i := range allTenants {
+			if allTenants[i].ClusterName == c.Query("obcluster") {
+				tenants = append(tenants, allTenants[i])
+			}
+		}
 	}
 	return tenants, nil
 }
@@ -84,8 +96,6 @@ func GetTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 // @Description Create an obtenant in a specific namespace, passwords should be encrypted by AES
 // @Accept application/json
 // @Produce application/json
-// @Param namespace path string true "obtenant namespace"
-// @Param name path string true "obtenant name"
 // @Param body body param.CreateOBTenantParam true "create obtenant request body"
 // @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
@@ -101,8 +111,8 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	}
 	logger.Infof("Create obtenant: %+v", tenantParam)
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
-		Namespace: tenantParam.Name,
-		Name:      tenantParam.Namespace,
+		Namespace: tenantParam.Namespace,
+		Name:      tenantParam.Name,
 	}, tenantParam)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
@@ -141,54 +151,6 @@ func DeleteTenant(c *gin.Context) (interface{}, error) {
 		return nil, httpErr.NewInternal(err.Error())
 	}
 	return nil, nil
-}
-
-// @Deprecated: use PatchTenant instead
-func ModifyUnitNumber(c *gin.Context) (*response.OBTenantDetail, error) {
-	nn := &param.NamespacedName{}
-	err := c.BindUri(nn)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	unitNumberParam := &param.ModifyUnitNumber{}
-	err = c.BindJSON(unitNumberParam)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	tenant, err := oceanbase.ModifyOBTenantUnitNumber(c, types.NamespacedName{
-		Namespace: nn.Namespace,
-		Name:      nn.Name,
-	}, unitNumberParam.UnitNumber)
-	if err != nil {
-		return nil, httpErr.NewInternal(err.Error())
-	}
-	return tenant, nil
-}
-
-// @Deprecated: use PatchTenant instead
-func ModifyUnitConfig(c *gin.Context) (*response.OBTenantDetail, error) {
-	nn := struct {
-		Name      string `uri:"name"`
-		Namespace string `uri:"namespace"`
-		Zone      string `uri:"zone"`
-	}{}
-	err := c.BindUri(&nn)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	unitConfig := param.UnitConfig{}
-	err = c.BindJSON(&unitConfig)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	tenant, err := oceanbase.ModifyOBTenantUnitConfig(c, types.NamespacedName{
-		Namespace: nn.Namespace,
-		Name:      nn.Name,
-	}, nn.Zone, &unitConfig)
-	if err != nil {
-		return nil, httpErr.NewInternal(err.Error())
-	}
-	return tenant, nil
 }
 
 // @ID PatchTenant
@@ -296,13 +258,13 @@ func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	if logReplayParam.Timestamp == nil {
-		return nil, httpErr.NewBadRequest("timestamp is required")
+	if !logReplayParam.Unlimited && logReplayParam.Timestamp == nil {
+		return nil, httpErr.NewBadRequest("timestamp is required if the restore is limited")
 	}
 	tenant, err := oceanbase.ReplayStandbyLog(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
-	}, *logReplayParam.Timestamp)
+	}, logReplayParam)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -365,6 +327,9 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	if !p.Failover != p.Switchover {
+		return nil, httpErr.NewBadRequest("one and only one of failover and switchover can be true")
+	}
 	tenant, err := oceanbase.ChangeTenantRole(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -424,7 +389,7 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
 // @Param body body param.UpdateBackupPolicy true "update backup policy request body"
-// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [POST]
+// @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [PATCH]
 // @Security ApiKeyAuth
 func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	nn := &param.NamespacedName{}
@@ -533,6 +498,7 @@ func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	p.Type = strings.ToUpper(p.Type)
 	limit := 10
 	if c.Query("limit") != "" {
 		limit, err = strconv.Atoi(c.Query("limit"))

@@ -1,43 +1,48 @@
 package param
 
-type BackupPolicyBase struct {
-	// Enum: NFS, OSS
-	DestType    BackupDestType `json:"destType" binding:"required"`
-	ArchivePath string         `json:"archivePath"`
-	BakDataPath string         `json:"bakDataPath"`
-
-	ScheduleType  string         `json:"scheduleType" binding:"required"`
+type ScheduleBase struct {
+	// Enum: Weekly, Monthly
+	ScheduleType  string         `json:"scheduleType" example:"Weekly"`
 	ScheduleDates []ScheduleDate `json:"scheduleDates"`
 	// Description: HH:MM
-	ScheduleTime string `json:"scheduleTime,omitempty"`
+	// Example: 04:00
+	ScheduleTime string `json:"scheduleTime" example:"04:00"`
+}
 
-	JobKeepWindow  string `json:"jobKeepWindow,omitempty"`
-	RecoveryWindow string `json:"recoveryWindow,omitempty"`
-	PieceInterval  string `json:"pieceInterval,omitempty"`
+type BackupPolicyBase struct {
+	// Enum: NFS, OSS
+	DestType    BackupDestType `json:"destType" binding:"required" example:"NFS"`
+	ArchivePath string         `json:"archivePath" binding:"required"`
+	BakDataPath string         `json:"bakDataPath" binding:"required"`
+
+	ScheduleBase `json:",inline"`
+
+	JobKeepDays       int `json:"jobKeepDays,omitempty" example:"5"`
+	RecoveryDays      int `json:"recoveryDays,omitempty" example:"3"`
+	PieceIntervalDays int `json:"pieceIntervalDays,omitempty" example:"1"`
 }
 
 type CreateBackupPolicy struct {
 	BackupPolicyBase      `json:",inline"`
-	OSSAccessID           string `json:"ossAccessId,omitempty"`
-	OSSAccessKey          string `json:"ossAccessKey,omitempty"`
-	BakEncryptionPassword string `json:"bakEncryptionPassword,omitempty"`
+	OSSAccessID           string `json:"ossAccessId,omitempty" example:"encryptedPassword"`
+	OSSAccessKey          string `json:"ossAccessKey,omitempty" example:"encryptedPassword"`
+	BakEncryptionPassword string `json:"bakEncryptionPassword,omitempty" example:"encryptedPassword"`
 }
 
 type ScheduleDate struct {
-	Day int `json:"day" binding:"required"`
+	// Description: 1-31 for monthly, 1-7 for weekly
+	Day int `json:"day" binding:"required" example:"3"`
 	// Enum: Full, Incremental
-	BackupType string `json:"backupType" binding:"required"`
+	BackupType string `json:"backupType" binding:"required" example:"Full"`
 }
 
 type UpdateBackupPolicy struct {
-	// Enum: Paused, Running
-	Status string `json:"status" binding:"required"`
+	// Enum: PAUSED, RUNNING
+	Status string `json:"status,omitempty" exmaple:"PAUSED"`
 
-	// Enum: Weekly, Monthly
-	ScheduleType  string         `json:"scheduleType,omitempty"`
-	ScheduleDates []ScheduleDate `json:"scheduleDates,omitempty"`
+	ScheduleBase `json:",inline,omitempty"`
 
-	JobKeepWindow  string `json:"jobKeepWindow,omitempty"`
-	RecoveryWindow string `json:"recoveryWindow,omitempty"`
-	PieceInterval  string `json:"pieceInterval,omitempty"`
+	JobKeepWindow  int `json:"jobKeepWindow,omitempty" example:"5"`
+	RecoveryWindow int `json:"recoveryWindow,omitempty" example:"3"`
+	PieceInterval  int `json:"pieceInterval,omitempty" example:"1"`
 }
