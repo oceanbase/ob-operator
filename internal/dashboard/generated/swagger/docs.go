@@ -2846,7 +2846,8 @@ const docTemplate = `{
                 },
                 "status": {
                     "description": "Enum: PAUSED, RUNNING",
-                    "type": "string"
+                    "type": "string",
+                    "example": "PAUSED"
                 }
             }
         },

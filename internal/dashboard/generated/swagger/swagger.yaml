@@ -363,6 +363,7 @@ definitions:
         type: string
       status:
         description: 'Enum: PAUSED, RUNNING'
+        example: PAUSED
         type: string
     type: object
   param.UpgradeOBClusterParam:

@@ -94,7 +94,7 @@ func internalAssetsMetric_en_usYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21510, mode: os.FileMode(420), modTime: time.Unix(1708486292, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21510, mode: os.FileMode(420), modTime: time.Unix(1708935041, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -114,7 +114,7 @@ func internalAssetsMetric_exprYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1705048368, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1708935041, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -134,7 +134,7 @@ func internalAssetsMetric_zh_cnYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25073, mode: os.FileMode(420), modTime: time.Unix(1705048368, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25073, mode: os.FileMode(420), modTime: time.Unix(1708935041, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -200,13 +200,11 @@ var _bindata = map[string]func() (*asset, error){
 // directory embedded in the file by go-bindata.
 // For example if you run go-bindata on data/... and data contains the
 // following hierarchy:
-//
-//	data/
-//	  foo.txt
-//	  img/
-//	    a.png
-//	    b.png
-//
+//     data/
+//       foo.txt
+//       img/
+//         a.png
+//         b.png
 // then AssetDir("data") would return []string{"foo.txt", "img"}
 // AssetDir("data/img") would return []string{"a.png", "b.png"}
 // AssetDir("foo.txt") and AssetDir("notexist") would return an error
