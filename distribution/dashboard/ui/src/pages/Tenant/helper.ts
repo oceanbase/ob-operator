@@ -1,4 +1,4 @@
-import { encryptText } from '@/hook/usePublicKey';
+// import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
 import { clone } from 'lodash';
 
@@ -47,8 +47,8 @@ export function formatNewTenantForm(
         let { until } = originFormData[key]['restore'];
         result[key]['restore'] = {
           ...originFormData[key]['restore'],
-          ossAccessId:originFormData[key]['restore'].ossAccessId,
-          ossAccessKey:originFormData[key]['restore'].ossAccessKey,
+          ossAccessId: originFormData[key]['restore'].ossAccessId,
+          ossAccessKey: originFormData[key]['restore'].ossAccessKey,
           // ossAccessId: encryptText(
           //   originFormData[key]['restore'].ossAccessId,
           //   publicKey,
@@ -68,7 +68,8 @@ export function formatNewTenantForm(
               : { unlimited: true },
         };
         if (originFormData[key]['restore'].bakEncryptionPassword) {
-          result[key]['restore']['bakEncryptionPassword'] = originFormData[key]['restore'].bakEncryptionPassword
+          result[key]['restore']['bakEncryptionPassword'] =
+            originFormData[key]['restore'].bakEncryptionPassword;
           // result[key]['restore']['bakEncryptionPassword'] = encryptText(
           //   originFormData[key]['restore'].bakEncryptionPassword,
           //   publicKey,
@@ -93,7 +94,7 @@ export function formatNewTenantForm(
  *
  * format scheduleDates
  */
-export function formatNewBackupForm(originFormData: any, publicKey: string) {
+export function formatBackupForm(originFormData: any, publicKey?: string) {
   let formData = clone(originFormData);
   if (formData.bakEncryptionPassword) {
     formData.bakEncryptionPassword = originFormData.bakEncryptionPassword;
@@ -102,11 +103,12 @@ export function formatNewBackupForm(originFormData: any, publicKey: string) {
     //   publicKey,
     // );
   }
-  formData.ossAccessId = originFormData.ossAccessId;
-  formData.ossAccessKey = originFormData.ossAccessKey;
+  if (formData.ossAccessId) formData.ossAccessId = originFormData.ossAccessId;
+  if (formData.ossAccessKey)
+    formData.ossAccessKey = originFormData.ossAccessKey;
   // formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
   // formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
-  formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:MM');
+  formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:mm');
   formData.scheduleType = formData.scheduleDates.mode;
   delete formData.scheduleDates.days;
   delete formData.scheduleDates.mode;
@@ -117,3 +119,47 @@ export function formatNewBackupForm(originFormData: any, publicKey: string) {
   return formData;
 }
 
+export function formatBackupPolicyData(backupPolicy: API.BackupPolicy) {
+  if (!backupPolicy) return;
+  let result: any = {};
+  result.days = backupPolicy.scheduleDates.map((item) => item.day);
+  result.mode = backupPolicy.scheduleType;
+  result.days.forEach((day, index) => {
+    result[day] = backupPolicy.scheduleDates[index].backupType;
+  });
+  return result;
+}
+
+function checkDateIsSame(
+  preDates: API.ScheduleDatesType,
+  curDates: API.ScheduleDatesType,
+): boolean {
+  if (preDates.length !== curDates.length) return false;
+  for (let preDate of preDates) {
+    let targetItem = curDates.find((curDate) => curDate.day === preDate.day);
+    if (!targetItem) return false;
+    if (targetItem.backupType !== preDate.backupType) return false;
+  }
+  return true;
+}
+
+export function checkIsSame(
+  preData: API.BackupPolicy,
+  curData: API.BackupConfigEditable,
+): boolean {
+  for (let key of Object.keys(curData)) {
+    if (key === 'scheduleDates') {
+      if (
+        !checkDateIsSame(preData['scheduleDates'], curData['scheduleDates'])
+      ) {
+        return false;
+      }
+    } else {
+      if (curData[key] !== preData[key]) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}

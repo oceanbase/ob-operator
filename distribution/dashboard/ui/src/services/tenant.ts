@@ -88,9 +88,9 @@ export async function updateBackupPolicyOfTenant({
   ns,
   name,
   ...body
-}: API.NamespaceAndName & API.UpdateTenantPolicy): Promise<API.CommonResponse> {
+}: API.NamespaceAndName & API.UpdateTenantPolicy): Promise<API.BackupPolicyResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
-    method: 'POST',
+    method: 'PATCH',
     data: body,
   });
 }
@@ -116,6 +116,12 @@ export async function getBackupPolicy({
     'scheduleType',
     'scheduleTime',
     'scheduleDates',
+    'status',
+    'ossAccessSecret',
+    'bakEncryptionSecret',
+    'jobKeepWindow',
+    'pieceInterval',
+    'recoveryWindow'
   ];
 
   if (r.successful) {

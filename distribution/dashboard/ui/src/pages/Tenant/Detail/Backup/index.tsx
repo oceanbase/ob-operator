@@ -9,18 +9,23 @@ import { Button, Card, Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
+import { useState } from 'react';
 
 export default function Backup() {
   const [ns, name] = getNSName();
+  const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>()
 
-  const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
+  useRequest(getBackupPolicy, {
     defaultParams: [{ ns, name }],
+    onSuccess:({successful,data})=>{
+      if(successful)setBackupPolicy(data)
+    }
   });
   const { data: tenantDetailResponse } = useRequest(getTenant, {
     defaultParams: [{ ns, name }],
   });
-  const backupPolicy = backupPolicyResponse?.data;
   const tenantDetail = tenantDetailResponse?.data;
+  
   return (
     <PageContainer>
       {!backupPolicy ? (
@@ -66,7 +71,7 @@ export default function Backup() {
           {tenantDetail && (
             <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
           )}
-          <BackupConfiguration />
+          <BackupConfiguration backupPolicy={backupPolicy} setBackupPolicy={setBackupPolicy} />
           <BackupJobs />
         </Row>
       )}
