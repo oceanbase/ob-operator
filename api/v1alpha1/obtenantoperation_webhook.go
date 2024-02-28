@@ -36,6 +36,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 // log is for logging in this package.
@@ -73,6 +74,10 @@ func (r *OBTenantOperation) Default() {
 		targetTenantName = *r.Spec.TargetTenant
 	}
 	references := r.GetOwnerReferences()
+	labels := r.GetLabels()
+	if labels == nil {
+		labels = make(map[string]string)
+	}
 
 	if targetTenantName != "" {
 		err := clt.Get(context.Background(), types.NamespacedName{
@@ -90,6 +95,7 @@ func (r *OBTenantOperation) Default() {
 			Name:       firstMeta.GetName(),
 			UID:        firstMeta.GetUID(),
 		})
+		labels[oceanbaseconst.LabelTenantName] = firstMeta.GetName()
 	}
 
 	if secondaryTenantName != "" {
@@ -109,9 +115,11 @@ func (r *OBTenantOperation) Default() {
 			Name:       secondMeta.GetName(),
 			UID:        secondMeta.GetUID(),
 		})
+		labels[oceanbaseconst.LabelSecondaryTenant] = secondMeta.GetName()
 	}
 
 	r.SetOwnerReferences(references)
+	r.SetLabels(labels)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

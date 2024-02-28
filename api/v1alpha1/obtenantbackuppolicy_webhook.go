@@ -111,7 +111,7 @@ func (r *OBTenantBackupPolicy) Default() {
 		}})
 
 		r.SetLabels(map[string]string{
-			oceanbaseconst.LabelTenantName:   r.Spec.TenantName,
+			oceanbaseconst.LabelTenantName:   r.Spec.TenantCRName,
 			oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
 			oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
 		})
