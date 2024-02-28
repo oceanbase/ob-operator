@@ -129,6 +129,8 @@ declare namespace API {
 
   type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
 
+  type DestType = 'NFS' | 'OSS';
+
   type ReplicaDetailType = {
     iopsWeight: number;
     logDiskSize: string;
@@ -140,6 +142,11 @@ declare namespace API {
     type: string;
     zone: string;
   };
+
+  type ScheduleDatesType = {
+    backupType: 'Full' | 'Incremental';
+    day: number;
+  }[];
 
   interface TenantDetail {
     charset: string;
@@ -156,15 +163,12 @@ declare namespace API {
   }
 
   interface BackupPolicy {
-    destType: string;
+    destType: DestType;
     archivePath: string;
     bakDataPath: string;
     scheduleType: string;
     scheduleTime: string;
-    scheduleDates: {
-      backupType: string;
-      day: number;
-    }[];
+    scheduleDates: ScheduleDatesType;
   }
 
   interface BackupJob {
@@ -227,30 +231,24 @@ declare namespace API {
     archivePath: string;
     bakDataPath: string;
     bakEncryptionPassword?: string;
-    destType: 'NFS' | 'OSS';
+    destType: DestType;
     jobKeepWindow?: number;
     ossAccessId: string;
     ossAccessKey: string;
     pieceInterval?: number;
     recoveryWindow?: number;
-    scheduleDates: {
-      backupType: 'Full' | 'Incremental';
-      day: number;
-    }[];
+    scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: 'Weekly' | 'Monthly';
   };
 
   type UpdateTenantPolicy = {
-    jobKeepWindow: number;
-    pieceInterval: number;
-    recoveryWindow: number;
-    scheduleDates: {
-      backupType: 'Full' | 'Incremental';
-      day: number;
-    }[];
-    scheduleType: 'Weekly' | 'Monthly';
-    status: string;
+    jobKeepWindow?: number;
+    pieceInterval?: number;
+    recoveryWindow?: number;
+    scheduleDates?: ScheduleDatesType;
+    scheduleType?: 'Weekly' | 'Monthly';
+    status?: string;
   };
 
   interface CommonResponse {
@@ -261,10 +259,6 @@ declare namespace API {
 
   interface TenantsListResponse extends CommonResponse {
     data: TenantDetail[];
-  }
-
-  interface BackupPolicyResponse extends CommonResponse {
-    data: BackupPolicy;
   }
 
   interface BackupJobsResponse extends CommonResponse {
@@ -302,19 +296,14 @@ declare namespace API {
     archivePath: string;
     bakDataPath: string;
     bakEncryptionSecret: string;
-    destType: string;
+    destType: DestType;
     jobKeepWindow: string;
     name: string;
     namespace: string;
     ossAccessSecret: string;
     pieceInterval: string;
     recoveryWindow: string;
-    scheduleDates: [
-      {
-        backupType: string;
-        day: number;
-      },
-    ];
+    scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: string;
     status: string;
@@ -323,6 +312,16 @@ declare namespace API {
 
   interface BackupPolicyResponse extends CommonResponse {
     data: BackupPolicy;
+  }
+
+  type BackupConfigEditable = {
+    destType: DestType;
+    jobKeepWindow: number;
+    pieceInterval: number;
+    recoveryWindow: number;
+    scheduleDates: ScheduleDatesType;
+    scheduleTime: string;
+    scheduleType: string;
   }
 
   type ReplayLogType = {

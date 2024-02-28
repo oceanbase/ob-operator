@@ -15,11 +15,13 @@ export type ParamsType = {
 interface ScheduleSelectCompProps {
   value: ParamsType;
   onChange: (val: ParamsType) => void;
+  disable?: boolean;
 }
 
 export default function ScheduleSelectComp({
   value: params,
   onChange,
+  disable,
 }: ScheduleSelectCompProps) {
   const handleSelectDay = (day: number) => {
     onChange({
@@ -43,6 +45,7 @@ export default function ScheduleSelectComp({
         value={params.mode}
         optionType="button"
         buttonStyle="solid"
+        disabled={disable}
       />
 
       <ul className={styles.container}>
@@ -54,6 +57,7 @@ export default function ScheduleSelectComp({
               }`}
               onClick={() => handleSelectDay(item.value)}
               key={index}
+              style={disable ? { pointerEvents: 'none' } : {}}
             >
               {item.label}
             </li>
@@ -61,6 +65,7 @@ export default function ScheduleSelectComp({
         )}
         {params.mode === 'Weekly' && (
           <Checkbox
+            disabled={disable}
             checked={params.days.length === 7}
             onChange={(e) =>
               onChange({
