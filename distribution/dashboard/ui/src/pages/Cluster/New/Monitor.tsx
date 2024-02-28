@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from 'antd';
 import { useEffect, useState } from 'react';
+import { MIRROR_MONITOR } from '@/constants/doc';
 import { SUFFIX_UNIT } from '@/constants';
 
 const monitorTooltipText = intl.formatMessage({
@@ -65,10 +66,18 @@ export default function Monitor() {
                   },
                 ]}
                 style={{ width: '50%' }}
-                label={intl.formatMessage({
-                  id: 'OBDashboard.Cluster.New.Monitor.Image',
-                  defaultMessage: '镜像',
-                })}
+                label={
+                  <>
+                    镜像{' '}
+                    <a
+                      href={MIRROR_MONITOR}
+                      rel="noreferrer"
+                      target="_blank"
+                    >
+                      （镜像列表）
+                    </a>
+                  </>
+                }
                 name={['monitor', 'image']}
               >
                 <Input

@@ -3,6 +3,7 @@ import { Card, Col, Form, Input, InputNumber, Row, Tooltip } from 'antd';
 
 import ClassSelect from '@/components/ClassSelect';
 import { SUFFIX_UNIT } from '@/constants';
+import { MIRROR_SERVER } from '@/constants/doc';
 import styles from './index.less';
 
 const observerToolTipText = intl.formatMessage({
@@ -40,10 +41,18 @@ export default function Observer({ storageClasses, form }: any) {
         <Tooltip title={observerToolTipText}>
           <CustomItem
             style={{ width: '50%' }}
-            label={intl.formatMessage({
-              id: 'OBDashboard.Cluster.New.Observer.Image',
-              defaultMessage: '镜像',
-            })}
+            label={
+              <>
+                镜像{' '}
+                <a
+                  href={MIRROR_SERVER}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  （镜像列表）
+                </a>
+              </>
+            }
             name={['observer', 'image']}
           >
             <Input

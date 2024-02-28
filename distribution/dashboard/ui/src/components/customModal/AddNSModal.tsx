@@ -1,6 +1,7 @@
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Form, Input, message } from 'antd';
+import { useRef } from 'react';
 
 import { createNameSpace } from '@/services';
 import type { CommonModalType } from '.';
@@ -11,6 +12,8 @@ export default function AddNSModal({
   setVisible,
   successCallback,
 }: CommonModalType) {
+  const [form] = Form.useForm();
+  const newNamespace = useRef<string>('')
   const { run: createNS } = useRequest(createNameSpace, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -22,11 +25,10 @@ export default function AddNSModal({
           }),
         );
         setVisible(false);
-        successCallback();
+        successCallback(newNamespace.current);
       }
     },
   });
-  const [form] = Form.useForm();
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -35,6 +37,7 @@ export default function AddNSModal({
   };
   const handleCancel = () => setVisible(false);
   const onFinish = async (val: any) => {
+    newNamespace.current = val.namespace;
     await createNS(val.namespace);
   };
   return (
