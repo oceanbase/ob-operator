@@ -107,7 +107,8 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			NodeSelector: nodeSelector,
 		})
 	}
-	return &response.OBCluster{
+
+	respCluster := &response.OBCluster{
 		Namespace:    obcluster.Namespace,
 		Name:         obcluster.Name,
 		ClusterName:  obcluster.Spec.ClusterName,
@@ -117,9 +118,39 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		CreateTime:   float64(obcluster.ObjectMeta.CreationTimestamp.UnixMilli()) / 1000,
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
+		OBClusterExtra: response.OBClusterExtra{
+			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
+			Parameters:         nil,
+			Monitor: &response.MonitorSpec{
+				Image:    "",
+				Resource: modelcommon.ResourceSpec{},
+			},
+			BackupVolume: &response.NFSVolumeSpec{},
+		},
 		// TODO: add metrics
 		Metrics: nil,
-	}, nil
+	}
+	var parameters []modelcommon.KVPair
+	for _, param := range obcluster.Spec.Parameters {
+		parameters = append(parameters, modelcommon.KVPair{
+			Key:   param.Name,
+			Value: param.Value,
+		})
+	}
+	respCluster.Parameters = parameters
+
+	if obcluster.Spec.MonitorTemplate != nil {
+		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
+		respCluster.Monitor.Resource = modelcommon.ResourceSpec{
+			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.Value() >> 30,
+		}
+	}
+	if obcluster.Spec.BackupVolume != nil {
+		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
+		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
+	}
+	return respCluster, nil
 }
 
 func ListOBClusters(ctx context.Context) ([]response.OBCluster, error) {
