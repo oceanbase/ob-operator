@@ -27,9 +27,9 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	clusterstatus "github.com/oceanbase/ob-operator/internal/dashboard/business/enums/obcluster"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"

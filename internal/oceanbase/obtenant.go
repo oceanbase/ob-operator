@@ -20,7 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 func CreateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
