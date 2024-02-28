@@ -115,7 +115,7 @@ func (r *OBTenantOperation) Default() {
 			Name:       secondMeta.GetName(),
 			UID:        secondMeta.GetUID(),
 		})
-		labels[oceanbaseconst.LabelSecondTenant] = secondMeta.GetName()
+		labels[oceanbaseconst.LabelSecondaryTenant] = secondMeta.GetName()
 	}
 
 	r.SetOwnerReferences(references)
