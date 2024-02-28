@@ -43,13 +43,15 @@ export default function Observer({ storageClasses, form }: any) {
             style={{ width: '50%' }}
             label={
               <>
-                镜像{' '}
-                <a
-                  href={MIRROR_SERVER}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  （镜像列表）
+                {intl.formatMessage({
+                  id: 'Dashboard.Cluster.New.Observer.Image',
+                  defaultMessage: '镜像',
+                })}{' '}
+                <a href={MIRROR_SERVER} rel="noreferrer" target="_blank">
+                  {intl.formatMessage({
+                    id: 'Dashboard.Cluster.New.Observer.ImageList',
+                    defaultMessage: '（镜像列表）',
+                  })}
                 </a>
               </>
             }
