@@ -18,3 +18,10 @@ const (
 	PodAffinityType     AffinityType = "POD"
 	PodAntiAffinityType AffinityType = "POD_ANTI"
 )
+
+// Cluster mode
+const (
+	ClusterModeNormal     ClusterMode = "NORMAL"
+	ClusterModeStandalone ClusterMode = "STANDALONE"
+	ClusterModeService    ClusterMode = "SERVICE"
+)

@@ -27,6 +27,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
@@ -203,6 +204,21 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	if obcluster.Spec.BackupVolume != nil {
 		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
 		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
+	}
+	labels := obcluster.GetLabels()
+	if labels != nil {
+		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
+			switch mode {
+			case oceanbaseconst.ModeStandalone:
+				respCluster.Mode = modelcommon.ClusterModeStandalone
+			case oceanbaseconst.ModeService:
+				respCluster.Mode = modelcommon.ClusterModeService
+			default:
+				respCluster.Mode = modelcommon.ClusterModeNormal
+			}
+		} else {
+			respCluster.Mode = modelcommon.ClusterModeNormal
+		}
 	}
 	return respCluster, nil
 }
@@ -399,6 +415,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: param.Namespace,
 			Name:      param.Name,
+			Labels:    map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
 			ClusterName:      param.ClusterName,
@@ -410,6 +427,13 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 			Topology:         topology,
 			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
 		},
+	}
+	switch param.Mode {
+	case modelcommon.ClusterModeStandalone:
+		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+	case modelcommon.ClusterModeService:
+		obcluster.Labels[oceanbaseconst.AnnotationsMode] = "service"
+	default:
 	}
 	return obcluster
 }

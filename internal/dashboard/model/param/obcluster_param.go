@@ -49,16 +49,17 @@ type NFSVolumeSpec struct {
 }
 
 type CreateOBClusterParam struct {
-	Namespace    string          `json:"namespace"`
-	Name         string          `json:"name"`
-	ClusterName  string          `json:"clusterName"`
-	ClusterId    int64           `json:"clusterId"`
-	RootPassword string          `json:"rootPassword"`
-	Topology     []ZoneTopology  `json:"topology"`
-	OBServer     *OBServerSpec   `json:"observer"`
-	Monitor      *MonitorSpec    `json:"monitor"`
-	Parameters   []common.KVPair `json:"parameters"`
-	BackupVolume *NFSVolumeSpec  `json:"backupVolume"`
+	Namespace    string             `json:"namespace"`
+	Name         string             `json:"name"`
+	ClusterName  string             `json:"clusterName"`
+	ClusterId    int64              `json:"clusterId"`
+	RootPassword string             `json:"rootPassword"`
+	Topology     []ZoneTopology     `json:"topology"`
+	OBServer     *OBServerSpec      `json:"observer"`
+	Monitor      *MonitorSpec       `json:"monitor"`
+	Parameters   []common.KVPair    `json:"parameters"`
+	BackupVolume *NFSVolumeSpec     `json:"backupVolume"`
+	Mode         common.ClusterMode `json:"mode"`
 }
 
 type UpgradeOBClusterParam struct {

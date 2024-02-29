@@ -33,3 +33,5 @@ type AffinitySpec struct {
 	KVPair `json:",inline"`
 	Type   AffinityType `json:"type"`
 }
+
+type ClusterMode string

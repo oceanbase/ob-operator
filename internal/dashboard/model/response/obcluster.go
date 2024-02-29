@@ -68,10 +68,11 @@ type OBCluster struct {
 }
 
 type OBClusterExtra struct {
-	RootPasswordSecret string          `json:"rootPasswordSecret"`
-	Parameters         []common.KVPair `json:"parameters"`
-	Monitor            *MonitorSpec    `json:"monitor"`
-	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
+	RootPasswordSecret string             `json:"rootPasswordSecret"`
+	Parameters         []common.KVPair    `json:"parameters"`
+	Monitor            *MonitorSpec       `json:"monitor"`
+	BackupVolume       *NFSVolumeSpec     `json:"backupVolume"`
+	Mode               common.ClusterMode `json:"mode"`
 }
 
 type MonitorSpec struct {
