@@ -16,11 +16,11 @@ const OverviewPage: React.FC = () => {
         }),
       }}
     >
-      {/* <Row justify="start" gutter={[16, 16]}>
+      <Row justify="start" gutter={[16, 16]}>
         <OverviewStatus />
         <EventsTable />
         <NodesTable />
-      </Row> */}
+      </Row>
     </PageContainer>
   );
 };
