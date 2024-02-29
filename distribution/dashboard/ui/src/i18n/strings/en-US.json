@@ -551,5 +551,9 @@
   "Dashboard.Detail.NewBackup.SchduleSelectFormItem.SchedulingCycle": "Scheduling cycle",
   "Dashboard.Detail.NewBackup.SchduleSelectFormItem.SelectASchedulingCycle": "Select a scheduling cycle",
   "Dashboard.Detail.NewBackup.ScheduleTimeFormItem.SchedulingTime": "Scheduling time",
-  "Dashboard.Detail.NewBackup.ScheduleTimeFormItem.SelectASchedulingTime": "Select a scheduling time"
+  "Dashboard.Detail.NewBackup.ScheduleTimeFormItem.SelectASchedulingTime": "Select a scheduling time",
+  "Dashboard.Cluster.New.Monitor.Image": "Image",
+  "Dashboard.Cluster.New.Monitor.ImageList": "(Image list)",
+  "Dashboard.Cluster.New.Observer.Image": "Image",
+  "Dashboard.Cluster.New.Observer.ImageList": "(Image list)"
 }

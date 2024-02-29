@@ -14,7 +14,7 @@ interface CustomModalProps {
 export type CommonModalType = {
   visible: boolean;
   setVisible: (prop: boolean) => void;
-  successCallback: () => void;
+  successCallback: (val:any) => void;
 };
 
 export default function CustomModal(props: CustomModalProps) {

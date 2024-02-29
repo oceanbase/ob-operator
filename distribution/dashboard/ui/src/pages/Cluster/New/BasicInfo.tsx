@@ -38,33 +38,15 @@ export default function BasicInfo({
   passwordVal,
   setPasswordVal,
 }: BasicInfoProps) {
-  const { setFieldValue } = form;
-  //控制新增命名空间弹窗
+  // control the modal for adding a new namespace
   const [visible, setVisible] = useState(false);
-  const [textVisile, setTextVisible] = useState<boolean>(false);
   const { data, run: getNS } = useRequest(getNameSpaces);
-  const genaretaPassword = () => {
-    let password = generateRandomPassword();
-    setPasswordVal(password);
-    setFieldValue('rootPassword', password);
-    form.validateFields(['rootPassword']);
-  };
+
   const filterOption = (
     input: string,
     option: { label: string; value: string },
   ) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
-  const passwordCopy = () => {
-    if (passwordVal) {
-      copy(passwordVal);
-      message.success(
-        intl.formatMessage({
-          id: 'OBDashboard.Cluster.New.BasicInfo.CopiedSuccessfully',
-          defaultMessage: '复制成功',
-        }),
-      );
-    }
-  };
 
   const DropDownComponent = (menu: any) => {
     return (
@@ -87,23 +69,11 @@ export default function BasicInfo({
     );
   };
 
-  const passwordChange = async (value: string) => {
-    setPasswordVal(value);
-  };
-
-  const listenPasswordChange = async () => {
-    try {
-      await form.validateFields(['rootPassword']);
-      setTextVisible(true);
-    } catch (err: any) {
-      const { errorFields } = err;
-      if (errorFields[0].errors.length) setTextVisible(false);
-    }
-  };
-
-  useUpdateEffect(() => {
-    listenPasswordChange();
-  }, [passwordVal]);
+  const addNSCallback = (newNS:string)=>{
+    form.setFieldValue('namespace',newNS)
+    form.validateFields(['namespace'])
+    getNS()
+  }
 
   return (
     <Col span={24}>
@@ -226,7 +196,7 @@ export default function BasicInfo({
       <AddNSModal
         visible={visible}
         setVisible={setVisible}
-        successCallback={getNS}
+        successCallback={addNSCallback}
       />
     </Col>
   );

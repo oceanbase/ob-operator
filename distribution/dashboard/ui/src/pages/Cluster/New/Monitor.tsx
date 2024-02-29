@@ -1,3 +1,5 @@
+import { SUFFIX_UNIT } from '@/constants';
+import { MIRROR_MONITOR } from '@/constants/doc';
 import { intl } from '@/utils/intl';
 import {
   Card,
@@ -10,7 +12,6 @@ import {
   Tooltip,
 } from 'antd';
 import { useEffect, useState } from 'react';
-import { SUFFIX_UNIT } from '@/constants';
 
 const monitorTooltipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Monitor.TheImageShouldBeFully',
@@ -65,10 +66,20 @@ export default function Monitor() {
                   },
                 ]}
                 style={{ width: '50%' }}
-                label={intl.formatMessage({
-                  id: 'OBDashboard.Cluster.New.Monitor.Image',
-                  defaultMessage: '镜像',
-                })}
+                label={
+                  <>
+                    {intl.formatMessage({
+                      id: 'Dashboard.Cluster.New.Monitor.Image',
+                      defaultMessage: '镜像',
+                    })}{' '}
+                    <a href={MIRROR_MONITOR} rel="noreferrer" target="_blank">
+                      {intl.formatMessage({
+                        id: 'Dashboard.Cluster.New.Monitor.ImageList',
+                        defaultMessage: '（镜像列表）',
+                      })}
+                    </a>
+                  </>
+                }
                 name={['monitor', 'image']}
               >
                 <Input
