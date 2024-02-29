@@ -15,9 +15,11 @@ package param
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
 type ZoneTopology struct {
-	Zone         string          `json:"zone"`
-	Replicas     int             `json:"replicas"`
-	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
+	Zone         string                `json:"zone"`
+	Replicas     int                   `json:"replicas"`
+	NodeSelector []common.KVPair       `json:"nodeSelector,omitempty"`
+	Tolerations  []common.KVPair       `json:"tolerations,omitempty"`
+	Affinities   []common.AffinitySpec `json:"affinities,omitempty"`
 }
 
 type OBServerStorageSpec struct {

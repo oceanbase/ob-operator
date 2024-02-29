@@ -40,6 +40,9 @@ type OBZone struct {
 	RootService  string          `json:"rootService,omitempty"`
 	OBServers    []OBServer      `json:"observers,omitempty"`
 	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
+
+	Tolerations []common.KVPair       `json:"tolerations,omitempty"`
+	Affinities  []common.AffinitySpec `json:"affinities,omitempty"`
 }
 
 type OBMetrics struct {
