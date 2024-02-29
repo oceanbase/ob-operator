@@ -408,7 +408,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 			BackupVolume:     backupVolume,
 			Parameters:       parameters,
 			Topology:         topology,
-			UserSecrets:      generateUserSecrets(param.ClusterName, param.ClusterId),
+			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
 		},
 	}
 	return obcluster
