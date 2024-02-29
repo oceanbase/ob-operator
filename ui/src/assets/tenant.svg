@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="70px" height="63px" viewBox="0 0 70 63" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>icon/租户-basic备份 3</title>
+    <defs>
+        <linearGradient x1="10.2412873%" y1="31.7749023%" x2="90.7942357%" y2="60.7788086%" id="linearGradient-1">
+            <stop stop-color="#B18BCC" offset="0%"></stop>
+            <stop stop-color="#783BA3" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="44.3321945%" x2="91.5728802%" y2="54.2679047%" id="linearGradient-2">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.958287806" offset="18.2383751%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <filter x="-2.8%" y="-8.3%" width="105.6%" height="116.5%" filterUnits="objectBoundingBox" id="filter-3">
+            <feGaussianBlur stdDeviation="0.0400543213" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <linearGradient x1="-14.4141831%" y1="47.6362069%" x2="94.4986979%" y2="52.0983812%" id="linearGradient-4">
+            <stop stop-color="#B18BCC" offset="0%"></stop>
+            <stop stop-color="#783BA3" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="-9.01303415%" y1="48.9662057%" x2="91.3116651%" y2="55.1054457%" id="linearGradient-5">
+            <stop stop-color="#C090E3" offset="0%"></stop>
+            <stop stop-color="#783BA3" offset="100%"></stop>
+        </linearGradient>
+        <linearGradient x1="0%" y1="44.2059497%" x2="100%" y2="55.2976816%" id="linearGradient-6">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.958287806" offset="40.6741696%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <filter x="-2.8%" y="-8.2%" width="105.6%" height="116.4%" filterUnits="objectBoundingBox" id="filter-7">
+            <feGaussianBlur stdDeviation="0.0400543213" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+        <linearGradient x1="0%" y1="44.3376215%" x2="91.5728802%" y2="54.2638181%" id="linearGradient-8">
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="0%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0.958287806" offset="18.2383751%"></stop>
+            <stop stop-color="#FFFFFF" stop-opacity="0" offset="100%"></stop>
+        </linearGradient>
+        <filter x="-2.8%" y="-8.3%" width="105.6%" height="116.6%" filterUnits="objectBoundingBox" id="filter-9">
+            <feGaussianBlur stdDeviation="0.0400543213" in="SourceGraphic"></feGaussianBlur>
+        </filter>
+    </defs>
+    <g id="仪表盘" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="1.1-仪表盘" transform="translate(-557.000000, -129.000000)">
+            <g id="icon/租户-basic备份-3" transform="translate(556.000000, 120.000000)">
+                <g id="Group" transform="translate(0.000000, 28.125000)">
+                    <path d="M1.12329032,20.8125 L3.89157017,20.8119482 L34.8738684,2.90104485 C35.5705957,2.49824935 36.4294043,2.49824935 37.1261316,2.90104485 L68.1075702,20.8119482 L70.8774807,20.8125 L70.8774298,23.0571188 C70.8785353,23.2502725 70.8298702,23.4462663 70.7262127,23.6255658 C70.6275958,23.7961464 70.4859074,23.9378348 70.3153268,24.0364517 L37.1261316,43.2239551 C36.4294043,43.6267507 35.5705957,43.6267507 34.8738684,43.2239551 L1.68467318,24.0364517 C1.32607408,23.8291366 1.1247811,23.4541888 1.12257017,23.0678812 L1.12329032,20.8125 Z" id="Combined-Shape" fill="#B18BCC"></path>
+                    <path d="M1.68467318,19.8385483 L34.8738684,0.651044852 C35.5705957,0.248249345 36.4294043,0.248249345 37.1261316,0.651044852 L70.3153268,19.8385483 C70.8532255,20.149521 71.0371853,20.8376672 70.7262127,21.3755658 C70.6275958,21.5461464 70.4859074,21.6878348 70.3153268,21.7864517 L37.1261316,40.9739551 C36.4294043,41.3767507 35.5705957,41.3767507 34.8738684,40.9739551 L1.68467318,21.7864517 C1.14677452,21.475479 0.962814653,20.7873328 1.27378732,20.2494342 C1.3724042,20.0788536 1.51409263,19.9371652 1.68467318,19.8385483 Z" id="Path-2-Copy" fill="#EFE1FA"></path>
+                </g>
+                <g id="Z#/icon/集群备份-2" transform="translate(10.687500, 9.000000)">
+                    <polygon id="Fill-1" fill="#51276E" points="25.0533551 23.7163229 1.97686773 37.1459422 25.2043328 50.5755615 48.2808202 37.1459422"></polygon>
+                    <polygon id="Fill-2备份" fill="#9E76BA" points="2.04493758 13.423376 1.97753906 37.1708293 25.0866682 23.7472712 25.1540667 8.43075609e-15"></polygon>
+                    <polygon id="Fill-3备份" fill="#CDB1E1" points="25.0558611 23.7474533 48.3123099 37.1708293 48.3796972 13.423194 25.1232484 0"></polygon>
+                    <g id="编组-3备份-5" transform="translate(16.512451, 7.465210)" fill-rule="nonzero">
+                        <g id="Group-3" transform="translate(0.000000, 8.453979)">
+                            <path d="M0,4.50596401 L17.6495361,4.50596401 L17.6495361,17.8571946 L17.6446252,18.0283639 C17.4878872,20.7559744 13.5990879,22.9394531 8.82476807,22.9394531 C3.95098324,22.9394531 0,20.6640485 0,17.8571946 L0,17.8571946 L0,4.50596401 Z" id="Combined-Shape" fill="url(#linearGradient-1)"></path>
+                            <ellipse id="Oval" fill="#BD93DE" cx="8.82476807" cy="4.9155971" rx="8.82476807" ry="4.9155971"></ellipse>
+                            <path d="M0.00858680798,5.32523019 C0.269684305,6.92842637 1.57403087,8.18249434 3.92162652,9.08743411 C6.26922216,9.99237388 9.39519529,10.0354774 13.2995459,9.21674456" id="Path-13" stroke="url(#linearGradient-2)" stroke-width="0.5" opacity="0.75" stroke-linecap="round" filter="url(#filter-3)"></path>
+                        </g>
+                        <g id="Group-3" transform="translate(0.000000, 3.856201)">
+                            <path d="M0,4.91833102 L17.6495361,4.91833102 L17.6495361,7.95729979 L17.6446252,8.11722446 C17.4878872,10.6656495 13.5990879,12.7056885 8.82476807,12.7056885 C3.95098324,12.7056885 0,10.5797624 0,7.95729979 L0,7.95729979 L0,4.91833102 Z" id="Combined-Shape" fill="url(#linearGradient-4)"></path>
+                            <ellipse id="Oval" fill="#BD93DE" cx="8.82476807" cy="4.91833102" rx="8.82476807" ry="4.91833102"></ellipse>
+                        </g>
+                        <g id="Group-3">
+                            <path d="M0.00867775901,4.09235619 L17.6495361,4.09235619 L17.6495361,7.12668859 L17.6446276,7.28636928 C17.4879666,9.83090635 13.6010794,11.867833 8.82910695,11.867833 C3.95771842,11.867833 0.00867775901,9.74515032 0.00867775901,7.12668859 L0.00867775901,7.12668859 L0.00867775901,4.09235619 Z" id="Combined-Shape" fill="url(#linearGradient-5)"></path>
+                            <ellipse id="Oval" fill="#BD93DE" cx="8.82910695" cy="4.296974" rx="8.82042919" ry="4.296974"></ellipse>
+                            <path d="M0.00867775901,4.09235619 C-0.120060337,5.62102706 1.1836132,6.8738782 3.91969837,7.8509096 C6.65578354,8.82794101 9.78021972,8.87100267 13.2930069,7.98009458" id="Path-13" stroke="url(#linearGradient-6)" stroke-width="0.5" opacity="0.75" stroke-linecap="round" filter="url(#filter-7)"></path>
+                            <path d="M0.0172603451,9.0756314 C0.278229468,10.677272 1.58193473,11.9301231 3.92837613,12.8341848 C6.27481752,13.7382465 9.39925371,13.7813082 13.3016847,12.9633698" id="Path-13" stroke="url(#linearGradient-8)" stroke-width="0.5" opacity="0.75" stroke-linecap="round" filter="url(#filter-9)"></path>
+                        </g>
+                        <ellipse id="Oval" cx="8.80004883" cy="4.40002441" rx="6.08093262" ry="3.26293945"></ellipse>
+                    </g>
+                    <polygon id="Fill-3" fill="#CDB1E1" points="1.97753906 37.201624 25.2339878 50.625 25.3013751 26.8773647 2.04492636 13.4541707"></polygon>
+                    <polygon id="Fill-2" fill="#783BA3" points="25.270568 26.8775467 25.2031695 50.625 48.3122986 37.2014419 48.3796972 13.4541707"></polygon>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>
