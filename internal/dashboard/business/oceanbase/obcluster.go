@@ -176,11 +176,6 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		OBClusterExtra: response.OBClusterExtra{
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
 			Parameters:         nil,
-			Monitor: &response.MonitorSpec{
-				Image:    "",
-				Resource: modelcommon.ResourceSpec{},
-			},
-			BackupVolume: &response.NFSVolumeSpec{},
 		},
 		// TODO: add metrics
 		Metrics: nil,
@@ -195,6 +190,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	respCluster.Parameters = parameters
 
 	if obcluster.Spec.MonitorTemplate != nil {
+		respCluster.Monitor = &response.MonitorSpec{}
 		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
 		respCluster.Monitor.Resource = modelcommon.ResourceSpec{
 			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
@@ -202,6 +198,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		}
 	}
 	if obcluster.Spec.BackupVolume != nil {
+		respCluster.BackupVolume = &response.NFSVolumeSpec{}
 		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
 		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
 	}
