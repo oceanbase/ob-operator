@@ -200,7 +200,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 					if err != nil {
 						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
-					} else if svc != nil {
+					} else {
 						m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
 					}
 				}
