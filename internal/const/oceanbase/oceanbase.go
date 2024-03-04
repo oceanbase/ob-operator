@@ -80,6 +80,7 @@ const (
 
 const (
 	ModeStandalone = "standalone"
+	ModeService    = "service"
 )
 
 const (

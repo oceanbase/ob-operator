@@ -26,3 +26,12 @@ type StorageSpec struct {
 	StorageClass string `json:"storageClass"`
 	SizeGB       int64  `json:"size"`
 }
+
+type AffinityType string
+
+type AffinitySpec struct {
+	KVPair `json:",inline"`
+	Type   AffinityType `json:"type"`
+}
+
+type ClusterMode string

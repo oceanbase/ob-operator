@@ -27,9 +27,10 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	clusterstatus "github.com/oceanbase/ob-operator/internal/dashboard/business/enums/obcluster"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -94,6 +95,58 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				Value: v,
 			})
 		}
+
+		affinities := make([]modelcommon.AffinitySpec, 0)
+		if obzone.Spec.Topology.Affinity != nil {
+			zoneAffinity := obzone.Spec.Topology.Affinity
+			switch {
+			case zoneAffinity.NodeAffinity != nil:
+				for _, term := range zoneAffinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
+					for _, req := range term.MatchExpressions {
+						affinities = append(affinities, modelcommon.AffinitySpec{
+							Type: modelcommon.NodeAffinityType,
+							KVPair: modelcommon.KVPair{
+								Key:   req.Key,
+								Value: req.Values[0],
+							},
+						})
+					}
+				}
+			case zoneAffinity.PodAffinity != nil:
+				for _, term := range zoneAffinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
+					for _, req := range term.LabelSelector.MatchExpressions {
+						affinities = append(affinities, modelcommon.AffinitySpec{
+							Type: modelcommon.PodAffinityType,
+							KVPair: modelcommon.KVPair{
+								Key:   req.Key,
+								Value: req.Values[0],
+							},
+						})
+					}
+				}
+			case zoneAffinity.PodAntiAffinity != nil:
+				for _, term := range zoneAffinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
+					for _, req := range term.LabelSelector.MatchExpressions {
+						affinities = append(affinities, modelcommon.AffinitySpec{
+							Type: modelcommon.PodAntiAffinityType,
+							KVPair: modelcommon.KVPair{
+								Key:   req.Key,
+								Value: req.Values[0],
+							},
+						})
+					}
+				}
+			}
+		}
+
+		tolerations := make([]modelcommon.KVPair, 0)
+		for _, toleration := range obzone.Spec.Topology.Tolerations {
+			tolerations = append(tolerations, modelcommon.KVPair{
+				Key:   toleration.Key,
+				Value: toleration.Value,
+			})
+		}
+
 		topology = append(topology, response.OBZone{
 			Namespace:    obzone.Namespace,
 			Name:         obzone.Name,
@@ -105,9 +158,12 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			RootService:  obzone.Status.OBServerStatus[0].Server,
 			OBServers:    observers,
 			NodeSelector: nodeSelector,
+			Affinities:   affinities,
+			Tolerations:  tolerations,
 		})
 	}
-	return &response.OBCluster{
+
+	respCluster := &response.OBCluster{
 		Namespace:    obcluster.Namespace,
 		Name:         obcluster.Name,
 		ClusterName:  obcluster.Spec.ClusterName,
@@ -117,9 +173,51 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		CreateTime:   float64(obcluster.ObjectMeta.CreationTimestamp.UnixMilli()) / 1000,
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
+		OBClusterExtra: response.OBClusterExtra{
+			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
+			Parameters:         nil,
+		},
 		// TODO: add metrics
 		Metrics: nil,
-	}, nil
+	}
+	var parameters []modelcommon.KVPair
+	for _, param := range obcluster.Spec.Parameters {
+		parameters = append(parameters, modelcommon.KVPair{
+			Key:   param.Name,
+			Value: param.Value,
+		})
+	}
+	respCluster.Parameters = parameters
+
+	if obcluster.Spec.MonitorTemplate != nil {
+		respCluster.Monitor = &response.MonitorSpec{}
+		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
+		respCluster.Monitor.Resource = modelcommon.ResourceSpec{
+			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.Value() >> 30,
+		}
+	}
+	if obcluster.Spec.BackupVolume != nil {
+		respCluster.BackupVolume = &response.NFSVolumeSpec{}
+		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
+		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
+	}
+	labels := obcluster.GetLabels()
+	if labels != nil {
+		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
+			switch mode {
+			case oceanbaseconst.ModeStandalone:
+				respCluster.Mode = modelcommon.ClusterModeStandalone
+			case oceanbaseconst.ModeService:
+				respCluster.Mode = modelcommon.ClusterModeService
+			default:
+				respCluster.Mode = modelcommon.ClusterModeNormal
+			}
+		} else {
+			respCluster.Mode = modelcommon.ClusterModeNormal
+		}
+	}
+	return respCluster, nil
 }
 
 func ListOBClusters(ctx context.Context) ([]response.OBCluster, error) {
@@ -202,11 +300,79 @@ func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *apitypes.BackupVolum
 func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopology {
 	obzoneTopology := make([]apitypes.OBZoneTopology, 0)
 	for _, zone := range topology {
-		obzoneTopology = append(obzoneTopology, apitypes.OBZoneTopology{
+		topo := apitypes.OBZoneTopology{
 			Zone:         zone.Zone,
 			NodeSelector: common.KVsToMap(zone.NodeSelector),
 			Replica:      zone.Replicas,
-		})
+		}
+		if len(zone.Affinities) > 0 {
+			topo.Affinity = &corev1.Affinity{}
+			for _, kv := range zone.Affinities {
+				switch kv.Type {
+				case modelcommon.NodeAffinityType:
+					if topo.Affinity.NodeAffinity == nil {
+						topo.Affinity.NodeAffinity = &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{},
+							},
+						}
+					}
+					nodeSelectorTerm := corev1.NodeSelectorTerm{
+						MatchExpressions: []corev1.NodeSelectorRequirement{{
+							Key:      kv.Key,
+							Operator: corev1.NodeSelectorOpIn,
+							Values:   []string{kv.Value},
+						}},
+					}
+					topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, nodeSelectorTerm)
+				case modelcommon.PodAffinityType:
+					if topo.Affinity.PodAffinity == nil {
+						topo.Affinity.PodAffinity = &corev1.PodAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
+						}
+					}
+					podAffinityTerm := corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      kv.Key,
+								Operator: metav1.LabelSelectorOpIn,
+								Values:   []string{kv.Value},
+							}},
+						},
+					}
+					topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAffinityTerm)
+				case modelcommon.PodAntiAffinityType:
+					if topo.Affinity.PodAntiAffinity == nil {
+						topo.Affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
+						}
+					}
+					podAntiAffinityTerm := corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      kv.Key,
+								Operator: metav1.LabelSelectorOpIn,
+								Values:   []string{kv.Value},
+							}},
+						},
+					}
+					topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAntiAffinityTerm)
+				}
+			}
+		}
+		if len(zone.Tolerations) > 0 {
+			topo.Tolerations = make([]corev1.Toleration, 0)
+			for _, kv := range zone.Tolerations {
+				toleration := corev1.Toleration{
+					Key:      kv.Key,
+					Operator: corev1.TolerationOpEqual,
+					Value:    kv.Value,
+					Effect:   corev1.TaintEffectNoSchedule,
+				}
+				topo.Tolerations = append(topo.Tolerations, toleration)
+			}
+		}
+		obzoneTopology = append(obzoneTopology, topo)
 	}
 	return obzoneTopology
 }
@@ -246,6 +412,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: param.Namespace,
 			Name:      param.Name,
+			Labels:    map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
 			ClusterName:      param.ClusterName,
@@ -255,8 +422,15 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 			BackupVolume:     backupVolume,
 			Parameters:       parameters,
 			Topology:         topology,
-			UserSecrets:      generateUserSecrets(param.ClusterName, param.ClusterId),
+			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
 		},
+	}
+	switch param.Mode {
+	case modelcommon.ClusterModeStandalone:
+		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+	case modelcommon.ClusterModeService:
+		obcluster.Labels[oceanbaseconst.AnnotationsMode] = "service"
+	default:
 	}
 	return obcluster
 }

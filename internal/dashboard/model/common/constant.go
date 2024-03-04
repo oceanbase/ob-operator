@@ -10,18 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obcluster
+package common
 
+// Affinity type
 const (
-	New                 = "new"
-	Running             = "running"
-	AddOBZone           = "add obzone"
-	DeleteOBZone        = "delete obzone"
-	ModifyOBZoneReplica = "modify obzone replica"
-	Upgrade             = "upgrade"
-	ModifyOBParameter   = "modify parameter"
-	Bootstrapped        = "bootstrapped"
-	FinalizerFinished   = "finalizer finished"
-	ScaleUp             = "scale up"
-	Failed              = "failed"
+	NodeAffinityType    AffinityType = "NODE"
+	PodAffinityType     AffinityType = "POD"
+	PodAntiAffinityType AffinityType = "POD_ANTI"
+)
+
+// Cluster mode
+const (
+	ClusterModeNormal     ClusterMode = "NORMAL"
+	ClusterModeStandalone ClusterMode = "STANDALONE"
+	ClusterModeService    ClusterMode = "SERVICE"
 )

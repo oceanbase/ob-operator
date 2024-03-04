@@ -40,6 +40,9 @@ type OBZone struct {
 	RootService  string          `json:"rootService,omitempty"`
 	OBServers    []OBServer      `json:"observers,omitempty"`
 	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
+
+	Tolerations []common.KVPair       `json:"tolerations,omitempty"`
+	Affinities  []common.AffinitySpec `json:"affinities,omitempty"`
 }
 
 type OBMetrics struct {
@@ -60,4 +63,24 @@ type OBCluster struct {
 	Image        string     `json:"image"`
 	Metrics      *OBMetrics `json:"metrics"`
 	Version      string     `json:"version"`
+
+	OBClusterExtra `json:",inline"`
+}
+
+type OBClusterExtra struct {
+	RootPasswordSecret string             `json:"rootPasswordSecret"`
+	Parameters         []common.KVPair    `json:"parameters"`
+	Monitor            *MonitorSpec       `json:"monitor"`
+	BackupVolume       *NFSVolumeSpec     `json:"backupVolume"`
+	Mode               common.ClusterMode `json:"mode"`
+}
+
+type MonitorSpec struct {
+	Image    string              `json:"image"`
+	Resource common.ResourceSpec `json:"resource"`
+}
+
+type NFSVolumeSpec struct {
+	Address string `json:"address"`
+	Path    string `json:"path"`
 }

@@ -15,9 +15,11 @@ package param
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
 type ZoneTopology struct {
-	Zone         string          `json:"zone"`
-	Replicas     int             `json:"replicas"`
-	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
+	Zone         string                `json:"zone"`
+	Replicas     int                   `json:"replicas"`
+	NodeSelector []common.KVPair       `json:"nodeSelector,omitempty"`
+	Tolerations  []common.KVPair       `json:"tolerations,omitempty"`
+	Affinities   []common.AffinitySpec `json:"affinities,omitempty"`
 }
 
 type OBServerStorageSpec struct {
@@ -47,16 +49,17 @@ type NFSVolumeSpec struct {
 }
 
 type CreateOBClusterParam struct {
-	Namespace    string          `json:"namespace"`
-	Name         string          `json:"name"`
-	ClusterName  string          `json:"clusterName"`
-	ClusterId    int64           `json:"clusterId"`
-	RootPassword string          `json:"rootPassword"`
-	Topology     []ZoneTopology  `json:"topology"`
-	OBServer     *OBServerSpec   `json:"observer"`
-	Monitor      *MonitorSpec    `json:"monitor"`
-	Parameters   []common.KVPair `json:"parameters"`
-	BackupVolume *NFSVolumeSpec  `json:"backupVolume"`
+	Namespace    string             `json:"namespace"`
+	Name         string             `json:"name"`
+	ClusterName  string             `json:"clusterName"`
+	ClusterId    int64              `json:"clusterId"`
+	RootPassword string             `json:"rootPassword"`
+	Topology     []ZoneTopology     `json:"topology"`
+	OBServer     *OBServerSpec      `json:"observer"`
+	Monitor      *MonitorSpec       `json:"monitor"`
+	Parameters   []common.KVPair    `json:"parameters"`
+	BackupVolume *NFSVolumeSpec     `json:"backupVolume"`
+	Mode         common.ClusterMode `json:"mode"`
 }
 
 type UpgradeOBClusterParam struct {
