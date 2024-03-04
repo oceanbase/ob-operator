@@ -159,12 +159,8 @@ func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskRes
 }
 
 func (m *TaskManager) CleanTaskResult(taskId tasktypes.TaskID) error {
-	retChAny, exists := m.ResultMap.Load(taskId)
+	_, exists := m.ResultMap.Load(taskId)
 	if !exists {
-		return nil
-	}
-	_, ok := retChAny.(chan *tasktypes.TaskResult)
-	if !ok {
 		return nil
 	}
 	m.ResultMap.Delete(taskId)
