@@ -517,19 +517,32 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		Name:  "ZONE_NAME",
 		Value: m.OBServer.Spec.Zone,
 	}
-	envSvcIp := corev1.EnvVar{
-		Name:  "SVC_IP",
-		Value: m.OBServer.Status.PodIp,
-	}
-	svc, err := m.getSvc()
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			m.Logger.Info("svc not found")
-		} else {
-			m.Logger.Error(err, "Failed to get svc")
+
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist {
+		switch mode {
+		case oceanbaseconst.ModeStandalone:
+			envMode := corev1.EnvVar{
+				Name:  "STANDALONE",
+				Value: oceanbaseconst.ModeStandalone,
+			}
+			env = append(env, envMode)
+		case oceanbaseconst.ModeService:
+			svc, err := m.getSvc()
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					m.Logger.Info("svc not found")
+				} else {
+					m.Logger.Error(err, "Failed to get svc")
+				}
+			} else {
+				envSvcIp := corev1.EnvVar{
+					Name:  "SVC_IP",
+					Value: svc.Spec.ClusterIP,
+				}
+				env = append(env, envSvcIp)
+			}
 		}
-	} else if svc != nil {
-		envSvcIp.Value = svc.Spec.ClusterIP
 	}
 
 	startupParameters := make([]string, 0)
@@ -559,16 +572,6 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envClusterName)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)
-	env = append(env, envSvcIp)
-
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
-		envMode := corev1.EnvVar{
-			Name:  "STANDALONE",
-			Value: oceanbaseconst.ModeStandalone,
-		}
-		env = append(env, envMode)
-	}
 
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
