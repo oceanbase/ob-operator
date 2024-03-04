@@ -1,7 +1,6 @@
 import { POINT_NUMBER } from '@/constants';
 import { useRequestOfMonitor } from '@/hook/useRequestOfMonitor';
-import type { QueryRangeType } from '@/pages/Cluster/Detail/Monitor';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import type { QueryRangeType } from '@/components/MonitorDetail';
 import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
@@ -22,9 +21,11 @@ export interface LineGraphProps {
   metrics: MetricType[];
   labels: API.MetricsLabels;
   queryRange: QueryRangeType;
+  groupLabels:API.LableKeys[];
   height?: number;
   isRefresh?: boolean;
-  type?: API.MonitorUserFor;
+  type?: API.MonitorUseTarget;
+  useFor: API.MonitorUseFor;
 }
 
 export default function LineGraph({
@@ -32,11 +33,12 @@ export default function LineGraph({
   metrics,
   labels,
   queryRange,
+  groupLabels,
   height = 186,
   isRefresh = false,
   type = 'DETAIL',
+  useFor
 }: LineGraphProps) {
-  const [, chooseClusterName] = getNSName();
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [isloading, setIsloading] = useState<boolean>(true);
   const lineGraphRef = useRef(null);
@@ -44,12 +46,10 @@ export default function LineGraph({
   const [inViewport] = useInViewport(lineGraphRef);
   // 进入可见区域次数,只在第一次进入可见区域发起网络请求
   const [inViewportCount, setInViewportCount] = useState<number>(0);
-  const groupLabels = _.uniq(labels.map((label) => label.key));
-
   const getQueryParms = () => {
     let metricsKeys: string[] = [metrics[0].key],
       realLabels = labels;
-    if (chooseClusterName) {
+    if (type === 'DETAIL') {
       metricsKeys = metrics.map((metric: MetricType) => metric.key);
     }
     if (type === 'OVERVIEW') realLabels = [];
@@ -58,7 +58,8 @@ export default function LineGraph({
       labels: realLabels, //为空则查询全部集群
       metrics: metricsKeys,
       queryRange,
-      type
+      type,
+      useFor
     };
   };
 
@@ -67,7 +68,7 @@ export default function LineGraph({
     for (let metric of metricsData) {
       values.push(metric.value);
     }
-    
+      
     const config = {
       data: metricsData,
       xField: 'date',
@@ -157,6 +158,8 @@ export default function LineGraph({
 
   //开启实时模式后处理
   useUpdateEffect(() => {
+    console.log('isRefresh',isRefresh);
+    
     if (!isRefresh) {
       if (inViewport) {
         queryMetrics(getQueryParms());

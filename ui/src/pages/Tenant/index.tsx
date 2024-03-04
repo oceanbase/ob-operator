@@ -10,7 +10,7 @@ import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
 
 
-import type { LabelType, QueryRangeType } from '../Cluster/Detail/Monitor';
+import type { LabelType, QueryRangeType } from '../../components/MonitorDetail';
 
 const defaultQueryRange: QueryRangeType = {
   step: 20,
@@ -32,7 +32,8 @@ export default function TenantPage() {
     }
   });
   const handleAddCluster = () => navigate('new');
-  const tenantsList = tenantsListResponse?.data
+  const tenantsList = tenantsListResponse?.data;
+  
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
@@ -49,6 +50,8 @@ export default function TenantPage() {
         filterLabel={filterLabel}
         queryScope="OBTENANT"
         type="OVERVIEW"
+        useFor='tenant'
+        groupLabels={['tenant_name','ob_cluster_name']}
         queryRange={defaultQueryRange}
       />
     </PageContainer>

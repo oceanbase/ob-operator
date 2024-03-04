@@ -1,20 +1,20 @@
-import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
+import { POINT_NUMBER,REFRESH_FREQUENCY } from '@/constants';
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { useUpdateEffect } from 'ahooks';
-import { Col, DatePicker, Row, Select, Switch } from 'antd';
+import { Col,DatePicker,Row,Select,Switch } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import moment from 'moment';
-import { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import { caculateStep } from './helper';
 import type {
-  FilterDataType,
-  Label,
-  LabelType,
-  OptionType,
-  QueryRangeType,
+FilterDataType,
+Label,
+LabelType,
+OptionType,
+QueryRangeType,
 } from './index';
 import styles from './index.less';
 
@@ -26,7 +26,7 @@ interface DataFilterProps {
   queryRange: QueryRangeType;
   setQueryRange: React.Dispatch<React.SetStateAction<QueryRangeType>>;
   setIsRefresh: React.Dispatch<React.SetStateAction<boolean>>;
-  setFilterLable: React.Dispatch<React.SetStateAction<LabelType[]>>;
+  setFilterLabel: React.Dispatch<React.SetStateAction<LabelType[]>>;
   setFilterData: React.Dispatch<React.SetStateAction<FilterDataType>>;
 }
 const { RangePicker } = DatePicker;
@@ -91,8 +91,6 @@ const DateSelectOption: OptionType[] = [
 
 type RangeValue = [Dayjs | null, Dayjs | null] | null;
 
-//选择时间下拉框改变右边时间选择框
-//所以右边时间选择框需要value属性 受控
 export default function DataFilter({
   isRefresh,
   realTime,
@@ -100,7 +98,7 @@ export default function DataFilter({
   filterLabel, //发送请求的label
   queryRange, //defaultVAlue
   setIsRefresh,
-  setFilterLable,
+  setFilterLabel,
   setQueryRange,
 }: DataFilterProps) {
   const [zoneOption, setZoneOption] = useState<OptionType[]>([]);
@@ -190,10 +188,10 @@ export default function DataFilter({
     let isClear: boolean = !Boolean(val),
       currentLable = [...filterLabel];
     if (isClear) {
-      //清空obzone&svr_ip
+      //clear obzone&svr_ip
       currentLable = clearLabel(clearLabel(filterLabel, 'obzone'), 'svr_ip');
     } else {
-      //更新zone后清空server
+      //clear the server after updating the zone
       currentLable = clearLabel(
         updateLable(filterLabel, 'obzone', val!),
         'svr_ip',
@@ -205,16 +203,18 @@ export default function DataFilter({
   const zoneSelectChange = (val: string | undefined) => {
     setSelectZone(val);
     setSelectServer(undefined);
-    setFilterLable(handleLabel(val));
-    //清空
-    if (typeof val === 'undefined') {
-      setServerOption(filterData.serverList);
-      return;
+    setFilterLabel(handleLabel(val));
+    //clear
+    if(filterData.serverList){
+      if (typeof val === 'undefined') {
+        setServerOption(filterData.serverList);
+        return;
+      }
+      const filterServers = filterData.serverList.filter((server: OptionType) => {
+        return server.zone === val;
+      });
+      setServerOption(filterServers);
     }
-    const filterServers = filterData.serverList.filter((server: OptionType) => {
-      return server.zone === val;
-    });
-    setServerOption(filterServers);
   };
 
   const serverSelectChange = (val: string | undefined) => {
@@ -225,7 +225,7 @@ export default function DataFilter({
     } else {
       lable = updateLable(lable, 'svr_ip', val!);
     }
-    setFilterLable(lable);
+    setFilterLabel(lable);
     setSelectServer(val);
   };
 
@@ -276,10 +276,10 @@ export default function DataFilter({
   };
 
   useUpdateEffect(() => {
-    if (filterData.zoneList.length) {
+    if (filterData?.zoneList?.length) {
       setZoneOption(filterData.zoneList);
     }
-    if (filterData.serverList.length) {
+    if (filterData?.serverList?.length) {
       setServerOption(filterData.serverList);
     }
   }, [filterData]);
@@ -319,41 +319,46 @@ export default function DataFilter({
       extra={<AutoRefresh />}
     >
       <Row gutter={12} style={{ alignItems: 'center' }}>
-        <Col span={5}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            <span style={{ marginRight: 8 }}>Zone:</span>
-            <Select
-              value={selectZone}
-              onChange={zoneSelectChange}
-              allowClear
-              style={{ width: '100%' }}
-              showSearch
-              placeholder={intl.formatMessage({
-                id: 'OBDashboard.Detail.Monitor.DataFilter.All',
-                defaultMessage: '全部',
-              })}
-              options={zoneOption}
-            />
-          </div>
-        </Col>
-        <Col span={5}>
-          <div style={{ display: 'flex', alignItems: 'center' }}>
-            {' '}
-            <span style={{ marginRight: 8 }}>OBServer:</span>
-            <Select
-              value={selectServer}
-              onChange={serverSelectChange}
-              allowClear
-              style={{ width: '100%' }}
-              showSearch
-              placeholder={intl.formatMessage({
-                id: 'OBDashboard.Detail.Monitor.DataFilter.All',
-                defaultMessage: '全部',
-              })}
-              options={serverOption}
-            />{' '}
-          </div>
-        </Col>
+        {filterData.zoneList && (
+          <Col span={5}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ marginRight: 8 }}>Zone:</span>
+              <Select
+                value={selectZone}
+                onChange={zoneSelectChange}
+                allowClear
+                style={{ width: '100%' }}
+                showSearch
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Detail.Monitor.DataFilter.All',
+                  defaultMessage: '全部',
+                })}
+                options={zoneOption}
+              />
+            </div>
+          </Col>
+        )}
+
+        {filterData.serverList && (
+          <Col span={5}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              {' '}
+              <span style={{ marginRight: 8 }}>OBServer:</span>
+              <Select
+                value={selectServer}
+                onChange={serverSelectChange}
+                allowClear
+                style={{ width: '100%' }}
+                showSearch
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Detail.Monitor.DataFilter.All',
+                  defaultMessage: '全部',
+                })}
+                options={serverOption}
+              />{' '}
+            </div>
+          </Col>
+        )}
         <Col span={14}>
           <div
             className={styles.selectRangeTimeContainer}
