@@ -17,11 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -91,4 +91,11 @@ type OBServerList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBServer{}, &OBServerList{})
+}
+
+func (ss OBServerStatus) GetConnectAddr() string {
+	if ss.ServiceIp != "" {
+		return ss.ServiceIp
+	}
+	return ss.PodIp
 }

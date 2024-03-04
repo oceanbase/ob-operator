@@ -74,11 +74,8 @@ func (m *OBServerManager) AddServer() tasktypes.TaskError {
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
 	serverInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	if m.OBServer.Status.ServiceIp != "" {
-		serverInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
 	if obs != nil {
@@ -595,11 +592,8 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 		return errors.Wrapf(err, "Get oceanbase operation manager failed")
 	}
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	if m.OBServer.Status.ServiceIp != "" {
-		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	observer, err := operationManager.GetServer(observerInfo)
 	if err != nil {
@@ -689,11 +683,8 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 	}
 	m.Logger.Info("wait observer active in cluster")
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	if m.OBServer.Status.ServiceIp != "" {
-		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	active := false
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
@@ -723,11 +714,8 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	m.Logger.Info("wait observer deleted in cluster")
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	if m.OBServer.Status.ServiceIp != "" {
-		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {

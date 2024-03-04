@@ -16,11 +16,8 @@ import (
 	"context"
 	"strings"
 
-	"github.com/oceanbase/ob-operator/internal/telemetry"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
-	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
-
+	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,17 +26,17 @@ import (
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -128,11 +125,8 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 		return nil, err
 	}
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	if m.OBServer.Status.ServiceIp != "" {
-		observerInfo.Ip = m.OBServer.Status.ServiceIp
 	}
 	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeExist && mode == oceanbaseconst.ModeStandalone {
