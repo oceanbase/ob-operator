@@ -93,15 +93,22 @@ export default function MonitorComp({
                       <Card className={styles.monitorItem} key={graphIdx}>
                         <div className={styles.graphHeader}>
                           <span className={styles.graphHeaderText}>
-                            {graphContainer.name}(
-                            {graphContainer.metrics[0].unit}
+                            {graphContainer.name}
                             {graphContainer.metrics[0].unit &&
-                              type === 'OVERVIEW' &&
-                              ','}
-                            {type === 'OVERVIEW'
-                              ? `${graphContainer.metrics[0].key}`
-                              : ''}
-                            )
+                              `(
+                                ${graphContainer.metrics[0].unit}
+                                ${
+                                  (graphContainer.metrics[0].unit && type) ===
+                                  'OVERVIEW'
+                                    ? ','
+                                    : ''
+                                }
+                                ${
+                                  type === 'OVERVIEW'
+                                    ? graphContainer.metrics[0].key
+                                    : ''
+                                }
+                                )`}
                           </span>
                           {/* <Tooltip title="放大查看">
                             <FullscreenOutlined
