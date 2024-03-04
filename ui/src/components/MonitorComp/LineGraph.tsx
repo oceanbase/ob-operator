@@ -158,8 +158,6 @@ export default function LineGraph({
 
   //开启实时模式后处理
   useUpdateEffect(() => {
-    console.log('isRefresh',isRefresh);
-    
     if (!isRefresh) {
       if (inViewport) {
         queryMetrics(getQueryParms());

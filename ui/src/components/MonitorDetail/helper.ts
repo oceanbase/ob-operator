@@ -17,7 +17,6 @@ export const getFilterData = (detail: any): FilterDataType => {
       res.serverList = serverList;
     }
   }
-  console.log('detail',detail)
   if (detail.zones || detail.replicas) {
     for (let zone of detail.zones || detail.replicas) {
       if (zone.zone)
