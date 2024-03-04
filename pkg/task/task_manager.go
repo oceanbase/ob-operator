@@ -50,6 +50,9 @@ func taskManagerInit() {
 func runTask(f tasktypes.TaskFunc, ch chan<- *tasktypes.TaskResult, tokens chan struct{}) {
 	defer func() {
 		if r := recover(); r != nil {
+			if ch == nil {
+				return
+			}
 			ch <- &tasktypes.TaskResult{
 				Status: taskstatus.Failed,
 				Error:  errors.Errorf("Observed a panic: %v, stacktrace: %s", r, string(debug.Stack())),
