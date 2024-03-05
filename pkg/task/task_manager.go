@@ -56,6 +56,7 @@ func runTask(f tasktypes.TaskFunc, ch chan<- *tasktypes.TaskResult, tokens chan 
 			}
 		}
 		<-tokens
+		close(ch)
 	}()
 
 	tokens <- struct{}{}
@@ -133,18 +134,21 @@ func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskRes
 			"Pool size", cap(m.tokens),
 		)
 	}
-	retChAny, exists := m.ResultMap.Load(taskId)
-	if !exists {
-		return nil, errors.Errorf("Task %s not exists", taskId)
-	}
-	retCh, ok := retChAny.(chan *tasktypes.TaskResult)
-	if !ok {
-		return nil, errors.Errorf("Task %s not exists", taskId)
-	}
 	result, exists := m.TaskResultCache.Load(taskId)
 	if !exists {
+		retChAny, exists := m.ResultMap.Load(taskId)
+		if !exists {
+			return nil, errors.Errorf("Task %s not exists", taskId)
+		}
+		retCh, ok := retChAny.(chan *tasktypes.TaskResult)
+		if !ok {
+			return nil, errors.Errorf("Task %s not exists", taskId)
+		}
 		select {
-		case result := <-retCh:
+		case result, ok := <-retCh:
+			if !ok {
+				return nil, errors.Errorf("Result channel of task %s was closed", taskId)
+			}
 			m.TaskResultCache.Store(taskId, result)
 			return result, nil
 		default:
@@ -155,15 +159,10 @@ func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskRes
 }
 
 func (m *TaskManager) CleanTaskResult(taskId tasktypes.TaskID) error {
-	retChAny, exists := m.ResultMap.Load(taskId)
+	_, exists := m.ResultMap.Load(taskId)
 	if !exists {
 		return nil
 	}
-	retCh, ok := retChAny.(chan *tasktypes.TaskResult)
-	if !ok {
-		return nil
-	}
-	close(retCh)
 	m.ResultMap.Delete(taskId)
 	m.TaskResultCache.Delete(taskId)
 
