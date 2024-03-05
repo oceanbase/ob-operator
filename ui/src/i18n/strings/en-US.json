@@ -555,5 +555,12 @@
   "Dashboard.Cluster.New.Monitor.Image": "Image",
   "Dashboard.Cluster.New.Monitor.ImageList": "(Image list)",
   "Dashboard.Cluster.New.Observer.Image": "Image",
-  "Dashboard.Cluster.New.Observer.ImageList": "(Image list)"
+  "Dashboard.Cluster.New.Observer.ImageList": "(Image list)",
+  "Dashboard.Detail.Backup.JobTable.TaskName": "Task name",
+  "Dashboard.Detail.Backup.JobTable.Deadline": "Deadline",
+  "Dashboard.Detail.Backup.JobTable.EndTime": "End time",
+  "Dashboard.Detail.Backup.JobTable.Path": "Path",
+  "Dashboard.Detail.Backup.JobTable.ResourceStatus": "Resource status",
+  "Dashboard.Detail.Backup.JobTable.TaskStatus": "Task Status",
+  "Dashboard.Tenant.Detail.PerformanceMonitoring": "Performance monitoring"
 }

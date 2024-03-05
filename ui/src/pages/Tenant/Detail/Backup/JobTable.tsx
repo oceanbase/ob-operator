@@ -12,7 +12,10 @@ const getColumns = (
 ): TableProps<API.BackupJob>['columns'] => {
   return [
     {
-      title: '任务名称',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.JobTable.TaskName',
+        defaultMessage: '任务名称',
+      }),
       dataIndex: 'name',
       key: 'name',
       ellipsis: true,
@@ -33,12 +36,24 @@ const getColumns = (
       key: 'startTime',
     },
     {
-      title: curSelect === 'ARCHIVE' ? '截止时间' : '结束时间',
+      title:
+        curSelect === 'ARCHIVE'
+          ? intl.formatMessage({
+              id: 'Dashboard.Detail.Backup.JobTable.Deadline',
+              defaultMessage: '截止时间',
+            })
+          : intl.formatMessage({
+              id: 'Dashboard.Detail.Backup.JobTable.EndTime',
+              defaultMessage: '结束时间',
+            }),
       dataIndex: 'endTime',
       key: 'endTime',
     },
     {
-      title: '路径',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.JobTable.Path',
+        defaultMessage: '路径',
+      }),
       dataIndex: 'path',
       key: 'path',
       ellipsis: true,
@@ -51,12 +66,18 @@ const getColumns = (
       },
     },
     {
-      title: '资源状态',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.JobTable.ResourceStatus',
+        defaultMessage: '资源状态',
+      }),
       dataIndex: 'status',
       key: 'status',
     },
     {
-      title: '任务状态',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.JobTable.TaskStatus',
+        defaultMessage: '任务状态',
+      }),
       dataIndex: 'statusInDatabase',
       key: 'statusInDatabase',
     },
