@@ -526,3 +526,23 @@ func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 	}
 	return jobs, nil
 }
+
+// @ID GetOBTenantStatistic
+// @Tags Obtenant
+// @Summary List statistics information of tenants
+// @Description List statistics information of tenants
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]response.OBTenantStatistic}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obtenants/statistic [GET]
+// @Security ApiKeyAuth
+func GetOBTenantStatistic(c *gin.Context) ([]*response.OBTenantStatistic, error) {
+	tenants, err := oceanbase.GetOBTenantStatistics(c)
+	if err != nil {
+		return nil, err
+	}
+	return tenants, nil
+}

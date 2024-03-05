@@ -1,5 +1,34 @@
 basePath: /api/v1
 definitions:
+  common.AffinitySpec:
+    properties:
+      key:
+        type: string
+      type:
+        $ref: '#/definitions/common.AffinityType'
+      value:
+        type: string
+    type: object
+  common.AffinityType:
+    enum:
+    - NODE
+    - POD
+    - POD_ANTI
+    type: string
+    x-enum-varnames:
+    - NodeAffinityType
+    - PodAffinityType
+    - PodAntiAffinityType
+  common.ClusterMode:
+    enum:
+    - NORMAL
+    - STANDALONE
+    - SERVICE
+    type: string
+    x-enum-varnames:
+    - ClusterModeNormal
+    - ClusterModeStandalone
+    - ClusterModeService
   common.KVPair:
     properties:
       key:
@@ -100,6 +129,8 @@ definitions:
         type: integer
       clusterName:
         type: string
+      mode:
+        $ref: '#/definitions/common.ClusterMode'
       monitor:
         $ref: '#/definitions/param.MonitorSpec'
       name:
@@ -373,12 +404,20 @@ definitions:
     type: object
   param.ZoneTopology:
     properties:
+      affinities:
+        items:
+          $ref: '#/definitions/common.AffinitySpec'
+        type: array
       nodeSelector:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
       replicas:
         type: integer
+      tolerations:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       zone:
         type: string
     type: object
@@ -619,6 +658,20 @@ definitions:
       value:
         type: number
     type: object
+  response.MonitorSpec:
+    properties:
+      image:
+        type: string
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+    type: object
+  response.NFSVolumeSpec:
+    properties:
+      address:
+        type: string
+      path:
+        type: string
+    type: object
   response.Namespace:
     properties:
       namespace:
@@ -628,6 +681,8 @@ definitions:
     type: object
   response.OBCluster:
     properties:
+      backupVolume:
+        $ref: '#/definitions/response.NFSVolumeSpec'
       clusterId:
         type: integer
       clusterName:
@@ -638,9 +693,19 @@ definitions:
         type: string
       metrics:
         $ref: '#/definitions/response.OBMetrics'
+      mode:
+        $ref: '#/definitions/common.ClusterMode'
+      monitor:
+        $ref: '#/definitions/response.MonitorSpec'
       name:
         type: string
       namespace:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      rootPasswordSecret:
         type: string
       status:
         type: string
@@ -795,8 +860,19 @@ definitions:
       zone:
         type: string
     type: object
+  response.OBTenantStatistic:
+    properties:
+      count:
+        type: integer
+      status:
+        type: string
+    type: object
   response.OBZone:
     properties:
+      affinities:
+        items:
+          $ref: '#/definitions/common.AffinitySpec'
+        type: array
       name:
         type: string
       namespace:
@@ -817,6 +893,10 @@ definitions:
         type: string
       statusDetail:
         type: string
+      tolerations:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       zone:
         type: string
     type: object
@@ -2306,6 +2386,43 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Upgrade tenant compatibility version of specific tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenants/statistic:
+    get:
+      consumes:
+      - application/json
+      description: List statistics information of tenants
+      operationId: GetOBTenantStatistic
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.OBTenantStatistic'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List statistics information of tenants
       tags:
       - Obtenant
 securityDefinitions:

@@ -33,4 +33,5 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.PATCH("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.UpdateBackupPolicy))
 	g.DELETE("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.DeleteBackupPolicy))
 	g.GET("/obtenants/:namespace/:name/backup/:type/jobs", h.Wrap(h.ListBackupJobs))
+	g.GET("/obtenants/statistic", h.Wrap(h.GetOBTenantStatistic))
 }
