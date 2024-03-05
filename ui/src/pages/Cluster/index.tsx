@@ -9,7 +9,7 @@ import MonitorComp from '@/components/MonitorComp';
 import ClusterList from './ClusterList';
 // import Monitor from './Monitor';
 import { getObclusterListReq } from '@/services';
-import type { LabelType, QueryRangeType } from './Detail/Monitor';
+import type { LabelType, QueryRangeType } from '../../components/MonitorDetail';
 
 const defaultQueryRange:QueryRangeType = {
   step: 20,
@@ -47,6 +47,7 @@ const ClusterPage: React.FC = () => {
         filterLabel={clusterNames} 
         queryScope='OBCLUSTER_OVERVIEW' 
         type='OVERVIEW' 
+        groupLabels={['ob_cluster_name']}
         queryRange={defaultQueryRange}/>
     </PageContainer>
   );

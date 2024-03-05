@@ -21,7 +21,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link replace to={`/tenant/ns=${record.namespace}&nm=${record.name}`}>{value}</Link>
+      <Link replace to={`/tenant/ns=${record.namespace}&nm=${record.name}&tenantName=${record.tenantName}`}>{value}</Link>
     ),
   },
   {

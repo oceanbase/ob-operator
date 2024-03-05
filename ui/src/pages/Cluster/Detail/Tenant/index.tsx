@@ -46,12 +46,16 @@ export default function Tenant() {
           />
         )}
         <EventsTable objectType="OBTENANT" />
-        <MonitorComp
-          queryRange={defaultQueryRange}
-          type="DETAIL"
-          queryScope="OBTENANT"
-          filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
-        />
+        {tenantsList && (
+          <MonitorComp
+            queryRange={defaultQueryRange}
+            type="OVERVIEW"
+            queryScope="OBTENANT"
+            groupLabels={['tenant_name']}
+            useFor='tenant'
+            filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
+          />
+        )}
       </Row>
     </PageContainer>
   );

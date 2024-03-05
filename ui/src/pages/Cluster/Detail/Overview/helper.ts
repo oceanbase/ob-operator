@@ -1,7 +1,7 @@
-// 与UI无关函数
+// Functions without UI
 
 /**
- * 通过url的path获取namespace和name
+ * Get the namespace, name and cluster name or tenant name through the path of the url
  *
  * @returns {Array} [namespace,name]
  * @example /cluster/ns=oceanbase&nm=test/overview => [oceanbase,test]
@@ -13,11 +13,11 @@ const getNSName = () => {
   for (let path of pathArr) {
     
     if (path.split('&').length === 3) {
-      const [ns, name,clusterName] = path.split('&');
+      const [ns, name,clusterOrTenantName] = path.split('&');
       if (ns.split('=')[0] === 'ns' && name.split('=')[0] === 'nm') {
         res[0] = ns.split('=')[1];
         res[1] = name.split('=')[1];
-        res[2] = clusterName.split('=')[1];
+        res[2] = clusterOrTenantName.split('=')[1];
       }
       return res;
     }else if(path.split('&').length === 2){
@@ -32,7 +32,7 @@ const getNSName = () => {
   return res;
 };
 
-// 存在集群｜zone｜server状态不为running 则返回status为operating
+// if there is cluster｜zone｜server whose status isn't running,the return status is operating.
 const formatClusterData = (responseData: any): API.ClusterDetail => {
   const res: any = {
     info: {},

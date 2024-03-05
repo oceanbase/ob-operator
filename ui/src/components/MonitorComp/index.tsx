@@ -1,12 +1,12 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { ProCard } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
-import { Card, Col, Row, Tooltip } from 'antd';
+import { Card,Col,Row,Tooltip } from 'antd';
 import { useState } from 'react';
 
-import type { QueryRangeType } from '@/pages/Cluster/Detail/Monitor';
+import type { QueryRangeType } from '@/components/MonitorDetail';
 import { getAllMetrics } from '@/services';
-import LineGraph, { LineGraphProps, MetricType } from './LineGraph';
+import LineGraph,{ LineGraphProps,MetricType } from './LineGraph';
 import styles from './index.less';
 
 //查询的label
@@ -22,7 +22,9 @@ interface MonitorCompProps {
   queryRange: QueryRangeType;
   isRefresh?: boolean;
   queryScope:API.EventObjectType;
-  type: API.MonitorUserFor;
+  type: API.MonitorUseTarget;
+  groupLabels:API.LableKeys[];
+  useFor?: API.MonitorUseFor;
 }
 
 export default function MonitorComp({
@@ -30,14 +32,15 @@ export default function MonitorComp({
   queryRange,
   isRefresh = false,
   type,
-  queryScope
+  queryScope,
+  groupLabels,
+  useFor='cluster'
 }: MonitorCompProps) {
   const { data: allMetrics } = useRequest(getAllMetrics, {
     defaultParams: [queryScope],
   });
   const [visible, setVisible] = useState(false);
   const [modalProps, setModalProps] = useState<LineGraphProps>({});
-
   const Title = ({
     metrics,
     name,
@@ -78,7 +81,7 @@ export default function MonitorComp({
             <ProCard bodyStyle={{ padding: 0 }}>
               <div>
                 <div className={styles.monitorHeader}>
-                  {type === 'overview' ? (
+                  {type === 'OVERVIEW' ? (
                     <h2>{container.name}</h2>
                   ) : (
                     <p className={styles.headerText}>{container.name}</p>
@@ -91,6 +94,21 @@ export default function MonitorComp({
                         <div className={styles.graphHeader}>
                           <span className={styles.graphHeaderText}>
                             {graphContainer.name}
+                            {graphContainer.metrics[0].unit &&
+                              `(
+                                ${graphContainer.metrics[0].unit}
+                                ${
+                                  (graphContainer.metrics[0].unit && type) ===
+                                  'OVERVIEW'
+                                    ? ','
+                                    : ''
+                                }
+                                ${
+                                  type === 'OVERVIEW'
+                                    ? graphContainer.metrics[0].key
+                                    : ''
+                                }
+                                )`}
                           </span>
                           {/* <Tooltip title="放大查看">
                             <FullscreenOutlined
@@ -121,7 +139,9 @@ export default function MonitorComp({
                           queryRange={queryRange}
                           metrics={graphContainer.metrics}
                           labels={filterLabel}
+                          groupLabels={groupLabels}
                           type={type}
+                          useFor={useFor}
                         />
                       </Card>
                     ),

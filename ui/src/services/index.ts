@@ -388,8 +388,17 @@ export async function getAllMetrics(type: API.EventObjectType) {
   return r.data;
 }
 
-// //时间戳换算成时间
-export async function queryMetricsReq({ type, ...data }: API.QueryMetricsType) {
+const setMetricNameFromLabels = (labels:API.MetricsLabels)=>{
+  let tenantName = labels.find((label) => label.key === 'tenant_name')?.value;
+  let clustetName = labels
+    .filter((label) => label.key === 'ob_cluster_name')
+    .map((label) => label.value)
+    .join(',');
+  
+  return `${tenantName}(${clustetName})`
+}
+
+export async function queryMetricsReq({ useFor, type, ...data }: API.QueryMetricsType) {
   const r = await request('/api/v1/metrics/query', {
     method: 'POST',
     data,
@@ -397,11 +406,24 @@ export async function queryMetricsReq({ type, ...data }: API.QueryMetricsType) {
   if (r.successful) {
     if (!r.data || !r.data.length) return [];
     r.data.forEach((metric) => {
+      
       metric.values.forEach((item) => {
         // item.date = moment.unix(item.timestamp).format('YYYY-MM-DD HH:mm:ss');
         item.date = item.timestamp * 1000;
         if (type === 'OVERVIEW') {
-          item.name = metric.metric.labels[0]?.value || '';
+          if (useFor === 'tenant') {
+            let metricLabels =  metric.metric.labels;
+            if(metricLabels.length > 1){
+              item.name = setMetricNameFromLabels(metricLabels);
+            }else{
+              item.name = metricLabels[0]?.value || '';
+            }
+          } else {
+            item.name =
+              metric.metric.labels.find(
+                (label) => label.key === 'ob_cluster_name',
+              ).value || '';
+          }
         } else {
           item.name = metric.metric.name;
         }

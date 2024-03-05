@@ -72,11 +72,11 @@ const TenantDetail: React.FC = () => {
       }),
       link: `/tenant/${tenantId}/backup`,
     },
-    // {
-    //   title: '性能监控',
-    //   key: 'monitor',
-    //   link: `/tenant/${clusterId}/monitor`,
-    // },
+    {
+      title: '性能监控',
+      key: 'monitor',
+      link: `/tenant/${tenantId}/monitor`,
+    },
   ];
   const userMenu = (
     <Menu
