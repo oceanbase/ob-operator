@@ -285,7 +285,7 @@ export default function TopoComponent({
         ? header
         : originTopoData && (
             <BasicInfo
-              style={{ backgroundColor: '#f5f8fe' }}
+              style={{ backgroundColor: '#f5f8fe', border:'none' }}
               {...(originTopoData.basicInfo as API.ClusterInfo)}
             />
           )}

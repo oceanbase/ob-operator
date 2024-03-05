@@ -1,7 +1,6 @@
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
 import { Link } from '@umijs/max';
-import { Button, Col, Table, Tag } from 'antd';
+import { Button, Col, Table, Tag, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { COLOR_MAP } from '@/constants';
 
@@ -94,7 +93,7 @@ export default function TenantsList({
 }: TenantsListProps) {
   return (
     <Col span={24}>
-      <ProCard>
+      <Card>
         <div className={styles.clusterHeader}>
           <h2>
             {intl.formatMessage({
@@ -118,7 +117,7 @@ export default function TenantsList({
           bordered
           sticky
         />
-      </ProCard>
+      </Card>
     </Col>
   );
 }

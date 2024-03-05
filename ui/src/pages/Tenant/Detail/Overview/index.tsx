@@ -223,7 +223,6 @@ export default function TenantOverview() {
 
           <EventsTable
             objectType="OBTENANT"
-            cardType="proCard"
             collapsible={true}
           />
 

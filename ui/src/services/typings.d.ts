@@ -235,20 +235,20 @@ declare namespace API {
     bakDataPath: string;
     bakEncryptionPassword?: string;
     destType: DestType;
-    jobKeepWindow?: number;
+    jobKeepDays?: number;
     ossAccessId: string;
     ossAccessKey: string;
-    pieceInterval?: number;
-    recoveryWindow?: number;
+    pieceIntervalDays?: number;
+    recoveryDays?: number;
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: 'Weekly' | 'Monthly';
   };
 
   type UpdateTenantPolicy = {
-    jobKeepWindow?: number;
-    pieceInterval?: number;
-    recoveryWindow?: number;
+    jobKeepDays?: number;
+    pieceIntervalDays?: number;
+    recoveryDays?: number;
     scheduleDates?: ScheduleDatesType;
     scheduleType?: 'Weekly' | 'Monthly';
     status?: string;
@@ -300,12 +300,12 @@ declare namespace API {
     bakDataPath: string;
     bakEncryptionSecret: string;
     destType: DestType;
-    jobKeepWindow: string;
+    jobKeepDays: string;
     name: string;
     namespace: string;
     ossAccessSecret: string;
-    pieceInterval: string;
-    recoveryWindow: string;
+    pieceIntervalDays: string;
+    recoveryDays: string;
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: string;
@@ -319,9 +319,9 @@ declare namespace API {
 
   type BackupConfigEditable = {
     destType: DestType;
-    jobKeepWindow: number;
-    pieceInterval: number;
-    recoveryWindow: number;
+    jobKeepDays: number;
+    pieceIntervalDays: number;
+    recoveryDays: number;
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: string;

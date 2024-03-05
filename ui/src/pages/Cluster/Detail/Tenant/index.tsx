@@ -6,7 +6,7 @@ import { getAllTenants } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Row } from 'antd';
+import { Col,Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
 import { getNSName } from '../Overview/helper';
 
@@ -47,14 +47,16 @@ export default function Tenant() {
         )}
         <EventsTable objectType="OBTENANT" />
         {tenantsList && (
-          <MonitorComp
-            queryRange={defaultQueryRange}
-            type="OVERVIEW"
-            queryScope="OBTENANT"
-            groupLabels={['tenant_name']}
-            useFor='tenant'
-            filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
-          />
+          <Col span={24}>
+            <MonitorComp
+              queryRange={defaultQueryRange}
+              type="OVERVIEW"
+              queryScope="OBTENANT"
+              groupLabels={['tenant_name']}
+              useFor="tenant"
+              filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
+            />
+          </Col>
         )}
       </Row>
     </PageContainer>

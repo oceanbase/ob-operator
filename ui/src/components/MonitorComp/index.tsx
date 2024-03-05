@@ -1,5 +1,4 @@
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { ProCard } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
 import { Card,Col,Row,Tooltip } from 'antd';
 import { useState } from 'react';
@@ -78,7 +77,7 @@ export default function MonitorComp({
       {allMetrics &&
         allMetrics.map((container: any, index: number) => (
           <Col span={24} key={index}>
-            <ProCard bodyStyle={{ padding: 0 }}>
+            <Card bodyStyle={{ padding: 0 }}>
               <div>
                 <div className={styles.monitorHeader}>
                   {type === 'OVERVIEW' ? (
@@ -148,7 +147,7 @@ export default function MonitorComp({
                   )}
                 </div>
               </div>
-            </ProCard>
+            </Card>
           </Col>
         ))}
       {/* <LineGraphModal

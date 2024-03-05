@@ -1,6 +1,5 @@
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
-import { Col, Table, Tag } from 'antd';
+import { Col, Table, Tag, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -97,7 +96,7 @@ const getServerColums = () => {
 export default function ServerTable({ servers }: { servers: API.Server[] }) {
   return (
     <Col span={24}>
-      <ProCard>
+      <Card>
         <Table
           columns={getServerColums()}
           rowKey="name"
@@ -105,7 +104,7 @@ export default function ServerTable({ servers }: { servers: API.Server[] }) {
           pagination={{simple:true}}
           sticky
         />
-      </ProCard>
+      </Card>
     </Col>
   );
 }

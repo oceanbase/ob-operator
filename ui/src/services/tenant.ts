@@ -119,9 +119,9 @@ export async function getBackupPolicy({
     'status',
     'ossAccessSecret',
     'bakEncryptionSecret',
-    'jobKeepWindow',
-    'pieceInterval',
-    'recoveryWindow'
+    'jobKeepDays',
+    'pieceIntervalDays',
+    'recoveryDays'
   ];
 
   if (r.successful) {
@@ -137,13 +137,14 @@ export async function getBackupJobs({
   ns,
   name,
   type,
-  limit = 10,
+  limit
 }: API.NamespaceAndName & {
   type: API.JobType;
   limit?: number;
 }): Promise<API.BackupJobsResponse> {
+  let limitQuery = limit ? `?limit=${limit}` : '';
   let r = await request(
-    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs?limit=${limit}`,
+    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs${limitQuery}`,
   );
   let res: API.BackupJob[] = [];
   if (r.successful) {
