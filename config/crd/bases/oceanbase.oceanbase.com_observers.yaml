@@ -2693,6 +2693,8 @@ spec:
                 type: string
               ready:
                 type: boolean
+              serviceIp:
+                type: string
               startServiceTime:
                 format: int64
                 type: integer

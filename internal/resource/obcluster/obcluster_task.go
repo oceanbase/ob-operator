@@ -31,12 +31,11 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
-
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -308,10 +307,11 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	} else {
 		connectAddress := manager.Connector.DataSource().GetAddress()
 		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].Server
+			serverIp := zone.Status.OBServerStatus[0].GetConnectAddr()
+			// Notes: If the addr of the db connector is in this obzone, use it as the bootstrap server instead of the first one
 			for _, serverInfo := range zone.Status.OBServerStatus {
-				if serverInfo.Server == connectAddress {
-					serverIp = connectAddress
+				if serverInfo.Server == connectAddress || serverInfo.ServiceIP == connectAddress {
+					serverIp = serverInfo.GetConnectAddr()
 				}
 			}
 			serverInfo := &model.ServerInfo{
@@ -1007,9 +1007,10 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Name:    "helper-check-image-pull-ready",
-						Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-						Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
+						Name:            "helper-check-image-pull-ready",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
+						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
 					}},
 					RestartPolicy: corev1.RestartPolicyNever,
 				},

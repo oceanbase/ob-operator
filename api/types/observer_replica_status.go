@@ -13,6 +13,14 @@ See the Mulan PSL v2 for more details.
 package types
 
 type OBServerReplicaStatus struct {
-	Server string `json:"server"`
-	Status string `json:"status"`
+	Server    string `json:"server"` // PodIP
+	Status    string `json:"status"`
+	ServiceIP string `json:"serviceIP,omitempty"`
+}
+
+func (srs OBServerReplicaStatus) GetConnectAddr() string {
+	if srs.ServiceIP != "" {
+		return srs.ServiceIP
+	}
+	return srs.Server
 }

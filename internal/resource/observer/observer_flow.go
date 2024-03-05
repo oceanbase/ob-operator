@@ -22,7 +22,7 @@ func PrepareOBServerForBootstrap() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fPrepareOBServerForBootstrap,
-			Tasks:        []tasktypes.TaskName{tCreateOBPVC, tCreateOBPod, tWaitOBServerReady},
+			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBPVC, tCreateOBPod, tWaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
 		},
 	}
