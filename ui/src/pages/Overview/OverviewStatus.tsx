@@ -1,21 +1,85 @@
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
-import { Badge, Card, Col, Row } from 'antd';
+import { Badge,Card,Col,Row } from 'antd';
 
 import clusterImg from '@/assets/cluster/running.svg';
 import tenantImg from '@/assets/tenant.svg';
-import { getOBStatisticReq } from '@/services';
+import { getClusterStatisticReq } from '@/services';
+import { getTenantStatisticReq } from '@/services/tenant';
 import styles from './index.less';
 
 export default function OverviewStatus() {
-  //每次请求完成后，useRequest 钩子函数会根据请求结果更新 data 的值 可以直接使用data值
-  const { data } = useRequest(getOBStatisticReq);
+  const { data:clusterStatisticRes } = useRequest(getClusterStatisticReq);
+  const { data:tenantStatisticRes } = useRequest(getTenantStatisticReq)
   const clusterHref = '/#/cluster';
   const tenantHref = '/#/tenant';
+  const clusterStatistic = clusterStatisticRes?.data;
+  const tenantStatistic = tenantStatisticRes?.data;
+
+  const CustomBadge = ({
+    text,
+    type,
+    count,
+    status,
+  }: {
+    text: string;
+    type: 'cluster' | 'tenant';
+    count: number;
+    status: 'processing' | 'error' | 'default' | 'warning';
+  }) => {
+    return (
+      <div>
+        <Badge status={status} text={text} />
+        <a
+          className={count === 0 ? styles.zeroText : ''}
+          style={{ marginLeft: '8px' }}
+          href={type === 'cluster' ? clusterHref : tenantHref}
+        >
+          {count}
+        </a>
+      </div>
+    );
+  };
+
+  const getStatisticConfig = (statistic: API.StatisticData) => ({
+    running: (
+      <CustomBadge
+        text="运行中"
+        status="processing"
+        type={statistic.type}
+        count={statistic.running}
+      />
+    ),
+    deleting: (
+      <CustomBadge
+        text="删除中"
+        status="error"
+        type={statistic.type}
+        count={statistic.deleting}
+      />
+    ),
+    operating: (
+      <CustomBadge
+        text="操作中"
+        status="warning"
+        type={statistic.type}
+        count={statistic.operating}
+      />
+    ),
+    failed: (
+      <CustomBadge
+        text="已出错"
+        status="default"
+        type={statistic.type}
+        count={statistic.failed}
+      />
+    ),
+  });
+
   return (
     <>
-      {data &&
-        data.map((item, index) => {
+      {clusterStatistic && tenantStatistic ?
+        [clusterStatistic,tenantStatistic].map((statistic, index) => {
           return (
             <Col
               span={8}
@@ -23,9 +87,7 @@ export default function OverviewStatus() {
               key={index}
             >
               <Card
-                className={`${styles.cardContent} ${
-                  item.type === 'tenant' && styles.banContent
-                }`}
+                className={styles.cardContent}
               >
                 <Row>
                   <Col
@@ -35,13 +97,13 @@ export default function OverviewStatus() {
                     }}
                   >
                     <img
-                      src={item.type === 'cluster' ? clusterImg : tenantImg}
+                      src={statistic.type === 'cluster' ? clusterImg : tenantImg}
                       className={styles.imgContent}
                       alt="svg"
                     />
 
                     <div className={styles.total}>
-                      <div className={styles.totalText}>{item.total}</div>
+                      <div className={styles.totalText}>{statistic.total}</div>
                       <div className={styles.totalTitle}>
                         {intl.formatMessage({
                           id: 'dashboard.pages.Overview.OverviewStatus.TotalQuantity',
@@ -51,72 +113,18 @@ export default function OverviewStatus() {
                     </div>
                   </Col>
                   <Col span={14} offset={6}>
-                    <div className={styles.name}>{item.name}</div>
+                    <div className={styles.name}>{statistic.name}</div>
                     <div>
-                      <div>
-                        <Badge
-                          status="processing"
-                          text={intl.formatMessage({
-                            id: 'dashboard.pages.Overview.OverviewStatus.Running',
-                            defaultMessage: '运行中',
-                          })}
-                        />
-
-                        <a
-                          className={item.running === 0 ? styles.zeroText : ''}
-                          style={{ marginLeft: '8px' }}
-                          href={
-                            item.type === 'cluster' ? clusterHref : tenantHref
-                          }
-                        >
-                          {item.running}
-                        </a>
-                      </div>
-                      <div>
-                        <Badge
-                          status="error"
-                          text={intl.formatMessage({
-                            id: 'OBDashboard.pages.Overview.OverviewStatus.Deleting',
-                            defaultMessage: '删除中',
-                          })}
-                        />
-                        <a
-                          className={item.deleting === 0 ? styles.zeroText : ''}
-                          style={{ marginLeft: '8px' }}
-                          href={
-                            item.type === 'cluster' ? clusterHref : tenantHref
-                          }
-                        >
-                          {item.deleting}
-                        </a>
-                      </div>
-                      <div>
-                        <Badge
-                          status="warning"
-                          text={intl.formatMessage({
-                            id: 'OBDashboard.pages.Overview.OverviewStatus.InOperation',
-                            defaultMessage: '操作中',
-                          })}
-                        />
-                        <a
-                          className={
-                            item.operating === 0 ? styles.zeroText : ''
-                          }
-                          style={{ marginLeft: '8px' }}
-                          href={
-                            item.type === 'cluster' ? clusterHref : tenantHref
-                          }
-                        >
-                          {item.operating}
-                        </a>
-                      </div>
+                      {
+                        Object.keys(getStatisticConfig(statistic)).map((key)=>(getStatisticConfig(statistic)[key]))
+                      }
                     </div>
                   </Col>
                 </Row>
               </Card>
             </Col>
           );
-        })}
+        }) : null}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
+import { formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
 import _ from 'lodash';
@@ -86,39 +87,14 @@ export async function getNodeLabelsReq() {
   return res;
 }
 
-export async function getOBStatisticReq() {
+export async function getClusterStatisticReq(): Promise<API.StatisticDataResponse> {
   const r = await request('/api/v1/obclusters/statistic', {
     method: 'GET',
   });
-  let data = r.data,
-    res = [];
-  if (r.successful) {
-    let obj = {
-      total: 0,
-      name: intl.formatMessage({
-        id: 'OBDashboard.src.services.OceanbaseCluster',
-        defaultMessage: 'OceanBase集群',
-      }),
-      type: 'cluster',
-      deleting: 0,
-      operating: 0,
-      running: 0,
-    };
-    let tenant = _.clone(obj);
-    tenant.name = intl.formatMessage({
-      id: 'OBDashboard.src.services.OceanbaseTenants',
-      defaultMessage: 'OceanBase租户',
-    });
-    tenant.type = 'tenant';
-    for (let item of data) {
-      obj.total += item.count;
-      obj[item.status] = item.count;
-    }
-    res.push(obj);
-    res.push(tenant);
-  }
-
-  return res;
+  return {
+    ...r,
+    data: formatStatisticData('cluster', r.data),
+  };
 }
 
 export async function createObclusterReq(body: any) {

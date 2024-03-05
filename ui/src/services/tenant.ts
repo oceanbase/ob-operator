@@ -1,7 +1,17 @@
-import { getInitialObjOfKeys } from '@/utils/helper';
+import { formatStatisticData, getInitialObjOfKeys } from '@/utils/helper';
 import { request } from '@umijs/max';
 
 const tenantPrefix = '/api/v1/obtenants';
+
+export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse> {
+  const r = await request(`${tenantPrefix}/statistic`, {
+    method: 'GET',
+  });
+  return {
+    ...r,
+    data: formatStatisticData('tenant', r.data),
+  };
+}
 
 export async function getAllTenants(
   obcluster?: string,
@@ -37,7 +47,7 @@ export async function getTenant({
     replicas: [],
   };
   if (r.successful) {
-    res.info = getInitialObjOfKeys(r.data,infoKeys)
+    res.info = getInitialObjOfKeys(r.data, infoKeys);
     if (r.data.primaryTenant) res.source!.primaryTenant = r.data.primaryTenant;
     if (r.data.restoreSource?.archiveSource)
       res.source!.archiveSource = r.data.restoreSource.archiveSource;
@@ -80,7 +90,7 @@ export async function createBackupPolicyOfTenant({
 }: API.NamespaceAndName & API.TenantPolicy): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
     method: 'PUT',
-    data:body
+    data: body,
   });
 }
 
@@ -88,7 +98,8 @@ export async function updateBackupPolicyOfTenant({
   ns,
   name,
   ...body
-}: API.NamespaceAndName & API.UpdateTenantPolicy): Promise<API.BackupPolicyResponse> {
+}: API.NamespaceAndName &
+  API.UpdateTenantPolicy): Promise<API.BackupPolicyResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/backupPolicy`, {
     method: 'PATCH',
     data: body,
@@ -121,7 +132,7 @@ export async function getBackupPolicy({
     'bakEncryptionSecret',
     'jobKeepWindow',
     'pieceInterval',
-    'recoveryWindow'
+    'recoveryWindow',
   ];
 
   if (r.successful) {

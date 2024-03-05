@@ -254,10 +254,24 @@ declare namespace API {
     status?: string;
   };
 
+  type StatisticData = {
+    total: number;
+    name: string;
+    type: 'cluster' | 'tenant';
+    deleting: number;
+    operating: number;
+    running: number;
+    failed: number;
+  };
+
   interface CommonResponse {
     data: any;
     message: string;
     successful: boolean;
+  }
+
+  interface StatisticDataResponse extends CommonResponse {
+    data: StatisticData;
   }
 
   interface TenantsListResponse extends CommonResponse {
