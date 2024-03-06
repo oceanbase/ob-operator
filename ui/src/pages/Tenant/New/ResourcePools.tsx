@@ -1,6 +1,7 @@
 import { SUFFIX_UNIT } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Checkbox, Col, Form, InputNumber, Row } from 'antd';
+import { Card, Checkbox, Col, Form, Row } from 'antd';
+import InputNumber from '@/components/InputNumber';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
 import styles from './index.less';

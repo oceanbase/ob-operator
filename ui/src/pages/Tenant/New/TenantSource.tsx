@@ -11,6 +11,7 @@ import {
   Select,
   Switch,
   TimePicker,
+  Tooltip,
 } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
@@ -173,99 +174,160 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                   />
                 </Form.Item>
               </Col>
+              <Form.Item noStyle dependencies={[['source', 'restore', 'type']]}>
+                {({ getFieldValue }) => {
+                  console.log(
+                    'getFieldValue',
+                    getFieldValue(['source', 'restore', 'type']),
+                  );
+
+                  if (getFieldValue(['source', 'restore', 'type']) !== 'NFS') {
+                    return (
+                      <>
+                        <Col span={8}>
+                          <Form.Item
+                            label="OSS AccessID"
+                            name={['source', 'restore', 'ossAccessId']}
+                            rules={[
+                              {
+                                required: true,
+                                message: intl.formatMessage({
+                                  id: 'Dashboard.Tenant.New.TenantSource.EnterOssAccessid',
+                                  defaultMessage: '请输入 OSS AccessID',
+                                }),
+                              },
+                            ]}
+                          >
+                            <Password
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col span={8}>
+                          <Form.Item
+                            label="OSS AccessKey"
+                            name={['source', 'restore', 'ossAccessKey']}
+                            rules={[
+                              {
+                                required: true,
+                                message: intl.formatMessage({
+                                  id: 'Dashboard.Tenant.New.TenantSource.EnterOssAccesskey',
+                                  defaultMessage: '请输入 OSS AccessKey',
+                                }),
+                              },
+                            ]}
+                          >
+                            <Password
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                      </>
+                    );
+                  } else {
+                    return null;
+                  }
+                }}
+              </Form.Item>
               <Col span={8}>
-                <Form.Item
-                  label="OSS AccessID"
-                  name={['source', 'restore', 'ossAccessId']}
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.Tenant.New.TenantSource.EnterOssAccessid',
-                        defaultMessage: '请输入 OSS AccessID',
-                      }),
-                    },
-                  ]}
+                <Tooltip
+                  overlayStyle={{ maxWidth: 300 }}
+                  title={
+                    <div>
+                      <span>
+                        {intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat',
+                          defaultMessage: 'NFS 类型，参考路径格式：path/to/dir',
+                        })}
+                      </span>
+                      <br />
+                      <span>
+                        {intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation',
+                          defaultMessage:
+                            'OSS 类型，参考路径格式：oss://bucket/dir?host=xxx',
+                        })}
+                      </span>
+                    </div>
+                  }
                 >
-                  <Password
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
-                      defaultMessage: '请输入',
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.TenantSource.LogArchivePath',
+                      defaultMessage: '日志归档路径',
                     })}
-                  />
-                </Form.Item>
+                    name={['source', 'restore', 'archiveSource']}
+                    rules={[
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.EnterTheLogArchivePath',
+                          defaultMessage: '请输入日志归档路径',
+                        }),
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
+                        defaultMessage: '请输入',
+                      })}
+                    />
+                  </Form.Item>
+                </Tooltip>
               </Col>
               <Col span={8}>
-                <Form.Item
-                  label="OSS AccessKey"
-                  name={['source', 'restore', 'ossAccessKey']}
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.Tenant.New.TenantSource.EnterOssAccesskey',
-                        defaultMessage: '请输入 OSS AccessKey',
-                      }),
-                    },
-                  ]}
+                <Tooltip
+                  overlayStyle={{ maxWidth: 300 }}
+                  title={
+                    <div>
+                      <span>
+                        {intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat',
+                          defaultMessage: 'NFS 类型，参考路径格式：path/to/dir',
+                        })}
+                      </span>
+                      <br />
+                      <span>
+                        {intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation',
+                          defaultMessage:
+                            'OSS 类型，参考路径格式：oss://bucket/dir?host=xxx',
+                        })}
+                      </span>
+                    </div>
+                  }
                 >
-                  <Password
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
-                      defaultMessage: '请输入',
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.TenantSource.DataBackupPath',
+                      defaultMessage: '数据备份路径',
                     })}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  label={intl.formatMessage({
-                    id: 'Dashboard.Tenant.New.TenantSource.LogArchivePath',
-                    defaultMessage: '日志归档路径',
-                  })}
-                  name={['source', 'restore', 'archiveSource']}
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.Tenant.New.TenantSource.EnterTheLogArchivePath',
-                        defaultMessage: '请输入日志归档路径',
-                      }),
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
-                      defaultMessage: '请输入',
-                    })}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={8}>
-                <Form.Item
-                  label={intl.formatMessage({
-                    id: 'Dashboard.Tenant.New.TenantSource.DataBackupPath',
-                    defaultMessage: '数据备份路径',
-                  })}
-                  name={['source', 'restore', 'bakDataSource']}
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.Tenant.New.TenantSource.EnterTheDataBackupPath',
-                        defaultMessage: '请输入数据备份路径',
-                      }),
-                    },
-                  ]}
-                >
-                  <Input
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
-                      defaultMessage: '请输入',
-                    })}
-                  />
-                </Form.Item>
+                    name={['source', 'restore', 'bakDataSource']}
+                    rules={[
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Tenant.New.TenantSource.EnterTheDataBackupPath',
+                          defaultMessage: '请输入数据备份路径',
+                        }),
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Tenant.New.TenantSource.PleaseEnter',
+                        defaultMessage: '请输入',
+                      })}
+                    />
+                  </Form.Item>
+                </Tooltip>
               </Col>
               <Col span={8}>
                 <Form.Item
@@ -355,7 +417,6 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                   </Col>
                 </Row>
               )}
-              {/* <InputNumber /> */}
             </div>
           </div>
         )}

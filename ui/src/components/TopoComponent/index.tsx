@@ -223,7 +223,7 @@ export default function TopoComponent({
   useUpdateEffect(() => {
     let checkStatusTimer: NodeJS.Timer;
     //polling
-    if (originTopoData.topoData.status === 'operating') {
+    if (originTopoData.topoData.status !== 'running') {
       if (!operateDisable) setOperateDisable(true);
       checkStatusTimer = setInterval(() => {
         getTopoData({ ns, name, useFor: 'topo', tenantReplicas });

@@ -21,7 +21,7 @@ const ClusterOverview: React.FC = () => {
     useState<boolean>(false);
   const [[ns, name]] = useState(getNSName());
   const chooseZoneName = useRef<string>('');
-  const timerRef = useRef<NodeJS.Timeout>()
+  const timerRef = useRef<NodeJS.Timeout>();
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //当前运维弹窗类型
   const modalType = useRef<API.ModalType>('addZone');

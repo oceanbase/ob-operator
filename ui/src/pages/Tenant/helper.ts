@@ -87,6 +87,7 @@ export function formatNewTenantForm(
       result[key] = originFormData[key];
     }
   });
+  delete result.source?.restore?.until
   return result;
 }
 /**

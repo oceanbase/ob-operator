@@ -68,7 +68,7 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button key="submit" onClick={() => form.submit()}>
+        <Button type='primary' key="submit" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'Dashboard.Tenant.New.Submit',
             defaultMessage: '提交',

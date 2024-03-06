@@ -351,9 +351,12 @@ export async function getStorageClasses() {
         toolTipData: toolTipData,
       });
     }
-    return res;
+    return {
+      ...r,
+      data:res
+    };
   }
-  return r.data;
+  return r;
 }
 
 export async function getAllMetrics(type: API.EventObjectType) {
