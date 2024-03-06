@@ -27,4 +27,5 @@ func init() {
 	task.GetRegistry().Register(fUpgradeOBCluster, UpgradeOBCluster)
 	task.GetRegistry().Register(fScaleUpOBZones, ScaleUpOBZones)
 	task.GetRegistry().Register(fExpandPVC, ResizePVC)
+	task.GetRegistry().Register(fMountBackupVolume, MountBackupVolume)
 }

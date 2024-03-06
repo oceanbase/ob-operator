@@ -681,7 +681,7 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+	if modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService) {
 		return nil
 	}
 	m.Logger.Info("wait observer active in cluster")
@@ -721,7 +721,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		Port: oceanbaseconst.RpcPort,
 	}
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+	if modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService) {
 		return nil
 	}
 	deleted := false
@@ -891,5 +891,13 @@ func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
 			return errors.Wrapf(err, "Failed to create observer service")
 		}
 	}
+	return nil
+}
+
+func (m *OBServerManager) MountBackupVolume() tasktypes.TaskError {
+	return nil
+}
+
+func (m *OBServerManager) WaitForBackupVolumeMounted() tasktypes.TaskError {
 	return nil
 }

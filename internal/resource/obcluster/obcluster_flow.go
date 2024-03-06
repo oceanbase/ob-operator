@@ -113,3 +113,13 @@ func ResizePVC() *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func MountBackupVolume() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fMountBackupVolume,
+			Tasks:        []tasktypes.TaskName{tMountBackupVolume, tWaitOBZoneRunning},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}

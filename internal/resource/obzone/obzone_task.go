@@ -340,9 +340,11 @@ func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
 		if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
 			observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
 			m.Logger.Info("scale up observer", "observer", observer.Name)
-			observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
-			observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
-			err = m.Client.Update(m.Ctx, &observer)
+			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
+				observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
+				return m.Client.Update(m.Ctx, &observer)
+			})
 			if err != nil {
 				return errors.Wrapf(err, "Scale up observer %s failed", observer.Name)
 			}
@@ -360,13 +362,36 @@ func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
 		if observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
 			observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
 			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-			m.Logger.Info("resize observer", "observer", observer.Name)
-			observer.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size
-			observer.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size
-			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-			err = m.Client.Update(m.Ctx, &observer)
+
+			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				m.Logger.Info("Expand pvc of observer", "observer", observer.Name)
+				observer.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size
+				observer.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size
+				observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+				return m.Client.Update(m.Ctx, &observer)
+			})
 			if err != nil {
-				return errors.Wrapf(err, "Resize observer %s failed", observer.Name)
+				return errors.Wrapf(err, "Expand observer %s failed", observer.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) MountBackupVolume() tasktypes.TaskError {
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return err
+	}
+	for _, observer := range observerList.Items {
+		if observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil {
+			m.Logger.Info("Mount backup volume", "observer", observer.Name)
+			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
+				return m.Client.Update(m.Ctx, &observer)
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Mount backup volume %s failed", observer.Name)
 			}
 		}
 	}
