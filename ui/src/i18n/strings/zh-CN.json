@@ -157,7 +157,7 @@
   "OBDashboard.Detail.Overview.ZoneTable.RootServiceIp": "根服务IP",
   "OBDashboard.Detail.Overview.ZoneTable.Status": "状态",
   "OBDashboard.Detail.Overview.ZoneTable.Operation": "操作",
-  "OBDashboard.Detail.Overview.ZoneTable.Expansion": "扩缩容",
+  "OBDashboard.Detail.Overview.ZoneTable.Scale": "扩缩容",
   "OBDashboard.Detail.Overview.ZoneTable.AreYouSureYouWant": "你确定要删除该zone吗？",
   "OBDashboard.Detail.Overview.ZoneTable.Delete": "删除",
   "OBDashboard.Detail.Overview.ZoneTable.OperationSucceeded": "操作成功！",
@@ -167,7 +167,7 @@
   "OBDashboard.Detail.Overview.Delete": "删除",
   "OBDashboard.Detail.Topo.constants.Upgrade": "升级",
   "OBDashboard.Detail.Topo.constants.Delete": "删除",
-  "OBDashboard.Detail.Topo.constants.Expansion": "扩缩容",
+  "OBDashboard.Detail.Topo.constants.Scale": "扩缩容",
   "OBDashboard.Detail.Topo.helper.Cluster": "集群",
   "OBDashboard.Detail.Topo.AreYouSureYouWant": "你确定要删除集群吗？",
   "OBDashboard.Detail.Topo.AreYouSureYouWant.1": "你确定要删除该Zone吗？",
@@ -571,5 +571,6 @@
   "Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat": "NFS 类型，参考路径格式：path/to/dir",
   "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS 类型，参考路径格式：oss://bucket/dir?host=xxx",
   "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase集群",
-  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase租户"
+  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase租户",
+  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "租户恢复"
 }

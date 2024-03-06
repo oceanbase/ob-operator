@@ -157,7 +157,7 @@
   "OBDashboard.Detail.Overview.ZoneTable.RootServiceIp": "Root service IP",
   "OBDashboard.Detail.Overview.ZoneTable.Status": "Status",
   "OBDashboard.Detail.Overview.ZoneTable.Operation": "Operation",
-  "OBDashboard.Detail.Overview.ZoneTable.Expansion": "Expansion",
+  "OBDashboard.Detail.Overview.ZoneTable.Scale": "Scale",
   "OBDashboard.Detail.Overview.ZoneTable.AreYouSureYouWant": "Are you sure you want to delete the zone?",
   "OBDashboard.Detail.Overview.ZoneTable.Delete": "Delete",
   "OBDashboard.Detail.Overview.ZoneTable.OperationSucceeded": "Operation succeeded!",
@@ -167,7 +167,7 @@
   "OBDashboard.Detail.Overview.Delete": "Delete",
   "OBDashboard.Detail.Topo.constants.Upgrade": "Upgrade",
   "OBDashboard.Detail.Topo.constants.Delete": "Delete",
-  "OBDashboard.Detail.Topo.constants.Expansion": "Expansion",
+  "OBDashboard.Detail.Topo.constants.Scale": "Scale",
   "OBDashboard.Detail.Topo.helper.Cluster": "Cluster",
   "OBDashboard.Detail.Topo.AreYouSureYouWant": "Are you sure you want to delete the cluster?",
   "OBDashboard.Detail.Topo.AreYouSureYouWant.1": "Are you sure you want to delete the Zone?",
@@ -571,5 +571,6 @@
   "Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat": "NFS type, see path format: path/to/dir",
   "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS type. For more information, see oss:// bucket/dir? host=xxx",
   "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase cluster",
-  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase tenants"
+  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase tenants",
+  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "Tenant recovery"
 }

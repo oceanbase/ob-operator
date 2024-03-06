@@ -13,8 +13,7 @@ Form,
 Input,
 Row,
 Select,
-Space,
-message,
+message
 } from 'antd';
 import { formatBackupForm } from '../../helper';
 import BasicInfo from '../Overview/BasicInfo';
@@ -101,136 +100,146 @@ export default function NewBackup() {
         <Card style={{ marginTop: 24, marginBottom: 24 }}>
           <Row>
             <Col span={24}>
-              <Space direction="vertical">
-                <h3>
-                  {intl.formatMessage({
-                    id: 'Dashboard.Detail.NewBackup.BackupPolicyConfiguration',
-                    defaultMessage: '备份策略配置',
-                  })}
-                </h3>
-                <Row gutter={[16, 32]}>
-                  <Col span={8}>
-                    <Form.Item
-                      name={['destType']}
-                      label={intl.formatMessage({
-                        id: 'Dashboard.Detail.NewBackup.BackupType',
-                        defaultMessage: '备份类型',
+              <h3>
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.NewBackup.BackupPolicyConfiguration',
+                  defaultMessage: '备份策略配置',
+                })}
+              </h3>
+              <Row gutter={[16, 32]}>
+                <Col span={8}>
+                  <Form.Item
+                    name={['destType']}
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Detail.NewBackup.BackupType',
+                      defaultMessage: '备份类型',
+                    })}
+                    rules={[
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.SelectABackupType',
+                          defaultMessage: '请选择备份类型',
+                        }),
+                      },
+                    ]}
+                  >
+                    <Select
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.PleaseSelect',
+                        defaultMessage: '请选择',
                       })}
-                      rules={[
-                        {
-                          required: true,
-                          message: intl.formatMessage({
-                            id: 'Dashboard.Detail.NewBackup.SelectABackupType',
-                            defaultMessage: '请选择备份类型',
-                          }),
-                        },
-                      ]}
-                    >
-                      <Select
-                        placeholder={intl.formatMessage({
-                          id: 'Dashboard.Detail.NewBackup.PleaseSelect',
-                          defaultMessage: '请选择',
-                        })}
-                        options={distType}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      label="OSS AccessID"
-                      name={['ossAccessId']}
-                      rules={[
-                        {
-                          required: true,
-                          message: intl.formatMessage({
-                            id: 'Dashboard.Detail.NewBackup.EnterOssAccessid',
-                            defaultMessage: '请输入 OSS AccessID',
-                          }),
-                        },
-                      ]}
-                    >
-                      <Password
-                        placeholder={intl.formatMessage({
-                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
-                          defaultMessage: '请输入',
-                        })}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      label="OSS AccessKey"
-                      name={['ossAccessKey']}
-                      rules={[
-                        {
-                          required: true,
-                          message: intl.formatMessage({
-                            id: 'Dashboard.Detail.NewBackup.EnterOssAccesskey',
-                            defaultMessage: '请输入 OSS AccessKey',
-                          }),
-                        },
-                      ]}
-                    >
-                      <Password
-                        placeholder={intl.formatMessage({
-                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
-                          defaultMessage: '请输入',
-                        })}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      label={intl.formatMessage({
-                        id: 'Dashboard.Detail.NewBackup.LogArchivePath',
-                        defaultMessage: '日志归档路径',
+                      options={distType}
+                    />
+                  </Form.Item>
+                </Col>
+                <Form.Item noStyle dependencies={['destType']}>
+                  {({ getFieldValue }) => {
+                    if (getFieldValue(['destType']) !== 'NFS') {
+                      return (
+                        <>
+                          <Col span={8}>
+                            <Form.Item
+                              label="OSS AccessID"
+                              name={['ossAccessId']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: intl.formatMessage({
+                                    id: 'Dashboard.Detail.NewBackup.EnterOssAccessid',
+                                    defaultMessage: '请输入 OSS AccessID',
+                                  }),
+                                },
+                              ]}
+                            >
+                              <Password
+                                placeholder={intl.formatMessage({
+                                  id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                  defaultMessage: '请输入',
+                                })}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              label="OSS AccessKey"
+                              name={['ossAccessKey']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: intl.formatMessage({
+                                    id: 'Dashboard.Detail.NewBackup.EnterOssAccesskey',
+                                    defaultMessage: '请输入 OSS AccessKey',
+                                  }),
+                                },
+                              ]}
+                            >
+                              <Password
+                                placeholder={intl.formatMessage({
+                                  id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                  defaultMessage: '请输入',
+                                })}
+                              />
+                            </Form.Item>
+                          </Col>
+                        </>
+                      );
+                    }
+                    return null;
+                  }}
+                </Form.Item>
+
+                <Col span={8}>
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Detail.NewBackup.LogArchivePath',
+                      defaultMessage: '日志归档路径',
+                    })}
+                    name={['archivePath']}
+                    rules={[
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.EnterTheLogArchivePath',
+                          defaultMessage: '请输入日志归档路径',
+                        }),
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                        defaultMessage: '请输入',
                       })}
-                      name={['archivePath']}
-                      rules={[
-                        {
-                          required: true,
-                          message: intl.formatMessage({
-                            id: 'Dashboard.Detail.NewBackup.EnterTheLogArchivePath',
-                            defaultMessage: '请输入日志归档路径',
-                          }),
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder={intl.formatMessage({
-                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
-                          defaultMessage: '请输入',
-                        })}
-                      />
-                    </Form.Item>
-                  </Col>
-                  <Col span={8}>
-                    <Form.Item
-                      label={intl.formatMessage({
-                        id: 'Dashboard.Detail.NewBackup.DataBackupPath',
-                        defaultMessage: '数据备份路径',
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={8}>
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'Dashboard.Detail.NewBackup.DataBackupPath',
+                      defaultMessage: '数据备份路径',
+                    })}
+                    name={['bakDataPath']}
+                    rules={[
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'Dashboard.Detail.NewBackup.EnterTheDataBackupPath',
+                          defaultMessage: '请输入数据备份路径',
+                        }),
+                      },
+                    ]}
+                  >
+                    <Input
+                      placeholder={intl.formatMessage({
+                        id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                        defaultMessage: '请输入',
                       })}
-                      name={['bakDataPath']}
-                      rules={[
-                        {
-                          required: true,
-                          message: intl.formatMessage({
-                            id: 'Dashboard.Detail.NewBackup.EnterTheDataBackupPath',
-                            defaultMessage: '请输入数据备份路径',
-                          }),
-                        },
-                      ]}
-                    >
-                      <Input
-                        placeholder={intl.formatMessage({
-                          id: 'Dashboard.Detail.NewBackup.PleaseEnter',
-                          defaultMessage: '请输入',
-                        })}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Space>
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
             </Col>
             <Col span={12}>
               <SchduleSelectFormItem

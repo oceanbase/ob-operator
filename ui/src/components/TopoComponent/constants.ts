@@ -29,7 +29,7 @@ const zoneOperate: OperateTypeLabel = [
   {
     value: 'scaleServer',
     label: intl.formatMessage({
-      id: 'OBDashboard.Detail.Topo.constants.Expansion',
+      id: 'OBDashboard.Detail.Topo.constants.Scale',
       defaultMessage: '扩缩容',
     }),
   },
