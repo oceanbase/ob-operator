@@ -1,7 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
-import { Col, Descriptions, Row, Tag } from 'antd';
+import { Card,Col,Descriptions,Tag } from 'antd';
 
 export default function BasicInfo({
   info,
@@ -66,54 +65,52 @@ export default function BasicInfo({
     until: 'until',
   };
 
-  const checkSource = (source:any)=>{
-    Object.keys(source).forEach((key)=>{
-      if(source[key])return true
-    })
-    return false
-  }
+  const checkSource = (source: any) => {
+    Object.keys(source).forEach((key) => {
+      if (source[key]) return true;
+    });
+    return false;
+  };
 
   return (
-    <Row style={{ marginBottom: 24 }} gutter={[16, 16]}>
-      <Col span={24}>
-        <ProCard style={style}>
+    <Col span={24}>
+      <Card style={style}>
+        <Descriptions
+          column={5}
+          title={intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.BasicInformation',
+            defaultMessage: '基本信息',
+          })}
+        >
+          {Object.keys(InfoConfig).map(
+            (key: keyof typeof InfoConfig, index) => {
+              return (
+                <Descriptions.Item key={index} label={InfoConfig[key]}>
+                  {key !== 'status' ? (
+                    info[key]
+                  ) : (
+                    <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
+                  )}
+                </Descriptions.Item>
+              );
+            },
+          )}
+        </Descriptions>
+        {checkSource(source) && (
           <Descriptions
-            column={5}
             title={intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.BasicInformation',
-              defaultMessage: '基本信息',
+              id: 'Dashboard.Detail.Overview.BasicInfo.TenantResources',
+              defaultMessage: '租户资源',
             })}
           >
-            {Object.keys(InfoConfig).map(
-              (key: keyof typeof InfoConfig, index) => {
-                return (
-                  <Descriptions.Item key={index} label={InfoConfig[key]}>
-                    {key !== 'status' ? (
-                      info[key]
-                    ) : (
-                      <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
-                    )}
-                  </Descriptions.Item>
-                );
-              },
-            )}
+            {Object.keys(SourceConfig).map((key, index) => (
+              <Descriptions.Item label={SourceConfig[key]} key={index}>
+                {source[key]}
+              </Descriptions.Item>
+            ))}
           </Descriptions>
-          {checkSource(source) && (
-            <Descriptions
-              title={intl.formatMessage({
-                id: 'Dashboard.Detail.Overview.BasicInfo.TenantResources',
-                defaultMessage: '租户资源',
-              })}
-            >
-              {Object.keys(SourceConfig).map((key, index) => (
-                <Descriptions.Item label={SourceConfig[key]} key={index}>
-                  {source[key]}
-                </Descriptions.Item>
-              ))}
-            </Descriptions>
-          )}
-        </ProCard>
-      </Col>
-    </Row>
+        )}
+      </Card>
+    </Col>
   );
 }

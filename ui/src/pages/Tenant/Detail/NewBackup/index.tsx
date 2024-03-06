@@ -1,20 +1,20 @@
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
+import { createBackupPolicyOfTenant,getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  Row,
-  Select,
-  Space,
-  message,
+Button,
+Card,
+Col,
+Form,
+Input,
+Row,
+Select,
+Space,
+message,
 } from 'antd';
 import { formatBackupForm } from '../../helper';
 import BasicInfo from '../Overview/BasicInfo';
@@ -94,12 +94,11 @@ export default function NewBackup() {
         </Button>,
       ]}
     >
-      {tenantDetail && (
-        <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
-      )}
-
       <Form initialValues={initialValues} form={form} onFinish={handleSubmit}>
-        <Card style={{ marginBottom: 24 }}>
+        {tenantDetail && (
+          <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+        )}
+        <Card style={{ marginTop: 24, marginBottom: 24 }}>
           <Row>
             <Col span={24}>
               <Space direction="vertical">

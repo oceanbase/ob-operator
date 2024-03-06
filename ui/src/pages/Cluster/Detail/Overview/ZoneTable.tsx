@@ -1,6 +1,5 @@
 import { intl } from '@/utils/intl'; //@ts-nocheck
-import { ProCard } from '@ant-design/pro-components';
-import { Col, Table, Tag, message } from 'antd';
+import { Col, Table, Tag, message, Card } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
@@ -141,14 +140,14 @@ export default function ZoneTable({
   };
   return (
     <Col span={24}>
-      <ProCard>
+      <Card>
         <Table
           rowKey="name"
           pagination={{simple:true}}
           columns={getZoneColumns(handleDelete, clickScale)}
           dataSource={zones}
         />
-      </ProCard>
+      </Card>
     </Col>
   );
 }

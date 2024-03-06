@@ -555,5 +555,12 @@
   "Dashboard.Cluster.New.Monitor.Image": "镜像",
   "Dashboard.Cluster.New.Monitor.ImageList": "（镜像列表）",
   "Dashboard.Cluster.New.Observer.Image": "镜像",
-  "Dashboard.Cluster.New.Observer.ImageList": "（镜像列表）"
+  "Dashboard.Cluster.New.Observer.ImageList": "（镜像列表）",
+  "Dashboard.Detail.Backup.JobTable.TaskName": "任务名称",
+  "Dashboard.Detail.Backup.JobTable.Deadline": "截止时间",
+  "Dashboard.Detail.Backup.JobTable.EndTime": "结束时间",
+  "Dashboard.Detail.Backup.JobTable.Path": "路径",
+  "Dashboard.Detail.Backup.JobTable.ResourceStatus": "资源状态",
+  "Dashboard.Detail.Backup.JobTable.TaskStatus": "任务状态",
+  "Dashboard.Tenant.Detail.PerformanceMonitoring": "性能监控"
 }

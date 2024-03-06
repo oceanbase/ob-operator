@@ -73,11 +73,15 @@ const TenantDetail: React.FC = () => {
       link: `/tenant/${tenantId}/backup`,
     },
     {
-      title: '性能监控',
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.PerformanceMonitoring',
+        defaultMessage: '性能监控',
+      }),
       key: 'monitor',
       link: `/tenant/${tenantId}/monitor`,
     },
   ];
+
   const userMenu = (
     <Menu
       onClick={() => {

@@ -1,8 +1,7 @@
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
 import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button, Col, Table, Tag } from 'antd';
+import { Button, Col, Table, Tag, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -167,7 +166,7 @@ export default function ClusterList({
 }: ClusterListProps) {
   return (
     <Col span={24}>
-      <ProCard>
+      <Card>
         <div className={styles.clusterHeader}>
           <h2>
             {intl.formatMessage({
@@ -191,7 +190,7 @@ export default function ClusterList({
           bordered
           sticky
         />
-      </ProCard>
+      </Card>
     </Col>
   );
 }

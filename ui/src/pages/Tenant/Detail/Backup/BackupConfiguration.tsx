@@ -94,15 +94,15 @@ export default function BackupConfiguration({
     };
   }
   const DATE_CONFIG = {
-    jobKeepWindow: intl.formatMessage({
+    jobKeepDays: intl.formatMessage({
       id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupTaskRetention',
       defaultMessage: '备份任务保留',
     }),
-    recoveryWindow: intl.formatMessage({
+    recoveryDays: intl.formatMessage({
       id: 'Dashboard.Detail.Backup.BackupConfiguration.DataRecoveryWindow',
       defaultMessage: '数据恢复窗口',
     }),
-    pieceInterval: intl.formatMessage({
+    pieceIntervalDays: intl.formatMessage({
       id: 'Dashboard.Detail.Backup.BackupConfiguration.ArchiveSliceInterval',
       defaultMessage: '归档切片间隔',
     }),
