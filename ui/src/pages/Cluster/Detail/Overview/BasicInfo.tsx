@@ -1,7 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
-import { Col, Descriptions, Tag } from 'antd';
+import { Col, Descriptions, Tag, Card } from 'antd';
 
 interface BasicInfoProps {
   name: string;
@@ -20,7 +19,7 @@ export default function BasicInfo({
 }: BasicInfoProps) {
   return (
     <Col span={24}>
-      <ProCard style={style}>
+      <Card style={style}>
         <Descriptions
           column={5}
           title={intl.formatMessage({
@@ -62,7 +61,7 @@ export default function BasicInfo({
             <Tag color={COLOR_MAP.get(status)}>{status}</Tag>
           </Descriptions.Item>
         </Descriptions>
-      </ProCard>
+      </Card>
     </Col>
   );
 }

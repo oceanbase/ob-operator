@@ -100,7 +100,7 @@ export default function AdvancedConfiguration({
                     }),
                   },
                 ]}
-                name={['jobKeepWindow']}
+                name={['jobKeepDays']}
               >
                 <InputNumber disabled={disable} />
               </Form.Item>
@@ -130,14 +130,14 @@ export default function AdvancedConfiguration({
                     }),
                   },
                 ]}
-                name={['recoveryWindow']}
+                name={['recoveryDays']}
               >
                 <InputNumber disabled={disable} />
               </Form.Item>
             )}
           </Col>
           <Form.Item
-            name={['pieceInterval']}
+            name={['pieceIntervalDays']}
             label={intl.formatMessage({
               id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.ArchiveSliceInterval',
               defaultMessage: '归档切片间隔',

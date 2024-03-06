@@ -1,6 +1,5 @@
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
-import { Col, Descriptions, Table, Tooltip } from 'antd';
+import { Col, Descriptions, Table, Tooltip, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface BackupsProps {
@@ -96,7 +95,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
 
   return (
     <Col span={24}>
-      <ProCard
+      <Card
         title={
           <h2>
             {intl.formatMessage({
@@ -137,7 +136,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
           pagination={{ simple: true }}
           columns={columns}
         />
-      </ProCard>
+      </Card>
     </Col>
   );
 }

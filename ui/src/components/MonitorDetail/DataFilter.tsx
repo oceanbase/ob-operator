@@ -1,20 +1,19 @@
-import { POINT_NUMBER,REFRESH_FREQUENCY } from '@/constants';
+import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
 import { intl } from '@/utils/intl';
-import { ProCard } from '@ant-design/pro-components';
 import { useUpdateEffect } from 'ahooks';
-import { Col,DatePicker,Row,Select,Switch } from 'antd';
+import { Col, DatePicker, Row, Select, Switch, Card } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import moment from 'moment';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { caculateStep } from './helper';
 import type {
-FilterDataType,
-Label,
-LabelType,
-OptionType,
-QueryRangeType,
+  FilterDataType,
+  Label,
+  LabelType,
+  OptionType,
+  QueryRangeType,
 } from './index';
 import styles from './index.less';
 
@@ -205,14 +204,16 @@ export default function DataFilter({
     setSelectServer(undefined);
     setFilterLabel(handleLabel(val));
     //clear
-    if(filterData.serverList){
+    if (filterData.serverList) {
       if (typeof val === 'undefined') {
         setServerOption(filterData.serverList);
         return;
       }
-      const filterServers = filterData.serverList.filter((server: OptionType) => {
-        return server.zone === val;
-      });
+      const filterServers = filterData.serverList.filter(
+        (server: OptionType) => {
+          return server.zone === val;
+        },
+      );
       setServerOption(filterServers);
     }
   };
@@ -309,9 +310,8 @@ export default function DataFilter({
   }, [dateValue]);
 
   return (
-    <ProCard
+    <Card
       style={{ marginTop: 12 }}
-      headerBordered
       title={intl.formatMessage({
         id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
         defaultMessage: '数据筛选',
@@ -387,6 +387,6 @@ export default function DataFilter({
           </div>
         </Col>
       </Row>
-    </ProCard>
+    </Card>
   );
 }

@@ -76,12 +76,12 @@ export default {
       bakDataPath: 'string',
       bakEncryptionSecret: 'string',
       destType: 'string',
-      jobKeepWindow: 'string',
+      jobKeepDays: 'string',
       name: 'string',
       namespace: 'string',
       ossAccessSecret: 'string',
-      pieceInterval: 'string',
-      recoveryWindow: 'string',
+      pieceIntervalDays: 'string',
+      recoveryDays: 'string',
       scheduleDates: [
         {
           backupType: 'typea',

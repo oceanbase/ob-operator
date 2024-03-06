@@ -28,7 +28,7 @@ export default function BackupJobs() {
         id: 'Dashboard.Detail.Backup.BackupJobs.FullBackup',
         defaultMessage: '全量备份',
       }),
-      children: <JobTable dataSource={backupJobs} />,
+      children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
     },
     {
       key: 'INCR',
@@ -36,7 +36,7 @@ export default function BackupJobs() {
         id: 'Dashboard.Detail.Backup.BackupJobs.IncrementalBackup',
         defaultMessage: '增量备份',
       }),
-      children: <JobTable dataSource={backupJobs} />,
+      children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
     },
     {
       key: 'ARCHIVE',
@@ -44,7 +44,7 @@ export default function BackupJobs() {
         id: 'Dashboard.Detail.Backup.BackupJobs.LogArchiving',
         defaultMessage: '日志归档',
       }),
-      children: <JobTable dataSource={backupJobs} />,
+      children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
     },
     {
       key: 'CLEAN',
@@ -52,8 +52,8 @@ export default function BackupJobs() {
         id: 'Dashboard.Detail.Backup.BackupJobs.DataCleansing',
         defaultMessage: '数据清理',
       }),
-      children: <JobTable dataSource={backupJobs} />,
-    },
+      children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
+    }, 
   ];
 
   return (
