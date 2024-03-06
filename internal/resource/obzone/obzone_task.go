@@ -362,7 +362,6 @@ func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
 		if observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
 			observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
 			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				m.Logger.Info("Expand pvc of observer", "observer", observer.Name)
 				observer.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size

@@ -242,10 +242,13 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				}
 				time.Sleep(time.Second)
 				updatedOBZone := &v1alpha1.OBZone{}
-				m.Client.Get(m.Ctx, types.NamespacedName{
+				err := m.Client.Get(m.Ctx, types.NamespacedName{
 					Namespace: obzone.Namespace,
 					Name:      obzone.Name,
 				}, updatedOBZone)
+				if err != nil {
+					return errors.Wrap(err, "get obzone")
+				}
 				if updatedOBZone.Status.Status == workingStatus {
 					break
 				}
@@ -258,10 +261,13 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				}
 				time.Sleep(time.Second)
 				updatedOBZone := &v1alpha1.OBZone{}
-				m.Client.Get(m.Ctx, types.NamespacedName{
+				err := m.Client.Get(m.Ctx, types.NamespacedName{
 					Namespace: obzone.Namespace,
 					Name:      obzone.Name,
 				}, updatedOBZone)
+				if err != nil {
+					return errors.Wrap(err, "get obzone")
+				}
 				if updatedOBZone.Status.Status == targetStatus {
 					break
 				}
