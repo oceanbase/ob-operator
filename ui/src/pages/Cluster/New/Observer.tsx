@@ -1,9 +1,19 @@
 import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, InputNumber, Row, Tooltip } from 'antd';
+import {
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Tooltip,
+} from 'antd';
 
 import ClassSelect from '@/components/ClassSelect';
-import { SUFFIX_UNIT } from '@/constants';
+import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
+import { clone } from 'lodash';
 import styles from './index.less';
 
 const observerToolTipText = intl.formatMessage({
@@ -35,9 +45,45 @@ export default function Observer({ storageClasses, form }: any) {
     );
   };
 
+  const setMinimalConfiguration = () => {
+    let originObserver = clone(form.getFieldsValue());
+    form.setFieldsValue({
+      ...originObserver,
+      observer: {
+        ...originObserver.observer,
+        resource: {
+          cpu: MINIMAL_CONFIG.cpu,
+          memory: MINIMAL_CONFIG.memory,
+        },
+        storage: {
+          ...originObserver.observer.storage,
+          data: {
+            size: MINIMAL_CONFIG.data,
+          },
+          log: {
+            size: MINIMAL_CONFIG.log,
+          },
+          redoLog: {
+            size: MINIMAL_CONFIG.redoLog,
+          },
+        },
+      },
+    });
+  };
+
   return (
     <Col span={24}>
-      <Card title="Observer">
+      <Card
+        title="Observer"
+        extra={
+          <Button type="primary" onClick={setMinimalConfiguration}>
+            {intl.formatMessage({
+              id: 'Dashboard.Cluster.New.Observer.MinimumSpecificationConfiguration',
+              defaultMessage: '最小规格配置',
+            })}
+          </Button>
+        }
+      >
         <Tooltip title={observerToolTipText}>
           <CustomItem
             style={{ width: '50%' }}
@@ -81,7 +127,7 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'resource', 'cpu']}
               >
                 <InputNumber
-                  min={2}
+                  min={MINIMAL_CONFIG.cpu}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
                     defaultMessage: '请输入',
@@ -96,7 +142,7 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'resource', 'memory']}
               >
                 <InputNumber
-                  min={10}
+                  min={MINIMAL_CONFIG.memory}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -124,7 +170,7 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'data', 'size']}
               >
                 <InputNumber
-                  min={30}
+                  min={MINIMAL_CONFIG.data}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -162,7 +208,7 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'log', 'size']}
               >
                 <InputNumber
-                  min={30}
+                  min={MINIMAL_CONFIG.log}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -193,7 +239,7 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'redoLog', 'size']}
               >
                 <InputNumber
-                  min={30}
+                  min={MINIMAL_CONFIG.redoLog}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',

@@ -1,30 +1,48 @@
 import { getStorageClasses } from '@/services';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate,history } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Form, Row,message } from 'antd';
+import { Button, Form, Row, message } from 'antd';
 import { useState } from 'react';
+import { createObclusterReq } from '@/services';
 
+import { encryptText,usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
 import Monitor from './Monitor';
 import Observer from './Observer';
 import Parameters from './Parameters';
 import Topo from './Topo';
-import { createObclusterReq } from '@/services';
-import { encryptText, usePublicKey } from '@/hook/usePublicKey'
 
 export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [passwordVal, setPasswordVal] = useState('');
-  const { data: storageClasses } = useRequest(getStorageClasses);
+  const { data: storageClassesRes } = useRequest(getStorageClasses, {
+    onSuccess: ({ successful, data }) => {
+      if (successful && data.length === 1) {
+        let { value } = data[0];
+        form.setFieldValue(['observer', 'storage'], {
+          data: {
+            storageClass: value,
+          },
+          log: {
+            storageClass: value,
+          },
+          redoLog: {
+            storageClass: value,
+          },
+        });
+      }
+    },
+  });
   const publicKey = usePublicKey();
-
+  const storageClasses = storageClassesRes?.data;
   const onFinish = async (values: any) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
+    
     const res = await createObclusterReq(values);
     if (res.successful) {
       message.success(res.message, 3);
@@ -48,29 +66,6 @@ export default function New() {
         replicas: 1,
       },
     ],
-    // observer:{
-    //   resource:{
-    //     cpu:2,
-    //     memory:10
-    //   },
-    //   storage:{
-    //     data:{
-    //       size:30
-    //     },
-    //     log:{
-    //       size:30
-    //     },
-    //     redoLog:{
-    //       size:30
-    //     }
-    //   }
-    // },
-    // monitor:{
-    //   resource:{
-    //     cpu:1,
-    //     memory:1
-    //   }
-    // }
   };
   return (
     <PageContainer
@@ -90,7 +85,7 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button key="submit" onClick={() => form.submit()}>
+        <Button type='primary' key="submit" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'dashboard.Cluster.New.Submit',
             defaultMessage: '提交',

@@ -562,5 +562,14 @@
   "Dashboard.Detail.Backup.JobTable.Path": "路径",
   "Dashboard.Detail.Backup.JobTable.ResourceStatus": "资源状态",
   "Dashboard.Detail.Backup.JobTable.TaskStatus": "任务状态",
-  "Dashboard.Tenant.Detail.PerformanceMonitoring": "性能监控"
+  "Dashboard.Tenant.Detail.PerformanceMonitoring": "性能监控",
+  "Dashboard.Cluster.New.Observer.MinimumSpecificationConfiguration": "最小规格配置",
+  "Dashboard.pages.Overview.OverviewStatus.Running": "运行中",
+  "Dashboard.pages.Overview.OverviewStatus.Deleting": "删除中",
+  "Dashboard.pages.Overview.OverviewStatus.InOperation": "操作中",
+  "Dashboard.pages.Overview.OverviewStatus.AnErrorHasOccurred": "已出错",
+  "Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat": "NFS 类型，参考路径格式：path/to/dir",
+  "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS 类型，参考路径格式：oss://bucket/dir?host=xxx",
+  "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase集群",
+  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase租户"
 }

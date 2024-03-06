@@ -1,6 +1,7 @@
 import PasswordInput from '@/components/PasswordInput';
 import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, InputNumber, Row, Select } from 'antd';
+import { Card, Col, Form, Input, Row, Select } from 'antd';
+import InputNumber from '@/components/InputNumber';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {

@@ -11,7 +11,7 @@ import zoneDeleting from '@/assets/zone/deleting.svg';
 import zoneOperating from '@/assets/zone/operating.svg';
 import zoneRunning from '@/assets/zone/running.svg';
 
-//统一状态常量和颜色
+//Unify status constants and colors
 const STATUS = ['running', 'deleting', 'operating'];
 const COLOR_MAP = new Map([
   ['running', 'geekblue'],
@@ -40,23 +40,35 @@ const BADGE_IMG_MAP = new Map([
   ['operating', badgeOperating],
 ]);
 
+const REFRESH_TENANT_TIME = 5000;
+
 const REFRESH_CLUSTER_TIME = 10000;
-// 性能监控自动刷新时间 15s
+// Monitor automatic refresh interval 15s
 const REFRESH_FREQUENCY = 15;
-// 监控点位数量
+// Number of monitoring points
 const POINT_NUMBER = 15;
 
 const SUFFIX_UNIT = 'GB';
 
+const MINIMAL_CONFIG = {
+  cpu: 2,
+  memory: 10,
+  data: 30,
+  log: 30,
+  redoLog: 30,
+};
+
 export {
-  POINT_NUMBER,
-  REFRESH_CLUSTER_TIME,
-  REFRESH_FREQUENCY,
-  SUFFIX_UNIT,
   BADGE_IMG_MAP,
   CLUSTER_IMG_MAP,
   COLOR_MAP,
+  MINIMAL_CONFIG,
+  POINT_NUMBER,
+  REFRESH_CLUSTER_TIME,
+  REFRESH_FREQUENCY,
+  REFRESH_TENANT_TIME,
   SERVER_IMG_MAP,
   STATUS,
+  SUFFIX_UNIT,
   ZONE_IMG_MAP,
 };

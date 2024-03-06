@@ -562,5 +562,14 @@
   "Dashboard.Detail.Backup.JobTable.Path": "Path",
   "Dashboard.Detail.Backup.JobTable.ResourceStatus": "Resource status",
   "Dashboard.Detail.Backup.JobTable.TaskStatus": "Task Status",
-  "Dashboard.Tenant.Detail.PerformanceMonitoring": "Performance monitoring"
+  "Dashboard.Tenant.Detail.PerformanceMonitoring": "Performance monitoring",
+  "Dashboard.Cluster.New.Observer.MinimumSpecificationConfiguration": "Minimum specification configuration",
+  "Dashboard.pages.Overview.OverviewStatus.Running": "Running",
+  "Dashboard.pages.Overview.OverviewStatus.Deleting": "Deleting",
+  "Dashboard.pages.Overview.OverviewStatus.InOperation": "In operation",
+  "Dashboard.pages.Overview.OverviewStatus.AnErrorHasOccurred": "An error has occurred.",
+  "Dashboard.Tenant.New.TenantSource.NfsTypeSeePathFormat": "NFS type, see path format: path/to/dir",
+  "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS type. For more information, see oss:// bucket/dir? host=xxx",
+  "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase cluster",
+  "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase tenants"
 }

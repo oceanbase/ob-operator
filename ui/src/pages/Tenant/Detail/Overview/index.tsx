@@ -1,21 +1,21 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_CLUSTER_TIME } from '@/constants';
+import { REFRESH_TENANT_TIME } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-  deleteTenent,
-  getBackupJobs,
-  getBackupPolicy,
-  getTenant,
+deleteTenent,
+getBackupJobs,
+getBackupPolicy,
+getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Tooltip, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Button,Row,Tooltip,message } from 'antd';
+import { useEffect,useRef,useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -34,6 +34,7 @@ export default function TenantOverview() {
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
+  const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const [[ns, name]] = useState(getNSName());
 
@@ -55,24 +56,27 @@ export default function TenantOverview() {
     }
   };
 
-  const { data: tenantDetailResponse, run: getTenantDetail } = useRequest(
-    getTenant,
-    {
-      manual: true,
-      onSuccess: ({ data, successful }) => {
-        if (successful) {
-          if (data.info.unitNumber) {
-            setDefaultUnitCount(data.info.unitNumber)
-          }
-          if (data.info.status === 'operating') {
-            setTimeout(() => {
-              getTenantDetail({ ns, name });
-            }, REFRESH_CLUSTER_TIME);
-          }
+  const {
+    data: tenantDetailResponse,
+    run: getTenantDetail,
+    refresh: reGetTenantDetail,
+  } = useRequest(getTenant, {
+    manual: true,
+    onSuccess: ({ data, successful }) => {
+      if (successful) {
+        if (data.info.unitNumber) {
+          setDefaultUnitCount(data.info.unitNumber);
         }
-      },
+        if (data.info.status !== 'running') {
+          timerRef.current = setTimeout(() => {
+            reGetTenantDetail();
+          }, REFRESH_TENANT_TIME);
+        } else if (timerRef.current) {
+          clearTimeout(timerRef.current);
+        }
+      }
     },
-  );
+  });
 
   const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
     defaultParams: [{ name, ns }],
@@ -207,6 +211,12 @@ export default function TenantOverview() {
 
   useEffect(() => {
     getTenantDetail({ ns, name });
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, []);
 
   return (
