@@ -121,7 +121,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
 			t.Spec.Source.Restore.BakDataSource.Path = p.Source.Restore.BakDataSource
 
-			if p.Source.Restore.Until != nil {
+			if p.Source.Restore.Until != nil && !p.Source.Restore.Until.Unlimited {
 				t.Spec.Source.Restore.Until.Timestamp = p.Source.Restore.Until.Timestamp
 			} else {
 				t.Spec.Source.Restore.Until.Unlimited = true
