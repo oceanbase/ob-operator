@@ -7,6 +7,10 @@ import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
+import localeZn from 'antd/es/date-picker/locale/zh_CN';
+import localeEn from 'antd/es/date-picker/locale/en_US';
+import { getLocale } from 'umi';
+import 'dayjs/locale/zh-cn';
 import { caculateStep } from './helper';
 import type {
   FilterDataType,
@@ -87,6 +91,7 @@ const DateSelectOption: OptionType[] = [
     value: 604800000,
   },
 ];
+const locale = getLocale() === 'zh-CN' ? localeZn : localeEn;
 
 type RangeValue = [Dayjs | null, Dayjs | null] | null;
 
@@ -378,6 +383,7 @@ export default function DataFilter({
             />
 
             <RangePicker
+              locale={locale}
               value={dateValue}
               onChange={rangePickerChange}
               disabledDate={disabledDate}

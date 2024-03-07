@@ -88,7 +88,7 @@ export default function ZoneTable({
                 }}
               >
                 {intl.formatMessage({
-                  id: 'OBDashboard.Detail.Overview.ZoneTable.Expansion',
+                  id: 'OBDashboard.Detail.Overview.ZoneTable.Scale',
                   defaultMessage: '扩缩容',
                 })}
               </a>
