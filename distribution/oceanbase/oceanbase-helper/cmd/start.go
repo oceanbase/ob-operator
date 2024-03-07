@@ -20,6 +20,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 )
 
 const (
@@ -58,11 +60,13 @@ var startCmd = &cobra.Command{
 	},
 }
 
-var MinStandaloneVersion *OceanBaseVersion
+var MinStandaloneVersion *oceanbase.OceanBaseVersion
+var MinServiceVersion *oceanbase.OceanBaseVersion
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-	MinStandaloneVersion, _ = ParseOceanBaseVersion("4.2.0.0")
+	MinStandaloneVersion, _ = oceanbase.ParseOceanBaseVersion("4.2.0.0")
+	MinServiceVersion, _ = oceanbase.ParseOceanBaseVersion("4.2.3.0")
 }
 
 func prepareDir() error {
@@ -134,11 +138,11 @@ func startOBServerWithParam() error {
 	if extraOptStr != "" {
 		optStr = fmt.Sprintf("%s,%s", optStr, extraOptStr)
 	}
-	ver, err := getCurrentVersion(DefaultHomePath)
+	ver, err := oceanbase.GetCurrentVersion(DefaultHomePath)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get current version")
 	}
-	obv, err := ParseOceanBaseVersion(ver)
+	obv, err := oceanbase.ParseOceanBaseVersion(ver)
 	if err != nil {
 		return errors.Wrap(err, "Failed to parse current version")
 	}

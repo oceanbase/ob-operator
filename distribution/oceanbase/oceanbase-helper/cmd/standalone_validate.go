@@ -19,6 +19,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 )
 
 func init() {
@@ -38,12 +40,12 @@ var standaloneValidateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "validate current version supports standalone mode",
 	Run: func(cmd *cobra.Command, args []string) {
-		ver, err := getCurrentVersion(DefaultHomePath)
+		ver, err := oceanbase.GetCurrentVersion(DefaultHomePath)
 		if err != nil {
 			fmt.Printf("Failed to get current version, %v \n", err)
 			os.Exit(1)
 		}
-		obv, err := ParseOceanBaseVersion(ver)
+		obv, err := oceanbase.ParseOceanBaseVersion(ver)
 		if err != nil {
 			fmt.Printf("Failed to parse current version, %v \n", err)
 			os.Exit(1)

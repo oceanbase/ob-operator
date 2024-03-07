@@ -17,10 +17,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
 )
 
 // upgradeValidateCmd represents the validate command
@@ -47,7 +48,7 @@ func init() {
 func validateUpgrade() error {
 	fromVersion := viper.GetString("start-version")
 	oceanbaseInstallPath := viper.GetString("ob-installation-path")
-	targetVersion, err := getCurrentVersion(oceanbaseInstallPath)
+	targetVersion, err := oceanbase.GetCurrentVersion(oceanbaseInstallPath)
 	fmt.Println(targetVersion)
 	if err != nil {
 		return errors.Wrap(err, "Failed to current oceanbase version")
