@@ -18,3 +18,7 @@ const (
 	AddServer    = "alter system add server ?"
 	DeleteServer = "alter system delete server ?"
 )
+
+const (
+	ListGVServers = "select svr_ip, svr_port, zone, sql_port, cpu_capacity, cpu_capacity_max, cpu_assigned, cpu_assigned_max, mem_capacity, mem_assigned, memory_limit, log_disk_capacity, log_disk_assigned, data_disk_capacity, data_disk_allocated, data_disk_in_use, data_disk_health_status from oceanbase.GV$OB_SERVERS"
+)
