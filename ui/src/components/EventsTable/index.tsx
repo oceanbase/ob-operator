@@ -24,6 +24,7 @@ interface EventsTableProps {
   objectType?: API.EventObjectType;
   cardType?: 'card' | 'proCard';
   collapsible?: boolean;
+  defaultExpand?: boolean;
 }
 
 const columns: ColumnsType<DataType> = [
@@ -132,6 +133,7 @@ export default function EventsTable({
   objectType,
   cardType,
   collapsible = false,
+  defaultExpand = false
 }: EventsTableProps) {
   const { data } = useRequest(getEventsReq, {
     defaultParams: objectType && [{ objectType }],
@@ -147,7 +149,7 @@ export default function EventsTable({
             {props.children}
           </ProCard>
         ) : (
-          <CollapsibleCard title={title} collapsible={collapsible}>
+          <CollapsibleCard defaultExpand={defaultExpand} title={title} collapsible={collapsible}>
             {props.children}
           </CollapsibleCard>
         )}

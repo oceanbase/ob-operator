@@ -12,6 +12,7 @@ export default function Replicas({
         <CollapsibleCard
           title={<h2 style={{ marginBottom: 0 }}>replicas</h2>}
           collapsible={true}
+          defaultExpand={true}
           key={index}
         >
           <Descriptions column={5} title={`replica ${index + 1}`}>

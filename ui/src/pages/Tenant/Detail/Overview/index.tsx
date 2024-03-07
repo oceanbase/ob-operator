@@ -231,7 +231,7 @@ export default function TenantOverview() {
             <Replicas replicaList={tenantDetail.replicas} />
           )}
 
-          <EventsTable objectType="OBTENANT" collapsible={true} />
+          <EventsTable defaultExpand={true} objectType="OBTENANT" collapsible={true} />
           <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 

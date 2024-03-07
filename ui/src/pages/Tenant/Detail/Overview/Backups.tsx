@@ -106,6 +106,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
           </h2>
         }
         collapsible={true}
+        defaultExpand={true}
       >
         {backupPolicy && (
           <Descriptions

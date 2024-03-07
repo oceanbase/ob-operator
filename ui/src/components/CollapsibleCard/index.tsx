@@ -5,9 +5,10 @@ export default function CollapsibleCard({
   collapsible,
   children,
   title,
+  defaultExpand=false,
   ...props
 }: any) {
-  const [isExpand, setIsExpand] = useState(collapsible);
+  const [isExpand, setIsExpand] = useState(defaultExpand);
   return (
     <Card
       title={
