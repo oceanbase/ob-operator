@@ -1,9 +1,9 @@
+import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Checkbox, Col, Form, Row } from 'antd';
-import InputNumber from '@/components/InputNumber';
+import { Card,Checkbox,Col,Form,Row,Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
-import { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
@@ -127,10 +127,11 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item
                 name={['unitConfig', 'logDiskSize']}
-                label={intl.formatMessage({
-                  id: 'Dashboard.Tenant.New.ResourcePools.LogDisk',
-                  defaultMessage: '日志磁盘',
-                })}
+                label={
+                  <Tooltip title="此处指的是租户的 clog 磁盘空间">
+                    日志磁盘大小
+                  </Tooltip>
+                }
               >
                 <InputNumber
                   addonAfter={SUFFIX_UNIT}
@@ -144,12 +145,20 @@ export default function ResourcePools({
             </Col>
             <Col span={8}>
               <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
-                <InputNumber min={1024} placeholder="min" style={{ width: '100%' }} />
+                <InputNumber
+                  min={1024}
+                  placeholder="min"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>
               <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
-                <InputNumber min={1024} placeholder="max" style={{ width: '100%' }} />
+                <InputNumber
+                  min={1024}
+                  placeholder="max"
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
             </Col>
             <Col span={8}>

@@ -69,7 +69,7 @@ export default function TenantPage() {
           />
         )}
 
-        <EventsTable objectType="OBTENANT" />
+        <EventsTable objectType="OBTENANT" collapsible={false}/>
       </Row>
       <MonitorComp
         filterLabel={filterLabel}

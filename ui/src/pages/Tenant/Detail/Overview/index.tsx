@@ -95,7 +95,7 @@ export default function TenantOverview() {
         id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
         defaultMessage: 'Unit规格管理',
       }),
-      onClick: () => openOperateModal('changeUnitCount'),
+      onClick: () => openOperateModal('modifyUnitSpecification'),
       show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: false,
     },
@@ -153,11 +153,8 @@ export default function TenantOverview() {
       isMore: true,
     },
     {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.TenantVersionUpgrade',
-        defaultMessage: '租户版本升级',
-      }),
-      onClick: () => openOperateModal('upgradeTenant'),
+      text: '调整 Unit 数量',
+      onClick: () => openOperateModal('changeUnitCount'),
       show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: true,
     },
@@ -231,14 +228,8 @@ export default function TenantOverview() {
             <Replicas replicaList={tenantDetail.replicas} />
           )}
 
-          <EventsTable
-            objectType="OBTENANT"
-            collapsible={true}
-          />
-
-          {backupPolicy && backupJobs && (
-            <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
-          )}
+          <EventsTable objectType="OBTENANT" collapsible={true} />
+          <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 
         <OperateModal

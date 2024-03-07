@@ -135,7 +135,7 @@ export async function getBackupPolicy({
     'recoveryDays'
   ];
 
-  if (r.successful) {
+  if (r.successful && r.data) {
     return {
       ...r,
       data: getInitialObjOfKeys(r.data, keys),
@@ -159,7 +159,7 @@ export async function getBackupJobs({
   );
   let res: API.BackupJob[] = [];
   if (r.successful) {
-    res = r.data.map((job: API.BackupJob) => ({
+    res = r.data?.map((job: API.BackupJob) => ({
       encryptionSecret: job.encryptionSecret,
       endTime: job.endTime,
       name: job.name,
