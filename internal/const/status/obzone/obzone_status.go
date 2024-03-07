@@ -24,4 +24,5 @@ const (
 	FinalizerFinished = "finalizer finished"
 	ScaleUp           = "scale up"
 	ExpandPVC         = "expand pvc"
+	MountBackupVolume = "mount backup volume"
 )

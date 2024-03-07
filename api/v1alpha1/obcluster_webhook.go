@@ -147,7 +147,29 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	} else if oldMode != oceanbaseconst.ModeStandalone && (oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu || oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory) {
 		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
 	}
+	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
+		return nil, errors.New("forbid to remove backup volume")
+	}
 	var err error
+	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil {
+		if mode != oceanbaseconst.ModeStandalone && mode != oceanbaseconst.ModeService {
+			observerList := &OBServerList{}
+			err = clt.List(context.TODO(), observerList)
+			if err != nil {
+				return nil, err
+			}
+			keepIpWithCNI := false
+			for _, observer := range observerList.Items {
+				if observer.SupportStaticIP() {
+					keepIpWithCNI = true
+					break
+				}
+			}
+			if !keepIpWithCNI {
+				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
+			}
+		}
+	}
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
 	}

@@ -28,4 +28,5 @@ func init() {
 	task.GetRegistry().Register(fAddServerInOB, AddServerInOB)
 	task.GetRegistry().Register(fScaleUpOBServer, ScaleUpOBServer)
 	task.GetRegistry().Register(fExpandPVC, ResizePVC)
+	task.GetRegistry().Register(fMountBackupVolume, MountBackupVolume)
 }
