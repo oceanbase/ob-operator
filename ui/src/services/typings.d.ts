@@ -264,6 +264,31 @@ declare namespace API {
     failed: number;
   };
 
+  type ServerResource = {
+    availableCPU: number;
+    availableDataDisk: number;
+    availableLogDisk: number;
+    availableMemory: number;
+    obServerIP: string;
+    obZone: string;
+  };
+
+  type ZoneResource = {
+    availableCPU: number;
+    availableDataDisk: number;
+    availableLogDisk: number;
+    availableMemory: number;
+    obZone: string;
+  };
+
+  type EssentialParametersType = {
+    minPoolMemory: number;
+    obServerResources: ServerResource[];
+    obZoneResourceMap: {
+      [T]: ZoneResource;
+    };
+  };
+
   interface CommonResponse {
     data: any;
     message: string;
@@ -405,4 +430,8 @@ declare namespace API {
     };
     replicas?: ReplicaDetailType[];
   };
+
+  interface EssentialParametersTypeResponse extends CommonResponse {
+    data: EssentialParametersType;
+  }
 }

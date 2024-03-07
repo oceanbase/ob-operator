@@ -2,13 +2,7 @@ import CollapsibleCard from '@/components/CollapsibleCard';
 import { SUFFIX_UNIT } from '@/constants';
 import { MIRROR_MONITOR } from '@/constants/doc';
 import { intl } from '@/utils/intl';
-import {
-Col,
-Form,
-Input,
-InputNumber,
-Tooltip,
-} from 'antd';
+import { Col, Form, Input, InputNumber, Tooltip } from 'antd';
 
 const monitorTooltipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Monitor.TheImageShouldBeFully',
@@ -19,7 +13,14 @@ const monitorTooltipText = intl.formatMessage({
 export default function Monitor() {
   return (
     <Col span={24}>
-      <CollapsibleCard title="监控" collapsible={true} bordered={false}>
+      <CollapsibleCard
+        title={intl.formatMessage({
+          id: 'Dashboard.Cluster.New.Monitor.Monitoring',
+          defaultMessage: '监控',
+        })}
+        collapsible={true}
+        bordered={false}
+      >
         <Tooltip title={monitorTooltipText}>
           <Form.Item
             rules={[

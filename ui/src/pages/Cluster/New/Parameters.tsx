@@ -6,7 +6,14 @@ import { Button, Col, Form, Input, Popconfirm, Row } from 'antd';
 export default function Parameters() {
   return (
     <Col span={24}>
-      <CollapsibleCard title="参数设置" collapsible={true} bordered={false}>
+      <CollapsibleCard
+        title={intl.formatMessage({
+          id: 'Dashboard.Cluster.New.Parameters.ParameterSettings',
+          defaultMessage: '参数设置',
+        })}
+        collapsible={true}
+        bordered={false}
+      >
         <Form.List name="parameters">
           {(fields, { add, remove }) => (
             <>

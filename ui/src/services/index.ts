@@ -6,6 +6,8 @@ import { request } from '@umijs/max';
 import _ from 'lodash';
 import moment from 'moment';
 
+const clusterPrefix = '/api/v1/obclusters';
+
 export async function loginReq(body: API.User) {
   return request('/api/v1/login', {
     method: 'POST',
@@ -32,7 +34,7 @@ export async function getEventsReq(params: {
   type?: API.EventType;
   objectType?: API.EventObjectType;
 }) {
-  const r = await request('/api/v1/cluster/events', {
+  const r = await request(`${clusterPrefix}/events`, {
     method: 'GET',
     params,
   });
@@ -53,7 +55,7 @@ export async function getEventsReq(params: {
 }
 
 export async function getNodeInfoReq() {
-  const r = await request('/api/v1/cluster/nodes', { method: 'GET' });
+  const r = await request(`${clusterPrefix}/nodes`, { method: 'GET' });
   let res = [];
   if (r.successful) {
     for (let node of r.data) {
@@ -69,7 +71,7 @@ export async function getNodeInfoReq() {
 }
 
 export async function getNodeLabelsReq() {
-  const r = await request('/api/v1/cluster/nodes', { method: 'GET' });
+  const r = await request(`${clusterPrefix}/nodes`, { method: 'GET' });
   let res = { key: [], value: [], originLabels: [] };
   if (r.successful) {
     for (let node of r.data) {
@@ -305,7 +307,7 @@ export async function deleteObserver({
 }
 
 export async function getNameSpaces() {
-  const r = await request('/api/v1/cluster/namespaces', {
+  const r = await request(`${clusterPrefix}/namespaces`, {
     method: 'GET',
   });
   if (r.successful) {
@@ -323,7 +325,7 @@ export async function getNameSpaces() {
 }
 
 export async function createNameSpace(namespace: string) {
-  const r = await request('/api/v1/cluster/namespaces', {
+  const r = await request(`${clusterPrefix}/namespaces`, {
     method: 'POST',
     data: { namespace },
   });
@@ -334,7 +336,7 @@ export async function createNameSpace(namespace: string) {
 }
 
 export async function getStorageClasses() {
-  const r = await request('/api/v1/cluster/storageClasses', {
+  const r = await request(`${clusterPrefix}/storageClasses`, {
     method: 'GET',
   });
   if (r.successful) {
@@ -412,4 +414,11 @@ export async function queryMetricsReq({ useFor, type, ...data }: API.QueryMetric
     return res;
   }
   return r.data || [];
+}
+
+export async function getEssentialParameters({
+  ns,
+  name,
+}: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
+  return request(`${clusterPrefix}/${ns}/${name}/essential-parameters`);
 }

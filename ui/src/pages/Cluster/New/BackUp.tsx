@@ -5,7 +5,14 @@ import { Col, Form, Input, Row } from 'antd';
 export default function BackUp() {
   return (
     <Col span={24}>
-      <CollapsibleCard collapsible={true} title="备份恢复" bordered={false}>
+      <CollapsibleCard
+        collapsible={true}
+        title={intl.formatMessage({
+          id: 'Dashboard.Cluster.New.BackUp.BackupAndRecovery',
+          defaultMessage: '备份恢复',
+        })}
+        bordered={false}
+      >
         <Row gutter={8}>
           <Col span={12}>
             <Form.Item

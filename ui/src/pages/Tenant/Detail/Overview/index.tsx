@@ -4,18 +4,18 @@ import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_TENANT_TIME } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-deleteTenent,
-getBackupJobs,
-getBackupPolicy,
-getTenant,
+  deleteTenent,
+  getBackupJobs,
+  getBackupPolicy,
+  getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Row,Tooltip,message } from 'antd';
-import { useEffect,useRef,useState } from 'react';
+import { Button, Row, Tooltip, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -153,7 +153,10 @@ export default function TenantOverview() {
       isMore: true,
     },
     {
-      text: '调整 Unit 数量',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.AdjustTheNumberOfUnits',
+        defaultMessage: '调整 Unit 数量',
+      }),
       onClick: () => openOperateModal('changeUnitCount'),
       show: tenantDetail?.info.tenantRole === 'PRIMARY',
       isMore: true,
