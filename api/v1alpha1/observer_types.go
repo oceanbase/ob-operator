@@ -21,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -98,4 +99,18 @@ func (ss OBServerStatus) GetConnectAddr() string {
 		return ss.ServiceIp
 	}
 	return ss.PodIp
+}
+
+func (s *OBServer) SupportStaticIP() bool {
+	switch s.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		return true
+	default:
+		annos := s.GetAnnotations()
+		if annos == nil {
+			return false
+		}
+		mode, modeAnnoExist := annos[oceanbaseconst.AnnotationsMode]
+		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
+	}
 }

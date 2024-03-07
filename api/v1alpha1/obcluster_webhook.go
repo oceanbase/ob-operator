@@ -160,7 +160,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			}
 			keepIpWithCNI := false
 			for _, observer := range observerList.Items {
-				if observer.Status.CNI == oceanbaseconst.CNICalico {
+				if observer.SupportStaticIP() {
 					keepIpWithCNI = true
 					break
 				}

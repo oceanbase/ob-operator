@@ -680,7 +680,7 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
-	if m.SupportStaticIp() {
+	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
 	m.Logger.Info("wait observer active in cluster")
@@ -714,7 +714,7 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
-	if m.SupportStaticIp() {
+	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
 	m.Logger.Info("wait observer deleted in cluster")

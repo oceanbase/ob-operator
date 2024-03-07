@@ -108,16 +108,6 @@ func (m *OBServerManager) SetOperationContext(c *tasktypes.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
-func (m *OBServerManager) SupportStaticIp() bool {
-	switch m.OBServer.Status.CNI {
-	case oceanbaseconst.CNICalico:
-		return true
-	default:
-		mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
-	}
-}
-
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {

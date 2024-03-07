@@ -121,9 +121,8 @@ func (m *OBServerManager) retryUpdateStatus() error {
 }
 
 func (m *OBServerManager) setRecoveryStatus() {
-	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
-		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
+	if m.OBServer.SupportStaticIP() {
+		m.Logger.Info("Current server can keep static ip address or the cluster runs as standalone, recover by recreating pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
 		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
