@@ -680,8 +680,7 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService) {
+	if m.SupportStaticIp() {
 		return nil
 	}
 	m.Logger.Info("wait observer active in cluster")
@@ -715,14 +714,13 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
+	if m.SupportStaticIp() {
+		return nil
+	}
 	m.Logger.Info("wait observer deleted in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService) {
-		return nil
 	}
 	deleted := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {

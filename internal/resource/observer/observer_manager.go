@@ -113,7 +113,8 @@ func (m *OBServerManager) SupportStaticIp() bool {
 	case oceanbaseconst.CNICalico:
 		return true
 	default:
-		return m.OBServer.Status.ServiceIp != ""
+		mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
 	}
 }
 

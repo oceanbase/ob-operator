@@ -150,12 +150,26 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
 		return nil, errors.New("forbid to remove backup volume")
 	}
-	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil &&
-		mode != oceanbaseconst.ModeStandalone &&
-		mode != oceanbaseconst.ModeService {
-		return nil, errors.New("forbid to add backup volume on non-service or non-standalone cluster")
-	}
 	var err error
+	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil {
+		if mode != oceanbaseconst.ModeStandalone && mode != oceanbaseconst.ModeService {
+			observerList := &OBServerList{}
+			err = clt.List(context.TODO(), observerList)
+			if err != nil {
+				return nil, err
+			}
+			keepIpWithCNI := false
+			for _, observer := range observerList.Items {
+				if observer.Status.CNI == oceanbaseconst.CNICalico {
+					keepIpWithCNI = true
+					break
+				}
+			}
+			if !keepIpWithCNI {
+				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
+			}
+		}
+	}
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
 	}
