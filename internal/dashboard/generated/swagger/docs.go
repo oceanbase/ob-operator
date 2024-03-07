@@ -1374,6 +1374,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/obtenants/statistic": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List statistics information of tenants",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obtenant"
+                ],
+                "summary": "List statistics information of tenants",
+                "operationId": "GetOBTenantStatistic",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.OBTenantStatistic"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants/{namespace}/{name}": {
             "get": {
                 "security": [
@@ -2319,6 +2381,46 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "common.AffinitySpec": {
+            "type": "object",
+            "properties": {
+                "key": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/common.AffinityType"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "common.AffinityType": {
+            "type": "string",
+            "enum": [
+                "NODE",
+                "POD",
+                "POD_ANTI"
+            ],
+            "x-enum-varnames": [
+                "NodeAffinityType",
+                "PodAffinityType",
+                "PodAntiAffinityType"
+            ]
+        },
+        "common.ClusterMode": {
+            "type": "string",
+            "enum": [
+                "NORMAL",
+                "STANDALONE",
+                "SERVICE"
+            ],
+            "x-enum-varnames": [
+                "ClusterModeNormal",
+                "ClusterModeStandalone",
+                "ClusterModeService"
+            ]
+        },
         "common.KVPair": {
             "type": "object",
             "properties": {
@@ -2459,6 +2561,9 @@ const docTemplate = `{
                 },
                 "clusterName": {
                     "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
                 },
                 "monitor": {
                     "$ref": "#/definitions/param.MonitorSpec"
@@ -2862,6 +2967,12 @@ const docTemplate = `{
         "param.ZoneTopology": {
             "type": "object",
             "properties": {
+                "affinities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.AffinitySpec"
+                    }
+                },
                 "nodeSelector": {
                     "type": "array",
                     "items": {
@@ -2870,6 +2981,12 @@ const docTemplate = `{
                 },
                 "replicas": {
                     "type": "integer"
+                },
+                "tolerations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "zone": {
                     "type": "string"
@@ -3228,6 +3345,28 @@ const docTemplate = `{
                 }
             }
         },
+        "response.MonitorSpec": {
+            "type": "object",
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "resource": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                }
+            }
+        },
+        "response.NFSVolumeSpec": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "path": {
+                    "type": "string"
+                }
+            }
+        },
         "response.Namespace": {
             "type": "object",
             "properties": {
@@ -3242,6 +3381,9 @@ const docTemplate = `{
         "response.OBCluster": {
             "type": "object",
             "properties": {
+                "backupVolume": {
+                    "$ref": "#/definitions/response.NFSVolumeSpec"
+                },
                 "clusterId": {
                     "type": "integer"
                 },
@@ -3257,10 +3399,25 @@ const docTemplate = `{
                 "metrics": {
                     "$ref": "#/definitions/response.OBMetrics"
                 },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
+                },
+                "monitor": {
+                    "$ref": "#/definitions/response.MonitorSpec"
+                },
                 "name": {
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "rootPasswordSecret": {
                     "type": "string"
                 },
                 "status": {
@@ -3484,9 +3641,26 @@ const docTemplate = `{
                 }
             }
         },
+        "response.OBTenantStatistic": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "response.OBZone": {
             "type": "object",
             "properties": {
+                "affinities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.AffinitySpec"
+                    }
+                },
                 "name": {
                     "type": "string"
                 },
@@ -3516,6 +3690,12 @@ const docTemplate = `{
                 },
                 "statusDetail": {
                     "type": "string"
+                },
+                "tolerations": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "zone": {
                     "type": "string"

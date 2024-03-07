@@ -60,3 +60,5 @@ type RestoreSource struct {
 	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
 	Until               string `json:"until,omitempty"`
 }
+
+type OBTenantStatistic OBClusterStastistic

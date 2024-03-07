@@ -41,6 +41,7 @@ const (
 	StatusDeleting  = "deleting"
 	StatusRunning   = "running"
 	StatusOperating = "operating"
+	StatusFailed    = "failed"
 )
 
 func convertStatus(detailedStatus string) string {
@@ -57,6 +58,8 @@ func getStatisticStatus(obcluster *v1alpha1.OBCluster) string {
 		return StatusDeleting
 	} else if obcluster.Status.Status == StatusRunning {
 		return StatusRunning
+	} else if obcluster.Status.Status == clusterstatus.Failed {
+		return StatusFailed
 	} else {
 		return StatusOperating
 	}
@@ -549,22 +552,37 @@ func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic,
 	if err != nil {
 		return statisticResult, errors.Wrap(err, "failed to list obclusters")
 	}
-	statusMap := make(map[string]int)
+	var (
+		runningCount   int
+		deletingCount  int
+		operatingCount int
+		failedCount    int
+	)
 	for _, obcluster := range obclusterList.Items {
-		statisticStatus := getStatisticStatus(&obcluster)
-		cnt, found := statusMap[statisticStatus]
-		if found {
-			cnt++
-		} else {
-			cnt = 1
+		switch getStatisticStatus(&obcluster) {
+		case StatusRunning:
+			runningCount++
+		case StatusDeleting:
+			deletingCount++
+		case StatusOperating:
+			operatingCount++
+		case StatusFailed:
+			failedCount++
 		}
-		statusMap[statisticStatus] = cnt
 	}
-	for status, count := range statusMap {
-		statisticResult = append(statisticResult, response.OBClusterStastistic{
-			Status: status,
-			Count:  count,
+	statisticResult = append(statisticResult,
+		response.OBClusterStastistic{
+			Status: StatusRunning,
+			Count:  runningCount,
+		}, response.OBClusterStastistic{
+			Status: StatusDeleting,
+			Count:  deletingCount,
+		}, response.OBClusterStastistic{
+			Status: StatusOperating,
+			Count:  operatingCount,
+		}, response.OBClusterStastistic{
+			Status: StatusFailed,
+			Count:  failedCount,
 		})
-	}
 	return statisticResult, nil
 }

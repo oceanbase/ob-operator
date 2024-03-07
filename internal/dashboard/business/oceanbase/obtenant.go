@@ -25,6 +25,7 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/oceanbase"
@@ -120,7 +121,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
 			t.Spec.Source.Restore.BakDataSource.Path = p.Source.Restore.BakDataSource
 
-			if p.Source.Restore.Until != nil {
+			if p.Source.Restore.Until != nil && !p.Source.Restore.Until.Unlimited {
 				t.Spec.Source.Restore.Until.Timestamp = p.Source.Restore.Until.Timestamp
 			} else {
 				t.Spec.Source.Restore.Until.Unlimited = true
@@ -500,4 +501,41 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 		return nil, err
 	}
 	return buildDetailFromApiType(tenant), nil
+}
+
+// GetOBTenantStatistics returns the statistics of all tenants
+// Including the number of tenants in four status: running, deleting, operating, failed
+func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, error) {
+	stats := []response.OBTenantStatistic{}
+	tenantList, err := oceanbase.ListAllOBTenants(ctx, v1.ListOptions{})
+	if err != nil {
+		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
+	}
+	var runningCount, deletingCount, operatingCount, failedCount int
+	for _, tenant := range tenantList.Items {
+		switch tenant.Status.Status {
+		case tenantstatus.Running:
+			runningCount++
+		case tenantstatus.DeletingTenant:
+			deletingCount++
+		case tenantstatus.Failed, tenantstatus.RestoreFailed:
+			failedCount++
+		default:
+			operatingCount++
+		}
+	}
+	stats = append(stats, response.OBTenantStatistic{
+		Status: tenantstatus.Running,
+		Count:  runningCount,
+	}, response.OBTenantStatistic{
+		Status: tenantstatus.DeletingTenant,
+		Count:  deletingCount,
+	}, response.OBTenantStatistic{
+		Status: "operating",
+		Count:  operatingCount,
+	}, response.OBTenantStatistic{
+		Status: tenantstatus.Failed,
+		Count:  failedCount,
+	})
+	return stats, nil
 }
