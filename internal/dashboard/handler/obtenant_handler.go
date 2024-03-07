@@ -539,7 +539,7 @@ func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/statistic [GET]
 // @Security ApiKeyAuth
-func GetOBTenantStatistic(c *gin.Context) ([]*response.OBTenantStatistic, error) {
+func GetOBTenantStatistic(c *gin.Context) ([]response.OBTenantStatistic, error) {
 	tenants, err := oceanbase.GetOBTenantStatistics(c)
 	if err != nil {
 		return nil, err

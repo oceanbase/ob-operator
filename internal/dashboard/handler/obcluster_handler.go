@@ -34,7 +34,7 @@ import (
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/statistic [GET]
-func GetOBClusterStatistic(c *gin.Context) ([]*response.OBClusterStastistic, error) {
+func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, error) {
 	// return mock data
 	obclusterStastics, err := oceanbase.GetOBClusterStatistic(c)
 	if err != nil {

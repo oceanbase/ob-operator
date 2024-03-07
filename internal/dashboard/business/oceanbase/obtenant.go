@@ -505,8 +505,8 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 
 // GetOBTenantStatistics returns the statistics of all tenants
 // Including the number of tenants in four status: running, deleting, operating, failed
-func GetOBTenantStatistics(ctx context.Context) ([]*response.OBTenantStatistic, error) {
-	stats := []*response.OBTenantStatistic{}
+func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, error) {
+	stats := []response.OBTenantStatistic{}
 	tenantList, err := oceanbase.ListAllOBTenants(ctx, v1.ListOptions{})
 	if err != nil {
 		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
@@ -524,16 +524,16 @@ func GetOBTenantStatistics(ctx context.Context) ([]*response.OBTenantStatistic, 
 			operatingCount++
 		}
 	}
-	stats = append(stats, &response.OBTenantStatistic{
+	stats = append(stats, response.OBTenantStatistic{
 		Status: tenantstatus.Running,
 		Count:  runningCount,
-	}, &response.OBTenantStatistic{
+	}, response.OBTenantStatistic{
 		Status: tenantstatus.DeletingTenant,
 		Count:  deletingCount,
-	}, &response.OBTenantStatistic{
+	}, response.OBTenantStatistic{
 		Status: "operating",
 		Count:  operatingCount,
-	}, &response.OBTenantStatistic{
+	}, response.OBTenantStatistic{
 		Status: tenantstatus.Failed,
 		Count:  failedCount,
 	})

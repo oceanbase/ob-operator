@@ -546,8 +546,8 @@ func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIden
 	return oceanbase.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 }
 
-func GetOBClusterStatistic(ctx context.Context) ([]*response.OBClusterStastistic, error) {
-	statisticResult := make([]*response.OBClusterStastistic, 0)
+func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic, error) {
+	statisticResult := make([]response.OBClusterStastistic, 0)
 	obclusterList, err := oceanbase.ListAllOBClusters(ctx)
 	if err != nil {
 		return statisticResult, errors.Wrap(err, "failed to list obclusters")
@@ -571,16 +571,16 @@ func GetOBClusterStatistic(ctx context.Context) ([]*response.OBClusterStastistic
 		}
 	}
 	statisticResult = append(statisticResult,
-		&response.OBClusterStastistic{
+		response.OBClusterStastistic{
 			Status: StatusRunning,
 			Count:  runningCount,
-		}, &response.OBClusterStastistic{
+		}, response.OBClusterStastistic{
 			Status: StatusDeleting,
 			Count:  deletingCount,
-		}, &response.OBClusterStastistic{
+		}, response.OBClusterStastistic{
 			Status: StatusOperating,
 			Count:  operatingCount,
-		}, &response.OBClusterStastistic{
+		}, response.OBClusterStastistic{
 			Status: StatusFailed,
 			Count:  failedCount,
 		})
