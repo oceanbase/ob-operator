@@ -1,11 +1,11 @@
 import { usePublicKey } from '@/hook/usePublicKey';
-import { getSimpleClusterList } from '@/services';
+import { getEssentialParameters as getEssentialParametersReq,getSimpleClusterList } from '@/services';
 import { createTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
-import { useRequest } from 'ahooks';
-import { Button, Col, Form, Row, message } from 'antd';
+import { useRequest,useUpdateEffect } from 'ahooks';
+import { Button,Col,Form,Row,message } from 'antd';
 import { useState } from 'react';
 import { formatNewTenantForm } from '../helper';
 import BasicInfo from './BasicInfo';
@@ -20,18 +20,24 @@ export default function New() {
   const [selectClusterId, setSelectClusterId] = useState<number>();
 
   const { data: clusterList = [] } = useRequest(getSimpleClusterList);
-
+  const { data: essentialParameterRes,run: getEssentialParameters} = useRequest(
+    getEssentialParametersReq,
+    {
+      manual: true,
+    },
+  );
   //Selected cluster resource name
   const clusterName = clusterList.filter(
     (cluster) => cluster.clusterId === selectClusterId,
   )[0]?.name;
+  const essentialParameter = essentialParameterRes?.data;
 
   const onFinish = async (values: any) => {
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
     const res = await createTenant({
-      namespace:ns,
+      namespace: ns,
       ...formatNewTenantForm(values, clusterName, publicKey),
     });
     if (res.successful) {
@@ -50,6 +56,19 @@ export default function New() {
   const initialValues = {
     connectWhiteList: ['%'],
   };
+
+  useUpdateEffect(() => {
+    const { name, namespace } = clusterList.filter(
+      (cluster) => cluster.clusterId === selectClusterId,
+    )[0];
+    if (name && namespace) {
+      getEssentialParameters({
+        ns: namespace,
+        name,
+      });
+    }
+  }, [selectClusterId]);
+
   return (
     <PageContainer
       header={{
@@ -68,7 +87,7 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button type='primary' key="submit" onClick={() => form.submit()}>
+        <Button type="primary" key="submit" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'Dashboard.Tenant.New.Submit',
             defaultMessage: '提交',
@@ -97,6 +116,7 @@ export default function New() {
             <ResourcePools
               form={form}
               selectClusterId={selectClusterId}
+              essentialParameter={essentialParameter}
               clusterList={clusterList}
             />
           </Col>

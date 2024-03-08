@@ -1,8 +1,9 @@
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
-import { Card, Col, Table, Tag } from 'antd';
+import { Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import CollapsibleCard from '../CollapsibleCard';
 
 import { getEventsReq } from '@/services';
 import CustomTooltip from '../CustomTooltip';
@@ -23,6 +24,7 @@ interface EventsTableProps {
   objectType?: API.EventObjectType;
   cardType?: 'card' | 'proCard';
   collapsible?: boolean;
+  defaultExpand?: boolean;
 }
 
 const columns: ColumnsType<DataType> = [
@@ -130,7 +132,8 @@ const columns: ColumnsType<DataType> = [
 export default function EventsTable({
   objectType,
   cardType,
-  collapsible,
+  collapsible = false,
+  defaultExpand = false
 }: EventsTableProps) {
   const { data } = useRequest(getEventsReq, {
     defaultParams: objectType && [{ objectType }],
@@ -138,6 +141,7 @@ export default function EventsTable({
 
   const CustomCard = (props) => {
     const { title } = props;
+    
     return (
       <>
         {cardType === 'proCard' ? (
@@ -145,10 +149,9 @@ export default function EventsTable({
             {props.children}
           </ProCard>
         ) : (
-          <Card>
-            {title}
+          <CollapsibleCard defaultExpand={defaultExpand} title={title} collapsible={collapsible}>
             {props.children}
-          </Card>
+          </CollapsibleCard>
         )}
       </>
     );
@@ -158,7 +161,7 @@ export default function EventsTable({
     <Col span={24}>
       <CustomCard
         title={
-          <h2>
+          <h2 style={{marginBottom:0}}>
             {intl.formatMessage({
               id: 'OBDashboard.components.EventsTable.Event',
               defaultMessage: '事件',

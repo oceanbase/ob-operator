@@ -1,10 +1,11 @@
 import { intl } from '@/utils/intl';
-import { Col, Descriptions, Table, Tooltip, Card } from 'antd';
+import { Col,Descriptions,Table,Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import CollapsibleCard from '@/components/CollapsibleCard';
 
 interface BackupsProps {
-  backupPolicy: API.BackupPolicy;
-  backupJobs: API.BackupJob[];
+  backupPolicy?: API.BackupPolicy;
+  backupJobs?: API.BackupJob[];
 }
 
 export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
@@ -95,7 +96,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
 
   return (
     <Col span={24}>
-      <Card
+      <CollapsibleCard
         title={
           <h2>
             {intl.formatMessage({
@@ -104,39 +105,43 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
             })}
           </h2>
         }
-        collapsible
+        collapsible={true}
+        defaultExpand={true}
       >
-        <Descriptions
-          column={5}
-          title={intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.Backups.BackupPolicy',
-            defaultMessage: '备份策略',
-          })}
-        >
-          {Object.keys(PolicyConfig).map((key, index) => (
-            <Descriptions.Item label={PolicyConfig[key]} key={index}>
-              {key !== 'scheduleDates' ? (
-                <span>{backupPolicy[key]}</span>
-              ) : (
-                <div>
-                  {backupPolicy[key].map((item, index) => (
-                    <span key={index}>
-                      {item.backupType},{item.day}
-                      {index !== backupPolicy[key].length}{' '}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </Descriptions.Item>
-          ))}
-        </Descriptions>
+        {backupPolicy && (
+          <Descriptions
+            column={5}
+            title={intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.Backups.BackupPolicy',
+              defaultMessage: '备份策略',
+            })}
+          >
+            {Object.keys(PolicyConfig).map((key, index) => (
+              <Descriptions.Item label={PolicyConfig[key]} key={index}>
+                {key !== 'scheduleDates' ? (
+                  <span>{backupPolicy[key]}</span>
+                ) : (
+                  <div>
+                    {backupPolicy[key].map((item, index) => (
+                      <span key={index}>
+                        {item.backupType},{item.day}
+                        {index !== backupPolicy[key].length}{' '}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </Descriptions.Item>
+            ))}
+          </Descriptions>
+        )}
+
         <Table
           dataSource={backupJobs}
           rowKey="name"
           pagination={{ simple: true }}
           columns={columns}
         />
-      </Card>
+      </CollapsibleCard>
     </Col>
   );
 }

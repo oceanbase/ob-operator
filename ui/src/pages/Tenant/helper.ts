@@ -1,6 +1,7 @@
 // import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
 import { clone } from 'lodash';
+import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
   if (typeof val === 'number') return true;
@@ -163,4 +164,26 @@ export function checkIsSame(
   }
 
   return true;
+}
+
+function findMinValue(
+  key: 'availableCPU' | 'availableLogDisk' | 'availableMemory',
+  resources: API.ServerResource[],
+) {
+  return resources.sort((pre, cur) => pre[key] - cur[key])[0][key];
+}
+
+export function findMinParameter(
+  zones: string[],
+  essentialParameter: API.EssentialParametersType,
+): MaxResourceType {
+  const { obServerResources } = essentialParameter;
+  const selectResources = obServerResources.filter((resource) =>
+    zones.includes(resource.obZone),
+  );
+  return {
+    maxCPU: findMinValue('availableCPU', selectResources),
+    maxLogDisk: findMinValue('availableLogDisk', selectResources),
+    maxMemory: findMinValue('availableMemory', selectResources),
+  };
 }

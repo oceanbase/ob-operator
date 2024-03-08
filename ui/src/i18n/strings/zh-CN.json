@@ -572,5 +572,12 @@
   "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS 类型，参考路径格式：oss://bucket/dir?host=xxx",
   "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase集群",
   "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase租户",
-  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "租户恢复"
+  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "租户恢复",
+  "Dashboard.Cluster.New.BackUp.BackupAndRecovery": "备份恢复",
+  "Dashboard.Cluster.New.Monitor.Monitoring": "监控",
+  "Dashboard.Cluster.New.Parameters.ParameterSettings": "参数设置",
+  "Dashboard.Detail.Overview.AdjustTheNumberOfUnits": "调整 Unit 数量",
+  "Dashboard.Tenant.New.ResourcePools.AvailableResources": "可用资源：",
+  "Dashboard.Tenant.New.ResourcePools.LogDiskSize": "日志磁盘大小",
+  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "此处指的是租户的 clog 磁盘空间"
 }

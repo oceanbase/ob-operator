@@ -1,6 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Descriptions,Tag } from 'antd';
+import { Card, Col, Descriptions, Tag } from 'antd';
 
 export default function BasicInfo({
   info,
@@ -74,14 +74,18 @@ export default function BasicInfo({
 
   return (
     <Col span={24}>
-      <Card style={style}>
-        <Descriptions
-          column={5}
-          title={intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.BasicInformation',
-            defaultMessage: '基本信息',
-          })}
-        >
+      <Card
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.BasicInformation',
+              defaultMessage: '基本信息',
+            })}
+          </h2>
+        }
+        style={style}
+      >
+        <Descriptions column={5}>
           {Object.keys(InfoConfig).map(
             (key: keyof typeof InfoConfig, index) => {
               return (

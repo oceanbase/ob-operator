@@ -572,5 +572,12 @@
   "Dashboard.Tenant.New.TenantSource.OssTypeForMoreInformation": "OSS type. For more information, see oss:// bucket/dir? host=xxx",
   "Dashboard.src.utils.helper.OceanbaseCluster": "OceanBase cluster",
   "Dashboard.src.utils.helper.OceanbaseTenants": "OceanBase tenants",
-  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "Tenant recovery"
+  "Dashboard.Tenant.New.TenantSource.TenantRecovery": "Tenant recovery",
+  "Dashboard.Cluster.New.BackUp.BackupAndRecovery": "Backup and Recovery",
+  "Dashboard.Cluster.New.Monitor.Monitoring": "Monitoring",
+  "Dashboard.Cluster.New.Parameters.ParameterSettings": "Parameter settings",
+  "Dashboard.Detail.Overview.AdjustTheNumberOfUnits": "Adjust the number of units",
+  "Dashboard.Tenant.New.ResourcePools.AvailableResources": "Available resources:",
+  "Dashboard.Tenant.New.ResourcePools.LogDiskSize": "Log disk size",
+  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "This refers to the tenant's clog disk space."
 }
