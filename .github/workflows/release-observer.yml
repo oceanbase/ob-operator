@@ -34,9 +34,9 @@ jobs:
       - name: Build and push observer w/o cache
         uses: docker/build-push-action@v2
         with:
-          context: ./distribution/oceanbase
+          context: .
           platforms: linux/amd64,linux/arm64
-          file: ./distribution/oceanbase/Dockerfile
+          file: ./build/Dockerfile.observer
           push: true
           tags: ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-cloud-native:${{ steps.set_version_vars.outputs.version }}
           build-args: |
