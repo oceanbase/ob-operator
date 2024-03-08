@@ -86,9 +86,9 @@ type NFSVolumeSpec struct {
 }
 
 type OBClusterEssentialParameters struct {
-	MinPoolMemory     int64                             `json:"minPoolMemory" example:"2147483648"`
-	OBServerResources []*OBServerAvailableResource      `json:"obServerResources"`
-	OBZoneResourceMap map[string]OBZoneAvaiableResource `json:"obZoneResourceMap"`
+	MinPoolMemory     int64                              `json:"minPoolMemory" example:"2147483648"`
+	OBServerResources []OBServerAvailableResource        `json:"obServerResources"`
+	OBZoneResourceMap map[string]*OBZoneAvaiableResource `json:"obZoneResourceMap"`
 }
 
 type OBServerAvailableResource struct {

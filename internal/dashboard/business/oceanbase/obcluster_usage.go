@@ -26,6 +26,7 @@ import (
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
@@ -72,41 +73,47 @@ func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIde
 	essentials := &response.OBClusterEssentialParameters{
 		MinPoolMemory: minPoolMemory.Value(),
 	}
-	zoneMapping := make(map[string]response.OBZoneAvaiableResource)
 	gvservers, err := manager.ListGVServers()
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-	serverUsages := make([]*response.OBServerAvailableResource, 0, len(gvservers))
-	for _, gvserver := range gvservers {
-		if _, ok := zoneMapping[gvserver.Zone]; !ok {
-			zoneMapping[gvserver.Zone] = response.OBZoneAvaiableResource{
-				OBZone:            gvserver.Zone,
-				AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
-				AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
-				AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
-				AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
-			}
-		}
-		serverUsage := &response.OBServerAvailableResource{
-			OBServerIP: gvserver.ServerIP,
-			OBZoneAvaiableResource: response.OBZoneAvaiableResource{
-				OBZone:            gvserver.Zone,
-				AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
-				AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
-				AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
-				AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
-			},
-		}
-		if zoneMapping[gvserver.Zone].AvailableCPU > serverUsage.AvailableCPU ||
-			zoneMapping[gvserver.Zone].AvailableMemory > serverUsage.AvailableMemory ||
-			zoneMapping[gvserver.Zone].AvailableLogDisk > serverUsage.AvailableLogDisk ||
-			zoneMapping[gvserver.Zone].AvailableDataDisk > serverUsage.AvailableDataDisk {
-			zoneMapping[gvserver.Zone] = serverUsage.OBZoneAvaiableResource
-		}
-		serverUsages = append(serverUsages, serverUsage)
-	}
+	serverUsages, zoneMapping := getServerUsages(gvservers)
 	essentials.OBServerResources = serverUsages
 	essentials.OBZoneResourceMap = zoneMapping
 	return essentials, nil
+}
+
+func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailableResource, map[string]*response.OBZoneAvaiableResource) {
+	zoneMapping := make(map[string]*response.OBZoneAvaiableResource)
+	serverUsages := make([]response.OBServerAvailableResource, 0, len(gvservers))
+	for _, gvserver := range gvservers {
+		zoneResource := &response.OBZoneAvaiableResource{
+			OBZone:            gvserver.Zone,
+			AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
+			AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
+			AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
+			AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
+		}
+		if _, ok := zoneMapping[gvserver.Zone]; !ok {
+			zoneMapping[gvserver.Zone] = zoneResource
+		}
+		serverUsage := response.OBServerAvailableResource{
+			OBServerIP:             gvserver.ServerIP,
+			OBZoneAvaiableResource: *zoneResource,
+		}
+		if zoneMapping[gvserver.Zone].AvailableCPU > serverUsage.AvailableCPU {
+			zoneMapping[gvserver.Zone].AvailableCPU = serverUsage.AvailableCPU
+		}
+		if zoneMapping[gvserver.Zone].AvailableMemory > serverUsage.AvailableMemory {
+			zoneMapping[gvserver.Zone].AvailableMemory = serverUsage.AvailableMemory
+		}
+		if zoneMapping[gvserver.Zone].AvailableLogDisk > serverUsage.AvailableLogDisk {
+			zoneMapping[gvserver.Zone].AvailableLogDisk = serverUsage.AvailableLogDisk
+		}
+		if zoneMapping[gvserver.Zone].AvailableDataDisk > serverUsage.AvailableDataDisk {
+			zoneMapping[gvserver.Zone].AvailableDataDisk = serverUsage.AvailableDataDisk
+		}
+		serverUsages = append(serverUsages, serverUsage)
+	}
+	return serverUsages, zoneMapping
 }
