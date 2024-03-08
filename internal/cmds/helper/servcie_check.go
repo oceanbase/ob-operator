@@ -27,8 +27,20 @@ func init() {
 
 func newServiceCheckCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "svc-check",
-		Short: "Check whether the observer support service mode",
+		Use:   "service",
+		Short: "Support service mode",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	cmd.AddCommand(newServiceValidateCmd())
+	return cmd
+}
+
+func newServiceValidateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validate",
+		Short: "Check whether the observer supports service mode",
 		Run: func(cmd *cobra.Command, args []string) {
 			obVer, err := helper.GetCurrentVersion(DefaultHomePath)
 			if err != nil {
@@ -46,5 +58,6 @@ func newServiceCheckCmd() *cobra.Command {
 			}
 		},
 	}
+
 	return cmd
 }
