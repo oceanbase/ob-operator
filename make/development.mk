@@ -65,7 +65,7 @@ $(ADD_LICENSE_CHECKER):
 
 .PHONY: license-check
 license-check: $(ADD_LICENSE_CHECKER) ## Check whether all license headers are present.
-	find . -type f -name "*.go" -not -path "./distribution/*" -not -path "**/generated/*" | xargs addlicense -check
+	find . -type f -name "*.go" -not -path "./distribution/*" -not -path "**/generated/*" | xargs $(ADD_LICENSE_CHECKER) -check
 
 .PHONY: commit-hook
 commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
