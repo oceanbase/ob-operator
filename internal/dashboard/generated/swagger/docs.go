@@ -1254,7 +1254,7 @@ const docTemplate = `{
                     "Obcluster"
                 ],
                 "summary": "list essential parameters",
-                "operationId": "ListEssentialParameters",
+                "operationId": "ListOBClusterResources",
                 "parameters": [
                     {
                         "type": "string",
@@ -1283,7 +1283,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.OBClusterEssentialParameters"
+                                            "$ref": "#/definitions/response.OBClusterResources"
                                         }
                                     }
                                 }
@@ -3512,7 +3512,7 @@ const docTemplate = `{
                 }
             }
         },
-        "response.OBClusterEssentialParameters": {
+        "response.OBClusterResources": {
             "type": "object",
             "properties": {
                 "minPoolMemory": {
@@ -3606,6 +3606,10 @@ const docTemplate = `{
                 "obZone": {
                     "type": "string",
                     "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },
@@ -3848,6 +3852,10 @@ const docTemplate = `{
                 "obZone": {
                     "type": "string",
                     "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

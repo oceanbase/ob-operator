@@ -28,5 +28,5 @@ func InitOBClusterRoutes(g *gin.RouterGroup) {
 	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.Wrap(h.AddOBZone))
 	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.Wrap(h.ScaleOBServer))
 	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone))
-	g.GET("/obclusters/:namespace/:name/essential-parameters", h.Wrap(h.ListEssentialParameters))
+	g.GET("/obclusters/:namespace/:name/essential-parameters", h.Wrap(h.ListOBClusterResources))
 }

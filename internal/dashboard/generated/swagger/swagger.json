@@ -1247,7 +1247,7 @@
                     "Obcluster"
                 ],
                 "summary": "list essential parameters",
-                "operationId": "ListEssentialParameters",
+                "operationId": "ListOBClusterResources",
                 "parameters": [
                     {
                         "type": "string",
@@ -1276,7 +1276,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.OBClusterEssentialParameters"
+                                            "$ref": "#/definitions/response.OBClusterResources"
                                         }
                                     }
                                 }
@@ -3505,7 +3505,7 @@
                 }
             }
         },
-        "response.OBClusterEssentialParameters": {
+        "response.OBClusterResources": {
             "type": "object",
             "properties": {
                 "minPoolMemory": {
@@ -3599,6 +3599,10 @@
                 "obZone": {
                     "type": "string",
                     "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },
@@ -3841,6 +3845,10 @@
                 "obZone": {
                     "type": "string",
                     "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

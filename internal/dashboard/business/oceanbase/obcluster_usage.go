@@ -30,7 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
-func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterEssentialParameters, error) {
+func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterResources, error) {
 	obcluster, err := oceanbase.GetOBCluster(ctx, nn.Namespace, nn.Name)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIde
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-	essentials := &response.OBClusterEssentialParameters{
+	essentials := &response.OBClusterResources{
 		MinPoolMemory: minPoolMemory.Value(),
 	}
 	gvservers, err := manager.ListGVServers()
@@ -88,30 +88,33 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 	serverUsages := make([]response.OBServerAvailableResource, 0, len(gvservers))
 	for _, gvserver := range gvservers {
 		zoneResource := &response.OBZoneAvaiableResource{
+			ServerCount:       1,
 			OBZone:            gvserver.Zone,
 			AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
 			AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
 			AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
 			AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
 		}
-		if _, ok := zoneMapping[gvserver.Zone]; !ok {
-			zoneMapping[gvserver.Zone] = zoneResource
-		}
 		serverUsage := response.OBServerAvailableResource{
 			OBServerIP:             gvserver.ServerIP,
 			OBZoneAvaiableResource: *zoneResource,
 		}
-		if zoneMapping[gvserver.Zone].AvailableCPU > serverUsage.AvailableCPU {
-			zoneMapping[gvserver.Zone].AvailableCPU = serverUsage.AvailableCPU
-		}
-		if zoneMapping[gvserver.Zone].AvailableMemory > serverUsage.AvailableMemory {
-			zoneMapping[gvserver.Zone].AvailableMemory = serverUsage.AvailableMemory
-		}
-		if zoneMapping[gvserver.Zone].AvailableLogDisk > serverUsage.AvailableLogDisk {
-			zoneMapping[gvserver.Zone].AvailableLogDisk = serverUsage.AvailableLogDisk
-		}
-		if zoneMapping[gvserver.Zone].AvailableDataDisk > serverUsage.AvailableDataDisk {
-			zoneMapping[gvserver.Zone].AvailableDataDisk = serverUsage.AvailableDataDisk
+		if _, ok := zoneMapping[gvserver.Zone]; !ok {
+			zoneMapping[gvserver.Zone] = zoneResource
+		} else {
+			zoneMapping[gvserver.Zone].ServerCount++
+			if zoneMapping[gvserver.Zone].AvailableCPU > serverUsage.AvailableCPU {
+				zoneMapping[gvserver.Zone].AvailableCPU = serverUsage.AvailableCPU
+			}
+			if zoneMapping[gvserver.Zone].AvailableMemory > serverUsage.AvailableMemory {
+				zoneMapping[gvserver.Zone].AvailableMemory = serverUsage.AvailableMemory
+			}
+			if zoneMapping[gvserver.Zone].AvailableLogDisk > serverUsage.AvailableLogDisk {
+				zoneMapping[gvserver.Zone].AvailableLogDisk = serverUsage.AvailableLogDisk
+			}
+			if zoneMapping[gvserver.Zone].AvailableDataDisk > serverUsage.AvailableDataDisk {
+				zoneMapping[gvserver.Zone].AvailableDataDisk = serverUsage.AvailableDataDisk
+			}
 		}
 		serverUsages = append(serverUsages, serverUsage)
 	}

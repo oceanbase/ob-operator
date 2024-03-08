@@ -276,7 +276,7 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 	return nil, nil
 }
 
-// @ID ListEssentialParameters
+// @ID ListOBClusterResources
 // @Summary list essential parameters
 // @Description list essential parameters of specific obcluster
 // @Tags Obcluster
@@ -284,13 +284,13 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
 // @Param name path string true "obcluster name"
-// @Success 200 object response.APIResponse{data=response.OBClusterEssentialParameters}
+// @Success 200 object response.APIResponse{data=response.OBClusterResources}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/{namespace}/{name}/essential-parameters [GET]
 // @Security ApiKeyAuth
-func ListEssentialParameters(c *gin.Context) (*response.OBClusterEssentialParameters, error) {
+func ListOBClusterResources(c *gin.Context) (*response.OBClusterResources, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {

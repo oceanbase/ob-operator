@@ -718,7 +718,7 @@ definitions:
       version:
         type: string
     type: object
-  response.OBClusterEssentialParameters:
+  response.OBClusterResources:
     properties:
       minPoolMemory:
         example: 2147483648
@@ -782,6 +782,9 @@ definitions:
       obZone:
         example: zone1
         type: string
+      serverCount:
+        example: 3
+        type: integer
     type: object
   response.OBTenantBrief:
     description: Brief information about OBTenant
@@ -951,6 +954,9 @@ definitions:
       obZone:
         example: zone1
         type: string
+      serverCount:
+        example: 3
+        type: integer
     type: object
   response.RestoreSource:
     properties:
@@ -1455,7 +1461,7 @@ paths:
       consumes:
       - application/json
       description: list essential parameters of specific obcluster
-      operationId: ListEssentialParameters
+      operationId: ListOBClusterResources
       parameters:
       - description: obcluster namespace
         in: path
@@ -1477,7 +1483,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.OBClusterEssentialParameters'
+                  $ref: '#/definitions/response.OBClusterResources'
               type: object
         "400":
           description: Bad Request
