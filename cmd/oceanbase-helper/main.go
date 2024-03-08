@@ -12,8 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package main
 
-import "github.com/oceanbase/oceanbase-helper/cmd"
+import "github.com/oceanbase/ob-operator/internal/cmds/helper"
 
 func main() {
-	cmd.Execute()
+	helper.Execute()
 }

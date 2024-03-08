@@ -12,7 +12,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package cmd
+package helper
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 )
 
 func init() {
@@ -31,7 +31,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "print current installed version of OceanBase",
 	Run: func(cmd *cobra.Command, args []string) {
-		ver, err := oceanbase.GetCurrentVersion(DefaultHomePath)
+		ver, err := helper.GetCurrentVersion(DefaultHomePath)
 		if err != nil {
 			fmt.Printf("Version command failed, %v \n", err)
 			os.Exit(1)

@@ -10,14 +10,15 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package cmd
+package helper
 
 import (
 	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 )
 
 func init() {
@@ -29,19 +30,19 @@ func newServiceCheckCmd() *cobra.Command {
 		Use:   "svc-check",
 		Short: "Check whether the observer support service mode",
 		Run: func(cmd *cobra.Command, args []string) {
-			obVer, err := oceanbase.GetCurrentVersion(DefaultHomePath)
+			obVer, err := helper.GetCurrentVersion(DefaultHomePath)
 			if err != nil {
 				cmd.PrintErrf("Failed to get current version, %v \n", err)
 				os.Exit(1)
 			}
-			obv, err := oceanbase.ParseOceanBaseVersion(obVer)
+			obv, err := helper.ParseOceanBaseVersion(obVer)
 			if err != nil {
 				cmd.PrintErrf("Failed to parse current version, %v \n", err)
 				os.Exit(1)
 			}
 			if obv.Cmp(MinServiceVersion) < 0 {
 				cmd.PrintErrf("Current version %s is too low, please upgrade to %s first \n", obVer, MinServiceVersion.String())
-				os.Exit(int(ExitCodeNotSupport))
+				os.Exit(int(cmdconst.ExitCodeNotSupport))
 			}
 		},
 	}

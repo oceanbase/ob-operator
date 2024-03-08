@@ -11,7 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cmd
+package helper
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 )
 
 // upgradeValidateCmd represents the validate command
@@ -48,12 +48,12 @@ func init() {
 func validateUpgrade() error {
 	fromVersion := viper.GetString("start-version")
 	oceanbaseInstallPath := viper.GetString("ob-installation-path")
-	targetVersion, err := oceanbase.GetCurrentVersion(oceanbaseInstallPath)
+	targetVersion, err := helper.GetCurrentVersion(oceanbaseInstallPath)
 	fmt.Println(targetVersion)
 	if err != nil {
 		return errors.Wrap(err, "Failed to current oceanbase version")
 	}
-	route, err := oceanbase.GetOBUpgradeRoute(&oceanbase.OBUpgradeRouteParam{
+	route, err := helper.GetOBUpgradeRoute(&helper.OBUpgradeRouteParam{
 		StartVersion:  fromVersion,
 		TargetVersion: targetVersion,
 		DepFilePath:   fmt.Sprintf("%s/etc/oceanbase_upgrade_dep.yml", oceanbaseInstallPath),

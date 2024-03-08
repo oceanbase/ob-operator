@@ -11,7 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cmd
+package helper
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/oceanbase/oceanbase-helper/pkg/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 )
 
 const (
@@ -60,13 +60,13 @@ var startCmd = &cobra.Command{
 	},
 }
 
-var MinStandaloneVersion *oceanbase.OceanBaseVersion
-var MinServiceVersion *oceanbase.OceanBaseVersion
+var MinStandaloneVersion *helper.OceanBaseVersion
+var MinServiceVersion *helper.OceanBaseVersion
 
 func init() {
 	rootCmd.AddCommand(startCmd)
-	MinStandaloneVersion, _ = oceanbase.ParseOceanBaseVersion("4.2.0.0")
-	MinServiceVersion, _ = oceanbase.ParseOceanBaseVersion("4.2.3.0")
+	MinStandaloneVersion, _ = helper.ParseOceanBaseVersion("4.2.0.0")
+	MinServiceVersion, _ = helper.ParseOceanBaseVersion("4.2.3.0")
 }
 
 func prepareDir() error {
@@ -138,11 +138,11 @@ func startOBServerWithParam() error {
 	if extraOptStr != "" {
 		optStr = fmt.Sprintf("%s,%s", optStr, extraOptStr)
 	}
-	ver, err := oceanbase.GetCurrentVersion(DefaultHomePath)
+	ver, err := helper.GetCurrentVersion(DefaultHomePath)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get current version")
 	}
-	obv, err := oceanbase.ParseOceanBaseVersion(ver)
+	obv, err := helper.ParseOceanBaseVersion(ver)
 	if err != nil {
 		return errors.Wrap(err, "Failed to parse current version")
 	}
