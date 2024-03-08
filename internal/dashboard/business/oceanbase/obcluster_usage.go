@@ -103,16 +103,16 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 			zoneMapping[gvserver.Zone] = zoneResource
 		} else {
 			zoneMapping[gvserver.Zone].ServerCount++
-			if zoneMapping[gvserver.Zone].AvailableCPU > serverUsage.AvailableCPU {
+			if zoneMapping[gvserver.Zone].AvailableCPU < serverUsage.AvailableCPU {
 				zoneMapping[gvserver.Zone].AvailableCPU = serverUsage.AvailableCPU
 			}
-			if zoneMapping[gvserver.Zone].AvailableMemory > serverUsage.AvailableMemory {
+			if zoneMapping[gvserver.Zone].AvailableMemory < serverUsage.AvailableMemory {
 				zoneMapping[gvserver.Zone].AvailableMemory = serverUsage.AvailableMemory
 			}
-			if zoneMapping[gvserver.Zone].AvailableLogDisk > serverUsage.AvailableLogDisk {
+			if zoneMapping[gvserver.Zone].AvailableLogDisk < serverUsage.AvailableLogDisk {
 				zoneMapping[gvserver.Zone].AvailableLogDisk = serverUsage.AvailableLogDisk
 			}
-			if zoneMapping[gvserver.Zone].AvailableDataDisk > serverUsage.AvailableDataDisk {
+			if zoneMapping[gvserver.Zone].AvailableDataDisk < serverUsage.AvailableDataDisk {
 				zoneMapping[gvserver.Zone].AvailableDataDisk = serverUsage.AvailableDataDisk
 			}
 		}
