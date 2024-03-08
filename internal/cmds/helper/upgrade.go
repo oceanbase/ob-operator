@@ -14,8 +14,6 @@ See the Mulan PSL v2 for more details.
 package helper
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +22,7 @@ var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
 	Short: "Upgrade OceanBase",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("upgrade called")
+		cmd.Println("upgrade called")
 	},
 }
 

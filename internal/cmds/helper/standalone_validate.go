@@ -15,7 +15,6 @@ See the Mulan PSL v2 for more details.
 package helper
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -42,16 +41,16 @@ var standaloneValidateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ver, err := helper.GetCurrentVersion(DefaultHomePath)
 		if err != nil {
-			fmt.Printf("Failed to get current version, %v \n", err)
+			cmd.PrintErrf("Failed to get current version, %v \n", err)
 			os.Exit(1)
 		}
 		obv, err := helper.ParseOceanBaseVersion(ver)
 		if err != nil {
-			fmt.Printf("Failed to parse current version, %v \n", err)
+			cmd.PrintErrf("Failed to parse current version, %v \n", err)
 			os.Exit(1)
 		}
 		if obv.Cmp(MinStandaloneVersion) < 0 {
-			fmt.Printf("Current version %s is too low, please upgrade to %s first \n", ver, MinStandaloneVersion.String())
+			cmd.PrintErrf("Current version %s is too low, please upgrade to %s first \n", ver, MinStandaloneVersion.String())
 			os.Exit(1)
 		}
 	},

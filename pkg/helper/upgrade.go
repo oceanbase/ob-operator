@@ -151,7 +151,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 		nodeMap[k].Precursor = nil
 	}
 	for {
-		if len(queue) <= 0 {
+		if len(queue) == 0 {
 			break
 		}
 		node := queue[len(queue)-1]
@@ -213,7 +213,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 					node.DirectUpgrade = true
 				}
 			}
-			i += 1
+			i++
 		} else {
 			break
 		}

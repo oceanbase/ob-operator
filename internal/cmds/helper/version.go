@@ -15,7 +15,6 @@ See the Mulan PSL v2 for more details.
 package helper
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -33,9 +32,9 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ver, err := helper.GetCurrentVersion(DefaultHomePath)
 		if err != nil {
-			fmt.Printf("Version command failed, %v \n", err)
+			cmd.PrintErrf("Version command failed, %v \n", err)
 			os.Exit(1)
 		}
-		fmt.Println(ver)
+		cmd.Println(ver)
 	},
 }

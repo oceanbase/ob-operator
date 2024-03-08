@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type OceanBaseVersion struct {
@@ -35,16 +36,15 @@ func GetCurrentVersion(oceanbaseInstallPath string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Failed to execute version command")
 	}
-	fmt.Println(string(output))
+	log.Println(string(output))
 	lines := strings.Split(string(output), "\n")
 	if len(lines) > 3 {
 		versionStr := strings.Split(lines[1], " ")
 		version := versionStr[len(versionStr)-1]
 		releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
 		return fmt.Sprintf("%s-%s", version[0:len(version)-1], releaseStr), nil
-	} else {
-		return "", errors.New("OB Version Format is Wrong")
 	}
+	return "", errors.New("OB Version Format is Wrong")
 }
 
 func ParseOceanBaseVersion(version string) (*OceanBaseVersion, error) {

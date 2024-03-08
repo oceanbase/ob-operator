@@ -15,6 +15,7 @@ package helper
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -49,12 +50,12 @@ var startCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := prepareDir()
 		if err != nil {
-			fmt.Printf("Prepare observer dir failed, %v \n", err)
+			cmd.PrintErrf("Prepare observer dir failed, %v \n", err)
 			os.Exit(1)
 		}
 		err = startOBServer()
 		if err != nil {
-			fmt.Printf("Start observer failed, %v \n", err)
+			cmd.PrintErrf("Start observer failed, %v \n", err)
 			os.Exit(1)
 		}
 	},
@@ -86,11 +87,11 @@ func startOBServer() error {
 	configFile := fmt.Sprintf("%s/store/etc/%s", DefaultHomePath, BackupConfigFileName)
 	_, err := os.Stat(configFile)
 	if err == nil {
-		fmt.Println("Found backup config file, start without parameter")
+		log.Println("Found backup config file, start without parameter")
 		return startOBServerWithConfig()
 	}
 	if os.IsNotExist(err) {
-		fmt.Println("Backup config file not found, start with parameter")
+		log.Println("Backup config file not found, start with parameter")
 		return startOBServerWithParam()
 	}
 	return errors.Wrap(err, "Failed to check config file")
@@ -155,6 +156,6 @@ func startOBServerWithParam() error {
 	} else {
 		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s -i %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	}
-	fmt.Println("Start commands: ", cmd)
+	log.Println("Start commands: ", cmd)
 	return exec.Command("bash", "-c", cmd).Run()
 }

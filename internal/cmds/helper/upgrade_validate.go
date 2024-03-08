@@ -15,6 +15,7 @@ package helper
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/pkg/errors"
@@ -31,7 +32,7 @@ var upgradeValidateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := validateUpgrade()
 		if err != nil {
-			fmt.Printf("Upgrade validate failed, %v \n", err)
+			cmd.PrintErrf("Upgrade validate failed, %v \n", err)
 			os.Exit(1)
 		}
 	},
@@ -49,7 +50,7 @@ func validateUpgrade() error {
 	fromVersion := viper.GetString("start-version")
 	oceanbaseInstallPath := viper.GetString("ob-installation-path")
 	targetVersion, err := helper.GetCurrentVersion(oceanbaseInstallPath)
-	fmt.Println(targetVersion)
+	log.Println(targetVersion)
 	if err != nil {
 		return errors.Wrap(err, "Failed to current oceanbase version")
 	}
