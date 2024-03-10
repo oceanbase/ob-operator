@@ -1,7 +1,7 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME } from '@/constants';
+import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
   deleteTenent,
@@ -67,7 +67,7 @@ export default function TenantOverview() {
         if (data.info.unitNumber) {
           setDefaultUnitCount(data.info.unitNumber);
         }
-        if (data.info.status !== 'running') {
+        if (!RESULT_STATUS.includes(data.info.status)) {
           timerRef.current = setTimeout(() => {
             reGetTenantDetail();
           }, REFRESH_TENANT_TIME);

@@ -385,15 +385,6 @@ declare namespace API {
     unitNum: number;
   };
 
-  type UnitConfig = {
-    iopsWeight: number;
-    logDiskSize: string;
-    maxIops: number;
-    memorySize: string;
-    cpuCount: number;
-    minIops: number;
-  };
-
   type PatchTenantConfiguration = {
     unitConfig?: {
       pools?: {

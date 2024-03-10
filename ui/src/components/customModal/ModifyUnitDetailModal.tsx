@@ -2,16 +2,27 @@ import { SUFFIX_UNIT } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { formatUnitDetailData } from '@/utils/helper';
 
-import { Col, Form, InputNumber, Row, message } from 'antd';
+import { Col,Form,InputNumber,Row,message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
+
+export type UnitDetailType = {
+  cpuCount: number;
+  iopsWeight: number;
+  logDiskSize: number;
+  maxIops: number;
+  memorySize: number;
+  minIops: number;
+};
+
 export default function ModifyUnitDetailModal({
   visible,
   setVisible,
   successCallback,
 }: CommonModalType) {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<UnitDetailType>();
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -20,8 +31,8 @@ export default function ModifyUnitDetailModal({
   };
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
-    const res = await patchTenantConfiguration({ namespace, name, ...values });
+    const [ns, name] = getNSName();
+    const res = await patchTenantConfiguration({ ns, name, ...formatUnitDetailData(values) });
     if (res.successful) {
       message.success(res.message);
       successCallback();

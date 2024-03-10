@@ -1,4 +1,6 @@
+import type { UnitDetailType } from '@/components/customModal/ModifyUnitDetailModal';
 import { intl } from '@/utils/intl';
+import { clone } from 'lodash';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
 type StatisticDataType = { status: StatisticStatus; count: number }[];
@@ -37,4 +39,16 @@ export const formatStatisticData = (
     r[item.status] = item.count;
   }
   return r;
+};
+
+export const formatUnitDetailData = (originUnitData: UnitDetailType) => {
+  const _originUnitData: API.UnitConfig = clone(originUnitData);
+  _originUnitData.logDiskSize = _originUnitData.logDiskSize + 'GB';
+  _originUnitData.memorySize = _originUnitData.memorySize + 'GB';
+  _originUnitData.cpuCount = String(_originUnitData.cpuCount); 
+  return {
+    unitConfig: {
+      unitConfig: { ..._originUnitData },
+    },
+  };
 };

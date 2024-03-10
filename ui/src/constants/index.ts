@@ -58,6 +58,8 @@ const MINIMAL_CONFIG = {
   redoLog: 30,
 };
 
+const RESULT_STATUS = ['running','failed'];
+
 export {
   BADGE_IMG_MAP,
   CLUSTER_IMG_MAP,
@@ -71,4 +73,5 @@ export {
   STATUS,
   SUFFIX_UNIT,
   ZONE_IMG_MAP,
+  RESULT_STATUS
 };
