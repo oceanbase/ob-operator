@@ -69,6 +69,7 @@ declare namespace API {
     statusDetail: string;
     rootService: string;
     observers: Server[];
+    checked?: boolean;
   };
 
   type ClusterItem = {
@@ -85,6 +86,10 @@ declare namespace API {
     namespace: string;
     topology: Topology[];
   }[];
+
+  interface SimpleClusterListResponse extends CommonResponse {
+    data: SimpleClusterList;
+  }
 
   type ClusterList = ClusterItem[];
 

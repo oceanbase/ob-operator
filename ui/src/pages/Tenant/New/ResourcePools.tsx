@@ -1,9 +1,10 @@
 import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Checkbox, Col, Form, Row, Tooltip } from 'antd';
+import { Card,Checkbox,Col,Form,Row,Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
-import { useEffect, useMemo, useState } from 'react';
+import { cloneDeep } from 'lodash';
+import { useEffect, useState } from 'react';
 import { findMinParameter } from '../helper';
 import styles from './index.less';
 
@@ -11,7 +12,14 @@ interface ResourcePoolsProps {
   selectClusterId?: number;
   clusterList: API.SimpleClusterList;
   form: FormInstance<any>;
+  setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
   essentialParameter?: API.EssentialParametersType;
+}
+
+interface ZoneItemProps {
+  setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
+  name: string;
+  checked: boolean;
 }
 
 export type MaxResourceType = {
@@ -24,22 +32,40 @@ export default function ResourcePools({
   selectClusterId,
   clusterList,
   essentialParameter,
+  setClusterList,
   form,
 }: ResourcePoolsProps) {
+  
   const [minMemory, setMinMemory] = useState<number>(2);
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
-  const ZoneItem = ({ name }: { name: string }) => {
-    const [isChecked, setIsChecked] = useState<boolean>(false);
+
+  const getNewClusterList = (clusterList:API.SimpleClusterList,zone:string,checked:boolean)=>{
+      const _clusterList = cloneDeep(clusterList);
+      for(let cluster of _clusterList){
+        if(cluster.clusterId === selectClusterId){
+          cluster.topology.forEach((zoneItem)=>{
+            if(zoneItem.zone === zone){
+              zoneItem.checked = checked;
+            }
+          })
+        }
+      }
+      return _clusterList;
+  }
+
+  const ZoneItem = ({ name,setClusterList, checked}:ZoneItemProps) => {
     const obZoneResource = essentialParameter?.obZoneResourceMap[name];
-    useEffect(() => {
-      if (!isChecked) {
+    const checkboxOnChange = (e) => {
+      const { checked } = e.target;
+      if (!checked) {
         form.setFieldValue(['pools', name, 'priority'], undefined);
         setSelectZones(selectZones.filter((zone) => zone !== name));
       } else {
         setSelectZones([...selectZones, name]);
       }
-    }, [isChecked]);
+      setClusterList(getNewClusterList(clusterList, name, checked));
+    };
     return (
       <div
         style={{
@@ -51,11 +77,9 @@ export default function ResourcePools({
       >
         <span style={{ marginRight: 8 }}>{name}</span>
         <Checkbox
-          checked={isChecked}
+          checked={checked}
           style={{ marginRight: 24 }}
-          onChange={(e) => {
-            setIsChecked(e.target.checked);
-          }}
+          onChange={checkboxOnChange}
         />
 
         <Col span={8}>
@@ -66,7 +90,7 @@ export default function ResourcePools({
               defaultMessage: '权重',
             })}
           >
-            <InputNumber style={{ width: '100%' }} disabled={!isChecked} />
+            <InputNumber style={{ width: '100%' }} disabled={!checked} />
           </Form.Item>
         </Col>
         {obZoneResource && (
@@ -97,7 +121,7 @@ export default function ResourcePools({
   };
   const targetZoneList = clusterList
     .filter((cluster) => cluster.clusterId === selectClusterId)[0]
-    ?.topology.map((zone) => ({ zone: zone.zone }));
+    ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
   useEffect(() => {
     if (essentialParameter) {
@@ -123,27 +147,23 @@ export default function ResourcePools({
       })}
     >
       <div>
-        {useMemo(
-          () => (
-            <div>
-              {' '}
-              {targetZoneList && essentialParameter && (
-                <Row>
-                  <h3>
-                    {intl.formatMessage({
-                      id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
-                      defaultMessage: 'Zone优先级',
-                    })}
-                  </h3>
-                  {targetZoneList.map((item, index) => (
-                    <ZoneItem key={index} name={item.zone} />
-                  ))}
-                </Row>
-              )}
-            </div>
-          ),
-
-          [selectClusterId, clusterList, essentialParameter],
+        {targetZoneList && essentialParameter && (
+          <Row>
+            <h3>
+              {intl.formatMessage({
+                id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
+                defaultMessage: 'Zone优先级',
+              })}
+            </h3>
+            {targetZoneList.map((item, index) => (
+              <ZoneItem
+                key={index}
+                name={item.zone}
+                checked={item.checked!}
+                setClusterList={setClusterList}
+              />
+            ))}
+          </Row>
         )}
 
         <h3>Unit config</h3>
