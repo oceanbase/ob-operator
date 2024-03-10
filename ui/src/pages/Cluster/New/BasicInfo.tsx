@@ -41,6 +41,20 @@ export default function BasicInfo({
   // control the modal for adding a new namespace
   const [visible, setVisible] = useState(false);
   const { data, run: getNS } = useRequest(getNameSpaces);
+  const CLUSTER_MODE = [
+    {
+      value:'NORMAL',
+      label:'常规模式'
+    },
+    {
+      value:'STANDLONE',
+      label:"单体模式"
+    },
+    {
+      value:'SERVICE',
+      label:'Service模式'
+    }
+  ]
 
   const filterOption = (
     input: string,
@@ -190,6 +204,23 @@ export default function BasicInfo({
                 })}
               />
             </Form.Item>
+          </Col>
+          <Col span={8}>
+                <Form.Item
+                  label="集群模式"
+                  name='mode'
+                  rules={[
+                    {
+                      required:true,
+                      message:'请选择集群模式'
+                    }
+                  ]}
+                >
+                  <Select 
+                    placeholder="请选择"
+                    options={CLUSTER_MODE}
+                  />
+                </Form.Item>
           </Col>
         </Row>
       </Card>
