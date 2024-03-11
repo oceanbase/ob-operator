@@ -169,8 +169,6 @@ func (m ObTenantRestoreManager) UpdateStatus() error {
 		if err != nil {
 			return err
 		}
-	} else if m.Resource.Status.Status == apitypes.RestoreJobStatus("Failed") {
-		return nil
 	}
 	return m.retryUpdateStatus()
 }

@@ -171,8 +171,6 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
-	} else if m.OBTenant.Status.Status == "Failed" {
-		return nil
 	} else {
 		// build tenant status from DB
 		tenantStatusCurrent, err := m.buildTenantStatus()
