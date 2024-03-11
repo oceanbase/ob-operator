@@ -133,9 +133,6 @@ func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
-	if m.OBCluster.Status.Status == "Failed" {
-		return nil
-	}
 	// update obzone status
 	obzoneList, err := m.listOBZones()
 	if err != nil {

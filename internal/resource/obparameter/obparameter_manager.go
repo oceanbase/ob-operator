@@ -127,9 +127,6 @@ func (m *OBParameterManager) retryUpdateStatus() error {
 }
 
 func (m *OBParameterManager) UpdateStatus() error {
-	if m.OBParameter.Status.Status == "Failed" {
-		return nil
-	}
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
