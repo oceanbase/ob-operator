@@ -29,6 +29,7 @@ const (
 	fDeleteOBClusterFinalizer        ttypes.FlowName = "delete obcluster finalizer"
 	fScaleUpOBZones                  ttypes.FlowName = "scale up obzones"
 	fExpandPVC                       ttypes.FlowName = "expand pvc for obcluster"
+	fMountBackupVolume               ttypes.FlowName = "mount backup volume for obcluster"
 )
 
 // obcluster tasks
@@ -60,4 +61,5 @@ const (
 	tCreateServiceForMonitor    ttypes.TaskName = "create service for monitor"
 	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
+	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
 )

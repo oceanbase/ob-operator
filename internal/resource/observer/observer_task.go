@@ -74,7 +74,7 @@ func (m *OBServerManager) AddServer() tasktypes.TaskError {
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
 	serverInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
 	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
@@ -518,6 +518,33 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		Value: m.OBServer.Spec.Zone,
 	}
 
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist {
+		switch mode {
+		case oceanbaseconst.ModeStandalone:
+			envMode := corev1.EnvVar{
+				Name:  "STANDALONE",
+				Value: oceanbaseconst.ModeStandalone,
+			}
+			env = append(env, envMode)
+		case oceanbaseconst.ModeService:
+			svc, err := m.getSvc()
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					m.Logger.Info("svc not found")
+				} else {
+					m.Logger.Error(err, "Failed to get svc")
+				}
+			} else {
+				envSvcIp := corev1.EnvVar{
+					Name:  "SVC_IP",
+					Value: svc.Spec.ClusterIP,
+				}
+				env = append(env, envSvcIp)
+			}
+		}
+	}
+
 	startupParameters := make([]string, 0)
 	for _, parameter := range obcluster.Spec.Parameters {
 		reserved := false
@@ -546,15 +573,6 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)
 
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
-		envMode := corev1.EnvVar{
-			Name:  "STANDALONE",
-			Value: oceanbaseconst.ModeStandalone,
-		}
-		env = append(env, envMode)
-	}
-
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
 		Image:           m.OBServer.Spec.OBServerTemplate.Image,
@@ -577,7 +595,7 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 		return errors.Wrapf(err, "Get oceanbase operation manager failed")
 	}
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
 	observer, err := operationManager.GetServer(observerInfo)
@@ -591,7 +609,7 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 			m.Logger.Info("need to delete observer")
 			err = operationManager.DeleteServer(observerInfo)
 			if err != nil {
-				return errors.Wrapf(err, "Failed to delete observer %s", m.OBServer.Status.PodIp)
+				return errors.Wrapf(err, "Failed to delete observer %s", observerInfo.Ip)
 			}
 		}
 	} else {
@@ -662,13 +680,12 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
+	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
 	m.Logger.Info("wait observer active in cluster")
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
 	active := false
@@ -697,14 +714,13 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
+	if m.OBServer.SupportStaticIP() {
+		return nil
+	}
 	m.Logger.Info("wait observer deleted in cluster")
 	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
+		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
-	}
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
-		return nil
 	}
 	deleted := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
@@ -838,4 +854,48 @@ outer:
 		return nil
 	}
 	return errors.Errorf("Timeout to wait for pvc resized")
+}
+func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist && mode == oceanbaseconst.ModeService {
+		m.Logger.Info("create observer service")
+		svc := &corev1.Service{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      m.OBServer.Name,
+				Namespace: m.OBServer.Namespace,
+				Labels:    m.OBServer.Labels,
+				OwnerReferences: []metav1.OwnerReference{{
+					APIVersion: m.OBServer.APIVersion,
+					Kind:       m.OBServer.Kind,
+					Name:       m.OBServer.Name,
+					UID:        m.OBServer.GetUID(),
+				}},
+			},
+			Spec: corev1.ServiceSpec{
+				Selector: m.OBServer.Labels,
+				Ports: []corev1.ServicePort{{
+					Name:       "sql",
+					Port:       oceanbaseconst.SqlPort,
+					TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.SqlPort},
+				}, {
+					Name:       "rpc",
+					Port:       oceanbaseconst.RpcPort,
+					TargetPort: intstr.IntOrString{IntVal: oceanbaseconst.RpcPort},
+				}},
+			},
+		}
+		err := m.Client.Create(m.Ctx, svc)
+		if err != nil {
+			return errors.Wrapf(err, "Failed to create observer service")
+		}
+	}
+	return nil
+}
+
+func (m *OBServerManager) MountBackupVolume() tasktypes.TaskError {
+	return nil
+}
+
+func (m *OBServerManager) WaitForBackupVolumeMounted() tasktypes.TaskError {
+	return nil
 }

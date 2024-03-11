@@ -15,18 +15,14 @@ package obzone
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
@@ -119,6 +115,8 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServers)
 	case zonestatus.ExpandPVC:
 		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+	case zonestatus.MountBackupVolume:
+		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -187,17 +185,6 @@ func (m *OBZoneManager) ArchiveResource() {
 	m.OBZone.Status.OperationContext = nil
 }
 
-func (m *OBZoneManager) retryUpdateStatus() error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obzone, err := m.getOBZone()
-		if err != nil {
-			return client.IgnoreNotFound(err)
-		}
-		obzone.Status = *m.OBZone.Status.DeepCopy()
-		return m.Client.Status().Update(m.Ctx, obzone)
-	})
-}
-
 func (m *OBZoneManager) UpdateStatus() error {
 	if m.OBZone.Status.Status == "Failed" {
 		return nil
@@ -211,10 +198,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 	// handle upgrade
 	allServerVersionSync := true
 	for _, observer := range observerList.Items {
-		observerReplicaStatusList = append(observerReplicaStatusList, apitypes.OBServerReplicaStatus{
-			Server: observer.Status.PodIp,
-			Status: observer.Status.Status,
-		})
+		observerReplica := apitypes.OBServerReplicaStatus{
+			Server:    observer.Status.PodIp,
+			Status:    observer.Status.Status,
+			ServiceIP: observer.Status.ServiceIp,
+		}
+		observerReplicaStatusList = append(observerReplicaStatusList, observerReplica)
 		if observer.Status.Status != serverstatus.Unrecoverable {
 			availableReplica++
 		}
@@ -252,6 +241,10 @@ func (m *OBZoneManager) UpdateStatus() error {
 			for _, observer := range observerList.Items {
 				if m.checkIfStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
+					break
+				}
+				if m.checkIfBackupVolumeAdded(&observer) {
+					m.OBZone.Status.Status = zonestatus.MountBackupVolume
 					break
 				}
 			}
@@ -321,6 +314,8 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 		return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case tWaitForOBServerExpandingPVC:
 		return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case tWaitForOBServerMounting:
+		return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case tAddZone:
 		return m.AddZone, nil
 	case tStartOBZone:
@@ -351,6 +346,8 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 		return m.ResizePVC, nil
 	case tDeleteLegacyOBServers:
 		return m.DeleteLegacyOBServer, nil
+	case tMountBackupVolume:
+		return m.MountBackupVolume, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}
@@ -358,44 +355,4 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 
 func (m *OBZoneManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
-}
-
-func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {
-	// this label always exists
-	observerList := &v1alpha1.OBServerList{}
-	err := m.Client.List(m.Ctx, observerList, client.MatchingLabels{
-		oceanbaseconst.LabelRefOBZone: m.OBZone.Name,
-	}, client.InNamespace(m.OBZone.Namespace))
-	if err != nil {
-		return nil, errors.Wrap(err, "get observers")
-	}
-	return observerList, err
-}
-
-func (m *OBZoneManager) generateNamespacedName(name string) types.NamespacedName {
-	var namespacedName types.NamespacedName
-	namespacedName.Namespace = m.OBZone.Namespace
-	namespacedName.Name = name
-	return namespacedName
-}
-
-func (m *OBZoneManager) getOBZone() (*v1alpha1.OBZone, error) {
-	// this label always exists
-	obzone := &v1alpha1.OBZone{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBZone.Name), obzone)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obzone")
-	}
-	return obzone, nil
-}
-
-func (m *OBZoneManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	// this label always exists
-	clusterName, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
-	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	return obcluster, nil
 }

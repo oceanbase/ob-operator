@@ -159,7 +159,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 				Server: fmt.Sprintf("%s:%d", parameterInfo.SvrIp, parameterInfo.SvrPort),
 			}
 			parameterValues = append(parameterValues, parameterValue)
-			if strings.ToLower(parameterInfo.Value) != strings.ToLower(m.OBParameter.Spec.Parameter.Value) {
+			if !strings.EqualFold(parameterInfo.Value, m.OBParameter.Spec.Parameter.Value) {
 				parameterMatched = false
 			}
 		}

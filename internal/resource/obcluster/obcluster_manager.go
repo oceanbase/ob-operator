@@ -18,7 +18,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -107,6 +106,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
 	case clusterstatus.ExpandPVC:
 		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+	case clusterstatus.MountBackupVolume:
+		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -136,17 +137,6 @@ func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
 		return m.Client.Update(m.Ctx, m.OBCluster)
 	}
 	return nil
-}
-
-func (m *OBClusterManager) retryUpdateStatus() error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obcluster, err := m.getOBCluster()
-		if err != nil {
-			return client.IgnoreNotFound(err)
-		}
-		obcluster.Status = *m.OBCluster.Status.DeepCopy()
-		return m.Client.Status().Update(m.Ctx, obcluster)
-	})
 }
 
 func (m *OBClusterManager) UpdateStatus() error {
@@ -192,8 +182,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 		if allZoneVersionSync {
 			m.OBCluster.Status.Image = m.OBCluster.Spec.OBServerTemplate.Image
 		}
-		// TODO: refactor this part of code
-		// check topology
+
 		if len(m.OBCluster.Spec.Topology) > len(obzoneList.Items) {
 			m.Logger.Info("Compare topology need add zone")
 			m.OBCluster.Status.Status = clusterstatus.AddOBZone
@@ -203,16 +192,20 @@ func (m *OBClusterManager) UpdateStatus() error {
 		} else {
 			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 		outer:
-			for _, zone := range m.OBCluster.Spec.Topology {
-				for _, obzone := range obzoneList.Items {
-					if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.checkIfCalcResourceChange(&obzone) {
-						m.OBCluster.Status.Status = clusterstatus.ScaleUp
-						break outer
-					}
-					if m.checkIfStorageSizeExpand(&obzone) {
-						m.OBCluster.Status.Status = clusterstatus.ExpandPVC
-						break outer
-					}
+			for _, obzone := range obzoneList.Items {
+				if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.checkIfCalcResourceChange(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.ScaleUp
+					break outer
+				}
+				if m.checkIfStorageSizeExpand(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.ExpandPVC
+					break outer
+				}
+				if m.checkIfBackupVolumeAdded(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.MountBackupVolume
+					break outer
+				}
+				for _, zone := range m.OBCluster.Spec.Topology {
 					if zone.Zone == obzone.Spec.Topology.Zone {
 						if zone.Replica != len(obzone.Status.OBServerStatus) {
 							m.OBCluster.Status.Status = clusterstatus.ModifyOBZoneReplica
@@ -344,6 +337,8 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
 	case tExpandPVC:
 		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout), nil
+	case tMountBackupVolume:
+		return m.rollingUpdateZones(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
 	default:
 		return nil, errors.New("Can not find a function for task")
 	}
@@ -353,33 +348,9 @@ func (m *OBClusterManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
-func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
-	// this label always exists
-	obzoneList := &v1alpha1.OBZoneList{}
-	err := m.Client.List(m.Ctx, obzoneList, client.MatchingLabels{
-		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
-	}, client.InNamespace(m.OBCluster.Namespace))
-	if err != nil {
-		return nil, errors.Wrap(err, "get obzone list")
-	}
-	return obzoneList, nil
-}
-
 func (m *OBClusterManager) ArchiveResource() {
 	m.Logger.Info("Archive obcluster", "obcluster", m.OBCluster.Name)
 	m.Recorder.Event(m.OBCluster, "Archive", "", "archive obcluster")
 	m.OBCluster.Status.Status = "Failed"
 	m.OBCluster.Status.OperationContext = nil
-}
-
-func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
-	// this label always exists
-	obparameterList := &v1alpha1.OBParameterList{}
-	err := m.Client.List(m.Ctx, obparameterList, client.MatchingLabels{
-		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
-	}, client.InNamespace(m.OBCluster.Namespace))
-	if err != nil {
-		return nil, errors.Wrap(err, "get obzone list")
-	}
-	return obparameterList, nil
 }

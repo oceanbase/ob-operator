@@ -81,6 +81,7 @@ const (
 
 const (
 	ModeStandalone = "standalone"
+	ModeService    = "service"
 )
 
 const (
@@ -145,8 +146,9 @@ const (
 )
 
 const (
-	LabelTenantName = "oceanbase.oceanbase.com/tenant-name"
-	LabelBackupType = "oceanbase.oceanbase.com/backup-type"
+	LabelTenantName      = "oceanbase.oceanbase.com/tenant-name"
+	LabelSecondaryTenant = "oceanbase.oceanbase.com/secondary-tenant"
+	LabelBackupType      = "oceanbase.oceanbase.com/backup-type"
 )
 
 const (

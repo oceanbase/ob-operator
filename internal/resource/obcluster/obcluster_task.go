@@ -31,12 +31,11 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
-
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -44,26 +43,6 @@ import (
 	obutil "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/util"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
-
-func (m *OBClusterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBCluster.Namespace,
-		Name:      m.OBCluster.Name,
-	}, obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	return obcluster, nil
-}
-
-func (m *OBClusterManager) generateZoneName(zone string) string {
-	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, zone)
-}
-
-func (m *OBClusterManager) generateParameterName(name string) string {
-	return fmt.Sprintf("%s-%d-%s", m.OBCluster.Spec.ClusterName, m.OBCluster.Spec.ClusterId, strings.ReplaceAll(name, "_", "-"))
-}
 
 func (m *OBClusterManager) WaitOBZoneTopologyMatch() tasktypes.TaskError {
 	// TODO
@@ -151,29 +130,6 @@ func (m *OBClusterManager) ModifyOBZoneReplica() tasktypes.TaskError {
 		}
 		return nil
 	})
-}
-
-func (m *OBClusterManager) getZonesToDelete() ([]v1alpha1.OBZone, error) {
-	deletedZones := make([]v1alpha1.OBZone, 0)
-	obzoneList, err := m.listOBZones()
-	if err != nil {
-		m.Logger.Error(err, "List obzone failed")
-		return deletedZones, errors.Wrapf(err, "List obzone of obcluster %s failed", m.OBCluster.Name)
-	}
-	for _, obzone := range obzoneList.Items {
-		reserve := false
-		for _, zone := range m.OBCluster.Spec.Topology {
-			if zone.Zone == obzone.Spec.Topology.Zone {
-				reserve = true
-				break
-			}
-		}
-		if !reserve {
-			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Need to delete obzone", "obzone", obzone.Name)
-			deletedZones = append(deletedZones, obzone)
-		}
-	}
-	return deletedZones, nil
 }
 
 func (m *OBClusterManager) DeleteOBZone() tasktypes.TaskError {
@@ -267,10 +223,6 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	return resourceutils.GetSysOperationClient(m.Client, m.Logger, m.OBCluster)
-}
-
 func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	obzoneList, err := m.listOBZones()
 	if err != nil {
@@ -312,10 +264,11 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 	} else {
 		connectAddress := manager.Connector.DataSource().GetAddress()
 		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].Server
+			serverIp := zone.Status.OBServerStatus[0].GetConnectAddr()
+			// Notes: If the addr of the db connector is in this obzone, use it as the bootstrap server instead of the first one
 			for _, serverInfo := range zone.Status.OBServerStatus {
-				if serverInfo.Server == connectAddress {
-					serverIp = connectAddress
+				if serverInfo.Server == connectAddress || serverInfo.ServiceIP == connectAddress {
+					serverIp = serverInfo.GetConnectAddr()
 				}
 			}
 			serverInfo := &model.ServerInfo{
@@ -356,41 +309,6 @@ func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Create proxyro user")
 	}
-	return nil
-}
-
-func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("begin create user", "username", userName)
-	password, err := resourceutils.ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
-	if err != nil {
-		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get password", "username", userName, "password", password)
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		m.Logger.Error(err, "Get oceanbase operation manager")
-		return errors.Wrap(err, "Get oceanbase operation manager")
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get operationmanager", "username", userName)
-	err = oceanbaseOperationManager.CreateUser(userName)
-	if err != nil {
-		m.Logger.Error(err, "Create user")
-		return errors.Wrapf(err, "Create user %s", userName)
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish create user", "username", userName)
-	err = oceanbaseOperationManager.SetUserPassword(userName, password)
-	if err != nil {
-		m.Logger.Error(err, "Set user password")
-		return errors.Wrapf(err, "Set password for user %s", userName)
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish set user password", "username", userName)
-	object := "*.*"
-	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
-	if err != nil {
-		m.Logger.Error(err, "Grant privilege")
-		return errors.Wrapf(err, "Grant privilege for user %s", userName)
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish grant user privilege", "username", userName)
 	return nil
 }
 
@@ -939,59 +857,6 @@ func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
 	return nil
 }
 
-type obzoneChanger func(*v1alpha1.OBZone)
-
-func (m *OBClusterManager) changeZonesWhenScaling(obzone *v1alpha1.OBZone) {
-	obzone.Spec.OBServerTemplate.Resource.Cpu = m.OBCluster.Spec.OBServerTemplate.Resource.Cpu
-	obzone.Spec.OBServerTemplate.Resource.Memory = m.OBCluster.Spec.OBServerTemplate.Resource.Memory
-}
-
-func (m *OBClusterManager) changeZonesWhenExpandingPVC(obzone *v1alpha1.OBZone) {
-	obzone.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size
-	obzone.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size
-	obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-}
-
-func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, status string, timeoutSeconds int) tasktypes.TaskFunc {
-	return func() tasktypes.TaskError {
-		obzoneList, err := m.listOBZones()
-		if err != nil {
-			return errors.Wrap(err, "list obzones")
-		}
-		for _, obzone := range obzoneList.Items {
-			changer(&obzone)
-			err = m.Client.Update(m.Ctx, &obzone)
-			if err != nil {
-				return errors.Wrap(err, "update obzone")
-			}
-		}
-
-		// check status of obzones
-		matched := true
-	outer:
-		for i := 0; i < timeoutSeconds; i++ {
-			time.Sleep(time.Second)
-			obzoneList, err = m.listOBZones()
-			if err != nil {
-				return errors.Wrap(err, "list obzones")
-			}
-			for _, obzone := range obzoneList.Items {
-				if obzone.Status.Status != status {
-					matched = false
-					continue outer
-				}
-			}
-			if matched {
-				break
-			}
-		}
-		if !matched {
-			return errors.New("failed to wait for status of obzone to be " + status)
-		}
-		return nil
-	}
-}
-
 func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 	jobName := "image-pull-ready-" + rand.String(8)
 	var ttl int32 = 120
@@ -1011,9 +876,10 @@ func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{{
-						Name:    "helper-check-image-pull-ready",
-						Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-						Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
+						Name:            "helper-check-image-pull-ready",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
+						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
 					}},
 					RestartPolicy: corev1.RestartPolicyNever,
 				},

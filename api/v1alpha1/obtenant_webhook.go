@@ -66,12 +66,19 @@ func (r *OBTenant) Default() {
 	if err != nil {
 		tenantlog.Error(err, "Failed to get cluster")
 	} else {
+		clusterMeta := cluster.GetObjectMeta()
 		r.SetOwnerReferences([]metav1.OwnerReference{{
 			APIVersion: cluster.APIVersion,
 			Kind:       cluster.Kind,
-			Name:       cluster.GetObjectMeta().GetName(),
-			UID:        cluster.GetObjectMeta().GetUID(),
+			Name:       clusterMeta.GetName(),
+			UID:        clusterMeta.GetUID(),
 		}})
+		labels := r.GetLabels()
+		if labels == nil {
+			labels = make(map[string]string)
+		}
+		labels[oceanbaseconst.LabelRefOBCluster] = clusterMeta.GetName()
+		r.SetLabels(labels)
 	}
 
 	if r.Spec.TenantRole == "" {

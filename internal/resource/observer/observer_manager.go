@@ -14,32 +14,24 @@ package observer
 
 import (
 	"context"
-	"strings"
-
-	"github.com/oceanbase/ob-operator/internal/telemetry"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
-	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
-
-	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
-	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/task"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -54,6 +46,8 @@ type OBServerManager struct {
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCreateOBServerSvc:
+		return m.CreateOBServerSvc, nil
 	case tCreateOBPVC:
 		return m.CreateOBPVC, nil
 	case tCreateOBPod:
@@ -84,6 +78,10 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 		return m.ResizePVC, nil
 	case tWaitForPVCResized:
 		return m.WaitForPVCResized, nil
+	case tMountBackupVolume:
+		return m.MountBackupVolume, nil
+	case tWaitForBackupVolumeMounted:
+		return m.WaitForBackupVolumeMounted, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for task %s", name)
 	}
@@ -110,58 +108,6 @@ func (m *OBServerManager) SetOperationContext(c *tasktypes.OperationContext) {
 	m.OBServer.Status.OperationContext = c
 }
 
-func (m *OBServerManager) SupportStaticIp() bool {
-	switch m.OBServer.Status.CNI {
-	case oceanbaseconst.CNICalico:
-		return true
-	default:
-		return false
-	}
-}
-
-func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
-	if m.OBServer.Status.PodIp == "" {
-		err := errors.New("pod ip is empty")
-		m.Logger.Error(err, "unable to get observer info")
-		return nil, err
-	}
-	observerInfo := &model.ServerInfo{
-		Ip:   m.OBServer.Status.PodIp,
-		Port: oceanbaseconst.RpcPort,
-	}
-	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeExist && mode == oceanbaseconst.ModeStandalone {
-		observerInfo.Ip = "127.0.0.1"
-	}
-	operationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
-	}
-	return operationManager.GetServer(observerInfo)
-}
-
-func (m *OBServerManager) retryUpdateStatus() error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		observer, err := m.getOBServer()
-		if err != nil {
-			return client.IgnoreNotFound(err)
-		}
-		observer.Status = *m.OBServer.Status.DeepCopy()
-		return m.Client.Status().Update(m.Ctx, observer)
-	})
-}
-
-func (m *OBServerManager) setRecoveryStatus() {
-	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
-		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
-		m.OBServer.Status.Status = serverstatus.Recover
-	} else {
-		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
-		m.OBServer.Status.Status = serverstatus.Unrecoverable
-	}
-}
-
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
@@ -169,7 +115,6 @@ func (m *OBServerManager) UpdateStatus() error {
 	} else if m.OBServer.Status.Status == "Failed" {
 		return nil
 	} else {
-		// get Pod status and update
 		pod, err := m.getPod()
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
@@ -188,6 +133,19 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
 			// TODO update from obcluster
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
+
+			if m.OBServer.Status.ServiceIp == "" {
+				mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+				if modeAnnoExist && mode == oceanbaseconst.ModeService {
+					svc := &corev1.Service{}
+					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+					if err != nil {
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
+					} else {
+						m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
+					}
+				}
+			}
 		}
 		pvcs, err := m.getPVCs()
 		if err != nil {
@@ -208,6 +166,8 @@ func (m *OBServerManager) UpdateStatus() error {
 				}
 			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
+			} else if m.checkIfBackupVolumeAdded(pod) {
+				m.OBServer.Status.Status = serverstatus.MountBackupVolume
 			}
 		}
 
@@ -326,6 +286,9 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case serverstatus.ExpandPVC:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to expand pvc")
 		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+	case serverstatus.MountBackupVolume:
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to mount backup volume")
+		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
 		return nil, nil
@@ -383,96 +346,9 @@ func (m *OBServerManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
-func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {
-	var namespacedName types.NamespacedName
-	namespacedName.Namespace = m.OBServer.Namespace
-	namespacedName.Name = name
-	return namespacedName
-}
-
-func (m *OBServerManager) getPod() (*corev1.Pod, error) {
-	// this label always exists
-	pod := &corev1.Pod{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
-	if err != nil {
-		return nil, errors.Wrap(err, "get pod")
-	}
-	return pod, nil
-}
-
-func (m *OBServerManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	// this label always exists
-	clusterName, _ := m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster]
-	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	return obcluster, nil
-}
-
-// get observer from K8s api server
-func (m *OBServerManager) getOBServer() (*v1alpha1.OBServer, error) {
-	// this label always exists
-	observer := &v1alpha1.OBServer{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), observer)
-	if err != nil {
-		return nil, errors.Wrap(err, "get observer")
-	}
-	return observer, nil
-}
-
-func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
-	// this label always exists
-	zoneName, _ := m.OBServer.Labels[oceanbaseconst.LabelRefOBZone]
-	obzone := &v1alpha1.OBZone{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(zoneName), obzone)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obzone")
-	}
-	return obzone, nil
-}
-
 func (m *OBServerManager) ArchiveResource() {
 	m.Logger.Info("Archive observer", "observer", m.OBServer.Name)
 	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
-}
-
-func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
-	pvcs := &corev1.PersistentVolumeClaimList{}
-	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
-	if err != nil {
-		return nil, errors.Wrap(err, "list pvc")
-	}
-	return pvcs, nil
-}
-
-func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
-	for _, pvc := range pvcs.Items {
-		switch {
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.DataVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.ClogVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.LogVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-				return true
-			}
-		case pvc.Name == m.OBServer.Name:
-			sum := resource.Quantity{}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-			if pvc.Spec.Resources.Requests.Storage().Cmp(sum) < 0 {
-				return true
-			}
-		}
-	}
-	return false
 }

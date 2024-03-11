@@ -9,29 +9,6 @@ env:
   tagName: ${{ github.ref_name }}
 
 jobs:
-  release-dashboard-chart:
-    permissions: write-all
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        with:
-          mark_as_latest: false
-          skip_existing: true
-          charts_dir: ./distribution/dashboard/manifests
-  
   release-oceanbase-dashboard:
     runs-on: ubuntu-latest
     steps:
@@ -62,9 +39,9 @@ jobs:
       - name: Build and push oceanbase-dashboard w/o cache
         uses: docker/build-push-action@v2
         with:
-          context: ./distribution/dashboard
+          context: .
           platforms: linux/amd64,linux/arm64
-          file: ./distribution/dashboard/Dockerfile
+          file: ./build/Dockerfile.dashboard
           push: true
           tags: ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-dashboard:${{ steps.set_version_vars.outputs.version }}
           build-args: |

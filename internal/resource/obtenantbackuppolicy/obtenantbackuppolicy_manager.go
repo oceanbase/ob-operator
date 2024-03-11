@@ -168,7 +168,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
-	} else if m.IsDeleting() && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
+	} else if m.IsDeleting() && (m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning || m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused) {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {

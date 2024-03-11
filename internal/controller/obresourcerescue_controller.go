@@ -77,13 +77,13 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		gvk := schema.FromAPIVersionAndKind(gvStr, rescue.Spec.TargetKind)
 		mapping, err := r.Client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			logger.Error(err, "failed to get REST mapping")
+			logger.Error(err, "failed to get REST mapping", "gvk", gvk)
 			return ctrl.Result{}, err
 		}
 
 		uns, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Get(ctx, rescue.Spec.TargetResName, metav1.GetOptions{})
 		if err != nil {
-			logger.Error(err, "failed to get the target resource")
+			logger.Error(err, "failed to get the target resource", "resource kind", rescue.Spec.TargetKind, "resource name", rescue.Spec.TargetResName)
 			return ctrl.Result{}, err
 		}
 
@@ -119,9 +119,30 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		case "retry":
 			// operationContext.TaskStatus = taskstatus.Pending
 			// operationContext.FailureRule.RetryCount = 0
-			err := errors.Join(
-				unstructured.SetNestedField(uns.Object, "Pending", "status", "operationContext", "taskStatus"),
-				unstructured.SetNestedField(uns.Object, 0, "status", "operationContext", "failureRule", "retryCount"),
+			context, exist, err := unstructured.NestedMap(uns.Object, "status", "operationContext")
+			if err != nil {
+				logger.Error(err, "failed to get operationContext fields of the target resource")
+				return ctrl.Result{}, nil
+			}
+			if !exist {
+				logger.Info("operationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				return ctrl.Result{}, nil
+			}
+			_, exist, err = unstructured.NestedMap(context, "failureRule")
+			if err != nil {
+				logger.Error(err, "failed to get failureStrategy field of the target resource")
+				return ctrl.Result{}, nil
+			}
+			if !exist {
+				logger.Info("failureStrategy not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				return ctrl.Result{}, nil
+			}
+
+			// Only bool, int64, float64, string, []interface{}, map[string]interface{}, json.Number and nil are allowed to be set.
+			var retryCount int64
+			err = errors.Join(
+				unstructured.SetNestedField(uns.Object, taskstatus.Pending, "status", "operationContext", "taskStatus"),
+				unstructured.SetNestedField(uns.Object, retryCount, "status", "operationContext", "failureRule", "retryCount"),
 			)
 			if err != nil {
 				logger.Error(err, "failed to set operationContext fields of the target resource")
@@ -135,6 +156,15 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		case "skip":
 			// operationContext.TaskStatus = taskstatus.Successful
 			// When coordinator finds that the task status is `successful`, it will go on the following steps.
+			_, exist, err := unstructured.NestedMap(uns.Object, "status", "operationContext")
+			if err != nil {
+				logger.Error(err, "failed to get operationContext fields of the target resource")
+				return ctrl.Result{}, nil
+			}
+			if !exist {
+				logger.Info("operationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				return ctrl.Result{}, nil
+			}
 			err = unstructured.SetNestedField(uns.Object, taskstatus.Successful, "status", "operationContext", "taskStatus")
 			if err != nil {
 				logger.Error(err, "failed to reset fields of the target resource")

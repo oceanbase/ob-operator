@@ -2685,6 +2685,8 @@ spec:
                   properties:
                     server:
                       type: string
+                    serviceIP:
+                      type: string
                     status:
                       type: string
                   required:

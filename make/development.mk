@@ -56,7 +56,16 @@ $(GOLANGCI_LINT):
 
 .PHONY: lint
 lint: $(GOLANGCI_LINT) ## Run linting.
-	$(GOLANGCI_LINT) run -v --timeout=10m
+	$(GOLANGCI_LINT) run -v --timeout=10m --max-same-issues=1000
+
+.PHONY: ADD_LICENSE_CHECKER
+ADD_LICENSE_CHECKER ?= $(LOCALBIN)/addlicense
+$(ADD_LICENSE_CHECKER):
+	GOBIN=$(LOCALBIN) go install github.com/google/addlicense@latest
+
+.PHONY: license-check
+license-check: $(ADD_LICENSE_CHECKER) ## Check whether all license headers are present.
+	find . -type f -name "*.go" -not -path "./distribution/*" -not -path "**/generated/*" | xargs $(ADD_LICENSE_CHECKER) -check
 
 .PHONY: commit-hook
 commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
@@ -68,10 +77,10 @@ commit-hook: $(GOLANGCI_LINT) ## Install commit hook.
 
 .PHONY: run-delve
 run-delve: generate fmt vet manifests ## Run with Delve for development purposes against the configured Kubernetes cluster in ~/.kube/config 
-	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/main.go
+	go build -gcflags "all=-trimpath=$(shell go env GOPATH)" -o bin/manager cmd/operator/main.go
 	DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec ./bin/manager --continue -- -log-verbosity=${LOG_LEVEL}
 
 .PHONY: run-local
 run-local: manifests generate fmt vet ## Run a controller on your local host, with configurations in ~/.kube/config
 	@mkdir -p testreports/covdata
-	CGO_ENABLED=1 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run -cover -covermode=atomic ./cmd/main.go --log-verbosity=${LOG_LEVEL} 
+	CGO_ENABLED=1 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true DISABLE_TELEMETRY=true go run -cover -covermode=atomic ./cmd/operator/main.go --log-verbosity=${LOG_LEVEL} 

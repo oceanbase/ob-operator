@@ -75,3 +75,5 @@ linters-settings:
         disabled: true
       - name: early-return
         disabled: true
+      - name: deep-exit
+        disabled: true

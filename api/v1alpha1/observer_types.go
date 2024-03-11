@@ -17,11 +17,12 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -55,6 +56,7 @@ type OBServerStatus struct {
 	PodPhase         corev1.PodPhase             `json:"podPhase"`
 	Ready            bool                        `json:"ready"`
 	PodIp            string                      `json:"podIp"`
+	ServiceIp        string                      `json:"serviceIp,omitempty"`
 	NodeIp           string                      `json:"nodeIp"`
 	OBStatus         string                      `json:"obStatus,omitempty"`
 	StartServiceTime int64                       `json:"startServiceTime,omitempty"`
@@ -90,4 +92,25 @@ type OBServerList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBServer{}, &OBServerList{})
+}
+
+func (ss OBServerStatus) GetConnectAddr() string {
+	if ss.ServiceIp != "" {
+		return ss.ServiceIp
+	}
+	return ss.PodIp
+}
+
+func (s *OBServer) SupportStaticIP() bool {
+	switch s.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		return true
+	default:
+		annos := s.GetAnnotations()
+		if annos == nil {
+			return false
+		}
+		mode, modeAnnoExist := annos[oceanbaseconst.AnnotationsMode]
+		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
+	}
 }

@@ -83,7 +83,7 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 
 	var s *connector.OceanBaseDataSource
 	for _, observer := range observerList.Items {
-		address := observer.Status.PodIp
+		address := observer.Status.GetConnectAddr()
 		switch obcluster.Status.Status {
 		case clusterstatus.New:
 			return nil, errors.New("Cluster is not bootstrapped")
@@ -157,7 +157,7 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
 	}
 	for _, observer := range observerList.Items {
-		address := observer.Status.PodIp
+		address := observer.Status.GetConnectAddr()
 		switch obcluster.Status.Status {
 		case clusterstatus.New:
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, "", "")

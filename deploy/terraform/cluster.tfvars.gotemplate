@@ -1,0 +1,8 @@
+{{range .clusters -}}
+k8s_host                   = "{{.cluster.server}}"
+k8s_cluster_ca_certificate = "{{index .cluster "certificate-authority-data"}}"
+{{- end}}
+{{range .users -}}
+k8s_client_certificate     = "{{index .user "client-certificate-data"}}"
+k8s_client_key             = "{{index .user "client-key-data"}}"
+{{- end}}

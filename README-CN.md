@@ -48,6 +48,29 @@ helm repo update
 helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
 ```
 
+#### 使用 terraform
+
+部署所需要的文件放在项目的 `deploy/terraform` 目录
+
+1. 生成配置变量:
+在开始部署前，需要通过以下命令来生成 `terraform.tfvars` 文件，用来记录当前 Kubernetes 集群的一些配置。
+```shell
+cd deploy/terraform
+./generate_k8s_cluster_tfvars.sh
+```
+
+2. 初始化 Terraform:
+此步骤用来保证 terraform 获取到必要的 plugin 和模块来管理配置的资源，使用如下命令来进行初始化。
+```
+terraform init
+```
+
+3. 应用配置:
+执行以下命令开始部署 ob-operator。
+```
+terraform apply
+```
+
 #### 验证部署结果
 
 安装完成之后，可以使用以下命令验证 ob-operator 是否部署成功：
