@@ -345,7 +345,7 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *OBTenantManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBTenantManager) ArchiveResource() {

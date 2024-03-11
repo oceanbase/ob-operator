@@ -218,7 +218,7 @@ func (m *OBParameterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.Tas
 }
 
 func (m *OBParameterManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBParameterManager) SetOBParameter() tasktypes.TaskError {

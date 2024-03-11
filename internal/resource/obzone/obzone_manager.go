@@ -348,7 +348,7 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 }
 
 func (m *OBZoneManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBZoneManager) listOBServers() (*v1alpha1.OBServerList, error) {

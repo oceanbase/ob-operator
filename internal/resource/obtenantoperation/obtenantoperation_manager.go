@@ -242,7 +242,7 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *ObTenantOperationManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *ObTenantOperationManager) retryUpdateStatus() error {
