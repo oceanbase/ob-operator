@@ -17,10 +17,9 @@ import (
 	"fmt"
 	"strings"
 
-	logger "github.com/sirupsen/logrus"
-
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -432,7 +431,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	case modelcommon.ClusterModeStandalone:
 		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 	case modelcommon.ClusterModeService:
-		obcluster.Labels[oceanbaseconst.AnnotationsMode] = "service"
+		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
 	default:
 	}
 	return obcluster

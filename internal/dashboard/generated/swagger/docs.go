@@ -1236,6 +1236,81 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/obclusters/{namespace}/{name}/essential-parameters": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list essential parameters of specific obcluster",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Obcluster"
+                ],
+                "summary": "list essential parameters",
+                "operationId": "ListOBClusterResources",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obcluster namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obcluster name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBClusterResources"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants": {
             "get": {
                 "security": [
@@ -3437,6 +3512,27 @@ const docTemplate = `{
                 }
             }
         },
+        "response.OBClusterResources": {
+            "type": "object",
+            "properties": {
+                "minPoolMemory": {
+                    "type": "integer",
+                    "example": 2147483648
+                },
+                "obServerResources": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OBServerAvailableResource"
+                    }
+                },
+                "obZoneResourceMap": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/response.OBZoneAvaiableResource"
+                    }
+                }
+            }
+        },
         "response.OBClusterStastistic": {
             "type": "object",
             "properties": {
@@ -3482,6 +3578,38 @@ const docTemplate = `{
                 },
                 "statusDetail": {
                     "type": "string"
+                }
+            }
+        },
+        "response.OBServerAvailableResource": {
+            "type": "object",
+            "properties": {
+                "availableCPU": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "availableDataDisk": {
+                    "type": "integer",
+                    "example": 16106127360
+                },
+                "availableLogDisk": {
+                    "type": "integer",
+                    "example": 5368709120
+                },
+                "availableMemory": {
+                    "type": "integer",
+                    "example": 5368709120
+                },
+                "obServerIP": {
+                    "type": "string"
+                },
+                "obZone": {
+                    "type": "string",
+                    "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },
@@ -3699,6 +3827,35 @@ const docTemplate = `{
                 },
                 "zone": {
                     "type": "string"
+                }
+            }
+        },
+        "response.OBZoneAvaiableResource": {
+            "type": "object",
+            "properties": {
+                "availableCPU": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "availableDataDisk": {
+                    "type": "integer",
+                    "example": 16106127360
+                },
+                "availableLogDisk": {
+                    "type": "integer",
+                    "example": 5368709120
+                },
+                "availableMemory": {
+                    "type": "integer",
+                    "example": 5368709120
+                },
+                "obZone": {
+                    "type": "string",
+                    "example": "zone1"
+                },
+                "serverCount": {
+                    "type": "integer",
+                    "example": 3
                 }
             }
         },

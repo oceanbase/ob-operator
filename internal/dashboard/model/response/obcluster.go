@@ -84,3 +84,23 @@ type NFSVolumeSpec struct {
 	Address string `json:"address"`
 	Path    string `json:"path"`
 }
+
+type OBClusterResources struct {
+	MinPoolMemory     int64                              `json:"minPoolMemory" example:"2147483648"`
+	OBServerResources []OBServerAvailableResource        `json:"obServerResources"`
+	OBZoneResourceMap map[string]*OBZoneAvaiableResource `json:"obZoneResourceMap"`
+}
+
+type OBServerAvailableResource struct {
+	OBServerIP             string `json:"obServerIP"`
+	OBZoneAvaiableResource `json:",inline"`
+}
+
+type OBZoneAvaiableResource struct {
+	ServerCount       int64  `json:"serverCount" example:"3"`
+	OBZone            string `json:"obZone" example:"zone1"`
+	AvailableLogDisk  int64  `json:"availableLogDisk" example:"5368709120"`
+	AvailableDataDisk int64  `json:"availableDataDisk" example:"16106127360"`
+	AvailableMemory   int64  `json:"availableMemory" example:"5368709120"`
+	AvailableCPU      int64  `json:"availableCPU" example:"12"`
+}

@@ -60,6 +60,7 @@ func InitRoutes(router *gin.Engine) {
 	if os.Getenv("ENABLE_SWAGGER_DOC") == "true" {
 		docs.SwaggerInfo.BasePath = "/"
 		router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		router.Use(static.Serve("/api-gen", static.LocalFile("internal/dashboard/generated/swagger", false)))
 	}
 
 	// login api does not require login

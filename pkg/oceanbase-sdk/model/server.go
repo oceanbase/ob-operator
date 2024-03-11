@@ -31,3 +31,24 @@ type OBServer struct {
 	StartServiceTime int64  `json:"start_service_time" db:"start_service_time"`
 	BuildVersion     string `json:"build_version" db:"build_version"`
 }
+
+// GVOBServer shows the usage info of the server
+type GVOBServer struct {
+	ServerIP             string `json:"svrIp" db:"svr_ip"`
+	Port                 int64  `json:"svrPort" db:"svr_port"`
+	Zone                 string `json:"zone" db:"zone"`
+	SQLPort              int64  `json:"sqlPort" db:"sql_port"`
+	CPUCapacity          int64  `json:"cpuCapacity" db:"cpu_capacity"`
+	CPUCapacityMax       int64  `json:"cpuCapacityMax" db:"cpu_capacity_max"`
+	CPUAssigned          int64  `json:"cpuAssigned" db:"cpu_assigned"`
+	CPUAssignedMax       int64  `json:"cpuAssignedMax" db:"cpu_assigned_max"`
+	MemCapacity          int64  `json:"memCapacity" db:"mem_capacity"`
+	MemAssigned          int64  `json:"memAssigned" db:"mem_assigned"`
+	MemoryLimit          int64  `json:"memoryLimit" db:"memory_limit"`
+	LogDiskCapacity      int64  `json:"logDiskCapacity" db:"log_disk_capacity"`
+	LogDiskAssigned      int64  `json:"logDiskAssigned" db:"log_disk_assigned"`
+	DataDiskCapacity     int64  `json:"dataDiskCapacity" db:"data_disk_capacity"`
+	DataDiskAllocated    int64  `json:"dataDiskAllocated" db:"data_disk_allocated"`
+	DataDiskInUse        int64  `json:"dataDiskInUse" db:"data_disk_in_use"`
+	DataDiskHealthStatus string `json:"dataDiskHealthStatus" db:"data_disk_health_status"`
+}

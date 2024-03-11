@@ -718,6 +718,20 @@ definitions:
       version:
         type: string
     type: object
+  response.OBClusterResources:
+    properties:
+      minPoolMemory:
+        example: 2147483648
+        type: integer
+      obServerResources:
+        items:
+          $ref: '#/definitions/response.OBServerAvailableResource'
+        type: array
+      obZoneResourceMap:
+        additionalProperties:
+          $ref: '#/definitions/response.OBZoneAvaiableResource'
+        type: object
+    type: object
   response.OBClusterStastistic:
     properties:
       count:
@@ -748,6 +762,29 @@ definitions:
         type: string
       statusDetail:
         type: string
+    type: object
+  response.OBServerAvailableResource:
+    properties:
+      availableCPU:
+        example: 12
+        type: integer
+      availableDataDisk:
+        example: 16106127360
+        type: integer
+      availableLogDisk:
+        example: 5368709120
+        type: integer
+      availableMemory:
+        example: 5368709120
+        type: integer
+      obServerIP:
+        type: string
+      obZone:
+        example: zone1
+        type: string
+      serverCount:
+        example: 3
+        type: integer
     type: object
   response.OBTenantBrief:
     description: Brief information about OBTenant
@@ -899,6 +936,27 @@ definitions:
         type: array
       zone:
         type: string
+    type: object
+  response.OBZoneAvaiableResource:
+    properties:
+      availableCPU:
+        example: 12
+        type: integer
+      availableDataDisk:
+        example: 16106127360
+        type: integer
+      availableLogDisk:
+        example: 5368709120
+        type: integer
+      availableMemory:
+        example: 5368709120
+        type: integer
+      obZone:
+        example: zone1
+        type: string
+      serverCount:
+        example: 3
+        type: integer
     type: object
   response.RestoreSource:
     properties:
@@ -1396,6 +1454,52 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: create obcluster
+      tags:
+      - Obcluster
+  /api/v1/obclusters/{namespace}/{name}/essential-parameters:
+    get:
+      consumes:
+      - application/json
+      description: list essential parameters of specific obcluster
+      operationId: ListOBClusterResources
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBClusterResources'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list essential parameters
       tags:
       - Obcluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}:

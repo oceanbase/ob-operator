@@ -61,3 +61,12 @@ func (m *OceanbaseOperationManager) DeleteServer(serverInfo *model.ServerInfo) e
 	}
 	return nil
 }
+
+func (m *OceanbaseOperationManager) ListGVServers() ([]model.GVOBServer, error) {
+	observers := make([]model.GVOBServer, 0)
+	err := m.QueryList(&observers, sql.ListGVServers)
+	if err != nil {
+		return nil, errors.Wrap(err, "List observer failed")
+	}
+	return observers, nil
+}
