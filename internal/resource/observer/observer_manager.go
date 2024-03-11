@@ -97,7 +97,7 @@ func (m *OBServerManager) GetStatus() string {
 }
 
 func (m *OBServerManager) InitStatus() {
-	m.Logger.Info("newly created server, init status")
+	m.Logger.Info("Newly created server, init status")
 	status := v1alpha1.OBServerStatus{
 		Image:  m.OBServer.Spec.OBServerTemplate.Image,
 		Status: serverstatus.New,
@@ -120,7 +120,7 @@ func (m *OBServerManager) SupportStaticIp() bool {
 
 func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	if m.OBServer.Status.PodIp == "" {
-		err := errors.New("pod ip is empty")
+		err := errors.New("Pod ip is empty")
 		m.Logger.Error(err, "unable to get observer info")
 		return nil, err
 	}
@@ -153,10 +153,10 @@ func (m *OBServerManager) retryUpdateStatus() error {
 func (m *OBServerManager) setRecoveryStatus() {
 	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
-		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
+		m.Logger.Info("Current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
-		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+		m.Logger.Info("OBServer not recoverable, delete current observer and wait recreate")
 		m.OBServer.Status.Status = serverstatus.Unrecoverable
 	}
 }
@@ -171,12 +171,12 @@ func (m *OBServerManager) UpdateStatus() error {
 		pod, err := m.getPod()
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("pod not found")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Pod not found")
 				if m.OBServer.Status.Status == serverstatus.Running {
 					m.setRecoveryStatus()
 				}
 			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("observer status is not running, wait task finish")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer status is not running, wait task finish")
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
@@ -193,7 +193,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					svc := &corev1.Service{}
 					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 					if err != nil {
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get svc failed")
 					} else {
 						m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
 					}
@@ -202,11 +202,11 @@ func (m *OBServerManager) UpdateStatus() error {
 		}
 		pvcs, err := m.getPVCs()
 		if err != nil {
-			m.Logger.Info("get pvc failed: " + err.Error())
+			m.Logger.Info("Get pvc failed: " + err.Error())
 		}
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("check observer in obcluster")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
 			observer, err := m.getCurrentOBServerFromOB()
 			if err != nil {
 				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get observer failed, check next time")
@@ -240,7 +240,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			}
 		}
 
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update observer status", "status", m.OBServer.Status)
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update observer status", "status", m.OBServer.Status)
 	}
 
 	err := m.retryUpdateStatus()
@@ -286,7 +286,7 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBServer.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from observer status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from observer status")
 		return tasktypes.NewTaskFlow(m.OBServer.Status.OperationContext), nil
 	}
 	// newly created observer
@@ -294,7 +294,7 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	var err error
 	var obcluster *v1alpha1.OBCluster
 
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to observer status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to observer status")
 	switch m.OBServer.Status.Status {
 	case serverstatus.New:
 		obcluster, err = m.getOBCluster()
@@ -314,31 +314,23 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			return nil, errors.Wrap(err, "Get create observer task flow")
 		}
 	case serverstatus.BootstrapReady:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when bootstrap ready")
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBServerAfterBootstrap)
 	case serverstatus.Deleting:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer deleting")
 		taskFlow, err = task.GetRegistry().Get(fDeleteOBServerFinalizer)
 	case serverstatus.Upgrade:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer upgrade")
 		taskFlow, err = task.GetRegistry().Get(fUpgradeOBServer)
 	case serverstatus.Recover:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need recover")
 		taskFlow, err = task.GetRegistry().Get(fRecoverOBServer)
 	case serverstatus.Annotate:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need set annotation")
 		taskFlow, err = task.GetRegistry().Get(fAnnotateOBServerPod)
 	case serverstatus.AddServer:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be added to obcluster")
 		taskFlow, err = task.GetRegistry().Get(fAddServerInOB)
 	case serverstatus.ScaleUp:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to be scaled up")
 		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
 	case serverstatus.ExpandPVC:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to expand pvc")
 		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for observer")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for observer")
 		return nil, nil
 	}
 
@@ -391,7 +383,7 @@ func (m *OBServerManager) HandleFailure() {
 }
 
 func (m *OBServerManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBServer, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedName {
