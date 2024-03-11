@@ -19,6 +19,7 @@ import (
 func init() {
 	// obzone
 	task.GetRegistry().Register(fCreateOBZone, CreateOBZone)
+	task.GetRegistry().Register(fMigrateOBZoneFromExisting, MigrateOBZoneFromExisting)
 	task.GetRegistry().Register(fAddOBServer, AddOBServer)
 	task.GetRegistry().Register(fDeleteOBServer, DeleteOBServer)
 	task.GetRegistry().Register(fPrepareOBZoneForBootstrap, PrepareOBZoneForBootstrap)

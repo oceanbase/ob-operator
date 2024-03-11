@@ -19,6 +19,7 @@ import (
 func init() {
 	// obcluster
 	task.GetRegistry().Register(fBootstrapOBCluster, BootstrapOBCluster)
+	task.GetRegistry().Register(fMigrateOBClusterFromExisting, MigrateOBClusterFromExisting)
 	task.GetRegistry().Register(fMaintainOBClusterAfterBootstrap, MaintainOBClusterAfterBootstrap)
 	task.GetRegistry().Register(fAddOBZone, AddOBZone)
 	task.GetRegistry().Register(fDeleteOBZone, DeleteOBZone)

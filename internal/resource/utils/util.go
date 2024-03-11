@@ -15,6 +15,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,7 +51,14 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 
 func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
 	logger.V(oceanbaseconst.LogLevelTrace).Info("Get cluster sys client", "obCluster", obcluster)
-	return getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
+	_, migrateAnnoExist := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterConnection)
+	manager, err := getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
+	if err != nil {
+		if migrateAnnoExist && obcluster.Status.Status == clusterstatus.MigrateFromExisting {
+			manager, err = getSysClientFromSourceCluster(c, logger, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
+		}
+	}
+	return manager, err
 }
 
 func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, tenantName, credential string) (*operation.OceanbaseOperationManager, error) {
@@ -101,6 +109,36 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 	return nil, errors.Errorf("Can not get root operation client of tenant %s in obcluster %s after checked all server", tenantName, obcluster.Name)
 }
 
+func getSysClientFromSourceCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
+	password, err := ReadPassword(c, obcluster.Namespace, secretName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
+	}
+	// when obcluster is under migrating, use address from annotation
+	migrateAnnoVal, _ := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterConnection)
+	servers := strings.Split(migrateAnnoVal, ";")
+	for _, server := range servers {
+		addressParts := strings.Split(server, ":")
+		if len(addressParts) != 2 {
+			return nil, errors.New("Parse oceanbase cluster connect address failed")
+		}
+		sqlPort, err := strconv.ParseInt(addressParts[1], 10, 64)
+		if err != nil {
+			return nil, errors.New("Parse sql port of obcluster failed")
+		}
+		s := connector.NewOceanBaseDataSource(addressParts[0], sqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
+		// if err is nil, db connection is already checked available
+		sysClient, err := operation.GetOceanbaseOperationManager(s)
+		if err == nil && sysClient != nil {
+			sysClient.Logger = logger
+			return sysClient, nil
+		} else {
+			logger.Error(err, "Get operation manager from existing obcluster")
+		}
+	}
+	return nil, errors.Errorf("Failed to get sys client from existing obcluster, address: %s", migrateAnnoVal)
+}
+
 func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
 	observerList := &v1alpha1.OBServerList{}
 	err := c.List(context.Background(), observerList, client.MatchingLabels{
@@ -114,6 +152,10 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 	}
 
 	var s *connector.OceanBaseDataSource
+	password, err := ReadPassword(c, obcluster.Namespace, secretName)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
+	}
 	for _, observer := range observerList.Items {
 		address := observer.Status.PodIp
 		switch obcluster.Status.Status {
@@ -122,10 +164,6 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 		case clusterstatus.Bootstrapped:
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, oceanbaseconst.RootUser, tenantName, "", oceanbaseconst.DefaultDatabase)
 		default:
-			password, err := ReadPassword(c, obcluster.Namespace, secretName)
-			if err != nil {
-				return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
-			}
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
 		}
 		// if err is nil, db connection is already checked available

@@ -26,6 +26,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
@@ -108,6 +109,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterConnection)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -147,6 +149,9 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 		}
 		if modeAnnoExist {
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		}
+		if migrateAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterConnection] = migrateAnnoVal
 		}
 		m.Logger.Info("create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)
@@ -367,6 +372,43 @@ func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
 			err = m.Client.Update(m.Ctx, &observer)
 			if err != nil {
 				return errors.Wrapf(err, "Resize observer %s failed", observer.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) DeleteLegacyOBServer() tasktypes.TaskError {
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	allOBServers, err := operationManager.ListServers()
+	if err != nil {
+		return errors.Wrap(err, "List observers in oceanbase")
+	}
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return errors.Wrap(err, "List observer crs")
+	}
+	for _, observer := range allOBServers {
+		// skip observers in different obzone
+		if observer.Zone != m.OBZone.Spec.Topology.Zone {
+			continue
+		}
+		found := false
+		for _, observerCR := range observerList.Items {
+			if observer.Ip == observerCR.Status.PodIp {
+				found = true
+			}
+		}
+		if !found {
+			err := operationManager.DeleteServer(&model.ServerInfo{
+				Ip:   observer.Ip,
+				Port: observer.Port,
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Delete observer %s:%d", observer.Ip, observer.Port)
 			}
 		}
 	}

@@ -59,9 +59,14 @@ func (m *OBZoneManager) GetStatus() string {
 
 func (m *OBZoneManager) InitStatus() {
 	m.Logger.Info("newly created zone, init status")
+	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterConnection)
+	initialStatus := zonestatus.New
+	if migrateAnnoExist {
+		initialStatus = zonestatus.MigrateFromExisting
+	}
 	status := v1alpha1.OBZoneStatus{
 		Image:          m.OBZone.Spec.OBServerTemplate.Image,
-		Status:         zonestatus.New,
+		Status:         initialStatus,
 		OBServerStatus: make([]apitypes.OBServerReplicaStatus, 0, m.OBZone.Spec.Topology.Replica),
 	}
 	m.OBZone.Status = status
@@ -100,6 +105,8 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "Get create obzone task flow")
 		}
+	case zonestatus.MigrateFromExisting:
+		taskFlow, err = task.GetRegistry().Get(fMigrateOBZoneFromExisting)
 	case zonestatus.BootstrapReady:
 		taskFlow, err = task.GetRegistry().Get(fMaintainOBZoneAfterBootstrap)
 	case zonestatus.AddOBServer:
@@ -342,6 +349,8 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 		return m.ScaleUpOBServer, nil
 	case tExpandPVC:
 		return m.ResizePVC, nil
+	case tDeleteLegacyOBServers:
+		return m.DeleteLegacyOBServer, nil
 	default:
 		return nil, errors.Errorf("Can not find an function for %s", name)
 	}

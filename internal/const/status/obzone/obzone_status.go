@@ -10,18 +10,19 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obcluster
+package obzone
 
 const (
-	New               = "new"
-	Maintaining       = "maintaining"
-	Running           = "running"
-	AddOBServer       = "add observer"
-	DeleteOBServer    = "delete observer"
-	Deleting          = "deleting"
-	Upgrade           = "upgrade"
-	BootstrapReady    = "bootstrap ready"
-	FinalizerFinished = "finalizer finished"
-	ScaleUp           = "scale up"
-	ExpandPVC         = "expand pvc"
+	New                 = "new"
+	MigrateFromExisting = "migrate from existing"
+	Maintaining         = "maintaining"
+	Running             = "running"
+	AddOBServer         = "add observer"
+	DeleteOBServer      = "delete observer"
+	Deleting            = "deleting"
+	Upgrade             = "upgrade"
+	BootstrapReady      = "bootstrap ready"
+	FinalizerFinished   = "finalizer finished"
+	ScaleUp             = "scale up"
+	ExpandPVC           = "expand pvc"
 )

@@ -1774,6 +1774,8 @@ spec:
               serviceAccount:
                 default: default
                 type: string
+              sourceOBClusterConnection:
+                type: string
               topology:
                 items:
                   properties:
@@ -2726,6 +2728,7 @@ spec:
                 - root
                 type: object
             required:
+            - clusterId
             - clusterName
             - observer
             - topology

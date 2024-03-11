@@ -18,6 +18,7 @@ import (
 
 // obzone flows
 const (
+	fMigrateOBZoneFromExisting    ttypes.FlowName = "migrate obzone from existing"
 	fPrepareOBZoneForBootstrap    ttypes.FlowName = "prepare obzone for bootstrap"
 	fMaintainOBZoneAfterBootstrap ttypes.FlowName = "maintain obzone after bootstrap"
 	fAddOBServer                  ttypes.FlowName = "add observer"
@@ -35,6 +36,7 @@ const (
 	tCreateOBServer              ttypes.TaskName = "create observer"
 	tUpgradeOBServer             ttypes.TaskName = "upgrade observer"
 	tWaitOBServerUpgraded        ttypes.TaskName = "wait observer upgraded"
+	tDeleteLegacyOBServers       ttypes.TaskName = "delete legacy observers"
 	tDeleteOBServer              ttypes.TaskName = "delete observer"
 	tDeleteAllOBServer           ttypes.TaskName = "delete all observer"
 	tAddZone                     ttypes.TaskName = "add zone"

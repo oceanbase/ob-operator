@@ -18,6 +18,7 @@ import (
 
 // obcluster flows
 const (
+	fMigrateOBClusterFromExisting    ttypes.FlowName = "migrate obcluster from existing"
 	fBootstrapOBCluster              ttypes.FlowName = "bootstrap obcluster"
 	fMaintainOBClusterAfterBootstrap ttypes.FlowName = "maintain obcluster after bootstrap"
 	fAddOBZone                       ttypes.FlowName = "add obzone"
