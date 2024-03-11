@@ -160,9 +160,6 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
-	if m.BackupPolicy.Status.Status == apitypes.BackupPolicyStatusType("Failed") {
-		return nil
-	}
 	if m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusPausing
 		m.BackupPolicy.Status.OperationContext = nil

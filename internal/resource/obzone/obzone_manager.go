@@ -190,9 +190,6 @@ func (m *OBZoneManager) retryUpdateStatus() error {
 }
 
 func (m *OBZoneManager) UpdateStatus() error {
-	if m.OBZone.Status.Status == "Failed" {
-		return nil
-	}
 	observerList, err := m.listOBServers()
 	if err != nil {
 		m.Logger.Error(err, "Got error when list observers")

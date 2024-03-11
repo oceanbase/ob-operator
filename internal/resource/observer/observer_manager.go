@@ -165,8 +165,6 @@ func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
 	if m.IsDeleting() {
 		m.OBServer.Status.Status = serverstatus.Deleting
-	} else if m.OBServer.Status.Status == "Failed" {
-		return nil
 	} else {
 		pod, err := m.getPod()
 		if err != nil {
