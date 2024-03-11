@@ -1,15 +1,15 @@
 import EmptyImg from '@/assets/empty.svg';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { getBackupPolicy, getTenant } from '@/services/tenant';
+import { getBackupPolicy,getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Card, Row } from 'antd';
+import { Button,Card,Col,Row } from 'antd';
+import { useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
-import { useState } from 'react';
 
 export default function Backup() {
   const [ns, name] = getNSName();
@@ -71,7 +71,12 @@ export default function Backup() {
           {tenantDetail && (
             <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
           )}
-          <BackupConfiguration backupPolicy={backupPolicy} setBackupPolicy={setBackupPolicy} />
+          <Col span={24}>
+            <BackupConfiguration
+              backupPolicy={backupPolicy}
+              setBackupPolicy={setBackupPolicy}
+            />
+          </Col>
           <BackupJobs />
         </Row>
       )}

@@ -6,6 +6,7 @@ import {
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
+import { usePublicKey } from '@/hook/usePublicKey';
 import {
   Button,
   Card,
@@ -46,6 +47,7 @@ export default function BackupConfiguration({
   const [loading, setIsLoading] = useState<boolean>(false);
   const curConfig = useRef({});
   const [ns, name] = getNSName();
+  const publicKey = usePublicKey()
 
   const INFO_CONFIG = {
     archivePath: {
@@ -186,8 +188,8 @@ export default function BackupConfiguration({
 
     if (
       checkIsSame(
-        formatBackupForm(initialValues),
-        formatBackupForm(form.getFieldsValue()),
+        formatBackupForm(initialValues,publicKey),
+        formatBackupForm(form.getFieldsValue(),publicKey),
       )
     ) {
       message.info(
@@ -207,10 +209,10 @@ export default function BackupConfiguration({
     const { successful, data } = await updateBackupPolicyOfTenant({
       ns,
       name,
-      ...formatBackupForm(values),
+      ...formatBackupForm(values,publicKey),
     });
     if (successful) {
-      curConfig.current = formatBackupForm(form.getFieldsValue());
+      curConfig.current = formatBackupForm(form.getFieldsValue(),publicKey);
       if (checkIsSame(data, curConfig.current)) {
         setIsLoading(true);
         getBackupPolicyReq({ ns, name });

@@ -42,13 +42,22 @@ export const formatStatisticData = (
 };
 
 export const formatUnitDetailData = (originUnitData: UnitDetailType) => {
-  const _originUnitData: API.UnitConfig = clone(originUnitData);
-  _originUnitData.logDiskSize = _originUnitData.logDiskSize + 'GB';
-  _originUnitData.memorySize = _originUnitData.memorySize + 'GB';
-  _originUnitData.cpuCount = String(_originUnitData.cpuCount); 
+  const _originUnitData: UnitDetailType = clone(originUnitData);
+  _originUnitData.unitConfig.unitConfig.logDiskSize = _originUnitData.unitConfig.unitConfig.logDiskSize + 'Gi';
+  _originUnitData.unitConfig.unitConfig.memorySize = _originUnitData.unitConfig.unitConfig.memorySize + 'Gi';
+  _originUnitData.unitConfig.unitConfig.cpuCount = String(
+    _originUnitData.unitConfig.unitConfig.cpuCount,
+  );
   return {
     unitConfig: {
-      unitConfig: { ..._originUnitData },
+      unitConfig: _originUnitData.unitConfig.unitConfig,
+      pools: Object.keys(_originUnitData.unitConfig.pools)
+        .map((zone) => ({
+          zone,
+          priority: _originUnitData.unitConfig.pools?.[zone]?.priority,
+          type: 'Full',
+        }))
+        .filter((item) => item.priority || item.priority === 0),
     },
   };
 };

@@ -82,6 +82,7 @@ declare namespace API {
 
   type SimpleClusterList = {
     name: string;
+    clusterName: string;
     clusterId: number;
     namespace: string;
     topology: Topology[];

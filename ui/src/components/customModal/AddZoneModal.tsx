@@ -1,6 +1,7 @@
 import { intl } from '@/utils/intl';
 import { Form, Input, InputNumber, message } from 'antd';
 
+import { TZ_NAME_REG } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { addObzone } from '@/services';
 import type { CommonModalType } from '.';
@@ -71,6 +72,13 @@ export default function AddZoneModal({
                 defaultMessage: '请输入zone名称!',
               }),
             },
+            {
+              pattern: TZ_NAME_REG,
+              message: intl.formatMessage({
+                id: 'Dashboard.components.customModal.AddZoneModal.TheFirstCharacterMustBe',
+                defaultMessage: '首字符必须是字母或者下划线，不能包含 -',
+              }),
+            },
           ]}
         >
           <Input
@@ -105,46 +113,46 @@ export default function AddZoneModal({
         </Form.Item>
         {/* 如果不能为空的话应该需要添加默认值 */}
         {/* <p>node-selector:</p>
-           <Form.List name="nodeSelector">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...restField }) => (
-                  <Space
-                    key={key}
-                    style={{ display: 'flex', marginBottom: 8 }}
-                    align="baseline"
-                  >
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'key']}
-                      rules={[{ required: true, message: '请输入key' }]}
-                    >
-                      <Input placeholder="key" />
-                    </Form.Item>
-                    :
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'value']}
-                      rules={[{ required: true, message: '请输入value' }]}
-                    >
-                      <Input placeholder="value" />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(name)} />
-                  </Space>
-                ))}
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    onClick={() => add()}
-                    block
-                    icon={<PlusOutlined />}
-                  >
-                    添加node-selector
-                  </Button>
-                </Form.Item>
-              </>
-            )}
-           </Form.List> */}
+            <Form.List name="nodeSelector">
+             {(fields, { add, remove }) => (
+               <>
+                 {fields.map(({ key, name, ...restField }) => (
+                   <Space
+                     key={key}
+                     style={{ display: 'flex', marginBottom: 8 }}
+                     align="baseline"
+                   >
+                     <Form.Item
+                       {...restField}
+                       name={[name, 'key']}
+                       rules={[{ required: true, message: '请输入key' }]}
+                     >
+                       <Input placeholder="key" />
+                     </Form.Item>
+                     :
+                     <Form.Item
+                       {...restField}
+                       name={[name, 'value']}
+                       rules={[{ required: true, message: '请输入value' }]}
+                     >
+                       <Input placeholder="value" />
+                     </Form.Item>
+                     <MinusCircleOutlined onClick={() => remove(name)} />
+                   </Space>
+                 ))}
+                 <Form.Item>
+                   <Button
+                     type="dashed"
+                     onClick={() => add()}
+                     block
+                     icon={<PlusOutlined />}
+                   >
+                     添加node-selector
+                   </Button>
+                 </Form.Item>
+               </>
+             )}
+            </Form.List> */}
         <NodeSelector
           showLabel={true}
           formName="nodeSelector"

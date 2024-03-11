@@ -1,6 +1,6 @@
-// import { encryptText } from '@/hook/usePublicKey';
+import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
-import { clone } from 'lodash';
+import { clone,cloneDeep } from 'lodash';
 import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
@@ -37,7 +37,7 @@ export function formatNewTenantForm(
           priority: originFormData[key]?.[zone]?.priority,
           type: 'Full',
         }))
-        .filter((item) => item.priority);
+        .filter((item) => item.priority || item.priority === 0);
     } else if (key === 'source') {
       if (originFormData[key]['tenant'] || originFormData[key]['restore'])
         result[key] = {};
@@ -48,16 +48,14 @@ export function formatNewTenantForm(
         let { until } = originFormData[key]['restore'];
         result[key]['restore'] = {
           ...originFormData[key]['restore'],
-          ossAccessId: originFormData[key]['restore'].ossAccessId,
-          ossAccessKey: originFormData[key]['restore'].ossAccessKey,
-          // ossAccessId: encryptText(
-          //   originFormData[key]['restore'].ossAccessId,
-          //   publicKey,
-          // ),
-          // ossAccessKey: encryptText(
-          //   originFormData[key]['restore'].ossAccessKey,
-          //   publicKey,
-          // ),
+          ossAccessId: encryptText(
+            originFormData[key]['restore'].ossAccessId,
+            publicKey,
+          ),
+          ossAccessKey: encryptText(
+            originFormData[key]['restore'].ossAccessKey,
+            publicKey,
+          ),
           until:
             until && until.date && until.time
               ? {
@@ -69,19 +67,16 @@ export function formatNewTenantForm(
               : { unlimited: true },
         };
         if (originFormData[key]['restore'].bakEncryptionPassword) {
-          result[key]['restore']['bakEncryptionPassword'] =
-            originFormData[key]['restore'].bakEncryptionPassword;
-          // result[key]['restore']['bakEncryptionPassword'] = encryptText(
-          //   originFormData[key]['restore'].bakEncryptionPassword,
-          //   publicKey,
-          // );
+          result[key]['restore']['bakEncryptionPassword'] = encryptText(
+            originFormData[key]['restore'].bakEncryptionPassword,
+            publicKey,
+          );
         } else {
           delete result[key]['restore']['bakEncryptionPassword'];
         }
       }
     } else if (key === 'rootPassword') {
-      result[key] = originFormData[key];
-      // result[key] = encryptText(originFormData[key], publicKey);
+      result[key] = encryptText(originFormData[key], publicKey);
     } else if (key === 'unitConfig') {
       result[key] = formatUnitConfig(originFormData[key]);
     } else {
@@ -99,17 +94,19 @@ export function formatNewTenantForm(
 export function formatBackupForm(originFormData: any, publicKey?: string) {
   let formData = clone(originFormData);
   if (formData.bakEncryptionPassword) {
-    formData.bakEncryptionPassword = originFormData.bakEncryptionPassword;
-    // formData.bakEncryptionPassword = encryptText(
-    //   originFormData.bakEncryptionPassword,
-    //   publicKey,
-    // );
+    formData.bakEncryptionPassword = publicKey
+      ? encryptText(originFormData.bakEncryptionPassword, publicKey)
+      : originFormData.bakEncryptionPassword;
   }
-  if (formData.ossAccessId) formData.ossAccessId = originFormData.ossAccessId;
+  if (formData.ossAccessId) {
+    formData.ossAccessId = publicKey
+      ? encryptText(originFormData.ossAccessId, publicKey)
+      : originFormData.ossAccessId;
+  }
   if (formData.ossAccessKey)
-    formData.ossAccessKey = originFormData.ossAccessKey;
-  // formData.ossAccessId = encryptText(originFormData.ossAccessId, publicKey);
-  // formData.ossAccessKey = encryptText(originFormData.ossAccessKey, publicKey);
+    formData.ossAccessKey = publicKey
+      ? encryptText(originFormData.ossAccessKey, publicKey)
+      : originFormData.ossAccessId;
   formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:mm');
   formData.scheduleType = formData.scheduleDates.mode;
   delete formData.scheduleDates.days;
@@ -187,3 +184,28 @@ export function findMinParameter(
     maxMemory: findMinValue('availableMemory', selectResources),
   };
 }
+
+export const getNewClusterList = (
+  clusterList: API.SimpleClusterList,
+  zone: string,
+  checked: boolean,
+  target: {
+    id?: number;
+    name?: string;
+  },
+) => {
+  const _clusterList = cloneDeep(clusterList);
+  for (let cluster of _clusterList) {
+    if (
+      cluster.clusterId === target.id ||
+      cluster.clusterName === target.name
+    ) {
+      cluster.topology.forEach((zoneItem) => {
+        if (zoneItem.zone === zone) {
+          zoneItem.checked = checked;
+        }
+      });
+    }
+  }
+  return _clusterList;
+};

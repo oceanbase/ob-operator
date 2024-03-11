@@ -3,6 +3,7 @@ import { changeTenantPassword } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 import type { CommonModalType } from '.';
+import { usePublicKey, encryptText } from '@/hook/usePublicKey';
 import CustomModal from '.';
 
 type FieldType = {
@@ -15,6 +16,7 @@ export default function ModifyPasswordModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
+  const publicKey = usePublicKey()
 
   const handleSubmit = async () => {
     try {
@@ -30,7 +32,7 @@ export default function ModifyPasswordModal({
       ns: namespace,
       name,
       User: 'root',
-      Password: values.password,
+      Password: encryptText(values.password,publicKey) as string,
     });
     if (res.successful) {
       message.success(res.message);
