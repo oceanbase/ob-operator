@@ -21,3 +21,15 @@ type K8sNode struct {
 	OperatingSystem         string `json:"operatingSystem,omitempty"`
 	Architecture            string `json:"architecture,omitempty"`
 }
+
+type K8sEvent struct {
+	Name           string `json:"name"`
+	Namespace      string `json:"namespace"`
+	Kind           string `json:"kind"`
+	ResourceName   string `json:"resourceName"`
+	Reason         string `json:"reason"`
+	Message        string `json:"message"`
+	Count          int32  `json:"count"`
+	FirstTimestamp string `json:"firstTimestamp"`
+	LastTimestamp  string `json:"lastTimestamp"`
+}
