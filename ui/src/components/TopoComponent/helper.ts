@@ -115,8 +115,6 @@ function getZoneTypeText(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
 
 function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
   let targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
-  console.log('targetZone',targetZone);
-  
   if (targetZone) {
     return {
       cpuCount: targetZone.cpuCount,
@@ -198,9 +196,6 @@ export const formatTopoData = (
     badgeImg: BADGE_IMG_MAP.get(responseData.status),
     disable: false,
   };
-  console.log('topology',responseData.topology);
-  console.log('tenantReplicas',tenantReplicas);
-  
   topoData.children = getChildren(responseData.topology, tenantReplicas);
 
   let basicInfo: BasicInfoType = {

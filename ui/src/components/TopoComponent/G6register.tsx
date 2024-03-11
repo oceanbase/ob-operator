@@ -16,8 +16,6 @@ const tooltip = new G6.Tooltip({
   getContent(e) {
     const outDiv = document.createElement('div');
     const { tooltipInfo } = e.item.getModel();
-    console.log('tooltipInfo',tooltipInfo);
-    
     outDiv.style.width = '180px';
     outDiv.innerHTML = `
       <ul>
