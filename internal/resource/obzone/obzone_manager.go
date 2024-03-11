@@ -15,10 +15,9 @@ package obzone
 import (
 	"context"
 
-	corev1 "k8s.io/api/core/v1"
-
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -26,7 +25,6 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
@@ -58,7 +56,7 @@ func (m *OBZoneManager) GetStatus() string {
 }
 
 func (m *OBZoneManager) InitStatus() {
-	m.Logger.Info("newly created zone, init status")
+	m.Logger.Info("Newly created zone, init status")
 	status := v1alpha1.OBZoneStatus{
 		Image:          m.OBZone.Spec.OBServerTemplate.Image,
 		Status:         zonestatus.New,
@@ -74,7 +72,7 @@ func (m *OBZoneManager) SetOperationContext(c *tasktypes.OperationContext) {
 func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBZone.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obzone status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obzone status")
 		return tasktypes.NewTaskFlow(m.OBZone.Status.OperationContext), nil
 	}
 	// newly created zone
@@ -123,7 +121,7 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		return task.GetRegistry().Get(fForceUpgradeOBZone)
 		// TODO upgrade
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obzone")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obzone")
 		return nil, nil
 	}
 
@@ -261,7 +259,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obzone status", "status", m.OBZone.Status)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update obzone status", "status", m.OBZone.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")

@@ -53,7 +53,7 @@ func (m *OBClusterManager) GetStatus() string {
 }
 
 func (m *OBClusterManager) InitStatus() {
-	m.Logger.Info("newly created cluster, init status")
+	m.Logger.Info("Newly created cluster, init status")
 	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
@@ -70,7 +70,7 @@ func (m *OBClusterManager) SetOperationContext(c *tasktypes.OperationContext) {
 func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBCluster.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obcluster status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obcluster status")
 		return tasktypes.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
 	}
 	// return task flow depends on status
@@ -78,7 +78,7 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// newly created cluster
 	var taskFlow *tasktypes.TaskFlow
 	var err error
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obcluster status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.New:
@@ -101,7 +101,7 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case clusterstatus.ExpandPVC:
 		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obcluster", "obcluster", m.OBCluster.Name)
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
 	}
 
@@ -160,7 +160,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			Status: obzone.Status.Status,
 		})
 		if obzone.Status.Image != m.OBCluster.Spec.OBServerTemplate.Image {
-			m.Logger.Info("obzone still not sync")
+			m.Logger.Info("Obzone still not sync")
 			allZoneVersionSync = false
 		}
 	}
@@ -247,7 +247,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obcluster status", "status", m.OBCluster.Status)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update obcluster status", "status", m.OBCluster.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")

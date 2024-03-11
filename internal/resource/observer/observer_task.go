@@ -149,6 +149,7 @@ func (m *OBServerManager) CreateOBPod() tasktypes.TaskError {
 		m.Logger.Error(err, "failed to create pod")
 		return errors.Wrap(err, "failed to create pod")
 	}
+	m.Recorder.Event(m.OBServer, "CreatePod", "CreatePod", "Create observer pod")
 	return nil
 }
 
@@ -711,6 +712,7 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
 	}
 	m.Logger.Info("Observer becomes active", "observer", observerInfo)
+	m.Recorder.Event(m.OBServer, "ObserverBecomesActive", "ObserverBecomesActive", "Observer becomes active")
 	return nil
 }
 
@@ -745,6 +747,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		return errors.Errorf("Wait observer %s deleted timeout", observerInfo.Ip)
 	}
 	m.Logger.Info("Observer was deleted", "observer", observerInfo)
+	m.Recorder.Event(m.OBServer, "ObserverDeleted", "ObserverDeleted", "Observer was deleted")
 	return nil
 }
 

@@ -114,7 +114,7 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 			allMatched := true
 			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
 				if obzoneStatus.Status != status {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
 					allMatched = false
 					break
 				}
@@ -124,7 +124,7 @@ func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSe
 			}
 			time.Sleep(time.Second)
 		}
-		return errors.New("zone status still not matched when timeout")
+		return errors.New("Zone status still not matched when timeout")
 	}
 	return f
 }
@@ -191,7 +191,7 @@ func (m *OBClusterManager) DeleteOBZone() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create obzones")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create obzones")
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
@@ -251,7 +251,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 		if modeAnnoExist {
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
-		m.Logger.Info("create obzone", "zone", zoneName)
+		m.Logger.Info("Create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
 		if err != nil {
 			m.Logger.Error(err, "create obzone failed", "zone", zone.Zone)
@@ -272,7 +272,7 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 		m.Logger.Error(err, "list obzones failed")
 		return errors.Wrap(err, "list obzones")
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("successfully get obzone list", "obzone list", obzoneList)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully get obzone list", "obzone list", obzoneList)
 	if len(obzoneList.Items) == 0 {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
@@ -356,37 +356,37 @@ func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("begin create user", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Begin create user", "username", userName)
 	password, err := resourceutils.ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
 	if err != nil {
 		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get password", "username", userName, "password", password)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Finish get password", "username", userName, "password", password)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get operationmanager", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Finish get operationmanager", "username", userName)
 	err = oceanbaseOperationManager.CreateUser(userName)
 	if err != nil {
 		m.Logger.Error(err, "Create user")
 		return errors.Wrapf(err, "Create user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish create user", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Finish create user", "username", userName)
 	err = oceanbaseOperationManager.SetUserPassword(userName, password)
 	if err != nil {
 		m.Logger.Error(err, "Set user password")
 		return errors.Wrapf(err, "Set password for user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish set user password", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Finish set user password", "username", userName)
 	object := "*.*"
 	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
 	if err != nil {
 		m.Logger.Error(err, "Grant privilege")
 		return errors.Wrapf(err, "Grant privilege for user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish grant user privilege", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Finish grant user privilege", "username", userName)
 	return nil
 }
 
@@ -429,7 +429,7 @@ func (m *OBClusterManager) MaintainOBParameter() tasktypes.TaskError {
 }
 
 func (m *OBClusterManager) CreateOBParameter(parameter *apitypes.Parameter) error {
-	m.Logger.Info("create ob parameters")
+	m.Logger.Info("Create ob parameters")
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
 		APIVersion: m.OBCluster.APIVersion,
@@ -455,7 +455,7 @@ func (m *OBClusterManager) CreateOBParameter(parameter *apitypes.Parameter) erro
 			Parameter:   parameter,
 		},
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("create obparameter", "parameter", parameterName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create obparameter", "parameter", parameterName)
 	err := m.Client.Create(m.Ctx, obparameter)
 	if err != nil {
 		m.Logger.Error(err, "create obparameter failed")
@@ -553,17 +553,17 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 			m.Logger.Error(err, "Failed to get job")
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
 		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
 			break
 		}
 	}
 
 	if jobObject.Status.Succeeded == 1 {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded")
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
 	} else {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("job is failed", "job", jobName)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is failed", "job", jobName)
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
@@ -694,7 +694,7 @@ func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
 			zoneList = append(zoneList, zone)
 		}
 	}
-	m.Logger.Info("modify sys pool's zone list when add zone", "zone list", zoneList)
+	m.Logger.Info("Modify sys pool's zone list when add zone", "zone list", zoneList)
 	err = oceanbaseOperationManager.AlterPool(&model.PoolParam{
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: zoneList,
@@ -724,7 +724,7 @@ func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
 				Zone: zone,
 			})
 			locality = obutil.ConvertToLocalityStr(replicas)
-			m.Logger.Info("modify sys tenant's locality when add zone", "locality", locality)
+			m.Logger.Info("Modify sys tenant's locality when add zone", "locality", locality)
 			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
 				TenantName: oceanbaseconst.SysTenant,
 				Locality:   locality,
@@ -750,7 +750,7 @@ func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
 		if !found {
 			newReplicas := obutil.OmitZoneFromReplicas(replicas, r.Zone)
 			locality = obutil.ConvertToLocalityStr(newReplicas)
-			m.Logger.Info("modify sys tenant's locality when delete zone", "locality", locality)
+			m.Logger.Info("Modify sys tenant's locality when delete zone", "locality", locality)
 			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
 				TenantName: oceanbaseconst.SysTenant,
 				Locality:   locality,
@@ -778,7 +778,7 @@ func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
 			newZoneList = append(newZoneList, zone)
 		}
 	}
-	m.Logger.Info("modify sys pool's zone list when delete zone", "zone list", newZoneList)
+	m.Logger.Info("Modify sys pool's zone list when delete zone", "zone list", newZoneList)
 	return oceanbaseOperationManager.AlterPool(&model.PoolParam{
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: newZoneList,
@@ -1131,9 +1131,9 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 				return err
 			}
 			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job is still running")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Ob version check job is still running")
 			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("ob version check job finished")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Ob version check job finished")
 				break
 			}
 		}

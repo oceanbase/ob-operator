@@ -97,7 +97,7 @@ func (m *OBServerManager) GetStatus() string {
 }
 
 func (m *OBServerManager) InitStatus() {
-	m.Logger.Info("newly created server, init status")
+	m.Logger.Info("Newly created server, init status")
 	status := v1alpha1.OBServerStatus{
 		Image:  m.OBServer.Spec.OBServerTemplate.Image,
 		Status: serverstatus.New,
@@ -120,7 +120,7 @@ func (m *OBServerManager) SupportStaticIp() bool {
 
 func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	if m.OBServer.Status.PodIp == "" {
-		err := errors.New("pod ip is empty")
+		err := errors.New("Pod ip is empty")
 		m.Logger.Error(err, "unable to get observer info")
 		return nil, err
 	}
@@ -153,10 +153,10 @@ func (m *OBServerManager) retryUpdateStatus() error {
 func (m *OBServerManager) setRecoveryStatus() {
 	mode, modeExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if m.SupportStaticIp() || (modeExist && mode == oceanbaseconst.ModeStandalone) {
-		m.Logger.Info("current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
+		m.Logger.Info("Current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
-		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+		m.Logger.Info("Observer not recoverable, delete current observer and wait recreate")
 		m.OBServer.Status.Status = serverstatus.Unrecoverable
 	}
 }
@@ -193,7 +193,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					svc := &corev1.Service{}
 					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 					if err != nil {
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("get svc failed")
+						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get svc failed")
 					} else {
 						m.OBServer.Status.ServiceIp = svc.Spec.ClusterIP
 					}
@@ -240,7 +240,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			}
 		}
 
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update observer status", "status", m.OBServer.Status)
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update observer status", "status", m.OBServer.Status)
 	}
 
 	err := m.retryUpdateStatus()
