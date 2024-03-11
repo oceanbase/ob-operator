@@ -710,12 +710,12 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 		m.Logger.Info("Wait for observer to become active, timeout")
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("observer becomes active", "observer", observerInfo)
+	m.Logger.Info("Observer becomes active", "observer", observerInfo)
 	return nil
 }
 
 func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
-	m.Logger.Info("wait observer deleted in cluster")
+	m.Logger.Info("Wait for observer deleted in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
@@ -744,12 +744,12 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		m.Logger.Info("Wait observer deleted timeout")
 		return errors.Errorf("Wait observer %s deleted timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("observer deleted", "observer", observerInfo)
+	m.Logger.Info("Observer was deleted", "observer", observerInfo)
 	return nil
 }
 
 func (m *OBServerManager) DeletePod() tasktypes.TaskError {
-	m.Logger.Info("delete observer pod")
+	m.Logger.Info("Delete observer pod")
 	pod, err := m.getPod()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
@@ -763,7 +763,7 @@ func (m *OBServerManager) DeletePod() tasktypes.TaskError {
 }
 
 func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
-	m.Logger.Info("wait for observer pod being deleted")
+	m.Logger.Info("Wait for observer pod being deleted")
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
 		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
@@ -860,7 +860,7 @@ outer:
 func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeService {
-		m.Logger.Info("create observer service")
+		m.Logger.Info("Create observer service")
 		svc := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      m.OBServer.Name,
