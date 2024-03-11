@@ -243,7 +243,7 @@ func (m *OBTenantManager) CheckAndApplyWhiteList() tasktypes.TaskError {
 		specWhiteList = tenant.DefaultOBTcpInvitedNodes
 	}
 	if statusWhiteList != specWhiteList {
-		m.Logger.Info("found specWhiteList didn't match", "tenantName", tenantName,
+		m.Logger.Info("Found specWhiteList didn't match", "tenantName", tenantName,
 			"statusWhiteList", statusWhiteList, "specWhiteList", specWhiteList)
 		variableList := m.generateWhiteListInVariableForm(specWhiteList)
 		err = oceanbaseOperationManager.SetTenantVariable(tenantName, variableList)
@@ -273,7 +273,7 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() tasktypes.TaskError {
 		}
 
 		if !IsUnitConfigV4Equal(specUnitConfig, statusUnitConfig) {
-			m.Logger.Info("found unit config v4 didn't match", "tenantName", tenantName, "zoneName", pool.Zone,
+			m.Logger.Info("Found unit config v4 didn't match", "tenantName", tenantName, "zoneName", pool.Zone,
 				"statusUnitConfig", FormatUnitConfigV4(statusUnitConfigMap[pool.Zone]), "specUnitConfig", FormatUnitConfigV4(specUnitConfigMap[pool.Zone]))
 			match = false
 		}

@@ -54,7 +54,7 @@ func (m *OBZoneManager) GetStatus() string {
 }
 
 func (m *OBZoneManager) InitStatus() {
-	m.Logger.Info("newly created zone, init status")
+	m.Logger.Info("Newly created zone, init status")
 	status := v1alpha1.OBZoneStatus{
 		Image:          m.OBZone.Spec.OBServerTemplate.Image,
 		Status:         zonestatus.New,
@@ -70,7 +70,7 @@ func (m *OBZoneManager) SetOperationContext(c *tasktypes.OperationContext) {
 func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBZone.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obzone status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obzone status")
 		return tasktypes.NewTaskFlow(m.OBZone.Status.OperationContext), nil
 	}
 	// newly created zone
@@ -121,7 +121,7 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		return task.GetRegistry().Get(fForceUpgradeOBZone)
 		// TODO upgrade
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obzone")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obzone")
 		return nil, nil
 	}
 
@@ -252,7 +252,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 			}
 		}
 	}
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obzone status", "status", m.OBZone.Status)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update obzone status", "status", m.OBZone.Status)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obzone status")
@@ -345,5 +345,5 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 }
 
 func (m *OBZoneManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "Task failed", err.Error())
 }
