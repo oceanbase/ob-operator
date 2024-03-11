@@ -10,41 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package oceanbase
+package helper
 
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 
 	mapset "github.com/deckarep/golang-set"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
-
-var validatorCommand = &cobra.Command{
-	Use:   "upgrade-validator",
-	Short: "oceanbase upgrade version validator",
-	Long:  "oceanbase upgrade version validator",
-	Run: func(cmd *cobra.Command, args []string) {
-		err := runValidator()
-		if err != nil {
-			log.WithField("args", args).Errorf("Failed to execute validator: %v", err)
-		}
-	},
-}
-
-func init() {
-	validatorCommand.Flags().StringP("config", "c", "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml", "upgrade path config file")
-	validatorCommand.Flags().StringP("from", "f", "/home/admin/oceanbase/etc/oceanbase_upgrade_dep.yml", "upgrade path config file")
-}
-
-func runValidator() error {
-	return nil
-}
 
 type OBUpgradeRouteParam struct {
 	StartVersion  string
@@ -79,7 +56,7 @@ func GetOBUpgradeRoute(param *OBUpgradeRouteParam) ([]VersionDep, error) {
 	filePath := param.DepFilePath
 	log.Info("Upgrade Route Process Params: ", startVersion, targetVersion, filePath)
 
-	content, err := ioutil.ReadFile(filePath)
+	content, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, errors.New(fmt.Sprint("cannot find file: ", filePath))
@@ -174,7 +151,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 		nodeMap[k].Precursor = nil
 	}
 	for {
-		if len(queue) <= 0 {
+		if len(queue) == 0 {
 			break
 		}
 		node := queue[len(queue)-1]
@@ -236,7 +213,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 					node.DirectUpgrade = true
 				}
 			}
-			i += 1
+			i++
 		} else {
 			break
 		}

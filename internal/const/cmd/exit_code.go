@@ -10,10 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package main
+package cmd
 
-import "github.com/oceanbase/oceanbase-helper/cmd"
+type ExitCode int
 
-func main() {
-	cmd.Execute()
-}
+const (
+	ExitCodeOK         ExitCode = 0
+	ExitCodeErr        ExitCode = 1
+	ExitCodeBadArgs    ExitCode = 2
+	ExitCodeNotSupport ExitCode = 10
+)

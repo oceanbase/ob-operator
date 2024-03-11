@@ -1,13 +1,12 @@
 FROM golang:1.20.4 as builder
 ARG GOPROXY=https://goproxy.io,direct
 WORKDIR /workspace
-COPY ./oceanbase-helper .
-RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build -a -o oceanbase-helper main.go
+COPY . .
+RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build -a -o oceanbase-helper ./cmd/oceanbase-helper/main.go
 
 FROM openanolis/anolisos:8.8
 ARG VERSION
 ARG TARGETPLATFORM
-RUN echo TARGET_PLATFORM is ${TARGETPLATFORM}
 WORKDIR /home/admin/oceanbase
 RUN mkdir -p /home/admin/oceanbase/bin
 COPY --from=builder /workspace/oceanbase-helper /home/admin/oceanbase/bin
