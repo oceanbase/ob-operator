@@ -632,7 +632,7 @@ func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
 			}
 		}
 		if upgradeFinished {
-			m.Logger.Info("Obzone upgrade finished", "obzone", zoneName)
+			m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
 			break
 		}
 		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
@@ -1131,9 +1131,9 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 				return err
 			}
 			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Ob version check job is still running")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer version check job is still running")
 			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Ob version check job finished")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer version check job finished")
 				break
 			}
 		}

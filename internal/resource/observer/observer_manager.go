@@ -156,7 +156,7 @@ func (m *OBServerManager) setRecoveryStatus() {
 		m.Logger.Info("Current cni supports specific static ip address or the cluster runs as standalone, recover by recreate pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
-		m.Logger.Info("Observer not recoverable, delete current observer and wait recreate")
+		m.Logger.Info("OBServer not recoverable, delete current observer and wait recreate")
 		m.OBServer.Status.Status = serverstatus.Unrecoverable
 	}
 }
@@ -176,7 +176,7 @@ func (m *OBServerManager) UpdateStatus() error {
 					m.setRecoveryStatus()
 				}
 			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Observer status is not running, wait task finish")
+				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer status is not running, wait task finish")
 				return errors.Wrap(err, "get pod when update status")
 			}
 		} else {
@@ -446,6 +446,8 @@ func (m *OBServerManager) getOBZone() (*v1alpha1.OBZone, error) {
 }
 
 func (m *OBServerManager) ArchiveResource() {
+	m.Logger.Info("Archive observer", "observer", m.OBServer.Name)
+	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
 }

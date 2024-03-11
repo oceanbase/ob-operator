@@ -79,7 +79,7 @@ func (m *OBServerManager) AddServer() tasktypes.TaskError {
 	}
 	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
 	if obs != nil {
-		m.Logger.Info("Observer already exists in obcluster")
+		m.Logger.Info("OBServer already exists in obcluster")
 		return nil
 	}
 	if err != nil {
@@ -96,7 +96,7 @@ func (m *OBServerManager) WaitOBClusterBootstrapped() tasktypes.TaskError {
 			return errors.Wrap(err, "Get obcluster from K8s")
 		}
 		if obcluster.Status.Status == clusterstatus.Bootstrapped {
-			m.Logger.Info("Obcluster bootstrapped")
+			m.Logger.Info("OBCluster bootstrapped")
 			return nil
 		}
 		time.Sleep(time.Second)
@@ -711,8 +711,8 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 		m.Logger.Info("Wait for observer to become active, timeout")
 		return errors.Errorf("Wait observer %s active timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("Observer becomes active", "observer", observerInfo)
-	m.Recorder.Event(m.OBServer, "ObserverBecomesActive", "ObserverBecomesActive", "Observer becomes active")
+	m.Logger.Info("OBServer becomes active", "observer", observerInfo)
+	m.Recorder.Event(m.OBServer, "OBServerBecomesActive", "OBServerBecomesActive", "OBServer becomes active")
 	return nil
 }
 
@@ -734,7 +734,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		}
 		observer, err := operationManager.GetServer(observerInfo)
 		if observer == nil && err == nil {
-			m.Logger.Info("Observer deleted")
+			m.Logger.Info("OBServer deleted")
 			deleted = true
 			break
 		} else if err != nil {
@@ -746,8 +746,8 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 		m.Logger.Info("Wait observer deleted timeout")
 		return errors.Errorf("Wait observer %s deleted timeout", observerInfo.Ip)
 	}
-	m.Logger.Info("Observer was deleted", "observer", observerInfo)
-	m.Recorder.Event(m.OBServer, "ObserverDeleted", "ObserverDeleted", "Observer was deleted")
+	m.Logger.Info("OBServer was deleted", "observer", observerInfo)
+	m.Recorder.Event(m.OBServer, "OBServerDeleted", "OBServerDeleted", "OBServer was deleted")
 	return nil
 }
 

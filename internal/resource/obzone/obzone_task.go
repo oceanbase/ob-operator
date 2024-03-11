@@ -211,7 +211,7 @@ func (m *OBZoneManager) WaitReplicaMatch() tasktypes.TaskError {
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
 		} else if m.OBZone.Spec.Topology.Replica == len(obzone.Status.OBServerStatus) {
-			m.Logger.Info("Obzone replica matched")
+			m.Logger.Info("OBZone replica matched")
 			matched = true
 			break
 		} else {
@@ -233,7 +233,7 @@ func (m *OBZoneManager) WaitOBServerDeleted() tasktypes.TaskError {
 			m.Logger.Error(err, "Get obzone from K8s failed")
 		}
 		if 0 == len(obzone.Status.OBServerStatus) {
-			m.Logger.Info("Observer all deleted")
+			m.Logger.Info("OBServer all deleted")
 			matched = true
 			break
 		}

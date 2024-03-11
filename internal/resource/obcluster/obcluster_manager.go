@@ -160,7 +160,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			Status: obzone.Status.Status,
 		})
 		if obzone.Status.Image != m.OBCluster.Spec.OBServerTemplate.Image {
-			m.Logger.Info("Obzone still not sync")
+			m.Logger.Info("OBZone still not sync")
 			allZoneVersionSync = false
 		}
 	}
