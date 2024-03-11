@@ -132,9 +132,8 @@ func getSysClientFromSourceCluster(c client.Client, logger *logr.Logger, obclust
 		if err == nil && sysClient != nil {
 			sysClient.Logger = logger
 			return sysClient, nil
-		} else {
-			logger.Error(err, "Get operation manager from existing obcluster")
 		}
+		logger.Error(err, "Get operation manager from existing obcluster")
 	}
 	return nil, errors.Errorf("Failed to get sys client from existing obcluster, address: %s", migrateAnnoVal)
 }
