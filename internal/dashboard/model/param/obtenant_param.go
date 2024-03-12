@@ -101,5 +101,5 @@ type TenantPoolSpec struct {
 
 type TenantPoolName struct {
 	NamespacedName `json:",inline"`
-	ZoneName       string `json:"zoneName"`
+	ZoneName       string `json:"zoneName" uri:"zoneName"`
 }
