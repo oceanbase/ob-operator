@@ -165,9 +165,22 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
-	} else if m.IsDeleting() && (m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning || m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused) {
-		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
-		m.BackupPolicy.Status.OperationContext = nil
+	} else if m.IsDeleting() {
+		switch m.BackupPolicy.Status.Status {
+		case constants.BackupPolicyStatusPaused,
+			constants.BackupPolicyStatusRunning,
+			constants.BackupPolicyStatusMaintaining,
+			constants.BackupPolicyStatusPausing,
+			constants.BackupPolicyStatusPrepared,
+			constants.BackupPolicyStatusResuming:
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
+			m.BackupPolicy.Status.OperationContext = nil
+		case constants.BackupPolicyStatusDeleting:
+			// do nothing
+		default:
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusStopped
+			m.BackupPolicy.Status.OperationContext = nil
+		}
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
 			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining

@@ -23,6 +23,9 @@ func PrepareBackupPolicy() *tasktypes.TaskFlow {
 			Name:         fPrepareBackupPolicy,
 			Tasks:        []tasktypes.TaskName{tConfigureServerForBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPrepared),
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: string(constants.BackupPolicyStatusFailed),
+			},
 		},
 	}
 }
@@ -33,6 +36,9 @@ func StartBackupJob() *tasktypes.TaskFlow {
 			Name:         fStartBackupJob,
 			Tasks:        []tasktypes.TaskName{tStartBackupJob},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: string(constants.BackupPolicyStatusFailed),
+			},
 		},
 	}
 }
