@@ -60,6 +60,8 @@ const MINIMAL_CONFIG = {
 
 const RESULT_STATUS = ['running','failed'];
 
+const BACKUP_RESULT_STATUS = ['RUNNING','FAILED','PAUSED']
+
 const RESOURCE_NAME_REG = /^[a-z\-]+$/;
 // use for tenant name or zone name
 const TZ_NAME_REG =  /^[_a-zA-Z][^-\n]*$/;
@@ -78,6 +80,7 @@ export {
   SUFFIX_UNIT,
   ZONE_IMG_MAP,
   RESULT_STATUS,
+  BACKUP_RESULT_STATUS,
   RESOURCE_NAME_REG,
   TZ_NAME_REG
 };

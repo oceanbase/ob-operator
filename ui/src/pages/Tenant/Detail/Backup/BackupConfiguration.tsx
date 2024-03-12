@@ -1,30 +1,30 @@
+import { BACKUP_RESULT_STATUS } from '@/constants';
+import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-  deletePolicyOfTenant,
-  getBackupPolicy,
-  updateBackupPolicyOfTenant,
+deletePolicyOfTenant,
+updateBackupPolicyOfTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
-import { usePublicKey } from '@/hook/usePublicKey';
 import {
-  Button,
-  Card,
-  Col,
-  Descriptions,
-  Form,
-  InputNumber,
-  Row,
-  Select,
-  Space,
-  message,
+Button,
+Card,
+Col,
+Descriptions,
+Form,
+InputNumber,
+Row,
+Select,
+Space,
+message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useRef, useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 import {
-  checkIsSame,
-  formatBackupForm,
-  formatBackupPolicyData,
+checkIsSame,
+formatBackupForm,
+formatBackupPolicyData,
 } from '../../helper';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
@@ -34,20 +34,20 @@ interface BackupConfigurationProps {
   setBackupPolicy: React.Dispatch<
     React.SetStateAction<API.BackupPolicy | undefined>
   >;
+  backupPolicyRefresh: () => void;
 }
 
 export default function BackupConfiguration({
   backupPolicy,
   setBackupPolicy,
+  backupPolicyRefresh
 }: BackupConfigurationProps) {
   const [form] = Form.useForm();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [isEdit, setIsEdit] = useState<boolean>(false);
-  const [pollingInterval, setPollingInterval] = useState<number>(0);
-  const [loading, setIsLoading] = useState<boolean>(false);
   const curConfig = useRef({});
   const [ns, name] = getNSName();
-  const publicKey = usePublicKey()
+  const publicKey = usePublicKey();
 
   const INFO_CONFIG = {
     archivePath: {
@@ -118,42 +118,11 @@ export default function BackupConfiguration({
     scheduleTime: dayjs(backupPolicy.scheduleTime, 'HH:mm'),
   };
 
-  const { run: getBackupPolicyReq } = useRequest(getBackupPolicy, {
-    manual: true,
-    pollingInterval, //Polling
-    onSuccess: ({ successful, data }) => {
-      if (successful) {
-        if (
-          !checkIsSame(
-            data,
-            JSON.stringify(form.getFieldsValue()) === '{}'
-              ? curConfig.current
-              : form.getFieldsValue(),
-          ) &&
-          pollingInterval === 0
-        ) {
-          setPollingInterval(300);
-        } else {
-          setIsLoading(false);
-          setBackupPolicy(data);
-          setPollingInterval(0); //Stop polling
-          message.success(
-            intl.formatMessage({
-              id: 'Dashboard.Detail.Backup.BackupConfiguration.OperationSucceeded',
-              defaultMessage: '操作成功',
-            }),
-          );
-        }
-      }
-    },
-  });
-
   const { run: deleteBackupPolicyReq } = useRequest(deletePolicyOfTenant, {
     manual: true,
-    onSuccess: ({ successful, data }) => {
+    onSuccess: ({ successful }) => {
       if (successful) {
-        setIsLoading(true);
-        getBackupPolicyReq({ ns, name });
+        backupPolicyRefresh();
       }
     },
   });
@@ -167,8 +136,7 @@ export default function BackupConfiguration({
     const { successful, data } = await updateBackupPolicyOfTenant(param);
     if (successful) {
       if (data.status === backupPolicy.status) {
-        setIsLoading(true);
-        getBackupPolicyReq({ ns, name });
+        backupPolicyRefresh()
       } else {
         message.success(
           intl.formatMessage({
@@ -188,8 +156,8 @@ export default function BackupConfiguration({
 
     if (
       checkIsSame(
-        formatBackupForm(initialValues,publicKey),
-        formatBackupForm(form.getFieldsValue(),publicKey),
+        formatBackupForm(initialValues, publicKey),
+        formatBackupForm(form.getFieldsValue(), publicKey),
       )
     ) {
       message.info(
@@ -209,23 +177,22 @@ export default function BackupConfiguration({
     const { successful, data } = await updateBackupPolicyOfTenant({
       ns,
       name,
-      ...formatBackupForm(values,publicKey),
+      ...formatBackupForm(values, publicKey),
     });
     if (successful) {
-      curConfig.current = formatBackupForm(form.getFieldsValue(),publicKey);
-      if (checkIsSame(data, curConfig.current)) {
-        setIsLoading(true);
-        getBackupPolicyReq({ ns, name });
-      } else {
-        setBackupPolicy(data);
-        setIsEdit(!isEdit);
-        message.success(
-          intl.formatMessage({
-            id: 'Dashboard.Detail.Backup.BackupConfiguration.OperationSucceeded.2',
-            defaultMessage: '操作成功!',
-          }),
-        );
+      curConfig.current = formatBackupForm(form.getFieldsValue(), publicKey);
+      // Updates are asynchronous
+      if (!BACKUP_RESULT_STATUS.includes(data.status)) {
+        backupPolicyRefresh();
       }
+      setBackupPolicy(data);
+      setIsEdit(false);
+      message.success(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Backup.BackupConfiguration.OperationSucceeded.2',
+          defaultMessage: '操作成功!',
+        }),
+      );
     }
   };
 
@@ -236,7 +203,6 @@ export default function BackupConfiguration({
         defaultMessage: '备份策略配置',
       })}
       style={{ width: '100%' }}
-      loading={loading}
       extra={
         <Space>
           <Button type="primary" onClick={changeEditBtnStatus}>
@@ -339,7 +305,7 @@ export default function BackupConfiguration({
             Object.keys(DATE_CONFIG).map((key, index) => (
               <Col span={8} key={index}>
                 <Form.Item label={DATE_CONFIG[key]} name={key}>
-                  <InputNumber min={0} />
+                  <InputNumber addonAfter={'天'} min={0} />
                 </Form.Item>
               </Col>
             ))

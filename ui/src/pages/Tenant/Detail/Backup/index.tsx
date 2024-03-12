@@ -1,4 +1,5 @@
 import EmptyImg from '@/assets/empty.svg';
+import { BACKUP_RESULT_STATUS,REFRESH_TENANT_TIME } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { getBackupPolicy,getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
@@ -6,25 +7,39 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Card,Col,Row } from 'antd';
-import { useState } from 'react';
+import { useEffect,useRef,useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
 
 export default function Backup() {
   const [ns, name] = getNSName();
-  const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>()
+  const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
+  const timerRef = useRef<NodeJS.Timeout>()
 
-  useRequest(getBackupPolicy, {
+  const { refresh: backupPolicyRefresh } = useRequest(getBackupPolicy, {
     defaultParams: [{ ns, name }],
-    onSuccess:({successful,data})=>{
-      if(successful)setBackupPolicy(data)
-    }
+    onSuccess: ({ successful, data }) => {
+      if (successful) {
+        setBackupPolicy(data);
+        if (!BACKUP_RESULT_STATUS.includes(data.status)) {
+          timerRef.current = setTimeout(()=>{
+            backupPolicyRefresh();
+          },REFRESH_TENANT_TIME)
+        }
+      }
+    },
   });
   const { data: tenantDetailResponse } = useRequest(getTenant, {
     defaultParams: [{ ns, name }],
   });
   const tenantDetail = tenantDetailResponse?.data;
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timerRef.current);
+    };
+  }, []);
   
   return (
     <PageContainer>
@@ -75,6 +90,7 @@ export default function Backup() {
             <BackupConfiguration
               backupPolicy={backupPolicy}
               setBackupPolicy={setBackupPolicy}
+              backupPolicyRefresh={backupPolicyRefresh}
             />
           </Col>
           <BackupJobs />
