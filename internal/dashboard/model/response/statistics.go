@@ -14,7 +14,7 @@ package response
 
 import "github.com/oceanbase/ob-operator/internal/telemetry/models"
 
-type TelemetryData struct {
+type StatisticData struct {
 	Version        string                  `json:"version"`
 	Clusters       []models.OBCluster      `json:"clusters"`
 	Zones          []models.OBZone         `json:"zones"`
@@ -24,8 +24,8 @@ type TelemetryData struct {
 	WarningEvents  []models.K8sEvent       `json:"warningEvents"`
 }
 
-type TelemetryReportResponse struct {
+type StatisticDataResponse struct {
 	Component string         `json:"component"`
 	Time      string         `json:"time"`
-	Content   *TelemetryData `json:"content"`
+	Content   *StatisticData `json:"content"`
 }

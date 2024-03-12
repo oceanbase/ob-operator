@@ -649,10 +649,10 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Metric"
+                    "Info"
                 ],
                 "summary": "get telemetry data",
-                "operationId": "GetTelemetryData",
+                "operationId": "GetStatistics",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -665,7 +665,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.TelemetryReportResponse"
+                                            "$ref": "#/definitions/response.StatisticDataResponse"
                                         }
                                     }
                                 }
@@ -4309,39 +4309,7 @@ const docTemplate = `{
                 }
             }
         },
-        "response.StorageClass": {
-            "type": "object",
-            "properties": {
-                "allowVolumeExpansion": {
-                    "type": "boolean"
-                },
-                "mountOptions": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string"
-                },
-                "parameters": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/common.KVPair"
-                    }
-                },
-                "provisioner": {
-                    "type": "string"
-                },
-                "reclaimPolicy": {
-                    "type": "string"
-                },
-                "volumeBindingMode": {
-                    "type": "string"
-                }
-            }
-        },
-        "response.TelemetryData": {
+        "response.StatisticData": {
             "type": "object",
             "properties": {
                 "backupPolicies": {
@@ -4385,16 +4353,48 @@ const docTemplate = `{
                 }
             }
         },
-        "response.TelemetryReportResponse": {
+        "response.StatisticDataResponse": {
             "type": "object",
             "properties": {
                 "component": {
                     "type": "string"
                 },
                 "content": {
-                    "$ref": "#/definitions/response.TelemetryData"
+                    "$ref": "#/definitions/response.StatisticData"
                 },
                 "time": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.StorageClass": {
+            "type": "object",
+            "properties": {
+                "allowVolumeExpansion": {
+                    "type": "boolean"
+                },
+                "mountOptions": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "provisioner": {
+                    "type": "string"
+                },
+                "reclaimPolicy": {
+                    "type": "string"
+                },
+                "volumeBindingMode": {
                     "type": "string"
                 }
             }

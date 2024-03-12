@@ -1211,28 +1211,7 @@ definitions:
       until:
         type: string
     type: object
-  response.StorageClass:
-    properties:
-      allowVolumeExpansion:
-        type: boolean
-      mountOptions:
-        items:
-          type: string
-        type: array
-      name:
-        type: string
-      parameters:
-        items:
-          $ref: '#/definitions/common.KVPair'
-        type: array
-      provisioner:
-        type: string
-      reclaimPolicy:
-        type: string
-      volumeBindingMode:
-        type: string
-    type: object
-  response.TelemetryData:
+  response.StatisticData:
     properties:
       backupPolicies:
         items:
@@ -1261,13 +1240,34 @@ definitions:
           $ref: '#/definitions/models.OBZone'
         type: array
     type: object
-  response.TelemetryReportResponse:
+  response.StatisticDataResponse:
     properties:
       component:
         type: string
       content:
-        $ref: '#/definitions/response.TelemetryData'
+        $ref: '#/definitions/response.StatisticData'
       time:
+        type: string
+    type: object
+  response.StorageClass:
+    properties:
+      allowVolumeExpansion:
+        type: boolean
+      mountOptions:
+        items:
+          type: string
+        type: array
+      name:
+        type: string
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      provisioner:
+        type: string
+      reclaimPolicy:
+        type: string
+      volumeBindingMode:
         type: string
     type: object
 info:
@@ -1663,7 +1663,7 @@ paths:
       consumes:
       - application/json
       description: get telemetry data
-      operationId: GetTelemetryData
+      operationId: GetStatistics
       produces:
       - application/json
       responses:
@@ -1674,7 +1674,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.TelemetryReportResponse'
+                  $ref: '#/definitions/response.StatisticDataResponse'
               type: object
         "400":
           description: Bad Request
@@ -1692,7 +1692,7 @@ paths:
       - ApiKeyAuth: []
       summary: get telemetry data
       tags:
-      - Metric
+      - Info
   /api/v1/obclusters:
     get:
       consumes:
