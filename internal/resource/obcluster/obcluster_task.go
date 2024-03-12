@@ -1019,7 +1019,7 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 // check obcluster name and id
 // check obzone exists in topology
 func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
-	m.Logger.Info("check before migration")
+	m.Logger.Info("Check before migration")
 	manager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "get operation manager")
