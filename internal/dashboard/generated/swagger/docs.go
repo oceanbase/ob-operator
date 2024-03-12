@@ -708,7 +708,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "list obclusters",
                 "operationId": "ListOBClusters",
@@ -768,7 +768,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "create obcluster",
                 "operationId": "CreateOBCluster",
@@ -826,7 +826,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "get obcluster",
                 "operationId": "GetOBCluster",
@@ -899,7 +899,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "upgrade obcluster",
                 "operationId": "UpgradeOBCluster",
@@ -969,7 +969,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "delete obcluster",
                 "operationId": "DeleteOBCluster",
@@ -1032,7 +1032,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "add obzone",
                 "operationId": "AddOBZone",
@@ -1104,7 +1104,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "delete obzone",
                 "operationId": "DeleteOBZone",
@@ -1174,7 +1174,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "scale observer",
                 "operationId": "ScaleOBServer",
@@ -1248,7 +1248,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "get obcluster statistic",
                 "operationId": "GetOBClusterStatistic",
@@ -1310,7 +1310,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obcluster"
+                    "OBCluster"
                 ],
                 "summary": "list essential parameters",
                 "operationId": "ListOBClusterResources",
@@ -1385,7 +1385,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "List all tenants",
                 "operationId": "ListAllTenants",
@@ -1453,7 +1453,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Create tenant",
                 "operationId": "CreateTenant",
@@ -1523,7 +1523,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "List statistics information of tenants",
                 "operationId": "GetOBTenantStatistic",
@@ -1585,7 +1585,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Get tenant",
                 "operationId": "GetTenant",
@@ -1658,7 +1658,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Delete tenant",
                 "operationId": "DeleteTenant",
@@ -1719,7 +1719,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Patch tenant's configuration",
                 "operationId": "PatchTenant",
@@ -1803,7 +1803,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "List backup jobs of specific tenant",
                 "operationId": "ListBackupJobs",
@@ -1901,7 +1901,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Get backup policy of specific tenant",
                 "operationId": "GetBackupPolicy",
@@ -1974,7 +1974,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Create backup policy of specific tenant",
                 "operationId": "CreateBackupPolicy",
@@ -2056,7 +2056,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Delete backup policy of specific tenant",
                 "operationId": "DeleteBackupPolicy",
@@ -2124,7 +2124,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Update backup policy of specific tenant",
                 "operationId": "UpdateBackupPolicy",
@@ -2208,7 +2208,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Replay standby log of specific standby tenant",
                 "operationId": "ReplayStandbyLog",
@@ -2292,7 +2292,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Create obtenant pool",
                 "operationId": "CreateOBTenantPool",
@@ -2360,7 +2360,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Delete obtenant pool",
                 "operationId": "DeleteOBTenantPool",
@@ -2417,7 +2417,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Patch obtenant pool",
                 "operationId": "PatchOBTenantPool",
@@ -2487,7 +2487,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Change tenant role of specific tenant",
                 "operationId": "ChangeTenantRole",
@@ -2571,7 +2571,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Change root password of specific tenant",
                 "operationId": "ChangeUserPassword",
@@ -2655,7 +2655,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Obtenant"
+                    "OBTenant"
                 ],
                 "summary": "Upgrade tenant compatibility version of specific tenant",
                 "operationId": "UpgradeTenantVersion",
@@ -3433,15 +3433,7 @@ const docTemplate = `{
             }
         },
         "param.PatchTenant": {
-            "type": "object",
-            "properties": {
-                "unitConfig": {
-                    "$ref": "#/definitions/param.PatchUnitConfig"
-                },
-                "unitNum": {
-                    "type": "integer"
-                }
-            }
+            "type": "object"
         },
         "param.PatchUnitConfig": {
             "type": "object",

@@ -483,11 +483,6 @@ definitions:
         $ref: '#/definitions/common.StorageSpec'
     type: object
   param.PatchTenant:
-    properties:
-      unitConfig:
-        $ref: '#/definitions/param.PatchUnitConfig'
-      unitNum:
-        type: integer
     type: object
   param.PatchUnitConfig:
     properties:
@@ -1738,7 +1733,7 @@ paths:
       - ApiKeyAuth: []
       summary: list obclusters
       tags:
-      - Obcluster
+      - OBCluster
     post:
       consumes:
       - application/json
@@ -1774,7 +1769,7 @@ paths:
       - ApiKeyAuth: []
       summary: create obcluster
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/{namespace}/{name}/essential-parameters:
     get:
       consumes:
@@ -1820,7 +1815,7 @@ paths:
       - ApiKeyAuth: []
       summary: list essential parameters
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}:
     delete:
       consumes:
@@ -1861,7 +1856,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete obcluster
       tags:
-      - Obcluster
+      - OBCluster
     get:
       consumes:
       - application/json
@@ -1906,7 +1901,7 @@ paths:
       - ApiKeyAuth: []
       summary: get obcluster
       tags:
-      - Obcluster
+      - OBCluster
     post:
       consumes:
       - application/json
@@ -1952,7 +1947,7 @@ paths:
       - ApiKeyAuth: []
       summary: upgrade obcluster
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones:
     post:
       consumes:
@@ -1999,7 +1994,7 @@ paths:
       - ApiKeyAuth: []
       summary: add obzone
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}:
     delete:
       consumes:
@@ -2045,7 +2040,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete obzone
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}/scale:
     post:
       consumes:
@@ -2097,7 +2092,7 @@ paths:
       - ApiKeyAuth: []
       summary: scale observer
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/statistic:
     get:
       consumes:
@@ -2132,7 +2127,7 @@ paths:
             $ref: '#/definitions/response.APIResponse'
       summary: get obcluster statistic
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obtenants:
     get:
       consumes:
@@ -2174,7 +2169,7 @@ paths:
       - ApiKeyAuth: []
       summary: List all tenants
       tags:
-      - Obtenant
+      - OBTenant
     put:
       consumes:
       - application/json
@@ -2216,7 +2211,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}:
     delete:
       consumes:
@@ -2258,7 +2253,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete tenant
       tags:
-      - Obtenant
+      - OBTenant
     get:
       consumes:
       - application/json
@@ -2303,7 +2298,7 @@ paths:
       - ApiKeyAuth: []
       summary: Get tenant
       tags:
-      - Obtenant
+      - OBTenant
     patch:
       consumes:
       - application/json
@@ -2354,7 +2349,7 @@ paths:
       - ApiKeyAuth: []
       summary: Patch tenant's configuration
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs:
     get:
       consumes:
@@ -2417,7 +2412,7 @@ paths:
       - ApiKeyAuth: []
       summary: List backup jobs of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/backupPolicy:
     delete:
       consumes:
@@ -2463,7 +2458,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     get:
       consumes:
       - application/json
@@ -2508,7 +2503,7 @@ paths:
       - ApiKeyAuth: []
       summary: Get backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     patch:
       consumes:
       - application/json
@@ -2559,7 +2554,7 @@ paths:
       - ApiKeyAuth: []
       summary: Update backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     put:
       consumes:
       - application/json
@@ -2611,7 +2606,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/logreplay:
     post:
       consumes:
@@ -2663,7 +2658,7 @@ paths:
       - ApiKeyAuth: []
       summary: Replay standby log of specific standby tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/pools/{zoneName}:
     delete:
       consumes:
@@ -2698,7 +2693,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete obtenant pool
       tags:
-      - Obtenant
+      - OBTenant
     patch:
       consumes:
       - application/json
@@ -2739,7 +2734,7 @@ paths:
       - ApiKeyAuth: []
       summary: Patch obtenant pool
       tags:
-      - Obtenant
+      - OBTenant
     put:
       consumes:
       - application/json
@@ -2780,7 +2775,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create obtenant pool
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/role:
     post:
       consumes:
@@ -2833,7 +2828,7 @@ paths:
       - ApiKeyAuth: []
       summary: Change tenant role of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/userCredentials:
     post:
       consumes:
@@ -2885,7 +2880,7 @@ paths:
       - ApiKeyAuth: []
       summary: Change root password of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/version:
     post:
       consumes:
@@ -2932,7 +2927,7 @@ paths:
       - ApiKeyAuth: []
       summary: Upgrade tenant compatibility version of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/statistic:
     get:
       consumes:
@@ -2969,7 +2964,7 @@ paths:
       - ApiKeyAuth: []
       summary: List statistics information of tenants
       tags:
-      - Obtenant
+      - OBTenant
 securityDefinitions:
   ApiKeyAuth:
     in: header

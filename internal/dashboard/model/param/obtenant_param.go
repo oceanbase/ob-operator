@@ -89,8 +89,9 @@ type PatchUnitConfig struct {
 }
 
 type PatchTenant struct {
-	UnitNumber *int             `json:"unitNum,omitempty"`
-	UnitConfig *PatchUnitConfig `json:"unitConfig,omitempty"`
+	UnitNumber *int `json:"unitNum,omitempty"`
+	// Deprecated
+	UnitConfig *PatchUnitConfig `json:"unitConfig,omitempty" example:"deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead"`
 }
 
 type TenantPoolSpec struct {
