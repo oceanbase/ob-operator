@@ -579,5 +579,14 @@
   "Dashboard.Detail.Overview.AdjustTheNumberOfUnits": "调整 Unit 数量",
   "Dashboard.Tenant.New.ResourcePools.AvailableResources": "可用资源：",
   "Dashboard.Tenant.New.ResourcePools.LogDiskSize": "日志磁盘大小",
-  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "此处指的是租户的 clog 磁盘空间"
+  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "此处指的是租户的 clog 磁盘空间",
+  "Dashboard.Cluster.New.BasicInfo.RegularMode": "常规模式",
+  "Dashboard.Cluster.New.BasicInfo.MonomerMode": "单体模式",
+  "Dashboard.Cluster.New.BasicInfo.ServiceMode": "Service模式",
+  "Dashboard.Cluster.New.BasicInfo.ClusterMode": "集群模式",
+  "Dashboard.Cluster.New.BasicInfo.SelectClusterMode": "请选择集群模式",
+  "Dashboard.Cluster.New.BasicInfo.PleaseSelect": "请选择",
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCanOnlyConsist": "资源名只能由小写字母和 - 组成",
+  "Dashboard.Tenant.New.BasicInfo.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -",
+  "Dashboard.components.customModal.AddZoneModal.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -"
 }

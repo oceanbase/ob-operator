@@ -579,5 +579,14 @@
   "Dashboard.Detail.Overview.AdjustTheNumberOfUnits": "Adjust the number of units",
   "Dashboard.Tenant.New.ResourcePools.AvailableResources": "Available resources:",
   "Dashboard.Tenant.New.ResourcePools.LogDiskSize": "Log disk size",
-  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "This refers to the tenant's clog disk space."
+  "Dashboard.Tenant.New.ResourcePools.ThisRefersToTheTenant": "This refers to the tenant's clog disk space.",
+  "Dashboard.Cluster.New.BasicInfo.RegularMode": "Regular mode",
+  "Dashboard.Cluster.New.BasicInfo.MonomerMode": "Monomer mode",
+  "Dashboard.Cluster.New.BasicInfo.ServiceMode": "Service mode",
+  "Dashboard.Cluster.New.BasicInfo.ClusterMode": "Cluster mode",
+  "Dashboard.Cluster.New.BasicInfo.SelectClusterMode": "Select cluster mode",
+  "Dashboard.Cluster.New.BasicInfo.PleaseSelect": "Please select",
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCanOnlyConsist": "Resource names can only consist of lowercase letters and-",
+  "Dashboard.Tenant.New.BasicInfo.TheFirstCharacterMustBe": "The first character must be a letter or an underscore and cannot contain-",
+  "Dashboard.components.customModal.AddZoneModal.TheFirstCharacterMustBe": "The first character must be a letter or an underscore and cannot contain-"
 }

@@ -1,4 +1,6 @@
+import type { UnitDetailType } from '@/components/customModal/ModifyUnitDetailModal';
 import { intl } from '@/utils/intl';
+import { clone } from 'lodash';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
 type StatisticDataType = { status: StatisticStatus; count: number }[];
@@ -37,4 +39,25 @@ export const formatStatisticData = (
     r[item.status] = item.count;
   }
   return r;
+};
+
+export const formatUnitDetailData = (originUnitData: UnitDetailType) => {
+  const _originUnitData: UnitDetailType = clone(originUnitData);
+  _originUnitData.unitConfig.unitConfig.logDiskSize = _originUnitData.unitConfig.unitConfig.logDiskSize + 'Gi';
+  _originUnitData.unitConfig.unitConfig.memorySize = _originUnitData.unitConfig.unitConfig.memorySize + 'Gi';
+  _originUnitData.unitConfig.unitConfig.cpuCount = String(
+    _originUnitData.unitConfig.unitConfig.cpuCount,
+  );
+  return {
+    unitConfig: {
+      unitConfig: _originUnitData.unitConfig.unitConfig,
+      pools: Object.keys(_originUnitData.unitConfig.pools)
+        .map((zone) => ({
+          zone,
+          priority: _originUnitData.unitConfig.pools?.[zone]?.priority,
+          type: 'Full',
+        }))
+        .filter((item) => item.priority || item.priority === 0),
+    },
+  };
 };

@@ -6,7 +6,8 @@ import { request } from '@umijs/max';
 import _ from 'lodash';
 import moment from 'moment';
 
-const clusterPrefix = '/api/v1/obclusters';
+const obClusterPrefix = '/api/v1/obclusters';
+const clusterPrefix = '/api/v1/cluster';
 
 export async function loginReq(body: API.User) {
   return request('/api/v1/login', {
@@ -90,7 +91,7 @@ export async function getNodeLabelsReq() {
 }
 
 export async function getClusterStatisticReq(): Promise<API.StatisticDataResponse> {
-  const r = await request('/api/v1/obclusters/statistic', {
+  const r = await request(`${obClusterPrefix}/statistic`, {
     method: 'GET',
   });
   return {
@@ -100,7 +101,7 @@ export async function getClusterStatisticReq(): Promise<API.StatisticDataRespons
 }
 
 export async function createObclusterReq(body: any) {
-  const r = await request('/api/v1/obclusters', { method: 'POST', data: body });
+  const r = await request(obClusterPrefix, { method: 'POST', data: body });
   if (r.successful && !r.message) {
     r.message = intl.formatMessage({
       id: 'OBDashboard.src.services.OperationSucceededTheClusterIs',
@@ -115,7 +116,7 @@ export async function createObclusterReq(body: any) {
 }
 
 export async function getObclusterListReq() {
-  const r = await request<API.ClusterListResponse>('/api/v1/obclusters', {
+  const r = await request<API.ClusterListResponse>(obClusterPrefix, {
     method: 'GET',
   });
   if (r.successful) {
@@ -142,19 +143,23 @@ export async function getObclusterListReq() {
   return [];
 }
 
-export async function getSimpleClusterList(): Promise<API.SimpleClusterList> {
-  const r = await request<API.ClusterListResponse>('/api/v1/obclusters', {
+export async function getSimpleClusterList(): Promise<API.SimpleClusterListResponse> {
+  const r = await request<API.SimpleClusterListResponse>(obClusterPrefix, {
     method: 'GET',
   });
   if (r.successful) {
-    return r.data.map((clusterDetail) => ({
-      clusterId: clusterDetail.clusterId,
-      name: clusterDetail.name,
-      namespace: clusterDetail.namespace,
-      topology: clusterDetail.topology,
-    }));
-  }
-  return [];
+    return{
+      ...r,
+      data:r.data.map((clusterDetail) => ({
+        clusterId: clusterDetail.clusterId,
+        name: clusterDetail.name,
+        namespace: clusterDetail.namespace,
+        topology: clusterDetail.topology,
+        clusterName: clusterDetail.clusterName
+      }))
+    }
+  };
+  return r;
 }
 
 export async function getClusterDetailReq({
@@ -168,7 +173,7 @@ export async function getClusterDetailReq({
   useFor?: string;
   tenantReplicas?: API.ReplicaDetailType[];
 }) {
-  const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
+  const r = await request(`${obClusterPrefix}/namespace/${ns}/name/${name}`, {
     method: 'GET',
   });
   if (r.successful) {
@@ -186,7 +191,7 @@ export async function upgradeObcluster({
   name: string;
   image: string;
 }) {
-  const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
+  const r = await request(`${obClusterPrefix}/namespace/${ns}/name/${name}`, {
     method: 'POST',
     data: { image },
   });
@@ -208,7 +213,7 @@ export async function scaleObserver({
   replicas: number;
 }) {
   const r = await request(
-    `/api/v1/obclusters/namespace/${namespace}/name/${name}/obzones/${zoneName}/scale`,
+    `${obClusterPrefix}/namespace/${namespace}/name/${name}/obzones/${zoneName}/scale`,
     {
       method: 'POST',
       data: { replicas },
@@ -237,7 +242,7 @@ export async function addObzone({
   nodeSelector: { key: string; value: string }[];
 }) {
   const r = await request(
-    `/api/v1/obclusters/namespace/${namespace}/name/${name}/obzones`,
+    `${obClusterPrefix}/namespace/${namespace}/name/${name}/obzones`,
     { method: 'POST', data: body },
   );
   if (r.successful && !r.message)
@@ -258,7 +263,7 @@ export async function deleteObcluster({
   ns: string;
   name: string;
 }) {
-  const r = await request(`/api/v1/obclusters/namespace/${ns}/name/${name}`, {
+  const r = await request(`${obClusterPrefix}/namespace/${ns}/name/${name}`, {
     method: 'DELETE',
   });
   return {
@@ -278,7 +283,7 @@ export async function deleteObzone({
   zoneName: string;
 }) {
   const r = await request(
-    `/api/v1/obclusters/namespace/${ns}/name/${name}/obzones/${zoneName}`,
+    `${obClusterPrefix}/namespace/${ns}/name/${name}/obzones/${zoneName}`,
     {
       method: 'DELETE',
     },
@@ -420,5 +425,5 @@ export async function getEssentialParameters({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
-  return request(`${clusterPrefix}/${ns}/${name}/essential-parameters`);
+  return request(`${obClusterPrefix}/${ns}/${name}/essential-parameters`);
 }

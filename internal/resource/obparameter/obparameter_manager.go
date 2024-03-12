@@ -24,19 +24,18 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/oceanbase/ob-operator/internal/telemetry"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
-	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
-
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	parameterstatus "github.com/oceanbase/ob-operator/internal/const/status/obparameter"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -58,7 +57,7 @@ func (m *OBParameterManager) GetStatus() string {
 }
 
 func (m *OBParameterManager) InitStatus() {
-	m.Logger.Info("newly created obparameter, init status")
+	m.Logger.Info("Newly created obparameter, init status")
 	status := v1alpha1.OBParameterStatus{
 		Status:    parameterstatus.New,
 		Parameter: make([]apitypes.ParameterValue, 0),
@@ -73,7 +72,7 @@ func (m *OBParameterManager) SetOperationContext(c *tasktypes.OperationContext) 
 func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBParameter.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obparameter status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obparameter status")
 		return tasktypes.NewTaskFlow(m.OBParameter.Status.OperationContext), nil
 	}
 
@@ -81,13 +80,13 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	var taskFlow *tasktypes.TaskFlow
 	var err error
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obparameter status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obparameter status")
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
 		taskFlow, err = task.GetRegistry().Get(fSetOBParameter)
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obparameter")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obparameter")
 		return nil, nil
 	}
 
@@ -128,9 +127,6 @@ func (m *OBParameterManager) retryUpdateStatus() error {
 }
 
 func (m *OBParameterManager) UpdateStatus() error {
-	if m.OBParameter.Status.Status == "Failed" {
-		return nil
-	}
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -142,7 +138,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
 		m.OBParameter.Status.Status = parameterstatus.PendingOB
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("obcluster not in running status, skip compare parameters")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("OBCluster not in running status, skip compare parameters")
 	} else {
 		parameterInfoList, err := operationManager.GetParameter(m.OBParameter.Spec.Parameter.Name, nil)
 		if err != nil {
@@ -219,7 +215,7 @@ func (m *OBParameterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.Tas
 }
 
 func (m *OBParameterManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBParameterManager) SetOBParameter() tasktypes.TaskError {

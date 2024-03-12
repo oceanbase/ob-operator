@@ -18,8 +18,19 @@ export default function New() {
   const [form] = Form.useForm();
   const [passwordVal, setPasswordVal] = useState('');
   const [selectClusterId, setSelectClusterId] = useState<number>();
-
-  const { data: clusterList = [] } = useRequest(getSimpleClusterList);
+  const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  useRequest(getSimpleClusterList, {
+    onSuccess: ({ successful, data }) => {
+      if (successful) {
+        data.forEach((cluster)=>{
+          cluster.topology.forEach((zone)=>{
+            zone.checked = false;
+          })
+        })
+        setClusterList(data);
+      }
+    },
+  });
   const { data: essentialParameterRes,run: getEssentialParameters} = useRequest(
     getEssentialParametersReq,
     {
@@ -118,6 +129,7 @@ export default function New() {
               selectClusterId={selectClusterId}
               essentialParameter={essentialParameter}
               clusterList={clusterList}
+              setClusterList={setClusterList}
             />
           </Col>
           <Col span={24}>

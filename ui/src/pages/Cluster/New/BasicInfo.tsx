@@ -1,30 +1,14 @@
 import { intl } from '@/utils/intl';
 import { PlusOutlined } from '@ant-design/icons';
-import { useRequest, useUpdateEffect } from 'ahooks';
-import {
-  Button,
-  Card,
-  Col,
-  Divider,
-  Form,
-  Input,
-  Row,
-  Select,
-  Tooltip,
-  message,
-} from 'antd';
+import { useRequest } from 'ahooks';
+import { Card, Col, Divider, Form, Input, Row, Select, Tooltip } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
+import PasswordInput from '@/components/PasswordInput';
 import AddNSModal from '@/components/customModal/AddNSModal';
 import { getNameSpaces } from '@/services';
-import copy from 'copy-to-clipboard';
 import { useState } from 'react';
-import PasswordInput from '@/components/PasswordInput';
-import {
-  generateRandomPassword,
-  passwordRules,
-  resourceNameRule,
-} from './helper';
+import { resourceNameRule } from './helper';
 import styles from './index.less';
 
 interface BasicInfoProps {
@@ -41,12 +25,34 @@ export default function BasicInfo({
   // control the modal for adding a new namespace
   const [visible, setVisible] = useState(false);
   const { data, run: getNS } = useRequest(getNameSpaces);
+  const CLUSTER_MODE = [
+    {
+      value: 'NORMAL',
+      label: intl.formatMessage({
+        id: 'Dashboard.Cluster.New.BasicInfo.RegularMode',
+        defaultMessage: '常规模式',
+      }),
+    },
+    {
+      value: 'STANDLONE',
+      label: intl.formatMessage({
+        id: 'Dashboard.Cluster.New.BasicInfo.MonomerMode',
+        defaultMessage: '单体模式',
+      }),
+    },
+    {
+      value: 'SERVICE',
+      label: intl.formatMessage({
+        id: 'Dashboard.Cluster.New.BasicInfo.ServiceMode',
+        defaultMessage: 'Service模式',
+      }),
+    },
+  ];
 
   const filterOption = (
     input: string,
     option: { label: string; value: string },
   ) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
-
 
   const DropDownComponent = (menu: any) => {
     return (
@@ -69,11 +75,11 @@ export default function BasicInfo({
     );
   };
 
-  const addNSCallback = (newNS:string)=>{
-    form.setFieldValue('namespace',newNS)
-    form.validateFields(['namespace'])
-    getNS()
-  }
+  const addNSCallback = (newNS: string) => {
+    form.setFieldValue('namespace', newNS);
+    form.validateFields(['namespace']);
+    getNS();
+  };
 
   return (
     <Col span={24}>
@@ -119,12 +125,12 @@ export default function BasicInfo({
             </Form.Item>
           </Col>
           <Col span={8} style={{ height: 48 }}>
-              <PasswordInput 
-                value={passwordVal}
-                onChange={setPasswordVal}
-                form={form}
-                name='rootPassword'
-              />
+            <PasswordInput
+              value={passwordVal}
+              onChange={setPasswordVal}
+              form={form}
+              name="rootPassword"
+            />
           </Col>
           <Col span={8} style={{ height: 48 }}>
             <Tooltip
@@ -188,6 +194,32 @@ export default function BasicInfo({
                   id: 'OBDashboard.Cluster.New.BasicInfo.EnterAClusterName',
                   defaultMessage: '请输入集群名',
                 })}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item
+              label={intl.formatMessage({
+                id: 'Dashboard.Cluster.New.BasicInfo.ClusterMode',
+                defaultMessage: '集群模式',
+              })}
+              name="mode"
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'Dashboard.Cluster.New.BasicInfo.SelectClusterMode',
+                    defaultMessage: '请选择集群模式',
+                  }),
+                },
+              ]}
+            >
+              <Select
+                placeholder={intl.formatMessage({
+                  id: 'Dashboard.Cluster.New.BasicInfo.PleaseSelect',
+                  defaultMessage: '请选择',
+                })}
+                options={CLUSTER_MODE}
               />
             </Form.Item>
           </Col>

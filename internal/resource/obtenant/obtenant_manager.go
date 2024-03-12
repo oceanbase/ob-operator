@@ -171,8 +171,6 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
-	} else if m.OBTenant.Status.Status == "Failed" {
-		return nil
 	} else {
 		// build tenant status from DB
 		tenantStatusCurrent, err := m.buildTenantStatus()
@@ -188,7 +186,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 		}
 		m.OBTenant.Status.Status = nextStatus
 	}
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update obtenant status", "status", m.OBTenant.Status, "operation context", m.OBTenant.Status.OperationContext)
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obtenant status")
@@ -276,11 +274,11 @@ func (m *OBTenantManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBTenant.Status.OperationContext != nil {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("get task flow from obtenant status")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obtenant status")
 		return tasktypes.NewTaskFlow(m.OBTenant.Status.OperationContext), nil
 	}
 
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obtenant status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obtenant status")
 	var taskFlow *tasktypes.TaskFlow
 	var err error
 
@@ -316,7 +314,7 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when deleting tenant")
 		taskFlow, err = task.GetRegistry().Get(fDeleteTenant)
 	case tenantstatus.PausingReconcile:
-		m.Logger.Error(errors.New("obtenant pause reconcile"),
+		m.Logger.Error(errors.New("Obtenant pause reconcile"),
 			"obtenant pause reconcile, please set status to running after manually resolving problem")
 		return nil, nil
 	case tenantstatus.Restoring:
@@ -326,7 +324,7 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case tenantstatus.CreatingEmptyStandby:
 		taskFlow, err = task.GetRegistry().Get(fCreateEmptyStandbyTenant)
 	default:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("no need to run anything for obtenant")
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obtenant")
 		return nil, nil
 	}
 
@@ -345,7 +343,7 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *OBTenantManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBTenantManager) ArchiveResource() {
@@ -402,27 +400,22 @@ func (m *OBTenantManager) NextStatus() (string, error) {
 	}
 	hasModifiedLocality := m.hasModifiedLocality()
 	if hasModifiedLocality {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant locality modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingLocality, nil
 	}
 	hasModifiedPriority := m.hasModifiedPrimaryZone()
 	if hasModifiedPriority {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant PrimaryZone modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingPrimaryZone, nil
 	}
 	hasModifiedTcpInvitedNode := m.hasModifiedWhiteList()
 	if hasModifiedTcpInvitedNode {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant WhiteList modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingWhiteList, nil
 	}
 	hasModifiedCharset := m.hasModifiedCharset()
 	if hasModifiedCharset {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant charset modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingCharset, nil
 	}
 	hasModifiedUnitNum := m.hasModifiedUnitNum()
 	if hasModifiedUnitNum {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant unitNum modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingUnitNum, nil
 	}
 	hasModifiedUnitConfig, err := m.hasModifiedUnitConfig()
@@ -430,7 +423,6 @@ func (m *OBTenantManager) NextStatus() (string, error) {
 		return tenantstatus.Running, err
 	}
 	if hasModifiedUnitConfig {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant UnitConfig modified", "tenantName", tenantName)
 		return tenantstatus.MaintainingUnitConfig, nil
 	}
 	return tenantstatus.Running, nil

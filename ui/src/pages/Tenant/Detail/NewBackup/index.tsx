@@ -85,7 +85,7 @@ export default function NewBackup() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button key="submit" onClick={() => form.submit()}>
+        <Button key="submit" type='primary' onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'Dashboard.Detail.NewBackup.Submit',
             defaultMessage: '提交',
