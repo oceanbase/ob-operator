@@ -1,7 +1,8 @@
+import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
+import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
-import InputNumber from '@/components/InputNumber';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
@@ -68,6 +69,13 @@ export default function BasicInfo({
                   defaultMessage: '请输入资源名',
                 }),
               },
+              {
+                pattern: RESOURCE_NAME_REG,
+                message: intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.BasicInfo.ResourceNamesCanOnlyConsist',
+                  defaultMessage: '资源名只能由小写字母和 - 组成',
+                }),
+              },
             ]}
             label={intl.formatMessage({
               id: 'Dashboard.Tenant.New.BasicInfo.ResourceName',
@@ -90,6 +98,13 @@ export default function BasicInfo({
                 message: intl.formatMessage({
                   id: 'Dashboard.Tenant.New.BasicInfo.EnterATenantName',
                   defaultMessage: '请输入租户名',
+                }),
+              },
+              {
+                pattern: TZ_NAME_REG,
+                message: intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.BasicInfo.TheFirstCharacterMustBe',
+                  defaultMessage: '首字符必须是字母或者下划线，不能包含 -',
                 }),
               },
             ]}
@@ -142,10 +157,10 @@ export default function BasicInfo({
           </Form.Item>
         </Col>
         {/* <Col span={8}>
-           <Form.Item name={["charset"]} label="字符集">
-             <Select />
-           </Form.Item>
-          </Col> */}
+            <Form.Item name={["charset"]} label="字符集">
+              <Select />
+            </Form.Item>
+           </Col> */}
       </Row>
     </Card>
   );

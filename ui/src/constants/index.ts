@@ -58,6 +58,12 @@ const MINIMAL_CONFIG = {
   redoLog: 30,
 };
 
+const RESULT_STATUS = ['running','failed'];
+
+const RESOURCE_NAME_REG = /^[a-z\-]+$/;
+// use for tenant name or zone name
+const TZ_NAME_REG =  /^[_a-zA-Z][^-\n]*$/;
+
 export {
   BADGE_IMG_MAP,
   CLUSTER_IMG_MAP,
@@ -71,4 +77,7 @@ export {
   STATUS,
   SUFFIX_UNIT,
   ZONE_IMG_MAP,
+  RESULT_STATUS,
+  RESOURCE_NAME_REG,
+  TZ_NAME_REG
 };

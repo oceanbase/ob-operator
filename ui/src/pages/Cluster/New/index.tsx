@@ -52,6 +52,7 @@ export default function New() {
     }
   };
   const initialValues = {
+    mode:'NORMAL',
     topology: [
       {
         zone: 'zone1',

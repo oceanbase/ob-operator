@@ -1,21 +1,22 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME } from '@/constants';
+import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { getEssentialParameters as getEssentialParametersReq,getSimpleClusterList } from '@/services';
 import {
-  deleteTenent,
-  getBackupJobs,
-  getBackupPolicy,
-  getTenant,
+deleteTenent,
+getBackupJobs,
+getBackupPolicy,
+getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Tooltip, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Button,Row,Tooltip,message } from 'antd';
+import { useEffect,useRef,useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -37,6 +38,25 @@ export default function TenantOverview() {
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const [[ns, name]] = useState(getNSName());
+  const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  useRequest(getSimpleClusterList, {
+    onSuccess: ({ successful, data }) => {
+      if (successful) {
+        data.forEach((cluster)=>{
+          cluster.topology.forEach((zone)=>{
+            zone.checked = false;
+          })
+        })
+        setClusterList(data);
+      }
+    },
+  });
+  const { data: essentialParameterRes,run: getEssentialParameters} = useRequest(
+    getEssentialParametersReq,
+    {
+      manual: true,
+    },
+  );
 
   const openOperateModal = (type: API.ModalType) => {
     modalType.current = type;
@@ -67,7 +87,7 @@ export default function TenantOverview() {
         if (data.info.unitNumber) {
           setDefaultUnitCount(data.info.unitNumber);
         }
-        if (data.info.status !== 'running') {
+        if (!RESULT_STATUS.includes(data.info.status)) {
           timerRef.current = setTimeout(() => {
             reGetTenantDetail();
           }, REFRESH_TENANT_TIME);
@@ -88,7 +108,7 @@ export default function TenantOverview() {
   const tenantDetail = tenantDetailResponse?.data;
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
-
+  const essentialParameter = essentialParameterRes?.data;
   const operateListConfig: OperateItemConfigType[] = [
     {
       text: intl.formatMessage({
@@ -208,6 +228,23 @@ export default function TenantOverview() {
       ],
     };
   };
+  const formatClustersTopology = (
+    clusters: API.SimpleClusterList,
+    tenantDetail: API.TenantBasicInfo | undefined,
+  ) => {
+    if (!tenantDetail) return clusters;
+    const { clusterName } = tenantDetail.info;
+    const { replicas } = tenantDetail;
+    const cluster = clusters.find(
+      (cluster) => cluster.clusterName === clusterName,
+    );
+    if (cluster && cluster.topology) {
+      cluster.topology = cluster.topology.filter((zone) =>
+        replicas?.find((item) => item.zone === zone.zone),
+      );
+    }
+    return clusters;
+  };
 
   useEffect(() => {
     getTenantDetail({ ns, name });
@@ -218,6 +255,21 @@ export default function TenantOverview() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (tenantDetail && clusterList) {
+      const cluster = clusterList.find(
+        (cluster) => cluster.clusterName === tenantDetail.info.clusterName,
+      );
+      if (cluster) {
+        const { name, namespace } = cluster;
+        getEssentialParameters({
+          ns: namespace,
+          name,
+        });
+      }
+    }
+  }, [clusterList, tenantDetail]);
 
   return (
     <div id="tenant-detail-container" className={styles.tenantContainer}>
@@ -231,7 +283,11 @@ export default function TenantOverview() {
             <Replicas replicaList={tenantDetail.replicas} />
           )}
 
-          <EventsTable defaultExpand={true} objectType="OBTENANT" collapsible={true} />
+          <EventsTable
+            defaultExpand={true}
+            objectType="OBTENANT"
+            collapsible={true}
+          />
           <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 
@@ -241,6 +297,12 @@ export default function TenantOverview() {
           setVisible={setOperateModalVisible}
           successCallback={operateSuccess}
           defaultValue={defaultUnitCount}
+          defaultValueForUnitDetail={{
+            clusterList:formatClustersTopology(clusterList,tenantDetail),
+            essentialParameter,
+            clusterName:tenantDetail?.info.clusterName,
+            setClusterList,
+          }}
         />
       </PageContainer>
     </div>

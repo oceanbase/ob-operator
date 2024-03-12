@@ -6,7 +6,7 @@ import { useEffect,useRef,useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
-import { REFRESH_TENANT_TIME } from '@/constants';
+import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
 
@@ -29,7 +29,7 @@ export default function TenantPage() {
       onSuccess: ({ data, successful }) => {
         if (successful) {
           const operatingTenant = data.find(
-            (tenant) => tenant.status !== 'running',
+            (tenant) => !RESULT_STATUS.includes(tenant.status),
           );
           if (operatingTenant) {
             timerRef.current = setTimeout(() => {

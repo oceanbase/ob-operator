@@ -69,6 +69,7 @@ declare namespace API {
     statusDetail: string;
     rootService: string;
     observers: Server[];
+    checked?: boolean;
   };
 
   type ClusterItem = {
@@ -81,10 +82,15 @@ declare namespace API {
 
   type SimpleClusterList = {
     name: string;
+    clusterName: string;
     clusterId: number;
     namespace: string;
     topology: Topology[];
   }[];
+
+  interface SimpleClusterListResponse extends CommonResponse {
+    data: SimpleClusterList;
+  }
 
   type ClusterList = ClusterItem[];
 
@@ -378,15 +384,6 @@ declare namespace API {
 
   type UnitNumber = {
     unitNum: number;
-  };
-
-  type UnitConfig = {
-    iopsWeight: number;
-    logDiskSize: string;
-    maxIops: number;
-    memorySize: string;
-    cpuCount: number;
-    minIops: number;
   };
 
   type PatchTenantConfiguration = {

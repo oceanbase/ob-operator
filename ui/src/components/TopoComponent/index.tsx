@@ -14,6 +14,7 @@ import { deleteObcluster, deleteObzone, getClusterDetailReq } from '@/services';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode, config } from './G6register';
 import type { OperateTypeLabel } from './constants';
+import { RESULT_STATUS } from '@/constants';
 import {
   clusterOperate,
   clusterOperateOfTenant,
@@ -223,7 +224,7 @@ export default function TopoComponent({
   useUpdateEffect(() => {
     let checkStatusTimer: NodeJS.Timer;
     //polling
-    if (originTopoData.topoData.status !== 'running') {
+    if (!RESULT_STATUS.includes(originTopoData.topoData.status)) {
       if (!operateDisable) setOperateDisable(true);
       checkStatusTimer = setInterval(() => {
         getTopoData({ ns, name, useFor: 'topo', tenantReplicas });

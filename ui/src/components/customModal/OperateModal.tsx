@@ -13,12 +13,14 @@ import ModifyUnitDetailModal from './ModifyUnitDetailModal';
 interface OperateModalProps {
   type: API.ModalType;
   zoneName?: any;
-  defaultValue?: number;
+  defaultValue?: any;
   disabled?: boolean;
+  defaultValueForUnitDetail?: any;
 }
 
 export default function OperateModal({
   type,
+  defaultValueForUnitDetail,
   ...props
 }: OperateModalProps & CommonModalType) {
   if (type === 'addZone') {
@@ -52,7 +54,7 @@ export default function OperateModal({
   }
 
   if(type === 'modifyUnitSpecification'){
-    return <ModifyUnitDetailModal {...props} />
+    return <ModifyUnitDetailModal {...defaultValueForUnitDetail} {...props} />
   }
 
   if(type === 'changeUnitCount'){
