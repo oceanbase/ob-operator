@@ -117,7 +117,8 @@ function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
   let targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
   if (targetZone) {
     return {
-      cpuCount: targetZone.cpuCount,
+      maxCPU: targetZone.maxCPU,
+      minCPU: targetZone.minCPU,
       memorySize: targetZone.memorySize,
       minIops: targetZone.minIops,
       maxIops: targetZone.maxIops,
