@@ -31,7 +31,7 @@ func PrepareOBServerForBootstrap() *tasktypes.TaskFlow {
 func MaintainOBServerAfterBootstrap() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fPrepareOBServerForBootstrap,
+			Name:         fMaintainOBServerAfterBootstrap,
 			Tasks:        []tasktypes.TaskName{tWaitOBClusterBootstrapped, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
