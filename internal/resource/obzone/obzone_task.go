@@ -109,7 +109,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
-	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterConnection)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -151,7 +151,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		if migrateAnnoExist {
-			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterConnection] = migrateAnnoVal
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
 		m.Logger.Info("create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)

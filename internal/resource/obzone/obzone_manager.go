@@ -55,7 +55,7 @@ func (m *OBZoneManager) GetStatus() string {
 
 func (m *OBZoneManager) InitStatus() {
 	m.Logger.Info("newly created zone, init status")
-	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterConnection)
+	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	initialStatus := zonestatus.New
 	if migrateAnnoExist {
 		initialStatus = zonestatus.MigrateFromExisting

@@ -76,7 +76,7 @@ const (
 	AnnotationsIndependentPVCLifecycle = "oceanbase.oceanbase.com/independent-pvc-lifecycle"
 	AnnotationsSinglePVC               = "oceanbase.oceanbase.com/single-pvc"
 	AnnotationsMode                    = "oceanbase.oceanbase.com/mode"
-	AnnotationsSourceClusterConnection = "oceanbase.oceanbase.com/source-cluster-address"
+	AnnotationsSourceClusterAddress    = "oceanbase.oceanbase.com/source-cluster-address"
 )
 
 const (
@@ -174,4 +174,9 @@ const (
 
 const (
 	TolerateServerPodNotReadyMinutes = 5
+)
+
+const (
+	ClusterNameParam = "cluster"
+	ClusterIdParam   = "cluster_id"
 )

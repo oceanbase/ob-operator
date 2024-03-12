@@ -51,12 +51,13 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 
 func GetSysOperationClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster) (*operation.OceanbaseOperationManager, error) {
 	logger.V(oceanbaseconst.LogLevelTrace).Info("Get cluster sys client", "obCluster", obcluster)
-	_, migrateAnnoExist := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterConnection)
-	manager, err := getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
-	if err != nil {
-		if migrateAnnoExist && obcluster.Status.Status == clusterstatus.MigrateFromExisting {
-			manager, err = getSysClientFromSourceCluster(c, logger, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
-		}
+	var manager *operation.OceanbaseOperationManager
+	var err error
+	_, migrateAnnoExist := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterAddress)
+	if migrateAnnoExist && obcluster.Status.Status == clusterstatus.MigrateFromExisting {
+		manager, err = getSysClientFromSourceCluster(c, logger, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
+	} else {
+		manager, err = getSysClient(c, logger, obcluster, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Operator)
 	}
 	return manager, err
 }
@@ -110,12 +111,16 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 }
 
 func getSysClientFromSourceCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
+	sysClient, err := getSysClient(c, logger, obcluster, userName, tenantName, secretName)
+	if err == nil {
+		return sysClient, err
+	}
 	password, err := ReadPassword(c, obcluster.Namespace, secretName)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Read password to get oceanbase operation manager of cluster %s", obcluster.Name)
 	}
 	// when obcluster is under migrating, use address from annotation
-	migrateAnnoVal, _ := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterConnection)
+	migrateAnnoVal, _ := GetAnnotationField(obcluster, oceanbaseconst.AnnotationsSourceClusterAddress)
 	servers := strings.Split(migrateAnnoVal, ";")
 	for _, server := range servers {
 		addressParts := strings.Split(server, ":")

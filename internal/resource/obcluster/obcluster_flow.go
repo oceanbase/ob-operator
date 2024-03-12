@@ -22,7 +22,7 @@ func MigrateOBClusterFromExisting() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMigrateOBClusterFromExisting,
-			Tasks:        []tasktypes.TaskName{tCheckImageReady, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning},
+			Tasks:        []tasktypes.TaskName{tCheckMigration, tCheckImageReady, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
 			TargetStatus: clusterstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,

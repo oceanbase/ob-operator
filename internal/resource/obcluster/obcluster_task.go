@@ -162,7 +162,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
-	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterConnection)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -210,7 +210,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		if migrateAnnoExist {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterConnection] = migrateAnnoVal
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
 		m.Logger.Info("create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
@@ -1012,6 +1012,49 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 			m.PrintErrEvent(err)
 			return err
 		}
+	}
+	return nil
+}
+
+// check obcluster name and id
+// check obzone exists in topology
+func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
+	m.Logger.Info("check before migration")
+	manager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "get operation manager")
+	}
+	obzoneList, err := manager.ListZones()
+	if err != nil {
+		return errors.Wrap(err, "list obzones")
+	}
+	for _, obzone := range obzoneList {
+		found := false
+		for _, zone := range m.OBCluster.Spec.Topology {
+			if obzone.Name == zone.Zone {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.Errorf("obzone %s not in obcluster's topology", obzone.Name)
+		}
+	}
+	obclusterNameParamList, err := manager.GetParameter(oceanbaseconst.ClusterNameParam, nil)
+	if err != nil {
+		return errors.Wrap(err, "get obcluster name failed")
+	}
+	obclusterName := obclusterNameParamList[0].Value
+	obclusterIdParamList, err := manager.GetParameter(oceanbaseconst.ClusterIdParam, nil)
+	if err != nil {
+		return errors.Wrap(err, "get obcluster id failed")
+	}
+	obclusterId := obclusterIdParamList[0].Value
+	if obclusterName != m.OBCluster.Spec.ClusterName {
+		return errors.Errorf("Cluster name mismatch, source cluster: %s, current: %s", obclusterName, m.OBCluster.Spec.ClusterName)
+	}
+	if obclusterId != fmt.Sprintf("%d", m.OBCluster.Spec.ClusterId) {
+		return errors.Errorf("Cluster id mismatch, source cluster: %s, current: %d", obclusterId, m.OBCluster.Spec.ClusterId)
 	}
 	return nil
 }

@@ -54,7 +54,7 @@ func (m *OBClusterManager) GetStatus() string {
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("newly created cluster, init status")
 	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
-	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterConnection)
+	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
 	initialStatus := clusterstatus.New
 	if migrateAnnoExist {
 		initialStatus = clusterstatus.MigrateFromExisting
@@ -287,6 +287,8 @@ func (m *OBClusterManager) HandleFailure() {
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCheckMigration:
+		return m.CheckMigration, nil
 	case tCheckImageReady:
 		return m.CheckImageReady, nil
 	case tCheckClusterMode:
