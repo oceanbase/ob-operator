@@ -13,7 +13,8 @@ See the Mulan PSL v2 for more details.
 package response
 
 type DashboardInfo struct {
-	AppName   string `json:"appName"`
-	Version   string `json:"version"`
-	PublicKey string `json:"publicKey"`
+	AppName          string `json:"appName"`
+	Version          string `json:"version"`
+	PublicKey        string `json:"publicKey"`
+	ReportStatistics bool   `json:"reportStatistics"`
 }

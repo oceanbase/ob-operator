@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -24,7 +24,6 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/store"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
@@ -53,9 +52,10 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 		return nil, err
 	}
 	return &response.DashboardInfo{
-		AppName:   "oceanbase-dashboard",
-		Version:   strings.Join([]string{Version, CommitHash, BuildTime}, "-"),
-		PublicKey: string(pubBytes),
+		AppName:          "oceanbase-dashboard",
+		Version:          strings.Join([]string{Version, CommitHash, BuildTime}, "-"),
+		PublicKey:        string(pubBytes),
+		ReportStatistics: os.Getenv("DISABLE_REPORT_STATISTICS") != "true",
 	}, nil
 }
 
@@ -73,22 +73,6 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 // @Security ApiKeyAuth
 func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData := response.StatisticData{}
-	telemetryIpKey := fmt.Sprintf("get-telemetry-data:%s", c.RemoteIP())
-	shouldFetch := true
-
-	latestFetchTime, ok := store.GetCache().Load(telemetryIpKey)
-	if ok {
-		if timestamp, ok := latestFetchTime.(int64); ok {
-			latestFetchedAt := time.Unix(timestamp, 0)
-			if latestFetchedAt.Add(10 * time.Minute).After(time.Now()) {
-				shouldFetch = false
-			}
-		}
-	}
-	if !shouldFetch {
-		return nil, nil
-	}
-
 	clusterList := v1alpha1.OBClusterList{}
 	err := oceanbase.ClusterClient.List(c, corev1.NamespaceAll, &clusterList, metav1.ListOptions{})
 	if err != nil {
@@ -167,7 +151,6 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData.Version = Version
 
 	currentTime := time.Now()
-	store.GetCache().Store(telemetryIpKey, currentTime.Unix())
 
 	return &response.StatisticDataResponse{
 		Component: telemetry.TelemetryComponentDashboard,
