@@ -169,8 +169,6 @@ func (m ObTenantRestoreManager) UpdateStatus() error {
 		if err != nil {
 			return err
 		}
-	} else if m.Resource.Status.Status == apitypes.RestoreJobStatus("Failed") {
-		return nil
 	}
 	return m.retryUpdateStatus()
 }
@@ -230,7 +228,7 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m ObTenantRestoreManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *ObTenantRestoreManager) ArchiveResource() {

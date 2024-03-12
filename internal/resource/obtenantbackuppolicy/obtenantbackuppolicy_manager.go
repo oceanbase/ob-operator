@@ -160,17 +160,27 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
-	if m.BackupPolicy.Status.Status == apitypes.BackupPolicyStatusType("Failed") {
-		return nil
-	}
 	if m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusPausing
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
-	} else if m.IsDeleting() && (m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning || m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused) {
-		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
-		m.BackupPolicy.Status.OperationContext = nil
+	} else if m.IsDeleting() {
+		switch m.BackupPolicy.Status.Status {
+		case constants.BackupPolicyStatusPaused,
+			constants.BackupPolicyStatusRunning,
+			constants.BackupPolicyStatusMaintaining,
+			constants.BackupPolicyStatusPausing,
+			constants.BackupPolicyStatusPrepared,
+			constants.BackupPolicyStatusResuming:
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusDeleting
+			m.BackupPolicy.Status.OperationContext = nil
+		case constants.BackupPolicyStatusDeleting:
+			// do nothing
+		default:
+			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusStopped
+			m.BackupPolicy.Status.OperationContext = nil
+		}
 	} else if m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		if m.BackupPolicy.GetGeneration() > m.BackupPolicy.Status.ObservedGeneration {
 			m.BackupPolicy.Status.Status = constants.BackupPolicyStatusMaintaining
@@ -367,7 +377,7 @@ func (m *ObTenantBackupPolicyManager) HandleFailure() {
 }
 
 func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.BackupPolicy, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *ObTenantBackupPolicyManager) ArchiveResource() {

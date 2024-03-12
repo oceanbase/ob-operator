@@ -242,7 +242,7 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *ObTenantOperationManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *ObTenantOperationManager) retryUpdateStatus() error {
@@ -274,7 +274,7 @@ func (m *ObTenantOperationManager) getTenantCR(tenantCRName string) (*v1alpha1.O
 
 func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.OBTenant) {
 	meta := tenant.GetObjectMeta()
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("appendOwnerTenantReference", "tenant", tenant, "metadata", meta)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Append owner tenant reference", "tenant", tenant, "metadata", meta)
 	owners := make([]metav1.OwnerReference, 0)
 	if m.Resource.OwnerReferences != nil {
 		owners = append(owners, m.Resource.OwnerReferences...)

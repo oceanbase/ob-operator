@@ -72,7 +72,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 			allMatched := true
 			for _, observerStatus := range obzone.Status.OBServerStatus {
 				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("server status still not matched", "server", observerStatus.Server, "status", status)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Server status still not matched", "server", observerStatus.Server, "status", status)
 					allMatched = false
 					break
 				}
@@ -88,7 +88,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 }
 
 func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
-	m.Logger.Info("create observers")
+	m.Logger.Info("Create observers")
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
@@ -148,7 +148,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 		if modeAnnoExist {
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
-		m.Logger.Info("create observer", "server", serverName)
+		m.Logger.Info("Create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)
 		if err != nil {
 			m.Logger.Error(err, "create observer failed", "server", serverName)
@@ -160,7 +160,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 }
 
 func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("delete observers")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Delete observers")
 	observerList, err := m.listOBServers()
 	if err != nil {
 		m.Logger.Error(err, "List observers failed")
@@ -173,7 +173,7 @@ func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
 			continue
 		}
 		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
-			m.Logger.Info("delete observer", "observer", observer)
+			m.Logger.Info("Delete observer", "observer", observer)
 			err = m.Client.Delete(m.Ctx, &observer)
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
@@ -188,14 +188,14 @@ func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
 
 // TODO refactor Delete observer method together
 func (m *OBZoneManager) DeleteAllOBServer() tasktypes.TaskError {
-	m.Logger.Info("delete all observers")
+	m.Logger.Info("Delete all observers")
 	observerList, err := m.listOBServers()
 	if err != nil {
 		m.Logger.Error(err, "List observers failed")
 		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
 	}
 	for _, observer := range observerList.Items {
-		m.Logger.Info("need delete observer", "observer", observer.Name)
+		m.Logger.Info("Need to delete observer", "observer", observer.Name)
 		err = m.Client.Delete(m.Ctx, &observer)
 		if err != nil {
 			return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
@@ -211,11 +211,11 @@ func (m *OBZoneManager) WaitReplicaMatch() tasktypes.TaskError {
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
 		} else if m.OBZone.Spec.Topology.Replica == len(obzone.Status.OBServerStatus) {
-			m.Logger.Info("Obzone replica matched")
+			m.Logger.Info("OBZone replica matched")
 			matched = true
 			break
 		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Zone replica not match", "desired replica", m.OBZone.Spec.Topology.Replica, "current replica", len(m.OBZone.Status.OBServerStatus))
 		}
 		time.Sleep(time.Second * 1)
 	}
@@ -233,7 +233,7 @@ func (m *OBZoneManager) WaitOBServerDeleted() tasktypes.TaskError {
 			m.Logger.Error(err, "Get obzone from K8s failed")
 		}
 		if 0 == len(obzone.Status.OBServerStatus) {
-			m.Logger.Info("observer all deleted")
+			m.Logger.Info("OBServer all deleted")
 			matched = true
 			break
 		}
@@ -284,7 +284,7 @@ func (m *OBZoneManager) UpgradeOBServer() tasktypes.TaskError {
 			return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
 		}
 		for _, observer := range observerList.Items {
-			m.Logger.Info("upgrade observer", "observer", observer.Name)
+			m.Logger.Info("Upgrade observer", "observer", observer.Name)
 			observer.Spec.OBServerTemplate.Image = m.OBZone.Spec.OBServerTemplate.Image
 			err = m.Client.Update(m.Ctx, &observer)
 			if err != nil {
@@ -339,7 +339,7 @@ func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
 	for _, observer := range observerList.Items {
 		if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
 			observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
-			m.Logger.Info("scale up observer", "observer", observer.Name)
+			m.Logger.Info("Scale up observer", "observer", observer.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
 				observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
