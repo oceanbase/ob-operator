@@ -41,13 +41,13 @@ func LoginRequired() gin.HandlerFunc {
 		}
 
 		username := session.Get("username").(string)
-		// _, exist := store.GetCache().Load(username)
-		// if !exist {
-		// 	c.AbortWithStatusJSON(401, gin.H{
-		// 		"message": "login required",
-		// 	})
-		// 	return
-		// }
+		_, exist := store.GetCache().Load(username)
+		if !exist {
+			c.AbortWithStatusJSON(401, gin.H{
+				"message": "login required",
+			})
+			return
+		}
 
 		expr := session.Get("expiration")
 		if expr == nil || expr.(int64) < 0 {
