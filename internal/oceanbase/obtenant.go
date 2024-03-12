@@ -21,6 +21,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
 )
 
 func CreateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
@@ -77,6 +78,21 @@ func UpdateTenantBackupPolicy(ctx context.Context, policy *v1alpha1.OBTenantBack
 
 func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
 	return BackupPolicyClient.Delete(ctx, nn.Namespace, nn.Name, metav1.DeleteOptions{})
+}
+
+func ForceDeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
+	_, err := RescueClient.Create(ctx, &v1alpha1.OBResourceRescue{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "force-delete-",
+		},
+		Spec: v1alpha1.OBResourceRescueSpec{
+			TargetKind:    schema.OBTenantBackupPolicyKind,
+			TargetResName: nn.Name,
+			Type:          "delete",
+			Namespace:     nn.Namespace,
+		},
+	}, metav1.CreateOptions{})
+	return err
 }
 
 func ListBackupJobs(ctx context.Context, listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {

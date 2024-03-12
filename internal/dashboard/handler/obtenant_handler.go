@@ -474,6 +474,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
+// @Param force query string false "force delete" default(false)
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [DELETE]
 // @Security ApiKeyAuth
 func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
@@ -485,7 +486,7 @@ func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
 	err = oceanbase.DeleteTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
-	})
+	}, c.Query("force") == "true")
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

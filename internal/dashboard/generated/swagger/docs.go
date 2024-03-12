@@ -634,6 +634,65 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/metrics/telemetry": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "get telemetry data",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Metric"
+                ],
+                "summary": "get telemetry data",
+                "operationId": "GetTelemetryData",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.TelemetryReportResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obclusters": {
             "get": {
                 "security": [
@@ -2015,6 +2074,13 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "default": "false",
+                        "description": "force delete",
+                        "name": "force",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -2529,6 +2595,366 @@ const docTemplate = `{
                 }
             }
         },
+        "models.K8sEvent": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "firstTimestamp": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "lastTimestamp": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "resourceName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OBBackupPolicy": {
+            "type": "object",
+            "properties": {
+                "archiveDestType": {
+                    "type": "string"
+                },
+                "archiveSwitchPieceInterval": {
+                    "type": "string"
+                },
+                "bakDataDestType": {
+                    "type": "string"
+                },
+                "bakDataFullCrontab": {
+                    "type": "string"
+                },
+                "bakDataIncrCrontab": {
+                    "type": "string"
+                },
+                "encryptBakData": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "runningFlow": {
+                    "type": "string"
+                },
+                "runningTask": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "taskStatus": {
+                    "type": "string"
+                },
+                "tenantCR": {
+                    "type": "string"
+                },
+                "tenantName": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OBCluster": {
+            "type": "object",
+            "properties": {
+                "clusterId": {
+                    "type": "integer"
+                },
+                "clusterMode": {
+                    "type": "string"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "configuredBackupVolume": {
+                    "type": "boolean"
+                },
+                "configuredMonitor": {
+                    "type": "boolean"
+                },
+                "cpu": {
+                    "type": "integer"
+                },
+                "dataStorage": {
+                    "$ref": "#/definitions/models.StorageSpec"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "independentPVC": {
+                    "type": "boolean"
+                },
+                "memory": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "redoLogStorage": {
+                    "$ref": "#/definitions/models.StorageSpec"
+                },
+                "runningFlow": {
+                    "type": "string"
+                },
+                "runningTask": {
+                    "type": "string"
+                },
+                "singlePVC": {
+                    "type": "boolean"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "sysLogStorage": {
+                    "$ref": "#/definitions/models.StorageSpec"
+                },
+                "taskStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBZoneStatus"
+                    }
+                }
+            }
+        },
+        "models.OBServer": {
+            "type": "object",
+            "properties": {
+                "clusterCR": {
+                    "type": "string"
+                },
+                "clusterId": {
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "cni": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "podIPHash": {
+                    "type": "string"
+                },
+                "podPhase": {
+                    "type": "string"
+                },
+                "runningFlow": {
+                    "type": "string"
+                },
+                "runningTask": {
+                    "type": "string"
+                },
+                "serviceIPHash": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "taskStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "zoneName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OBTenant": {
+            "type": "object",
+            "properties": {
+                "archiveDestType": {
+                    "type": "string"
+                },
+                "bakDataDestType": {
+                    "type": "string"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "primaryTenant": {
+                    "type": "string"
+                },
+                "runningFlow": {
+                    "type": "string"
+                },
+                "runningTask": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "taskStatus": {
+                    "type": "string"
+                },
+                "tenantName": {
+                    "type": "string"
+                },
+                "tenantRole": {
+                    "type": "string"
+                },
+                "topology": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBTenantResourcePool"
+                    }
+                },
+                "uid": {
+                    "type": "string"
+                },
+                "unitNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "models.OBTenantResourcePool": {
+            "type": "object",
+            "properties": {
+                "IOPSWeight": {
+                    "type": "integer"
+                },
+                "logDiskSize": {
+                    "type": "integer"
+                },
+                "maxCPU": {
+                    "type": "integer"
+                },
+                "maxIOPS": {
+                    "type": "integer"
+                },
+                "memorySize": {
+                    "type": "integer"
+                },
+                "minCPU": {
+                    "type": "integer"
+                },
+                "minIOPS": {
+                    "type": "integer"
+                },
+                "priority": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "unitNumber": {
+                    "type": "integer"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OBZone": {
+            "type": "object",
+            "properties": {
+                "clusterCR": {
+                    "type": "string"
+                },
+                "clusterId": {
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "runningFlow": {
+                    "type": "string"
+                },
+                "runningTask": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "taskStatus": {
+                    "type": "string"
+                },
+                "uid": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.OBZoneStatus": {
+            "type": "object",
+            "properties": {
+                "replica": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "zoneName": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.StorageSpec": {
+            "type": "object",
+            "properties": {
+                "storageClass": {
+                    "type": "string"
+                },
+                "storageSize": {
+                    "type": "integer"
+                }
+            }
+        },
         "param.ChangeTenantRole": {
             "type": "object",
             "properties": {
@@ -2996,15 +3422,15 @@ const docTemplate = `{
         "param.UpdateBackupPolicy": {
             "type": "object",
             "properties": {
-                "jobKeepWindow": {
+                "jobKeepDays": {
                     "type": "integer",
                     "example": 5
                 },
-                "pieceInterval": {
+                "pieceIntervalDays": {
                     "type": "integer",
                     "example": 1
                 },
-                "recoveryWindow": {
+                "recoveryDays": {
                     "type": "integer",
                     "example": 3
                 },
@@ -3911,6 +4337,64 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "volumeBindingMode": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.TelemetryData": {
+            "type": "object",
+            "properties": {
+                "backupPolicies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBBackupPolicy"
+                    }
+                },
+                "clusters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBCluster"
+                    }
+                },
+                "servers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBServer"
+                    }
+                },
+                "tenants": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBTenant"
+                    }
+                },
+                "version": {
+                    "type": "string"
+                },
+                "warningEvents": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.K8sEvent"
+                    }
+                },
+                "zones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.OBZone"
+                    }
+                }
+            }
+        },
+        "response.TelemetryReportResponse": {
+            "type": "object",
+            "properties": {
+                "component": {
+                    "type": "string"
+                },
+                "content": {
+                    "$ref": "#/definitions/response.TelemetryData"
+                },
+                "time": {
                     "type": "string"
                 }
             }

@@ -407,10 +407,13 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	return buildBackupPolicyModelType(np), nil
 }
 
-func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
+func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, force bool) error {
 	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return oberr.NewBadRequest(err.Error())
+	}
+	if force {
+		return oceanbase.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 	}
 	return oceanbase.DeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 }
