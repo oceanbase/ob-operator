@@ -92,3 +92,13 @@ type PatchTenant struct {
 	UnitNumber *int             `json:"unitNum,omitempty"`
 	UnitConfig *PatchUnitConfig `json:"unitConfig,omitempty"`
 }
+
+type TenantPoolSpec struct {
+	Priority   int        `json:"priority"`
+	UnitConfig UnitConfig `json:"unitConfig"`
+}
+
+type TenantPoolName struct {
+	NamespacedName `json:",inline"`
+	ZoneName       string `json:"zoneName"`
+}

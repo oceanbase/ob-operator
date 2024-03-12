@@ -579,6 +579,13 @@ definitions:
     - backupType
     - day
     type: object
+  param.TenantPoolSpec:
+    properties:
+      priority:
+        type: integer
+      unitConfig:
+        $ref: '#/definitions/param.UnitConfig'
+    type: object
   param.TenantSourceSpec:
     properties:
       restore:
@@ -751,6 +758,8 @@ definitions:
         type: string
       publicKey:
         type: string
+      reportStatistics:
+        type: boolean
       version:
         type: string
     type: object
@@ -2653,6 +2662,123 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Replay standby log of specific standby tenant
+      tags:
+      - Obtenant
+  /api/v1/obtenants/{namespace}/{name}/pools/{zoneName}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an obtenant pool in a specific namespace
+      operationId: DeleteOBTenantPool
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete obtenant pool
+      tags:
+      - Obtenant
+    patch:
+      consumes:
+      - application/json
+      description: Patch an obtenant pool in a specific namespace
+      operationId: PatchOBTenantPool
+      parameters:
+      - description: patch obtenant pool request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.TenantPoolSpec'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Patch obtenant pool
+      tags:
+      - Obtenant
+    put:
+      consumes:
+      - application/json
+      description: Create an obtenant pool in a specific namespace
+      operationId: CreateOBTenantPool
+      parameters:
+      - description: create obtenant pool request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.TenantPoolSpec'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create obtenant pool
       tags:
       - Obtenant
   /api/v1/obtenants/{namespace}/{name}/role:
