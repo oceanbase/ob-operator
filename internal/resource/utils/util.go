@@ -113,7 +113,7 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 func getSysClientFromSourceCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
 	sysClient, err := getSysClient(c, logger, obcluster, userName, tenantName, secretName)
 	if err == nil {
-		return sysClient, err
+		return sysClient, nil
 	}
 	password, err := ReadPassword(c, obcluster.Namespace, secretName)
 	if err != nil {
