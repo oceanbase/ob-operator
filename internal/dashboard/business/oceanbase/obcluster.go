@@ -219,6 +219,27 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			respCluster.Mode = modelcommon.ClusterModeNormal
 		}
 	}
+	if obcluster.Spec.OBServerTemplate != nil {
+		respCluster.OBClusterExtra.ResourceSpec = modelcommon.ResourceSpec{
+			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.Value() >> 30,
+		}
+		respCluster.OBClusterExtra.OBServerStorage = response.OBServerStorage{
+			DataStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value() >> 30,
+			},
+			RedoLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value() >> 30,
+			},
+			SysLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value() >> 30,
+			},
+		}
+	}
+
 	return respCluster, nil
 }
 

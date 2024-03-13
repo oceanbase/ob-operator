@@ -68,6 +68,9 @@ type OBCluster struct {
 }
 
 type OBClusterExtra struct {
+	common.ResourceSpec `json:",inline"`
+	OBServerStorage     `json:",inline"`
+
 	RootPasswordSecret string             `json:"rootPasswordSecret"`
 	Parameters         []common.KVPair    `json:"parameters"`
 	Monitor            *MonitorSpec       `json:"monitor"`
@@ -83,6 +86,17 @@ type MonitorSpec struct {
 type NFSVolumeSpec struct {
 	Address string `json:"address"`
 	Path    string `json:"path"`
+}
+
+type OBServerStorage struct {
+	DataStorage    StorageSpec `json:"dataStorage"`
+	RedoLogStorage StorageSpec `json:"redoLogStorage"`
+	SysLogStorage  StorageSpec `json:"sysLogStorage"`
+}
+
+type StorageSpec struct {
+	StorageClass string `json:"storageClass"`
+	SizeGB       int64  `json:"size"`
 }
 
 type OBClusterResources struct {

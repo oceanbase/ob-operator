@@ -483,6 +483,15 @@ definitions:
         $ref: '#/definitions/common.StorageSpec'
     type: object
   param.PatchTenant:
+    properties:
+      unitConfig:
+        allOf:
+        - $ref: '#/definitions/param.PatchUnitConfig'
+        description: |-
+          Deprecated
+          Description: Deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead
+      unitNum:
+        type: integer
     type: object
   param.PatchUnitConfig:
     properties:
@@ -928,10 +937,16 @@ definitions:
         type: integer
       clusterName:
         type: string
+      cpu:
+        type: integer
       createTime:
         type: number
+      dataStorage:
+        $ref: '#/definitions/response.StorageSpec'
       image:
         type: string
+      memory:
+        type: integer
       metrics:
         $ref: '#/definitions/response.OBMetrics'
       mode:
@@ -946,12 +961,16 @@ definitions:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
+      redoLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
       rootPasswordSecret:
         type: string
       status:
         type: string
       statusDetail:
         type: string
+      sysLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
       topology:
         items:
           $ref: '#/definitions/response.OBZone'
@@ -1274,6 +1293,13 @@ definitions:
       volumeBindingMode:
         type: string
     type: object
+  response.StorageSpec:
+    properties:
+      size:
+        type: integer
+      storageClass:
+        type: string
+    type: object
 info:
   contact: {}
   description: OceanBase Dashboard
@@ -1304,6 +1330,10 @@ paths:
       - description: Object name
         in: query
         name: name
+        type: string
+      - description: Namespace
+        in: query
+        name: namespace
         type: string
       produces:
       - application/json

@@ -30,6 +30,7 @@ import (
 // @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT)
 // @Param type query string false "event level" Enums(NORMAL, WARNING)
 // @Param name query string false "Object name" string
+// @Param namespace query string false "Namespace" string
 // @Success 200 object response.APIResponse{data=[]response.K8sEvent}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse

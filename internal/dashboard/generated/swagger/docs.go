@@ -60,6 +60,12 @@ const docTemplate = `{
                         "description": "Object name",
                         "name": "name",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3433,7 +3439,20 @@ const docTemplate = `{
             }
         },
         "param.PatchTenant": {
-            "type": "object"
+            "type": "object",
+            "properties": {
+                "unitConfig": {
+                    "description": "Deprecated\nDescription: Deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/param.PatchUnitConfig"
+                        }
+                    ]
+                },
+                "unitNum": {
+                    "type": "integer"
+                }
+            }
         },
         "param.PatchUnitConfig": {
             "type": "object",
@@ -4092,11 +4111,20 @@ const docTemplate = `{
                 "clusterName": {
                     "type": "string"
                 },
+                "cpu": {
+                    "type": "integer"
+                },
                 "createTime": {
                     "type": "number"
                 },
+                "dataStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
+                },
                 "image": {
                     "type": "string"
+                },
+                "memory": {
+                    "type": "integer"
                 },
                 "metrics": {
                     "$ref": "#/definitions/response.OBMetrics"
@@ -4119,6 +4147,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/common.KVPair"
                     }
                 },
+                "redoLogStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
+                },
                 "rootPasswordSecret": {
                     "type": "string"
                 },
@@ -4127,6 +4158,9 @@ const docTemplate = `{
                 },
                 "statusDetail": {
                     "type": "string"
+                },
+                "sysLogStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
                 },
                 "topology": {
                     "type": "array",
@@ -4596,6 +4630,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "volumeBindingMode": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.StorageSpec": {
+            "type": "object",
+            "properties": {
+                "size": {
+                    "type": "integer"
+                },
+                "storageClass": {
                     "type": "string"
                 }
             }
