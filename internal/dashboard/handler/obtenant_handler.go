@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -121,6 +122,28 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Create obtenant: %+v", tenantParam)
+	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if tenantParam.Source != nil && tenantParam.Source.Restore != nil {
+		if tenantParam.Source.Restore.Type == "OSS" {
+			tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
+			if err != nil {
+				return nil, httpErr.NewBadRequest(err.Error())
+			}
+			tenantParam.Source.Restore.OSSAccessKey, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessKey)
+			if err != nil {
+				return nil, httpErr.NewBadRequest(err.Error())
+			}
+		}
+		if tenantParam.Source.Restore.BakEncryptionPassword != "" {
+			tenantParam.Source.Restore.BakEncryptionPassword, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.BakEncryptionPassword)
+			if err != nil {
+				return nil, httpErr.NewBadRequest(err.Error())
+			}
+		}
+	}
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
 		Namespace: tenantParam.Namespace,
 		Name:      tenantParam.Name,
@@ -191,7 +214,7 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	if patch.UnitNumber == nil && patch.UnitConfig == nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest("unitNumber or unitConfig is required")
 	}
 	tenant, err := oceanbase.PatchTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
@@ -377,6 +400,22 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	if createPolicyParam.DestType == "OSS" {
+		createPolicyParam.OSSAccessID, err = crypto.DecryptWithPrivateKey(createPolicyParam.OSSAccessID)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		createPolicyParam.OSSAccessKey, err = crypto.DecryptWithPrivateKey(createPolicyParam.OSSAccessKey)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+	}
+	if createPolicyParam.BakEncryptionPassword != "" {
+		createPolicyParam.BakEncryptionPassword, err = crypto.DecryptWithPrivateKey(createPolicyParam.BakEncryptionPassword)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+	}
 	policy, err := oceanbase.CreateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -435,6 +474,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
+// @Param force query string false "force delete" default(false)
 // @Router /api/v1/obtenants/{namespace}/{name}/backupPolicy [DELETE]
 // @Security ApiKeyAuth
 func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
@@ -446,7 +486,7 @@ func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
 	err = oceanbase.DeleteTenantBackupPolicy(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
-	})
+	}, c.Query("force") == "true")
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

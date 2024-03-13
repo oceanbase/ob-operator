@@ -26,7 +26,8 @@ const (
 const ContentTypeJson = "application/json"
 
 const (
-	TelemetryComponent = "ob-operator"
+	TelemetryComponent          = "ob-operator"
+	TelemetryComponentDashboard = "oceanbase-dashboard"
 )
 
 const (

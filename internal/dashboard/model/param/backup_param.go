@@ -21,17 +21,20 @@ type ScheduleBase struct {
 	ScheduleTime string `json:"scheduleTime" example:"04:00"`
 }
 
+type DaysFieldBase struct {
+	JobKeepDays       int `json:"jobKeepDays,omitempty" example:"5"`
+	RecoveryDays      int `json:"recoveryDays,omitempty" example:"3"`
+	PieceIntervalDays int `json:"pieceIntervalDays,omitempty" example:"1"`
+}
+
 type BackupPolicyBase struct {
 	// Enum: NFS, OSS
 	DestType    BackupDestType `json:"destType" binding:"required" example:"NFS"`
 	ArchivePath string         `json:"archivePath" binding:"required"`
 	BakDataPath string         `json:"bakDataPath" binding:"required"`
 
-	ScheduleBase `json:",inline"`
-
-	JobKeepDays       int `json:"jobKeepDays,omitempty" example:"5"`
-	RecoveryDays      int `json:"recoveryDays,omitempty" example:"3"`
-	PieceIntervalDays int `json:"pieceIntervalDays,omitempty" example:"1"`
+	ScheduleBase  `json:",inline"`
+	DaysFieldBase `json:",inline"`
 }
 
 type CreateBackupPolicy struct {
@@ -52,9 +55,6 @@ type UpdateBackupPolicy struct {
 	// Enum: PAUSED, RUNNING
 	Status string `json:"status,omitempty" example:"PAUSED"`
 
-	ScheduleBase `json:",inline,omitempty"`
-
-	JobKeepWindow  int `json:"jobKeepWindow,omitempty" example:"5"`
-	RecoveryWindow int `json:"recoveryWindow,omitempty" example:"3"`
-	PieceInterval  int `json:"pieceInterval,omitempty" example:"1"`
+	ScheduleBase  `json:",inline,omitempty"`
+	DaysFieldBase `json:",inline,omitempty"`
 }

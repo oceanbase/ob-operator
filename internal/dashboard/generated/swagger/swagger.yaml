@@ -50,6 +50,243 @@ definitions:
       storageClass:
         type: string
     type: object
+  models.K8sEvent:
+    properties:
+      count:
+        type: integer
+      firstTimestamp:
+        type: string
+      kind:
+        type: string
+      lastTimestamp:
+        type: string
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      reason:
+        type: string
+      resourceName:
+        type: string
+    type: object
+  models.OBBackupPolicy:
+    properties:
+      archiveDestType:
+        type: string
+      archiveSwitchPieceInterval:
+        type: string
+      bakDataDestType:
+        type: string
+      bakDataFullCrontab:
+        type: string
+      bakDataIncrCrontab:
+        type: string
+      encryptBakData:
+        type: boolean
+      name:
+        type: string
+      namespace:
+        type: string
+      runningFlow:
+        type: string
+      runningTask:
+        type: string
+      status:
+        type: string
+      taskStatus:
+        type: string
+      tenantCR:
+        type: string
+      tenantName:
+        type: string
+      uid:
+        type: string
+    type: object
+  models.OBCluster:
+    properties:
+      clusterId:
+        type: integer
+      clusterMode:
+        type: string
+      clusterName:
+        type: string
+      configuredBackupVolume:
+        type: boolean
+      configuredMonitor:
+        type: boolean
+      cpu:
+        type: integer
+      dataStorage:
+        $ref: '#/definitions/models.StorageSpec'
+      image:
+        type: string
+      independentPVC:
+        type: boolean
+      memory:
+        type: integer
+      name:
+        type: string
+      namespace:
+        type: string
+      redoLogStorage:
+        $ref: '#/definitions/models.StorageSpec'
+      runningFlow:
+        type: string
+      runningTask:
+        type: string
+      singlePVC:
+        type: boolean
+      status:
+        type: string
+      sysLogStorage:
+        $ref: '#/definitions/models.StorageSpec'
+      taskStatus:
+        type: string
+      uid:
+        type: string
+      zones:
+        items:
+          $ref: '#/definitions/models.OBZoneStatus'
+        type: array
+    type: object
+  models.OBServer:
+    properties:
+      clusterCR:
+        type: string
+      clusterId:
+        type: integer
+      clusterName:
+        type: string
+      cni:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      podIPHash:
+        type: string
+      podPhase:
+        type: string
+      runningFlow:
+        type: string
+      runningTask:
+        type: string
+      serviceIPHash:
+        type: string
+      status:
+        type: string
+      taskStatus:
+        type: string
+      uid:
+        type: string
+      zoneName:
+        type: string
+    type: object
+  models.OBTenant:
+    properties:
+      archiveDestType:
+        type: string
+      bakDataDestType:
+        type: string
+      clusterName:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      primaryTenant:
+        type: string
+      runningFlow:
+        type: string
+      runningTask:
+        type: string
+      status:
+        type: string
+      taskStatus:
+        type: string
+      tenantName:
+        type: string
+      tenantRole:
+        type: string
+      topology:
+        items:
+          $ref: '#/definitions/models.OBTenantResourcePool'
+        type: array
+      uid:
+        type: string
+      unitNumber:
+        type: integer
+    type: object
+  models.OBTenantResourcePool:
+    properties:
+      IOPSWeight:
+        type: integer
+      logDiskSize:
+        type: integer
+      maxCPU:
+        type: integer
+      maxIOPS:
+        type: integer
+      memorySize:
+        type: integer
+      minCPU:
+        type: integer
+      minIOPS:
+        type: integer
+      priority:
+        type: integer
+      type:
+        type: string
+      unitNumber:
+        type: integer
+      zone:
+        type: string
+    type: object
+  models.OBZone:
+    properties:
+      clusterCR:
+        type: string
+      clusterId:
+        type: integer
+      clusterName:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      runningFlow:
+        type: string
+      runningTask:
+        type: string
+      status:
+        type: string
+      taskStatus:
+        type: string
+      uid:
+        type: string
+    type: object
+  models.OBZoneStatus:
+    properties:
+      replica:
+        type: integer
+      status:
+        type: string
+      zoneName:
+        type: string
+    type: object
+  models.StorageSpec:
+    properties:
+      storageClass:
+        type: string
+      storageSize:
+        type: integer
+    type: object
   param.ChangeTenantRole:
     properties:
       failover:
@@ -369,13 +606,13 @@ definitions:
     type: object
   param.UpdateBackupPolicy:
     properties:
-      jobKeepWindow:
+      jobKeepDays:
         example: 5
         type: integer
-      pieceInterval:
+      pieceIntervalDays:
         example: 1
         type: integer
-      recoveryWindow:
+      recoveryDays:
         example: 3
         type: integer
       scheduleDates:
@@ -974,6 +1211,44 @@ definitions:
       until:
         type: string
     type: object
+  response.StatisticData:
+    properties:
+      backupPolicies:
+        items:
+          $ref: '#/definitions/models.OBBackupPolicy'
+        type: array
+      clusters:
+        items:
+          $ref: '#/definitions/models.OBCluster'
+        type: array
+      servers:
+        items:
+          $ref: '#/definitions/models.OBServer'
+        type: array
+      tenants:
+        items:
+          $ref: '#/definitions/models.OBTenant'
+        type: array
+      version:
+        type: string
+      warningEvents:
+        items:
+          $ref: '#/definitions/models.K8sEvent'
+        type: array
+      zones:
+        items:
+          $ref: '#/definitions/models.OBZone'
+        type: array
+    type: object
+  response.StatisticDataResponse:
+    properties:
+      component:
+        type: string
+      content:
+        $ref: '#/definitions/response.StatisticData'
+      time:
+        type: string
+    type: object
   response.StorageClass:
     properties:
       allowVolumeExpansion:
@@ -1383,6 +1658,41 @@ paths:
       summary: query metrics
       tags:
       - Metric
+  /api/v1/metrics/telemetry:
+    get:
+      consumes:
+      - application/json
+      description: get telemetry data
+      operationId: GetStatistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StatisticDataResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get telemetry data
+      tags:
+      - Info
   /api/v1/obclusters:
     get:
       consumes:
@@ -2115,6 +2425,11 @@ paths:
         in: path
         name: name
         required: true
+        type: string
+      - default: "false"
+        description: force delete
+        in: query
+        name: force
         type: string
       produces:
       - application/json
