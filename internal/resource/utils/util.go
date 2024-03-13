@@ -22,12 +22,12 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -192,14 +192,8 @@ func GetJob(c client.Client, namespace string, jobName string) (*batchv1.Job, er
 	return job, err
 }
 
-func randomStr() string {
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	return suffix
-}
-
 func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName string, image string, cmd string) (string, error) {
-	fullJobName := fmt.Sprintf("%s-%s", jobName, randomStr())
+	fullJobName := fmt.Sprintf("%s-%s", jobName, rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{
@@ -298,9 +292,7 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		}
 	}
 
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	jobName := fmt.Sprintf("%s-%s", "script-runner", suffix)
+	jobName := fmt.Sprintf("%s-%s", "script-runner", rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{

@@ -1751,8 +1751,6 @@ spec:
               serviceAccount:
                 default: default
                 type: string
-              sourceOBClusterConnection:
-                type: string
               topology:
                 items:
                   properties:

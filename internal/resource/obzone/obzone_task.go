@@ -14,12 +14,11 @@ package obzone
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -40,9 +39,7 @@ func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOper
 }
 
 func (m *OBZoneManager) generateServerName() string {
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	return fmt.Sprintf("%s-%d-%s-%s", m.OBZone.Spec.ClusterName, m.OBZone.Spec.ClusterId, m.OBZone.Spec.Topology.Zone, suffix)
+	return fmt.Sprintf("%s-%d-%s-%s", m.OBZone.Spec.ClusterName, m.OBZone.Spec.ClusterId, m.OBZone.Spec.Topology.Zone, rand.String(6))
 }
 
 func (m *OBZoneManager) AddZone() tasktypes.TaskError {

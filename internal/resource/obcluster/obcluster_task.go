@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -434,9 +433,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
 	}
 	// Get target version and patch
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", suffix)
+	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{
@@ -718,12 +715,10 @@ func (m *OBClusterManager) CreateServiceForMonitor() tasktypes.TaskError {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	selector := make(map[string]string)
 	selector[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
 	monitorService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       m.OBCluster.Namespace,
-			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, suffix),
+			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, rand.String(6)),
 			OwnerReferences: ownerReferenceList,
 		},
 		Spec: corev1.ServiceSpec{
