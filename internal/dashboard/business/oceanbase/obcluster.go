@@ -220,11 +220,11 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		}
 	}
 	if obcluster.Spec.OBServerTemplate != nil {
-		respCluster.OBClusterExtra.ResourceSpec = modelcommon.ResourceSpec{
+		respCluster.OBClusterExtra.Resource = modelcommon.ResourceSpec{
 			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
 			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.Value() >> 30,
 		}
-		respCluster.OBClusterExtra.OBServerStorage = response.OBServerStorage{
+		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
 			DataStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
 				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value() >> 30,

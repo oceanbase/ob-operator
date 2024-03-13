@@ -937,16 +937,10 @@ definitions:
         type: integer
       clusterName:
         type: string
-      cpu:
-        type: integer
       createTime:
         type: number
-      dataStorage:
-        $ref: '#/definitions/response.StorageSpec'
       image:
         type: string
-      memory:
-        type: integer
       metrics:
         $ref: '#/definitions/response.OBMetrics'
       mode:
@@ -961,16 +955,16 @@ definitions:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
-      redoLogStorage:
-        $ref: '#/definitions/response.StorageSpec'
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
       rootPasswordSecret:
         type: string
       status:
         type: string
       statusDetail:
         type: string
-      sysLogStorage:
-        $ref: '#/definitions/response.StorageSpec'
+      storage:
+        $ref: '#/definitions/response.OBServerStorage'
       topology:
         items:
           $ref: '#/definitions/response.OBZone'
@@ -1045,6 +1039,15 @@ definitions:
       serverCount:
         example: 3
         type: integer
+    type: object
+  response.OBServerStorage:
+    properties:
+      dataStorage:
+        $ref: '#/definitions/response.StorageSpec'
+      redoLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
+      sysLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
     type: object
   response.OBTenantBrief:
     description: Brief information about OBTenant

@@ -68,8 +68,8 @@ type OBCluster struct {
 }
 
 type OBClusterExtra struct {
-	common.ResourceSpec `json:",inline"`
-	OBServerStorage     `json:",inline"`
+	Resource common.ResourceSpec `json:"resource"`
+	Storage  OBServerStorage     `json:"storage"`
 
 	RootPasswordSecret string             `json:"rootPasswordSecret"`
 	Parameters         []common.KVPair    `json:"parameters"`

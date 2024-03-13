@@ -4111,20 +4111,11 @@ const docTemplate = `{
                 "clusterName": {
                     "type": "string"
                 },
-                "cpu": {
-                    "type": "integer"
-                },
                 "createTime": {
                     "type": "number"
                 },
-                "dataStorage": {
-                    "$ref": "#/definitions/response.StorageSpec"
-                },
                 "image": {
                     "type": "string"
-                },
-                "memory": {
-                    "type": "integer"
                 },
                 "metrics": {
                     "$ref": "#/definitions/response.OBMetrics"
@@ -4147,8 +4138,8 @@ const docTemplate = `{
                         "$ref": "#/definitions/common.KVPair"
                     }
                 },
-                "redoLogStorage": {
-                    "$ref": "#/definitions/response.StorageSpec"
+                "resource": {
+                    "$ref": "#/definitions/common.ResourceSpec"
                 },
                 "rootPasswordSecret": {
                     "type": "string"
@@ -4159,8 +4150,8 @@ const docTemplate = `{
                 "statusDetail": {
                     "type": "string"
                 },
-                "sysLogStorage": {
-                    "$ref": "#/definitions/response.StorageSpec"
+                "storage": {
+                    "$ref": "#/definitions/response.OBServerStorage"
                 },
                 "topology": {
                     "type": "array",
@@ -4271,6 +4262,20 @@ const docTemplate = `{
                 "serverCount": {
                     "type": "integer",
                     "example": 3
+                }
+            }
+        },
+        "response.OBServerStorage": {
+            "type": "object",
+            "properties": {
+                "dataStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
+                },
+                "redoLogStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
+                },
+                "sysLogStorage": {
+                    "$ref": "#/definitions/response.StorageSpec"
                 }
             }
         },
