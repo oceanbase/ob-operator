@@ -1695,11 +1695,11 @@ paths:
       summary: query metrics
       tags:
       - Metric
-  /api/v1/metrics/telemetry:
+  /api/v1/metrics/statistic:
     get:
       consumes:
       - application/json
-      description: get telemetry data
+      description: get statistic data
       operationId: GetStatistics
       produces:
       - application/json
@@ -1727,7 +1727,7 @@ paths:
             $ref: '#/definitions/response.APIResponse'
       security:
       - ApiKeyAuth: []
-      summary: get telemetry data
+      summary: get statistic data
       tags:
       - Info
   /api/v1/obclusters:

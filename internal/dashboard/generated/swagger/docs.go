@@ -640,14 +640,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/metrics/telemetry": {
+        "/api/v1/metrics/statistic": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "get telemetry data",
+                "description": "get statistic data",
                 "consumes": [
                     "application/json"
                 ],
@@ -657,7 +657,7 @@ const docTemplate = `{
                 "tags": [
                     "Info"
                 ],
-                "summary": "get telemetry data",
+                "summary": "get statistic data",
                 "operationId": "GetStatistics",
                 "responses": {
                     "200": {
