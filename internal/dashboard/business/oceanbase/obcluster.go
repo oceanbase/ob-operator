@@ -148,21 +148,24 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				Value: toleration.Value,
 			})
 		}
-
-		topology = append(topology, response.OBZone{
+		respZone := response.OBZone{
 			Namespace:    obzone.Namespace,
 			Name:         obzone.Name,
 			Zone:         obzone.Spec.Topology.Zone,
 			Replicas:     obzone.Spec.Topology.Replica,
 			Status:       convertStatus(obzone.Status.Status),
 			StatusDetail: obzone.Status.Status,
+			RootService:  "",
 			// TODO: query real rs
-			RootService:  obzone.Status.OBServerStatus[0].Server,
 			OBServers:    observers,
 			NodeSelector: nodeSelector,
 			Affinities:   affinities,
 			Tolerations:  tolerations,
-		})
+		}
+		if len(obzone.Status.OBServerStatus) > 0 {
+			respZone.RootService = obzone.Status.OBServerStatus[0].Server
+		}
+		topology = append(topology, respZone)
 	}
 
 	respCluster := &response.OBCluster{
