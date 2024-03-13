@@ -263,7 +263,10 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 			logger.Error(err, "failed to get job logs")
 		} else {
 			defer logs.Close()
-			io.Copy(&outputBuffer, logs)
+			_, err = io.Copy(&outputBuffer, logs)
+			if err != nil {
+				logger.Error(err, "failed to copy logs")
+			}
 			output = outputBuffer.String()
 		}
 	} else {
