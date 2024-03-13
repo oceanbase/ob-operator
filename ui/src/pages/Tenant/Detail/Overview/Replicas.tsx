@@ -1,6 +1,6 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import { intl } from '@/utils/intl';
-import { Col, Descriptions } from 'antd';
+import { Col,Descriptions } from 'antd';
 
 export default function Replicas({
   replicaList,
@@ -67,15 +67,11 @@ export default function Replicas({
               { replicaZone: replica.zone },
             )}
           >
-            {sortKeys(Object.keys(replica)).map((key, idx) => {
-              console.log('key', key);
-
-              return (
-                <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
-                  {replica[key]}
-                </Descriptions.Item>
-              );
-            })}
+            {sortKeys(Object.keys(replica)).map((key, idx) => (
+              <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
+                {replica[key]}
+              </Descriptions.Item>
+            ))}
           </Descriptions>
         ))}
       </CollapsibleCard>
