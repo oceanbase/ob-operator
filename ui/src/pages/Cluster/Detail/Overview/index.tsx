@@ -35,8 +35,8 @@ const ClusterOverview: React.FC = () => {
           timerRef.current = setTimeout(() => {
             getClusterDetail({ ns, name });
           }, REFRESH_CLUSTER_TIME);
-        }else if(timerRef.current){
-          clearTimeout(timerRef.current)
+        } else if (timerRef.current) {
+          clearTimeout(timerRef.current);
         }
       },
     },
@@ -51,7 +51,7 @@ const ClusterOverview: React.FC = () => {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/cluster')
+      history.push('/cluster');
     }
   };
 
@@ -72,8 +72,8 @@ const ClusterOverview: React.FC = () => {
   const header = () => {
     return {
       title: intl.formatMessage({
-        id: 'dashboard.Detail.Overview.Overview',
-        defaultMessage: '概览',
+        id: 'Dashboard.Detail.Overview.ClusterOverview',
+        defaultMessage: '集群概览',
       }),
       extra: [
         <Button onClick={handleAddZone} disabled={isOperating} key="1">
@@ -115,11 +115,11 @@ const ClusterOverview: React.FC = () => {
   useEffect(() => {
     getClusterDetail({ ns, name });
 
-    return ()=>{
-      if(timerRef.current){
-        clearTimeout(timerRef.current)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
       }
-    }
+    };
   }, []);
 
   return (

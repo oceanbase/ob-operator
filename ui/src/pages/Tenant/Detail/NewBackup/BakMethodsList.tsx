@@ -20,7 +20,7 @@ export default function BakMethodsList({
   const dataSource = scheduleValue || form?.getFieldValue('scheduleDates');
 
   return (
-    <Space direction="vertical">
+    <Space direction="vertical" style={{marginBottom:24}}>
       <h3>
         {intl.formatMessage({
           id: 'Dashboard.Detail.NewBackup.BakMethodsList.BackupData',
@@ -30,7 +30,7 @@ export default function BakMethodsList({
       <p>
         {intl.formatMessage({
           id: 'Dashboard.Detail.NewBackup.BakMethodsList.WeRecommendThatYouConfigure',
-          defaultMessage: '建议至少配置 1 个全量备份',
+          defaultMessage: '至少配置 1 个全量备份',
         })}
       </p>
       {dataSource?.days
@@ -41,6 +41,7 @@ export default function BakMethodsList({
             label={
               dataSource?.mode === 'Monthly' ? day : WEEK_TEXT_MAP.get(day)
             }
+            style={{marginBottom:0}}
             key={index}
           >
             <Radio.Group disabled={disable} defaultValue="Full">

@@ -1,21 +1,12 @@
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { createBackupPolicyOfTenant,getTenant } from '@/services/tenant';
+import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import {
-Button,
-Card,
-Col,
-Form,
-Input,
-Row,
-Select,
-message
-} from 'antd';
-import { formatBackupForm } from '../../helper';
+import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
+import { checkScheduleDatesHaveFull, formatBackupForm } from '../../helper';
 import BasicInfo from '../Overview/BasicInfo';
 import AdvancedConfiguration from './AdvancedConfiguration';
 import BakMethodsList from './BakMethodsList';
@@ -35,6 +26,14 @@ export default function NewBackup() {
   ];
 
   const handleSubmit = async (values: any) => {
+    if (!checkScheduleDatesHaveFull(values)) {
+      message.warning(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.NewBackup.ConfigureAtLeastOneFull',
+          defaultMessage: '请至少配置 1 个全量备份',
+        }),
+      );
+    }
     const res = await createBackupPolicyOfTenant({
       ns,
       name,
@@ -85,7 +84,7 @@ export default function NewBackup() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button key="submit" type='primary' onClick={() => form.submit()}>
+        <Button key="submit" type="primary" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'Dashboard.Detail.NewBackup.Submit',
             defaultMessage: '提交',
@@ -97,6 +96,7 @@ export default function NewBackup() {
         {tenantDetail && (
           <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
         )}
+
         <Card style={{ marginTop: 24, marginBottom: 24 }}>
           <Row>
             <Col span={24}>

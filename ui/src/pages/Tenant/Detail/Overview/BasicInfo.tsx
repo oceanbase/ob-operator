@@ -78,8 +78,8 @@ export default function BasicInfo({
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.BasicInformation',
-              defaultMessage: '基本信息',
+              id: 'Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation',
+              defaultMessage: '租户基本信息',
             })}
           </h2>
         }
