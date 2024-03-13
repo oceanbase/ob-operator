@@ -13,8 +13,10 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +34,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	secretconst "github.com/oceanbase/ob-operator/internal/const/secret"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -187,6 +190,87 @@ func GetJob(c client.Client, namespace string, jobName string) (*batchv1.Job, er
 		Name:      jobName,
 	}, job)
 	return job, err
+}
+
+func randomStr() string {
+	parts := strings.Split(uuid.New().String(), "-")
+	suffix := parts[len(parts)-1]
+	return suffix
+}
+
+func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName string, image string, cmd string) (string, error) {
+	fullJobName := fmt.Sprintf("%s-%s", jobName, randomStr())
+	var backoffLimit int32
+	var ttl int32 = 300
+	container := corev1.Container{
+		Name:    "job-runner",
+		Image:   image,
+		Command: []string{"bash", "-c", cmd},
+	}
+	job := batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fullJobName,
+			Namespace: namespace,
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
+				},
+			},
+			BackoffLimit:            &backoffLimit,
+			TTLSecondsAfterFinished: &ttl,
+		},
+	}
+
+	err := c.Create(context.Background(), &job)
+	if err != nil {
+		return "", errors.Wrapf(err, "failed to create job of image: %s", image)
+	}
+
+	output := ""
+	var jobObject *batchv1.Job
+	for i := 0; i < oceanbaseconst.CheckJobMaxRetries; i++ {
+		jobObject, err = GetJob(c, namespace, fullJobName)
+		if err != nil {
+			logger.Error(err, "Failed to get job")
+			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
+		} else {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+	}
+	if jobObject.Status.Succeeded == 1 {
+		logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded", "job", fullJobName)
+		clientSet := k8sclient.GetClient()
+		podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
+		})
+		if err != nil || len(podList.Items) == 0 {
+			return "", errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		}
+		var outputBuffer bytes.Buffer
+		podLogOpts := corev1.PodLogOptions{}
+		pod := podList.Items[0]
+		res := clientSet.ClientSet.CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOpts)
+		logs, err := res.Stream(context.TODO())
+		if err != nil {
+			logger.Error(err, "failed to get job logs")
+		} else {
+			defer logs.Close()
+			io.Copy(&outputBuffer, logs)
+			output = outputBuffer.String()
+		}
+	} else {
+		logger.V(oceanbaseconst.LogLevelDebug).Info("job failed", "job", fullJobName)
+		return "", errors.Wrapf(err, "failed to run job %s", fullJobName)
+	}
+	return output, nil
 }
 
 func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {

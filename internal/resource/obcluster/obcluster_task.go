@@ -1016,30 +1016,60 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 	return nil
 }
 
-// check obcluster name and id
-// check obzone exists in topology
 func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
 	m.Logger.Info("Check before migration")
 	manager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "get operation manager")
 	}
+
+	// check version strictly matches
+	targetVersionStr, err := resourceutils.RunJob(m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
+	if err != nil {
+		return errors.Wrap(err, "get target oceanbase version")
+	}
+
+	sourceVersion, err := manager.GetVersion()
+	if err != nil {
+		return errors.Wrap(err, "get source oceanbase version")
+	}
+
+	if sourceVersion.String() != targetVersionStr {
+		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", sourceVersion.String(), targetVersionStr)
+	}
+
+	// check obzone matches topology
 	obzoneList, err := manager.ListZones()
 	if err != nil {
 		return errors.Wrap(err, "list obzones")
 	}
-	for _, obzone := range obzoneList {
-		found := false
-		for _, zone := range m.OBCluster.Spec.Topology {
-			if obzone.Name == zone.Zone {
-				found = true
-				break
-			}
-		}
+	zoneMap := make(map[string]struct{})
+	for _, zone := range obzoneList {
+		zoneMap[zone.Name] = struct{}{}
+	}
+
+	extraZones := make([]string, 0)
+	for _, obzone := range m.OBCluster.Spec.Topology {
+		_, found := zoneMap[obzone.Zone]
 		if !found {
-			return errors.Errorf("obzone %s not in obcluster's topology", obzone.Name)
+			extraZones = append(extraZones, obzone.Zone)
+		} else {
+			delete(zoneMap, obzone.Zone)
 		}
 	}
+	if len(extraZones) > 0 {
+		return errors.Errorf("obzone %s defined but not in source cluster", strings.Join(extraZones, ","))
+	}
+
+	undefinedZones := make([]string, 0)
+	for zone := range zoneMap {
+		undefinedZones = append(undefinedZones, zone)
+	}
+	if len(undefinedZones) > 0 {
+		return errors.Errorf("obzone %s not defined in obcluster's topology", strings.Join(undefinedZones, ","))
+	}
+
+	// check obcluster name and id
 	obclusterNameParamList, err := manager.GetParameter(oceanbaseconst.ClusterNameParam, nil)
 	if err != nil {
 		return errors.Wrap(err, "get obcluster name failed")

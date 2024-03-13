@@ -422,7 +422,7 @@ func (m *OBZoneManager) DeleteLegacyOBServer() tasktypes.TaskError {
 		}
 		found := false
 		for _, observerCR := range observerList.Items {
-			if observer.Ip == observerCR.Status.PodIp {
+			if observer.Ip == observerCR.Status.GetConnectAddr() {
 				found = true
 			}
 		}

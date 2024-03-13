@@ -64,6 +64,7 @@ const (
 	GetConnectionMaxRetries = 10
 	CheckConnectionInterval = 3
 	CheckJobInterval        = 3
+	CheckJobMaxRetries      = 100
 	CommonCheckInterval     = 5
 )
 
@@ -179,4 +180,8 @@ const (
 const (
 	ClusterNameParam = "cluster"
 	ClusterIdParam   = "cluster_id"
+)
+
+const (
+	CmdVersion = "rpm -q --queryformat '%{VERSION}-%{RELEASE}' oceanbase-ce | sed 's/\\.[^.]*$//'"
 )

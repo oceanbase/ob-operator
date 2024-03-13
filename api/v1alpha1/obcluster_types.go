@@ -40,8 +40,7 @@ type OBClusterSpec struct {
 	Topology         []apitypes.OBZoneTopology  `json:"topology"`
 	UserSecrets      *apitypes.OBUserSecrets    `json:"userSecrets"`
 	//+kubebuilder:default=default
-	ServiceAccount            string `json:"serviceAccount,omitempty"`
-	SourceOBClusterConnection string `json:"sourceOBClusterConnection,omitempty"`
+	ServiceAccount string `json:"serviceAccount,omitempty"`
 }
 
 // OBClusterStatus defines the observed state of OBCluster
