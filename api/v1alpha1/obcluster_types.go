@@ -32,7 +32,7 @@ type OBClusterSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	ClusterName      string                     `json:"clusterName"`
-	ClusterId        int64                      `json:"clusterId,omitempty"`
+	ClusterId        int64                      `json:"clusterId"`
 	OBServerTemplate *apitypes.OBServerTemplate `json:"observer"`
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitor,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`

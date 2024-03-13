@@ -54,9 +54,14 @@ func (m *OBClusterManager) GetStatus() string {
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("Newly created cluster, init status")
 	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
+	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
+	initialStatus := clusterstatus.New
+	if migrateAnnoExist {
+		initialStatus = clusterstatus.MigrateFromExisting
+	}
 	status := v1alpha1.OBClusterStatus{
 		Image:        m.OBCluster.Spec.OBServerTemplate.Image,
-		Status:       clusterstatus.New,
+		Status:       initialStatus,
 		OBZoneStatus: make([]apitypes.OBZoneReplicaStatus, 0, len(m.OBCluster.Spec.Topology)),
 	}
 	m.OBCluster.Status = status
@@ -80,6 +85,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
+	case clusterstatus.MigrateFromExisting:
+		taskFlow, err = task.GetRegistry().Get(fMigrateOBClusterFromExisting)
 	case clusterstatus.New:
 		taskFlow, err = task.GetRegistry().Get(fBootstrapOBCluster)
 	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
@@ -277,6 +284,8 @@ func (m *OBClusterManager) HandleFailure() {
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
 	switch name {
+	case tCheckMigration:
+		return m.CheckMigration, nil
 	case tCheckImageReady:
 		return m.CheckImageReady, nil
 	case tCheckClusterMode:

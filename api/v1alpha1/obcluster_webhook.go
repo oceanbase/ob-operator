@@ -220,6 +220,11 @@ func (r *OBCluster) validateMutation() error {
 		} else if r.Spec.Topology[0].Replica != 1 {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "standalone mode only support single replica"))
 		}
+		// validate migration
+		migrateAnnoVal, migrateAnnoExist := r.GetAnnotations()[oceanbaseconst.AnnotationsSourceClusterAddress]
+		if migrateAnnoExist {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("metadata").Child("annotations").Child(oceanbaseconst.AnnotationsSourceClusterAddress), migrateAnnoVal, "migrate obcluster into standalone mode is not supported"))
+		}
 	}
 
 	// Validate userSecrets

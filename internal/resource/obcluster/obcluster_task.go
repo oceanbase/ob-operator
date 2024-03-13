@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -162,6 +161,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -207,6 +207,9 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 		}
 		if modeAnnoExist {
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		}
+		if migrateAnnoExist {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
 		m.Logger.Info("Create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
@@ -430,9 +433,7 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
 	}
 	// Get target version and patch
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", suffix)
+	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{
@@ -714,12 +715,10 @@ func (m *OBClusterManager) CreateServiceForMonitor() tasktypes.TaskError {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	selector := make(map[string]string)
 	selector[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
 	monitorService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:       m.OBCluster.Namespace,
-			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, suffix),
+			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, rand.String(6)),
 			OwnerReferences: ownerReferenceList,
 		},
 		Spec: corev1.ServiceSpec{
@@ -1008,6 +1007,79 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 			m.PrintErrEvent(err)
 			return err
 		}
+	}
+	return nil
+}
+
+func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
+	m.Logger.Info("Check before migration")
+	manager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "get operation manager")
+	}
+
+	// check version strictly matches
+	targetVersionStr, err := resourceutils.RunJob(m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
+	if err != nil {
+		return errors.Wrap(err, "get target oceanbase version")
+	}
+
+	sourceVersion, err := manager.GetVersion()
+	if err != nil {
+		return errors.Wrap(err, "get source oceanbase version")
+	}
+
+	if sourceVersion.String() != targetVersionStr {
+		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", sourceVersion.String(), targetVersionStr)
+	}
+
+	// check obzone matches topology
+	obzoneList, err := manager.ListZones()
+	if err != nil {
+		return errors.Wrap(err, "list obzones")
+	}
+	zoneMap := make(map[string]struct{})
+	for _, zone := range obzoneList {
+		zoneMap[zone.Name] = struct{}{}
+	}
+
+	extraZones := make([]string, 0)
+	for _, obzone := range m.OBCluster.Spec.Topology {
+		_, found := zoneMap[obzone.Zone]
+		if !found {
+			extraZones = append(extraZones, obzone.Zone)
+		} else {
+			delete(zoneMap, obzone.Zone)
+		}
+	}
+	if len(extraZones) > 0 {
+		return errors.Errorf("obzone %s defined but not in source cluster", strings.Join(extraZones, ","))
+	}
+
+	undefinedZones := make([]string, 0)
+	for zone := range zoneMap {
+		undefinedZones = append(undefinedZones, zone)
+	}
+	if len(undefinedZones) > 0 {
+		return errors.Errorf("obzone %s not defined in obcluster's topology", strings.Join(undefinedZones, ","))
+	}
+
+	// check obcluster name and id
+	obclusterNameParamList, err := manager.GetParameter(oceanbaseconst.ClusterNameParam, nil)
+	if err != nil {
+		return errors.Wrap(err, "get obcluster name failed")
+	}
+	obclusterName := obclusterNameParamList[0].Value
+	obclusterIdParamList, err := manager.GetParameter(oceanbaseconst.ClusterIdParam, nil)
+	if err != nil {
+		return errors.Wrap(err, "get obcluster id failed")
+	}
+	obclusterId := obclusterIdParamList[0].Value
+	if obclusterName != m.OBCluster.Spec.ClusterName {
+		return errors.Errorf("Cluster name mismatch, source cluster: %s, current: %s", obclusterName, m.OBCluster.Spec.ClusterName)
+	}
+	if obclusterId != fmt.Sprintf("%d", m.OBCluster.Spec.ClusterId) {
+		return errors.Errorf("Cluster id mismatch, source cluster: %s, current: %d", obclusterId, m.OBCluster.Spec.ClusterId)
 	}
 	return nil
 }

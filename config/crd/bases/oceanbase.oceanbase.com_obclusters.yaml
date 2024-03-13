@@ -2703,6 +2703,7 @@ spec:
                 - root
                 type: object
             required:
+            - clusterId
             - clusterName
             - observer
             - topology

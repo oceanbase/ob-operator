@@ -2726,6 +2726,7 @@ spec:
                 - root
                 type: object
             required:
+            - clusterId
             - clusterName
             - observer
             - topology
@@ -12038,6 +12039,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/log
+  verbs:
+  - get
 - apiGroups:
   - ""
   resources:

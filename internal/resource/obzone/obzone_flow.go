@@ -18,6 +18,16 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+func MigrateOBZoneFromExisting() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fMigrateOBZoneFromExisting,
+			Tasks:        []tasktypes.TaskName{tCreateOBServer, tWaitOBServerRunning, tDeleteLegacyOBServers},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}
+
 func PrepareOBZoneForBootstrap() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{

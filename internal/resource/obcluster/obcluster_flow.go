@@ -18,6 +18,19 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+func MigrateOBClusterFromExisting() *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fMigrateOBClusterFromExisting,
+			Tasks:        []tasktypes.TaskName{tCheckMigration, tCheckImageReady, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
+			TargetStatus: clusterstatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: clusterstatus.Failed,
+			},
+		},
+	}
+}
+
 func BootstrapOBCluster() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{

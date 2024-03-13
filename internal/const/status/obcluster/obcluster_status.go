@@ -14,6 +14,7 @@ package obcluster
 
 const (
 	New                 = "new"
+	MigrateFromExisting = "migrate from existing"
 	Running             = "running"
 	AddOBZone           = "add obzone"
 	DeleteOBZone        = "delete obzone"

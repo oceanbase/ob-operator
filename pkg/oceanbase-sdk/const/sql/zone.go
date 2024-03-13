@@ -13,7 +13,8 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	GetZone    = "select name, value, lower(info) as info from __all_zone where zone = ? and name in ('idc', 'recovery_status', 'region', 'status', 'storage_type', 'zone_type')"
+	GetZone    = "select zone as name, lower(status) as status, idc, region, type from DBA_OB_ZONES where zone = ?"
+	ListZones  = "select zone as name, lower(status) as status, idc, region, type from DBA_OB_ZONES"
 	AddZone    = "alter system add zone ?"
 	DeleteZone = "alter system delete zone ?"
 	StartZone  = "alter system start zone ?"
