@@ -915,7 +915,7 @@ definitions:
       image:
         type: string
       resource:
-        $ref: '#/definitions/common.ResourceSpec'
+        $ref: '#/definitions/response.ResourceSpecRender'
     type: object
   response.NFSVolumeSpec:
     properties:
@@ -958,7 +958,7 @@ definitions:
           $ref: '#/definitions/common.KVPair'
         type: array
       resource:
-        $ref: '#/definitions/common.ResourceSpec'
+        $ref: '#/definitions/response.ResourceSpecRender'
       rootPasswordSecret:
         type: string
       status:
@@ -1223,6 +1223,13 @@ definitions:
         example: 3
         type: integer
     type: object
+  response.ResourceSpecRender:
+    properties:
+      cpu:
+        type: integer
+      memory:
+        type: string
+    type: object
   response.RestoreSource:
     properties:
       archiveSource:
@@ -1301,7 +1308,7 @@ definitions:
   response.StorageSpec:
     properties:
       size:
-        type: integer
+        type: string
       storageClass:
         type: string
     type: object

@@ -4076,7 +4076,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "resource": {
-                    "$ref": "#/definitions/common.ResourceSpec"
+                    "$ref": "#/definitions/response.ResourceSpecRender"
                 }
             }
         },
@@ -4142,7 +4142,7 @@ const docTemplate = `{
                     }
                 },
                 "resource": {
-                    "$ref": "#/definitions/common.ResourceSpec"
+                    "$ref": "#/definitions/response.ResourceSpecRender"
                 },
                 "rootPasswordSecret": {
                     "type": "string"
@@ -4528,6 +4528,17 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ResourceSpecRender": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "type": "integer"
+                },
+                "memory": {
+                    "type": "string"
+                }
+            }
+        },
         "response.RestoreSource": {
             "type": "object",
             "properties": {
@@ -4646,7 +4657,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "size": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "storageClass": {
                     "type": "string"

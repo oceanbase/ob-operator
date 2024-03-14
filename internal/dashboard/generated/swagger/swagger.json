@@ -4069,7 +4069,7 @@
                     "type": "string"
                 },
                 "resource": {
-                    "$ref": "#/definitions/common.ResourceSpec"
+                    "$ref": "#/definitions/response.ResourceSpecRender"
                 }
             }
         },
@@ -4135,7 +4135,7 @@
                     }
                 },
                 "resource": {
-                    "$ref": "#/definitions/common.ResourceSpec"
+                    "$ref": "#/definitions/response.ResourceSpecRender"
                 },
                 "rootPasswordSecret": {
                     "type": "string"
@@ -4521,6 +4521,17 @@
                 }
             }
         },
+        "response.ResourceSpecRender": {
+            "type": "object",
+            "properties": {
+                "cpu": {
+                    "type": "integer"
+                },
+                "memory": {
+                    "type": "string"
+                }
+            }
+        },
         "response.RestoreSource": {
             "type": "object",
             "properties": {
@@ -4639,7 +4650,7 @@
             "type": "object",
             "properties": {
                 "size": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "storageClass": {
                     "type": "string"

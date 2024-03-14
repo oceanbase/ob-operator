@@ -67,9 +67,14 @@ type OBCluster struct {
 	OBClusterExtra `json:",inline"`
 }
 
+type ResourceSpecRender struct {
+	Cpu      int64  `json:"cpu"`
+	MemoryGB string `json:"memory"`
+}
+
 type OBClusterExtra struct {
-	Resource common.ResourceSpec `json:"resource"`
-	Storage  OBServerStorage     `json:"storage"`
+	Resource ResourceSpecRender `json:"resource"`
+	Storage  OBServerStorage    `json:"storage"`
 
 	RootPasswordSecret string             `json:"rootPasswordSecret"`
 	Parameters         []common.KVPair    `json:"parameters"`
@@ -79,8 +84,8 @@ type OBClusterExtra struct {
 }
 
 type MonitorSpec struct {
-	Image    string              `json:"image"`
-	Resource common.ResourceSpec `json:"resource"`
+	Image    string             `json:"image"`
+	Resource ResourceSpecRender `json:"resource"`
 }
 
 type NFSVolumeSpec struct {
@@ -96,7 +101,7 @@ type OBServerStorage struct {
 
 type StorageSpec struct {
 	StorageClass string `json:"storageClass"`
-	SizeGB       int64  `json:"size"`
+	SizeGB       string `json:"size"`
 }
 
 type OBClusterResources struct {

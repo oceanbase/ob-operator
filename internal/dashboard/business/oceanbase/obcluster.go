@@ -197,9 +197,9 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	if obcluster.Spec.MonitorTemplate != nil {
 		respCluster.Monitor = &response.MonitorSpec{}
 		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
-		respCluster.Monitor.Resource = modelcommon.ResourceSpec{
+		respCluster.Monitor.Resource = response.ResourceSpecRender{
 			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.Value() >> 30,
+			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.String(),
 		}
 	}
 	if obcluster.Spec.BackupVolume != nil {
@@ -223,22 +223,22 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		}
 	}
 	if obcluster.Spec.OBServerTemplate != nil {
-		respCluster.OBClusterExtra.Resource = modelcommon.ResourceSpec{
+		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
 			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.Value() >> 30,
+			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.String(),
 		}
 		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
 			DataStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value() >> 30,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.String(),
 			},
 			RedoLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value() >> 30,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(),
 			},
 			SysLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value() >> 30,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.String(),
 			},
 		}
 	}
