@@ -10,7 +10,6 @@ export default function Topo() {
     defaultParams: [{ ns, name }],
   });
   const tenantTopoData = tenantResponse?.data;
-
   return (
     <div>
       {tenantTopoData && (

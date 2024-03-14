@@ -28,29 +28,29 @@ declare namespace API {
     namespace: string;
     status: string;
     image: string;
-    resource:{
+    rootPasswordSecret: string;
+    mode: ClusterMode;
+    resource?:{
       cpu: number;
       memory: number;
     };
-    storage: {
+    storage?: {
       dataStorage: Storage;
       redoLogStorage: Storage;
       sysLogStorage: Storage;
     };
-    backupVolume: {
+    backupVolume?: {
       address: string;
       path: string;
     };
-    monitor: {
+    monitor?: {
       image: string;
       resource: {
         cpu: number;
         memory: number;
       };
     };
-    rootPasswordSecret: string;
-    mode: ClusterMode;
-    parameters: {
+    parameters?: {
       key: string;
       value: string;
     }[];
@@ -238,6 +238,18 @@ declare namespace API {
     memorySize: string;
     minIops?: number;
   }
+
+  type PoolConfig = {
+    priority: number;
+    unitConfig: {
+      iopsWeight: number;
+      logDiskSize: string;
+      cpuCount: string;
+      maxIops: number;
+      memorySize: string;
+      minIops: number;
+    };
+  };
 
   type TenantBody = {
     connectWhiteList?: string;

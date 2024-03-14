@@ -1,6 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Col, Descriptions, Switch, Tag } from 'antd';
+import { Card,Col,Descriptions,Switch,Tag } from 'antd';
 import { useState } from 'react';
 
 import styles from './index.less';
@@ -10,69 +10,72 @@ export default function BasicInfo({
   namespace,
   status,
   image,
+  mode,
+  rootPasswordSecret,
   resource,
   storage,
   backupVolume,
   monitor,
-  rootPasswordSecret,
-  mode,
   parameters,
+  extra = true,
   style,
-}: API.ClusterInfo & { style: React.CSSProperties }) {
+}: API.ClusterInfo & { style?: React.CSSProperties,extra?: boolean }) {
   const [checked, setChecked] = useState<boolean>(false);
-  const OBServerConfig = [
-    {
-      label: 'CPU',
-      value: resource.cpu,
-    },
-    {
-      label: 'Memory',
-      value: resource.memory,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageClass',
-        defaultMessage: 'Datafile 存储类',
-      }),
-      value: storage.dataStorage.storageClass,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageSize',
-        defaultMessage: 'Datafile 存储大小',
-      }),
-      value: storage.dataStorage.size,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.RedologStorageClass',
-        defaultMessage: 'RedoLog 存储类',
-      }),
-      value: storage.redoLogStorage.storageClass,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
-        defaultMessage: 'RedoLog 大小',
-      }),
-      value: storage.redoLogStorage.size,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageClass',
-        defaultMessage: '系统日志存储类',
-      }),
-      value: storage.sysLogStorage.storageClass,
-    },
-    {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageSize',
-        defaultMessage: '系统日志存储大小',
-      }),
-      value: storage.sysLogStorage.size,
-    },
-  ];
-
+  const OBServerConfig = extra
+    ? [
+        {
+          label: 'CPU',
+          value: resource.cpu,
+        },
+        {
+          label: 'Memory',
+          value: resource.memory,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageClass',
+            defaultMessage: 'Datafile 存储类',
+          }),
+          value: storage.dataStorage.storageClass,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageSize',
+            defaultMessage: 'Datafile 存储大小',
+          }),
+          value: storage.dataStorage.size,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.RedologStorageClass',
+            defaultMessage: 'RedoLog 存储类',
+          }),
+          value: storage.redoLogStorage.storageClass,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
+            defaultMessage: 'RedoLog 大小',
+          }),
+          value: storage.redoLogStorage.size,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageClass',
+            defaultMessage: '系统日志存储类',
+          }),
+          value: storage.sysLogStorage.storageClass,
+        },
+        {
+          label: intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageSize',
+            defaultMessage: '系统日志存储大小',
+          }),
+          value: storage.sysLogStorage.size,
+        },
+      ]
+    : [];
+  
   return (
     <Col span={24}>
       <Card style={style}>
@@ -135,26 +138,28 @@ export default function BasicInfo({
             {rootPasswordSecret || '-'}
           </Descriptions.Item>
         </Descriptions>
-        <div style={{ marginBottom: 12 }}>
-          <span
-            style={{
-              color: '#132039',
-              fontSize: 16,
-              fontWeight: 600,
-              marginRight: 8,
-            }}
-          >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.DetailedClusterConfiguration',
-              defaultMessage: '集群详细配置',
-            })}
-          </span>
-          <Switch
-            checked={checked}
-            onChange={(checked) => setChecked(checked)}
-          />
-        </div>
-        {checked && (
+        {extra && (
+          <div style={{ marginBottom: 12 }}>
+            <span
+              style={{
+                color: '#132039',
+                fontSize: 16,
+                fontWeight: 600,
+                marginRight: 8,
+              }}
+            >
+              {intl.formatMessage({
+                id: 'Dashboard.Detail.Overview.BasicInfo.DetailedClusterConfiguration',
+                defaultMessage: '集群详细配置',
+              })}
+            </span>
+            <Switch
+              checked={checked}
+              onChange={(checked) => setChecked(checked)}
+            />
+          </div>
+        )}
+        {checked && extra && (
           <div className={styles.detailConfig}>
             <Descriptions
               style={{ width: '50%' }}

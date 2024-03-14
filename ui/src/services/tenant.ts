@@ -132,7 +132,7 @@ export async function getBackupPolicy({
     'bakEncryptionSecret',
     'jobKeepDays',
     'pieceIntervalDays',
-    'recoveryDays'
+    'recoveryDays',
   ];
 
   if (r.successful && r.data) {
@@ -148,7 +148,7 @@ export async function getBackupJobs({
   ns,
   name,
   type,
-  limit
+  limit,
 }: API.NamespaceAndName & {
   type: API.JobType;
   limit?: number;
@@ -177,7 +177,7 @@ export async function getBackupJobs({
   return r;
 }
 
-// 备租户回放日志
+// tenant replay log
 export async function replayLogOfTenant({
   ns,
   name,
@@ -219,7 +219,7 @@ export async function modifyUnitNumber({
   });
 }
 
-// 升级特定租户的租户兼容版本以匹配集群版本
+// Upgrade the tenant-compatible version of a specific tenant to match the cluster version
 export async function upgradeTenantCompatibilityVersion({
   ns,
   name,
@@ -250,6 +250,45 @@ export async function patchTenantConfiguration({
 }: API.NamespaceAndName &
   API.PatchTenantConfiguration): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}`, {
+    method: 'PATCH',
+    data: body,
+  });
+}
+
+// Create obtenant pool
+export async function createObtenantPool({
+  ns,
+  name,
+  zoneName,
+  ...body
+}: API.PoolConfig &
+  API.NamespaceAndName & { zoneName: string }): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}/pools/${zoneName}`, {
+    method: 'PUT',
+    data: body,
+  });
+}
+
+// Delete obtenant pool
+export async function deleteObtenantPool({
+  ns,
+  name,
+  zoneName,
+}: API.NamespaceAndName & { zoneName: string }): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}/pools/${zoneName}`, {
+    method: 'DELETE',
+  });
+}
+
+// Patch obtenant pool
+export async function patchObtenantPool({
+  ns,
+  name,
+  zoneName,
+  ...body
+}: API.PoolConfig &
+  API.NamespaceAndName & { zoneName: string }): Promise<API.CommonResponse> {
+  return request(`${tenantPrefix}/${ns}/${name}/pools/${zoneName}`, {
     method: 'PATCH',
     data: body,
   });

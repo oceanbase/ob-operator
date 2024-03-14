@@ -1,18 +1,19 @@
 import { intl } from '@/utils/intl';
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined,PlusOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd';
 import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Row,
+Button,
+Card,
+Col,
+Form,
+Input,
+InputNumber,
+Popconfirm,
+Row,
 } from 'antd';
 
 import NodeSelector from '@/components/NodeSelector';
+import { TZ_NAME_REG } from '@/constants';
 import { resourceNameRule } from './helper';
 
 export default function Topo({ form }: { form: FormInstance<any> }) {
@@ -48,6 +49,7 @@ export default function Topo({ form }: { form: FormInstance<any> }) {
                               defaultMessage: 'Zone名称',
                             })
                           }
+                          validateFirst
                           name={[name, 'zone']}
                           rules={[
                             {
@@ -56,6 +58,10 @@ export default function Topo({ form }: { form: FormInstance<any> }) {
                                 id: 'OBDashboard.Cluster.New.Topo.EnterAZoneName',
                                 defaultMessage: '请输入zone名称',
                               }),
+                            },
+                            {
+                              pattern: TZ_NAME_REG,
+                              message: '首字符必须是字母或者下划线，不能包含 -',
                             },
                             resourceNameRule,
                           ]}
@@ -142,8 +148,7 @@ export default function Topo({ form }: { form: FormInstance<any> }) {
                         onClick={() =>
                           add({
                             zone: `zone${fields.length + 1}`,
-                            nodeSelector: [
-                            ],
+                            nodeSelector: [],
                             replicas: 1,
                           })
                         }

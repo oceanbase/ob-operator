@@ -1,8 +1,8 @@
+import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Col, Table, Tag, Card } from 'antd';
+import { Button,Card,Col,Table,Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { COLOR_MAP } from '@/constants';
 
 import styles from './index.less';
 
@@ -20,7 +20,12 @@ const columns: ColumnsType<API.TenantDetail> = [
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link replace to={`/tenant/ns=${record.namespace}&nm=${record.name}&tenantName=${record.tenantName}`}>{value}</Link>
+      <Link
+        replace
+        to={`/tenant/ns=${record.namespace}&nm=${record.name}&tenantName=${record.tenantName}`}
+      >
+        {value}
+      </Link>
     ),
   },
   {
@@ -36,8 +41,8 @@ const columns: ColumnsType<API.TenantDetail> = [
       id: 'Dashboard.pages.Tenant.TenantsList.Cluster',
       defaultMessage: '所属集群',
     }),
-    dataIndex: 'clusterName',
-    key: 'clusterName',
+    dataIndex: 'clusterResourceName',
+    key: 'clusterResourceName',
   },
   {
     title: intl.formatMessage({
@@ -75,7 +80,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render:(value)=><Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+    render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
   },
   {
     title: intl.formatMessage({

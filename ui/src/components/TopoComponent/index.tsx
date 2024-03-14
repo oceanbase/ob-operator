@@ -49,11 +49,13 @@ export default function TopoComponent({
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [operateDisable, setOperateDisable] = useState<boolean>(false);
+  
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
       ? [namespace, clusterNameOfKubectl]
       : getNSName(),
   );
+  
   //Control the visibility of operation and maintenance modal
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
@@ -114,7 +116,7 @@ export default function TopoComponent({
       zoneName: chooseZoneName.current,
     });
     if (res.successful) {
-      message.success(res.message);
+      message.success(res.message || '删除成功');
       getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
     }
   };
@@ -286,6 +288,7 @@ export default function TopoComponent({
         ? header
         : originTopoData && (
             <BasicInfo
+              extra={false}
               style={{ backgroundColor: '#f5f8fe', border:'none' }}
               {...(originTopoData.basicInfo as API.ClusterInfo)}
             />

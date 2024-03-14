@@ -1,25 +1,25 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
+import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-  getEssentialParameters as getEssentialParametersReq,
-  getSimpleClusterList,
+getEssentialParameters as getEssentialParametersReq,
+getSimpleClusterList,
 } from '@/services';
 import {
-  deleteTenent,
-  getBackupJobs,
-  getBackupPolicy,
-  getTenant,
+deleteTenent,
+getBackupJobs,
+getBackupPolicy,
+getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Tooltip, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Button,Row,Tooltip,message } from 'antd';
+import { useEffect,useRef,useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -32,6 +32,8 @@ type OperateItemConfigType = {
   isMore: boolean;
   danger?: boolean;
 };
+
+export type ClusterNSName = { ns?: string; name?: string }
 
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
@@ -112,15 +114,15 @@ export default function TenantOverview() {
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
   const operateListConfig: OperateItemConfigType[] = [
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
-        defaultMessage: 'Unit规格管理',
-      }),
-      onClick: () => openOperateModal('modifyUnitSpecification'),
-      show: tenantDetail?.info.tenantRole === 'PRIMARY',
-      isMore: false,
-    },
+    // {
+    //   text: intl.formatMessage({
+    //     id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
+    //     defaultMessage: 'Unit规格管理',
+    //   }),
+    //   onClick: () => openOperateModal('modifyUnitSpecification'),
+    //   show: tenantDetail?.info.tenantRole === 'PRIMARY',
+    //   isMore: false,
+    // },
     {
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.ChangePassword',
@@ -213,7 +215,12 @@ export default function TenantOverview() {
         ...operateListConfig
           .filter((item) => item.show && !item.isMore)
           .map((item, index) => (
-            <Button onClick={item.onClick} danger={item.danger} key={index}>
+            <Button
+              type={item.text !== '修改密码' ? 'primary' : 'default'}
+              onClick={item.onClick}
+              danger={item.danger}
+              key={index}
+            >
               {item.text}
             </Button>
           )),
@@ -282,7 +289,10 @@ export default function TenantOverview() {
           )}
 
           {tenantDetail && tenantDetail.replicas && (
-            <Replicas replicaList={tenantDetail.replicas} />
+            <Replicas
+              refreshTenant={reGetTenantDetail} 
+              replicaList={tenantDetail.replicas}
+            />
           )}
 
           <EventsTable
@@ -303,7 +313,7 @@ export default function TenantOverview() {
           defaultValueForUnitDetail={{
             clusterList: formatClustersTopology(clusterList, tenantDetail),
             essentialParameter,
-            clusterResourceName:tenantDetail?.info.clusterResourceName,
+            clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
           }}
         />

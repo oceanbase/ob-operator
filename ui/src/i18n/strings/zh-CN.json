@@ -628,6 +628,6 @@
   "Dashboard.Detail.Overview.Replicas.MinimumAvailableCpu": "最小可用 CPU",
   "Dashboard.Detail.Overview.Replicas.ClogDiskSize": "Clog 盘大小",
   "Dashboard.Detail.Overview.Replicas.ResourcePool": "资源池",
-  "Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone": "资源池 - {{replicaZone}}",
+  "Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone": "资源池 - {replicaZone}",
   "Dashboard.Detail.Overview.TenantOverview": "租户概览"
 }
