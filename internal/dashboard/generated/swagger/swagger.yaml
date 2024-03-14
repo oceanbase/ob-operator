@@ -714,6 +714,8 @@ definitions:
         type: string
       bakEncryptionSecret:
         type: string
+      createTime:
+        type: string
       destType:
         description: 'Enum: NFS, OSS'
         example: NFS

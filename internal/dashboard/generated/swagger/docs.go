@@ -3782,6 +3782,9 @@ const docTemplate = `{
                 "bakEncryptionSecret": {
                     "type": "string"
                 },
+                "createTime": {
+                    "type": "string"
+                },
                 "destType": {
                     "description": "Enum: NFS, OSS",
                     "type": "string",

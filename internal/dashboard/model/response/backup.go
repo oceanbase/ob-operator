@@ -23,6 +23,8 @@ type BackupPolicy struct {
 	Status              string `json:"status"`
 	OSSAccessSecret     string `json:"ossAccessSecret,omitempty"`
 	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
+
+	CreateTime string `json:"createTime"`
 }
 
 type BackupJob struct {
