@@ -14,18 +14,18 @@ package obzone
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
@@ -39,9 +39,7 @@ func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOper
 }
 
 func (m *OBZoneManager) generateServerName() string {
-	parts := strings.Split(uuid.New().String(), "-")
-	suffix := parts[len(parts)-1]
-	return fmt.Sprintf("%s-%d-%s-%s", m.OBZone.Spec.ClusterName, m.OBZone.Spec.ClusterId, m.OBZone.Spec.Topology.Zone, suffix)
+	return fmt.Sprintf("%s-%d-%s-%s", m.OBZone.Spec.ClusterName, m.OBZone.Spec.ClusterId, m.OBZone.Spec.Topology.Zone, rand.String(6))
 }
 
 func (m *OBZoneManager) AddZone() tasktypes.TaskError {
@@ -108,6 +106,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
 		finalizerName := "finalizers.oceanbase.com.deleteobserver"
@@ -147,6 +146,9 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 		}
 		if modeAnnoExist {
 			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		}
+		if migrateAnnoExist {
+			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
 		m.Logger.Info("Create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)
@@ -391,6 +393,43 @@ func (m *OBZoneManager) MountBackupVolume() tasktypes.TaskError {
 			})
 			if err != nil {
 				return errors.Wrapf(err, "Mount backup volume %s failed", observer.Name)
+			}
+		}
+	}
+	return nil
+}
+
+func (m *OBZoneManager) DeleteLegacyOBServer() tasktypes.TaskError {
+	operationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	allOBServers, err := operationManager.ListServers()
+	if err != nil {
+		return errors.Wrap(err, "List observers in oceanbase")
+	}
+	observerList, err := m.listOBServers()
+	if err != nil {
+		return errors.Wrap(err, "List observer crs")
+	}
+	for _, observer := range allOBServers {
+		// skip observers in different obzone
+		if observer.Zone != m.OBZone.Spec.Topology.Zone {
+			continue
+		}
+		found := false
+		for _, observerCR := range observerList.Items {
+			if observer.Ip == observerCR.Status.GetConnectAddr() {
+				found = true
+			}
+		}
+		if !found {
+			err := operationManager.DeleteServer(&model.ServerInfo{
+				Ip:   observer.Ip,
+				Port: observer.Port,
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Delete observer %s:%d", observer.Ip, observer.Port)
 			}
 		}
 	}

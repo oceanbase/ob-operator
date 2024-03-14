@@ -64,6 +64,7 @@ const (
 	GetConnectionMaxRetries = 10
 	CheckConnectionInterval = 3
 	CheckJobInterval        = 3
+	CheckJobMaxRetries      = 100
 	CommonCheckInterval     = 5
 )
 
@@ -76,6 +77,7 @@ const (
 	AnnotationsIndependentPVCLifecycle = "oceanbase.oceanbase.com/independent-pvc-lifecycle"
 	AnnotationsSinglePVC               = "oceanbase.oceanbase.com/single-pvc"
 	AnnotationsMode                    = "oceanbase.oceanbase.com/mode"
+	AnnotationsSourceClusterAddress    = "oceanbase.oceanbase.com/source-cluster-address"
 )
 
 const (
@@ -173,4 +175,13 @@ const (
 
 const (
 	TolerateServerPodNotReadyMinutes = 5
+)
+
+const (
+	ClusterNameParam = "cluster"
+	ClusterIdParam   = "cluster_id"
+)
+
+const (
+	CmdVersion = "rpm -q --queryformat '%{VERSION}-%{RELEASE}' oceanbase-ce | sed 's/\\.[^.]*$//'"
 )

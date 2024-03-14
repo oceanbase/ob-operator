@@ -198,7 +198,7 @@ export const getNewClusterList = (
   for (let cluster of _clusterList) {
     if (
       cluster.clusterId === target.id ||
-      cluster.clusterName === target.name
+      cluster.name === target.name
     ) {
       cluster.topology.forEach((zoneItem) => {
         if (zoneItem.zone === zone) {

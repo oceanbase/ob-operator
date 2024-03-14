@@ -29,7 +29,7 @@ export type UnitDetailType = {
 
 type UnitConfigType = {
   clusterList?: API.SimpleClusterList;
-  clusterName?: string;
+  clusterResourceName?: string;
   essentialParameter?: API.EssentialParametersType;
   setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
 };
@@ -41,7 +41,7 @@ export default function ModifyUnitDetailModal({
   clusterList = [],
   setClusterList,
   essentialParameter = {},
-  clusterName = '',
+  clusterResourceName = '',
 }: CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<UnitDetailType>();
   const [minMemory, setMinMemory] = useState<number>(2);
@@ -76,14 +76,14 @@ export default function ModifyUnitDetailModal({
       setSelectZones([...selectZones, name]);
     }
     setClusterList(
-      getNewClusterList(clusterList, name, checked, { name: clusterName }),
+      getNewClusterList(clusterList, name, checked, { name: clusterResourceName }),
     );
   };
 
   const targetZoneList = clusterList
-    .filter((cluster) => cluster.clusterName === clusterName)[0]
+    .filter((cluster) => cluster.name === clusterResourceName)[0]
     ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
-
+    
   useEffect(() => {
     if (essentialParameter) {
       setMinMemory(essentialParameter.minPoolMemory / (1 << 30));

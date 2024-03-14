@@ -12,47 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package model
 
-// database entity
-type OBZoneInfo struct {
-	Name  string `json:"name" db:"name"`
-	Value int64  `json:"value" db:"value"`
-	Info  string `json:"info" db:"info"`
-}
-
-// response data
 type OBZone struct {
-	Name           string `json:"name"`
-	Idc            string `json:"idc"`
-	RecoveryStatus string `json:"recovery_status"`
-	Region         string `json:"region"`
-	Status         string `json:"status"`
-	StorageType    string `json:"storage_type"`
-	ZoneType       string `json:"zone_type"`
-}
-
-func NewOBZone(zoneName string, obzoneInfoList []OBZoneInfo) *OBZone {
-	obzone := &OBZone{
-		Name: zoneName,
-	}
-	for _, obzoneInfo := range obzoneInfoList {
-		if obzoneInfo.Name == "idc" {
-			obzone.Idc = obzoneInfo.Info
-		}
-		if obzoneInfo.Name == "recovery_status" {
-			obzone.RecoveryStatus = obzoneInfo.Info
-		}
-		if obzoneInfo.Name == "region" {
-			obzone.Region = obzoneInfo.Info
-		}
-		if obzoneInfo.Name == "status" {
-			obzone.Status = obzoneInfo.Info
-		}
-		if obzoneInfo.Name == "storage_type" {
-			obzone.StorageType = obzoneInfo.Info
-		}
-		if obzoneInfo.Name == "zone_type" {
-			obzone.ZoneType = obzoneInfo.Info
-		}
-	}
-	return obzone
+	Name   string `json:"name" db:"name"`
+	Idc    string `json:"idc" db:"idc"`
+	Region string `json:"region" db:"region"`
+	Status string `json:"status" db:"status"`
+	Type   string `json:"type" db:"type"`
 }

@@ -16,7 +16,7 @@ export default function Topo() {
       {tenantTopoData && (
         <TopoComponent
           tenantReplicas={tenantTopoData.replicas}
-          clusterNameOfKubectl={tenantTopoData.info.clusterName}
+          clusterNameOfKubectl={tenantTopoData.info.clusterResourceName}
           namespace={tenantTopoData.info.namespace}
           header={
             <BasicInfo

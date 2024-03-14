@@ -18,6 +18,12 @@ import (
 	"strconv"
 	"strings"
 
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -27,13 +33,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/oceanbase"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-
-	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
-
-	"k8s.io/apimachinery/pkg/types"
 )
 
 func numberToDay(n int) string {
@@ -175,7 +174,6 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 	policy.Spec = v1alpha1.OBTenantBackupPolicySpec{
 		ObClusterName: obcluster,
 		TenantCRName:  nn.Name,
-		TenantName:    nn.Name, // It's tricky to use the deprecated field
 		JobKeepWindow: numberToDay(p.JobKeepDays),
 		LogArchive: v1alpha1.LogArchiveConfig{
 			Destination: apitypes.BackupDestination{
@@ -216,9 +214,11 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 				ScheduleTime:  "",
 				ScheduleDates: []param.ScheduleDate{},
 			},
-			JobKeepDays:       dayToNumber(p.Spec.JobKeepWindow),
-			RecoveryDays:      dayToNumber(p.Spec.DataClean.RecoveryWindow),
-			PieceIntervalDays: dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
+			DaysFieldBase: param.DaysFieldBase{
+				JobKeepDays:       dayToNumber(p.Spec.JobKeepWindow),
+				RecoveryDays:      dayToNumber(p.Spec.DataClean.RecoveryWindow),
+				PieceIntervalDays: dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
+			},
 		},
 		TenantName:          p.Spec.TenantCRName,
 		Name:                p.Name,
@@ -299,6 +299,15 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	if tenant.Status.Status != "running" {
 		return nil, oberr.NewBadRequest("Tenant is not running")
 	}
+	if p.JobKeepDays == 0 {
+		p.JobKeepDays = 7
+	}
+	if p.RecoveryDays == 0 {
+		p.RecoveryDays = 30
+	}
+	if p.PieceIntervalDays == 0 {
+		p.PieceIntervalDays = 1
+	}
 	backupPolicy := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, p)
 
 	if p.DestType == "OSS" && p.OSSAccessID != "" && p.OSSAccessKey != "" {
@@ -360,14 +369,14 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	if err != nil {
 		return nil, oberr.NewBadRequest(err.Error())
 	}
-	if p.JobKeepWindow != 0 {
-		policy.Spec.JobKeepWindow = numberToDay(p.JobKeepWindow)
+	if p.JobKeepDays != 0 {
+		policy.Spec.JobKeepWindow = numberToDay(p.JobKeepDays)
 	}
-	if p.RecoveryWindow != 0 {
-		policy.Spec.DataClean.RecoveryWindow = numberToDay(p.RecoveryWindow)
+	if p.RecoveryDays != 0 {
+		policy.Spec.DataClean.RecoveryWindow = numberToDay(p.RecoveryDays)
 	}
-	if p.PieceInterval != 0 {
-		policy.Spec.LogArchive.SwitchPieceInterval = numberToDay(p.PieceInterval)
+	if p.PieceIntervalDays != 0 {
+		policy.Spec.LogArchive.SwitchPieceInterval = numberToDay(p.PieceIntervalDays)
 	}
 
 	if strings.ToUpper(p.Status) == "PAUSED" {
@@ -398,10 +407,13 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	return buildBackupPolicyModelType(np), nil
 }
 
-func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
+func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, force bool) error {
 	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return oberr.NewBadRequest(err.Error())
+	}
+	if force {
+		return oceanbase.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 	}
 	return oceanbase.DeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 }

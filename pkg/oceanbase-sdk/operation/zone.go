@@ -53,18 +53,24 @@ func (m *OceanbaseOperationManager) DeleteZone(zoneName string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) GetZone(zoneName string) (*model.OBZone, error) {
-	obzoneInfoList := make([]model.OBZoneInfo, 0)
-	err := m.QueryList(&obzoneInfoList, sql.GetZone, zoneName)
+func (m *OceanbaseOperationManager) ListZones() ([]model.OBZone, error) {
+	zoneList := make([]model.OBZone, 0)
+	err := m.QueryList(&zoneList, sql.ListZones)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when query zone info")
-		return nil, errors.Wrap(err, "Query zone info")
+		m.Logger.Error(err, "Got exception when list all zone")
+		return nil, errors.Wrap(err, "list all zone")
 	}
-	if len(obzoneInfoList) == 0 {
-		return nil, errors.Errorf("Query obzone %s info get empty result", zoneName)
+	return zoneList, nil
+}
+
+func (m *OceanbaseOperationManager) GetZone(zoneName string) (*model.OBZone, error) {
+	zone := &model.OBZone{}
+	err := m.QueryRow(zone, sql.GetZone, zoneName)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when query zone")
+		return nil, errors.Wrap(err, "query zone info")
 	}
-	obzone := model.NewOBZone(zoneName, obzoneInfoList)
-	return obzone, nil
+	return zone, nil
 }
 
 func (m *OceanbaseOperationManager) StartZone(zoneName string) error {

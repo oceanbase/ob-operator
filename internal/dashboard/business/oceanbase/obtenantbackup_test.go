@@ -48,8 +48,10 @@ var _ = Describe("OBTenantBackup", func() {
 					ScheduleDates: scheduleDates,
 					ScheduleTime:  "04:00",
 				},
-				JobKeepDays:  3,
-				RecoveryDays: 7,
+				DaysFieldBase: param.DaysFieldBase{
+					JobKeepDays:  3,
+					RecoveryDays: 7,
+				},
 			},
 		}
 		policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
@@ -108,8 +110,10 @@ var _ = Describe("OBTenantBackup", func() {
 					ScheduleDates: scheduleDates,
 					ScheduleTime:  "04:00",
 				},
-				JobKeepDays:  3,
-				RecoveryDays: 7,
+				DaysFieldBase: param.DaysFieldBase{
+					JobKeepDays:  3,
+					RecoveryDays: 7,
+				},
 			},
 		}
 		policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)

@@ -10,11 +10,24 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package response
+package schema
 
-type DashboardInfo struct {
-	AppName          string `json:"appName"`
-	Version          string `json:"version"`
-	PublicKey        string `json:"publicKey"`
-	ReportStatistics bool   `json:"reportStatistics"`
-}
+import "k8s.io/apimachinery/pkg/runtime/schema"
+
+const (
+	OBResourceRescueKind     = "OBResourceRescue"
+	OBResourceRescueResource = "obresourcerescues"
+)
+
+var (
+	OBResourceRescueGVR = schema.GroupVersionResource{
+		Group:    Group,
+		Version:  Version,
+		Resource: OBResourceRescueResource,
+	}
+	OBResourceRescueGVK = schema.GroupVersionKind{
+		Group:   Group,
+		Version: Version,
+		Kind:    OBResourceRescueKind,
+	}
+)
