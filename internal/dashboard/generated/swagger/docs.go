@@ -673,7 +673,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/response.OBCluster"
+                                                "$ref": "#/definitions/response.OBClusterBrief"
                                             }
                                         }
                                     }
@@ -4164,6 +4164,41 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "string"
+                }
+            }
+        },
+        "response.OBClusterBrief": {
+            "type": "object",
+            "properties": {
+                "clusterId": {
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "createTime": {
+                    "type": "integer"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "statusDetail": {
+                    "type": "string"
+                },
+                "topology": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OBZone"
+                    }
                 }
             }
         },

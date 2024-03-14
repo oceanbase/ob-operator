@@ -64,7 +64,100 @@ func getStatisticStatus(obcluster *v1alpha1.OBCluster) string {
 	}
 }
 
+func buildOBClusterBrief(ctx context.Context, obcluster *v1alpha1.OBCluster) (*response.OBClusterBrief, error) {
+	topology, err := buildOBClusterTopologyResp(ctx, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build obcluster topology")
+	}
+	return &response.OBClusterBrief{
+		Namespace:    obcluster.Namespace,
+		Name:         obcluster.Name,
+		ClusterName:  obcluster.Spec.ClusterName,
+		ClusterId:    obcluster.Spec.ClusterId,
+		Status:       getStatisticStatus(obcluster),
+		StatusDetail: obcluster.Status.Status,
+		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
+		Image:        obcluster.Status.Image,
+		Topology:     topology,
+	}, nil
+}
+
 func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) (*response.OBCluster, error) {
+	brief, err := buildOBClusterBrief(ctx, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to build obcluster brief")
+	}
+	respCluster := &response.OBCluster{
+		OBClusterBrief: *brief,
+		OBClusterExtra: response.OBClusterExtra{
+			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
+			Parameters:         nil,
+		},
+		// TODO: add metrics
+		Metrics: nil,
+	}
+	var parameters []modelcommon.KVPair
+	for _, param := range obcluster.Spec.Parameters {
+		parameters = append(parameters, modelcommon.KVPair{
+			Key:   param.Name,
+			Value: param.Value,
+		})
+	}
+	respCluster.Parameters = parameters
+
+	if obcluster.Spec.MonitorTemplate != nil {
+		respCluster.Monitor = &response.MonitorSpec{}
+		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
+		respCluster.Monitor.Resource = response.ResourceSpecRender{
+			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.String(),
+		}
+	}
+	if obcluster.Spec.BackupVolume != nil {
+		respCluster.BackupVolume = &response.NFSVolumeSpec{}
+		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
+		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
+	}
+	labels := obcluster.GetLabels()
+	if labels != nil {
+		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
+			switch mode {
+			case oceanbaseconst.ModeStandalone:
+				respCluster.Mode = modelcommon.ClusterModeStandalone
+			case oceanbaseconst.ModeService:
+				respCluster.Mode = modelcommon.ClusterModeService
+			default:
+				respCluster.Mode = modelcommon.ClusterModeNormal
+			}
+		} else {
+			respCluster.Mode = modelcommon.ClusterModeNormal
+		}
+	}
+	if obcluster.Spec.OBServerTemplate != nil {
+		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
+			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.String(),
+		}
+		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
+			DataStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.String(),
+			},
+			RedoLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(),
+			},
+			SysLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.String(),
+			},
+		}
+	}
+
+	return respCluster, nil
+}
+
+func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBCluster) ([]response.OBZone, error) {
 	obzoneList, err := oceanbase.ListOBZonesOfOBCluster(ctx, obcluster)
 	if err != nil {
 		return nil, errors.Wrapf(err, "List obzone of obcluster %s %s", obcluster.Namespace, obcluster.Name)
@@ -168,92 +261,17 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		topology = append(topology, respZone)
 	}
 
-	respCluster := &response.OBCluster{
-		Namespace:    obcluster.Namespace,
-		Name:         obcluster.Name,
-		ClusterName:  obcluster.Spec.ClusterName,
-		ClusterId:    obcluster.Spec.ClusterId,
-		Status:       getStatisticStatus(obcluster),
-		StatusDetail: obcluster.Status.Status,
-		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
-		Image:        obcluster.Status.Image,
-		Topology:     topology,
-		OBClusterExtra: response.OBClusterExtra{
-			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
-			Parameters:         nil,
-		},
-		// TODO: add metrics
-		Metrics: nil,
-	}
-	var parameters []modelcommon.KVPair
-	for _, param := range obcluster.Spec.Parameters {
-		parameters = append(parameters, modelcommon.KVPair{
-			Key:   param.Name,
-			Value: param.Value,
-		})
-	}
-	respCluster.Parameters = parameters
-
-	if obcluster.Spec.MonitorTemplate != nil {
-		respCluster.Monitor = &response.MonitorSpec{}
-		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
-		respCluster.Monitor.Resource = response.ResourceSpecRender{
-			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.String(),
-		}
-	}
-	if obcluster.Spec.BackupVolume != nil {
-		respCluster.BackupVolume = &response.NFSVolumeSpec{}
-		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
-		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
-	}
-	labels := obcluster.GetLabels()
-	if labels != nil {
-		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
-			switch mode {
-			case oceanbaseconst.ModeStandalone:
-				respCluster.Mode = modelcommon.ClusterModeStandalone
-			case oceanbaseconst.ModeService:
-				respCluster.Mode = modelcommon.ClusterModeService
-			default:
-				respCluster.Mode = modelcommon.ClusterModeNormal
-			}
-		} else {
-			respCluster.Mode = modelcommon.ClusterModeNormal
-		}
-	}
-	if obcluster.Spec.OBServerTemplate != nil {
-		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
-			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.String(),
-		}
-		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
-			DataStorage: response.StorageSpec{
-				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.String(),
-			},
-			RedoLogStorage: response.StorageSpec{
-				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(),
-			},
-			SysLogStorage: response.StorageSpec{
-				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.String(),
-			},
-		}
-	}
-
-	return respCluster, nil
+	return topology, nil
 }
 
-func ListOBClusters(ctx context.Context) ([]response.OBCluster, error) {
-	obclusters := make([]response.OBCluster, 0)
+func ListOBClusters(ctx context.Context) ([]response.OBClusterBrief, error) {
+	obclusters := make([]response.OBClusterBrief, 0)
 	obclusterList, err := oceanbase.ListAllOBClusters(ctx)
 	if err != nil {
 		return obclusters, errors.Wrap(err, "failed to list obclusters")
 	}
 	for _, obcluster := range obclusterList.Items {
-		resp, err := buildOBClusterResponse(ctx, &obcluster)
+		resp, err := buildOBClusterBrief(ctx, &obcluster)
 		if err != nil {
 			logger.Errorf("failed to build obcluster response: %v", err)
 		}

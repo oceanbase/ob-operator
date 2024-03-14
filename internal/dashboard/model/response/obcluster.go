@@ -51,18 +51,23 @@ type OBMetrics struct {
 	DiskPercent   int `json:"diskPercent"`
 }
 
+type OBClusterBrief struct {
+	Name         string   `json:"name"`
+	Namespace    string   `json:"namespace"`
+	ClusterName  string   `json:"clusterName"`
+	ClusterId    int64    `json:"clusterId"`
+	Status       string   `json:"status"`
+	StatusDetail string   `json:"statusDetail"`
+	CreateTime   int64    `json:"createTime"`
+	Image        string   `json:"image"`
+	Topology     []OBZone `json:"topology"`
+}
+
 type OBCluster struct {
-	Namespace    string     `json:"namespace"`
-	Name         string     `json:"name"`
-	ClusterName  string     `json:"clusterName"`
-	ClusterId    int64      `json:"clusterId"`
-	Topology     []OBZone   `json:"topology"`
-	Status       string     `json:"status"`
-	StatusDetail string     `json:"statusDetail"`
-	CreateTime   int64      `json:"createTime"`
-	Image        string     `json:"image"`
-	Metrics      *OBMetrics `json:"metrics"`
-	Version      string     `json:"version"`
+	OBClusterBrief `json:",inline"`
+
+	Metrics *OBMetrics `json:"metrics"`
+	Version string     `json:"version"`
 
 	OBClusterExtra `json:",inline"`
 }
