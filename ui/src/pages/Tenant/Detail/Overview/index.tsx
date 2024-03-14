@@ -1,22 +1,25 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
+import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { getEssentialParameters as getEssentialParametersReq,getSimpleClusterList } from '@/services';
 import {
-deleteTenent,
-getBackupJobs,
-getBackupPolicy,
-getTenant,
+  getEssentialParameters as getEssentialParametersReq,
+  getSimpleClusterList,
+} from '@/services';
+import {
+  deleteTenent,
+  getBackupJobs,
+  getBackupPolicy,
+  getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Row,Tooltip,message } from 'antd';
-import { useEffect,useRef,useState } from 'react';
+import { Button, Row, Tooltip, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -42,21 +45,19 @@ export default function TenantOverview() {
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        data.forEach((cluster)=>{
-          cluster.topology.forEach((zone)=>{
+        data.forEach((cluster) => {
+          cluster.topology.forEach((zone) => {
             zone.checked = false;
-          })
-        })
+          });
+        });
         setClusterList(data);
       }
     },
   });
-  const { data: essentialParameterRes,run: getEssentialParameters} = useRequest(
-    getEssentialParametersReq,
-    {
+  const { data: essentialParameterRes, run: getEssentialParameters } =
+    useRequest(getEssentialParametersReq, {
       manual: true,
-    },
-  );
+    });
 
   const openOperateModal = (type: API.ModalType) => {
     modalType.current = type;
@@ -106,6 +107,7 @@ export default function TenantOverview() {
   });
 
   const tenantDetail = tenantDetailResponse?.data;
+
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
@@ -204,8 +206,8 @@ export default function TenantOverview() {
     let container = document.getElementById('tenant-detail-container');
     return {
       title: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.Overview',
-        defaultMessage: '概览',
+        id: 'Dashboard.Detail.Overview.TenantOverview',
+        defaultMessage: '租户概览',
       }),
       extra: [
         ...operateListConfig
@@ -288,6 +290,7 @@ export default function TenantOverview() {
             objectType="OBTENANT"
             collapsible={true}
           />
+
           <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 
@@ -298,7 +301,7 @@ export default function TenantOverview() {
           successCallback={operateSuccess}
           defaultValue={defaultUnitCount}
           defaultValueForUnitDetail={{
-            clusterList:formatClustersTopology(clusterList,tenantDetail),
+            clusterList: formatClustersTopology(clusterList, tenantDetail),
             essentialParameter,
             clusterResourceName:tenantDetail?.info.clusterResourceName,
             setClusterList,

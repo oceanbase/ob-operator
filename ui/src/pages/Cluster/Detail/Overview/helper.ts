@@ -32,6 +32,20 @@ const getNSName = () => {
   return res;
 };
 
+const clusterInfoConfig = [
+  'name',
+  'namespace',
+  'status',
+  'image',
+  'resource',
+  'storage',
+  'backupVolume',
+  'monitor',
+  'rootPasswordSecret',
+  'mode',
+  'parameters'
+]
+
 // if there is cluster｜zone｜server whose status isn't running,the return status is operating.
 const formatClusterData = (responseData: any): API.ClusterDetail => {
   const res: any = {
@@ -45,11 +59,13 @@ const formatClusterData = (responseData: any): API.ClusterDetail => {
     if (key === 'status' && responseData[key] !== 'running') {
       status = 'operating';
     }
-    if (key !== 'topology' && key !== 'metrics') {
+    if(clusterInfoConfig.includes(key)){
       res['info'][key] = responseData[key];
-    } else if (key === 'metrics') {
+    }
+    if (key === 'metrics') {
       res[key] = responseData[key];
-    } else {
+    }
+    if(key === 'topology'){
       const servers: API.Server[] = [];
       const zones = responseData[key].map((zone: any) => {
         let temp: any = {};

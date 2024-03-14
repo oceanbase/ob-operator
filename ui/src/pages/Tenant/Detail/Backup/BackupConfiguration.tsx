@@ -2,29 +2,30 @@ import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-deletePolicyOfTenant,
-updateBackupPolicyOfTenant,
+  deletePolicyOfTenant,
+  updateBackupPolicyOfTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import {
-Button,
-Card,
-Col,
-Descriptions,
-Form,
-InputNumber,
-Row,
-Select,
-Space,
-message,
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Form,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect,useRef,useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-checkIsSame,
-formatBackupForm,
-formatBackupPolicyData,
+  checkIsSame,
+  checkScheduleDatesHaveFull,
+  formatBackupForm,
+  formatBackupPolicyData,
 } from '../../helper';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
@@ -34,13 +35,14 @@ interface BackupConfigurationProps {
   setBackupPolicy: React.Dispatch<
     React.SetStateAction<API.BackupPolicy | undefined>
   >;
+
   backupPolicyRefresh: () => void;
 }
 
 export default function BackupConfiguration({
   backupPolicy,
   setBackupPolicy,
-  backupPolicyRefresh
+  backupPolicyRefresh,
 }: BackupConfigurationProps) {
   const [form] = Form.useForm();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
@@ -70,8 +72,8 @@ export default function BackupConfiguration({
     },
     destType: {
       label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupType',
-        defaultMessage: '备份类型',
+        id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupMediaType',
+        defaultMessage: '备份介质类型',
       }),
       editRender: (
         <Select
@@ -136,7 +138,7 @@ export default function BackupConfiguration({
     const { successful, data } = await updateBackupPolicyOfTenant(param);
     if (successful) {
       if (data.status === backupPolicy.status) {
-        backupPolicyRefresh()
+        backupPolicyRefresh();
       } else {
         message.success(
           intl.formatMessage({
@@ -174,6 +176,15 @@ export default function BackupConfiguration({
   };
 
   const updateBackupPolicyConfig = async (values) => {
+    if (!checkScheduleDatesHaveFull(values.scheduleDates)) {
+      message.warning(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Backup.BackupConfiguration.ConfigureAtLeastOneFull',
+          defaultMessage: '请至少配置 1 个全量备份',
+        }),
+      );
+      return;
+    }
     const { successful, data } = await updateBackupPolicyOfTenant({
       ns,
       name,
@@ -305,7 +316,13 @@ export default function BackupConfiguration({
             Object.keys(DATE_CONFIG).map((key, index) => (
               <Col span={8} key={index}>
                 <Form.Item label={DATE_CONFIG[key]} name={key}>
-                  <InputNumber addonAfter={'天'} min={0} />
+                  <InputNumber
+                    addonAfter={intl.formatMessage({
+                      id: 'Dashboard.Detail.Backup.BackupConfiguration.Days',
+                      defaultMessage: '天',
+                    })}
+                    min={0}
+                  />
                 </Form.Item>
               </Col>
             ))

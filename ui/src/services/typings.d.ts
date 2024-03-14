@@ -18,16 +18,47 @@ declare namespace API {
     value: string;
   };
 
+  type Storage = {
+    size:number;
+    storageClass:string;
+  }
+
   type ClusterInfo = {
     name: string;
     namespace: string;
     status: string;
-    statusDetail: string;
     image: string;
-    createTime: string;
-    metrics: Metrics;
-    clusterId: number;
-    clusterName: string;
+    resource:{
+      cpu: number;
+      memory: number;
+    };
+    storage: {
+      dataStorage: Storage;
+      redoLogStorage: Storage;
+      sysLogStorage: Storage;
+    };
+    backupVolume: {
+      address: string;
+      path: string;
+    };
+    monitor: {
+      image: string;
+      resource: {
+        cpu: number;
+        memory: number;
+      };
+    };
+    rootPasswordSecret: string;
+    mode: ClusterMode;
+    parameters: {
+      key: string;
+      value: string;
+    }[];
+    // statusDetail: string;
+    // createTime: string;
+    // metrics: Metrics;
+    // clusterId: number;
+    // clusterName: string;
   };
 
   type Zone = {
@@ -125,6 +156,8 @@ declare namespace API {
     type: MonitorUseTarget;
     useFor: MonitorUseFor;
   };
+
+  type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE'
 
   type MonitorUseFor = 'cluster' | 'tenant';
 

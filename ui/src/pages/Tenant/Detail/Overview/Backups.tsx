@@ -1,38 +1,122 @@
-import { intl } from '@/utils/intl';
-import { Col,Descriptions,Table,Tooltip } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import CollapsibleCard from '@/components/CollapsibleCard';
+import { intl } from '@/utils/intl';
+import { Col, Descriptions, Table, Tooltip, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 
 interface BackupsProps {
   backupPolicy?: API.BackupPolicy;
   backupJobs?: API.BackupJob[];
 }
 
+const { Text } = Typography;
+
 export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
   const PolicyConfig = {
-    destType: 'destType',
-    archivePath: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Backups.FilePath',
-      defaultMessage: '档案路径',
-    }),
-    bakDataPath: 'bakDataPath',
-    scheduleType: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Backups.PlanType',
-      defaultMessage: '计划类型',
-    }),
-    scheduleDates: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Backups.PlannedDate',
-      defaultMessage: '计划日期',
-    }),
-    scheduleTime: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Backups.ScheduledTime',
-      defaultMessage: '计划时间',
-    }),
+    destType: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.BackupMediaType',
+        defaultMessage: '备份介质类型',
+      }),
+    },
+    archivePath: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.FilePath',
+        defaultMessage: '日志归档路径',
+      }),
+      render: (value: string) => (
+        <Text style={{ width: 300 }} ellipsis={{ tooltip: value }}>
+          {value}
+        </Text>
+      ),
+    },
+    bakDataPath: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.DataBackupPath',
+        defaultMessage: '数据备份路径',
+      }),
+      render: (value: string) => (
+        <Text style={{ width: 300 }} ellipsis={{ tooltip: value }}>
+          {value}
+        </Text>
+      ),
+    },
+    scheduleType: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.PlanType',
+        defaultMessage: '计划类型',
+      }),
+      render: (value: string) => (
+        <span>
+          {value === 'Monthly'
+            ? intl.formatMessage({
+                id: 'Dashboard.Detail.Overview.Backups.MonthlyCycle',
+                defaultMessage: '按月为周期',
+              })
+            : intl.formatMessage({
+                id: 'Dashboard.Detail.Overview.Backups.CycleByWeek',
+                defaultMessage: '按周为周期',
+              })}
+        </span>
+      ),
+    },
+    scheduleDates: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.PlannedDate',
+        defaultMessage: '计划日期',
+      }),
+      render: (value: API.ScheduleDatesType) => {
+        const fullArr = value.filter((item) => item.backupType === 'Full');
+        const incrementalArr = value.filter(
+          (item) => item.backupType === 'Incremental',
+        );
+        return (
+          <div>
+            {fullArr.length && (
+              <p>
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Overview.Backups.FullBackupTheFirstOf',
+                  defaultMessage: '全量备份：每个月第',
+                })}
+                {fullArr.map((item) => item.day).join(',')}
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Overview.Backups.Days',
+                  defaultMessage: '天',
+                })}
+              </p>
+            )}
+
+            {incrementalArr.length && (
+              <p>
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Overview.Backups.IncrementalBackupTheFirstOf',
+                  defaultMessage: '增量备份：每个月第',
+                })}
+
+                {incrementalArr.map((item) => item.day).join(',')}
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Overview.Backups.Days',
+                  defaultMessage: '天',
+                })}
+              </p>
+            )}
+          </div>
+        );
+      },
+    },
+    scheduleTime: {
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.ScheduledTime',
+        defaultMessage: '计划时间',
+      }),
+    },
   };
 
   const columns: ColumnsType<API.BackupJob> = [
     {
-      title: 'name',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.Name',
+        defaultMessage: '名称',
+      }),
       dataIndex: 'name',
       key: 'name',
     },
@@ -61,7 +145,10 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       key: 'string',
     },
     {
-      title: 'path',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.Path',
+        defaultMessage: '路径',
+      }),
       dataIndex: 'path',
       key: 'path',
       ellipsis: true,
@@ -72,7 +159,10 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       ),
     },
     {
-      title: 'encryptionSecret',
+      title: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.EncryptionKeySecret',
+        defaultMessage: '加密密钥 Secret',
+      }),
       dataIndex: 'encryptionSecret',
       key: 'encryptionSecret',
     },
@@ -98,7 +188,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
     <Col span={24}>
       <CollapsibleCard
         title={
-          <h2>
+          <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
               id: 'Dashboard.Detail.Overview.Backups.Backup',
               defaultMessage: '备份',
@@ -110,28 +200,23 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
       >
         {backupPolicy && (
           <Descriptions
-            column={5}
+            column={3}
             title={intl.formatMessage({
               id: 'Dashboard.Detail.Overview.Backups.BackupPolicy',
               defaultMessage: '备份策略',
             })}
           >
-            {Object.keys(PolicyConfig).map((key, index) => (
-              <Descriptions.Item label={PolicyConfig[key]} key={index}>
-                {key !== 'scheduleDates' ? (
-                  <span>{backupPolicy[key]}</span>
-                ) : (
-                  <div>
-                    {backupPolicy[key].map((item, index) => (
-                      <span key={index}>
-                        {item.backupType},{item.day}
-                        {index !== backupPolicy[key].length}{' '}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </Descriptions.Item>
-            ))}
+            {Object.keys(PolicyConfig).map((key, index) => {
+              return (
+                <Descriptions.Item label={PolicyConfig[key].text} key={index}>
+                  {PolicyConfig[key].render ? (
+                    PolicyConfig[key]?.render(backupPolicy[key])
+                  ) : (
+                    <span>{backupPolicy[key]}</span>
+                  )}
+                </Descriptions.Item>
+              );
+            })}
           </Descriptions>
         )}
 

@@ -209,3 +209,14 @@ export const getNewClusterList = (
   }
   return _clusterList;
 };
+
+export const checkScheduleDatesHaveFull = (scheduleDates): boolean => {
+  for (let key of Object.keys(scheduleDates)) {
+    if (!isNaN(key)) {
+      if (scheduleDates[key] === 'Full') {
+        return true;
+      }
+    }
+  }
+  return false;
+};
