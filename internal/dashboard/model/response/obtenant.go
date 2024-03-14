@@ -25,6 +25,7 @@ type OBTenantBrief struct {
 	CreateTime  string            `json:"createTime"`          // Creation time of the tenant
 	Locality    string            `json:"locality"`            // Locality of the tenant units
 	Charset     string            `json:"charset"`             // Charset of the tenant
+	PrimaryZone string            `json:"primaryZone"`         // Primary zone of the tenant
 }
 
 type OBTenantDetail struct {

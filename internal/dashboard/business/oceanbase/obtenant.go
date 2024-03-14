@@ -170,6 +170,7 @@ func buildBriefFromApiType(t *v1alpha1.OBTenant) *response.OBTenantBrief {
 	rt.Status = t.Status.Status
 	rt.Charset = t.Spec.Charset
 	rt.Locality = t.Status.TenantRecordInfo.Locality
+	rt.PrimaryZone = t.Status.TenantRecordInfo.PrimaryZone
 
 	for i := range t.Spec.Pools {
 		pool := t.Spec.Pools[i]

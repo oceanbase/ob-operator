@@ -1095,6 +1095,9 @@ definitions:
       namespace:
         description: Namespace of the resource
         type: string
+      primaryZone:
+        description: Primary zone of the tenant
+        type: string
       status:
         description: Status of the tenant
         type: string
@@ -1134,6 +1137,9 @@ definitions:
         description: Namespace of the resource
         type: string
       primaryTenant:
+        type: string
+      primaryZone:
+        description: Primary zone of the tenant
         type: string
       restoreSource:
         $ref: '#/definitions/response.RestoreSource'

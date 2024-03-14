@@ -4345,6 +4345,10 @@ const docTemplate = `{
                     "description": "Namespace of the resource",
                     "type": "string"
                 },
+                "primaryZone": {
+                    "description": "Primary zone of the tenant",
+                    "type": "string"
+                },
                 "status": {
                     "description": "Status of the tenant",
                     "type": "string"
@@ -4398,6 +4402,10 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "primaryTenant": {
+                    "type": "string"
+                },
+                "primaryZone": {
+                    "description": "Primary zone of the tenant",
                     "type": "string"
                 },
                 "restoreSource": {
