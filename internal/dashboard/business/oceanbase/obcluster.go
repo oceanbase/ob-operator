@@ -175,7 +175,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		ClusterId:    obcluster.Spec.ClusterId,
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
-		CreateTime:   float64(obcluster.ObjectMeta.CreationTimestamp.UnixMilli()) / 1000,
+		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
 		OBClusterExtra: response.OBClusterExtra{

@@ -4112,7 +4112,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "createTime": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"

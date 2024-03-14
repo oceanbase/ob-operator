@@ -59,7 +59,7 @@ type OBCluster struct {
 	Topology     []OBZone   `json:"topology"`
 	Status       string     `json:"status"`
 	StatusDetail string     `json:"statusDetail"`
-	CreateTime   float64    `json:"createTime"`
+	CreateTime   int64      `json:"createTime"`
 	Image        string     `json:"image"`
 	Metrics      *OBMetrics `json:"metrics"`
 	Version      string     `json:"version"`
