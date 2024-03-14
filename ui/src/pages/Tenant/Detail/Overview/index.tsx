@@ -236,7 +236,7 @@ export default function TenantOverview() {
     const { clusterResourceName } = tenantDetail.info;
     const { replicas } = tenantDetail;
     const cluster = clusters.find(
-      (cluster) => cluster.clusterName === clusterResourceName,
+      (cluster) => cluster.name === clusterResourceName,
     );
     if (cluster && cluster.topology) {
       cluster.topology = cluster.topology.filter((zone) =>
