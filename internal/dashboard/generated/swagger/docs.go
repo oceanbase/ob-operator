@@ -4287,7 +4287,7 @@ const docTemplate = `{
                     "description": "Charset of the tenant",
                     "type": "string"
                 },
-                "clusterName": {
+                "clusterResourceName": {
                     "description": "Name of the cluster belonging to",
                     "type": "string"
                 },
@@ -4339,7 +4339,7 @@ const docTemplate = `{
                     "description": "Charset of the tenant",
                     "type": "string"
                 },
-                "clusterName": {
+                "clusterResourceName": {
                     "description": "Name of the cluster belonging to",
                     "type": "string"
                 },

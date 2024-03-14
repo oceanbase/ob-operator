@@ -14,17 +14,17 @@ package response
 
 // @Description Brief information about OBTenant
 type OBTenantBrief struct {
-	Name        string            `json:"name"`        // Name of the resource
-	Namespace   string            `json:"namespace"`   // Namespace of the resource
-	TenantName  string            `json:"tenantName"`  // Name of the tenant in the database
-	ClusterName string            `json:"clusterName"` // Name of the cluster belonging to
-	TenantRole  string            `json:"tenantRole"`  // Enum: Primary, Standby
-	UnitNumber  int               `json:"unitNumber"`  // Number of units in every zone
-	Topology    []OBTenantReplica `json:"topology"`    // Topology of the tenant
-	Status      string            `json:"status"`      // Status of the tenant
-	CreateTime  string            `json:"createTime"`  // Creation time of the tenant
-	Locality    string            `json:"locality"`    // Locality of the tenant units
-	Charset     string            `json:"charset"`     // Charset of the tenant
+	Name        string            `json:"name"`                // Name of the resource
+	Namespace   string            `json:"namespace"`           // Namespace of the resource
+	TenantName  string            `json:"tenantName"`          // Name of the tenant in the database
+	ClusterName string            `json:"clusterResourceName"` // Name of the cluster belonging to
+	TenantRole  string            `json:"tenantRole"`          // Enum: Primary, Standby
+	UnitNumber  int               `json:"unitNumber"`          // Number of units in every zone
+	Topology    []OBTenantReplica `json:"topology"`            // Topology of the tenant
+	Status      string            `json:"status"`              // Status of the tenant
+	CreateTime  string            `json:"createTime"`          // Creation time of the tenant
+	Locality    string            `json:"locality"`            // Locality of the tenant units
+	Charset     string            `json:"charset"`             // Charset of the tenant
 }
 
 type OBTenantDetail struct {
