@@ -69,7 +69,7 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/metrics/statistic [GET]
+// @Router /api/v1/statistics [GET]
 // @Security ApiKeyAuth
 func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData := response.StatisticData{}

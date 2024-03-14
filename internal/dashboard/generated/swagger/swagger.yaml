@@ -1697,41 +1697,6 @@ paths:
       summary: query metrics
       tags:
       - Metric
-  /api/v1/metrics/statistic:
-    get:
-      consumes:
-      - application/json
-      description: get statistic data
-      operationId: GetStatistics
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.StatisticDataResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: get statistic data
-      tags:
-      - Info
   /api/v1/obclusters:
     get:
       consumes:
@@ -3000,6 +2965,41 @@ paths:
       summary: List statistics information of tenants
       tags:
       - OBTenant
+  /api/v1/statistics:
+    get:
+      consumes:
+      - application/json
+      description: get statistic data
+      operationId: GetStatistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StatisticDataResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get statistic data
+      tags:
+      - Info
 securityDefinitions:
   ApiKeyAuth:
     in: header

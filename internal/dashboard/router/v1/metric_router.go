@@ -21,5 +21,4 @@ import (
 func InitMetricRoutes(g *gin.RouterGroup) {
 	g.GET("/metrics", h.Wrap(h.ListMetricMetas))
 	g.POST("/metrics/query", h.Wrap(h.QueryMetrics))
-	g.GET("/metrics/statistic", h.Wrap(h.GetStatistics))
 }
