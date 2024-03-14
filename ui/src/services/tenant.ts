@@ -32,7 +32,7 @@ export async function getTenant({
   });
   let infoKeys = [
     'charset',
-    'clusterName',
+    'clusterResourceName',
     'tenantName',
     'tenantRole',
     'unitNumber',
