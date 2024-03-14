@@ -148,21 +148,24 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				Value: toleration.Value,
 			})
 		}
-
-		topology = append(topology, response.OBZone{
+		respZone := response.OBZone{
 			Namespace:    obzone.Namespace,
 			Name:         obzone.Name,
 			Zone:         obzone.Spec.Topology.Zone,
 			Replicas:     obzone.Spec.Topology.Replica,
 			Status:       convertStatus(obzone.Status.Status),
 			StatusDetail: obzone.Status.Status,
+			RootService:  "",
 			// TODO: query real rs
-			RootService:  obzone.Status.OBServerStatus[0].Server,
 			OBServers:    observers,
 			NodeSelector: nodeSelector,
 			Affinities:   affinities,
 			Tolerations:  tolerations,
-		})
+		}
+		if len(obzone.Status.OBServerStatus) > 0 {
+			respZone.RootService = obzone.Status.OBServerStatus[0].Server
+		}
+		topology = append(topology, respZone)
 	}
 
 	respCluster := &response.OBCluster{
@@ -172,7 +175,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		ClusterId:    obcluster.Spec.ClusterId,
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
-		CreateTime:   float64(obcluster.ObjectMeta.CreationTimestamp.UnixMilli()) / 1000,
+		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
 		OBClusterExtra: response.OBClusterExtra{
@@ -219,6 +222,27 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			respCluster.Mode = modelcommon.ClusterModeNormal
 		}
 	}
+	if obcluster.Spec.OBServerTemplate != nil {
+		respCluster.OBClusterExtra.Resource = modelcommon.ResourceSpec{
+			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
+			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.Value() >> 30,
+		}
+		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
+			DataStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value() >> 30,
+			},
+			RedoLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value() >> 30,
+			},
+			SysLogStorage: response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
+				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value() >> 30,
+			},
+		}
+	}
+
 	return respCluster, nil
 }
 

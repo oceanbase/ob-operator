@@ -26,7 +26,7 @@ import (
 // @ID GetOBClusterStatistic
 // @Summary get obcluster statistic
 // @Description get obcluster statistic info
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Success 200 object response.APIResponse{data=[]response.OBClusterStastistic}
@@ -46,7 +46,7 @@ func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, erro
 // @ID ListOBClusters
 // @Summary list obclusters
 // @Description list obclusters
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Success 200 object response.APIResponse{data=[]response.OBCluster}
@@ -66,7 +66,7 @@ func ListOBClusters(c *gin.Context) ([]response.OBCluster, error) {
 // @ID GetOBCluster
 // @Summary get obcluster
 // @Description get obcluster detailed info
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -93,7 +93,7 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 // @ID CreateOBCluster
 // @Summary create obcluster
 // @Description create obcluster
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.CreateOBClusterParam true "create obcluster request body"
@@ -124,7 +124,7 @@ func CreateOBCluster(c *gin.Context) (any, error) {
 // @ID UpgradeOBCluster
 // @Summary upgrade obcluster
 // @Description upgrade obcluster
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -157,7 +157,7 @@ func UpgradeOBCluster(c *gin.Context) (any, error) {
 // @ID DeleteOBCluster
 // @Summary delete obcluster
 // @Description delete obcluster
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -184,7 +184,7 @@ func DeleteOBCluster(c *gin.Context) (any, error) {
 // @ID AddOBZone
 // @Summary add obzone
 // @Description add obzone
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -217,7 +217,7 @@ func AddOBZone(c *gin.Context) (any, error) {
 // @ID ScaleOBServer
 // @Summary scale observer
 // @Description scale observer
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -251,7 +251,7 @@ func ScaleOBServer(c *gin.Context) (any, error) {
 // @ID DeleteOBZone
 // @Summary delete obzone
 // @Description delete obzone
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
@@ -279,7 +279,7 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 // @ID ListOBClusterResources
 // @Summary list essential parameters
 // @Description list essential parameters of specific obcluster
-// @Tags Obcluster
+// @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"

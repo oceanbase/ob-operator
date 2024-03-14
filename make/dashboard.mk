@@ -7,7 +7,7 @@ PWD ?= $(shell pwd)
 DASHBOARD_VERSION ?= 1.0.0
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
-INJECT_PACKAGE=github.com/oceanbase/oceanbase-operator/internal/handler
+INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/dashboard/handler
 
 BUILD_FLAG      := -p $(PROCESSOR) -ldflags="-X '$(INJECT_PACKAGE).Version=$(DASHBOARD_VERSION)' -X '$(INJECT_PACKAGE).CommitHash=$(COMMIT_HASH)' -X '$(INJECT_PACKAGE).BuildTime=$(BUILD_TIMESTAMP)'"
 GOBUILD         := go build $(BUILD_FLAG)

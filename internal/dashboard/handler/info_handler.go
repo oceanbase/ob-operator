@@ -60,8 +60,8 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 }
 
 // @ID GetStatistics
-// @Summary get telemetry data
-// @Description get telemetry data
+// @Summary get statistic data
+// @Description get statistic data
 // @Tags Info
 // @Accept application/json
 // @Produce application/json
@@ -69,7 +69,7 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/metrics/telemetry [GET]
+// @Router /api/v1/statistics [GET]
 // @Security ApiKeyAuth
 func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData := response.StatisticData{}

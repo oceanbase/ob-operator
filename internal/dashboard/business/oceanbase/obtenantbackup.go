@@ -226,6 +226,7 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 		Status:              string(p.Status.Status),
 		OSSAccessSecret:     p.Spec.LogArchive.Destination.OSSAccessSecret,
 		BakEncryptionSecret: p.Spec.DataBackup.EncryptionSecret,
+		CreateTime:          p.CreationTimestamp.Format("2006-01-02 15:04:05"),
 	}
 	res.ScheduleBase = getScheduleDatesFromPolicy(p)
 	return res

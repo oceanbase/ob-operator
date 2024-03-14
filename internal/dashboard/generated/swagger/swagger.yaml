@@ -485,7 +485,11 @@ definitions:
   param.PatchTenant:
     properties:
       unitConfig:
-        $ref: '#/definitions/param.PatchUnitConfig'
+        allOf:
+        - $ref: '#/definitions/param.PatchUnitConfig'
+        description: |-
+          Deprecated
+          Description: Deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead
       unitNum:
         type: integer
     type: object
@@ -578,6 +582,13 @@ definitions:
     required:
     - backupType
     - day
+    type: object
+  param.TenantPoolSpec:
+    properties:
+      priority:
+        type: integer
+      unitConfig:
+        $ref: '#/definitions/param.UnitConfig'
     type: object
   param.TenantSourceSpec:
     properties:
@@ -703,6 +714,8 @@ definitions:
         type: string
       bakEncryptionSecret:
         type: string
+      createTime:
+        type: string
       destType:
         description: 'Enum: NFS, OSS'
         example: NFS
@@ -751,6 +764,8 @@ definitions:
         type: string
       publicKey:
         type: string
+      reportStatistics:
+        type: boolean
       version:
         type: string
     type: object
@@ -925,7 +940,7 @@ definitions:
       clusterName:
         type: string
       createTime:
-        type: number
+        type: integer
       image:
         type: string
       metrics:
@@ -942,12 +957,16 @@ definitions:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
       rootPasswordSecret:
         type: string
       status:
         type: string
       statusDetail:
         type: string
+      storage:
+        $ref: '#/definitions/response.OBServerStorage'
       topology:
         items:
           $ref: '#/definitions/response.OBZone'
@@ -1023,13 +1042,22 @@ definitions:
         example: 3
         type: integer
     type: object
+  response.OBServerStorage:
+    properties:
+      dataStorage:
+        $ref: '#/definitions/response.StorageSpec'
+      redoLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
+      sysLogStorage:
+        $ref: '#/definitions/response.StorageSpec'
+    type: object
   response.OBTenantBrief:
     description: Brief information about OBTenant
     properties:
       charset:
         description: Charset of the tenant
         type: string
-      clusterName:
+      clusterResourceName:
         description: Name of the cluster belonging to
         type: string
       createTime:
@@ -1067,7 +1095,7 @@ definitions:
       charset:
         description: Charset of the tenant
         type: string
-      clusterName:
+      clusterResourceName:
         description: Name of the cluster belonging to
         type: string
       createTime:
@@ -1270,6 +1298,13 @@ definitions:
       volumeBindingMode:
         type: string
     type: object
+  response.StorageSpec:
+    properties:
+      size:
+        type: integer
+      storageClass:
+        type: string
+    type: object
 info:
   contact: {}
   description: OceanBase Dashboard
@@ -1300,6 +1335,10 @@ paths:
       - description: Object name
         in: query
         name: name
+        type: string
+      - description: Namespace
+        in: query
+        name: namespace
         type: string
       produces:
       - application/json
@@ -1658,41 +1697,6 @@ paths:
       summary: query metrics
       tags:
       - Metric
-  /api/v1/metrics/telemetry:
-    get:
-      consumes:
-      - application/json
-      description: get telemetry data
-      operationId: GetStatistics
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.StatisticDataResponse'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: get telemetry data
-      tags:
-      - Info
   /api/v1/obclusters:
     get:
       consumes:
@@ -1729,7 +1733,7 @@ paths:
       - ApiKeyAuth: []
       summary: list obclusters
       tags:
-      - Obcluster
+      - OBCluster
     post:
       consumes:
       - application/json
@@ -1765,7 +1769,7 @@ paths:
       - ApiKeyAuth: []
       summary: create obcluster
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/{namespace}/{name}/essential-parameters:
     get:
       consumes:
@@ -1811,7 +1815,7 @@ paths:
       - ApiKeyAuth: []
       summary: list essential parameters
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}:
     delete:
       consumes:
@@ -1852,7 +1856,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete obcluster
       tags:
-      - Obcluster
+      - OBCluster
     get:
       consumes:
       - application/json
@@ -1897,7 +1901,7 @@ paths:
       - ApiKeyAuth: []
       summary: get obcluster
       tags:
-      - Obcluster
+      - OBCluster
     post:
       consumes:
       - application/json
@@ -1943,7 +1947,7 @@ paths:
       - ApiKeyAuth: []
       summary: upgrade obcluster
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones:
     post:
       consumes:
@@ -1990,7 +1994,7 @@ paths:
       - ApiKeyAuth: []
       summary: add obzone
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}:
     delete:
       consumes:
@@ -2036,7 +2040,7 @@ paths:
       - ApiKeyAuth: []
       summary: delete obzone
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}/scale:
     post:
       consumes:
@@ -2088,7 +2092,7 @@ paths:
       - ApiKeyAuth: []
       summary: scale observer
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obclusters/statistic:
     get:
       consumes:
@@ -2123,7 +2127,7 @@ paths:
             $ref: '#/definitions/response.APIResponse'
       summary: get obcluster statistic
       tags:
-      - Obcluster
+      - OBCluster
   /api/v1/obtenants:
     get:
       consumes:
@@ -2165,7 +2169,7 @@ paths:
       - ApiKeyAuth: []
       summary: List all tenants
       tags:
-      - Obtenant
+      - OBTenant
     put:
       consumes:
       - application/json
@@ -2207,7 +2211,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}:
     delete:
       consumes:
@@ -2249,7 +2253,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete tenant
       tags:
-      - Obtenant
+      - OBTenant
     get:
       consumes:
       - application/json
@@ -2294,7 +2298,7 @@ paths:
       - ApiKeyAuth: []
       summary: Get tenant
       tags:
-      - Obtenant
+      - OBTenant
     patch:
       consumes:
       - application/json
@@ -2345,7 +2349,7 @@ paths:
       - ApiKeyAuth: []
       summary: Patch tenant's configuration
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs:
     get:
       consumes:
@@ -2408,7 +2412,7 @@ paths:
       - ApiKeyAuth: []
       summary: List backup jobs of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/backupPolicy:
     delete:
       consumes:
@@ -2454,7 +2458,7 @@ paths:
       - ApiKeyAuth: []
       summary: Delete backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     get:
       consumes:
       - application/json
@@ -2499,7 +2503,7 @@ paths:
       - ApiKeyAuth: []
       summary: Get backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     patch:
       consumes:
       - application/json
@@ -2550,7 +2554,7 @@ paths:
       - ApiKeyAuth: []
       summary: Update backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
     put:
       consumes:
       - application/json
@@ -2602,7 +2606,7 @@ paths:
       - ApiKeyAuth: []
       summary: Create backup policy of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/logreplay:
     post:
       consumes:
@@ -2654,7 +2658,124 @@ paths:
       - ApiKeyAuth: []
       summary: Replay standby log of specific standby tenant
       tags:
-      - Obtenant
+      - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/pools/{zoneName}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an obtenant pool in a specific namespace
+      operationId: DeleteOBTenantPool
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete obtenant pool
+      tags:
+      - OBTenant
+    patch:
+      consumes:
+      - application/json
+      description: Patch an obtenant pool in a specific namespace
+      operationId: PatchOBTenantPool
+      parameters:
+      - description: patch obtenant pool request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.TenantPoolSpec'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Patch obtenant pool
+      tags:
+      - OBTenant
+    put:
+      consumes:
+      - application/json
+      description: Create an obtenant pool in a specific namespace
+      operationId: CreateOBTenantPool
+      parameters:
+      - description: create obtenant pool request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.TenantPoolSpec'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create obtenant pool
+      tags:
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/role:
     post:
       consumes:
@@ -2707,7 +2828,7 @@ paths:
       - ApiKeyAuth: []
       summary: Change tenant role of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/userCredentials:
     post:
       consumes:
@@ -2759,7 +2880,7 @@ paths:
       - ApiKeyAuth: []
       summary: Change root password of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/version:
     post:
       consumes:
@@ -2806,7 +2927,7 @@ paths:
       - ApiKeyAuth: []
       summary: Upgrade tenant compatibility version of specific tenant
       tags:
-      - Obtenant
+      - OBTenant
   /api/v1/obtenants/statistic:
     get:
       consumes:
@@ -2843,7 +2964,42 @@ paths:
       - ApiKeyAuth: []
       summary: List statistics information of tenants
       tags:
-      - Obtenant
+      - OBTenant
+  /api/v1/statistics:
+    get:
+      consumes:
+      - application/json
+      description: get statistic data
+      operationId: GetStatistics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.StatisticDataResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get statistic data
+      tags:
+      - Info
 securityDefinitions:
   ApiKeyAuth:
     in: header

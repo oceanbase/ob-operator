@@ -31,7 +31,7 @@ import (
 )
 
 // @ID ListAllTenants
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary List all tenants
 // @Description List all tenants and return them
 // @Accept application/json
@@ -70,7 +70,7 @@ func ListAllTenants(c *gin.Context) ([]*response.OBTenantBrief, error) {
 }
 
 // @ID GetTenant
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Get tenant
 // @Description Get an obtenant in a specific namespace
 // @Accept application/json
@@ -103,7 +103,7 @@ func GetTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID CreateTenant
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Create tenant
 // @Description Create an obtenant in a specific namespace, passwords should be encrypted by AES
 // @Accept application/json
@@ -155,7 +155,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID DeleteTenant
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Delete tenant
 // @Description Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
 // @Accept application/json
@@ -188,7 +188,7 @@ func DeleteTenant(c *gin.Context) (any, error) {
 }
 
 // @ID PatchTenant
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Patch tenant's configuration
 // @Description Patch tenant's configuration
 // @Accept application/json
@@ -227,7 +227,7 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID ChangeUserPassword
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Change root password of specific tenant
 // @Description Change root password of specific tenant, encrypted by AES
 // @Accept application/json
@@ -267,7 +267,7 @@ func ChangeUserPassword(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID ReplayStandbyLog
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Replay standby log of specific standby tenant
 // @Description Replay standby log of specific standby tenant
 // @Accept application/json
@@ -306,7 +306,7 @@ func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID UpgradeTenantVersion
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Upgrade tenant compatibility version of specific tenant
 // @Description Upgrade tenant compatibility version of specific tenant to match the version of cluster
 // @Accept application/json
@@ -336,7 +336,7 @@ func UpgradeTenantVersion(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID ChangeTenantRole
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Change tenant role of specific tenant
 // @Description Change tenant role of specific tenant, if a tenant is a standby tenant, it can be changed to primary tenant, vice versa
 // @Accept application/json
@@ -375,7 +375,7 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID CreateBackupPolicy
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Create backup policy of specific tenant
 // @Description Create backup policy of specific tenant, passwords should be encrypted by AES
 // @Accept application/json
@@ -427,7 +427,7 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 }
 
 // @ID UpdateBackupPolicy
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Update backup policy of specific tenant
 // @Description Update backup policy of specific tenant
 // @Accept application/json
@@ -463,7 +463,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 }
 
 // @ID DeleteBackupPolicy
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Delete backup policy of specific tenant
 // @Description Delete backup policy of specific tenant
 // @Accept application/json
@@ -494,7 +494,7 @@ func DeleteBackupPolicy(c *gin.Context) (*response.OBTenantDetail, error) {
 }
 
 // @ID GetBackupPolicy
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary Get backup policy of specific tenant
 // @Description Get backup policy of specific tenant
 // @Accept application/json
@@ -524,7 +524,7 @@ func GetBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 }
 
 // @ID ListBackupJobs
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary List backup jobs of specific tenant
 // @Description List backup jobs of specific tenant
 // @Accept application/json
@@ -568,7 +568,7 @@ func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 }
 
 // @ID GetOBTenantStatistic
-// @Tags Obtenant
+// @Tags OBTenant
 // @Summary List statistics information of tenants
 // @Description List statistics information of tenants
 // @Accept application/json
@@ -585,4 +585,84 @@ func GetOBTenantStatistic(c *gin.Context) ([]response.OBTenantStatistic, error) 
 		return nil, err
 	}
 	return tenants, nil
+}
+
+// @ID CreateOBTenantPool
+// @Tags OBTenant
+// @Summary Create obtenant pool
+// @Description Create an obtenant pool in a specific namespace
+// @Accept application/json
+// @Produce application/json
+// @Param body body param.TenantPoolSpec true "create obtenant pool request body"
+// @Success 200 object response.APIResponse{data=bool}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PUT]
+// @Security ApiKeyAuth
+func CreateOBTenantPool(c *gin.Context) (bool, error) {
+	nn := param.TenantPoolName{}
+	err := c.BindUri(&nn)
+	if err != nil {
+		return false, httpErr.NewBadRequest(err.Error())
+	}
+
+	p := param.TenantPoolSpec{}
+	err = c.BindJSON(&p)
+	if err != nil {
+		return false, httpErr.NewBadRequest(err.Error())
+	}
+
+	return oceanbase.CreateTenantPool(c, nn, &p)
+}
+
+// @ID DeleteOBTenantPool
+// @Tags OBTenant
+// @Summary Delete obtenant pool
+// @Description Delete an obtenant pool in a specific namespace
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=bool}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [DELETE]
+// @Security ApiKeyAuth
+func DeleteOBTenantPool(c *gin.Context) (bool, error) {
+	nn := param.TenantPoolName{}
+	err := c.BindUri(&nn)
+	if err != nil {
+		return false, httpErr.NewBadRequest(err.Error())
+	}
+
+	return oceanbase.DeleteTenantPool(c, nn)
+}
+
+// @ID PatchOBTenantPool
+// @Tags OBTenant
+// @Summary Patch obtenant pool
+// @Description Patch an obtenant pool in a specific namespace
+// @Accept application/json
+// @Produce application/json
+// @Param body body param.TenantPoolSpec true "patch obtenant pool request body"
+// @Success 200 object response.APIResponse{data=bool}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PATCH]
+// @Security ApiKeyAuth
+func PatchOBTenantPool(c *gin.Context) (bool, error) {
+	nn := param.TenantPoolName{}
+	err := c.BindUri(&nn)
+	if err != nil {
+		return false, httpErr.NewBadRequest(err.Error())
+	}
+
+	p := param.TenantPoolSpec{}
+	err = c.BindJSON(&p)
+	if err != nil {
+		return false, httpErr.NewBadRequest(err.Error())
+	}
+
+	return oceanbase.PatchTenantPool(c, nn, &p)
 }
