@@ -399,7 +399,7 @@ declare namespace API {
 
   type InfoType = {
     charset: string;
-    clusterName: string;
+    clusterResourceName: string;
     tenantName: string;
     tenantRole: TenantRole;
     unitNumber: number;

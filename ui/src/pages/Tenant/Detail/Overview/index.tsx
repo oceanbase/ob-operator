@@ -233,10 +233,10 @@ export default function TenantOverview() {
     tenantDetail: API.TenantBasicInfo | undefined,
   ) => {
     if (!tenantDetail) return clusters;
-    const { clusterName } = tenantDetail.info;
+    const { clusterResourceName } = tenantDetail.info;
     const { replicas } = tenantDetail;
     const cluster = clusters.find(
-      (cluster) => cluster.clusterName === clusterName,
+      (cluster) => cluster.clusterName === clusterResourceName,
     );
     if (cluster && cluster.topology) {
       cluster.topology = cluster.topology.filter((zone) =>
@@ -259,7 +259,7 @@ export default function TenantOverview() {
   useEffect(() => {
     if (tenantDetail && clusterList) {
       const cluster = clusterList.find(
-        (cluster) => cluster.clusterName === tenantDetail.info.clusterName,
+        (cluster) => cluster.name === tenantDetail.info.clusterResourceName,
       );
       if (cluster) {
         const { name, namespace } = cluster;
@@ -300,7 +300,7 @@ export default function TenantOverview() {
           defaultValueForUnitDetail={{
             clusterList:formatClustersTopology(clusterList,tenantDetail),
             essentialParameter,
-            clusterName:tenantDetail?.info.clusterName,
+            clusterResourceName:tenantDetail?.info.clusterResourceName,
             setClusterList,
           }}
         />
