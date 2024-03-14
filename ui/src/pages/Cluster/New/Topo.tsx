@@ -1,15 +1,15 @@
 import { intl } from '@/utils/intl';
-import { DeleteOutlined,PlusOutlined } from '@ant-design/icons';
+import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import type { FormInstance } from 'antd';
 import {
-Button,
-Card,
-Col,
-Form,
-Input,
-InputNumber,
-Popconfirm,
-Row,
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Popconfirm,
+  Row,
 } from 'antd';
 
 import NodeSelector from '@/components/NodeSelector';
@@ -61,7 +61,11 @@ export default function Topo({ form }: { form: FormInstance<any> }) {
                             },
                             {
                               pattern: TZ_NAME_REG,
-                              message: '首字符必须是字母或者下划线，不能包含 -',
+                              message: intl.formatMessage({
+                                id: 'Dashboard.Cluster.New.Topo.TheFirstCharacterMustBe',
+                                defaultMessage:
+                                  '首字符必须是字母或者下划线，不能包含 -',
+                              }),
                             },
                             resourceNameRule,
                           ]}

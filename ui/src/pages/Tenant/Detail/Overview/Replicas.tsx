@@ -3,16 +3,15 @@ import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
-import { Button,Col,Descriptions,message } from 'antd';
-import type { ClusterNSName } from '.';
+import { Button, Col, Descriptions, message } from 'antd';
 import styles from './index.less';
 
 export default function Replicas({
   replicaList,
-  refreshTenant
+  refreshTenant,
 }: {
   replicaList: API.ReplicaDetailType[];
-  refreshTenant:()=>void;
+  refreshTenant: () => void;
 }) {
   const LABEL_TEXT_MAP = {
     priority: intl.formatMessage({
@@ -54,10 +53,16 @@ export default function Replicas({
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
       refreshTenant();
-      message.success(res.message || '删除成功');
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
+            defaultMessage: '删除成功',
+          }),
+      );
     }
   };
-  
+
   return (
     <Col span={24}>
       <CollapsibleCard
@@ -88,19 +93,34 @@ export default function Replicas({
                   )}
                 </span>
                 <div>
-                  <Button type="link">编辑</Button>
+                  <Button type="link">
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Replicas.Edit',
+                      defaultMessage: '编辑',
+                    })}
+                  </Button>
                   <Button
                     onClick={() => {
                       showDeleteConfirm({
                         onOk: () => deleteZone(replica.zone),
-                        title: `确定要删除该租户在${replica.zone}上的资源池吗？`,
+                        title: intl.formatMessage(
+                          {
+                            id: 'Dashboard.Detail.Overview.Replicas.AreYouSureYouWant',
+                            defaultMessage:
+                              '确定要删除该租户在{{replicaZone}}上的资源池吗？',
+                          },
+                          { replicaZone: replica.zone },
+                        ),
                       });
                     }}
                     disabled={replicaList.length === 2}
                     type="link"
                     danger
                   >
-                    删除
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Replicas.Delete',
+                      defaultMessage: '删除',
+                    })}
                   </Button>
                 </div>
               </div>
