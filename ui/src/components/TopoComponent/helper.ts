@@ -3,6 +3,7 @@ import {
   CLUSTER_IMG_MAP,
   SERVER_IMG_MAP,
   ZONE_IMG_MAP,
+  TOPO_INFO_CONFIG
 } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Graph, IG6GraphEvent, INode, IShape } from '@antv/g6';
@@ -199,12 +200,18 @@ export const formatTopoData = (
   };
   topoData.children = getChildren(responseData.topology, tenantReplicas);
 
-  let basicInfo: BasicInfoType = {
-    name: responseData.name,
-    namespace: responseData.namespace,
-    status: responseData.status,
-    image: responseData.image,
-  };
+  // let basicInfo: BasicInfoType = {
+  //   name: responseData.name,
+  //   namespace: responseData.namespace,
+  //   status: responseData.status,
+  //   image: responseData.image,
+  // };
+  let basicInfo:API.ClusterInfo = {};
+  for(let key of Object.keys(responseData)){
+    if(TOPO_INFO_CONFIG.includes(key)){
+      basicInfo[key] = responseData[key];
+    }
+  }
 
   return {
     topoData,

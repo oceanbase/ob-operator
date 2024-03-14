@@ -33,6 +33,8 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
+export type ClusterNSName = { ns?: string; name?: string };
+
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
@@ -112,15 +114,15 @@ export default function TenantOverview() {
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
   const operateListConfig: OperateItemConfigType[] = [
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
-        defaultMessage: 'Unit规格管理',
-      }),
-      onClick: () => openOperateModal('modifyUnitSpecification'),
-      show: tenantDetail?.info.tenantRole === 'PRIMARY',
-      isMore: false,
-    },
+    // {
+    //   text: intl.formatMessage({
+    //     id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
+    //     defaultMessage: 'Unit规格管理',
+    //   }),
+    //   onClick: () => openOperateModal('modifyUnitSpecification'),
+    //   show: tenantDetail?.info.tenantRole === 'PRIMARY',
+    //   isMore: false,
+    // },
     {
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.ChangePassword',
@@ -213,7 +215,20 @@ export default function TenantOverview() {
         ...operateListConfig
           .filter((item) => item.show && !item.isMore)
           .map((item, index) => (
-            <Button onClick={item.onClick} danger={item.danger} key={index}>
+            <Button
+              type={
+                item.text !==
+                intl.formatMessage({
+                  id: 'Dashboard.Detail.Overview.ChangePassword',
+                  defaultMessage: '修改密码',
+                })
+                  ? 'primary'
+                  : 'default'
+              }
+              onClick={item.onClick}
+              danger={item.danger}
+              key={index}
+            >
               {item.text}
             </Button>
           )),
@@ -282,7 +297,10 @@ export default function TenantOverview() {
           )}
 
           {tenantDetail && tenantDetail.replicas && (
-            <Replicas replicaList={tenantDetail.replicas} />
+            <Replicas
+              refreshTenant={reGetTenantDetail}
+              replicaList={tenantDetail.replicas}
+            />
           )}
 
           <EventsTable
@@ -303,7 +321,7 @@ export default function TenantOverview() {
           defaultValueForUnitDetail={{
             clusterList: formatClustersTopology(clusterList, tenantDetail),
             essentialParameter,
-            clusterResourceName:tenantDetail?.info.clusterResourceName,
+            clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
           }}
         />

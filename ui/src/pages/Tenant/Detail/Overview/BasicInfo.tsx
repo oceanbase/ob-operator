@@ -20,7 +20,7 @@ export default function BasicInfo({
       id: 'Dashboard.Detail.Overview.BasicInfo.TenantName',
       defaultMessage: '租户名',
     }),
-    clusterName: intl.formatMessage({
+    clusterResourceName: intl.formatMessage({
       id: 'Dashboard.Detail.Overview.BasicInfo.ClusterName',
       defaultMessage: '集群名',
     }),

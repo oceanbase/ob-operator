@@ -628,6 +628,12 @@
   "Dashboard.Detail.Overview.Replicas.MinimumAvailableCpu": "最小可用 CPU",
   "Dashboard.Detail.Overview.Replicas.ClogDiskSize": "Clog 盘大小",
   "Dashboard.Detail.Overview.Replicas.ResourcePool": "资源池",
-  "Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone": "资源池 - {{replicaZone}}",
-  "Dashboard.Detail.Overview.TenantOverview": "租户概览"
+  "Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone": "资源池 - {replicaZone}",
+  "Dashboard.Detail.Overview.TenantOverview": "租户概览",
+  "Dashboard.Cluster.New.Topo.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -",
+  "Dashboard.Detail.Overview.Replicas.DeletedSuccessfully": "删除成功",
+  "Dashboard.Detail.Overview.Replicas.Edit": "编辑",
+  "Dashboard.Detail.Overview.Replicas.AreYouSureYouWant": "确定要删除该租户在{replicaZone}上的资源池吗？",
+  "Dashboard.Detail.Overview.Replicas.Delete": "删除",
+  "Dashboard.components.TopoComponent.DeletedSuccessfully": "删除成功"
 }

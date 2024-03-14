@@ -60,7 +60,30 @@ const MINIMAL_CONFIG = {
 
 const RESULT_STATUS = ['running','failed'];
 
-const BACKUP_RESULT_STATUS = ['RUNNING','FAILED','PAUSED']
+const BACKUP_RESULT_STATUS = ['RUNNING','FAILED','PAUSED'];
+
+const CLUSTER_INFO_CONFIG = [
+  'name',
+  'namespace',
+  'status',
+  'image',
+  'resource',
+  'storage',
+  'backupVolume',
+  'monitor',
+  'rootPasswordSecret',
+  'mode',
+  'parameters'
+]
+
+const TOPO_INFO_CONFIG = [
+  'name',
+  'namespace',
+  'status',
+  'image',
+  'mode',
+  'rootPasswordSecret',
+]
 
 const RESOURCE_NAME_REG = /^[a-z\-]+$/;
 // use for tenant name or zone name
@@ -82,5 +105,7 @@ export {
   RESULT_STATUS,
   BACKUP_RESULT_STATUS,
   RESOURCE_NAME_REG,
-  TZ_NAME_REG
+  TZ_NAME_REG,
+  CLUSTER_INFO_CONFIG,
+  TOPO_INFO_CONFIG
 };

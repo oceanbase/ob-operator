@@ -629,5 +629,11 @@
   "Dashboard.Detail.Overview.Replicas.ClogDiskSize": "Clog disk size",
   "Dashboard.Detail.Overview.Replicas.ResourcePool": "Resource Pool",
   "Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone": "Resource pool-{replicaZone}",
-  "Dashboard.Detail.Overview.TenantOverview": "Tenant overview"
+  "Dashboard.Detail.Overview.TenantOverview": "Tenant overview",
+  "Dashboard.Cluster.New.Topo.TheFirstCharacterMustBe": "The first character must be a letter or an underscore and cannot contain-",
+  "Dashboard.Detail.Overview.Replicas.DeletedSuccessfully": "Deleted successfully",
+  "Dashboard.Detail.Overview.Replicas.Edit": "Edit",
+  "Dashboard.Detail.Overview.Replicas.AreYouSureYouWant": "Are you sure you want to delete the tenant's resource pool on {replicaZone}?",
+  "Dashboard.Detail.Overview.Replicas.Delete": "Delete",
+  "Dashboard.components.TopoComponent.DeletedSuccessfully": "Deleted successfully"
 }

@@ -9,12 +9,12 @@ import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
+import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
 import { deleteObcluster, deleteObzone, getClusterDetailReq } from '@/services';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode, config } from './G6register';
 import type { OperateTypeLabel } from './constants';
-import { RESULT_STATUS } from '@/constants';
 import {
   clusterOperate,
   clusterOperateOfTenant,
@@ -49,11 +49,13 @@ export default function TopoComponent({
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [operateDisable, setOperateDisable] = useState<boolean>(false);
+
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
       ? [namespace, clusterNameOfKubectl]
       : getNSName(),
   );
+
   //Control the visibility of operation and maintenance modal
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
@@ -114,7 +116,13 @@ export default function TopoComponent({
       zoneName: chooseZoneName.current,
     });
     if (res.successful) {
-      message.success(res.message);
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.TopoComponent.DeletedSuccessfully',
+            defaultMessage: '删除成功',
+          }),
+      );
       getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
     }
   };
@@ -286,10 +294,12 @@ export default function TopoComponent({
         ? header
         : originTopoData && (
             <BasicInfo
-              style={{ backgroundColor: '#f5f8fe', border:'none' }}
+              extra={false}
+              style={{ backgroundColor: '#f5f8fe', border: 'none' }}
               {...(originTopoData.basicInfo as API.ClusterInfo)}
             />
           )}
+
       <div style={{ height: '100%' }} id="topoContainer"></div>
       {useMemo(
         () => (

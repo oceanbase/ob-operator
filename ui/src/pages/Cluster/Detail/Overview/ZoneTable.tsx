@@ -93,6 +93,7 @@ export default function ZoneTable({
                 })}
               </a>
               <a
+                style={{ color:'#ff4b4b' }}
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),

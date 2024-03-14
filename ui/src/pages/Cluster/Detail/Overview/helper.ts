@@ -1,4 +1,5 @@
 // Functions without UI
+import { CLUSTER_INFO_CONFIG } from "@/constants";
 
 /**
  * Get the namespace, name and cluster name or tenant name through the path of the url
@@ -32,20 +33,6 @@ const getNSName = () => {
   return res;
 };
 
-const clusterInfoConfig = [
-  'name',
-  'namespace',
-  'status',
-  'image',
-  'resource',
-  'storage',
-  'backupVolume',
-  'monitor',
-  'rootPasswordSecret',
-  'mode',
-  'parameters'
-]
-
 // if there is cluster｜zone｜server whose status isn't running,the return status is operating.
 const formatClusterData = (responseData: any): API.ClusterDetail => {
   const res: any = {
@@ -59,7 +46,7 @@ const formatClusterData = (responseData: any): API.ClusterDetail => {
     if (key === 'status' && responseData[key] !== 'running') {
       status = 'operating';
     }
-    if(clusterInfoConfig.includes(key)){
+    if(CLUSTER_INFO_CONFIG.includes(key)){
       res['info'][key] = responseData[key];
     }
     if (key === 'metrics') {
