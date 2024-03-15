@@ -1,25 +1,25 @@
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
+import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-  getEssentialParameters as getEssentialParametersReq,
-  getSimpleClusterList,
+getEssentialParameters as getEssentialParametersReq,
+getSimpleClusterList,
 } from '@/services';
 import {
-  deleteTenent,
-  getBackupJobs,
-  getBackupPolicy,
-  getTenant,
+deleteTenent,
+getBackupJobs,
+getBackupPolicy,
+getTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Tooltip, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Button,Row,Tooltip,message } from 'antd';
+import { useEffect,useRef,useState } from 'react';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -302,12 +302,14 @@ export default function TenantOverview() {
               replicaList={tenantDetail.replicas}
             />
           )}
-
-          <EventsTable
-            defaultExpand={true}
-            objectType="OBTENANT"
-            collapsible={true}
-          />
+          {tenantDetail && (
+            <EventsTable
+              defaultExpand={true}
+              objectType="OBTENANT"
+              collapsible={true}
+              name={tenantDetail?.info.name}
+            />
+          )}
 
           <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>

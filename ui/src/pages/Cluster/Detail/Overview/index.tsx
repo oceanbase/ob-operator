@@ -1,14 +1,15 @@
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useModel } from '@umijs/max';
+import { history,useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
+import { Button,Row,message } from 'antd';
+import { useEffect,useRef,useState } from 'react';
 
+import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
-import { deleteObcluster, getClusterDetailReq } from '@/services';
+import { deleteObcluster,getClusterDetailReq } from '@/services';
 import BasicInfo from './BasicInfo';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
@@ -136,6 +137,13 @@ const ClusterOverview: React.FC = () => {
             setVisible={setOperateModalVisible}
             typeRef={modalType}
             setChooseServerNum={setChooseServerNum}
+          />
+        )}
+
+        {clusterDetail && (
+          <EventsTable
+            objectType="OBCLUSTER"
+            name={clusterDetail?.info?.name}
           />
         )}
 

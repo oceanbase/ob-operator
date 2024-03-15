@@ -34,6 +34,7 @@ export async function infoReq() {
 export async function getEventsReq(params: {
   type?: API.EventType;
   objectType?: API.EventObjectType;
+  name?: string;
 }) {
   const r = await request(`${clusterPrefix}/events`, {
     method: 'GET',

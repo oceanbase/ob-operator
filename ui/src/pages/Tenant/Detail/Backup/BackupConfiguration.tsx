@@ -2,30 +2,31 @@ import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-  deletePolicyOfTenant,
-  updateBackupPolicyOfTenant,
+deletePolicyOfTenant,
+updateBackupPolicyOfTenant,
 } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import {
-  Button,
-  Card,
-  Col,
-  Descriptions,
-  Form,
-  InputNumber,
-  Row,
-  Select,
-  Space,
-  message,
+Button,
+Card,
+Col,
+Descriptions,
+Form,
+InputNumber,
+Popconfirm,
+Row,
+Select,
+Space,
+message
 } from 'antd';
 import dayjs from 'dayjs';
-import { useRef, useState } from 'react';
+import { useRef,useState } from 'react';
 import {
-  checkIsSame,
-  checkScheduleDatesHaveFull,
-  formatBackupForm,
-  formatBackupPolicyData,
+checkIsSame,
+checkScheduleDatesHaveFull,
+formatBackupForm,
+formatBackupPolicyData,
 } from '../../helper';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
@@ -245,16 +246,18 @@ export default function BackupConfiguration({
                   defaultMessage: '暂停',
                 })}
           </Button>
-          <Button
-            onClick={() => deleteBackupPolicyReq({ ns, name })}
-            type="primary"
-            danger
+          <Popconfirm
+            onConfirm={() => deleteBackupPolicyReq({ ns, name })}
+            title="删除备份"
+            description="确定要删除该备份策略吗？"
           >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
-              defaultMessage: '删除',
-            })}
-          </Button>
+            <Button type="primary" danger>
+              {intl.formatMessage({
+                id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
+                defaultMessage: '删除',
+              })}
+            </Button>
+          </Popconfirm>
         </Space>
       }
     >
