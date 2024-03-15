@@ -1,6 +1,6 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import { intl } from '@/utils/intl';
-import { Col, Descriptions, Table, Tooltip, Typography } from 'antd';
+import { Col,Descriptions,Table,Tooltip,Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface BackupsProps {
@@ -71,7 +71,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
         );
         return (
           <div>
-            {fullArr.length && (
+            {fullArr.length ? (
               <p>
                 {intl.formatMessage({
                   id: 'Dashboard.Detail.Overview.Backups.FullBackupTheFirstOf',
@@ -83,9 +83,9 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
                   defaultMessage: '天',
                 })}
               </p>
-            )}
+            ) : null}
 
-            {incrementalArr.length && (
+            {incrementalArr.length ? (
               <p>
                 {intl.formatMessage({
                   id: 'Dashboard.Detail.Overview.Backups.IncrementalBackupTheFirstOf',
@@ -98,7 +98,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
                   defaultMessage: '天',
                 })}
               </p>
-            )}
+            ) : null}
           </div>
         );
       },
