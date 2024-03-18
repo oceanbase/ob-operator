@@ -167,7 +167,7 @@ function findMinValue(
   key: 'availableCPU' | 'availableLogDisk' | 'availableMemory',
   resources: API.ServerResource[],
 ) {
-  return resources.sort((pre, cur) => pre[key] - cur[key])[0][key];
+  return resources.sort((pre, cur) => cur[key] - pre[key])[0][key];
 }
 
 export function findMinParameter(
@@ -185,7 +185,11 @@ export function findMinParameter(
   };
 }
 
-export const getNewClusterList = (
+/**
+ * 
+ * @Describe Modify the checked status of a zone in a cluster from the cluster list 
+ */
+export const modifyZoneCheckedStatus = (
   clusterList: API.SimpleClusterList,
   zone: string,
   checked: boolean,

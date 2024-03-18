@@ -3,42 +3,54 @@ import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
-import { Button, Col, Descriptions, message } from 'antd';
+import { Button,Col,Descriptions,message } from 'antd';
+import type { OperateType } from '.';
 import styles from './index.less';
+
+interface ReplicasProps {
+  replicaList: API.ReplicaDetailType[];
+  refreshTenant: () => void;
+  openOperateModal: (type: API.ModalType) => void;
+  setEditZone: React.Dispatch<React.SetStateAction<string>>;
+  editZone: string;
+  operateType: React.MutableRefObject<OperateType | undefined>;
+}
+
+const LABEL_TEXT_MAP = {
+  priority: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.Priority',
+    defaultMessage: '优先级',
+  }),
+  type: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.ReplicaType',
+    defaultMessage: '副本类型',
+  }),
+  maxCPU: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.MaximumAvailableCpu',
+    defaultMessage: '最大可用 CPU',
+  }),
+  memorySize: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.MemorySize',
+    defaultMessage: '内存大小',
+  }),
+  minCPU: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.MinimumAvailableCpu',
+    defaultMessage: '最小可用 CPU',
+  }),
+  logDiskSize: intl.formatMessage({
+    id: 'Dashboard.Detail.Overview.Replicas.ClogDiskSize',
+    defaultMessage: 'Clog 盘大小',
+  }),
+};
 
 export default function Replicas({
   replicaList,
   refreshTenant,
-}: {
-  replicaList: API.ReplicaDetailType[];
-  refreshTenant: () => void;
-}) {
-  const LABEL_TEXT_MAP = {
-    priority: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.Priority',
-      defaultMessage: '优先级',
-    }),
-    type: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.ReplicaType',
-      defaultMessage: '副本类型',
-    }),
-    maxCPU: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.MaximumAvailableCpu',
-      defaultMessage: '最大可用 CPU',
-    }),
-    memorySize: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.MemorySize',
-      defaultMessage: '内存大小',
-    }),
-    minCPU: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.MinimumAvailableCpu',
-      defaultMessage: '最小可用 CPU',
-    }),
-    logDiskSize: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.Replicas.ClogDiskSize',
-      defaultMessage: 'Clog 盘大小',
-    }),
-  };
+  openOperateModal,
+  setEditZone,
+  operateType,
+  editZone
+}: ReplicasProps) {
   const sortKeys = (keys: string[]) => {
     const minCpuIdx = keys.findIndex((key) => key === 'minCPU');
     const memorySizeIdx = keys.findIndex((key) => key === 'memorySize');
@@ -63,6 +75,17 @@ export default function Replicas({
     }
   };
 
+  const editResourcePool = (zone: string) => {
+    operateType.current = 'edit';
+    setEditZone(zone);
+    openOperateModal('modifyUnitSpecification');
+  };
+  
+  const addResourcePool = ()=>{
+    operateType.current = 'create';
+    openOperateModal('modifyUnitSpecification');
+  }
+
   return (
     <Col span={24}>
       <CollapsibleCard
@@ -74,6 +97,7 @@ export default function Replicas({
             })}
           </h2>
         }
+        extra={<Button type='primary' onClick={addResourcePool}>新增资源池</Button>}
         collapsible={true}
         defaultExpand={true}
       >
@@ -93,7 +117,10 @@ export default function Replicas({
                   )}
                 </span>
                 <div>
-                  <Button type="link">
+                  <Button
+                    onClick={() => editResourcePool(replica.zone)}
+                    type="link"
+                  >
                     {intl.formatMessage({
                       id: 'Dashboard.Detail.Overview.Replicas.Edit',
                       defaultMessage: '编辑',
@@ -113,7 +140,7 @@ export default function Replicas({
                         ),
                       });
                     }}
-                    disabled={replicaList.length === 2}
+                    disabled={replicaList.length === 2 || replicaList.length === 1}
                     type="link"
                     danger
                   >

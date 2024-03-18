@@ -33,6 +33,8 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
+export type OperateType = 'edit'|'create';
+
 export type ClusterNSName = { ns?: string; name?: string };
 
 export default function TenantOverview() {
@@ -40,10 +42,12 @@ export default function TenantOverview() {
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
+  const operateTypeRef = useRef<OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const [[ns, name]] = useState(getNSName());
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  const [editZone, setEditZone] = useState<string>('');
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -61,7 +65,10 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType) => {
+  const openOperateModal = (type: API.ModalType, operateType?: OperateType) => {
+    if (operateType) {
+      operateTypeRef.current = operateType;
+    }
     modalType.current = type;
     setOperateModalVisible(true);
   };
@@ -300,6 +307,10 @@ export default function TenantOverview() {
             <Replicas
               refreshTenant={reGetTenantDetail}
               replicaList={tenantDetail.replicas}
+              openOperateModal={openOperateModal}
+              setEditZone={setEditZone}
+              editZone={editZone}
+              operateType={operateTypeRef}
             />
           )}
           {tenantDetail && (
@@ -325,6 +336,10 @@ export default function TenantOverview() {
             essentialParameter,
             clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
+            setEditZone,
+            replicaList: tenantDetail?.replicas,
+            editZone,
+            newResourcePool: operateTypeRef.current === 'create',
           }}
         />
       </PageContainer>
