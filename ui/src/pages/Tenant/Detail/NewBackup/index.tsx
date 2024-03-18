@@ -33,6 +33,7 @@ export default function NewBackup() {
           defaultMessage: '请至少配置 1 个全量备份',
         }),
       );
+      return;
     }
     const res = await createBackupPolicyOfTenant({
       ns,
