@@ -10,15 +10,20 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+//go:generate flow-register $GOFILE
+
 package obcluster
 
 import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func MigrateOBClusterFromExisting() *tasktypes.TaskFlow {
+var flowMap = builder.NewFlowMap[*OBClusterManager]()
+
+func MigrateOBClusterFromExisting(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMigrateOBClusterFromExisting,
@@ -31,7 +36,7 @@ func MigrateOBClusterFromExisting() *tasktypes.TaskFlow {
 	}
 }
 
-func BootstrapOBCluster() *tasktypes.TaskFlow {
+func BootstrapOBCluster(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fBootstrapOBCluster,
@@ -44,7 +49,7 @@ func BootstrapOBCluster() *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainOBClusterAfterBootstrap() *tasktypes.TaskFlow {
+func MaintainOBClusterAfterBootstrap(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainOBClusterAfterBootstrap,
@@ -54,7 +59,7 @@ func MaintainOBClusterAfterBootstrap() *tasktypes.TaskFlow {
 	}
 }
 
-func AddOBZone() *tasktypes.TaskFlow {
+func AddOBZone(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAddOBZone,
@@ -64,7 +69,7 @@ func AddOBZone() *tasktypes.TaskFlow {
 	}
 }
 
-func DeleteOBZone() *tasktypes.TaskFlow {
+func FlowDeleteOBZone(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeleteOBZone,
@@ -74,7 +79,7 @@ func DeleteOBZone() *tasktypes.TaskFlow {
 	}
 }
 
-func ModifyOBZoneReplica() *tasktypes.TaskFlow {
+func FlowModifyOBZoneReplica(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fModifyOBZoneReplica,
@@ -84,7 +89,7 @@ func ModifyOBZoneReplica() *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainOBParameter() *tasktypes.TaskFlow {
+func FlowMaintainOBParameter(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainOBParameter,
@@ -94,7 +99,7 @@ func MaintainOBParameter() *tasktypes.TaskFlow {
 	}
 }
 
-func UpgradeOBCluster() *tasktypes.TaskFlow {
+func UpgradeOBCluster(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fUpgradeOBCluster,
@@ -107,7 +112,7 @@ func UpgradeOBCluster() *tasktypes.TaskFlow {
 	}
 }
 
-func ScaleUpOBZones() *tasktypes.TaskFlow {
+func FlowScaleUpOBZones(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fScaleUpOBZones,
@@ -117,7 +122,7 @@ func ScaleUpOBZones() *tasktypes.TaskFlow {
 	}
 }
 
-func ResizePVC() *tasktypes.TaskFlow {
+func FlowExpandPVC(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fExpandPVC,
@@ -127,7 +132,7 @@ func ResizePVC() *tasktypes.TaskFlow {
 	}
 }
 
-func MountBackupVolume() *tasktypes.TaskFlow {
+func FlowMountBackupVolume(m *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMountBackupVolume,

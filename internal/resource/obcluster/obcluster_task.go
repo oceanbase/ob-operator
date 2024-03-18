@@ -9,6 +9,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
+//go:generate task-register $GOFILE
 
 package obcluster
 
@@ -40,15 +41,18 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	obutil "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/util"
+	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func (m *OBClusterManager) WaitOBZoneTopologyMatch() tasktypes.TaskError {
+var taskMap = builder.NewTaskMap[*OBClusterManager]()
+
+func WaitOBZoneTopologyMatch(m *OBClusterManager) tasktypes.TaskError {
 	// TODO
 	return nil
 }
 
-func (m *OBClusterManager) WaitOBZoneDeleted() tasktypes.TaskError {
+func WaitOBZoneDeleted(m *OBClusterManager) tasktypes.TaskError {
 	waitSuccess := false
 	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		obcluster, err := m.getOBCluster()
@@ -83,32 +87,7 @@ func (m *OBClusterManager) WaitOBZoneDeleted() tasktypes.TaskError {
 	return errors.Errorf("OBCluster %s zone still not deleted when timeout", m.OBCluster.Name)
 }
 
-func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) func() tasktypes.TaskError {
-	f := func() tasktypes.TaskError {
-		for i := 1; i < timeoutSeconds; i++ {
-			obcluster, err := m.getOBCluster()
-			if err != nil {
-				return errors.Wrap(err, "get obcluster failed")
-			}
-			allMatched := true
-			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
-				if obzoneStatus.Status != status {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
-					allMatched = false
-					break
-				}
-			}
-			if allMatched {
-				return nil
-			}
-			time.Sleep(time.Second)
-		}
-		return errors.New("Zone status still not matched when timeout")
-	}
-	return f
-}
-
-func (m *OBClusterManager) ModifyOBZoneReplica() tasktypes.TaskError {
+func ModifyOBZoneReplica(m *OBClusterManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obzoneList, err := m.listOBZones()
 		if err != nil {
@@ -131,7 +110,7 @@ func (m *OBClusterManager) ModifyOBZoneReplica() tasktypes.TaskError {
 	})
 }
 
-func (m *OBClusterManager) DeleteOBZone() tasktypes.TaskError {
+func DeleteOBZone(m *OBClusterManager) tasktypes.TaskError {
 	zonesToDelete, err := m.getZonesToDelete()
 	if err != nil {
 		return errors.Wrap(err, "Failed to get obzones to delete")
@@ -146,7 +125,7 @@ func (m *OBClusterManager) DeleteOBZone() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
+func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create obzones")
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
@@ -222,7 +201,7 @@ func (m *OBClusterManager) CreateOBZone() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
+func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 	obzoneList, err := m.listOBZones()
 	if err != nil {
 		m.Logger.Error(err, "list obzones failed")
@@ -291,7 +270,7 @@ func (m *OBClusterManager) Bootstrap() tasktypes.TaskError {
 }
 
 // Use Or for compatibility
-func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
+func CreateUsers(m *OBClusterManager) tasktypes.TaskError {
 	err := m.createUser(oceanbaseconst.RootUser, m.OBCluster.Spec.UserSecrets.Root, oceanbaseconst.AllPrivilege)
 	if err != nil {
 		return errors.Wrap(err, "Create root user")
@@ -311,7 +290,7 @@ func (m *OBClusterManager) CreateUsers() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) MaintainOBParameter() tasktypes.TaskError {
+func MaintainOBParameter(m *OBClusterManager) tasktypes.TaskError {
 	parameterMap := make(map[string]apitypes.Parameter)
 	for _, parameter := range m.OBCluster.Status.Parameters {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
@@ -349,79 +328,7 @@ func (m *OBClusterManager) MaintainOBParameter() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CreateOBParameter(parameter *apitypes.Parameter) error {
-	m.Logger.Info("Create ob parameters")
-	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBCluster.APIVersion,
-		Kind:       m.OBCluster.Kind,
-		Name:       m.OBCluster.Name,
-		UID:        m.OBCluster.GetUID(),
-	}
-	ownerReferenceList = append(ownerReferenceList, ownerReference)
-	labels := make(map[string]string)
-	labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
-	labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
-	parameterName := m.generateParameterName(parameter.Name)
-	obparameter := &v1alpha1.OBParameter{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            parameterName,
-			Namespace:       m.OBCluster.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          labels,
-		},
-		Spec: v1alpha1.OBParameterSpec{
-			ClusterName: m.OBCluster.Spec.ClusterName,
-			ClusterId:   m.OBCluster.Spec.ClusterId,
-			Parameter:   parameter,
-		},
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create obparameter", "parameter", parameterName)
-	err := m.Client.Create(m.Ctx, obparameter)
-	if err != nil {
-		m.Logger.Error(err, "create obparameter failed")
-		return errors.Wrap(err, "create obparameter")
-	}
-	return nil
-}
-
-func (m *OBClusterManager) UpdateOBParameter(parameter *apitypes.Parameter) error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		obparameter := &v1alpha1.OBParameter{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.OBCluster.Namespace,
-			Name:      m.generateParameterName(parameter.Name),
-		}, obparameter)
-		if err != nil {
-			return errors.Wrap(err, "Get obparameter")
-		}
-		obparameter.Spec.Parameter.Value = parameter.Value
-		err = m.Client.Update(m.Ctx, obparameter)
-		if err != nil {
-			return errors.Wrap(err, "Update obparameter")
-		}
-		return nil
-	})
-}
-
-func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) error {
-	obparameter := &v1alpha1.OBParameter{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBCluster.Namespace,
-		Name:      m.generateParameterName(parameter.Name),
-	}, obparameter)
-	if err != nil {
-		return errors.Wrap(err, "Get obparameter")
-	}
-	obparameter.Spec.Parameter.Value = parameter.Value
-	err = m.Client.Delete(m.Ctx, obparameter)
-	if err != nil {
-		return errors.Wrap(err, "Delete obparameter")
-	}
-	return nil
-}
-
-func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
+func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	// Get current obcluster version
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -488,11 +395,11 @@ func (m *OBClusterManager) ValidateUpgradeInfo() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) UpgradeCheck() tasktypes.TaskError {
+func UpgradeCheck(m *OBClusterManager) tasktypes.TaskError {
 	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
 }
 
-func (m *OBClusterManager) BackupEssentialParameters() tasktypes.TaskError {
+func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
@@ -528,39 +435,12 @@ func (m *OBClusterManager) BackupEssentialParameters() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) BeginUpgrade() tasktypes.TaskError {
+func BeginUpgrade(m *OBClusterManager) tasktypes.TaskError {
 	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
 }
 
 // TODO: add timeout
-func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
-	upgradeFinished := false
-	for {
-		zones, err := m.listOBZones()
-		if err != nil {
-			return errors.Wrap(err, "Failed to get obzone list")
-		}
-		for _, zone := range zones.Items {
-			if zone.Name != zoneName {
-				continue
-			}
-			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
-			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
-				upgradeFinished = true
-				break
-			}
-		}
-		if upgradeFinished {
-			m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
-			break
-		}
-		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
-	}
-	return nil
-}
-
-// TODO: add timeout
-func (m *OBClusterManager) RollingUpgradeByZone() tasktypes.TaskError {
+func RollingUpgradeByZone(m *OBClusterManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		zones, err := m.listOBZones()
 		if err != nil {
@@ -582,11 +462,11 @@ func (m *OBClusterManager) RollingUpgradeByZone() tasktypes.TaskError {
 	})
 }
 
-func (m *OBClusterManager) FinishUpgrade() tasktypes.TaskError {
+func FinishUpgrade(m *OBClusterManager) tasktypes.TaskError {
 	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
 }
 
-func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
+func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
@@ -704,7 +584,7 @@ func (m *OBClusterManager) ModifySysTenantReplica() tasktypes.TaskError {
 	})
 }
 
-func (m *OBClusterManager) CreateServiceForMonitor() tasktypes.TaskError {
+func CreateServiceForMonitor(m *OBClusterManager) tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
 		APIVersion: m.OBCluster.APIVersion,
@@ -742,7 +622,7 @@ func (m *OBClusterManager) CreateServiceForMonitor() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
+func RestoreEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
@@ -783,7 +663,7 @@ func (m *OBClusterManager) RestoreEssentialParameters() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
+func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 	secretList := []string{
 		m.OBCluster.Spec.UserSecrets.Operator,
 		m.OBCluster.Spec.UserSecrets.Monitor,
@@ -815,7 +695,7 @@ func (m *OBClusterManager) CheckAndCreateUserSecrets() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
+func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
 		err := m.Client.Create(m.Ctx, &corev1.Service{
@@ -852,7 +732,7 @@ func (m *OBClusterManager) CreateServices() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CheckImageReady() tasktypes.TaskError {
+func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
 	jobName := "image-pull-ready-" + rand.String(8)
 	var ttl int32 = 120
 	var backoffLimit int32 = 32
@@ -945,7 +825,7 @@ outerLoop:
 	return nil
 }
 
-func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
+func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	var err error
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
@@ -1011,7 +891,7 @@ func (m *OBClusterManager) CheckClusterMode() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
+func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	m.Logger.Info("Check before migration")
 	manager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -1082,4 +962,24 @@ func (m *OBClusterManager) CheckMigration() tasktypes.TaskError {
 		return errors.Errorf("Cluster id mismatch, source cluster: %s, current: %d", obclusterId, m.OBCluster.Spec.ClusterId)
 	}
 	return nil
+}
+
+func ScaleUpOBZones(m *OBClusterManager) tasktypes.TaskError {
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func MountBackupVolume(m *OBClusterManager) tasktypes.TaskError {
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
+	return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
+	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
 }

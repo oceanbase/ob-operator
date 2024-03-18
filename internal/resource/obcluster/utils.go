@@ -18,12 +18,15 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -275,4 +278,128 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 		}
 		return nil
 	}
+}
+
+func (m *OBClusterManager) generateWaitOBZoneStatusFunc(status string, timeoutSeconds int) tasktypes.TaskFunc {
+	f := func() tasktypes.TaskError {
+		for i := 1; i < timeoutSeconds; i++ {
+			obcluster, err := m.getOBCluster()
+			if err != nil {
+				return errors.Wrap(err, "get obcluster failed")
+			}
+			allMatched := true
+			for _, obzoneStatus := range obcluster.Status.OBZoneStatus {
+				if obzoneStatus.Status != status {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Zone status still not matched", "zone", obzoneStatus.Zone, "status", status)
+					allMatched = false
+					break
+				}
+			}
+			if allMatched {
+				return nil
+			}
+			time.Sleep(time.Second)
+		}
+		return errors.New("Zone status still not matched when timeout")
+	}
+	return f
+}
+
+func (m *OBClusterManager) CreateOBParameter(parameter *apitypes.Parameter) error {
+	m.Logger.Info("Create ob parameters")
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBCluster.APIVersion,
+		Kind:       m.OBCluster.Kind,
+		Name:       m.OBCluster.Name,
+		UID:        m.OBCluster.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	labels := make(map[string]string)
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
+	labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
+	parameterName := m.generateParameterName(parameter.Name)
+	obparameter := &v1alpha1.OBParameter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            parameterName,
+			Namespace:       m.OBCluster.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBParameterSpec{
+			ClusterName: m.OBCluster.Spec.ClusterName,
+			ClusterId:   m.OBCluster.Spec.ClusterId,
+			Parameter:   parameter,
+		},
+	}
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create obparameter", "parameter", parameterName)
+	err := m.Client.Create(m.Ctx, obparameter)
+	if err != nil {
+		m.Logger.Error(err, "create obparameter failed")
+		return errors.Wrap(err, "create obparameter")
+	}
+	return nil
+}
+
+func (m *OBClusterManager) UpdateOBParameter(parameter *apitypes.Parameter) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obparameter := &v1alpha1.OBParameter{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBCluster.Namespace,
+			Name:      m.generateParameterName(parameter.Name),
+		}, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Get obparameter")
+		}
+		obparameter.Spec.Parameter.Value = parameter.Value
+		err = m.Client.Update(m.Ctx, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Update obparameter")
+		}
+		return nil
+	})
+}
+
+func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Delete(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Delete obparameter")
+	}
+	return nil
+}
+
+// TODO: add timeout
+func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
+	upgradeFinished := false
+	for {
+		zones, err := m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "Failed to get obzone list")
+		}
+		for _, zone := range zones.Items {
+			if zone.Name != zoneName {
+				continue
+			}
+			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
+			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+				upgradeFinished = true
+				break
+			}
+		}
+		if upgradeFinished {
+			m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
+			break
+		}
+		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
+	}
+	return nil
 }
