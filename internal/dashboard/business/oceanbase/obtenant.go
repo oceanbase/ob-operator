@@ -133,7 +133,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 
 func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
-		OBTenantBrief: *buildBriefFromApiType(t),
+		OBTenantOverview: *buildOverviewFromApiType(t),
 	}
 	rt.RootCredential = t.Status.Credentials.Root
 	rt.StandbyROCredentail = t.Status.Credentials.StandbyRO
@@ -158,8 +158,8 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	return rt
 }
 
-func buildBriefFromApiType(t *v1alpha1.OBTenant) *response.OBTenantBrief {
-	rt := &response.OBTenantBrief{}
+func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
+	rt := &response.OBTenantOverview{}
 	rt.Name = t.Name
 	rt.Namespace = t.Namespace
 	rt.CreateTime = t.CreationTimestamp.Format("2006-01-02 15:04:05")
@@ -296,14 +296,14 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*response.OBTenantBrief, error) {
+func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
 	tenantList, err := oceanbase.ListAllOBTenants(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
-	tenants := make([]*response.OBTenantBrief, 0, len(tenantList.Items))
+	tenants := make([]*response.OBTenantOverview, 0, len(tenantList.Items))
 	for i := range tenantList.Items {
-		tenants = append(tenants, buildBriefFromApiType(&tenantList.Items[i]))
+		tenants = append(tenants, buildOverviewFromApiType(&tenantList.Items[i]))
 	}
 	return tenants, nil
 }

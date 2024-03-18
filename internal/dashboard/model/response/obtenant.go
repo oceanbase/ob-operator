@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package response
 
 // @Description Brief information about OBTenant
-type OBTenantBrief struct {
+type OBTenantOverview struct {
 	Name        string            `json:"name"`                // Name of the resource
 	Namespace   string            `json:"namespace"`           // Namespace of the resource
 	TenantName  string            `json:"tenantName"`          // Name of the tenant in the database
@@ -29,7 +29,7 @@ type OBTenantBrief struct {
 }
 
 type OBTenantDetail struct {
-	OBTenantBrief       `json:",inline"`
+	OBTenantOverview    `json:",inline"`
 	RootCredential      string `json:"rootCredential"`
 	StandbyROCredentail string `json:"standbyROCredentail"`
 	Version             string `json:"version"`

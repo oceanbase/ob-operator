@@ -51,7 +51,7 @@ type OBMetrics struct {
 	DiskPercent   int `json:"diskPercent"`
 }
 
-type OBClusterBrief struct {
+type OBClusterOverview struct {
 	Name         string   `json:"name"`
 	Namespace    string   `json:"namespace"`
 	ClusterName  string   `json:"clusterName"`
@@ -64,7 +64,7 @@ type OBClusterBrief struct {
 }
 
 type OBCluster struct {
-	OBClusterBrief `json:",inline"`
+	OBClusterOverview `json:",inline"`
 
 	Metrics *OBMetrics `json:"metrics"`
 	Version string     `json:"version"`

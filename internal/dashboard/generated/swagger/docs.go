@@ -673,7 +673,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/response.OBClusterBrief"
+                                                "$ref": "#/definitions/response.OBClusterOverview"
                                             }
                                         }
                                     }
@@ -1358,7 +1358,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/response.OBTenantBrief"
+                                                "$ref": "#/definitions/response.OBTenantOverview"
                                             }
                                         }
                                     }
@@ -4167,7 +4167,7 @@ const docTemplate = `{
                 }
             }
         },
-        "response.OBClusterBrief": {
+        "response.OBClusterOverview": {
             "type": "object",
             "properties": {
                 "clusterId": {
@@ -4317,63 +4317,6 @@ const docTemplate = `{
                 }
             }
         },
-        "response.OBTenantBrief": {
-            "description": "Brief information about OBTenant",
-            "type": "object",
-            "properties": {
-                "charset": {
-                    "description": "Charset of the tenant",
-                    "type": "string"
-                },
-                "clusterResourceName": {
-                    "description": "Name of the cluster belonging to",
-                    "type": "string"
-                },
-                "createTime": {
-                    "description": "Creation time of the tenant",
-                    "type": "string"
-                },
-                "locality": {
-                    "description": "Locality of the tenant units",
-                    "type": "string"
-                },
-                "name": {
-                    "description": "Name of the resource",
-                    "type": "string"
-                },
-                "namespace": {
-                    "description": "Namespace of the resource",
-                    "type": "string"
-                },
-                "primaryZone": {
-                    "description": "Primary zone of the tenant",
-                    "type": "string"
-                },
-                "status": {
-                    "description": "Status of the tenant",
-                    "type": "string"
-                },
-                "tenantName": {
-                    "description": "Name of the tenant in the database",
-                    "type": "string"
-                },
-                "tenantRole": {
-                    "description": "Enum: Primary, Standby",
-                    "type": "string"
-                },
-                "topology": {
-                    "description": "Topology of the tenant",
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/response.OBTenantReplica"
-                    }
-                },
-                "unitNumber": {
-                    "description": "Number of units in every zone",
-                    "type": "integer"
-                }
-            }
-        },
         "response.OBTenantDetail": {
             "type": "object",
             "properties": {
@@ -4442,6 +4385,63 @@ const docTemplate = `{
                 },
                 "version": {
                     "type": "string"
+                }
+            }
+        },
+        "response.OBTenantOverview": {
+            "description": "Brief information about OBTenant",
+            "type": "object",
+            "properties": {
+                "charset": {
+                    "description": "Charset of the tenant",
+                    "type": "string"
+                },
+                "clusterResourceName": {
+                    "description": "Name of the cluster belonging to",
+                    "type": "string"
+                },
+                "createTime": {
+                    "description": "Creation time of the tenant",
+                    "type": "string"
+                },
+                "locality": {
+                    "description": "Locality of the tenant units",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "Name of the resource",
+                    "type": "string"
+                },
+                "namespace": {
+                    "description": "Namespace of the resource",
+                    "type": "string"
+                },
+                "primaryZone": {
+                    "description": "Primary zone of the tenant",
+                    "type": "string"
+                },
+                "status": {
+                    "description": "Status of the tenant",
+                    "type": "string"
+                },
+                "tenantName": {
+                    "description": "Name of the tenant in the database",
+                    "type": "string"
+                },
+                "tenantRole": {
+                    "description": "Enum: Primary, Standby",
+                    "type": "string"
+                },
+                "topology": {
+                    "description": "Topology of the tenant",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.OBTenantReplica"
+                    }
+                },
+                "unitNumber": {
+                    "description": "Number of units in every zone",
+                    "type": "integer"
                 }
             }
         },

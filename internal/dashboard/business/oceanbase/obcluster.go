@@ -64,12 +64,12 @@ func getStatisticStatus(obcluster *v1alpha1.OBCluster) string {
 	}
 }
 
-func buildOBClusterBrief(ctx context.Context, obcluster *v1alpha1.OBCluster) (*response.OBClusterBrief, error) {
+func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) (*response.OBClusterOverview, error) {
 	topology, err := buildOBClusterTopologyResp(ctx, obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build obcluster topology")
 	}
-	return &response.OBClusterBrief{
+	return &response.OBClusterOverview{
 		Namespace:    obcluster.Namespace,
 		Name:         obcluster.Name,
 		ClusterName:  obcluster.Spec.ClusterName,
@@ -83,12 +83,12 @@ func buildOBClusterBrief(ctx context.Context, obcluster *v1alpha1.OBCluster) (*r
 }
 
 func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) (*response.OBCluster, error) {
-	brief, err := buildOBClusterBrief(ctx, obcluster)
+	overview, err := buildOBClusterOverview(ctx, obcluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to build obcluster brief")
+		return nil, errors.Wrap(err, "failed to build obcluster overview")
 	}
 	respCluster := &response.OBCluster{
-		OBClusterBrief: *brief,
+		OBClusterOverview: *overview,
 		OBClusterExtra: response.OBClusterExtra{
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
 			Parameters:         nil,
@@ -264,14 +264,14 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 	return topology, nil
 }
 
-func ListOBClusters(ctx context.Context) ([]response.OBClusterBrief, error) {
-	obclusters := make([]response.OBClusterBrief, 0)
+func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
+	obclusters := make([]response.OBClusterOverview, 0)
 	obclusterList, err := oceanbase.ListAllOBClusters(ctx)
 	if err != nil {
 		return obclusters, errors.Wrap(err, "failed to list obclusters")
 	}
 	for _, obcluster := range obclusterList.Items {
-		resp, err := buildOBClusterBrief(ctx, &obcluster)
+		resp, err := buildOBClusterOverview(ctx, &obcluster)
 		if err != nil {
 			logger.Errorf("failed to build obcluster response: %v", err)
 		}

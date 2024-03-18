@@ -37,13 +37,13 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param obcluster query string false "obcluster to filter"
-// @Success 200 object response.APIResponse{data=[]response.OBTenantBrief}
+// @Success 200 object response.APIResponse{data=[]response.OBTenantOverview}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants [GET]
 // @Security ApiKeyAuth
-func ListAllTenants(c *gin.Context) ([]*response.OBTenantBrief, error) {
+func ListAllTenants(c *gin.Context) ([]*response.OBTenantOverview, error) {
 	selector := ""
 	if c.Query("obcluster") != "" {
 		selector = fmt.Sprintf("ref-obcluster=%s", c.Query("obcluster"))
