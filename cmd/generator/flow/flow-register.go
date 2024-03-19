@@ -40,7 +40,7 @@ type Flow struct {
 
 func main() {
 	if len(os.Args) != 2 {
-		log.Fatalf("Usage: %s <source_file>", os.Args[0])
+		log.Printf("Usage: %s <source_file>", os.Args[0])
 	}
 	sourceFile := os.Args[1]
 
@@ -48,7 +48,7 @@ func main() {
 
 	node, err := parser.ParseFile(fset, sourceFile, nil, 0)
 	if err != nil {
-		log.Fatalf("Failed to parse source file: %v", err)
+		log.Printf("Failed to parse source file: %v", err)
 	}
 
 	flows := []Flow{}
@@ -73,14 +73,16 @@ func main() {
 
 	tmpl, err := template.New("registration").Parse(genTemplate)
 	if err != nil {
-		log.Fatalf("Failed to parse template: %v", err)
+		log.Printf("Failed to parse template: %v", err)
+		return
 	}
 
 	outputFile := sourceFile[:len(sourceFile)-3] + "_gen.go"
 
 	f, err := os.Create(outputFile)
 	if err != nil {
-		log.Fatalf("Failed to create output file: %v", err)
+		log.Printf("Failed to create output file: %v", err)
+		return
 	}
 	defer f.Close()
 
@@ -92,7 +94,8 @@ func main() {
 		Flows:       flows,
 	})
 	if err != nil {
-		log.Fatalf("Failed to execute template: %v", err)
+		log.Printf("Failed to execute template: %v", err)
+		return
 	}
 }
 

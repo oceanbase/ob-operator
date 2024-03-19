@@ -47,7 +47,7 @@ import (
 
 var taskMap = builder.NewTaskMap[*OBClusterManager]()
 
-func WaitOBZoneTopologyMatch(m *OBClusterManager) tasktypes.TaskError {
+func WaitOBZoneTopologyMatch(_ *OBClusterManager) tasktypes.TaskError {
 	// TODO
 	return nil
 }

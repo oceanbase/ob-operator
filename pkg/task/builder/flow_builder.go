@@ -17,21 +17,20 @@ import (
 
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-	tt "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type FlowGenerator[T any] func(T) *tt.TaskFlow
-type FlowMap[T any] map[tt.FlowName]FlowGenerator[T]
+type FlowGenerator[T any] func(T) *tasktypes.TaskFlow
+type FlowMap[T any] map[tasktypes.FlowName]FlowGenerator[T]
 
 func NewFlowMap[T any]() FlowMap[T] {
-	return make(map[tt.FlowName]FlowGenerator[T])
+	return make(map[tasktypes.FlowName]FlowGenerator[T])
 }
 
-func (f FlowMap[T]) Register(name tt.FlowName, flow FlowGenerator[T]) {
+func (f FlowMap[T]) RegisterFlow(name tasktypes.FlowName, flow FlowGenerator[T]) {
 	f[name] = flow
 }
 
-func (f FlowMap[T]) Get(name tt.FlowName, resource T) (*tt.TaskFlow, error) {
+func (f FlowMap[T]) GetFlow(name tasktypes.FlowName, resource T) (*tasktypes.TaskFlow, error) {
 	gen, ok := f[name]
 	if !ok {
 		return nil, errors.New("TaskFlow not found: " + string(name))

@@ -84,28 +84,28 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.MigrateFromExisting:
-		taskFlow, err = flowMap.Get(fMigrateOBClusterFromExisting, m)
+		taskFlow, err = flowMap.GetFlow(fMigrateOBClusterFromExisting, m)
 	case clusterstatus.New:
-		taskFlow, err = flowMap.Get(fBootstrapOBCluster, m)
+		taskFlow, err = flowMap.GetFlow(fBootstrapOBCluster, m)
 	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
-		taskFlow, err = flowMap.Get(fMaintainOBClusterAfterBootstrap, m)
+		taskFlow, err = flowMap.GetFlow(fMaintainOBClusterAfterBootstrap, m)
 	case clusterstatus.AddOBZone:
-		taskFlow, err = flowMap.Get(fAddOBZone, m)
+		taskFlow, err = flowMap.GetFlow(fAddOBZone, m)
 	case clusterstatus.DeleteOBZone:
-		taskFlow, err = flowMap.Get(fDeleteOBZone, m)
+		taskFlow, err = flowMap.GetFlow(fDeleteOBZone, m)
 	case clusterstatus.ModifyOBZoneReplica:
-		taskFlow, err = flowMap.Get(fModifyOBZoneReplica, m)
+		taskFlow, err = flowMap.GetFlow(fModifyOBZoneReplica, m)
 	case clusterstatus.Upgrade:
-		taskFlow, err = flowMap.Get(fUpgradeOBCluster, m)
+		taskFlow, err = flowMap.GetFlow(fUpgradeOBCluster, m)
 	case clusterstatus.ModifyOBParameter:
-		taskFlow, err = flowMap.Get(fMaintainOBParameter, m)
+		taskFlow, err = flowMap.GetFlow(fMaintainOBParameter, m)
 	case clusterstatus.ScaleUp:
-		taskFlow, err = flowMap.Get(fScaleUpOBZones, m)
+		taskFlow, err = flowMap.GetFlow(fScaleUpOBZones, m)
 	case clusterstatus.ExpandPVC:
-		taskFlow, err = flowMap.Get(fExpandPVC, m)
+		taskFlow, err = flowMap.GetFlow(fExpandPVC, m)
 	case clusterstatus.MountBackupVolume:
-		taskFlow, err = flowMap.Get(fMountBackupVolume, m)
+		taskFlow, err = flowMap.GetFlow(fMountBackupVolume, m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil

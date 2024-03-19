@@ -90,7 +90,7 @@ func main() {
 		Tasks:       taskFuncs,
 	})
 	if err != nil {
-		log.Fatalf("Failed to execute template: %v", err)
+		log.Printf("Failed to execute template: %v", err)
 	}
 }
 
