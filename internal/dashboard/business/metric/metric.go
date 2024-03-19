@@ -114,8 +114,22 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 				Value:     v,
 			})
 		}
-		if len(values) == 0 {
+		lenValues := len(values)
+		if lenValues == 0 {
 			continue
+		}
+		for i := range values {
+			// interpolate zero slot with average of previous and next value
+			if values[i].Value == 0 {
+				switch i {
+				case 0:
+					values[i].Value = values[i+1].Value
+				case lenValues - 1:
+					values[i].Value = values[i-1].Value
+				default:
+					values[i].Value = (values[i-1].Value + values[i+1].Value) / 2
+				}
+			}
 		}
 		metricDatas = append(metricDatas, response.MetricData{
 			Metric: metric,
