@@ -104,14 +104,18 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 			v, err := strconv.ParseFloat(value[1].(string), 64)
 			if err != nil {
 				logger.Warnf("failed to parse value %v", value)
+				v = 0
 			} else if math.IsNaN(v) {
-				logger.Debugf("skip NaN value at timestamp %f", t)
-			} else {
-				values = append(values, response.MetricValue{
-					Timestamp: t,
-					Value:     v,
-				})
+				logger.Debugf("value at timestamp %f is NaN, set to 0", t)
+				v = 0
 			}
+			values = append(values, response.MetricValue{
+				Timestamp: t,
+				Value:     v,
+			})
+		}
+		if len(values) == 0 {
+			continue
 		}
 		metricDatas = append(metricDatas, response.MetricData{
 			Metric: metric,

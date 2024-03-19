@@ -156,7 +156,6 @@ func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 func ListOBServersOfOBZone(ctx context.Context, obzone *v1alpha1.OBZone) (*v1alpha1.OBServerList, error) {
 	client := client.GetClient()
 	var observerList v1alpha1.OBServerList
-	logger.Infof("get observer list of obzone %s", obzone.Name)
 	obj, err := client.DynamicClient.Resource(schema.OBServerRes).Namespace(obzone.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBZone, obzone.Name),
 	})
