@@ -113,6 +113,11 @@ declare namespace API {
     toolTipData:any[]
   }
 
+  type OptionsType = {
+    label:string;
+    value:string;
+  }[]
+
   interface ClusterListResponse extends CommonResponse {
     data: ClusterItem[];
   }

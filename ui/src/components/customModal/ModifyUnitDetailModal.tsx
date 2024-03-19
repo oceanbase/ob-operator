@@ -1,31 +1,35 @@
 import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT } from '@/constants';
+import { RULER_ZONE } from '@/constants/rules';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import type { MaxResourceType } from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
-import { findMinParameter,modifyZoneCheckedStatus } from '@/pages/Tenant/helper';
-import { patchTenantConfiguration } from '@/services/tenant';
-import { formatUnitDetailData } from '@/utils/helper';
+import {
+  findMinParameter,
+  modifyZoneCheckedStatus,
+} from '@/pages/Tenant/helper';
+import { createObtenantPool, patchObtenantPool } from '@/services/tenant';
+import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
-import { Col,Form,Row,message } from 'antd';
+import { Col, Form, Row, Select, message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
-export type UnitDetailType = {
+export type PoolDetailType = {
+  zoneName?: string; // Exists when adding a new pool
+  priority: number;
+  selectZone?: string;
   unitConfig: {
-    unitConfig: {
-      cpuCount: number | string;
-      iopsWeight: number;
-      logDiskSize: number | string;
-      maxIops: number;
-      memorySize: number | string;
-      minIops: number;
-    };
-    pools: any;
+    cpuCount: number | string;
+    iopsWeight: number;
+    logDiskSize: number | string;
+    maxIops: number;
+    memorySize: number | string;
+    minIops: number;
   };
 };
 
@@ -49,7 +53,8 @@ type UnitConfigType = {
   editZone?: string;
   replicaList?: API.ReplicaDetailType[];
   newResourcePool?: boolean;
-  setEditZone?: React.Dispatch<React.SetStateAction<string>>
+  setEditZone?: React.Dispatch<React.SetStateAction<string>>;
+  zonesOptions?: API.OptionsType;
 };
 
 export default function ModifyUnitDetailModal({
@@ -63,15 +68,20 @@ export default function ModifyUnitDetailModal({
   editZone,
   replicaList,
   newResourcePool = false,
-  setEditZone
+  setEditZone,
+  zonesOptions,
 }: CommonModalType & UnitConfigType) {
-  const [form] = Form.useForm<UnitDetailType>();
+  const [form] = Form.useForm<PoolDetailType>();
   const [minMemory, setMinMemory] = useState<number>(2);
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
   const selectZone = Form.useWatch('selectZone', form);
+  const obtenantPoolReq = newResourcePool
+    ? createObtenantPool
+    : patchObtenantPool;
+
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -89,20 +99,30 @@ export default function ModifyUnitDetailModal({
 
   const onFinish = async (values: any) => {
     const [ns, name] = getNSName();
-    const res = await patchTenantConfiguration({
+    const { zoneName, ...reqData } = formatPatchPoolData(
+      values,
+      newResourcePool ? 'create' : 'edit',
+    );
+    const res = await obtenantPoolReq({
       ns,
       name,
-      ...formatUnitDetailData(values),
+      zoneName,
+      ...reqData,
     });
     if (res.successful) {
-      message.success(res.message || '修改成功');
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyUnitDetailModal.ModifiedSuccessfully',
+            defaultMessage: '修改成功',
+          }),
+      );
       successCallback();
       form.resetFields();
       setVisible(false);
     }
   };
   const checkBoxOnChange = (checked: boolean, name: string) => {
-
     if (!checked) {
       form.setFieldValue(['pools', name, 'priority'], undefined);
       setSelectZones(selectZones.filter((zone) => zone !== name));
@@ -121,20 +141,20 @@ export default function ModifyUnitDetailModal({
     let result = {};
     const zone = replicaList?.find((replica) => replica.zone === editZone);
     result.unitConfig = {
-      unitConfig: {
-        cpuCount: zone?.minCPU,
-        iopsWeight: zone?.iopsWeight,
-        logDiskSize: zone?.logDiskSize.split('Gi')[0],
-        maxIops: zone?.maxIops,
-        memorySize: zone?.memorySize.split('Gi')[0],
-        minIops: zone?.minIops,
-      },
-      pools: {},
+      cpuCount: zone?.minCPU,
+      iopsWeight: zone?.iopsWeight,
+      logDiskSize: zone?.logDiskSize.split('Gi')[0],
+      maxIops: zone?.maxIops,
+      memorySize: zone?.memorySize.split('Gi')[0],
+      minIops: zone?.minIops,
     };
-    result.unitConfig.pools[editZone] = {
-      priority: zone?.priority,
-    };
-
+    if (newResourcePool) {
+      result.priority = zone?.priority;
+    } else {
+      result[zone?.zone] = {
+        priority: zone?.priority,
+      };
+    }
     return result;
   };
   let targetCluster = clusterList.find(
@@ -188,7 +208,17 @@ export default function ModifyUnitDetailModal({
   return (
     <CustomModal
       width={780}
-      title={newResourcePool ? '新增资源池' : '编辑资源池'}
+      title={
+        newResourcePool
+          ? intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.AddAResourcePool',
+              defaultMessage: '新增资源池',
+            })
+          : intl.formatMessage({
+              id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EditResourcePool',
+              defaultMessage: '编辑资源池',
+            })
+      }
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={handleCancel}
@@ -201,7 +231,50 @@ export default function ModifyUnitDetailModal({
       >
         {newResourcePool && selectOptions.length ? (
           <Row>
-            <Form.Item name={'selectZone'} label="复制已有zone规格">
+            <Col span={8}>
+              <Form.Item
+                name={'zoneName'}
+                label={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.ZoneName',
+                  defaultMessage: 'Zone名称',
+                })}
+                validateFirst
+                rules={RULER_ZONE}
+                style={{ marginRight: 24 }}
+              >
+                {/* <Input placeholder={'请输入'} /> */}
+                <Select options={zonesOptions} />
+              </Form.Item>
+            </Col>
+            <Col span={4}>
+              <Form.Item
+                name={'priority'}
+                label={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.Weight',
+                  defaultMessage: '权重',
+                })}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnterTheWeightOf',
+                      defaultMessage: '请输入所选 zone 的权重',
+                    }),
+                  },
+                ]}
+                style={{ marginRight: 24 }}
+              >
+                <InputNumber />
+              </Form.Item>
+            </Col>
+
+            <Form.Item
+              name={'selectZone'}
+              label={intl.formatMessage({
+                id: 'Dashboard.components.customModal.ModifyUnitDetailModal.CopyExistingZoneSpecifications',
+                defaultMessage: '复制已有zone规格',
+              })}
+            >
               <SelectWithTooltip
                 form={form}
                 name={'selectZone'}
@@ -224,7 +297,8 @@ export default function ModifyUnitDetailModal({
                   <ZoneItem
                     key={index}
                     name={item.zone}
-                    formName={['unitConfig', 'pools', item.zone, 'priority']}
+                    isEdit={Boolean(editZone)}
+                    formName={[item.zone, 'priority']}
                     checked={item.checked!}
                     obZoneResource={
                       essentialParameter.obZoneResourceMap[item.zone]
@@ -241,7 +315,7 @@ export default function ModifyUnitDetailModal({
           <Col span={8}>
             <Form.Item
               label="CPU"
-              name={['unitConfig', 'unitConfig', 'cpuCount']}
+              name={['unitConfig', 'cpuCount']}
               rules={[
                 {
                   required: true,
@@ -269,7 +343,7 @@ export default function ModifyUnitDetailModal({
           <Col span={8}>
             <Form.Item
               label="Memory"
-              name={['unitConfig', 'unitConfig', 'memorySize']}
+              name={['unitConfig', 'memorySize']}
               rules={[
                 {
                   required: true,
@@ -297,8 +371,17 @@ export default function ModifyUnitDetailModal({
           </Col>
           <Col span={8}>
             <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterLogdisksize',
+                    defaultMessage: '请输入 logDiskSize',
+                  }),
+                },
+              ]}
               label="LogDiskSize"
-              name={['unitConfig', 'unitConfig', 'logDiskSize']}
+              name={['unitConfig', 'logDiskSize']}
             >
               <InputNumber
                 min={5}
@@ -319,8 +402,17 @@ export default function ModifyUnitDetailModal({
             <Row gutter={24}>
               <Col>
                 <Form.Item
+                  rules={[
+                    {
+                      required: true,
+                      message: intl.formatMessage({
+                        id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterMiniops',
+                        defaultMessage: '请输入 minIops',
+                      }),
+                    },
+                  ]}
                   label="min iops"
-                  name={['unitConfig', 'unitConfig', 'minIops']}
+                  name={['unitConfig', 'minIops']}
                 >
                   <InputNumber
                     min={1024}
@@ -333,8 +425,17 @@ export default function ModifyUnitDetailModal({
               </Col>
               <Col>
                 <Form.Item
+                  rules={[
+                    {
+                      required: true,
+                      message: intl.formatMessage({
+                        id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterMaxiops',
+                        defaultMessage: '请输入 maxIops',
+                      }),
+                    },
+                  ]}
                   label="max iops"
-                  name={['unitConfig', 'unitConfig', 'maxIops']}
+                  name={['unitConfig', 'maxIops']}
                 >
                   <InputNumber
                     min={1024}
@@ -353,7 +454,16 @@ export default function ModifyUnitDetailModal({
                 id: 'Dashboard.components.customModal.ModifyUnitDetailModal.IopsWeight',
                 defaultMessage: 'iops权重',
               })}
-              name={['unitConfig', 'unitConfig', 'iopsWeight']}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterIopsWeight',
+                    defaultMessage: '请输入 iops权重',
+                  }),
+                },
+              ]}
+              name={['unitConfig', 'iopsWeight']}
             >
               <InputNumber
                 placeholder={intl.formatMessage({

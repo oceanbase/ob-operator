@@ -3,7 +3,7 @@ import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
-import { Button,Col,Descriptions,message } from 'antd';
+import { Button, Col, Descriptions, message } from 'antd';
 import type { OperateType } from '.';
 import styles from './index.less';
 
@@ -12,7 +12,7 @@ interface ReplicasProps {
   refreshTenant: () => void;
   openOperateModal: (type: API.ModalType) => void;
   setEditZone: React.Dispatch<React.SetStateAction<string>>;
-  editZone: string;
+  cluster: API.SimpleCluster;
   operateType: React.MutableRefObject<OperateType | undefined>;
 }
 
@@ -49,7 +49,7 @@ export default function Replicas({
   openOperateModal,
   setEditZone,
   operateType,
-  editZone
+  cluster,
 }: ReplicasProps) {
   const sortKeys = (keys: string[]) => {
     const minCpuIdx = keys.findIndex((key) => key === 'minCPU');
@@ -80,15 +80,16 @@ export default function Replicas({
     setEditZone(zone);
     openOperateModal('modifyUnitSpecification');
   };
-  
-  const addResourcePool = ()=>{
+
+  const addResourcePool = () => {
     operateType.current = 'create';
     openOperateModal('modifyUnitSpecification');
-  }
+  };
 
   return (
     <Col span={24}>
       <CollapsibleCard
+        loading={!cluster?.topology?.length}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
@@ -97,7 +98,18 @@ export default function Replicas({
             })}
           </h2>
         }
-        extra={<Button type='primary' onClick={addResourcePool}>新增资源池</Button>}
+        extra={
+          <Button
+            type="primary"
+            disabled={cluster?.topology?.length === replicaList.length}
+            onClick={addResourcePool}
+          >
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.Replicas.AddAResourcePool',
+              defaultMessage: '新增资源池',
+            })}
+          </Button>
+        }
         collapsible={true}
         defaultExpand={true}
       >
@@ -140,7 +152,9 @@ export default function Replicas({
                         ),
                       });
                     }}
-                    disabled={replicaList.length === 2 || replicaList.length === 1}
+                    disabled={
+                      replicaList.length === 2 || replicaList.length === 1
+                    }
                     type="link"
                     danger
                   >

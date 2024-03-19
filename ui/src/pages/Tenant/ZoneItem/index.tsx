@@ -9,6 +9,7 @@ interface ZoneItemProps {
   checkBoxOnChange: (checked: boolean, name: string) => void;
   key: number;
   formName?:string[]|string;
+  isEdit?:boolean;
 }
 
 export default function ZoneItem({
@@ -17,6 +18,7 @@ export default function ZoneItem({
   checked,
   obZoneResource,
   checkBoxOnChange,
+  isEdit,
   formName = ['pools', name, 'priority']
 }: ZoneItemProps) {
   return (
@@ -32,6 +34,7 @@ export default function ZoneItem({
       <span style={{ marginRight: 8 }}>{name}</span>
       <Checkbox
         checked={checked}
+        disabled={isEdit}
         style={{ marginRight: 24 }}
         onChange={(e) => checkBoxOnChange(e.target.checked, name)}
       />

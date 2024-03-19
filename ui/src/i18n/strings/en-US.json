@@ -635,5 +635,22 @@
   "Dashboard.Detail.Overview.Replicas.Edit": "Edit",
   "Dashboard.Detail.Overview.Replicas.AreYouSureYouWant": "Are you sure you want to delete the tenant's resource pool on {replicaZone}?",
   "Dashboard.Detail.Overview.Replicas.Delete": "Delete",
-  "Dashboard.components.TopoComponent.DeletedSuccessfully": "Deleted successfully"
+  "Dashboard.components.TopoComponent.DeletedSuccessfully": "Deleted successfully",
+  "Dashboard.Detail.Backup.BackupConfiguration.DeleteBackup": "Delete Backup",
+  "Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant": "Are you sure you want to delete the backup policy?",
+  "Dashboard.Detail.Overview.Replicas.AddAResourcePool": "Add a resource pool",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.ModifiedSuccessfully": "Modified successfully",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.AddAResourcePool": "Add a resource pool",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.EditResourcePool": "Edit resource pool",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.ZoneName": "Zone name",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.Weight": "Weight",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnterTheWeightOf": "Please enter the weight of the selected zone",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.CopyExistingZoneSpecifications": "Copy existing zone specifications",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.EnterLogdisksize": "Enter logDiskSize",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.EnterMiniops": "Enter minIops",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.EnterMaxiops": "Enter maxIops",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.EnterIopsWeight": "Enter iops weight",
+  "Dashboard.src.constants.rules.TheResourceNameMayBe": "The resource name may be spliced into the domain name and must conform to the domain name format.",
+  "Dashboard.src.constants.rules.EnterAZoneName": "Enter a zone name",
+  "Dashboard.src.constants.rules.TheFirstCharacterMustBe": "The first character must be a letter or an underscore and cannot contain-"
 }

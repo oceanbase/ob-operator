@@ -13,8 +13,7 @@ import {
 } from 'antd';
 
 import NodeSelector from '@/components/NodeSelector';
-import { TZ_NAME_REG } from '@/constants';
-import { resourceNameRule } from './helper';
+import { RULER_ZONE } from '@/constants/rules';
 
 export default function Topo({ form }: { form: FormInstance<any> }) {
   const getNowNodeSelector = (zoneIdx: number) => {
@@ -51,24 +50,7 @@ export default function Topo({ form }: { form: FormInstance<any> }) {
                           }
                           validateFirst
                           name={[name, 'zone']}
-                          rules={[
-                            {
-                              required: true,
-                              message: intl.formatMessage({
-                                id: 'OBDashboard.Cluster.New.Topo.EnterAZoneName',
-                                defaultMessage: '请输入zone名称',
-                              }),
-                            },
-                            {
-                              pattern: TZ_NAME_REG,
-                              message: intl.formatMessage({
-                                id: 'Dashboard.Cluster.New.Topo.TheFirstCharacterMustBe',
-                                defaultMessage:
-                                  '首字符必须是字母或者下划线，不能包含 -',
-                              }),
-                            },
-                            resourceNameRule,
-                          ]}
+                          rules={RULER_ZONE}
                         >
                           <Input
                             placeholder={intl.formatMessage({
