@@ -25,11 +25,11 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -195,7 +195,7 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 
 func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	}
 
 	tenant.Spec = t.Spec
-	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
+	tenant, err = clients.UpdateOBTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +289,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 		}
 	}
 
-	tenant, err := oceanbase.CreateOBTenant(ctx, t)
+	tenant, err := clients.CreateOBTenant(ctx, t)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 }
 
 func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
-	tenantList, err := oceanbase.ListAllOBTenants(ctx, listOptions)
+	tenantList, err := clients.ListAllOBTenants(ctx, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -309,7 +309,7 @@ func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*respo
 }
 
 func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -317,12 +317,12 @@ func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*response.OBTena
 }
 
 func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
-	return oceanbase.DeleteOBTenant(ctx, nn)
+	return clients.DeleteOBTenant(ctx, nn)
 }
 
 func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, rootPassword string) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -355,7 +355,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 			},
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(ctx, &changePwdOp)
+	_, err = clients.CreateOBTenantOperation(ctx, &changePwdOp)
 	if err != nil {
 		return nil, err
 	}
@@ -364,7 +364,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 
 func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param.ReplayStandbyLog) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -385,7 +385,7 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param
 			TargetTenant: &nn.Name,
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(ctx, &replayLogOp)
+	_, err = clients.CreateOBTenantOperation(ctx, &replayLogOp)
 	if err != nil {
 		return nil, err
 	}
@@ -394,7 +394,7 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param
 
 func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +411,7 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 			TargetTenant: &nn.Name,
 		},
 	}
-	_, err = oceanbase.CreateOBTenantOperation(ctx, &upgradeOp)
+	_, err = clients.CreateOBTenantOperation(ctx, &upgradeOp)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +420,7 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 
 func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -449,7 +449,7 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 			StandbyTenant: nn.Name,
 		}
 	}
-	_, err = oceanbase.CreateOBTenantOperation(ctx, &changeRoleOp)
+	_, err = clients.CreateOBTenantOperation(ctx, &changeRoleOp)
 	if err != nil {
 		return nil, err
 	}
@@ -458,7 +458,7 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 
 func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
 	var err error
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		return nil, err
 	}
@@ -497,7 +497,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 			}
 		}
 	}
-	tenant, err = oceanbase.UpdateOBTenant(ctx, tenant)
+	tenant, err = clients.UpdateOBTenant(ctx, tenant)
 	if err != nil {
 		return nil, err
 	}
@@ -508,7 +508,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 // Including the number of tenants in four status: running, deleting, operating, failed
 func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, error) {
 	stats := []response.OBTenantStatistic{}
-	tenantList, err := oceanbase.ListAllOBTenants(ctx, v1.ListOptions{})
+	tenantList, err := clients.ListAllOBTenants(ctx, v1.ListOptions{})
 	if err != nil {
 		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
 	}

@@ -10,7 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package oceanbase
+package clients
 
 import (
 	"context"
@@ -20,8 +20,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
 )
 
 func CreateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {

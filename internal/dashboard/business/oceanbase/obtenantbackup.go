@@ -27,10 +27,10 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -282,14 +282,14 @@ func buildBackupJobModelType(p *v1alpha1.OBTenantBackup) *response.BackupJob {
 }
 
 func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*response.BackupPolicy, error) {
-	_, err := oceanbase.GetOBTenant(ctx, nn)
+	_, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, oberr.NewNotFound("Tenant not found")
 		}
 		return nil, oberr.NewInternal(err.Error())
 	}
-	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
+	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}
@@ -300,7 +300,7 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*respo
 }
 
 func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *param.CreateBackupPolicy) (*response.BackupPolicy, error) {
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, oberr.NewNotFound("Tenant not found")
@@ -361,7 +361,7 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		}
 	}
 
-	policy, err := oceanbase.CreateTenantBackupPolicy(ctx, backupPolicy)
+	policy, err := clients.CreateTenantBackupPolicy(ctx, backupPolicy)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}
@@ -369,7 +369,7 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 }
 
 func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *param.UpdateBackupPolicy) (*response.BackupPolicy, error) {
-	tenant, err := oceanbase.GetOBTenant(ctx, nn)
+	tenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, oberr.NewNotFound("Tenant not found")
@@ -379,7 +379,7 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	if tenant.Status.Status != "running" {
 		return nil, oberr.NewBadRequest("Tenant is not running")
 	}
-	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
+	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return nil, oberr.NewBadRequest(err.Error())
 	}
@@ -417,7 +417,7 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		}
 	}
 
-	np, err := oceanbase.UpdateTenantBackupPolicy(ctx, policy)
+	np, err := clients.UpdateTenantBackupPolicy(ctx, policy)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}
@@ -425,18 +425,18 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 }
 
 func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, force bool) error {
-	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
+	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return oberr.NewBadRequest(err.Error())
 	}
 	if force {
-		return oceanbase.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
+		return clients.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 	}
-	return oceanbase.DeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
+	return clients.DeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
 }
 
 func ListBackupJobs(ctx context.Context, nn types.NamespacedName, jobType string, limit int) ([]*response.BackupJob, error) {
-	policy, err := oceanbase.GetTenantBackupPolicy(ctx, nn)
+	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}
@@ -450,7 +450,7 @@ func ListBackupJobs(ctx context.Context, nn types.NamespacedName, jobType string
 		listOption.LabelSelector = oceanbaseconst.LabelRefBackupPolicy + "=" + policy.Name
 	}
 	listOption.Limit = int64(limit)
-	jobs, err := oceanbase.ListBackupJobs(ctx, listOption)
+	jobs, err := clients.ListBackupJobs(ctx, listOption)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
 	}

@@ -19,8 +19,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -38,7 +38,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 		return false, oberr.NewBadRequest("invalid log disk size: " + err.Error())
 	}
 
-	tenantCR, err := oceanbase.GetOBTenant(ctx, types.NamespacedName{
+	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -50,7 +50,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 			return false, oberr.NewBadRequest("pool already exists")
 		}
 	}
-	clusterCR, err := oceanbase.GetOBCluster(ctx, nn.Namespace, tenantCR.Spec.ClusterName)
+	clusterCR, err := clients.GetOBCluster(ctx, nn.Namespace, tenantCR.Spec.ClusterName)
 	if err != nil {
 		return false, err
 	}
@@ -74,7 +74,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 					LogDiskSize: logDiskSize,
 				},
 			})
-			_, err = oceanbase.UpdateOBTenant(ctx, tenantCR)
+			_, err = clients.UpdateOBTenant(ctx, tenantCR)
 			if err != nil {
 				return false, err
 			}
@@ -85,7 +85,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 }
 
 func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error) {
-	tenantCR, err := oceanbase.GetOBTenant(ctx, types.NamespacedName{
+	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -110,7 +110,7 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error
 	}
 
 	tenantCR.Spec.Pools = remainPools
-	_, err = oceanbase.UpdateOBTenant(ctx, tenantCR)
+	_, err = clients.UpdateOBTenant(ctx, tenantCR)
 	if err != nil {
 		return false, err
 	}
@@ -118,7 +118,7 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error
 }
 
 func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (bool, error) {
-	tenantCR, err := oceanbase.GetOBTenant(ctx, types.NamespacedName{
+	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
@@ -149,7 +149,7 @@ func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Tena
 					tenantCR.Spec.Pools[i].UnitConfig.IopsWeight = p.UnitConfig.IopsWeight
 				}
 			}
-			_, err = oceanbase.UpdateOBTenant(ctx, tenantCR)
+			_, err = clients.UpdateOBTenant(ctx, tenantCR)
 			if err != nil {
 				return false, err
 			}

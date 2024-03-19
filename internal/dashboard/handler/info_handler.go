@@ -22,8 +22,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
@@ -74,7 +74,7 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData := response.StatisticData{}
 	clusterList := v1alpha1.OBClusterList{}
-	err := oceanbase.ClusterClient.List(c, corev1.NamespaceAll, &clusterList, metav1.ListOptions{})
+	err := clients.ClusterClient.List(c, corev1.NamespaceAll, &clusterList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -85,7 +85,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	}
 
 	zoneList := v1alpha1.OBZoneList{}
-	err = oceanbase.ZoneClient.List(c, corev1.NamespaceAll, &zoneList, metav1.ListOptions{})
+	err = clients.ZoneClient.List(c, corev1.NamespaceAll, &zoneList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -96,7 +96,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	}
 
 	serverList := v1alpha1.OBServerList{}
-	err = oceanbase.ServerClient.List(c, corev1.NamespaceAll, &serverList, metav1.ListOptions{})
+	err = clients.ServerClient.List(c, corev1.NamespaceAll, &serverList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -107,7 +107,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	}
 
 	tenantList := v1alpha1.OBTenantList{}
-	err = oceanbase.TenantClient.List(c, corev1.NamespaceAll, &tenantList, metav1.ListOptions{})
+	err = clients.TenantClient.List(c, corev1.NamespaceAll, &tenantList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -118,7 +118,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	}
 
 	backupPolicyList := v1alpha1.OBTenantBackupPolicyList{}
-	err = oceanbase.BackupPolicyClient.List(c, corev1.NamespaceAll, &backupPolicyList, metav1.ListOptions{})
+	err = clients.BackupPolicyClient.List(c, corev1.NamespaceAll, &backupPolicyList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
