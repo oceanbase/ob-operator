@@ -237,6 +237,7 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 		OSSAccessSecret:     p.Spec.LogArchive.Destination.OSSAccessSecret,
 		BakEncryptionSecret: p.Spec.DataBackup.EncryptionSecret,
 		CreateTime:          p.CreationTimestamp.Format("2006-01-02 15:04:05"),
+		Events:              []response.K8sEvent{},
 	}
 	res.ScheduleBase = getScheduleDatesFromPolicy(p)
 	return res
@@ -296,7 +297,34 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*respo
 	if policy == nil {
 		return nil, nil
 	}
-	return buildBackupPolicyModelType(policy), nil
+	respPolicy := buildBackupPolicyModelType(policy)
+	events, err := client.GetClient().ClientSet.CoreV1().Events(nn.Namespace).List(ctx, metav1.ListOptions{
+		FieldSelector: "involvedObject.name=" + policy.Name + ",involvedObject.kind=OBTenantBackupPolicy",
+	})
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	jobEvents, err := client.GetClient().ClientSet.CoreV1().Events(nn.Namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: oceanbaseconst.LabelRefBackupPolicy + "=" + policy.Name,
+		FieldSelector: "involvedObject.kind=OBTenantBackup",
+	})
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	events.Items = append(events.Items, jobEvents.Items...)
+	for _, event := range events.Items {
+		respPolicy.Events = append(respPolicy.Events, response.K8sEvent{
+			Namespace:  event.Namespace,
+			Type:       event.Type,
+			Count:      event.Count,
+			FirstOccur: event.FirstTimestamp.Unix(),
+			LastSeen:   event.LastTimestamp.Unix(),
+			Reason:     event.Reason,
+			Message:    event.Message,
+			Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
+		})
+	}
+	return respPolicy, nil
 }
 
 func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *param.CreateBackupPolicy) (*response.BackupPolicy, error) {

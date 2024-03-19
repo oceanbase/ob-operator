@@ -146,6 +146,8 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 			kind = "OBCluster"
 		case "OBTENANT":
 			kind = "OBTenant"
+		case "OBBACKUPPOLICY":
+			kind = "OBTenantBackupPolicy"
 		default:
 			kind = queryEventParam.ObjectType
 		}

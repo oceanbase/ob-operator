@@ -720,6 +720,10 @@ definitions:
         description: 'Enum: NFS, OSS'
         example: NFS
         type: string
+      events:
+        items:
+          $ref: '#/definitions/response.K8sEvent'
+        type: array
       jobKeepDays:
         example: 5
         type: integer
@@ -1358,6 +1362,7 @@ paths:
         enum:
         - OBCLUSTER
         - OBTENANT
+        - OBBACKUPPOLICY
         in: query
         name: objectType
         type: string

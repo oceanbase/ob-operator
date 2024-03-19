@@ -38,7 +38,8 @@ const docTemplate = `{
                     {
                         "enum": [
                             "OBCLUSTER",
-                            "OBTENANT"
+                            "OBTENANT",
+                            "OBBACKUPPOLICY"
                         ],
                         "type": "string",
                         "description": "related object types",
@@ -3789,6 +3790,12 @@ const docTemplate = `{
                     "description": "Enum: NFS, OSS",
                     "type": "string",
                     "example": "NFS"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sEvent"
+                    }
                 },
                 "jobKeepDays": {
                     "type": "integer",

@@ -12,7 +12,9 @@ See the Mulan PSL v2 for more details.
 
 package response
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+)
 
 type BackupPolicy struct {
 	param.BackupPolicyBase `json:",inline"`
@@ -24,7 +26,8 @@ type BackupPolicy struct {
 	OSSAccessSecret     string `json:"ossAccessSecret,omitempty"`
 	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
 
-	CreateTime string `json:"createTime"`
+	CreateTime string     `json:"createTime"`
+	Events     []K8sEvent `json:"events"`
 }
 
 type BackupJob struct {
