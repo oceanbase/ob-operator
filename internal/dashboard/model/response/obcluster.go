@@ -51,25 +51,35 @@ type OBMetrics struct {
 	DiskPercent   int `json:"diskPercent"`
 }
 
+type OBClusterOverview struct {
+	Name         string   `json:"name"`
+	Namespace    string   `json:"namespace"`
+	ClusterName  string   `json:"clusterName"`
+	ClusterId    int64    `json:"clusterId"`
+	Status       string   `json:"status"`
+	StatusDetail string   `json:"statusDetail"`
+	CreateTime   int64    `json:"createTime"`
+	Image        string   `json:"image"`
+	Topology     []OBZone `json:"topology"`
+}
+
 type OBCluster struct {
-	Namespace    string     `json:"namespace"`
-	Name         string     `json:"name"`
-	ClusterName  string     `json:"clusterName"`
-	ClusterId    int64      `json:"clusterId"`
-	Topology     []OBZone   `json:"topology"`
-	Status       string     `json:"status"`
-	StatusDetail string     `json:"statusDetail"`
-	CreateTime   int64      `json:"createTime"`
-	Image        string     `json:"image"`
-	Metrics      *OBMetrics `json:"metrics"`
-	Version      string     `json:"version"`
+	OBClusterOverview `json:",inline"`
+
+	Metrics *OBMetrics `json:"metrics"`
+	Version string     `json:"version"`
 
 	OBClusterExtra `json:",inline"`
 }
 
+type ResourceSpecRender struct {
+	Cpu      int64  `json:"cpu"`
+	MemoryGB string `json:"memory"`
+}
+
 type OBClusterExtra struct {
-	Resource common.ResourceSpec `json:"resource"`
-	Storage  OBServerStorage     `json:"storage"`
+	Resource ResourceSpecRender `json:"resource"`
+	Storage  OBServerStorage    `json:"storage"`
 
 	RootPasswordSecret string             `json:"rootPasswordSecret"`
 	Parameters         []common.KVPair    `json:"parameters"`
@@ -79,8 +89,8 @@ type OBClusterExtra struct {
 }
 
 type MonitorSpec struct {
-	Image    string              `json:"image"`
-	Resource common.ResourceSpec `json:"resource"`
+	Image    string             `json:"image"`
+	Resource ResourceSpecRender `json:"resource"`
 }
 
 type NFSVolumeSpec struct {
@@ -96,7 +106,7 @@ type OBServerStorage struct {
 
 type StorageSpec struct {
 	StorageClass string `json:"storageClass"`
-	SizeGB       int64  `json:"size"`
+	SizeGB       string `json:"size"`
 }
 
 type OBClusterResources struct {

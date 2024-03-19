@@ -49,13 +49,13 @@ func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, erro
 // @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=[]response.OBCluster}
+// @Success 200 object response.APIResponse{data=[]response.OBClusterOverview}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [GET]
 // @Security ApiKeyAuth
-func ListOBClusters(c *gin.Context) ([]response.OBCluster, error) {
+func ListOBClusters(c *gin.Context) ([]response.OBClusterOverview, error) {
 	obclusters, err := oceanbase.ListOBClusters(c)
 	if err != nil {
 		return nil, err

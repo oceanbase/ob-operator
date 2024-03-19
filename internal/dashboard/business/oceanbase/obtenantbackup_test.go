@@ -54,7 +54,8 @@ var _ = Describe("OBTenantBackup", func() {
 				},
 			},
 		}
-		policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		policy, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		Expect(err).To(BeNil())
 		Expect("t1-backup-policy").To(Equal(policy.Name))
 		Expect("00 04 * * 1,5").To(Equal(policy.Spec.DataBackup.FullCrontab))
 		Expect("00 04 * * 2,3,4").To(Equal(policy.Spec.DataBackup.IncrementalCrontab))
@@ -116,7 +117,8 @@ var _ = Describe("OBTenantBackup", func() {
 				},
 			},
 		}
-		policy := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		policy, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		Expect(err).To(BeNil())
 		Expect("t1-backup-policy").To(Equal(policy.Name))
 		Expect("00 04 1,5,15,21,31 * *").To(Equal(policy.Spec.DataBackup.FullCrontab))
 		Expect("00 04 2,3,4,16,24 * *").To(Equal(policy.Spec.DataBackup.IncrementalCrontab))

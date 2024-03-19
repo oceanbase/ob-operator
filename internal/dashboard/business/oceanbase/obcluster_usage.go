@@ -66,12 +66,16 @@ func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIde
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-	minPoolMemory, err := resource.ParseQuantity(parameters[0].Value)
-	if err != nil {
-		return nil, httpErr.NewInternal(err.Error())
-	}
-	essentials := &response.OBClusterResources{
-		MinPoolMemory: minPoolMemory.Value(),
+
+	essentials := &response.OBClusterResources{}
+	if len(parameters) == 0 {
+		essentials.MinPoolMemory = 5 << 30 // 5 Gi
+	} else {
+		minPoolMemory, err := resource.ParseQuantity(parameters[0].Value)
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+		essentials.MinPoolMemory = minPoolMemory.Value()
 	}
 	gvservers, err := manager.ListGVServers()
 	if err != nil {

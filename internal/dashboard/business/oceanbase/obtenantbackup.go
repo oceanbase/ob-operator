@@ -50,7 +50,7 @@ func dayToNumber(day string) int {
 	return n
 }
 
-func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p param.ScheduleBase) {
+func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.ScheduleBase) error {
 	hourMinutes := strings.Split(p.ScheduleTime, ":")
 	crontabParts := fmt.Sprintf("%s %s", hourMinutes[1], hourMinutes[0])
 
@@ -64,6 +64,9 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p param.Sch
 			} else if date.BackupType == "Incremental" {
 				incrementalCrontabWeekdays = append(incrementalCrontabWeekdays, fmt.Sprint(date.Day%7))
 			}
+		}
+		if len(fullCrontabWeekdays) == 0 {
+			return oberr.NewBadRequest("At least one full backup day is required")
 		}
 		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
 		if len(incrementalCrontabWeekdays) > 0 {
@@ -81,6 +84,9 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p param.Sch
 				incrementalCrontabMonthdays = append(incrementalCrontabMonthdays, fmt.Sprint(date.Day))
 			}
 		}
+		if len(fullCrontabMonthdays) == 0 {
+			return oberr.NewBadRequest("At least one full backup day is required")
+		}
 		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
 		if len(incrementalCrontabMonthdays) > 0 {
 			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
@@ -88,6 +94,7 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p param.Sch
 			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, "*", "* *"}, " ")
 		}
 	}
+	return nil
 }
 
 func getScheduleDatesFromPolicy(p *v1alpha1.OBTenantBackupPolicy) param.ScheduleBase {
@@ -167,7 +174,7 @@ func getScheduleDatesFromPolicy(p *v1alpha1.OBTenantBackupPolicy) param.Schedule
 	return res
 }
 
-func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *param.CreateBackupPolicy) *v1alpha1.OBTenantBackupPolicy {
+func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *param.CreateBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
 	policy := &v1alpha1.OBTenantBackupPolicy{}
 	policy.Name = nn.Name + "-backup-policy"
 	policy.Namespace = nn.Namespace
@@ -198,9 +205,12 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *para
 		},
 	}
 
-	setScheduleDatesToPolicy(policy, p.ScheduleBase)
+	err := setScheduleDatesToPolicy(policy, &p.ScheduleBase)
+	if err != nil {
+		return nil, err
+	}
 
-	return policy
+	return policy, nil
 }
 
 func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.BackupPolicy {
@@ -309,7 +319,10 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 	if p.PieceIntervalDays == 0 {
 		p.PieceIntervalDays = 1
 	}
-	backupPolicy := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, p)
+	backupPolicy, err := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, p)
+	if err != nil {
+		return nil, err
+	}
 
 	if p.DestType == "OSS" && p.OSSAccessID != "" && p.OSSAccessKey != "" {
 		ossSecretName := nn.Name + "-backup-oss-secret-" + rand.String(6)
@@ -398,7 +411,10 @@ func UpdateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		if schedule.ScheduleDates != nil {
 			overlaySchedule.ScheduleDates = schedule.ScheduleDates
 		}
-		setScheduleDatesToPolicy(policy, overlaySchedule)
+		err := setScheduleDatesToPolicy(policy, &overlaySchedule)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	np, err := oceanbase.UpdateTenantBackupPolicy(ctx, policy)

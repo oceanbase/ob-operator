@@ -92,8 +92,12 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error
 	if err != nil {
 		return false, err
 	}
-	if len(tenantCR.Spec.Pools) == 1 {
+	switch len(tenantCR.Spec.Pools) {
+	case 1:
 		return false, oberr.NewBadRequest("at least one pool is required")
+	case 2:
+		return false, oberr.NewBadRequest("Error 4179 (HY000): forbidden to delete 1 of 2 units due to locality principal")
+	default:
 	}
 	remainPools := make([]v1alpha1.ResourcePoolSpec, 0, len(tenantCR.Spec.Pools)-1)
 	for i, pool := range tenantCR.Spec.Pools {
