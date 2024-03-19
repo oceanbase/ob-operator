@@ -169,7 +169,6 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		if err != nil {
 			return nil, errors.Wrapf(err, "List observers of obzone %s %s", obzone.Namespace, obzone.Name)
 		}
-		logger.Infof("found %d observer", len(observerList.Items))
 		for _, observer := range observerList.Items {
 			logger.Infof("add observer %s to result", observer.Name)
 			observers = append(observers, response.OBServer{

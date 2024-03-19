@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -151,7 +152,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	reportData.Version = Version
 
 	currentTime := time.Now()
-
+	logger.Debugf("Get statistic data: %+v", reportData)
 	return &response.StatisticDataResponse{
 		Component: telemetry.TelemetryComponentDashboard,
 		Time:      currentTime.Format(time.DateTime),

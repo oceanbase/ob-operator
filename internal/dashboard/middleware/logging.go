@@ -46,12 +46,16 @@ func Logging() gin.HandlerFunc {
 		// Request ID
 		requestID := requestid.Get(ctx)
 
+		// Query
+		query := ctx.Request.URL.Query()
+
 		log.WithFields(log.Fields{
 			"METHOD":      reqMethod,
-			"REQUEST_URI": reqUri,
 			"STATUS":      statusCode,
 			"LATENCY":     latencyTime,
 			"REQUEST_ID":  requestID,
+			"REQUEST_URI": reqUri,
+			"QUERY":       query,
 		}).Info("[HTTP REQUEST]")
 
 		ctx.Next()

@@ -1243,14 +1243,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/obclusters/{namespace}/{name}/essential-parameters": {
+        "/api/v1/obclusters/{namespace}/{name}/resource-usages": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "list essential parameters of specific obcluster",
+                "description": "list resource usages of specific obcluster, such as cpu, memory, storage, etc. The old router ending with /essential-parameters is deprecated",
                 "consumes": [
                     "application/json"
                 ],
@@ -1260,7 +1260,7 @@ const docTemplate = `{
                 "tags": [
                     "OBCluster"
                 ],
-                "summary": "list essential parameters",
+                "summary": "list resource usages, the old router ending with /essential-parameters is deprecated",
                 "operationId": "ListOBClusterResources",
                 "parameters": [
                     {

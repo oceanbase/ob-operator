@@ -35,11 +35,11 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/statistic [GET]
 func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, error) {
-	// return mock data
 	obclusterStastics, err := oceanbase.GetOBClusterStatistic(c)
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Get obcluster statistic: %v", obclusterStastics)
 	return obclusterStastics, nil
 }
 
@@ -60,6 +60,7 @@ func ListOBClusters(c *gin.Context) ([]response.OBClusterOverview, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List obclusters: %v", obclusters)
 	return obclusters, nil
 }
 
@@ -87,6 +88,7 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Get obcluster: %v", obcluster)
 	return obcluster, nil
 }
 
@@ -113,7 +115,7 @@ func CreateOBCluster(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	logger.Debugf("Create obcluster: %v", param)
+	logger.Infof("Create obcluster with param: %+v", param)
 	err = oceanbase.CreateOBCluster(c, param)
 	if err != nil {
 		return nil, err
@@ -147,6 +149,7 @@ func UpgradeOBCluster(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Upgrade obcluster with param: %+v", updateParam)
 	err = oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
 	if err != nil {
 		return nil, err
@@ -207,6 +210,7 @@ func AddOBZone(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Add obzone with param: %+v", param)
 	err = oceanbase.AddOBZone(c, obclusterIdentity, param)
 	if err != nil {
 		return nil, err
@@ -241,6 +245,7 @@ func ScaleOBServer(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Scale observer with param: %+v", scaleParam)
 	err = oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 	if err != nil {
 		return nil, err
@@ -277,8 +282,8 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 }
 
 // @ID ListOBClusterResources
-// @Summary list essential parameters
-// @Description list essential parameters of specific obcluster
+// @Summary list resource usages, the old router ending with /essential-parameters is deprecated
+// @Description list resource usages of specific obcluster, such as cpu, memory, storage, etc. The old router ending with /essential-parameters is deprecated
 // @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
@@ -288,7 +293,7 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/obclusters/{namespace}/{name}/essential-parameters [GET]
+// @Router /api/v1/obclusters/{namespace}/{name}/resource-usages [GET]
 // @Security ApiKeyAuth
 func ListOBClusterResources(c *gin.Context) (*response.OBClusterResources, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
@@ -296,5 +301,10 @@ func ListOBClusterResources(c *gin.Context) (*response.OBClusterResources, error
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return oceanbase.GetOBClusterEssentialParameters(c, obclusterIdentity)
+	usages, err := oceanbase.GetOBClusterUsages(c, obclusterIdentity)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("Get resource usages of obcluster: %v", obclusterIdentity)
+	return usages, nil
 }

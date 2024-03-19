@@ -16,6 +16,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/metric"
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
@@ -49,6 +50,7 @@ func ListMetricMetas(c *gin.Context) ([]response.MetricClass, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List metric classes: %+v", metricClasses)
 	return metricClasses, nil
 }
 
@@ -71,6 +73,8 @@ func QueryMetrics(c *gin.Context) ([]response.MetricData, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Query metric data with param: %+v", queryParam)
 	metricDatas := metric.QueryMetricData(queryParam)
+	logger.Debugf("Query metric data: %+v", metricDatas)
 	return metricDatas, nil
 }

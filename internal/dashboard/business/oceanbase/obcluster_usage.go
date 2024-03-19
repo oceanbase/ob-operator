@@ -30,7 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
-func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterResources, error) {
+func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterResources, error) {
 	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
 	if err != nil {
 		return nil, err

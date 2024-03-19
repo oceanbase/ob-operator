@@ -171,7 +171,7 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 		listOptions.FieldSelector = strings.Join(selectors, ",")
 	}
 	eventList, err := resource.ListEvents(ns, listOptions)
-	logger.Infof("query events with param: %v", queryEventParam)
+	logger.Infof("Query events with param: %+v", queryEventParam)
 	if err == nil {
 		for _, event := range eventList.Items {
 			events = append(events, response.K8sEvent{

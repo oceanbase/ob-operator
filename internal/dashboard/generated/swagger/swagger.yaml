@@ -1811,11 +1811,12 @@ paths:
       summary: create obcluster
       tags:
       - OBCluster
-  /api/v1/obclusters/{namespace}/{name}/essential-parameters:
+  /api/v1/obclusters/{namespace}/{name}/resource-usages:
     get:
       consumes:
       - application/json
-      description: list essential parameters of specific obcluster
+      description: list resource usages of specific obcluster, such as cpu, memory,
+        storage, etc. The old router ending with /essential-parameters is deprecated
       operationId: ListOBClusterResources
       parameters:
       - description: obcluster namespace
@@ -1854,7 +1855,8 @@ paths:
             $ref: '#/definitions/response.APIResponse'
       security:
       - ApiKeyAuth: []
-      summary: list essential parameters
+      summary: list resource usages, the old router ending with /essential-parameters
+        is deprecated
       tags:
       - OBCluster
   /api/v1/obclusters/namespace/{namespace}/name/{name}:
