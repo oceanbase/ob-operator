@@ -15,14 +15,14 @@ package response
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
 type K8sEvent struct {
-	Namespace  string  `json:"namespace"`
-	Type       string  `json:"type"`
-	Count      int32   `json:"count"`
-	FirstOccur float64 `json:"firstOccur"`
-	LastSeen   float64 `json:"lastSeen"`
-	Reason     string  `json:"reason"`
-	Object     string  `json:"object"`
-	Message    string  `json:"message"`
+	Namespace  string `json:"namespace"`
+	Type       string `json:"type"`
+	Count      int32  `json:"count"`
+	FirstOccur int64  `json:"firstOccur"`
+	LastSeen   int64  `json:"lastSeen"`
+	Reason     string `json:"reason"`
+	Object     string `json:"object"`
+	Message    string `json:"message"`
 }
 
 type K8sNodeCondition struct {
@@ -37,7 +37,7 @@ type K8sNodeInfo struct {
 	Conditions []K8sNodeCondition `json:"conditions"`
 	Roles      []string           `json:"roles"`
 	Labels     []common.KVPair    `json:"labels"`
-	Uptime     float64            `json:"uptime"`
+	Uptime     int64              `json:"uptime"`
 	Version    string             `json:"version"`
 	InternalIP string             `json:"internalIP"`
 	ExternalIP string             `json:"externalIP"`

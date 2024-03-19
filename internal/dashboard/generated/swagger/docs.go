@@ -3859,10 +3859,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "firstOccur": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "lastSeen": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "message": {
                     "type": "string"
@@ -3949,7 +3949,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "uptime": {
-                    "type": "number"
+                    "type": "integer"
                 },
                 "version": {
                     "type": "string"

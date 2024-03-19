@@ -774,9 +774,9 @@ definitions:
       count:
         type: integer
       firstOccur:
-        type: number
+        type: integer
       lastSeen:
-        type: number
+        type: integer
       message:
         type: string
       namespace:
@@ -833,7 +833,7 @@ definitions:
       status:
         type: string
       uptime:
-        type: number
+        type: integer
       version:
         type: string
     type: object
