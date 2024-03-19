@@ -33,7 +33,7 @@ func init() {
 }
 `
 
-type TaskFunc struct {
+type Task struct {
 	Name         string
 	TaskFuncName string
 }
@@ -50,7 +50,7 @@ func main() {
 		log.Fatalf("Failed to parse source file: %v", err)
 	}
 
-	taskFuncs := []TaskFunc{}
+	taskFuncs := []Task{}
 	ast.Inspect(node, func(n ast.Node) bool {
 		fn, ok := n.(*ast.FuncDecl)
 		if !ok {
@@ -59,7 +59,7 @@ func main() {
 		// Get return type of function and check whether it is a func(resource T) TaskError
 		if len(fn.Type.Params.List) == 1 && len(fn.Type.Results.List) == 1 {
 			if strings.HasSuffix(exprToString(fn.Type.Results.List[0].Type), "TaskError") {
-				taskFuncs = append(taskFuncs, TaskFunc{
+				taskFuncs = append(taskFuncs, Task{
 					Name:         strings.ReplaceAll(fn.Name.Name, "Task", ""),
 					TaskFuncName: fn.Name.Name,
 				})
@@ -84,7 +84,7 @@ func main() {
 
 	err = tmpl.Execute(f, struct {
 		PackageName string
-		Tasks       []TaskFunc
+		Tasks       []Task
 	}{
 		PackageName: node.Name.Name,
 		Tasks:       taskFuncs,
