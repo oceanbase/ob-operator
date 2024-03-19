@@ -146,7 +146,8 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *OBZoneManager) IsDeleting() bool {
-	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBZoneManager) CheckAndUpdateFinalizers() error {

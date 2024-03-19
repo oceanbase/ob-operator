@@ -104,7 +104,8 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *OBParameterManager) IsDeleting() bool {
-	return !m.OBParameter.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBParameter, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBParameter.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBParameterManager) CheckAndUpdateFinalizers() error {

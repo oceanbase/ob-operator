@@ -75,7 +75,8 @@ func (m *OBTenantManager) IsNewResource() bool {
 }
 
 func (m *OBTenantManager) IsDeleting() bool {
-	return !m.OBTenant.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBTenant, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBTenant.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBTenantManager) GetStatus() string {

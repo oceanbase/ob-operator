@@ -198,7 +198,8 @@ func (m *OBServerManager) UpdateStatus() error {
 }
 
 func (m *OBServerManager) IsDeleting() bool {
-	return !m.OBServer.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBServer.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBServerManager) CheckAndUpdateFinalizers() error {

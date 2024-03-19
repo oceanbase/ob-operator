@@ -27,6 +27,7 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -57,7 +58,8 @@ func (m *ObTenantOperationManager) GetStatus() string {
 }
 
 func (m *ObTenantOperationManager) IsDeleting() bool {
-	return m.Resource.GetDeletionTimestamp() != nil
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.Resource.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantOperationManager) CheckAndUpdateFinalizers() error {

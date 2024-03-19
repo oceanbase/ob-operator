@@ -31,10 +31,11 @@ import (
 var obresourcerescuelog = logf.Log.WithName("obresourcerescue-resource")
 
 var rescueTypeMapping = map[string]struct{}{
-	"delete": {},
-	"reset":  {},
-	"retry":  {},
-	"skip":   {},
+	"delete":          {},
+	"reset":           {},
+	"retry":           {},
+	"skip":            {},
+	"ignore-deletion": {},
 }
 
 func (r *OBResourceRescue) SetupWebhookWithManager(mgr ctrl.Manager) error {

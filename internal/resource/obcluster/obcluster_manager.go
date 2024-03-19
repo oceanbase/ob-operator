@@ -126,7 +126,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 }
 
 func (m *OBClusterManager) IsDeleting() bool {
-	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBClusterManager) CheckAndUpdateFinalizers() error {

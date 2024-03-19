@@ -57,7 +57,8 @@ func (m *ObTenantBackupPolicyManager) IsNewResource() bool {
 }
 
 func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
-	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.BackupPolicy, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantBackupPolicyManager) GetStatus() string {
