@@ -123,9 +123,13 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 			if values[i].Value == 0 {
 				switch i {
 				case 0:
-					values[i].Value = values[i+1].Value
+					if lenValues > 1 {
+						values[i].Value = values[i+1].Value
+					}
 				case lenValues - 1:
-					values[i].Value = values[i-1].Value
+					if lenValues > 1 {
+						values[i].Value = values[i-1].Value
+					}
 				default:
 					values[i].Value = (values[i-1].Value + values[i+1].Value) / 2
 				}
