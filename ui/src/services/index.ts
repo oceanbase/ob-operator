@@ -456,5 +456,5 @@ export async function getEssentialParameters({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
-  return request(`${obClusterPrefix}/${ns}/${name}/essential-parameters`);
+  return request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
 }

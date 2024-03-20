@@ -653,5 +653,9 @@
   "Dashboard.src.constants.rules.TheResourceNameMayBe": "The resource name may be spliced into the domain name and must conform to the domain name format.",
   "Dashboard.src.constants.rules.EnterAZoneName": "Enter a zone name",
   "Dashboard.src.constants.rules.TheFirstCharacterMustBe": "The first character must be a letter or an underscore and cannot contain-",
-  "Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull": "Configure at least one full backup"
+  "Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull": "Configure at least one full backup",
+  "Dashboard.Detail.Overview.BasicInfo.ReplicaDistribution": "Replica distribution",
+  "Dashboard.Tenant.New.ResourcePools.SelectTheZoneToDeploy": "Select the Zone to deploy the resource pool",
+  "Dashboard.Tenant.New.ResourcePools.ResourceUnitSpecifications": "Resource Unit specifications",
+  "Dashboard.Tenant.New.SelectAtLeastOneZone": "Select at least one Zone"
 }
