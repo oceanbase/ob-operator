@@ -3,7 +3,7 @@ import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
-import _ from 'lodash';
+import _,{ cloneDeep } from 'lodash';
 import moment from 'moment';
 
 const obClusterPrefix = '/api/v1/obclusters';
@@ -341,7 +341,7 @@ export async function createNameSpace(namespace: string) {
   };
 }
 
-export async function getStorageClasses() {
+export async function getStorageClasses(): Promise<API.StorageClassesResponse> {
   const r = await request(`${clusterPrefix}/storageClasses`, {
     method: 'GET',
   });
@@ -361,7 +361,7 @@ export async function getStorageClasses() {
     }
     return {
       ...r,
-      data:res
+      data: res,
     };
   }
   return r;

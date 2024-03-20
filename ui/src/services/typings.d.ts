@@ -107,17 +107,34 @@ declare namespace API {
     topology: Topology[];
   } & ClusterInfo;
 
+  type TooltipData = {
+    label:string | Element;
+    value:string;
+    toolTipData:any[]
+  }
+
+  type OptionsType = {
+    label:string;
+    value:string;
+  }[]
+
   interface ClusterListResponse extends CommonResponse {
     data: ClusterItem[];
   }
 
-  type SimpleClusterList = {
+  interface StorageClassesResponse extends CommonResponse {
+    data: TooltipData[];
+  }
+
+  type SimpleCluster = {
     name: string;
     clusterName: string;
     clusterId: number;
     namespace: string;
     topology: Topology[];
-  }[];
+  }
+
+  type SimpleClusterList = SimpleCluster[];
 
   interface SimpleClusterListResponse extends CommonResponse {
     data: SimpleClusterList;
@@ -178,7 +195,8 @@ declare namespace API {
     logDiskSize: string;
     maxIops: number;
     memorySize: string;
-    cpuCount: number;
+    maxCPU: string;
+    minCPU: string;
     minIops: number;
     priority: number;
     type: string;

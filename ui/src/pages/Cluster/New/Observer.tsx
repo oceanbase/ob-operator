@@ -1,17 +1,17 @@
 import { intl } from '@/utils/intl';
 import {
-  Button,
-  Card,
-  Col,
-  Form,
-  Input,
-  InputNumber,
-  Row,
-  Tooltip,
+Button,
+Card,
+Col,
+Form,
+Input,
+InputNumber,
+Row,
+Tooltip,
 } from 'antd';
 
-import ClassSelect from '@/components/ClassSelect';
-import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
+import SelectWithTooltip from '@/components/SelectWithTooltip';
+import { MINIMAL_CONFIG,SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
 import { clone } from 'lodash';
 import styles from './index.less';
@@ -21,6 +21,48 @@ const observerToolTipText = intl.formatMessage({
   defaultMessage:
     '镜像应写全 registry/image:tag，例如 oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319',
 });
+
+export const TooltipItemContent = ({ item }) => {
+  return (
+    <ul style={{ margin: 0, padding: '10px' }}>
+      {item.toolTipData.map((data: any) => {
+        let key = Object.keys(data)[0];
+        if (typeof data[key] === 'string') {
+          return (
+            <li style={{ listStyle: 'none' }} key={key}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <p>{key}：</p>
+                <p>{data[key]}</p>
+              </div>
+            </li>
+          );
+        } else {
+          let value = JSON.stringify(data[key]) || String(data[key]);
+          return (
+            <li style={{ listStyle: 'none' }} key={key}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <p>{key}：</p>
+                <p>{value}</p>
+              </div>
+            </li>
+          );
+        }
+      })}
+    </ul>
+  );
+};
+
+
 export default function Observer({ storageClasses, form }: any) {
   const CustomItem = (prop: any) => {
     const { label } = prop;
@@ -70,6 +112,7 @@ export default function Observer({ storageClasses, form }: any) {
       },
     });
   };
+
 
   return (
     <Col span={24}>
@@ -183,10 +226,11 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'data', 'storageClass']}
               >
                 {storageClasses && (
-                  <ClassSelect
+                  <SelectWithTooltip
                     name={['observer', 'storage', 'data', 'storageClass']}
                     form={form}
                     selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
                   />
                 )}
 
@@ -221,10 +265,11 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'log', 'storageClass']}
               >
                 {storageClasses && (
-                  <ClassSelect
+                  <SelectWithTooltip
                     form={form}
                     name={['observer', 'storage', 'log', 'storageClass']}
                     selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
                   />
                 )}
               </CustomItem>
@@ -253,10 +298,11 @@ export default function Observer({ storageClasses, form }: any) {
                 name={['observer', 'storage', 'redoLog', 'storageClass']}
               >
                 {storageClasses && (
-                  <ClassSelect
+                  <SelectWithTooltip
                     form={form}
                     name={['observer', 'storage', 'redoLog', 'storageClass']}
                     selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
                   />
                 )}
               </CustomItem>
