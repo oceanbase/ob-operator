@@ -160,7 +160,8 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
         name: clusterDetail.name,
         namespace: clusterDetail.namespace,
         topology: clusterDetail.topology,
-        clusterName: clusterDetail.clusterName
+        clusterName: clusterDetail.clusterName,
+        status: clusterDetail.status
       }))
     }
   };
