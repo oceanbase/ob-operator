@@ -652,5 +652,6 @@
   "Dashboard.components.customModal.ModifyUnitDetailModal.EnterIopsWeight": "请输入 iops权重",
   "Dashboard.src.constants.rules.TheResourceNameMayBe": "资源名可能拼接到域名中，需要符合域名格式",
   "Dashboard.src.constants.rules.EnterAZoneName": "请输入zone名称",
-  "Dashboard.src.constants.rules.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -"
+  "Dashboard.src.constants.rules.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -",
+  "Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull": "至少配置 1 个全量备份"
 }

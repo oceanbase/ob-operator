@@ -96,8 +96,6 @@ export default function TenantOverview() {
     manual: true,
     onSuccess: ({ data, successful }) => {
       if (successful) {
-        console.log('data',data);
-        
         if (data.info.unitNumber) {
           setDefaultUnitCount(data.info.unitNumber);
         }
