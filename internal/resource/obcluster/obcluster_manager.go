@@ -277,7 +277,7 @@ func (m *OBClusterManager) HandleFailure() {
 }
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	return taskMap.GetLegacyTask(name, m)
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBClusterManager) PrintErrEvent(err error) {

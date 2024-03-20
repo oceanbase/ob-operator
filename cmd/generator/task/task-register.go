@@ -60,7 +60,7 @@ func main() {
 		if len(fn.Type.Params.List) == 1 && len(fn.Type.Results.List) == 1 {
 			if strings.HasSuffix(exprToString(fn.Type.Results.List[0].Type), "TaskError") {
 				taskFuncs = append(taskFuncs, Task{
-					Name:         strings.ReplaceAll(fn.Name.Name, "Task", ""),
+					Name:         fn.Name.Name,
 					TaskFuncName: fn.Name.Name,
 				})
 			}

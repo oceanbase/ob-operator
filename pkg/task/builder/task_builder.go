@@ -29,15 +29,7 @@ func (t TaskMap[T]) Register(name tt.TaskName, task TypedTask[T]) {
 	t[name] = task
 }
 
-func (t TaskMap[T]) Get(name tt.TaskName) (TypedTask[T], error) {
-	task, ok := t[name]
-	if !ok {
-		return nil, errors.New("Task not found: " + string(name))
-	}
-	return task, nil
-}
-
-func (t TaskMap[T]) GetLegacyTask(name tt.TaskName, resource T) (tt.TaskFunc, error) {
+func (t TaskMap[T]) GetTask(name tt.TaskName, resource T) (tt.TaskFunc, error) {
 	task, ok := t[name]
 	if !ok {
 		return nil, errors.New("Task not found: " + string(name))
@@ -48,9 +40,9 @@ func (t TaskMap[T]) GetLegacyTask(name tt.TaskName, resource T) (tt.TaskFunc, er
 }
 
 func (t TaskMap[T]) Run(name tt.TaskName, resource T) tt.TaskError {
-	task, err := t.Get(name)
+	task, err := t.GetTask(name, resource)
 	if err != nil {
 		return err
 	}
-	return task(resource)
+	return task()
 }
