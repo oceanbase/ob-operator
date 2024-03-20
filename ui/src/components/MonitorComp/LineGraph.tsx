@@ -26,6 +26,7 @@ export interface LineGraphProps {
   isRefresh?: boolean;
   type?: API.MonitorUseTarget;
   useFor: API.MonitorUseFor;
+  filterData?: API.ClusterItem[] | API.TenantDetail[]
 }
 
 export default function LineGraph({
@@ -37,7 +38,8 @@ export default function LineGraph({
   height = 186,
   isRefresh = false,
   type = 'DETAIL',
-  useFor
+  useFor,
+  filterData
 }: LineGraphProps) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [isloading, setIsloading] = useState<boolean>(true);
@@ -47,6 +49,7 @@ export default function LineGraph({
   // The number of times to enter the visible area, 
   //only initiate a network request when entering the visible area for the first time
   const [inViewportCount, setInViewportCount] = useState<number>(0);
+
   const getQueryParms = () => {
     let metricsKeys: string[] = [metrics[0].key],
       realLabels = labels;
@@ -54,13 +57,15 @@ export default function LineGraph({
       metricsKeys = metrics.map((metric: MetricType) => metric.key);
     }
     if (type === 'OVERVIEW') realLabels = [];
+
     return {
       groupLabels,
       labels: realLabels, // If empty, query all clusters
       metrics: metricsKeys,
       queryRange,
       type,
-      useFor
+      useFor,
+      filterData
     };
   };
 
@@ -110,8 +115,6 @@ export default function LineGraph({
     if (isloading) setIsloading(false);
     if (!isEmpty) setIsEmpty(true);
   };
-
-
 
   // filter metricsData
   const {

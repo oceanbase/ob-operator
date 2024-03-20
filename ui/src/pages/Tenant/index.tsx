@@ -78,6 +78,7 @@ export default function TenantPage() {
         useFor='tenant'
         groupLabels={['tenant_name','ob_cluster_name']}
         queryRange={defaultQueryRange}
+        filterData={tenantsList}
       />
     </PageContainer>
   );
