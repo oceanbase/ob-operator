@@ -40,6 +40,7 @@ export async function getTenant({
     'name',
     'namespace',
     'locality',
+    'primaryZone'
   ];
   let res: API.TenantBasicInfo = {
     info: {},

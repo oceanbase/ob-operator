@@ -1,6 +1,6 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
-import { clone,cloneDeep } from 'lodash';
+import { clone, cloneDeep } from 'lodash';
 import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
@@ -32,12 +32,22 @@ export function formatNewTenantForm(
       result[key] = clusterName;
     } else if (key === 'pools') {
       result[key] = Object.keys(originFormData[key])
-        .map((zone) => ({
-          zone,
-          priority: originFormData[key]?.[zone]?.priority,
-          type: 'Full',
-        }))
-        .filter((item) => item.priority || item.priority === 0);
+        .filter((zoneKey) => {
+          return originFormData[key][zoneKey].checked;
+        })
+        .map((zoneName) => {
+          const { priority } = originFormData[key]?.[zoneName];
+          return priority || priority === 0
+            ? {
+                zone: zoneName,
+                priority,
+                type: 'Full',
+              }
+            : {
+                zone: zoneName,
+                type: 'Full',
+              };
+        });
     } else if (key === 'source') {
       if (originFormData[key]['tenant'] || originFormData[key]['restore'])
         result[key] = {};
@@ -83,7 +93,7 @@ export function formatNewTenantForm(
       result[key] = originFormData[key];
     }
   });
-  delete result.source?.restore?.until
+  delete result.source?.restore?.until;
   return result;
 }
 /**
@@ -186,8 +196,8 @@ export function findMinParameter(
 }
 
 /**
- * 
- * @Describe Modify the checked status of a zone in a cluster from the cluster list 
+ *
+ * @Describe Modify the checked status of a zone in a cluster from the cluster list
  */
 export const modifyZoneCheckedStatus = (
   clusterList: API.SimpleClusterList,
@@ -200,10 +210,7 @@ export const modifyZoneCheckedStatus = (
 ) => {
   const _clusterList = cloneDeep(clusterList);
   for (let cluster of _clusterList) {
-    if (
-      cluster.clusterId === target.id ||
-      cluster.name === target.name
-    ) {
+    if (cluster.clusterId === target.id || cluster.name === target.name) {
       cluster.topology.forEach((zoneItem) => {
         if (zoneItem.zone === zone) {
           zoneItem.checked = checked;

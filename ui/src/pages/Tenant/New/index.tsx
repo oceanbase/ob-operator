@@ -1,12 +1,15 @@
 import { usePublicKey } from '@/hook/usePublicKey';
-import { getEssentialParameters as getEssentialParametersReq,getSimpleClusterList } from '@/services';
+import {
+  getEssentialParameters as getEssentialParametersReq,
+  getSimpleClusterList,
+} from '@/services';
 import { createTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
-import { useRequest,useUpdateEffect } from 'ahooks';
-import { Button,Col,Form,Row,message } from 'antd';
-import { useState } from 'react';
+import { useRequest, useUpdateEffect } from 'ahooks';
+import { Button, Col, Form, Row, message } from 'antd';
+import { useEffect, useState } from 'react';
 import { formatNewTenantForm } from '../helper';
 import BasicInfo from './BasicInfo';
 import ResourcePools from './ResourcePools';
@@ -22,21 +25,20 @@ export default function New() {
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        data.forEach((cluster)=>{
-          cluster.topology.forEach((zone)=>{
+        data.forEach((cluster) => {
+          cluster.topology.forEach((zone) => {
             zone.checked = false;
-          })
-        })
+          });
+        });
+
         setClusterList(data);
       }
     },
   });
-  const { data: essentialParameterRes,run: getEssentialParameters} = useRequest(
-    getEssentialParametersReq,
-    {
+  const { data: essentialParameterRes, run: getEssentialParameters } =
+    useRequest(getEssentialParametersReq, {
       manual: true,
-    },
-  );
+    });
   //Selected cluster resource name
   const clusterName = clusterList.filter(
     (cluster) => cluster.clusterId === selectClusterId,
@@ -44,6 +46,16 @@ export default function New() {
   const essentialParameter = essentialParameterRes?.data;
 
   const onFinish = async (values: any) => {
+    const reqData = formatNewTenantForm(values, clusterName, publicKey);
+    if (!reqData.pools?.length) {
+      message.warning(
+        intl.formatMessage({
+          id: 'Dashboard.Tenant.New.SelectAtLeastOneZone',
+          defaultMessage: '至少选择一个Zone',
+        }),
+      );
+      return;
+    }
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
@@ -69,9 +81,9 @@ export default function New() {
   };
 
   useUpdateEffect(() => {
-    const { name, namespace } = clusterList.filter(
+    const { name, namespace } = clusterList.find(
       (cluster) => cluster.clusterId === selectClusterId,
-    )[0];
+    );
     if (name && namespace) {
       getEssentialParameters({
         ns: namespace,
@@ -79,6 +91,17 @@ export default function New() {
       });
     }
   }, [selectClusterId]);
+
+  useEffect(() => {
+    if (clusterList) {
+      const cluster = clusterList.find(
+        (cluster) => cluster.clusterId === selectClusterId,
+      );
+      cluster?.topology.forEach((zone) => {
+        form.setFieldValue(['pools', zone.zone, 'checked'], zone.checked);
+      });
+    }
+  }, [clusterList]);
 
   return (
     <PageContainer

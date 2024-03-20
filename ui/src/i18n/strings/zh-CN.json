@@ -653,5 +653,9 @@
   "Dashboard.src.constants.rules.TheResourceNameMayBe": "资源名可能拼接到域名中，需要符合域名格式",
   "Dashboard.src.constants.rules.EnterAZoneName": "请输入zone名称",
   "Dashboard.src.constants.rules.TheFirstCharacterMustBe": "首字符必须是字母或者下划线，不能包含 -",
-  "Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull": "至少配置 1 个全量备份"
+  "Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull": "至少配置 1 个全量备份",
+  "Dashboard.Detail.Overview.BasicInfo.ReplicaDistribution": "副本分布",
+  "Dashboard.Tenant.New.ResourcePools.SelectTheZoneToDeploy": "选择要部署资源池的 Zone",
+  "Dashboard.Tenant.New.ResourcePools.ResourceUnitSpecifications": "资源单元规格",
+  "Dashboard.Tenant.New.SelectAtLeastOneZone": "至少选择一个Zone"
 }
