@@ -44,7 +44,8 @@ export default function LineGraph({
   const lineGraphRef = useRef(null);
   const lineInstanceRef = useRef<Line | null>(null);
   const [inViewport] = useInViewport(lineGraphRef);
-  // 进入可见区域次数,只在第一次进入可见区域发起网络请求
+  // The number of times to enter the visible area, 
+  //only initiate a network request when entering the visible area for the first time
   const [inViewportCount, setInViewportCount] = useState<number>(0);
   const getQueryParms = () => {
     let metricsKeys: string[] = [metrics[0].key],
@@ -55,7 +56,7 @@ export default function LineGraph({
     if (type === 'OVERVIEW') realLabels = [];
     return {
       groupLabels,
-      labels: realLabels, //为空则查询全部集群
+      labels: realLabels, // If empty, query all clusters
       metrics: metricsKeys,
       queryRange,
       type,
@@ -110,6 +111,9 @@ export default function LineGraph({
     if (!isEmpty) setIsEmpty(true);
   };
 
+
+
+  // filter metricsData
   const {
     data: metricsData,
     run: queryMetrics,
@@ -137,7 +141,7 @@ export default function LineGraph({
       lineInstanceDestroy();
     },
   });
-
+  
   useUpdateEffect(() => {
     if (!isEmpty) {
       lineInstanceRender(metricsData);
@@ -156,7 +160,7 @@ export default function LineGraph({
     }
   }, [inViewportCount]);
 
-  //开启实时模式后处理
+  // Process after turning on real-time mode
   useUpdateEffect(() => {
     if (!isRefresh) {
       if (inViewport) {

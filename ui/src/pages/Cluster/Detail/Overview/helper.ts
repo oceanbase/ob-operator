@@ -1,5 +1,5 @@
 // Functions without UI
-import { CLUSTER_INFO_CONFIG } from "@/constants";
+import { CLUSTER_INFO_CONFIG, RESULT_STATUS } from "@/constants";
 
 /**
  * Get the namespace, name and cluster name or tenant name through the path of the url
@@ -36,16 +36,18 @@ const getNSName = () => {
 // if there is cluster｜zone｜server whose status isn't running,the return status is operating.
 const formatClusterData = (responseData: any): API.ClusterDetail => {
   const res: any = {
+    status:responseData.status,
     info: {},
     metrics: {},
     zones: [],
     servers: [],
   };
-  let status: 'running' | 'operating' = 'running';
+  // let status: 'running' | 'operating' = 'running';
+  
   for (let key of Object.keys(responseData)) {
-    if (key === 'status' && responseData[key] !== 'running') {
-      status = 'operating';
-    }
+    // if (key === 'status' && !RESULT_STATUS.includes(responseData[key])) {
+    //   status = 'operating';
+    // }
     if(CLUSTER_INFO_CONFIG.includes(key)){
       res['info'][key] = responseData[key];
     }
@@ -69,17 +71,16 @@ const formatClusterData = (responseData: any): API.ClusterDetail => {
         }
         return temp;
       });
-      for (let zone of zones) {
-        if (zone.status !== 'running') status = 'operating';
-      }
-      for (let server of servers) {
-        if (server.status !== 'running') status = 'operating';
-      }
+      // for (let zone of zones) {
+      //   if (!RESULT_STATUS.includes(zone.status)) status = 'operating';
+      // }
+      // for (let server of servers) {
+      //   if (!RESULT_STATUS.includes(server.status)) status = 'operating';
+      // }
       res['zones'] = zones;
       res['servers'] = servers;
     }
   }
-  res.status = status;
   return res;
 };
 

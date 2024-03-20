@@ -26,7 +26,7 @@ export default function NewBackup() {
   ];
 
   const handleSubmit = async (values: any) => {
-    if (!checkScheduleDatesHaveFull(values)) {
+    if (!checkScheduleDatesHaveFull(values.scheduleDates)) {
       message.warning(
         intl.formatMessage({
           id: 'Dashboard.Detail.NewBackup.ConfigureAtLeastOneFull',
