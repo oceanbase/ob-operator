@@ -648,6 +648,7 @@ OBTENANT:
   name: "\u5B58\u50A8\u4E0E\u7F13\u5B58"
 OBCLUSTER_OVERVIEW:
 - description: Cluster Overview
+  name: "\u96c6\u7fa4\u6027\u80fd\u6982\u89c8"
   metricGroups:
   - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
     metrics:
