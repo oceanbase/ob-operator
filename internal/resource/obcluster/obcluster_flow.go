@@ -10,20 +10,15 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-//go:generate flow-register $GOFILE
-
 package obcluster
 
 import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
-	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-var flowMap = builder.NewFlowMap[*OBClusterManager]()
-
-func MigrateOBClusterFromExisting(_ *OBClusterManager) *tasktypes.TaskFlow {
+func FlowMigrateOBClusterFromExisting(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMigrateOBClusterFromExisting,
@@ -36,7 +31,7 @@ func MigrateOBClusterFromExisting(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func BootstrapOBCluster(_ *OBClusterManager) *tasktypes.TaskFlow {
+func FlowBootstrapOBCluster(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fBootstrapOBCluster,
@@ -49,7 +44,7 @@ func BootstrapOBCluster(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainOBClusterAfterBootstrap(_ *OBClusterManager) *tasktypes.TaskFlow {
+func FlowMaintainOBClusterAfterBootstrap(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainOBClusterAfterBootstrap,
@@ -59,7 +54,7 @@ func MaintainOBClusterAfterBootstrap(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func AddOBZone(_ *OBClusterManager) *tasktypes.TaskFlow {
+func FlowAddOBZone(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAddOBZone,
@@ -99,7 +94,7 @@ func FlowMaintainOBParameter(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func UpgradeOBCluster(_ *OBClusterManager) *tasktypes.TaskFlow {
+func FlowUpgradeOBCluster(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fUpgradeOBCluster,

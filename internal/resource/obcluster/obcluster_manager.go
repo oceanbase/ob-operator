@@ -79,40 +79,35 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	// newly created cluster
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.MigrateFromExisting:
-		taskFlow, err = flowMap.GetFlow(fMigrateOBClusterFromExisting, m)
+		taskFlow = FlowMigrateOBClusterFromExisting(m)
 	case clusterstatus.New:
-		taskFlow, err = flowMap.GetFlow(fBootstrapOBCluster, m)
+		taskFlow = FlowBootstrapOBCluster(m)
 	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
-		taskFlow, err = flowMap.GetFlow(fMaintainOBClusterAfterBootstrap, m)
+		taskFlow = FlowMaintainOBClusterAfterBootstrap(m)
 	case clusterstatus.AddOBZone:
-		taskFlow, err = flowMap.GetFlow(fAddOBZone, m)
+		taskFlow = FlowAddOBZone(m)
 	case clusterstatus.DeleteOBZone:
-		taskFlow, err = flowMap.GetFlow(fDeleteOBZone, m)
+		taskFlow = FlowDeleteOBZone(m)
 	case clusterstatus.ModifyOBZoneReplica:
-		taskFlow, err = flowMap.GetFlow(fModifyOBZoneReplica, m)
+		taskFlow = FlowModifyOBZoneReplica(m)
 	case clusterstatus.Upgrade:
-		taskFlow, err = flowMap.GetFlow(fUpgradeOBCluster, m)
+		taskFlow = FlowUpgradeOBCluster(m)
 	case clusterstatus.ModifyOBParameter:
-		taskFlow, err = flowMap.GetFlow(fMaintainOBParameter, m)
+		taskFlow = FlowMaintainOBParameter(m)
 	case clusterstatus.ScaleUp:
-		taskFlow, err = flowMap.GetFlow(fScaleUpOBZones, m)
+		taskFlow = FlowScaleUpOBZones(m)
 	case clusterstatus.ExpandPVC:
-		taskFlow, err = flowMap.GetFlow(fExpandPVC, m)
+		taskFlow = FlowExpandPVC(m)
 	case clusterstatus.MountBackupVolume:
-		taskFlow, err = flowMap.GetFlow(fMountBackupVolume, m)
+		taskFlow = FlowMountBackupVolume(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {

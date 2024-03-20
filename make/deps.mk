@@ -8,7 +8,7 @@ $(LOCALBIN): ## Location to install dependencies to
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-INIT_GENERATOR ?= $(LOCALBIN)/task-register $(LOCALBIN)/flow-register
+INIT_GENERATOR ?= $(LOCALBIN)/task-register
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.0
@@ -46,4 +46,3 @@ tools: kustomize controller-gen envtest install-delve ## Download all tools
 init-generator: $(INIT_GENERATOR) ## Install generator tools
 $(INIT_GENERATOR): $(LOCALBIN)
 	GOBIN=$(LOCALBIN) go install cmd/generator/task/task-register.go
-	GOBIN=$(LOCALBIN) go install cmd/generator/flow/flow-register.go
