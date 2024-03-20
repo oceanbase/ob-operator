@@ -132,6 +132,7 @@ declare namespace API {
     clusterId: number;
     namespace: string;
     topology: Topology[];
+    status: string;
   }
 
   type SimpleClusterList = SimpleCluster[];

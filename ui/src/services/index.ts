@@ -3,8 +3,9 @@ import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
-import _,{ cloneDeep } from 'lodash';
+import _ from 'lodash';
 import moment from 'moment';
+import { getAllTenants } from './tenant';
 
 const obClusterPrefix = '/api/v1/obclusters';
 const clusterPrefix = '/api/v1/cluster';
@@ -138,10 +139,13 @@ export async function getObclusterListReq() {
       }
       res.push(obj);
     }
-    return res;
+    return {
+      ...r,
+      data:res
+    }
   }
 
-  return [];
+  return r;
 }
 
 export async function getSimpleClusterList(): Promise<API.SimpleClusterListResponse> {
@@ -156,7 +160,8 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
         name: clusterDetail.name,
         namespace: clusterDetail.namespace,
         topology: clusterDetail.topology,
-        clusterName: clusterDetail.clusterName
+        clusterName: clusterDetail.clusterName,
+        status: clusterDetail.status
       }))
     }
   };
@@ -385,24 +390,52 @@ const setMetricNameFromLabels = (labels:API.MetricsLabels)=>{
   return `${tenantName}(${clustetName})`
 }
 
-export async function queryMetricsReq({ useFor, type, ...data }: API.QueryMetricsType) {
+const filterMetricsData = async (
+  type: 'tenant' | 'cluster',
+  metricsData: any,
+) => {
+  const request = type === 'cluster' ? getObclusterListReq : getAllTenants;
+  const { data, successful } = await request();
+  if (successful) {
+    return metricsData.filter((item) => {
+      let targetName =
+        item?.metric?.labels?.find(
+          (label) =>
+            label.key ===
+            (type === 'tenant' ? 'tenant_name' : 'ob_cluster_name'),
+        ).value || '';
+      if(type === 'cluster'){
+        return !!data.find((cluster)=>cluster.clusterName === targetName);
+      }else{
+        return !!data.find((tenant)=>tenant.tenantName === targetName);
+      } 
+    });
+  }
+  return metricsData;
+};
+
+export async function queryMetricsReq({
+  useFor,
+  type,
+  ...data
+}: API.QueryMetricsType) {
   const r = await request('/api/v1/metrics/query', {
     method: 'POST',
     data,
   });
   if (r.successful) {
+    r.data = await filterMetricsData(useFor,r.data);
     if (!r.data || !r.data.length) return [];
     r.data.forEach((metric) => {
-      
       metric.values.forEach((item) => {
         // item.date = moment.unix(item.timestamp).format('YYYY-MM-DD HH:mm:ss');
         item.date = item.timestamp * 1000;
         if (type === 'OVERVIEW') {
           if (useFor === 'tenant') {
-            let metricLabels =  metric.metric.labels;
-            if(metricLabels.length > 1){
+            let metricLabels = metric.metric.labels;
+            if (metricLabels.length > 1) {
               item.name = setMetricNameFromLabels(metricLabels);
-            }else{
+            } else {
               item.name = metricLabels[0]?.value || '';
             }
           } else {
