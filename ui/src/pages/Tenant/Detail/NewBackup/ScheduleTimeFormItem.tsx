@@ -7,7 +7,6 @@ export default function ScheduleTimeFormItem({
   disable?: boolean;
 }) {
   return (
-    <>
       <Space direction="vertical">
         <h3>
           {intl.formatMessage({
@@ -30,6 +29,5 @@ export default function ScheduleTimeFormItem({
           <TimePicker format="HH:mm" disabled={disable} />
         </Form.Item>
       </Space>
-    </>
   );
 }

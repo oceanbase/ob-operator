@@ -197,15 +197,17 @@ export default function TenantOverview() {
   ];
 
   const OperateListModal = () => (
-    <ul>
-      {operateListConfig
-        .filter((item) => item.isMore && item.show)
-        .map((operateItem, index) => (
-          <li key={index} onClick={operateItem.onClick}>
-            {operateItem.text}
-          </li>
-        ))}
-    </ul>
+    <div className={styles.operateModalContainer}>
+      <ul>
+        {operateListConfig
+          .filter((item) => item.isMore && item.show)
+          .map((operateItem, index) => (
+            <li key={index} onClick={operateItem.onClick}>
+              {operateItem.text}
+            </li>
+          ))}
+      </ul>
+    </div>
   );
 
   const operateSuccess = () => {
