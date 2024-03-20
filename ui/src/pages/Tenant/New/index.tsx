@@ -97,8 +97,6 @@ export default function New() {
       const cluster = clusterList.find(
         (cluster) => cluster.clusterId === selectClusterId,
       );
-      console.log('cluster', cluster);
-
       cluster?.topology.forEach((zone) => {
         form.setFieldValue(['pools', zone.zone, 'checked'], zone.checked);
       });

@@ -31,7 +31,6 @@ export default function ResourcePools({
   const [minMemory, setMinMemory] = useState<number>(2);
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
-  console.log('clusterList', clusterList);
 
   const checkBoxOnChange = (checked: boolean, name: string) => {
     form.setFieldValue(['pools', name, 'checked'], checked);
