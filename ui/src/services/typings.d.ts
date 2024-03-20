@@ -173,6 +173,7 @@ declare namespace API {
     queryRange: { endTimestamp: number; startTimestamp: number; step: number };
     type: MonitorUseTarget;
     useFor: MonitorUseFor;
+    filterData?: API.ClusterItem[] | API.TenantDetail[];
   };
 
   type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE'

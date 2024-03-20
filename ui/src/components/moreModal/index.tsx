@@ -16,23 +16,27 @@ export default function MoreModal({
   disable,
 }: MoreModalProps) {
   return (
-    <ul
-      ref={innerRef}
-      className={visible ? `${styles.moreContainer}` : `${styles.hidden}`}
-    >
-      {list.map((item, index) => (
-        <li
-          style={
-            disable
-              ? { color: 'rgba(0, 0, 0, 0.45)', cursor: 'not-allowed' }
-              : {}
-          }
-          onClick={!disable ? () => ItemClick(item.value as API.ModalType) : () => {}}
-          key={index}
-        >
-          {item.label}
-        </li>
-      ))}
-    </ul>
+    <div className={styles.moreModalContainer}>
+      <ul
+        ref={innerRef}
+        className={visible ? `${styles.moreContainer}` : `${styles.hidden}`}
+      >
+        {list.map((item, index) => (
+          <li
+            style={
+              disable
+                ? { color: 'rgba(0, 0, 0, 0.45)', cursor: 'not-allowed' }
+                : {}
+            }
+            onClick={
+              !disable ? () => ItemClick(item.value as API.ModalType) : () => {}
+            }
+            key={index}
+          >
+            {item.label}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

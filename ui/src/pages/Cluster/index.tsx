@@ -51,7 +51,10 @@ const ClusterPage: React.FC = () => {
         queryScope='OBCLUSTER_OVERVIEW' 
         type='OVERVIEW' 
         groupLabels={['ob_cluster_name']}
-        queryRange={defaultQueryRange}/>
+        queryRange={defaultQueryRange}
+        filterData={clusterList}
+        />
+        
     </PageContainer>
   );
 };
