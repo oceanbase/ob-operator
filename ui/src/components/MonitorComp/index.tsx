@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import type { QueryRangeType } from '@/components/MonitorDetail';
 import { getAllMetrics } from '@/services';
+import IconTip from '../IconTip';
 import LineGraph,{ LineGraphProps,MetricType } from './LineGraph';
 import styles from './index.less';
 
@@ -96,10 +97,14 @@ export default function MonitorComp({
                     (graphContainer: any, graphIdx: number) => (
                       <Card className={styles.monitorItem} key={graphIdx}>
                         <div className={styles.graphHeader}>
-                          <span className={styles.graphHeaderText}>
-                            {graphContainer.name}
-                            {graphContainer.metrics[0].unit &&
-                              `(
+                          <IconTip
+                            tip={graphContainer.description}
+                            style={{fontSize:16}}
+                            content={
+                              <span className={styles.graphHeaderText}>
+                                {graphContainer.name}
+                                {graphContainer.metrics[0].unit &&
+                                  `(
                                 ${graphContainer.metrics[0].unit}
                                 ${
                                   (graphContainer.metrics[0].unit && type) ===
@@ -113,7 +118,9 @@ export default function MonitorComp({
                                     : ''
                                 }
                                 )`}
-                          </span>
+                              </span>
+                            }
+                          />
                           {/* <Tooltip title="放大查看">
                             <FullscreenOutlined
                               className={styles.fullscreen}
