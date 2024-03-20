@@ -8,7 +8,7 @@ import PasswordInput from '@/components/PasswordInput';
 import AddNSModal from '@/components/customModal/AddNSModal';
 import { getNameSpaces } from '@/services';
 import { useState } from 'react';
-import { resourceNameRule } from './helper';
+import { resourceNameRule } from '@/constants/rules';
 import styles from './index.less';
 
 interface BasicInfoProps {

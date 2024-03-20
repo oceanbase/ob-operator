@@ -1,5 +1,5 @@
 import { intl } from '@/utils/intl'; //@ts-nocheck
-import { Col, Table, Tag, message, Card } from 'antd';
+import { Button,Card,Col,Table,Tag,message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
@@ -13,6 +13,7 @@ interface ZoneTableProps {
   chooseZoneRef: React.MutableRefObject<string>;
   typeRef: React.MutableRefObject<API.ModalType>;
   setChooseServerNum: React.Dispatch<React.SetStateAction<number>>;
+  clusterStatus:'running' | 'failed' | 'operating'
 }
 
 export default function ZoneTable({
@@ -21,6 +22,7 @@ export default function ZoneTable({
   chooseZoneRef,
   typeRef,
   setChooseServerNum,
+  clusterStatus
 }: ZoneTableProps) {
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
@@ -80,20 +82,22 @@ export default function ZoneTable({
         render: (value, record) => {
           return (
             <>
-              <a
+              <Button
                 style={{ marginRight: 10 }}
                 onClick={() => {
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
                 }}
+                disabled={clusterStatus === 'failed'}
+                type="link"
               >
                 {intl.formatMessage({
                   id: 'OBDashboard.Detail.Overview.ZoneTable.Scale',
                   defaultMessage: '扩缩容',
                 })}
-              </a>
-              <a
-                style={{ color:'#ff4b4b' }}
+              </Button>
+              <Button
+                style={clusterStatus !== 'failed' ? { color: '#ff4b4b' } : {}}
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),
@@ -103,12 +107,14 @@ export default function ZoneTable({
                     }),
                   });
                 }}
+                disabled={clusterStatus === 'failed'}
+                type="link"
               >
                 {intl.formatMessage({
                   id: 'OBDashboard.Detail.Overview.ZoneTable.Delete',
                   defaultMessage: '删除',
                 })}
-              </a>
+              </Button>
             </>
           );
         },

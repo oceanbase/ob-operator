@@ -5,7 +5,7 @@ import { Card,Col,Form,Row,Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect,useState } from 'react';
 import ZoneItem from '../ZoneItem';
-import { findMinParameter,getNewClusterList } from '../helper';
+import { findMinParameter,modifyZoneCheckedStatus } from '../helper';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
@@ -40,7 +40,7 @@ export default function ResourcePools({
       setSelectZones([...selectZones, name]);
     }
     setClusterList(
-      getNewClusterList(clusterList, name, checked, { id: selectClusterId }),
+      modifyZoneCheckedStatus(clusterList, name, checked, { id: selectClusterId }),
     );
   };
   const targetZoneList = clusterList

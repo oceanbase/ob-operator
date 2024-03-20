@@ -19,7 +19,9 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
+import { cloneDeep } from 'lodash';
 import { useEffect,useRef,useState } from 'react';
+import { getClusterFromTenant,getZonesOptions } from '../../helper';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -33,6 +35,8 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
+export type OperateType = 'edit'|'create';
+
 export type ClusterNSName = { ns?: string; name?: string };
 
 export default function TenantOverview() {
@@ -40,10 +44,12 @@ export default function TenantOverview() {
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
+  const operateTypeRef = useRef<OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const [[ns, name]] = useState(getNSName());
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  const [editZone, setEditZone] = useState<string>('');
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -61,7 +67,10 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType) => {
+  const openOperateModal = (type: API.ModalType, operateType?: OperateType) => {
+    if (operateType) {
+      operateTypeRef.current = operateType;
+    }
     modalType.current = type;
     setOperateModalVisible(true);
   };
@@ -245,22 +254,25 @@ export default function TenantOverview() {
       ],
     };
   };
+
+  /**
+   * @describe Filter the zones that exist in the tenant resource pool in the cluster
+   */
   const formatClustersTopology = (
     clusters: API.SimpleClusterList,
     tenantDetail: API.TenantBasicInfo | undefined,
   ) => {
-    if (!tenantDetail) return clusters;
+    const newClusters = cloneDeep(clusters);
+    if (!tenantDetail) return newClusters;
     const { clusterResourceName } = tenantDetail.info;
     const { replicas } = tenantDetail;
-    const cluster = clusters.find(
-      (cluster) => cluster.name === clusterResourceName,
-    );
+    const cluster = getClusterFromTenant(newClusters,clusterResourceName)
     if (cluster && cluster.topology) {
       cluster.topology = cluster.topology.filter((zone) =>
         replicas?.find((item) => item.zone === zone.zone),
       );
     }
-    return clusters;
+    return newClusters;
   };
 
   useEffect(() => {
@@ -275,8 +287,9 @@ export default function TenantOverview() {
 
   useEffect(() => {
     if (tenantDetail && clusterList) {
-      const cluster = clusterList.find(
-        (cluster) => cluster.name === tenantDetail.info.clusterResourceName,
+      const cluster = getClusterFromTenant(
+        clusterList,
+        tenantDetail.info.clusterResourceName,
       );
       if (cluster) {
         const { name, namespace } = cluster;
@@ -300,6 +313,14 @@ export default function TenantOverview() {
             <Replicas
               refreshTenant={reGetTenantDetail}
               replicaList={tenantDetail.replicas}
+              openOperateModal={openOperateModal}
+              cluster={getClusterFromTenant(
+                clusterList,
+                tenantDetail.info.clusterResourceName,
+              )}
+              setEditZone={setEditZone}
+              editZone={editZone}
+              operateType={operateTypeRef}
             />
           )}
           {tenantDetail && (
@@ -321,10 +342,25 @@ export default function TenantOverview() {
           successCallback={operateSuccess}
           defaultValue={defaultUnitCount}
           defaultValueForUnitDetail={{
-            clusterList: formatClustersTopology(clusterList, tenantDetail),
+            // clusterList: formatClustersTopology(clusterList, tenantDetail),
+            clusterList: clusterList,
             essentialParameter,
             clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
+            setEditZone,
+            replicaList: tenantDetail?.replicas,
+            editZone,
+            newResourcePool: operateTypeRef.current === 'create',
+            zonesOptions:
+              operateTypeRef.current === 'create'
+                ? getZonesOptions(
+                    getClusterFromTenant(
+                      clusterList,
+                      tenantDetail?.info.clusterResourceName,
+                    ),
+                    tenantDetail?.replicas,
+                  )
+                : undefined,
           }}
         />
       </PageContainer>

@@ -42,7 +42,6 @@ const ClusterOverview: React.FC = () => {
       },
     },
   );
-  const isOperating = clusterDetail && clusterDetail.status === 'operating';
   const handleDelete = async () => {
     const res = await deleteObcluster({ ns, name });
     if (res.successful) {
@@ -77,20 +76,34 @@ const ClusterOverview: React.FC = () => {
         defaultMessage: '集群概览',
       }),
       extra: [
-        <Button onClick={handleAddZone} disabled={isOperating} key="1">
+        <Button
+          onClick={handleAddZone}
+          disabled={
+            clusterDetail?.status === 'operating' ||
+            clusterDetail?.status === 'failed'
+          }
+          key="1"
+        >
           {intl.formatMessage({
             id: 'dashboard.Detail.Overview.AddZone',
             defaultMessage: '新增Zone',
           })}
         </Button>,
-        <Button key="2" disabled={isOperating} onClick={handleUpgrade}>
+        <Button
+          key="2"
+          disabled={
+            clusterDetail?.status === 'operating' ||
+            clusterDetail?.status === 'failed'
+          }
+          onClick={handleUpgrade}
+        >
           {intl.formatMessage({
             id: 'OBDashboard.Detail.Overview.Upgrade',
             defaultMessage: '升级',
           })}
         </Button>,
         <Button
-          disabled={isOperating}
+          disabled={clusterDetail?.status === 'operating'}
           onClick={() =>
             showDeleteConfirm({
               onOk: handleDelete,
@@ -132,6 +145,7 @@ const ClusterOverview: React.FC = () => {
 
         {clusterDetail && (
           <ZoneTable
+            clusterStatus={clusterDetail.status}
             zones={clusterDetail.zones as API.Zone[]}
             chooseZoneRef={chooseZoneName}
             setVisible={setOperateModalVisible}

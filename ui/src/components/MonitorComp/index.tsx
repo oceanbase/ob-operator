@@ -8,13 +8,15 @@ import { getAllMetrics } from '@/services';
 import LineGraph,{ LineGraphProps,MetricType } from './LineGraph';
 import styles from './index.less';
 
-//查询的label
-// ob_cluster_name
-// ob_cluster_id
-// tenant_name
-// tenant_id
-// svr_ip
-// obzone
+/**
+ * Queryable label:
+ * ob_cluster_name
+ * ob_cluster_id
+ * tenant_name
+ * tenant_id
+ * svr_ip
+ * obzone
+ */
 
 interface MonitorCompProps {
   filterLabel: API.MetricsLabels;

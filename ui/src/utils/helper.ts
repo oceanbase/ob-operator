@@ -1,6 +1,5 @@
-import type { UnitDetailType } from '@/components/customModal/ModifyUnitDetailModal';
+import type { PoolDetailType } from '@/components/customModal/ModifyUnitDetailModal';
 import { intl } from '@/utils/intl';
-import { clone } from 'lodash';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
 type StatisticDataType = { status: StatisticStatus; count: number }[];
@@ -41,23 +40,27 @@ export const formatStatisticData = (
   return r;
 };
 
-export const formatUnitDetailData = (originUnitData: UnitDetailType) => {
-  const _originUnitData: UnitDetailType = clone(originUnitData);
-  _originUnitData.unitConfig.unitConfig.logDiskSize = _originUnitData.unitConfig.unitConfig.logDiskSize + 'Gi';
-  _originUnitData.unitConfig.unitConfig.memorySize = _originUnitData.unitConfig.unitConfig.memorySize + 'Gi';
-  _originUnitData.unitConfig.unitConfig.cpuCount = String(
-    _originUnitData.unitConfig.unitConfig.cpuCount,
-  );
-  return {
-    unitConfig: {
-      unitConfig: _originUnitData.unitConfig.unitConfig,
-      pools: Object.keys(_originUnitData.unitConfig.pools)
-        .map((zone) => ({
-          zone,
-          priority: _originUnitData.unitConfig.pools?.[zone]?.priority,
-          type: 'Full',
-        }))
-        .filter((item) => item.priority || item.priority === 0),
-    },
+export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'create') => {
+  let newOriginUnitData: PoolDetailType = {
+    unitConfig: {},
   };
+  newOriginUnitData.unitConfig = {
+    ...originUnitData.unitConfig,
+    logDiskSize: originUnitData.unitConfig.logDiskSize + 'Gi',
+    memorySize: originUnitData.unitConfig.memorySize + 'Gi',
+    cpuCount: String(originUnitData.unitConfig.cpuCount),
+  };
+  if(type === 'create'){
+    newOriginUnitData.zoneName = originUnitData.zoneName;
+    newOriginUnitData.priority = originUnitData.priority;
+  }
+  if(type === 'edit'){
+    Object.keys(originUnitData).forEach((key) => {
+      if (originUnitData[key]?.priority) {
+        newOriginUnitData.zoneName = key;
+        newOriginUnitData.priority = originUnitData[key].priority;
+      }
+    });
+  }
+  return newOriginUnitData;
 };

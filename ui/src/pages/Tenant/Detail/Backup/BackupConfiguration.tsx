@@ -1,3 +1,4 @@
+import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
@@ -14,7 +15,6 @@ Col,
 Descriptions,
 Form,
 InputNumber,
-Popconfirm,
 Row,
 Select,
 Space,
@@ -246,18 +246,24 @@ export default function BackupConfiguration({
                   defaultMessage: '暂停',
                 })}
           </Button>
-          <Popconfirm
-            onConfirm={() => deleteBackupPolicyReq({ ns, name })}
-            title="删除备份"
-            description="确定要删除该备份策略吗？"
+          <Button
+            type="primary"
+            danger
+            onClick={() =>
+              showDeleteConfirm({
+                onOk: () => deleteBackupPolicyReq({ ns, name }),
+                title: intl.formatMessage({
+                  id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
+                  defaultMessage: '确定要删除该备份策略吗？',
+                }),
+              })
+            }
           >
-            <Button type="primary" danger>
-              {intl.formatMessage({
-                id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
-                defaultMessage: '删除',
-              })}
-            </Button>
-          </Popconfirm>
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
+              defaultMessage: '删除',
+            })}
+          </Button>
         </Space>
       }
     >

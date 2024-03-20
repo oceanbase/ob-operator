@@ -167,7 +167,7 @@ function findMinValue(
   key: 'availableCPU' | 'availableLogDisk' | 'availableMemory',
   resources: API.ServerResource[],
 ) {
-  return resources.sort((pre, cur) => pre[key] - cur[key])[0][key];
+  return resources.sort((pre, cur) => cur[key] - pre[key])[0][key];
 }
 
 export function findMinParameter(
@@ -185,7 +185,11 @@ export function findMinParameter(
   };
 }
 
-export const getNewClusterList = (
+/**
+ * 
+ * @Describe Modify the checked status of a zone in a cluster from the cluster list 
+ */
+export const modifyZoneCheckedStatus = (
   clusterList: API.SimpleClusterList,
   zone: string,
   checked: boolean,
@@ -219,4 +223,37 @@ export const checkScheduleDatesHaveFull = (scheduleDates): boolean => {
     }
   }
   return false;
+};
+
+export const getClusterFromTenant = (
+  clusterList: API.SimpleClusterList,
+  clusterResourceName: string,
+): API.SimpleCluster | undefined => {
+  return clusterList.find((cluster) => cluster.name === clusterResourceName);
+};
+
+const formatReplicToOption = (
+  replicaList: API.ReplicaDetailType[] | API.Topology[],
+): API.OptionsType => {
+  return replicaList.map((replica) => ({
+    label: replica.zone,
+    value: replica.zone,
+  }));
+};
+
+export const getZonesOptions = (
+  cluster: API.SimpleCluster | undefined,
+  replicaList: API.ReplicaDetailType[] | undefined,
+): API.OptionsType => {
+  if (!replicaList) return [];
+  if (!cluster) return formatReplicToOption(replicaList);
+  const { topology } = cluster;
+  const newReplicas = topology.filter((zone) => {
+    if (replicaList.find((replica) => replica.zone === zone.zone)) {
+      return false;
+    } else {
+      return true;
+    }
+  });
+  return formatReplicToOption(newReplicas);
 };

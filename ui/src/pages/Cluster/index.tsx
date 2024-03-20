@@ -9,7 +9,7 @@ import MonitorComp from '@/components/MonitorComp';
 import ClusterList from './ClusterList';
 // import Monitor from './Monitor';
 import { getObclusterListReq } from '@/services';
-import type { LabelType, QueryRangeType } from '../../components/MonitorDetail';
+import type { LabelType,QueryRangeType } from '../../components/MonitorDetail';
 
 const defaultQueryRange:QueryRangeType = {
   step: 20,
@@ -22,17 +22,20 @@ const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
   const [clusterNames, setClusterNames] = useState<LabelType[]>([]);
 
-  const { data: clusterList } = useRequest(getObclusterListReq, {
-    onSuccess: (data) => {
-      let clusterNames: LabelType[] = data.map((item) => ({
-        key: 'ob_cluster_name',
-        value: item.clusterName,
-      }));
-      setClusterNames(clusterNames);
+  const { data: clusterListRes } = useRequest(getObclusterListReq, {
+    onSuccess: ({ successful, data }) => {
+      if (successful) {
+        let clusterNames: LabelType[] = data.map((item) => ({
+          key: 'ob_cluster_name',
+          value: item.clusterName,
+        }));
+        setClusterNames(clusterNames);
+      }
     },
   });
 
   const handleAddCluster = () => navigate('new');
+  const clusterList = clusterListRes?.data;
 
   return (
     <PageContainer>

@@ -102,30 +102,4 @@ const passwordRules = [
   }),
 ];
 
-/**
- * 检查资源名是否符合域名格式  资源名可能拼接到域名里面
- **/
-function checkName(name: string): boolean {
-  const regex =
-    /[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/g;
-  const res = name.match(regex);
-  if (res && res[0] === name) return true;
-  return false;
-}
-
-const resourceNameRule = () => ({
-  validator(_: any, value: string) {
-    if (checkName(value)) {
-      return Promise.resolve();
-    }
-    return Promise.reject(
-      new Error(
-        intl.formatMessage({
-          id: 'OBDashboard.Cluster.New.helper.TheResourceNameMayBe',
-          defaultMessage: '资源名可能拼接到域名中，需要符合域名格式',
-        }),
-      ),
-    );
-  },
-});
-export { checkName, generateRandomPassword, passwordRules, resourceNameRule };
+export { generateRandomPassword, passwordRules};

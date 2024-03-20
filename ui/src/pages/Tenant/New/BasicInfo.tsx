@@ -1,8 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
-import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
+import { RESOURCE_NAME_REG,TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, Row, Select } from 'antd';
+import { Card,Col,Form,Input,Row,Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
@@ -20,10 +20,12 @@ export default function BasicInfo({
   setPasswordVal,
   setSelectClusterId,
 }: BasicInfoProps) {
-  const clusterOptions = clusterList.map((cluster) => ({
-    value: cluster.clusterId,
-    label: cluster.name,
-  }));
+  const clusterOptions = clusterList
+    .filter((cluster) => cluster.status !== 'failed')
+    .map((cluster) => ({
+      value: cluster.clusterId,
+      label: cluster.name,
+    }));
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
   };
