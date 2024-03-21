@@ -17,16 +17,15 @@ import (
 	"strings"
 
 	logger "github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/resource"
-
-	corev1 "k8s.io/api/core/v1"
-	storagev1 "k8s.io/api/storage/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -147,6 +146,8 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 			kind = "OBCluster"
 		case "OBTENANT":
 			kind = "OBTenant"
+		case "OBBACKUPPOLICY":
+			kind = "OBTenantBackupPolicy"
 		default:
 			kind = queryEventParam.ObjectType
 		}
@@ -170,15 +171,15 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 		listOptions.FieldSelector = strings.Join(selectors, ",")
 	}
 	eventList, err := resource.ListEvents(ns, listOptions)
-	logger.Infof("query events with param: %v", queryEventParam)
+	logger.Infof("Query events with param: %+v", queryEventParam)
 	if err == nil {
 		for _, event := range eventList.Items {
 			events = append(events, response.K8sEvent{
 				Namespace:  event.Namespace,
 				Type:       event.Type,
 				Count:      event.Count,
-				FirstOccur: float64(event.FirstTimestamp.UnixMilli()) / 1000,
-				LastSeen:   float64(event.LastTimestamp.UnixMilli()) / 1000,
+				FirstOccur: event.FirstTimestamp.Unix(),
+				LastSeen:   event.LastTimestamp.Unix(),
 				Reason:     event.Reason,
 				Message:    event.Message,
 				Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
@@ -200,7 +201,7 @@ func ListNodes() ([]response.K8sNode, error) {
 				Roles:      extractNodeRoles(&node),
 				Labels:     common.MapToKVs(node.Labels),
 				Conditions: extractNodeConditions(&node),
-				Uptime:     float64(node.CreationTimestamp.UnixMilli()) / 1000,
+				Uptime:     node.CreationTimestamp.Unix(),
 				InternalIP: internalAddress,
 				ExternalIP: externalAddress,
 				Version:    node.Status.NodeInfo.KubeletVersion,

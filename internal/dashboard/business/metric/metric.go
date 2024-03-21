@@ -68,6 +68,7 @@ func ListMetricClasses(scope, language string) ([]response.MetricClass, error) {
 	}
 	logger.Debugf("metric configs contents: %s", string(metricConfigContent))
 	metricConfigMap := make(map[string][]response.MetricClass)
+	// TODO: Do not unmarshal the file every time, cache the result
 	err = yaml.Unmarshal(metricConfigContent, &metricConfigMap)
 	if err != nil {
 		return metricClasses, err
@@ -99,19 +100,51 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 			Name:   name,
 			Labels: bizcommon.MapToKVs(result.Metric),
 		}
+		lastValid := math.NaN()
+		invalidTimestamps := make([]float64, 0)
+		// one loop to handle invalid timestamps interpolation
 		for _, value := range result.Values {
 			t := value[0].(float64)
 			v, err := strconv.ParseFloat(value[1].(string), 64)
 			if err != nil {
 				logger.Warnf("failed to parse value %v", value)
+				invalidTimestamps = append(invalidTimestamps, t)
 			} else if math.IsNaN(v) {
-				logger.Debugf("skip NaN value at timestamp %f", t)
+				logger.Debugf("value at timestamp %f is NaN", t)
+				invalidTimestamps = append(invalidTimestamps, t)
 			} else {
+				// if there are invalid timestamps, interpolate them
+				if len(invalidTimestamps) > 0 {
+					var interpolated float64
+					if math.IsNaN(lastValid) {
+						interpolated = v
+					} else {
+						interpolated = (lastValid + v) / 2
+					}
+					// interpolate invalid slots with last valid value
+					for _, it := range invalidTimestamps {
+						values = append(values, response.MetricValue{
+							Timestamp: it,
+							Value:     interpolated,
+						})
+					}
+					invalidTimestamps = invalidTimestamps[:0]
+				}
 				values = append(values, response.MetricValue{
 					Timestamp: t,
 					Value:     v,
 				})
+				lastValid = v
 			}
+		}
+		if math.IsNaN(lastValid) {
+			lastValid = 0.0
+		}
+		for _, it := range invalidTimestamps {
+			values = append(values, response.MetricValue{
+				Timestamp: it,
+				Value:     lastValid,
+			})
 		}
 		metricDatas = append(metricDatas, response.MetricData{
 			Metric: metric,

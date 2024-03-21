@@ -26,6 +26,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
@@ -33,7 +34,6 @@ import (
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
 )
 
 const (
@@ -158,20 +158,19 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 }
 
 func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBCluster) ([]response.OBZone, error) {
-	obzoneList, err := oceanbase.ListOBZonesOfOBCluster(ctx, obcluster)
+	obzoneList, err := clients.ListOBZonesOfOBCluster(ctx, obcluster)
 	if err != nil {
 		return nil, errors.Wrapf(err, "List obzone of obcluster %s %s", obcluster.Namespace, obcluster.Name)
 	}
 	topology := make([]response.OBZone, 0, len(obzoneList.Items))
 	for _, obzone := range obzoneList.Items {
 		observers := make([]response.OBServer, 0)
-		observerList, err := oceanbase.ListOBServersOfOBZone(ctx, &obzone)
+		observerList, err := clients.ListOBServersOfOBZone(ctx, &obzone)
 		if err != nil {
 			return nil, errors.Wrapf(err, "List observers of obzone %s %s", obzone.Namespace, obzone.Name)
 		}
-		logger.Infof("found %d observer", len(observerList.Items))
 		for _, observer := range observerList.Items {
-			logger.Infof("add observer %s to result", observer.Name)
+			logger.Debugf("add observer %s to result", observer.Name)
 			observers = append(observers, response.OBServer{
 				Namespace:    observer.Namespace,
 				Name:         observer.Name,
@@ -266,7 +265,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 
 func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
 	obclusters := make([]response.OBClusterOverview, 0)
-	obclusterList, err := oceanbase.ListAllOBClusters(ctx)
+	obclusterList, err := clients.ListAllOBClusters(ctx)
 	if err != nil {
 		return obclusters, errors.Wrap(err, "failed to list obclusters")
 	}
@@ -481,16 +480,16 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 
 func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) error {
 	obcluster := generateOBClusterInstance(param)
-	err := oceanbase.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
+	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
 	if err != nil {
 		return errors.Wrap(err, "Create secrets for obcluster")
 	}
 	logger.Infof("Generated obcluster instance:%v", obcluster)
-	return oceanbase.CreateOBCluster(ctx, obcluster)
+	return clients.CreateOBCluster(ctx, obcluster)
 }
 
 func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, updateParam *param.UpgradeOBClusterParam) error {
-	obcluster, err := oceanbase.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
 		return errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
@@ -498,11 +497,11 @@ func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIde
 		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
 	}
 	obcluster.Spec.OBServerTemplate.Image = updateParam.Image
-	return oceanbase.UpdateOBCluster(ctx, obcluster)
+	return clients.UpdateOBCluster(ctx, obcluster)
 }
 
 func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, scaleParam *param.ScaleOBServerParam) error {
-	obcluster, err := oceanbase.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
+	obcluster, err := clients.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	if err != nil {
 		return errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
@@ -527,11 +526,11 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	if !replicaChanged {
 		return errors.Errorf("obzone %s replica already satisfied in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	return oceanbase.UpdateOBCluster(ctx, obcluster)
+	return clients.UpdateOBCluster(ctx, obcluster)
 }
 
 func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) error {
-	obcluster, err := oceanbase.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
+	obcluster, err := clients.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	if err != nil {
 		return errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
@@ -551,11 +550,11 @@ func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) err
 		return errors.Errorf("obzone %s not found in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
 	obcluster.Spec.Topology = newTopology
-	return oceanbase.UpdateOBCluster(ctx, obcluster)
+	return clients.UpdateOBCluster(ctx, obcluster)
 }
 
 func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, zone *param.ZoneTopology) error {
-	obcluster, err := oceanbase.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
 		return errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
@@ -572,11 +571,11 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
 	})
-	return oceanbase.UpdateOBCluster(ctx, obcluster)
+	return clients.UpdateOBCluster(ctx, obcluster)
 }
 
 func GetOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) (*response.OBCluster, error) {
-	obcluster, err := oceanbase.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
@@ -584,12 +583,12 @@ func GetOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentit
 }
 
 func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) error {
-	return oceanbase.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	return clients.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 }
 
 func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic, error) {
 	statisticResult := make([]response.OBClusterStastistic, 0)
-	obclusterList, err := oceanbase.ListAllOBClusters(ctx)
+	obclusterList, err := clients.ListAllOBClusters(ctx)
 	if err != nil {
 		return statisticResult, errors.Wrap(err, "failed to list obclusters")
 	}

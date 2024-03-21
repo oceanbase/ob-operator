@@ -10,11 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package oceanbase
+package clients
 
 import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
+	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 

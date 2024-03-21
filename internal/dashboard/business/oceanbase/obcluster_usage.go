@@ -19,10 +19,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/internal/oceanbase"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
@@ -30,14 +30,14 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
-func GetOBClusterEssentialParameters(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterResources, error) {
-	obcluster, err := oceanbase.GetOBCluster(ctx, nn.Namespace, nn.Name)
+func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*response.OBClusterResources, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
 	if err != nil {
 		return nil, err
 	}
 	clt := client.GetClient()
 	serverList := &v1alpha1.OBServerList{}
-	err = oceanbase.ServerClient.List(ctx, nn.Namespace, serverList, metav1.ListOptions{})
+	err = clients.ServerClient.List(ctx, nn.Namespace, serverList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

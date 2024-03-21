@@ -10,7 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package oceanbase
+package clients
 
 import (
 	"context"
@@ -24,8 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/oceanbase/schema"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
@@ -156,7 +156,6 @@ func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 func ListOBServersOfOBZone(ctx context.Context, obzone *v1alpha1.OBZone) (*v1alpha1.OBServerList, error) {
 	client := client.GetClient()
 	var observerList v1alpha1.OBServerList
-	logger.Infof("get observer list of obzone %s", obzone.Name)
 	obj, err := client.DynamicClient.Resource(schema.OBServerRes).Namespace(obzone.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBZone, obzone.Name),
 	})

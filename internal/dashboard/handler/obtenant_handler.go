@@ -66,6 +66,7 @@ func ListAllTenants(c *gin.Context) ([]*response.OBTenantOverview, error) {
 			}
 		}
 	}
+	logger.Debugf("List all tenants: %+v", tenants)
 	return tenants, nil
 }
 
@@ -99,6 +100,7 @@ func GetTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		}
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Get obtenant: %+v", tenant)
 	return tenant, nil
 }
 
@@ -121,7 +123,6 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	logger.Infof("Create obtenant: %+v", tenantParam)
 	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
@@ -144,6 +145,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 			}
 		}
 	}
+	logger.Infof("Create obtenant with param: %+v", tenantParam)
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
 		Namespace: tenantParam.Namespace,
 		Name:      tenantParam.Name,
@@ -151,6 +153,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Create obtenant: %+v", tenant)
 	return tenant, nil
 }
 
@@ -216,6 +219,7 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if patch.UnitNumber == nil && patch.UnitConfig == nil {
 		return nil, httpErr.NewBadRequest("unitNumber or unitConfig is required")
 	}
+	logger.Infof("Patch obtenant with param: %+v", patch)
 	tenant, err := oceanbase.PatchTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
@@ -223,6 +227,7 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Patch obtenant: %+v", tenant)
 	return tenant, nil
 }
 
@@ -255,6 +260,7 @@ func ChangeUserPassword(c *gin.Context) (*response.OBTenantDetail, error) {
 	if passwordParam.User != "root" {
 		return nil, httpErr.NewBadRequest("only root user is supported")
 	}
+	logger.Infof("Change obtenant root password with param: %+v", passwordParam)
 	tenant, err := oceanbase.ModifyOBTenantRootPassword(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
@@ -263,6 +269,7 @@ func ChangeUserPassword(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Change obtenant root password: %+v", tenant)
 	return tenant, nil
 }
 
@@ -295,6 +302,7 @@ func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 	if !logReplayParam.Unlimited && logReplayParam.Timestamp == nil {
 		return nil, httpErr.NewBadRequest("timestamp is required if the restore is limited")
 	}
+	logger.Infof("Replay standby log with param: %+v", logReplayParam)
 	tenant, err := oceanbase.ReplayStandbyLog(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -302,6 +310,7 @@ func ReplayStandbyLog(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Replay standby log: %+v", tenant)
 	return tenant, nil
 }
 
@@ -332,6 +341,7 @@ func UpgradeTenantVersion(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Upgrade tenant version: %+v", tenant)
 	return tenant, nil
 }
 
@@ -364,6 +374,7 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 	if !p.Failover != p.Switchover {
 		return nil, httpErr.NewBadRequest("one and only one of failover and switchover can be true")
 	}
+	logger.Infof("Change tenant role with param: %+v", p)
 	tenant, err := oceanbase.ChangeTenantRole(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -371,6 +382,7 @@ func ChangeTenantRole(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Change tenant role: %+v", tenant)
 	return tenant, nil
 }
 
@@ -416,6 +428,7 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 			return nil, httpErr.NewBadRequest(err.Error())
 		}
 	}
+	logger.Infof("Create backup policy with param: %+v", createPolicyParam)
 	policy, err := oceanbase.CreateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -423,6 +436,7 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Create backup policy: %+v", policy)
 	return policy, nil
 }
 
@@ -452,6 +466,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Update backup policy with param: %+v", updatePolicyParam)
 	policy, err := oceanbase.UpdateTenantBackupPolicy(c, types.NamespacedName{
 		Name:      nn.Name,
 		Namespace: nn.Namespace,
@@ -459,6 +474,7 @@ func UpdateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Update backup policy: %+v", policy)
 	return policy, nil
 }
 
@@ -520,6 +536,7 @@ func GetBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("Get backup policy: %+v", policy)
 	return policy, nil
 }
 
@@ -564,6 +581,7 @@ func ListBackupJobs(c *gin.Context) ([]*response.BackupJob, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+	logger.Debugf("List backup jobs: %+v", jobs)
 	return jobs, nil
 }
 
@@ -584,6 +602,7 @@ func GetOBTenantStatistic(c *gin.Context) ([]response.OBTenantStatistic, error) 
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("Get obtenant statistics: %+v", tenants)
 	return tenants, nil
 }
 
@@ -612,7 +631,7 @@ func CreateOBTenantPool(c *gin.Context) (bool, error) {
 	if err != nil {
 		return false, httpErr.NewBadRequest(err.Error())
 	}
-
+	logger.Infof("Create obtenant pool with param: %+v", p)
 	return oceanbase.CreateTenantPool(c, nn, &p)
 }
 
@@ -663,6 +682,6 @@ func PatchOBTenantPool(c *gin.Context) (bool, error) {
 	if err != nil {
 		return false, httpErr.NewBadRequest(err.Error())
 	}
-
+	logger.Infof("Patch obtenant pool with param: %+v", p)
 	return oceanbase.PatchTenantPool(c, nn, &p)
 }

@@ -14,6 +14,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -27,7 +28,7 @@ import (
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
-// @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT)
+// @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT, OBBACKUPPOLICY)
 // @Param type query string false "event level" Enums(NORMAL, WARNING)
 // @Param name query string false "Object name" string
 // @Param namespace query string false "Namespace" string
@@ -48,6 +49,7 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List k8s events: %v", events)
 	return events, nil
 }
 
@@ -68,6 +70,7 @@ func ListK8sNodes(_ *gin.Context) ([]response.K8sNode, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List k8s nodes: %v", nodes)
 	return nodes, nil
 }
 
@@ -88,6 +91,7 @@ func ListK8sNamespaces(_ *gin.Context) ([]response.Namespace, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List k8s namespaces: %v", namespaces)
 	return namespaces, nil
 }
 
@@ -108,6 +112,7 @@ func ListK8sStorageClasses(_ *gin.Context) ([]response.StorageClass, error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Debugf("List k8s storage classes: %v", storageClasses)
 	return storageClasses, nil
 }
 
@@ -130,6 +135,7 @@ func CreateK8sNamespace(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Create k8s namespace: %+v", param)
 	err = k8s.CreateNamespace(param)
 	if err != nil {
 		return nil, err
