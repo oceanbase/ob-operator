@@ -100,41 +100,51 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 			Name:   name,
 			Labels: bizcommon.MapToKVs(result.Metric),
 		}
+		lastValid := math.NaN()
+		invalidTimestamps := make([]float64, 0)
+		// one loop to handle invalid timestamps interpolation
 		for _, value := range result.Values {
 			t := value[0].(float64)
 			v, err := strconv.ParseFloat(value[1].(string), 64)
 			if err != nil {
 				logger.Warnf("failed to parse value %v", value)
-				v = 0
+				invalidTimestamps = append(invalidTimestamps, t)
 			} else if math.IsNaN(v) {
-				logger.Debugf("value at timestamp %f is NaN, set to 0", t)
-				v = 0
-			}
-			values = append(values, response.MetricValue{
-				Timestamp: t,
-				Value:     v,
-			})
-		}
-		lenValues := len(values)
-		if lenValues == 0 {
-			continue
-		}
-		for i := range values {
-			// interpolate zero slot with average of previous and next value
-			if values[i].Value == 0 {
-				switch i {
-				case 0:
-					if lenValues > 1 {
-						values[i].Value = values[i+1].Value
+				logger.Debugf("value at timestamp %f is NaN", t)
+				invalidTimestamps = append(invalidTimestamps, t)
+			} else {
+				// if there are invalid timestamps, interpolate them
+				if len(invalidTimestamps) > 0 {
+					var interpolated float64
+					if math.IsNaN(lastValid) {
+						interpolated = v
+					} else {
+						interpolated = (lastValid + v) / 2
 					}
-				case lenValues - 1:
-					if lenValues > 1 {
-						values[i].Value = values[i-1].Value
+					// interpolate invalid slots with last valid value
+					for _, it := range invalidTimestamps {
+						values = append(values, response.MetricValue{
+							Timestamp: it,
+							Value:     interpolated,
+						})
 					}
-				default:
-					values[i].Value = (values[i-1].Value + values[i+1].Value) / 2
+					invalidTimestamps = invalidTimestamps[:0]
 				}
+				values = append(values, response.MetricValue{
+					Timestamp: t,
+					Value:     v,
+				})
+				lastValid = v
 			}
+		}
+		if math.IsNaN(lastValid) {
+			lastValid = 0.0
+		}
+		for _, it := range invalidTimestamps {
+			values = append(values, response.MetricValue{
+				Timestamp: it,
+				Value:     lastValid,
+			})
 		}
 		metricDatas = append(metricDatas, response.MetricData{
 			Metric: metric,
