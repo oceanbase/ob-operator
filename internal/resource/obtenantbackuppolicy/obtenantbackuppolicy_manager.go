@@ -35,7 +35,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -277,24 +276,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tConfigureServerForBackup:
-		return m.ConfigureServerForBackup, nil
-	case tStartBackupJob:
-		return m.StartBackup, nil
-	case tStopBackupPolicy:
-		return m.StopBackup, nil
-	case tCheckAndSpawnJobs:
-		return m.CheckAndSpawnJobs, nil
-	case tCleanOldBackupJobs:
-		return m.CleanOldBackupJobs, nil
-	case tPauseBackup:
-		return m.PauseBackup, nil
-	case tResumeBackup:
-		return m.ResumeBackup, nil
-	default:
-		return nil, errors.Errorf("unknown task name %s", name)
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
@@ -308,17 +290,17 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error)
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.BackupPolicyStatusPreparing:
-		taskFlow, err = task.GetRegistry().Get(fPrepareBackupPolicy)
+		taskFlow = PrepareBackupPolicy()
 	case constants.BackupPolicyStatusPrepared:
-		taskFlow, err = task.GetRegistry().Get(fStartBackupJob)
+		taskFlow = StartBackupJob()
 	case constants.BackupPolicyStatusMaintaining:
-		taskFlow, err = task.GetRegistry().Get(fMaintainRunningPolicy)
+		taskFlow = MaintainRunningPolicy()
 	case constants.BackupPolicyStatusPausing:
-		taskFlow, err = task.GetRegistry().Get(fPauseBackup)
+		taskFlow = FlowPauseBackup()
 	case constants.BackupPolicyStatusResuming:
-		taskFlow, err = task.GetRegistry().Get(fResumeBackup)
+		taskFlow = FlowResumeBackup()
 	case constants.BackupPolicyStatusDeleting:
-		taskFlow, err = task.GetRegistry().Get(fStopBackupPolicy)
+		taskFlow = StopBackupPolicy()
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil

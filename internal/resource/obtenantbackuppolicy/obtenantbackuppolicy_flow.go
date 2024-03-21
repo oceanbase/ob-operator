@@ -34,7 +34,7 @@ func StartBackupJob() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fStartBackupJob,
-			Tasks:        []tasktypes.TaskName{tStartBackupJob},
+			Tasks:        []tasktypes.TaskName{tStartBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: string(constants.BackupPolicyStatusFailed),
@@ -47,7 +47,7 @@ func StopBackupPolicy() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fStopBackupPolicy,
-			Tasks:        []tasktypes.TaskName{tStopBackupPolicy},
+			Tasks:        []tasktypes.TaskName{tStopBackup},
 			TargetStatus: string(constants.BackupPolicyStatusStopped),
 		},
 	}
@@ -66,7 +66,7 @@ func MaintainRunningPolicy() *tasktypes.TaskFlow {
 	}
 }
 
-func PauseBackup() *tasktypes.TaskFlow {
+func FlowPauseBackup() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fPauseBackup,
@@ -76,7 +76,7 @@ func PauseBackup() *tasktypes.TaskFlow {
 	}
 }
 
-func ResumeBackup() *tasktypes.TaskFlow {
+func FlowResumeBackup() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fResumeBackup,

@@ -9,7 +9,7 @@ manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and Cust
 .PHONY: generate
 generate: controller-gen init-generator ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations; Generate task registrations for resource manager.
 	$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
-	GOBIN=$(LOCALBIN) go generate ./...
+	go generate ./...
 
 .PHONY: fmt
 fmt: ## Run go fmt against code.

@@ -29,7 +29,6 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -45,46 +44,7 @@ type OBServerManager struct {
 }
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tCreateOBServerSvc:
-		return m.CreateOBServerSvc, nil
-	case tCreateOBPVC:
-		return m.CreateOBPVC, nil
-	case tCreateOBPod:
-		return m.CreateOBPod, nil
-	case tWaitOBServerReady:
-		return m.WaitOBServerReady, nil
-	case tWaitOBClusterBootstrapped:
-		return m.WaitOBClusterBootstrapped, nil
-	case tAddServer:
-		return m.AddServer, nil
-	case tDeleteOBServerInCluster:
-		return m.DeleteOBServerInCluster, nil
-	case tWaitOBServerDeletedInCluster:
-		return m.WaitOBServerDeletedInCluster, nil
-	case tWaitOBServerPodReady:
-		return m.WaitOBServerPodReady, nil
-	case tWaitOBServerActiveInCluster:
-		return m.WaitOBServerActiveInCluster, nil
-	case tUpgradeOBServerImage:
-		return m.UpgradeOBServerImage, nil
-	case tAnnotateOBServerPod:
-		return m.AnnotateOBServerPod, nil
-	case tDeletePod:
-		return m.DeletePod, nil
-	case tWaitForPodDeleted:
-		return m.WaitForPodDeleted, nil
-	case tExpandPVC:
-		return m.ResizePVC, nil
-	case tWaitForPVCResized:
-		return m.WaitForPVCResized, nil
-	case tMountBackupVolume:
-		return m.MountBackupVolume, nil
-	case tWaitForBackupVolumeMounted:
-		return m.WaitForBackupVolumeMounted, nil
-	default:
-		return nil, errors.Errorf("Can not find an function for task %s", name)
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBServerManager) IsNewResource() bool {
@@ -239,9 +199,8 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	}
 	// newly created observer
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	var obcluster *v1alpha1.OBCluster
-
+	var err error
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to observer status")
 	switch m.OBServer.Status.Status {
 	case serverstatus.New:
@@ -252,41 +211,34 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create observer when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(fPrepareOBServerForBootstrap)
+			taskFlow = PrepareOBServerForBootstrap()
 		} else {
 			// created normally
 			m.Logger.Info("Create observer when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(fCreateOBServer)
-		}
-		if err != nil {
-			return nil, errors.Wrap(err, "Get create observer task flow")
+			taskFlow = CreateOBServer()
 		}
 	case serverstatus.BootstrapReady:
-		taskFlow, err = task.GetRegistry().Get(fMaintainOBServerAfterBootstrap)
+		taskFlow = MaintainOBServerAfterBootstrap()
 	case serverstatus.Deleting:
-		taskFlow, err = task.GetRegistry().Get(fDeleteOBServerFinalizer)
+		taskFlow = DeleteOBServerFinalizer()
 	case serverstatus.Upgrade:
-		taskFlow, err = task.GetRegistry().Get(fUpgradeOBServer)
+		taskFlow = UpgradeOBServer()
 	case serverstatus.Recover:
-		taskFlow, err = task.GetRegistry().Get(fRecoverOBServer)
+		taskFlow = RecoverOBServer()
 	case serverstatus.Annotate:
-		taskFlow, err = task.GetRegistry().Get(fAnnotateOBServerPod)
+		taskFlow = FlowAnnotateOBServerPod()
 	case serverstatus.AddServer:
-		taskFlow, err = task.GetRegistry().Get(fAddServerInOB)
+		taskFlow = AddServerInOB()
 	case serverstatus.ScaleUp:
-		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServer)
+		taskFlow = ScaleUpOBServer()
 	case serverstatus.ExpandPVC:
-		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+		taskFlow = FlowExpandPVC()
 	case serverstatus.MountBackupVolume:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to mount backup volume")
-		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
+		taskFlow = FlowMountBackupVolume()
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for observer")
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {

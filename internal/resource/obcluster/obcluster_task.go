@@ -45,7 +45,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-var taskMap = builder.NewTaskMap[*OBClusterManager]()
+var taskMap = builder.NewTaskHub[*OBClusterManager]()
 
 func WaitOBZoneTopologyMatch(_ *OBClusterManager) tasktypes.TaskError {
 	// TODO

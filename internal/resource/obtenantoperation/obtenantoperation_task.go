@@ -17,19 +17,24 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	obtenantresource "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
+	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
+
+//go:generate task-register $GOFILE
+
+var taskMap = builder.NewTaskHub[*ObTenantOperationManager]()
 
 func (m *ObTenantOperationManager) ChangeTenantRootPassword() tasktypes.TaskError {
 	con, err := m.getTenantRootClient(m.Resource.Spec.ChangePwd.Tenant)
@@ -127,7 +132,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() tasktypes.Ta
 	// Hack:
 	tenantManager.OBTenant.ObjectMeta.SetNamespace(m.Resource.Namespace)
 	// Just reuse the logic of creating users for new coming tenant
-	_ = tenantManager.CreateUserWithCredentials()
+	_ = obtenant.CreateUserWithCredentials(tenantManager)
 	return nil
 }
 
@@ -235,7 +240,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskErr
 			Logger:   m.Logger,
 			OBTenant: originStandby,
 		}
-		err = tenantManager.CreateUserWithCredentials()
+		err = obtenant.CreateUserWithCredentials(tenantManager)
 		if err != nil {
 			return err
 		}

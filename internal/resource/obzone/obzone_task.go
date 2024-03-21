@@ -18,7 +18,6 @@ import (
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -26,23 +25,15 @@ import (
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
+	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func (m *OBZoneManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	obcluster, err := m.getOBCluster()
-	if err != nil {
-		return nil, errors.Wrap(err, "Get obcluster from K8s")
-	}
-	return resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
-}
+//go:generate task-register $GOFILE
 
-func (m *OBZoneManager) generateServerName() string {
-	return fmt.Sprintf("%s-%d-%s-%s", m.OBZone.Spec.ClusterName, m.OBZone.Spec.ClusterId, m.OBZone.Spec.Topology.Zone, rand.String(6))
-}
+var taskMap = builder.NewTaskHub[*OBZoneManager]()
 
-func (m *OBZoneManager) AddZone() tasktypes.TaskError {
+func AddZone(m *OBZoneManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -51,7 +42,7 @@ func (m *OBZoneManager) AddZone() tasktypes.TaskError {
 	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
 }
 
-func (m *OBZoneManager) StartOBZone() tasktypes.TaskError {
+func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
@@ -60,32 +51,7 @@ func (m *OBZoneManager) StartOBZone() tasktypes.TaskError {
 	return oceanbaseOperationManager.StartZone(m.OBZone.Spec.Topology.Zone)
 }
 
-func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSeconds int) tasktypes.TaskFunc {
-	f := func() tasktypes.TaskError {
-		for i := 1; i < timeoutSeconds; i++ {
-			obzone, err := m.getOBZone()
-			if err != nil {
-				return errors.Wrap(err, "get obzoen failed")
-			}
-			allMatched := true
-			for _, observerStatus := range obzone.Status.OBServerStatus {
-				if observerStatus.Status != status && observerStatus.Status != serverstatus.Unrecoverable {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Server status still not matched", "server", observerStatus.Server, "status", status)
-					allMatched = false
-					break
-				}
-			}
-			if allMatched {
-				return nil
-			}
-			time.Sleep(time.Second)
-		}
-		return errors.New("all server still not bootstrap ready when timeout")
-	}
-	return f
-}
-
-func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
+func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	m.Logger.Info("Create observers")
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
@@ -161,7 +127,7 @@ func (m *OBZoneManager) CreateOBServer() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
+func DeleteOBServer(m *OBZoneManager) tasktypes.TaskError {
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Delete observers")
 	observerList, err := m.listOBServers()
 	if err != nil {
@@ -189,7 +155,7 @@ func (m *OBZoneManager) DeleteOBServer() tasktypes.TaskError {
 }
 
 // TODO refactor Delete observer method together
-func (m *OBZoneManager) DeleteAllOBServer() tasktypes.TaskError {
+func DeleteAllOBServer(m *OBZoneManager) tasktypes.TaskError {
 	m.Logger.Info("Delete all observers")
 	observerList, err := m.listOBServers()
 	if err != nil {
@@ -206,7 +172,7 @@ func (m *OBZoneManager) DeleteAllOBServer() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) WaitReplicaMatch() tasktypes.TaskError {
+func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
@@ -227,7 +193,7 @@ func (m *OBZoneManager) WaitReplicaMatch() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) WaitOBServerDeleted() tasktypes.TaskError {
+func WaitOBServerDeleted(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
 	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
@@ -247,7 +213,7 @@ func (m *OBZoneManager) WaitOBServerDeleted() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) StopOBZone() tasktypes.TaskError {
+func StopOBZone(m *OBZoneManager) tasktypes.TaskError {
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
@@ -259,7 +225,7 @@ func (m *OBZoneManager) StopOBZone() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) OBClusterHealthCheck() tasktypes.TaskError {
+func OBClusterHealthCheck(m *OBZoneManager) tasktypes.TaskError {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -268,7 +234,7 @@ func (m *OBZoneManager) OBClusterHealthCheck() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) OBZoneHealthCheck() tasktypes.TaskError {
+func OBZoneHealthCheck(m *OBZoneManager) tasktypes.TaskError {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -278,7 +244,7 @@ func (m *OBZoneManager) OBZoneHealthCheck() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) UpgradeOBServer() tasktypes.TaskError {
+func UpgradeOBServer(m *OBZoneManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		observerList, err := m.listOBServers()
 		if err != nil {
@@ -297,7 +263,7 @@ func (m *OBZoneManager) UpgradeOBServer() tasktypes.TaskError {
 	})
 }
 
-func (m *OBZoneManager) WaitOBServerUpgraded() tasktypes.TaskError {
+func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
 	for i := 0; i < oceanbaseconst.TimeConsumingStateWaitTimeout; i++ {
 		observerList, err := m.listOBServers()
 		if err != nil {
@@ -321,7 +287,7 @@ func (m *OBZoneManager) WaitOBServerUpgraded() tasktypes.TaskError {
 	return errors.New("Wait all server upgraded timeout")
 }
 
-func (m *OBZoneManager) DeleteOBZoneInCluster() tasktypes.TaskError {
+func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
@@ -333,7 +299,7 @@ func (m *OBZoneManager) DeleteOBZoneInCluster() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
+func ScaleUpOBServers(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
@@ -355,7 +321,7 @@ func (m *OBZoneManager) ScaleUpOBServer() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
+func ExpandPVC(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
@@ -379,7 +345,7 @@ func (m *OBZoneManager) ResizePVC() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) MountBackupVolume() tasktypes.TaskError {
+func MountBackupVolume(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
@@ -399,7 +365,7 @@ func (m *OBZoneManager) MountBackupVolume() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBZoneManager) DeleteLegacyOBServer() tasktypes.TaskError {
+func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
@@ -434,4 +400,24 @@ func (m *OBZoneManager) DeleteLegacyOBServer() tasktypes.TaskError {
 		}
 	}
 	return nil
+}
+
+func WaitOBServerBootstrapReady(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitForOBServerScalingUp(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout)()
 }

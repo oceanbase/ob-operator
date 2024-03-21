@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	fCreateBackupJobInDB ttypes.FlowName = "create backup job in db"
+	fCreateBackupJobInOB ttypes.FlowName = "create backup job in db"
 )
 
 const (
-	tCreateBackupJobInDB ttypes.TaskName = "create backup job in db"
+	tCreateBackupJobInOB ttypes.TaskName = "create backup job in db"
 )

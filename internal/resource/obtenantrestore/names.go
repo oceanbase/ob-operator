@@ -23,7 +23,7 @@ const (
 )
 
 const (
-	tStartRestoreJob ttypes.TaskName = "start restore job"
-	tStartLogReplay  ttypes.TaskName = "start log replay"
-	tActivateStandby ttypes.TaskName = "activate standby"
+	tStartRestoreJobInOB ttypes.TaskName = "start restore job"
+	tStartLogReplay      ttypes.TaskName = "start log replay"
+	tActivateStandby     ttypes.TaskName = "activate standby"
 )

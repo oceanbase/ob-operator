@@ -94,7 +94,7 @@ func AddServerInOB() *tasktypes.TaskFlow {
 	}
 }
 
-func AnnotateOBServerPod() *tasktypes.TaskFlow {
+func FlowAnnotateOBServerPod() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAnnotateOBServerPod,
@@ -114,7 +114,7 @@ func ScaleUpOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func ResizePVC() *tasktypes.TaskFlow {
+func FlowExpandPVC() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fExpandPVC,
@@ -127,7 +127,7 @@ func ResizePVC() *tasktypes.TaskFlow {
 	}
 }
 
-func MountBackupVolume() *tasktypes.TaskFlow {
+func FlowMountBackupVolume() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMountBackupVolume,

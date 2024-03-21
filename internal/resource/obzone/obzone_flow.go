@@ -68,7 +68,7 @@ func AddOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func DeleteOBServer() *tasktypes.TaskFlow {
+func FlowDeleteOBServer() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeleteOBServer,
@@ -111,7 +111,7 @@ func ForceUpgradeOBZone() *tasktypes.TaskFlow {
 	}
 }
 
-func ScaleUpOBServers() *tasktypes.TaskFlow {
+func FlowScaleUpOBServers() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fScaleUpOBServers,
@@ -121,7 +121,7 @@ func ScaleUpOBServers() *tasktypes.TaskFlow {
 	}
 }
 
-func ResizePVC() *tasktypes.TaskFlow {
+func FlowExpandPVC() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fExpandPVC,
@@ -131,7 +131,7 @@ func ResizePVC() *tasktypes.TaskFlow {
 	}
 }
 
-func MountBackupVolume() *tasktypes.TaskFlow {
+func FlowMountBackupVolume() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMountBackupVolume,

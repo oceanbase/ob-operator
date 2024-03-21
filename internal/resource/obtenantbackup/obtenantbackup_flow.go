@@ -21,8 +21,8 @@ import (
 func CreateBackupJobInDB() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fCreateBackupJobInDB,
-			Tasks:        []tasktypes.TaskName{tCreateBackupJobInDB},
+			Name:         fCreateBackupJobInOB,
+			Tasks:        []tasktypes.TaskName{tCreateBackupJobInOB},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.StartOver,

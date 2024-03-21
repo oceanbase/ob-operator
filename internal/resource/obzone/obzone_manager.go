@@ -92,31 +92,28 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create obzone when create obcluster")
-			taskFlow, err = task.GetRegistry().Get(fPrepareOBZoneForBootstrap)
+			taskFlow = PrepareOBZoneForBootstrap()
 		} else {
 			// created normally
 			m.Logger.Info("Create obzone when obcluster already exists")
-			taskFlow, err = task.GetRegistry().Get(fCreateOBZone)
-		}
-		if err != nil {
-			return nil, errors.Wrap(err, "Get create obzone task flow")
+			taskFlow = CreateOBZone()
 		}
 	case zonestatus.MigrateFromExisting:
-		taskFlow, err = task.GetRegistry().Get(fMigrateOBZoneFromExisting)
+		taskFlow = MigrateOBZoneFromExisting()
 	case zonestatus.BootstrapReady:
-		taskFlow, err = task.GetRegistry().Get(fMaintainOBZoneAfterBootstrap)
+		taskFlow = MaintainOBZoneAfterBootstrap()
 	case zonestatus.AddOBServer:
-		taskFlow, err = task.GetRegistry().Get(fAddOBServer)
+		taskFlow = AddOBServer()
 	case zonestatus.DeleteOBServer:
-		taskFlow, err = task.GetRegistry().Get(fDeleteOBServer)
+		taskFlow = FlowDeleteOBServer()
 	case zonestatus.Deleting:
-		taskFlow, err = task.GetRegistry().Get(fDeleteOBZoneFinalizer)
+		taskFlow = DeleteOBZoneFinalizer()
 	case zonestatus.ScaleUp:
-		taskFlow, err = task.GetRegistry().Get(fScaleUpOBServers)
+		taskFlow = FlowScaleUpOBServers()
 	case zonestatus.ExpandPVC:
-		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+		taskFlow = FlowExpandPVC()
 	case zonestatus.MountBackupVolume:
-		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
+		taskFlow = FlowMountBackupVolume()
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -130,10 +127,6 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obzone")
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
@@ -301,54 +294,7 @@ func (m *OBZoneManager) FinishTask() {
 }
 
 func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tCreateOBServer:
-		return m.CreateOBServer, nil
-	case tWaitOBServerBootstrapReady:
-		return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitOBServerRunning:
-		return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitForOBServerScalingUp:
-		return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitForOBServerExpandingPVC:
-		return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitForOBServerMounting:
-		return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tAddZone:
-		return m.AddZone, nil
-	case tStartOBZone:
-		return m.StartOBZone, nil
-	case tDeleteOBServer:
-		return m.DeleteOBServer, nil
-	case tDeleteAllOBServer:
-		return m.DeleteAllOBServer, nil
-	case tWaitReplicaMatch:
-		return m.WaitReplicaMatch, nil
-	case tWaitOBServerDeleted:
-		return m.WaitOBServerDeleted, nil
-	case tStopOBZone:
-		return m.StopOBZone, nil
-	case tDeleteOBZoneInCluster:
-		return m.DeleteOBZoneInCluster, nil
-	case tOBClusterHealthCheck:
-		return m.OBClusterHealthCheck, nil
-	case tOBZoneHealthCheck:
-		return m.OBZoneHealthCheck, nil
-	case tUpgradeOBServer:
-		return m.UpgradeOBServer, nil
-	case tWaitOBServerUpgraded:
-		return m.WaitOBServerUpgraded, nil
-	case tScaleUpOBServers:
-		return m.ScaleUpOBServer, nil
-	case tExpandPVC:
-		return m.ResizePVC, nil
-	case tDeleteLegacyOBServers:
-		return m.DeleteLegacyOBServer, nil
-	case tMountBackupVolume:
-		return m.MountBackupVolume, nil
-	default:
-		return nil, errors.Errorf("Can not find an function for %s", name)
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBZoneManager) PrintErrEvent(err error) {

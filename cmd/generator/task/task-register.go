@@ -28,15 +28,12 @@ package {{.PackageName}}
 
 func init() {
 {{- range .Tasks }}
-	taskMap[t{{.Name}}] = {{.TaskFuncName}}
+	taskMap.Register(t{{.}}, {{.}})
 {{- end }}
 }
 `
 
-type Task struct {
-	Name         string
-	TaskFuncName string
-}
+type Task string
 
 func main() {
 	if len(os.Args) != 2 {
@@ -59,10 +56,7 @@ func main() {
 		// Get return type of function and check whether it is a func(resource T) TaskError
 		if len(fn.Type.Params.List) == 1 && len(fn.Type.Results.List) == 1 {
 			if strings.HasSuffix(exprToString(fn.Type.Results.List[0].Type), "TaskError") {
-				taskFuncs = append(taskFuncs, Task{
-					Name:         fn.Name.Name,
-					TaskFuncName: fn.Name.Name,
-				})
+				taskFuncs = append(taskFuncs, Task(fn.Name.Name))
 			}
 		}
 

@@ -37,7 +37,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -226,50 +225,51 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBTenantManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tCheckTenant:
-		return m.CheckTenantTask, nil
-	case tCheckPoolAndUnitConfig:
-		return m.CheckPoolAndConfigTask, nil
-	case tCreateTenant:
-		return m.CreateTenantTaskWithClear, nil
-	case tCreateResourcePoolAndUnitConfig:
-		return m.CreateResourcePoolAndConfigTask, nil
-	case tMaintainCharset:
-		return m.CheckAndApplyCharset, nil
-	case tMaintainUnitNum:
-		return m.CheckAndApplyUnitNum, nil
-	case tMaintainWhiteList:
-		return m.CheckAndApplyWhiteList, nil
-	case tMaintainPrimaryZone:
-		return m.CheckAndApplyPrimaryZone, nil
-	case tMaintainLocality:
-		return m.CheckAndApplyLocality, nil
-	case tAddResourcePool:
-		return m.AddPoolTask, nil
-	case tDeleteResourcePool:
-		return m.DeletePoolTask, nil
-	case tMaintainUnitConfig:
-		return m.MaintainUnitConfigTask, nil
-	case tDeleteTenant:
-		return m.DeleteTenantTask, nil
-	case tCreateEmptyStandbyTenant:
-		return m.CreateEmptyStandbyTenant, nil
-	case tCreateUsersByCredentials:
-		return m.CreateUserWithCredentialSecrets, nil
-	case tCheckPrimaryTenantLSIntegrity:
-		return m.CheckPrimaryTenantLSIntegrity, nil
-	case tCreateRestoreJobCR:
-		return m.CreateTenantRestoreJobCR, nil
-	case tWatchRestoreJobToFinish:
-		return m.WatchRestoreJobToFinish, nil
-	case tCancelRestoreJob:
-		return m.CancelTenantRestoreJob, nil
-	case tUpgradeTenantIfNeeded:
-		return m.UpgradeTenantIfNeeded, nil
-	default:
-		return nil, errors.Errorf("Can not find an function for task %s", name)
-	}
+	// switch name {
+	// case tCheckTenant:
+	// 	return m.CheckTenantTask, nil
+	// case tCheckPoolAndUnitConfig:
+	// 	return m.CheckPoolAndConfigTask, nil
+	// case tCreateTenant:
+	// 	return m.CreateTenantTaskWithClear, nil
+	// case tCreateResourcePoolAndUnitConfig:
+	// 	return m.CreateResourcePoolAndConfigTask, nil
+	// case tMaintainCharset:
+	// 	return m.CheckAndApplyCharset, nil
+	// case tMaintainUnitNum:
+	// 	return m.CheckAndApplyUnitNum, nil
+	// case tMaintainWhiteList:
+	// 	return m.CheckAndApplyWhiteList, nil
+	// case tMaintainPrimaryZone:
+	// 	return m.CheckAndApplyPrimaryZone, nil
+	// case tMaintainLocality:
+	// 	return m.CheckAndApplyLocality, nil
+	// case tAddResourcePool:
+	// 	return m.AddPoolTask, nil
+	// case tDeleteResourcePool:
+	// 	return m.DeletePoolTask, nil
+	// case tMaintainUnitConfig:
+	// 	return m.MaintainUnitConfigTask, nil
+	// case tDeleteTenant:
+	// 	return m.DeleteTenantTask, nil
+	// case tCreateEmptyStandbyTenant:
+	// 	return m.CreateEmptyStandbyTenant, nil
+	// case tCreateUsersByCredentials:
+	// 	return m.CreateUserWithCredentialSecrets, nil
+	// case tCheckPrimaryTenantLSIntegrity:
+	// 	return m.CheckPrimaryTenantLSIntegrity, nil
+	// case tCreateRestoreJobCR:
+	// 	return m.CreateTenantRestoreJobCR, nil
+	// case tWatchRestoreJobToFinish:
+	// 	return m.WatchRestoreJobToFinish, nil
+	// case tCancelRestoreJob:
+	// 	return m.CancelTenantRestoreJob, nil
+	// case tUpgradeTenantIfNeeded:
+	// 	return m.UpgradeTenantIfNeeded, nil
+	// default:
+	// 	return nil, errors.Errorf("Can not find an function for task %s", name)
+	// }
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
@@ -281,56 +281,51 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obtenant status")
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 
 	switch m.OBTenant.Status.Status {
 	case tenantstatus.CreatingTenant:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when creating tenant")
-		taskFlow, err = task.GetRegistry().Get(fCreateTenant)
+		taskFlow = CreateTenant()
 	case tenantstatus.MaintainingWhiteList:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining white list")
-		taskFlow, err = task.GetRegistry().Get(fMaintainWhiteList)
+		taskFlow = MaintainWhiteList()
 	case tenantstatus.MaintainingCharset:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining charset")
-		taskFlow, err = task.GetRegistry().Get(fMaintainCharset)
+		taskFlow = MaintainCharset()
 	case tenantstatus.MaintainingUnitNum:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining unit num")
-		taskFlow, err = task.GetRegistry().Get(fMaintainUnitNum)
+		taskFlow = MaintainUnitNum()
 	case tenantstatus.MaintainingPrimaryZone:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining primary zone")
-		taskFlow, err = task.GetRegistry().Get(fMaintainPrimaryZone)
+		taskFlow = MaintainPrimaryZone()
 	case tenantstatus.MaintainingLocality:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining locality")
-		taskFlow, err = task.GetRegistry().Get(fMaintainLocality)
+		taskFlow = MaintainLocality()
 	case tenantstatus.AddingResourcePool:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant adding pool")
-		taskFlow, err = task.GetRegistry().Get(fAddPool)
+		taskFlow = AddPool()
 	case tenantstatus.DeletingResourcePool:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant deleting list")
-		taskFlow, err = task.GetRegistry().Get(fDeletePool)
+		taskFlow = DeletePool()
 	case tenantstatus.MaintainingUnitConfig:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining unit config")
-		taskFlow, err = task.GetRegistry().Get(fMaintainUnitConfig)
+		taskFlow = MaintainUnitConfig()
 	case tenantstatus.DeletingTenant:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when deleting tenant")
-		taskFlow, err = task.GetRegistry().Get(fDeleteTenant)
+		taskFlow = DeleteTenant()
 	case tenantstatus.PausingReconcile:
 		m.Logger.Error(errors.New("Obtenant pause reconcile"),
 			"obtenant pause reconcile, please set status to running after manually resolving problem")
 		return nil, nil
 	case tenantstatus.Restoring:
-		taskFlow, err = task.GetRegistry().Get(fRestoreTenant)
+		taskFlow = RestoreTenant()
 	case tenantstatus.CancelingRestore:
-		taskFlow, err = task.GetRegistry().Get(fCancelRestoreFlow)
+		taskFlow = FlowCancelRestore()
 	case tenantstatus.CreatingEmptyStandby:
-		taskFlow, err = task.GetRegistry().Get(fCreateEmptyStandbyTenant)
+		taskFlow = FlowCreateEmptyStandbyTenant()
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obtenant")
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {

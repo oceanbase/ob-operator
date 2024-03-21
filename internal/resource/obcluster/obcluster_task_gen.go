@@ -2,31 +2,31 @@
 package obcluster
 
 func init() {
-	taskMap[tWaitOBZoneTopologyMatch] = WaitOBZoneTopologyMatch
-	taskMap[tWaitOBZoneDeleted] = WaitOBZoneDeleted
-	taskMap[tModifyOBZoneReplica] = ModifyOBZoneReplica
-	taskMap[tDeleteOBZone] = DeleteOBZone
-	taskMap[tCreateOBZone] = CreateOBZone
-	taskMap[tBootstrap] = Bootstrap
-	taskMap[tCreateUsers] = CreateUsers
-	taskMap[tMaintainOBParameter] = MaintainOBParameter
-	taskMap[tValidateUpgradeInfo] = ValidateUpgradeInfo
-	taskMap[tUpgradeCheck] = UpgradeCheck
-	taskMap[tBackupEssentialParameters] = BackupEssentialParameters
-	taskMap[tBeginUpgrade] = BeginUpgrade
-	taskMap[tRollingUpgradeByZone] = RollingUpgradeByZone
-	taskMap[tFinishUpgrade] = FinishUpgrade
-	taskMap[tModifySysTenantReplica] = ModifySysTenantReplica
-	taskMap[tCreateServiceForMonitor] = CreateServiceForMonitor
-	taskMap[tRestoreEssentialParameters] = RestoreEssentialParameters
-	taskMap[tCheckAndCreateUserSecrets] = CheckAndCreateUserSecrets
-	taskMap[tCreateOBClusterService] = CreateOBClusterService
-	taskMap[tCheckImageReady] = CheckImageReady
-	taskMap[tCheckClusterMode] = CheckClusterMode
-	taskMap[tCheckMigration] = CheckMigration
-	taskMap[tScaleUpOBZones] = ScaleUpOBZones
-	taskMap[tExpandPVC] = ExpandPVC
-	taskMap[tMountBackupVolume] = MountBackupVolume
-	taskMap[tWaitOBZoneBootstrapReady] = WaitOBZoneBootstrapReady
-	taskMap[tWaitOBZoneRunning] = WaitOBZoneRunning
+	taskMap.Register(tWaitOBZoneTopologyMatch, WaitOBZoneTopologyMatch)
+	taskMap.Register(tWaitOBZoneDeleted, WaitOBZoneDeleted)
+	taskMap.Register(tModifyOBZoneReplica, ModifyOBZoneReplica)
+	taskMap.Register(tDeleteOBZone, DeleteOBZone)
+	taskMap.Register(tCreateOBZone, CreateOBZone)
+	taskMap.Register(tBootstrap, Bootstrap)
+	taskMap.Register(tCreateUsers, CreateUsers)
+	taskMap.Register(tMaintainOBParameter, MaintainOBParameter)
+	taskMap.Register(tValidateUpgradeInfo, ValidateUpgradeInfo)
+	taskMap.Register(tUpgradeCheck, UpgradeCheck)
+	taskMap.Register(tBackupEssentialParameters, BackupEssentialParameters)
+	taskMap.Register(tBeginUpgrade, BeginUpgrade)
+	taskMap.Register(tRollingUpgradeByZone, RollingUpgradeByZone)
+	taskMap.Register(tFinishUpgrade, FinishUpgrade)
+	taskMap.Register(tModifySysTenantReplica, ModifySysTenantReplica)
+	taskMap.Register(tCreateServiceForMonitor, CreateServiceForMonitor)
+	taskMap.Register(tRestoreEssentialParameters, RestoreEssentialParameters)
+	taskMap.Register(tCheckAndCreateUserSecrets, CheckAndCreateUserSecrets)
+	taskMap.Register(tCreateOBClusterService, CreateOBClusterService)
+	taskMap.Register(tCheckImageReady, CheckImageReady)
+	taskMap.Register(tCheckClusterMode, CheckClusterMode)
+	taskMap.Register(tCheckMigration, CheckMigration)
+	taskMap.Register(tScaleUpOBZones, ScaleUpOBZones)
+	taskMap.Register(tExpandPVC, ExpandPVC)
+	taskMap.Register(tMountBackupVolume, MountBackupVolume)
+	taskMap.Register(tWaitOBZoneBootstrapReady, WaitOBZoneBootstrapReady)
+	taskMap.Register(tWaitOBZoneRunning, WaitOBZoneRunning)
 }

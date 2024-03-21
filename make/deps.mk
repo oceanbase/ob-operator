@@ -8,7 +8,6 @@ $(LOCALBIN): ## Location to install dependencies to
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
 ENVTEST ?= $(LOCALBIN)/setup-envtest
-INIT_GENERATOR ?= $(LOCALBIN)/task-register
 
 ## Tool Versions
 KUSTOMIZE_VERSION ?= v5.0.0
@@ -43,6 +42,5 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 tools: kustomize controller-gen envtest install-delve ## Download all tools
 
 .PHONY: init-generator
-init-generator: $(INIT_GENERATOR) ## Install generator tools
-$(INIT_GENERATOR): $(LOCALBIN)
-	GOBIN=$(LOCALBIN) go install cmd/generator/task/task-register.go
+init-generator: ## Install generator tools
+	go install cmd/generator/task/task-register.go

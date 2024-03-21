@@ -23,11 +23,11 @@ func CreateTenant() *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: fCreateTenant,
 			Tasks: []tasktypes.TaskName{
-				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
-				tCreateTenant,
-				tCreateUsersByCredentials,
+				tCheckTenantTask,
+				tCheckPoolAndConfigTask,
+				tCreateResourcePoolAndConfigTask,
+				tCreateTenantTaskWithClear,
+				tCreateUserWithCredentialSecrets,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
@@ -41,7 +41,7 @@ func MaintainWhiteList() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainWhiteList,
-			Tasks:        []tasktypes.TaskName{tMaintainWhiteList},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyWhiteList},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -51,7 +51,7 @@ func MaintainCharset() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainCharset,
-			Tasks:        []tasktypes.TaskName{tMaintainCharset},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyCharset},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -61,7 +61,7 @@ func MaintainUnitNum() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainUnitNum,
-			Tasks:        []tasktypes.TaskName{tMaintainUnitNum},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyUnitNum},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -71,7 +71,7 @@ func MaintainLocality() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainLocality,
-			Tasks:        []tasktypes.TaskName{tMaintainLocality},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyLocality},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -81,7 +81,7 @@ func MaintainPrimaryZone() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainPrimaryZone,
-			Tasks:        []tasktypes.TaskName{tMaintainPrimaryZone},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyPrimaryZone},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -91,7 +91,7 @@ func AddPool() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAddPool,
-			Tasks:        []tasktypes.TaskName{tCheckPoolAndUnitConfig, tAddResourcePool},
+			Tasks:        []tasktypes.TaskName{tCheckPoolAndConfigTask, tAddPoolTask},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.RetryFromCurrent,
@@ -104,7 +104,7 @@ func DeletePool() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeletePool,
-			Tasks:        []tasktypes.TaskName{tDeleteResourcePool},
+			Tasks:        []tasktypes.TaskName{tDeletePoolTask},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -114,7 +114,7 @@ func MaintainUnitConfig() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainUnitConfig,
-			Tasks:        []tasktypes.TaskName{tMaintainUnitConfig},
+			Tasks:        []tasktypes.TaskName{tMaintainUnitConfigTask},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
@@ -124,7 +124,7 @@ func DeleteTenant() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeleteTenant,
-			Tasks:        []tasktypes.TaskName{tDeleteTenant},
+			Tasks:        []tasktypes.TaskName{tDeleteTenantTask},
 			TargetStatus: tenantstatus.FinalizerFinished,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: tenantstatus.DeletingTenant,
@@ -138,13 +138,13 @@ func RestoreTenant() *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: fRestoreTenant,
 			Tasks: []tasktypes.TaskName{
-				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
-				tCreateRestoreJobCR,
+				tCheckTenantTask,
+				tCheckPoolAndConfigTask,
+				tCreateResourcePoolAndConfigTask,
+				tCreateTenantRestoreJobCR,
 				tWatchRestoreJobToFinish,
-				tMaintainWhiteList,
-				tCreateUsersByCredentials,
+				tCheckAndApplyWhiteList,
+				tCreateUserWithCredentialSecrets,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
@@ -154,29 +154,29 @@ func RestoreTenant() *tasktypes.TaskFlow {
 	}
 }
 
-func CancelRestoreJob() *tasktypes.TaskFlow {
+func FlowCancelRestore() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fCancelRestoreFlow,
 			Tasks: []tasktypes.TaskName{
-				tCancelRestoreJob,
+				tCancelTenantRestoreJob,
 			},
 			TargetStatus: tenantstatus.RestoreCanceled,
 		},
 	}
 }
 
-func CreateEmptyStandbyTenant() *tasktypes.TaskFlow {
+func FlowCreateEmptyStandbyTenant() *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fCreateEmptyStandbyTenant,
 			Tasks: []tasktypes.TaskName{
 				tCheckPrimaryTenantLSIntegrity,
-				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
+				tCheckTenantTask,
+				tCheckPoolAndConfigTask,
+				tCreateResourcePoolAndConfigTask,
 				tCreateEmptyStandbyTenant,
-				tMaintainWhiteList,
+				tCheckAndApplyWhiteList,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{

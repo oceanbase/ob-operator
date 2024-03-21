@@ -32,7 +32,6 @@ import (
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -131,11 +130,7 @@ func (m *OBTenantBackupManager) UpdateStatus() error {
 }
 
 func (m *OBTenantBackupManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	if name == tCreateBackupJobInDB {
-		return m.CreateBackupJobInOB, nil
-	}
-
-	return nil, nil
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBTenantBackupManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
@@ -144,14 +139,13 @@ func (m *OBTenantBackupManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	if m.Resource.Status.Status == constants.BackupJobStatusInitializing {
 		switch m.Resource.Spec.Type {
 		case constants.BackupJobTypeFull, constants.BackupJobTypeIncr:
-			taskFlow, err = task.GetRegistry().Get(fCreateBackupJobInDB)
+			taskFlow = CreateBackupJobInDB()
 		}
 	}
-	return taskFlow, err
+	return taskFlow, nil
 }
 
 func (m *OBTenantBackupManager) PrintErrEvent(err error) {
@@ -163,38 +157,6 @@ func (m *OBTenantBackupManager) ArchiveResource() {
 	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant backup job")
 	m.Resource.Status.Status = "Failed"
 	m.Resource.Status.OperationContext = nil
-}
-
-func (m *OBTenantBackupManager) CreateBackupJobInOB() tasktypes.TaskError {
-	job := m.Resource
-	con, err := m.getObOperationClient()
-	if err != nil {
-		m.Logger.Error(err, "failed to get ob operation client")
-		return err
-	}
-	if job.Spec.EncryptionSecret != "" {
-		password, err := resourceutils.ReadPassword(m.Client, job.Namespace, job.Spec.EncryptionSecret)
-		if err != nil {
-			m.Logger.Error(err, "failed to read backup encryption secret")
-			m.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
-		} else if password != "" {
-			err = con.SetBackupPassword(password)
-			if err != nil {
-				m.Logger.Error(err, "failed to set backup password")
-				m.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
-			}
-		}
-	}
-	_, err = con.CreateAndReturnBackupJob(job.Spec.Type)
-	if err != nil {
-		m.Logger.Error(err, "failed to create and return backup job")
-		m.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
-		return err
-	}
-
-	// job.Status.BackupJob = latest
-	m.Recorder.Event(job, "Create", "", "create backup job successfully")
-	return nil
 }
 
 func (m *OBTenantBackupManager) getObOperationClient() (*operation.OceanbaseOperationManager, error) {
