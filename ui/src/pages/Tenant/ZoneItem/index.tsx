@@ -1,6 +1,6 @@
 import InputNumber from '@/components/InputNumber';
 import { intl } from '@/utils/intl';
-import { Checkbox, Col, Form } from 'antd';
+import { Checkbox,Col,Form } from 'antd';
 
 interface ZoneItemProps {
   name: string;
@@ -8,8 +8,9 @@ interface ZoneItemProps {
   obZoneResource: any;
   checkBoxOnChange: (checked: boolean, name: string) => void;
   key: number;
-  formName?:string[]|string;
+  priorityName?:string[]|string;
   isEdit?:boolean;
+  checkedFormName?:string[]|string;
 }
 
 export default function ZoneItem({
@@ -19,7 +20,8 @@ export default function ZoneItem({
   obZoneResource,
   checkBoxOnChange,
   isEdit,
-  formName = ['pools', name, 'priority']
+  priorityName = ['pools', name, 'priority'],
+  checkedFormName
 }: ZoneItemProps) {
   return (
     <div
@@ -32,16 +34,26 @@ export default function ZoneItem({
       }}
     >
       <span style={{ marginRight: 8 }}>{name}</span>
-      <Checkbox
-        checked={checked}
-        disabled={isEdit}
-        style={{ marginRight: 24 }}
-        onChange={(e) => checkBoxOnChange(e.target.checked, name)}
-      />
-
+      {checkedFormName ? (
+        <Form.Item noStyle name={checkedFormName}>
+          <Checkbox
+            checked={checked}
+            disabled={isEdit}
+            style={{ marginRight: 24 }}
+            onChange={(e) => checkBoxOnChange(e.target.checked, name)}
+          />
+        </Form.Item>
+      ) : (
+        <Checkbox
+          checked={checked}
+          disabled={isEdit}
+          style={{ marginRight: 24 }}
+          onChange={(e) => checkBoxOnChange(e.target.checked, name)}
+        />
+      )}
       <Col span={4}>
         <Form.Item
-          name={formName}
+          name={priorityName}
           label={intl.formatMessage({
             id: 'Dashboard.Tenant.New.ResourcePools.Weight',
             defaultMessage: '权重',

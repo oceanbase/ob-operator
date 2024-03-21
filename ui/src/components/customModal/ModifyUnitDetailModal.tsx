@@ -298,7 +298,7 @@ export default function ModifyUnitDetailModal({
                     key={index}
                     name={item.zone}
                     isEdit={Boolean(editZone)}
-                    formName={[item.zone, 'priority']}
+                    priorityName={[item.zone, 'priority']}
                     checked={item.checked!}
                     obZoneResource={
                       essentialParameter.obZoneResourceMap[item.zone]

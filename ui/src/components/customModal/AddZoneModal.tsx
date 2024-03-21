@@ -1,9 +1,10 @@
 import { intl } from '@/utils/intl';
-import { Form, Input, InputNumber, message } from 'antd';
+import { Form, Input, message } from 'antd';
 
 import { RULER_ZONE } from '@/constants/rules';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { addObzone } from '@/services';
+import InputNumber from '../InputNumber';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 import NodeSelector from '../NodeSelector';
@@ -26,7 +27,10 @@ export default function AddZoneModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => setVisible(false);
+  const handleCancel = () =>{
+    form.resetFields();
+    setVisible(false);
+  } 
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
     const res = await addObzone({ namespace, name, ...values });
@@ -55,6 +59,7 @@ export default function AddZoneModal({
         form={form}
         name="dynamic_form_nest_item"
         onFinish={onFinish}
+        initialValues={{ replicas: 1 }}
         style={{ maxWidth: 600 }}
         autoComplete="off"
       >

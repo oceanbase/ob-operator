@@ -28,22 +28,23 @@ export default function BasicInfo({
       id: 'Dashboard.Detail.Overview.BasicInfo.TenantRole',
       defaultMessage: '租户角色',
     }),
-    unitNumber: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.BasicInfo.NumberOfUnits',
-      defaultMessage: 'unit 数量',
+    charset: intl.formatMessage({
+      id: 'Dashboard.Detail.Overview.BasicInfo.CharacterSet',
+      defaultMessage: '字符集',
     }),
     status: intl.formatMessage({
       id: 'Dashboard.Detail.Overview.BasicInfo.Status',
       defaultMessage: '状态',
     }),
+    unitNumber: intl.formatMessage({
+      id: 'Dashboard.Detail.Overview.BasicInfo.NumberOfUnits',
+      defaultMessage: 'unit 数量',
+    }),
     locality: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.BasicInfo.Priority',
-      defaultMessage: '优先级',
+      id: 'Dashboard.Detail.Overview.BasicInfo.ReplicaDistribution',
+      defaultMessage: '副本分布',
     }),
-    charset: intl.formatMessage({
-      id: 'Dashboard.Detail.Overview.BasicInfo.CharacterSet',
-      defaultMessage: '字符集',
-    }),
+    primaryZone: 'PrimaryZone',
   };
   const SourceConfig = {
     primaryTenant: intl.formatMessage({
