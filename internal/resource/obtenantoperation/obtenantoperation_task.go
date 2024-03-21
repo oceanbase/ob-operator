@@ -23,7 +23,6 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	obtenantresource "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -132,7 +131,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() tasktypes.Ta
 	// Hack:
 	tenantManager.OBTenant.ObjectMeta.SetNamespace(m.Resource.Namespace)
 	// Just reuse the logic of creating users for new coming tenant
-	_ = obtenant.CreateUserWithCredentials(tenantManager)
+	_ = obtenantresource.CreateUserWithCredentials(tenantManager)
 	return nil
 }
 
@@ -240,7 +239,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskErr
 			Logger:   m.Logger,
 			OBTenant: originStandby,
 		}
-		err = obtenant.CreateUserWithCredentials(tenantManager)
+		err = obtenantresource.CreateUserWithCredentials(tenantManager)
 		if err != nil {
 			return err
 		}

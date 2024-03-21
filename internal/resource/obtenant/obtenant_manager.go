@@ -225,50 +225,6 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBTenantManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	// switch name {
-	// case tCheckTenant:
-	// 	return m.CheckTenantTask, nil
-	// case tCheckPoolAndUnitConfig:
-	// 	return m.CheckPoolAndConfigTask, nil
-	// case tCreateTenant:
-	// 	return m.CreateTenantTaskWithClear, nil
-	// case tCreateResourcePoolAndUnitConfig:
-	// 	return m.CreateResourcePoolAndConfigTask, nil
-	// case tMaintainCharset:
-	// 	return m.CheckAndApplyCharset, nil
-	// case tMaintainUnitNum:
-	// 	return m.CheckAndApplyUnitNum, nil
-	// case tMaintainWhiteList:
-	// 	return m.CheckAndApplyWhiteList, nil
-	// case tMaintainPrimaryZone:
-	// 	return m.CheckAndApplyPrimaryZone, nil
-	// case tMaintainLocality:
-	// 	return m.CheckAndApplyLocality, nil
-	// case tAddResourcePool:
-	// 	return m.AddPoolTask, nil
-	// case tDeleteResourcePool:
-	// 	return m.DeletePoolTask, nil
-	// case tMaintainUnitConfig:
-	// 	return m.MaintainUnitConfigTask, nil
-	// case tDeleteTenant:
-	// 	return m.DeleteTenantTask, nil
-	// case tCreateEmptyStandbyTenant:
-	// 	return m.CreateEmptyStandbyTenant, nil
-	// case tCreateUsersByCredentials:
-	// 	return m.CreateUserWithCredentialSecrets, nil
-	// case tCheckPrimaryTenantLSIntegrity:
-	// 	return m.CheckPrimaryTenantLSIntegrity, nil
-	// case tCreateRestoreJobCR:
-	// 	return m.CreateTenantRestoreJobCR, nil
-	// case tWatchRestoreJobToFinish:
-	// 	return m.WatchRestoreJobToFinish, nil
-	// case tCancelRestoreJob:
-	// 	return m.CancelTenantRestoreJob, nil
-	// case tUpgradeTenantIfNeeded:
-	// 	return m.UpgradeTenantIfNeeded, nil
-	// default:
-	// 	return nil, errors.Errorf("Can not find an function for task %s", name)
-	// }
 	return taskMap.GetTask(name, m)
 }
 

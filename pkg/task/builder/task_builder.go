@@ -18,31 +18,63 @@ import (
 	tt "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type TypedTask[T any] func(T) tt.TaskError
-type TaskMap[T any] map[tt.TaskName]TypedTask[T]
+type TypedTaskFunc[T any] func(T) tt.TaskError
 
-func NewTaskMap[T any]() TaskMap[T] {
-	return make(map[tt.TaskName]TypedTask[T])
+type NamedTask[T any] struct {
+	taskName tt.TaskName
+	fn       TypedTaskFunc[T]
 }
 
-func (t TaskMap[T]) Register(name tt.TaskName, task TypedTask[T]) {
-	t[name] = task
+func (t NamedTask[T]) Name() tt.TaskName {
+	return t.taskName
 }
 
-func (t TaskMap[T]) GetTask(name tt.TaskName, resource T) (tt.TaskFunc, error) {
-	task, ok := t[name]
-	if !ok {
-		return nil, errors.New("Task not found: " + string(name))
+func (t NamedTask[T]) Run(resource T) tt.TaskError {
+	return t.fn(resource)
+}
+
+func (t NamedTask[T]) Func() TypedTaskFunc[T] {
+	return t.fn
+}
+
+type TaskHub[T any] interface {
+	Register(tt.TaskName, TypedTaskFunc[T])
+	GetTask(tt.TaskName, T) (tt.TaskFunc, error)
+	GetTypedTask(tt.TaskName) (TypedTaskFunc[T], error)
+	Build(tt.TaskName, TypedTaskFunc[T]) NamedTask[T]
+}
+
+type taskMap[T any] struct {
+	m map[tt.TaskName]TypedTaskFunc[T]
+}
+
+func NewTaskHub[T any]() TaskHub[T] {
+	return &taskMap[T]{m: make(map[tt.TaskName]TypedTaskFunc[T])}
+}
+
+func (t *taskMap[T]) Build(name tt.TaskName, taskFunc TypedTaskFunc[T]) NamedTask[T] {
+	t.Register(name, taskFunc)
+	return NamedTask[T]{taskName: name, fn: taskFunc}
+}
+
+func (t taskMap[T]) Register(name tt.TaskName, taskFunc TypedTaskFunc[T]) {
+	t.m[name] = taskFunc
+}
+
+func (t taskMap[T]) GetTask(name tt.TaskName, resource T) (tt.TaskFunc, error) {
+	task, err := t.GetTypedTask(name)
+	if err != nil {
+		return nil, err
 	}
 	return func() tt.TaskError {
 		return task(resource)
 	}, nil
 }
 
-func (t TaskMap[T]) Run(name tt.TaskName, resource T) tt.TaskError {
-	task, err := t.GetTask(name, resource)
-	if err != nil {
-		return err
+func (t taskMap[T]) GetTypedTask(name tt.TaskName) (TypedTaskFunc[T], error) {
+	task, ok := t.m[name]
+	if !ok {
+		return nil, errors.New("Task not found: " + string(name))
 	}
-	return task()
+	return task, nil
 }

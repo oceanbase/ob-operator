@@ -13,33 +13,12 @@ See the Mulan PSL v2 for more details.
 package builder
 
 import (
-	"errors"
-
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type FlowGenerator[T any] func(T) *tasktypes.TaskFlow
-type FlowMap[T any] map[tasktypes.FlowName]FlowGenerator[T]
-
-func NewFlowMap[T any]() FlowMap[T] {
-	return make(map[tasktypes.FlowName]FlowGenerator[T])
-}
-
-func (f FlowMap[T]) RegisterFlow(name tasktypes.FlowName, flow FlowGenerator[T]) {
-	f[name] = flow
-}
-
-func (f FlowMap[T]) GetFlow(name tasktypes.FlowName, resource T) (*tasktypes.TaskFlow, error) {
-	gen, ok := f[name]
-	if !ok {
-		return nil, errors.New("TaskFlow not found: " + string(name))
-	}
-	return gen(resource), nil
-}
-
 type FlowBuilder interface {
-	Build() *tasktypes.TaskFlow
+	BuildFlow() *tasktypes.TaskFlow
 	Step(task tasktypes.TaskName) FlowBuilder
 	Steps(tasks ...tasktypes.TaskName) FlowBuilder
 	To(status string) FlowBuilder
@@ -61,7 +40,7 @@ func NewFlowBuilder(name tasktypes.FlowName) FlowBuilder {
 	}
 }
 
-func (b *flowBuilder) Build() *tasktypes.TaskFlow {
+func (b *flowBuilder) BuildFlow() *tasktypes.TaskFlow {
 	if b.operationContext.TargetStatus == "" {
 		b.operationContext.TargetStatus = "running"
 	}
@@ -107,4 +86,64 @@ func (b *flowBuilder) MaxRetry(max int) FlowBuilder {
 func (b *flowBuilder) Steps(tasks ...tasktypes.TaskName) FlowBuilder {
 	b.operationContext.Tasks = append(b.operationContext.Tasks, tasks...)
 	return b
+}
+
+// FlowGenerator generate a flow for a given type
+type FlowGenerator[T any] func(T) *tasktypes.TaskFlow
+
+// FlowGeneratorBuilder build a flow generator with a given type
+type FlowGeneratorBuilder[T any] interface {
+	FlowBuilder
+
+	BuildGenerator() FlowGenerator[T]
+	NamedTaskStep(named NamedTask[T]) FlowGeneratorBuilder[T]
+	NamedTaskSteps(named ...NamedTask[T]) FlowGeneratorBuilder[T]
+	GenFunc(gen func(T) *tasktypes.TaskFlow) FlowGeneratorBuilder[T]
+}
+
+type flowGeneratorBuilder[T any] struct {
+	*flowBuilder
+	gen func(T) *tasktypes.TaskFlow
+}
+
+// BuildGenerator build a generator function for the flow
+func (b *flowGeneratorBuilder[T]) BuildGenerator() FlowGenerator[T] {
+	if b.gen != nil {
+		return b.gen
+	}
+	return func(T) *tasktypes.TaskFlow {
+		return b.BuildFlow()
+	}
+}
+
+// NamedTaskStep add a named task to the flow
+func (b *flowGeneratorBuilder[T]) NamedTaskStep(named NamedTask[T]) FlowGeneratorBuilder[T] {
+	b.Step(named.Name())
+	return b
+}
+
+// NamedTaskSteps add named tasks to the flow
+func (b *flowGeneratorBuilder[T]) NamedTaskSteps(named ...NamedTask[T]) FlowGeneratorBuilder[T] {
+	for _, n := range named {
+		b.Step(n.Name())
+	}
+	return b
+}
+
+// GenFunc set the generator function for the flow
+func (b *flowGeneratorBuilder[T]) GenFunc(gen func(T) *tasktypes.TaskFlow) FlowGeneratorBuilder[T] {
+	b.gen = gen
+	return b
+}
+
+// NewFlowGenerator create a new flow generator builder
+func NewFlowGenerator[T any](name tasktypes.FlowName) FlowGeneratorBuilder[T] {
+	return &flowGeneratorBuilder[T]{
+		flowBuilder: &flowBuilder{
+			operationContext: &tasktypes.OperationContext{
+				Name:  name,
+				Tasks: []tasktypes.TaskName{},
+			},
+		},
+	}
 }

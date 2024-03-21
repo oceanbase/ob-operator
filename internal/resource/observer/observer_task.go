@@ -486,6 +486,7 @@ outer:
 	}
 	return errors.Errorf("Timeout to wait for pvc expanded")
 }
+
 func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeService {
@@ -523,10 +524,10 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 	return nil
 }
 
-func MountBackupVolume(m *OBServerManager) tasktypes.TaskError {
+func MountBackupVolume(_ *OBServerManager) tasktypes.TaskError {
 	return nil
 }
 
-func WaitForBackupVolumeMounted(m *OBServerManager) tasktypes.TaskError {
+func WaitForBackupVolumeMounted(_ *OBServerManager) tasktypes.TaskError {
 	return nil
 }
