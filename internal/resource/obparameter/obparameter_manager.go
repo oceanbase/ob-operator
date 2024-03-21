@@ -35,8 +35,9 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &OBParameterManager{}
+
 type OBParameterManager struct {
-	opresource.ResourceManager
 	Ctx         context.Context
 	OBParameter *v1alpha1.OBParameter
 	Client      client.Client

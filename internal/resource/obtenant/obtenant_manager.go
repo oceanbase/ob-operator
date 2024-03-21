@@ -42,8 +42,9 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &OBTenantManager{}
+
 type OBTenantManager struct {
-	opresource.ResourceManager
 	OBTenant *v1alpha1.OBTenant
 	Ctx      context.Context
 	Client   client.Client

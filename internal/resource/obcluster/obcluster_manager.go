@@ -32,8 +32,9 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &OBClusterManager{}
+
 type OBClusterManager struct {
-	opresource.ResourceManager
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client

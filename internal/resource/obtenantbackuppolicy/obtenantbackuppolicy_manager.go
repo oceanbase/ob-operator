@@ -40,8 +40,9 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &ObTenantBackupPolicyManager{}
+
 type ObTenantBackupPolicyManager struct {
-	opresource.ResourceManager
 	Ctx          context.Context
 	BackupPolicy *v1alpha1.OBTenantBackupPolicy
 	Client       client.Client
