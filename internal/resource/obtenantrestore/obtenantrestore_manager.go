@@ -16,7 +16,6 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -25,19 +24,20 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type ObTenantRestoreManager struct {
-	opresource.ResourceManager
+var _ opresource.ResourceManager = &ObTenantRestoreManager{}
 
+type ObTenantRestoreManager struct {
 	Ctx      context.Context
 	Resource *v1alpha1.OBTenantRestore
 	Client   client.Client
@@ -47,7 +47,7 @@ type ObTenantRestoreManager struct {
 	con *operation.OceanbaseOperationManager
 }
 
-func (m ObTenantRestoreManager) IsNewResource() bool {
+func (m *ObTenantRestoreManager) IsNewResource() bool {
 	return m.Resource.Status.Status == ""
 }
 
@@ -55,33 +55,34 @@ func (m *ObTenantRestoreManager) GetStatus() string {
 	return string(m.Resource.Status.Status)
 }
 
-func (m ObTenantRestoreManager) IsDeleting() bool {
-	return m.Resource.GetDeletionTimestamp() != nil
+func (m *ObTenantRestoreManager) IsDeleting() bool {
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.Resource.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
-func (m ObTenantRestoreManager) CheckAndUpdateFinalizers() error {
+func (m *ObTenantRestoreManager) CheckAndUpdateFinalizers() error {
 	return nil
 }
 
-func (m ObTenantRestoreManager) InitStatus() {
+func (m *ObTenantRestoreManager) InitStatus() {
 	m.Resource.Status.Status = constants.RestoreJobStarting
 }
 
-func (m ObTenantRestoreManager) SetOperationContext(c *tasktypes.OperationContext) {
+func (m *ObTenantRestoreManager) SetOperationContext(c *tasktypes.OperationContext) {
 	m.Resource.Status.OperationContext = c
 }
 
-func (m ObTenantRestoreManager) ClearTaskInfo() {
+func (m *ObTenantRestoreManager) ClearTaskInfo() {
 	m.Resource.Status.Status = constants.RestoreJobRunning
 	m.Resource.Status.OperationContext = nil
 }
 
-func (m ObTenantRestoreManager) FinishTask() {
+func (m *ObTenantRestoreManager) FinishTask() {
 	m.Resource.Status.Status = apitypes.RestoreJobStatus(m.Resource.Status.OperationContext.TargetStatus)
 	m.Resource.Status.OperationContext = nil
 }
 
-func (m ObTenantRestoreManager) HandleFailure() {
+func (m *ObTenantRestoreManager) HandleFailure() {
 	if m.IsDeleting() {
 		m.Resource.Status.OperationContext = nil
 	} else {
@@ -162,7 +163,7 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 	return nil
 }
 
-func (m ObTenantRestoreManager) UpdateStatus() error {
+func (m *ObTenantRestoreManager) UpdateStatus() error {
 	var err error
 	if m.Resource.Status.Status == constants.RestoreJobRunning {
 		err = m.checkRestoreProgress()
@@ -173,34 +174,24 @@ func (m ObTenantRestoreManager) UpdateStatus() error {
 	return m.retryUpdateStatus()
 }
 
-func (m ObTenantRestoreManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tStartRestoreJob:
-		return m.StartRestoreJobInOB, nil
-	case tStartLogReplay:
-		return m.StartLogReplay, nil
-	case tActivateStandby:
-		return m.ActivateStandby, nil
-	default:
-		return nil, errors.New("Task name not registered")
-	}
+func (m *ObTenantRestoreManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
+	return taskMap.GetTask(name, m)
 }
 
-func (m ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
+func (m *ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.Resource.Status.OperationContext != nil {
 		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	status := m.Resource.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.RestoreJobStarting:
-		taskFlow, err = task.GetRegistry().Get(fStartRestoreFlow)
+		taskFlow = genStartRestoreJobFlow(m)
 	case constants.RestoreJobStatusActivating:
-		taskFlow, err = task.GetRegistry().Get(fRestoreAsPrimaryFlow)
+		taskFlow = genRestoreAsPrimaryFlow(m)
 	case constants.RestoreJobStatusReplaying:
-		taskFlow, err = task.GetRegistry().Get(fRestoreAsStandbyFlow)
+		taskFlow = genRestoreAsStandbyFlow(m)
 	case constants.RestoreJobRunning:
 		fallthrough
 	case constants.RestoreJobCanceled:
@@ -213,10 +204,6 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		return nil, nil
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
 		taskFlow.OperationContext.OnFailure.Strategy = strategy.StartOver
 		if taskFlow.OperationContext.OnFailure.NextTryStatus == "" {
@@ -227,7 +214,7 @@ func (m ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	return taskFlow, nil
 }
 
-func (m ObTenantRestoreManager) PrintErrEvent(err error) {
+func (m *ObTenantRestoreManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 

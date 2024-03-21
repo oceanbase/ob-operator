@@ -27,18 +27,18 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-type ObTenantOperationManager struct {
-	opresource.ResourceManager
+var _ opresource.ResourceManager = &ObTenantOperationManager{}
 
+type ObTenantOperationManager struct {
 	Ctx      context.Context
 	Resource *v1alpha1.OBTenantOperation
 	Client   client.Client
@@ -57,7 +57,8 @@ func (m *ObTenantOperationManager) GetStatus() string {
 }
 
 func (m *ObTenantOperationManager) IsDeleting() bool {
-	return m.Resource.GetDeletionTimestamp() != nil
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.Resource.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantOperationManager) CheckAndUpdateFinalizers() error {
@@ -175,24 +176,7 @@ func (m *ObTenantOperationManager) ArchiveResource() {
 }
 
 func (m *ObTenantOperationManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tOpChangeTenantRootPassword:
-		return m.ChangeTenantRootPassword, nil
-	case tOpActivateStandby:
-		return m.ActivateStandbyTenant, nil
-	case tOpCreateUsersForActivatedStandby:
-		return m.CreateUsersForActivatedStandby, nil
-	case tOpSwitchTenantsRole:
-		return m.SwitchTenantsRole, nil
-	case tOpSetTenantLogRestoreSource:
-		return m.SetTenantLogRestoreSource, nil
-	case tOpUpgradeTenant:
-		return m.UpgradeTenant, nil
-	case tOpReplayLog:
-		return m.ReplayLogOfStandby, nil
-	default:
-		return nil, errors.New("Task name not registered")
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
@@ -204,24 +188,24 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	status := m.Resource.Status.Status
 	switch status {
 	case constants.TenantOpStarting:
-		// taskFlow, err = task.GetRegistry().Get(flow.CheckTenantCRExistenceFlow)
+		// taskFlow = low.CheckTenantCRExistenceFlow()
 	case constants.TenantOpRunning:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpChangePwd:
-			taskFlow, err = task.GetRegistry().Get(fChangeTenantRootPasswordFlow)
+			taskFlow = genChangeTenantRootPasswordFlow(m)
 		case constants.TenantOpFailover:
-			taskFlow, err = task.GetRegistry().Get(fActivateStandbyTenantFlow)
+			taskFlow = genActivateStandbyTenantOpFlow(m)
 		case constants.TenantOpSwitchover:
-			taskFlow, err = task.GetRegistry().Get(fSwitchoverTenantsFlow)
+			taskFlow = genSwitchoverTenantsFlow(m)
 		case constants.TenantOpUpgrade:
-			taskFlow, err = task.GetRegistry().Get(fOpUpgradeTenant)
+			taskFlow = genUpgradeTenantFlow(m)
 		case constants.TenantOpReplayLog:
-			taskFlow, err = task.GetRegistry().Get(fOpReplayLog)
+			taskFlow = genReplayLogOfStandbyFlow(m)
 		}
 	case constants.TenantOpReverting:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpSwitchover:
-			taskFlow, err = task.GetRegistry().Get(fRevertSwitchoverTenantsFlow)
+			taskFlow = genRevertSwitchoverTenantsFlow(m)
 		default:
 			err = errors.New("unsupported operation type")
 		}

@@ -24,18 +24,17 @@ import (
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
-	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &OBClusterManager{}
+
 type OBClusterManager struct {
-	opresource.ResourceManager
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
@@ -81,40 +80,35 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	// newly created cluster
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.MigrateFromExisting:
-		taskFlow, err = task.GetRegistry().Get(fMigrateOBClusterFromExisting)
+		taskFlow = genMigrateOBClusterFromExistingFlow(m)
 	case clusterstatus.New:
-		taskFlow, err = task.GetRegistry().Get(fBootstrapOBCluster)
+		taskFlow = genBootstrapOBClusterFlow(m)
 	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
-		taskFlow, err = task.GetRegistry().Get(fMaintainOBClusterAfterBootstrap)
+		taskFlow = genMaintainOBClusterAfterBootstrapFlow(m)
 	case clusterstatus.AddOBZone:
-		taskFlow, err = task.GetRegistry().Get(fAddOBZone)
+		taskFlow = genAddOBZoneFlow(m)
 	case clusterstatus.DeleteOBZone:
-		taskFlow, err = task.GetRegistry().Get(fDeleteOBZone)
+		taskFlow = genDeleteOBZoneFlow(m)
 	case clusterstatus.ModifyOBZoneReplica:
-		taskFlow, err = task.GetRegistry().Get(fModifyOBZoneReplica)
+		taskFlow = genModifyOBZoneReplicaFlow(m)
 	case clusterstatus.Upgrade:
-		taskFlow, err = task.GetRegistry().Get(fUpgradeOBCluster)
+		taskFlow = genUpgradeOBClusterFlow(m)
 	case clusterstatus.ModifyOBParameter:
-		taskFlow, err = task.GetRegistry().Get(fMaintainOBParameter)
+		taskFlow = genMaintainOBParameterFlow(m)
 	case clusterstatus.ScaleUp:
-		taskFlow, err = task.GetRegistry().Get(fScaleUpOBZones)
+		taskFlow = genScaleUpOBZonesFlow(m)
 	case clusterstatus.ExpandPVC:
-		taskFlow, err = task.GetRegistry().Get(fExpandPVC)
+		taskFlow = genExpandPVCFlow(m)
 	case clusterstatus.MountBackupVolume:
-		taskFlow, err = task.GetRegistry().Get(fMountBackupVolume)
+		taskFlow = genMountBackupVolumeFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
@@ -124,11 +118,12 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		}
 	}
 
-	return taskFlow, err
+	return taskFlow, nil
 }
 
 func (m *OBClusterManager) IsDeleting() bool {
-	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
@@ -283,64 +278,7 @@ func (m *OBClusterManager) HandleFailure() {
 }
 
 func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tCheckMigration:
-		return m.CheckMigration, nil
-	case tCheckImageReady:
-		return m.CheckImageReady, nil
-	case tCheckClusterMode:
-		return m.CheckClusterMode, nil
-	case tCheckAndCreateUserSecrets:
-		return m.CheckAndCreateUserSecrets, nil
-	case tCreateOBZone:
-		return m.CreateOBZone, nil
-	case tDeleteOBZone:
-		return m.DeleteOBZone, nil
-	case tModifyOBZoneReplica:
-		return m.ModifyOBZoneReplica, nil
-	case tWaitOBZoneTopologyMatch:
-		return m.WaitOBZoneTopologyMatch, nil
-	case tWaitOBZoneBootstrapReady:
-		return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitOBZoneRunning:
-		return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tWaitOBZoneDeleted:
-		return m.WaitOBZoneDeleted, nil
-	case tBootstrap:
-		return m.Bootstrap, nil
-	case tCreateUsers:
-		return m.CreateUsers, nil
-	case tCreateOBClusterService:
-		return m.CreateServices, nil
-	case tMaintainOBParameter:
-		return m.MaintainOBParameter, nil
-	case tValidateUpgradeInfo:
-		return m.ValidateUpgradeInfo, nil
-	case tUpgradeCheck:
-		return m.UpgradeCheck, nil
-	case tBackupEssentialParameters:
-		return m.BackupEssentialParameters, nil
-	case tBeginUpgrade:
-		return m.BeginUpgrade, nil
-	case tRollingUpgradeByZone:
-		return m.RollingUpgradeByZone, nil
-	case tFinishUpgrade:
-		return m.FinishUpgrade, nil
-	case tRestoreEssentialParameters:
-		return m.RestoreEssentialParameters, nil
-	case tCreateServiceForMonitor:
-		return m.CreateServiceForMonitor, nil
-	case tModifySysTenantReplica:
-		return m.ModifySysTenantReplica, nil
-	case tScaleUpOBZones:
-		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tExpandPVC:
-		return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout), nil
-	case tMountBackupVolume:
-		return m.rollingUpdateZones(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout), nil
-	default:
-		return nil, errors.New("Can not find a function for task")
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBClusterManager) PrintErrEvent(err error) {

@@ -14,7 +14,6 @@ package observer
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -25,20 +24,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
-	secretconst "github.com/oceanbase/ob-operator/internal/const/secret"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	observerstatus "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/server"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
+	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func (m *OBServerManager) WaitOBServerReady() tasktypes.TaskError {
+//go:generate task-register $GOFILE
+
+var taskMap = builder.NewTaskHub[*OBServerManager]()
+
+func WaitOBServerReady(m *OBServerManager) tasktypes.TaskError {
 	for i := 0; i < podconst.ReadyTimeoutSeconds; i++ {
 		observer, err := m.getOBServer()
 		if err != nil {
@@ -53,15 +53,7 @@ func (m *OBServerManager) WaitOBServerReady() tasktypes.TaskError {
 	return errors.New("Timeout to wait pod ready")
 }
 
-func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	obcluster, err := m.getOBCluster()
-	if err != nil {
-		return nil, errors.Wrap(err, "Get obcluster from K8s")
-	}
-	return resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
-}
-
-func (m *OBServerManager) AddServer() tasktypes.TaskError {
+func AddServer(m *OBServerManager) tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeStandalone {
 		m.Recorder.Event(m.OBServer, "SkipAddServer", "AddServer", "Skip add server in standalone mode")
@@ -89,7 +81,7 @@ func (m *OBServerManager) AddServer() tasktypes.TaskError {
 	return oceanbaseOperationManager.AddServer(serverInfo)
 }
 
-func (m *OBServerManager) WaitOBClusterBootstrapped() tasktypes.TaskError {
+func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
 	for i := 0; i < oceanbaseconst.BootstrapTimeoutSeconds; i++ {
 		obcluster, err := m.getOBCluster()
 		if err != nil {
@@ -104,20 +96,7 @@ func (m *OBServerManager) WaitOBClusterBootstrapped() tasktypes.TaskError {
 	return errors.New("Timeout to wait obcluster bootstrapped")
 }
 
-func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
-	annotations := make(map[string]string)
-	switch m.OBServer.Status.CNI {
-	case oceanbaseconst.CNICalico:
-		if m.OBServer.Status.PodIp != "" {
-			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
-		}
-	default:
-		m.Logger.Info("static ip not supported, set empty annotation")
-	}
-	return annotations
-}
-
-func (m *OBServerManager) CreateOBPod() tasktypes.TaskError {
+func CreateOBPod(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("create observer pod")
 	obcluster, err := m.getOBCluster()
 	if err != nil {
@@ -153,19 +132,7 @@ func (m *OBServerManager) CreateOBPod() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
-	pvcSpec := &corev1.PersistentVolumeClaimSpec{}
-	requestsResources := corev1.ResourceList{}
-	requestsResources["storage"] = storageSpec.Size
-	storageClassName := storageSpec.StorageClass
-	pvcSpec.StorageClassName = &(storageClassName)
-	accessModes := []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
-	pvcSpec.AccessModes = accessModes
-	pvcSpec.Resources.Requests = requestsResources
-	return *pvcSpec
-}
-
-func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
+func CreateOBPVC(m *OBServerManager) tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	if !sepVolumeAnnoExist || sepVolumeAnnoVal != "true" {
@@ -250,346 +217,7 @@ func (m *OBServerManager) CreateOBPVC() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.PodSpec {
-	containers := make([]corev1.Container, 0)
-	observerContainer := m.createOBServerContainer(obcluster)
-	containers = append(containers, observerContainer)
-
-	// TODO, add monitor container
-	volumes := make([]corev1.Volume, 0)
-
-	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	if singlePvcExist && singlePvcAnnoVal == "true" {
-		singleVolume := corev1.Volume{}
-		singleVolumeSource := &corev1.PersistentVolumeClaimVolumeSource{}
-		singleVolume.Name = m.OBServer.Name
-		singleVolumeSource.ClaimName = m.OBServer.Name
-		singleVolume.VolumeSource.PersistentVolumeClaim = singleVolumeSource
-
-		volumes = append(volumes, singleVolume)
-	} else {
-		volumeDataFile := corev1.Volume{}
-		volumeDataFileSource := &corev1.PersistentVolumeClaimVolumeSource{}
-		volumeDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
-		volumeDataFileSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
-		volumeDataFile.VolumeSource.PersistentVolumeClaim = volumeDataFileSource
-
-		volumeDataLog := corev1.Volume{}
-		volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-		volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
-		volumeDataLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-		volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
-
-		volumeLog := corev1.Volume{}
-		volumeLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
-		volumeLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
-		volumeLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
-		volumeLog.VolumeSource.PersistentVolumeClaim = volumeLogSource
-
-		volumes = append(volumes, volumeDataFile, volumeDataLog, volumeLog)
-	}
-
-	if m.OBServer.Spec.BackupVolume != nil {
-		volumes = append(volumes, *m.OBServer.Spec.BackupVolume.Volume)
-	}
-
-	if m.OBServer.Spec.MonitorTemplate != nil {
-		monitorContainer := m.createMonitorContainer(obcluster)
-		containers = append(containers, monitorContainer)
-	}
-
-	podSpec := corev1.PodSpec{
-		Volumes:            volumes,
-		Containers:         containers,
-		NodeSelector:       m.OBServer.Spec.NodeSelector,
-		Affinity:           m.OBServer.Spec.Affinity,
-		Tolerations:        m.OBServer.Spec.Tolerations,
-		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
-	}
-	return podSpec
-}
-
-func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) corev1.Container {
-	// port info
-	ports := make([]corev1.ContainerPort, 0)
-	httpPort := corev1.ContainerPort{}
-	httpPort.Name = obagentconst.HttpPortName
-	httpPort.ContainerPort = obagentconst.HttpPort
-	httpPort.Protocol = corev1.ProtocolTCP
-	pprofPort := corev1.ContainerPort{}
-	pprofPort.Name = obagentconst.PprofPortName
-	pprofPort.ContainerPort = obagentconst.PprofPort
-	pprofPort.Protocol = corev1.ProtocolTCP
-	ports = append(ports, httpPort)
-	ports = append(ports, pprofPort)
-
-	// resource info
-	monagentResource := corev1.ResourceList{}
-	monagentResource["memory"] = m.OBServer.Spec.MonitorTemplate.Resource.Memory
-	if !m.OBServer.Spec.MonitorTemplate.Resource.Cpu.IsZero() {
-		monagentResource["cpu"] = m.OBServer.Spec.MonitorTemplate.Resource.Cpu
-	}
-	resources := corev1.ResourceRequirements{
-		Limits: monagentResource,
-	}
-
-	readinessProbeHTTP := corev1.HTTPGetAction{}
-	readinessProbeHTTP.Port = intstr.FromInt(obagentconst.HttpPort)
-	readinessProbeHTTP.Path = obagentconst.StatUrl
-	readinessProbe := corev1.Probe{}
-	readinessProbe.ProbeHandler.HTTPGet = &readinessProbeHTTP
-	readinessProbe.PeriodSeconds = obagentconst.ProbeCheckPeriodSeconds
-	readinessProbe.InitialDelaySeconds = obagentconst.ProbeCheckDelaySeconds
-
-	env := make([]corev1.EnvVar, 0)
-	envOBModuleStatus := corev1.EnvVar{
-		Name:  obagentconst.EnvOBMonitorStatus,
-		Value: obagentconst.ActiveStatus,
-	}
-	envClusterName := corev1.EnvVar{
-		Name:  obagentconst.EnvClusterName,
-		Value: m.OBServer.Spec.ClusterName,
-	}
-	envClusterId := corev1.EnvVar{
-		Name:  obagentconst.EnvClusterId,
-		Value: fmt.Sprintf("%d", m.OBServer.Spec.ClusterId),
-	}
-	envZoneName := corev1.EnvVar{
-		Name:  obagentconst.EnvZoneName,
-		Value: m.OBServer.Spec.Zone,
-	}
-	envMonitorUser := corev1.EnvVar{
-		Name:  obagentconst.EnvMonitorUser,
-		Value: obagentconst.MonitorUser,
-	}
-	envMonitorPassword := corev1.EnvVar{
-		Name: obagentconst.EnvMonitorPASSWORD,
-		ValueFrom: &corev1.EnvVarSource{
-			SecretKeyRef: &corev1.SecretKeySelector{
-				LocalObjectReference: corev1.LocalObjectReference{
-					Name: obcluster.Spec.UserSecrets.Monitor,
-				},
-				Key: secretconst.PasswordKeyName,
-			},
-		},
-	}
-	env = append(env, envOBModuleStatus)
-	env = append(env, envClusterName)
-	env = append(env, envClusterId)
-	env = append(env, envZoneName)
-	env = append(env, envMonitorUser)
-	env = append(env, envMonitorPassword)
-
-	container := corev1.Container{
-		Name:            obagentconst.ContainerName,
-		Image:           m.OBServer.Spec.MonitorTemplate.Image,
-		ImagePullPolicy: "IfNotPresent",
-		Ports:           ports,
-		Resources:       resources,
-		ReadinessProbe:  &readinessProbe,
-		WorkingDir:      obagentconst.InstallPath,
-		Env:             env,
-	}
-	return container
-}
-
-// TODO move hardcoded values to another file
-func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster) corev1.Container {
-	// port info
-	ports := make([]corev1.ContainerPort, 0)
-	mysqlPort := corev1.ContainerPort{}
-	mysqlPort.Name = oceanbaseconst.SqlPortName
-	mysqlPort.ContainerPort = oceanbaseconst.SqlPort
-	mysqlPort.Protocol = corev1.ProtocolTCP
-	rpcPort := corev1.ContainerPort{}
-	rpcPort.Name = oceanbaseconst.RpcPortName
-	rpcPort.ContainerPort = oceanbaseconst.RpcPort
-	rpcPort.Protocol = corev1.ProtocolTCP
-	infoPort := corev1.ContainerPort{}
-	infoPort.Name = "info"
-	infoPort.ContainerPort = 8080
-	infoPort.Protocol = corev1.ProtocolTCP
-
-	ports = append(ports, mysqlPort)
-	ports = append(ports, rpcPort)
-	ports = append(ports, infoPort)
-
-	// resource info
-	observerResource := corev1.ResourceList{}
-	observerResource["memory"] = m.OBServer.Spec.OBServerTemplate.Resource.Memory
-	if !m.OBServer.Spec.OBServerTemplate.Resource.Cpu.IsZero() {
-		observerResource["cpu"] = m.OBServer.Spec.OBServerTemplate.Resource.Cpu
-	}
-	resources := corev1.ResourceRequirements{
-		Requests: observerResource,
-		Limits:   observerResource,
-	}
-
-	// volume mounts
-	volumeMountDataFile := corev1.VolumeMount{}
-	volumeMountDataFile.MountPath = oceanbaseconst.DataPath
-	volumeMountDataLog := corev1.VolumeMount{}
-	volumeMountDataLog.MountPath = oceanbaseconst.ClogPath
-	volumeMountLog := corev1.VolumeMount{}
-	volumeMountLog.MountPath = oceanbaseconst.LogPath
-
-	// set subpath
-	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	if singlePvcExist && singlePvcAnnoVal == "true" {
-		volumeMountDataFile.Name = m.OBServer.Name
-		volumeMountDataLog.Name = m.OBServer.Name
-		volumeMountLog.Name = m.OBServer.Name
-		volumeMountDataFile.SubPath = oceanbaseconst.DataVolumeSuffix
-		volumeMountDataLog.SubPath = oceanbaseconst.ClogVolumeSuffix
-		volumeMountLog.SubPath = oceanbaseconst.LogVolumeSuffix
-	} else {
-		volumeMountDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
-		volumeMountDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-		volumeMountLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
-	}
-
-	volumeMounts := make([]corev1.VolumeMount, 0)
-	volumeMounts = append(volumeMounts, volumeMountDataFile)
-	volumeMounts = append(volumeMounts, volumeMountDataLog)
-	volumeMounts = append(volumeMounts, volumeMountLog)
-
-	if m.OBServer.Spec.BackupVolume != nil {
-		volumeMountBackup := corev1.VolumeMount{}
-		volumeMountBackup.Name = fmt.Sprintf(m.OBServer.Spec.BackupVolume.Volume.Name)
-		volumeMountBackup.MountPath = oceanbaseconst.BackupPath
-		volumeMounts = append(volumeMounts, volumeMountBackup)
-	}
-
-	readinessProbeTCP := corev1.TCPSocketAction{}
-	readinessProbeTCP.Port = intstr.FromInt(oceanbaseconst.SqlPort)
-	readinessProbe := corev1.Probe{}
-	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
-	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
-	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
-	readinessProbe.FailureThreshold = 32
-
-	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
-
-	cmds := []string{
-		"bash",
-		"-c",
-		startOBServerCmd,
-	}
-
-	env := make([]corev1.EnvVar, 0)
-	envLib := corev1.EnvVar{
-		Name:  "LD_LIBRARY_PATH",
-		Value: "/home/admin/oceanbase/lib",
-	}
-	cpuCount := m.OBServer.Spec.OBServerTemplate.Resource.Cpu.Value()
-	if cpuCount < 16 {
-		cpuCount = 16
-	}
-	envCpu := corev1.EnvVar{
-		Name:  "CPU_COUNT",
-		Value: fmt.Sprintf("%d", cpuCount),
-	}
-
-	datafileSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
-	if !ok {
-		m.Logger.Error(errors.New("Parse datafile size failed"), "failed to parse datafile size")
-	}
-	envDataFile := corev1.EnvVar{
-		Name:  "DATAFILE_SIZE",
-		Value: fmt.Sprintf("%dG", datafileSize*oceanbaseconst.InitialDataDiskUsePercent/oceanbaseconst.GigaConverter/100),
-	}
-	clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
-	if !ok {
-		m.Logger.Error(errors.New("Parse log disk size failed"), "failed to parse log disk size")
-	}
-	envLogDisk := corev1.EnvVar{
-		Name:  "LOG_DISK_SIZE",
-		Value: fmt.Sprintf("%dG", clogDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100),
-	}
-	envClusterName := corev1.EnvVar{
-		Name:  "CLUSTER_NAME",
-		Value: m.OBServer.Spec.ClusterName,
-	}
-	envClusterId := corev1.EnvVar{
-		Name:  "CLUSTER_ID",
-		Value: fmt.Sprintf("%d", m.OBServer.Spec.ClusterId),
-	}
-	envZoneName := corev1.EnvVar{
-		Name:  "ZONE_NAME",
-		Value: m.OBServer.Spec.Zone,
-	}
-
-	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist {
-		switch mode {
-		case oceanbaseconst.ModeStandalone:
-			envMode := corev1.EnvVar{
-				Name:  "STANDALONE",
-				Value: oceanbaseconst.ModeStandalone,
-			}
-			env = append(env, envMode)
-		case oceanbaseconst.ModeService:
-			svc, err := m.getSvc()
-			if err != nil {
-				if kubeerrors.IsNotFound(err) {
-					m.Logger.Info("svc not found")
-				} else {
-					m.Logger.Error(err, "Failed to get svc")
-				}
-			} else {
-				envSvcIp := corev1.EnvVar{
-					Name:  "SVC_IP",
-					Value: svc.Spec.ClusterIP,
-				}
-				env = append(env, envSvcIp)
-			}
-		}
-	}
-
-	startupParameters := make([]string, 0)
-	for _, parameter := range obcluster.Spec.Parameters {
-		reserved := false
-		for _, reservedParameter := range oceanbaseconst.ReservedParameters {
-			if parameter.Name == reservedParameter {
-				reserved = true
-				break
-			}
-		}
-		if !reserved {
-			startupParameters = append(startupParameters, fmt.Sprintf("%s='%s'", parameter.Name, parameter.Value))
-		}
-	}
-	if len(startupParameters) != 0 {
-		envExtraOpt := corev1.EnvVar{
-			Name:  "EXTRA_OPTION",
-			Value: strings.Join(startupParameters, ","),
-		}
-		env = append(env, envExtraOpt)
-	}
-	env = append(env, envLib)
-	env = append(env, envCpu)
-	env = append(env, envDataFile)
-	env = append(env, envLogDisk)
-	env = append(env, envClusterName)
-	env = append(env, envClusterId)
-	env = append(env, envZoneName)
-
-	container := corev1.Container{
-		Name:            oceanbaseconst.ContainerName,
-		Image:           m.OBServer.Spec.OBServerTemplate.Image,
-		ImagePullPolicy: "IfNotPresent",
-		Ports:           ports,
-		Resources:       resources,
-		VolumeMounts:    volumeMounts,
-		ReadinessProbe:  &readinessProbe,
-		WorkingDir:      oceanbaseconst.InstallPath,
-		Env:             env,
-		Command:         cmds,
-	}
-	return container
-}
-
-func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
+func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("delete observer in cluster")
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
@@ -619,7 +247,7 @@ func (m *OBServerManager) DeleteOBServerInCluster() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) AnnotateOBServerPod() tasktypes.TaskError {
+func AnnotateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	observerPod, err := m.getPod()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
@@ -635,7 +263,7 @@ func (m *OBServerManager) AnnotateOBServerPod() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) UpgradeOBServerImage() tasktypes.TaskError {
+func UpgradeOBServerImage(m *OBServerManager) tasktypes.TaskError {
 	observerPod, err := m.getPod()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
@@ -653,7 +281,7 @@ func (m *OBServerManager) UpgradeOBServerImage() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
+func WaitOBServerPodReady(m *OBServerManager) tasktypes.TaskError {
 	observerPodRestarted := false
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		observerPod, err := m.getPod()
@@ -680,7 +308,7 @@ func (m *OBServerManager) WaitOBServerPodReady() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
+func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
@@ -715,7 +343,7 @@ func (m *OBServerManager) WaitOBServerActiveInCluster() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
+func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
@@ -749,7 +377,7 @@ func (m *OBServerManager) WaitOBServerDeletedInCluster() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) DeletePod() tasktypes.TaskError {
+func DeletePod(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.Info("Delete observer pod")
 	pod, err := m.getPod()
 	if err != nil {
@@ -763,7 +391,7 @@ func (m *OBServerManager) DeletePod() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
+func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.Info("Wait for observer pod being deleted")
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
@@ -775,7 +403,7 @@ func (m *OBServerManager) WaitForPodDeleted() tasktypes.TaskError {
 	return errors.New("Timeout to wait for pod being deleted")
 }
 
-func (m *OBServerManager) ResizePVC() tasktypes.TaskError {
+func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 	observerPVC, err := m.getPVCs()
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pvc list of observer %s", m.OBServer.Name)
@@ -816,7 +444,7 @@ func (m *OBServerManager) ResizePVC() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitForPVCResized() tasktypes.TaskError {
+func WaitForPVCResized(m *OBServerManager) tasktypes.TaskError {
 outer:
 	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
@@ -829,17 +457,17 @@ outer:
 			switch pvc.Name {
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
 				if m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
 				if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
 				if m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case m.OBServer.Name:
@@ -848,17 +476,18 @@ outer:
 				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
 				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
 				if sum.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not resized", "pvc", pvc.Name)
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			}
 		}
-		// all pvc resized
+		// all pvc expanded
 		return nil
 	}
-	return errors.Errorf("Timeout to wait for pvc resized")
+	return errors.Errorf("Timeout to wait for pvc expanded")
 }
-func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
+
+func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeService {
 		m.Logger.Info("Create observer service")
@@ -895,10 +524,10 @@ func (m *OBServerManager) CreateOBServerSvc() tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) MountBackupVolume() tasktypes.TaskError {
+func MountBackupVolume(_ *OBServerManager) tasktypes.TaskError {
 	return nil
 }
 
-func (m *OBServerManager) WaitForBackupVolumeMounted() tasktypes.TaskError {
+func WaitForBackupVolumeMounted(_ *OBServerManager) tasktypes.TaskError {
 	return nil
 }

@@ -40,3 +40,7 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 
 .PHONY: tools 
 tools: kustomize controller-gen envtest install-delve ## Download all tools
+
+.PHONY: init-generator
+init-generator: ## Install generator tools
+	go install cmd/generator/task/task-register.go

@@ -18,16 +18,16 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func CreateTenant() *tasktypes.TaskFlow {
+func genCreateTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fCreateTenant,
 			Tasks: []tasktypes.TaskName{
 				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
-				tCreateTenant,
-				tCreateUsersByCredentials,
+				tCheckPoolAndConfig,
+				tCreateResourcePoolAndConfig,
+				tCreateTenantWithClear,
+				tCreateUserWithCredentialSecrets,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
@@ -37,61 +37,61 @@ func CreateTenant() *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainWhiteList() *tasktypes.TaskFlow {
+func genMaintainWhiteListFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainWhiteList,
-			Tasks:        []tasktypes.TaskName{tMaintainWhiteList},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyWhiteList},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func MaintainCharset() *tasktypes.TaskFlow {
+func genMaintainCharsetFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainCharset,
-			Tasks:        []tasktypes.TaskName{tMaintainCharset},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyCharset},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func MaintainUnitNum() *tasktypes.TaskFlow {
+func genMaintainUnitNumFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainUnitNum,
-			Tasks:        []tasktypes.TaskName{tMaintainUnitNum},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyUnitNum},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func MaintainLocality() *tasktypes.TaskFlow {
+func genMaintainLocalityFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainLocality,
-			Tasks:        []tasktypes.TaskName{tMaintainLocality},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyLocality},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func MaintainPrimaryZone() *tasktypes.TaskFlow {
+func genMaintainPrimaryZoneFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainPrimaryZone,
-			Tasks:        []tasktypes.TaskName{tMaintainPrimaryZone},
+			Tasks:        []tasktypes.TaskName{tCheckAndApplyPrimaryZone},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func AddPool() *tasktypes.TaskFlow {
+func genAddPoolFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAddPool,
-			Tasks:        []tasktypes.TaskName{tCheckPoolAndUnitConfig, tAddResourcePool},
+			Tasks:        []tasktypes.TaskName{tCheckPoolAndConfig, tAddPool},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.RetryFromCurrent,
@@ -100,17 +100,17 @@ func AddPool() *tasktypes.TaskFlow {
 	}
 }
 
-func DeletePool() *tasktypes.TaskFlow {
+func genDeletePoolFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeletePool,
-			Tasks:        []tasktypes.TaskName{tDeleteResourcePool},
+			Tasks:        []tasktypes.TaskName{tDeletePool},
 			TargetStatus: tenantstatus.Running,
 		},
 	}
 }
 
-func MaintainUnitConfig() *tasktypes.TaskFlow {
+func genMaintainUnitConfigFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainUnitConfig,
@@ -120,7 +120,7 @@ func MaintainUnitConfig() *tasktypes.TaskFlow {
 	}
 }
 
-func DeleteTenant() *tasktypes.TaskFlow {
+func genDeleteTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeleteTenant,
@@ -133,18 +133,18 @@ func DeleteTenant() *tasktypes.TaskFlow {
 	}
 }
 
-func RestoreTenant() *tasktypes.TaskFlow {
+func genRestoreTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fRestoreTenant,
 			Tasks: []tasktypes.TaskName{
 				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
-				tCreateRestoreJobCR,
+				tCheckPoolAndConfig,
+				tCreateResourcePoolAndConfig,
+				tCreateTenantRestoreJobCR,
 				tWatchRestoreJobToFinish,
-				tMaintainWhiteList,
-				tCreateUsersByCredentials,
+				tCheckAndApplyWhiteList,
+				tCreateUserWithCredentialSecrets,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{
@@ -154,29 +154,29 @@ func RestoreTenant() *tasktypes.TaskFlow {
 	}
 }
 
-func CancelRestoreJob() *tasktypes.TaskFlow {
+func genCancelRestoreFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fCancelRestoreFlow,
+			Name: fCancelRestore,
 			Tasks: []tasktypes.TaskName{
-				tCancelRestoreJob,
+				tCancelTenantRestoreJob,
 			},
 			TargetStatus: tenantstatus.RestoreCanceled,
 		},
 	}
 }
 
-func CreateEmptyStandbyTenant() *tasktypes.TaskFlow {
+func genCreateEmptyStandbyTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fCreateEmptyStandbyTenant,
 			Tasks: []tasktypes.TaskName{
 				tCheckPrimaryTenantLSIntegrity,
 				tCheckTenant,
-				tCheckPoolAndUnitConfig,
-				tCreateResourcePoolAndUnitConfig,
+				tCheckPoolAndConfig,
+				tCreateResourcePoolAndConfig,
 				tCreateEmptyStandbyTenant,
-				tMaintainWhiteList,
+				tCheckAndApplyWhiteList,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{

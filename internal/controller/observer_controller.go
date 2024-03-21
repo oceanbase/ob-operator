@@ -97,7 +97,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			}
 		}
 		if needExecuteFinalizer {
-			err = observerManager.DeleteOBServerInCluster()
+			err = resobserver.DeleteOBServerInCluster(observerManager)
 			if err != nil {
 				logger.Error(err, "delete observer failed")
 				return ctrl.Result{}, errors.Wrapf(err, "delete observer %s failed", observer.Name)

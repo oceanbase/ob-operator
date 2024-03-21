@@ -28,8 +28,8 @@ const (
 const (
 	tConfigureServerForBackup ttypes.TaskName = "configure server for backup"
 	tCheckAndSpawnJobs        ttypes.TaskName = "check and spawn jobs"
-	tStartBackupJob           ttypes.TaskName = "start backup job"
-	tStopBackupPolicy         ttypes.TaskName = "stop backup policy"
+	tStartBackup              ttypes.TaskName = "start backup job"
+	tStopBackup               ttypes.TaskName = "stop backup policy"
 	tCleanOldBackupJobs       ttypes.TaskName = "clean old backup jobs"
 	tPauseBackup              ttypes.TaskName = "pause backup"
 	tResumeBackup             ttypes.TaskName = "resume backup"

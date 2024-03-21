@@ -33,6 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	ctlconfig "github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
@@ -173,6 +174,18 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
 				logger.Error(err, "failed to update status of the target resource")
+				return ctrl.Result{}, err
+			}
+		case "ignore-deletion":
+			annotations := uns.GetAnnotations()
+			if annotations == nil {
+				annotations = make(map[string]string)
+			}
+			annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
+			uns.SetAnnotations(annotations)
+			_, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Update(ctx, uns, metav1.UpdateOptions{})
+			if err != nil {
+				logger.Error(err, "failed to update annotations of the target resource")
 				return ctrl.Result{}, err
 			}
 		}

@@ -10,15 +10,19 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obtenantrestore
+package oceanbase
 
-import (
-	"github.com/oceanbase/ob-operator/pkg/task"
+const (
+	LabelRefOBCluster    = "ref-obcluster"
+	LabelRefOBZone       = "ref-obzone"
+	LabelRefOBServer     = "ref-observer"
+	LabelRefUID          = "ref-uid"
+	LabelJobName         = "job-name"
+	LabelRefBackupPolicy = "ref-backuppolicy"
 )
 
-func init() {
-	// tenant-level restore
-	task.GetRegistry().Register(fStartRestoreFlow, StartRestoreJob)
-	task.GetRegistry().Register(fRestoreAsPrimaryFlow, RestoreAsPrimary)
-	task.GetRegistry().Register(fRestoreAsStandbyFlow, RestoreAsStandby)
-}
+const (
+	LabelTenantName      = "oceanbase.oceanbase.com/tenant-name"
+	LabelSecondaryTenant = "oceanbase.oceanbase.com/secondary-tenant"
+	LabelBackupType      = "oceanbase.oceanbase.com/backup-type"
+)

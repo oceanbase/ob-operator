@@ -17,7 +17,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func ChangeTenantRootPassword() *tasktypes.TaskFlow {
+func genChangeTenantRootPasswordFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fChangeTenantRootPasswordFlow,
@@ -32,7 +32,7 @@ func ChangeTenantRootPassword() *tasktypes.TaskFlow {
 	}
 }
 
-func ActivateStandbyTenantOp() *tasktypes.TaskFlow {
+func genActivateStandbyTenantOpFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fActivateStandbyTenantFlow,
@@ -48,7 +48,7 @@ func ActivateStandbyTenantOp() *tasktypes.TaskFlow {
 	}
 }
 
-func SwitchoverTenants() *tasktypes.TaskFlow {
+func genSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fSwitchoverTenantsFlow,
@@ -64,7 +64,7 @@ func SwitchoverTenants() *tasktypes.TaskFlow {
 	}
 }
 
-func RevertSwitchoverTenants() *tasktypes.TaskFlow {
+func genRevertSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fRevertSwitchoverTenantsFlow,
@@ -79,7 +79,7 @@ func RevertSwitchoverTenants() *tasktypes.TaskFlow {
 	}
 }
 
-func UpgradeTenant() *tasktypes.TaskFlow {
+func genUpgradeTenantFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fOpUpgradeTenant,
@@ -94,7 +94,7 @@ func UpgradeTenant() *tasktypes.TaskFlow {
 	}
 }
 
-func ReplayLogOfStandby() *tasktypes.TaskFlow {
+func genReplayLogOfStandbyFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fOpReplayLog,

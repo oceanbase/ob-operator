@@ -18,7 +18,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func PrepareOBServerForBootstrap() *tasktypes.TaskFlow {
+func genPrepareOBServerForBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fPrepareOBServerForBootstrap,
@@ -28,7 +28,7 @@ func PrepareOBServerForBootstrap() *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainOBServerAfterBootstrap() *tasktypes.TaskFlow {
+func genMaintainOBServerAfterBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainOBServerAfterBootstrap,
@@ -38,7 +38,7 @@ func MaintainOBServerAfterBootstrap() *tasktypes.TaskFlow {
 	}
 }
 
-func CreateOBServer() *tasktypes.TaskFlow {
+func genCreateOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fCreateOBServer,
@@ -51,7 +51,7 @@ func CreateOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func DeleteOBServerFinalizer() *tasktypes.TaskFlow {
+func genDeleteOBServerFinalizerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fDeleteOBServerFinalizer,
@@ -61,7 +61,7 @@ func DeleteOBServerFinalizer() *tasktypes.TaskFlow {
 	}
 }
 
-func UpgradeOBServer() *tasktypes.TaskFlow {
+func genUpgradeOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fUpgradeOBServer,
@@ -71,7 +71,7 @@ func UpgradeOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func RecoverOBServer() *tasktypes.TaskFlow {
+func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fRecoverOBServer,
@@ -84,7 +84,7 @@ func RecoverOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func AddServerInOB() *tasktypes.TaskFlow {
+func genAddServerInOBFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAddServerInOB,
@@ -94,7 +94,7 @@ func AddServerInOB() *tasktypes.TaskFlow {
 	}
 }
 
-func AnnotateOBServerPod() *tasktypes.TaskFlow {
+func genAnnotateOBServerPodFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fAnnotateOBServerPod,
@@ -104,7 +104,7 @@ func AnnotateOBServerPod() *tasktypes.TaskFlow {
 	}
 }
 
-func ScaleUpOBServer() *tasktypes.TaskFlow {
+func genScaleUpOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fScaleUpOBServer,
@@ -114,7 +114,7 @@ func ScaleUpOBServer() *tasktypes.TaskFlow {
 	}
 }
 
-func ResizePVC() *tasktypes.TaskFlow {
+func genExpandPVCFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fExpandPVC,
@@ -127,7 +127,7 @@ func ResizePVC() *tasktypes.TaskFlow {
 	}
 }
 
-func MountBackupVolume() *tasktypes.TaskFlow {
+func genMountBackupVolumeFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMountBackupVolume,

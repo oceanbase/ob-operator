@@ -20,8 +20,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -32,15 +30,14 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &OBParameterManager{}
+
 type OBParameterManager struct {
-	opresource.ResourceManager
 	Ctx         context.Context
 	OBParameter *v1alpha1.OBParameter
 	Client      client.Client
@@ -79,19 +76,14 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// return task flow depends on status
 
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obparameter status")
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
-		taskFlow, err = task.GetRegistry().Get(fSetOBParameter)
+		taskFlow = genSetOBParameterFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obparameter")
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
@@ -100,30 +92,16 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			taskFlow.OperationContext.OnFailure.NextTryStatus = parameterstatus.Matched
 		}
 	}
-	return taskFlow, err
+	return taskFlow, nil
 }
 
 func (m *OBParameterManager) IsDeleting() bool {
-	return !m.OBParameter.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBParameter, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.OBParameter.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBParameterManager) CheckAndUpdateFinalizers() error {
 	return nil
-}
-
-func (m *OBParameterManager) retryUpdateStatus() error {
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		parameter := &v1alpha1.OBParameter{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.OBParameter.GetNamespace(),
-			Name:      m.OBParameter.GetName(),
-		}, parameter)
-		if err != nil {
-			return client.IgnoreNotFound(err)
-		}
-		parameter.Status = *m.OBParameter.Status.DeepCopy()
-		return m.Client.Status().Update(m.Ctx, parameter)
-	})
 }
 
 func (m *OBParameterManager) UpdateStatus() error {
@@ -206,56 +184,11 @@ func (m *OBParameterManager) HandleFailure() {
 }
 
 func (m *OBParameterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tSetOBParameter:
-		return m.SetOBParameter, nil
-	default:
-		return nil, errors.New("Can not find a function for task")
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *OBParameterManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBParameter, corev1.EventTypeWarning, "Task failed", err.Error())
-}
-
-func (m *OBParameterManager) SetOBParameter() tasktypes.TaskError {
-	operationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		m.Logger.Error(err, "Get operation manager failed")
-		return errors.Wrapf(err, "Get operation manager")
-	}
-	err = operationManager.SetParameter(m.OBParameter.Spec.Parameter.Name, m.OBParameter.Spec.Parameter.Value, nil)
-	if err != nil {
-		m.Logger.Error(err, "Set parameter failed")
-		return errors.Wrapf(err, "Set parameter")
-	}
-	return nil
-}
-
-func (m *OBParameterManager) generateNamespacedName(name string) types.NamespacedName {
-	var namespacedName types.NamespacedName
-	namespacedName.Namespace = m.OBParameter.Namespace
-	namespacedName.Name = name
-	return namespacedName
-}
-
-func (m *OBParameterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	// this label always exists
-	clusterName, _ := m.OBParameter.Labels[oceanbaseconst.LabelRefOBCluster]
-	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	return obcluster, nil
-}
-
-func (m *OBParameterManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	obcluster, err := m.getOBCluster()
-	if err != nil {
-		return nil, errors.Wrap(err, "Get obcluster from K8s")
-	}
-	return resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
 }
 
 func (m *OBParameterManager) ArchiveResource() {

@@ -10,13 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obtenantbackup
+package oceanbase
 
-import (
-	"github.com/oceanbase/ob-operator/pkg/task"
+const (
+	LogLevelDefault = 0
+	LogLevelInfo    = 0
+	LogLevelDebug   = 1
+	LogLevelTrace   = 2
 )
-
-func init() {
-	// obtenantbackup
-	task.GetRegistry().Register(fCreateBackupJobInDB, CreateBackupJobInDB)
-}

@@ -35,14 +35,14 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+var _ opresource.ResourceManager = &ObTenantBackupPolicyManager{}
+
 type ObTenantBackupPolicyManager struct {
-	opresource.ResourceManager
 	Ctx          context.Context
 	BackupPolicy *v1alpha1.OBTenantBackupPolicy
 	Client       client.Client
@@ -57,7 +57,8 @@ func (m *ObTenantBackupPolicyManager) IsNewResource() bool {
 }
 
 func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
-	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero()
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.BackupPolicy, oceanbaseconst.AnnotationsIgnoreDeletion)
+	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantBackupPolicyManager) GetStatus() string {
@@ -276,24 +277,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	switch name {
-	case tConfigureServerForBackup:
-		return m.ConfigureServerForBackup, nil
-	case tStartBackupJob:
-		return m.StartBackup, nil
-	case tStopBackupPolicy:
-		return m.StopBackup, nil
-	case tCheckAndSpawnJobs:
-		return m.CheckAndSpawnJobs, nil
-	case tCleanOldBackupJobs:
-		return m.CleanOldBackupJobs, nil
-	case tPauseBackup:
-		return m.PauseBackup, nil
-	case tResumeBackup:
-		return m.ResumeBackup, nil
-	default:
-		return nil, errors.Errorf("unknown task name %s", name)
-	}
+	return taskMap.GetTask(name, m)
 }
 
 func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
@@ -302,28 +286,24 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error)
 		return tasktypes.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
 	}
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	status := m.BackupPolicy.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.BackupPolicyStatusPreparing:
-		taskFlow, err = task.GetRegistry().Get(fPrepareBackupPolicy)
+		taskFlow = genPrepareBackupPolicyFlow(m)
 	case constants.BackupPolicyStatusPrepared:
-		taskFlow, err = task.GetRegistry().Get(fStartBackupJob)
+		taskFlow = genStartBackupJobFlow(m)
 	case constants.BackupPolicyStatusMaintaining:
-		taskFlow, err = task.GetRegistry().Get(fMaintainRunningPolicy)
+		taskFlow = genMaintainRunningPolicyFlow(m)
 	case constants.BackupPolicyStatusPausing:
-		taskFlow, err = task.GetRegistry().Get(fPauseBackup)
+		taskFlow = genPauseBackupFlow(m)
 	case constants.BackupPolicyStatusResuming:
-		taskFlow, err = task.GetRegistry().Get(fResumeBackup)
+		taskFlow = genResumeBackupFlow(m)
 	case constants.BackupPolicyStatusDeleting:
-		taskFlow, err = task.GetRegistry().Get(fStopBackupPolicy)
+		taskFlow = genStopBackupPolicyFlow(m)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {
