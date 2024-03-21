@@ -29,6 +29,7 @@ type Client struct {
 	ClientSet       *kubernetes.Clientset
 	DynamicClient   dynamic.Interface
 	DiscoveryClient *discovery.DiscoveryClient
+	config          *rest.Config
 }
 
 var client *Client
@@ -101,5 +102,10 @@ func MustGetClient(config *rest.Config) *Client {
 		ClientSet:       clientset,
 		DynamicClient:   dynamicClient,
 		DiscoveryClient: discoveryClient,
+		config:          config,
 	}
+}
+
+func (c *Client) GetConfig() *rest.Config {
+	return c.config
 }
