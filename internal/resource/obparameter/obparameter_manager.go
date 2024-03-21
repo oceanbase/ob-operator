@@ -80,7 +80,7 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	switch m.OBParameter.Status.Status {
 	// only need to handle parameter not match
 	case parameterstatus.NotMatch:
-		taskFlow = FlowSetOBParameter()
+		taskFlow = genSetOBParameterFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obparameter")
 		return nil, nil

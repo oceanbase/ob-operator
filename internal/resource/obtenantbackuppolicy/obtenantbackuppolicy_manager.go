@@ -286,28 +286,24 @@ func (m *ObTenantBackupPolicyManager) GetTaskFlow() (*tasktypes.TaskFlow, error)
 		return tasktypes.NewTaskFlow(m.BackupPolicy.Status.OperationContext), nil
 	}
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	status := m.BackupPolicy.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.BackupPolicyStatusPreparing:
-		taskFlow = PrepareBackupPolicy()
+		taskFlow = genPrepareBackupPolicyFlow(m)
 	case constants.BackupPolicyStatusPrepared:
-		taskFlow = StartBackupJob()
+		taskFlow = genStartBackupJobFlow(m)
 	case constants.BackupPolicyStatusMaintaining:
-		taskFlow = MaintainRunningPolicy()
+		taskFlow = genMaintainRunningPolicyFlow(m)
 	case constants.BackupPolicyStatusPausing:
-		taskFlow = FlowPauseBackup()
+		taskFlow = genPauseBackupFlow(m)
 	case constants.BackupPolicyStatusResuming:
-		taskFlow = FlowResumeBackup()
+		taskFlow = genResumeBackupFlow(m)
 	case constants.BackupPolicyStatusDeleting:
-		taskFlow = StopBackupPolicy()
+		taskFlow = genStopBackupPolicyFlow(m)
 	default:
 		// Paused, Stopped or Failed
 		return nil, nil
-	}
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {

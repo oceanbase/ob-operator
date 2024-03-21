@@ -242,44 +242,44 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	switch m.OBTenant.Status.Status {
 	case tenantstatus.CreatingTenant:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when creating tenant")
-		taskFlow = CreateTenant()
+		taskFlow = genCreateTenantFlow(m)
 	case tenantstatus.MaintainingWhiteList:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining white list")
-		taskFlow = MaintainWhiteList()
+		taskFlow = genMaintainWhiteListFlow(m)
 	case tenantstatus.MaintainingCharset:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining charset")
-		taskFlow = MaintainCharset()
+		taskFlow = genMaintainCharsetFlow(m)
 	case tenantstatus.MaintainingUnitNum:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining unit num")
-		taskFlow = MaintainUnitNum()
+		taskFlow = genMaintainUnitNumFlow(m)
 	case tenantstatus.MaintainingPrimaryZone:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining primary zone")
-		taskFlow = MaintainPrimaryZone()
+		taskFlow = genMaintainPrimaryZoneFlow(m)
 	case tenantstatus.MaintainingLocality:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining locality")
-		taskFlow = MaintainLocality()
+		taskFlow = genMaintainLocalityFlow(m)
 	case tenantstatus.AddingResourcePool:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant adding pool")
-		taskFlow = AddPool()
+		taskFlow = genAddPoolFlow(m)
 	case tenantstatus.DeletingResourcePool:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant deleting list")
-		taskFlow = DeletePool()
+		taskFlow = genDeletePoolFlow(m)
 	case tenantstatus.MaintainingUnitConfig:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when obtenant maintaining unit config")
-		taskFlow = MaintainUnitConfig()
+		taskFlow = genMaintainUnitConfigFlow(m)
 	case tenantstatus.DeletingTenant:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when deleting tenant")
-		taskFlow = DeleteTenant()
+		taskFlow = genDeleteTenantFlow(m)
 	case tenantstatus.PausingReconcile:
 		m.Logger.Error(errors.New("Obtenant pause reconcile"),
 			"obtenant pause reconcile, please set status to running after manually resolving problem")
 		return nil, nil
 	case tenantstatus.Restoring:
-		taskFlow = RestoreTenant()
+		taskFlow = genRestoreTenantFlow(m)
 	case tenantstatus.CancelingRestore:
-		taskFlow = FlowCancelRestore()
+		taskFlow = genCancelRestoreFlow(m)
 	case tenantstatus.CreatingEmptyStandby:
-		taskFlow = FlowCreateEmptyStandbyTenant()
+		taskFlow = genCreateEmptyStandbyTenantFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obtenant")
 		return nil, nil

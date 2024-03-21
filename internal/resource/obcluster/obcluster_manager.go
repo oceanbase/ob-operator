@@ -84,28 +84,28 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.MigrateFromExisting:
-		taskFlow = FlowMigrateOBClusterFromExisting(m)
+		taskFlow = genMigrateOBClusterFromExistingFlow(m)
 	case clusterstatus.New:
-		taskFlow = FlowBootstrapOBCluster(m)
+		taskFlow = genBootstrapOBClusterFlow(m)
 	// after obcluster bootstraped, return taskFlow to maintain obcluster after bootstrap
 	case clusterstatus.Bootstrapped:
-		taskFlow = FlowMaintainOBClusterAfterBootstrap(m)
+		taskFlow = genMaintainOBClusterAfterBootstrapFlow(m)
 	case clusterstatus.AddOBZone:
-		taskFlow = FlowAddOBZone(m)
+		taskFlow = genAddOBZoneFlow(m)
 	case clusterstatus.DeleteOBZone:
-		taskFlow = FlowDeleteOBZone(m)
+		taskFlow = genDeleteOBZoneFlow(m)
 	case clusterstatus.ModifyOBZoneReplica:
-		taskFlow = FlowModifyOBZoneReplica(m)
+		taskFlow = genModifyOBZoneReplicaFlow(m)
 	case clusterstatus.Upgrade:
-		taskFlow = FlowUpgradeOBCluster(m)
+		taskFlow = genUpgradeOBClusterFlow(m)
 	case clusterstatus.ModifyOBParameter:
-		taskFlow = FlowMaintainOBParameter(m)
+		taskFlow = genMaintainOBParameterFlow(m)
 	case clusterstatus.ScaleUp:
-		taskFlow = FlowScaleUpOBZones(m)
+		taskFlow = genScaleUpOBZonesFlow(m)
 	case clusterstatus.ExpandPVC:
-		taskFlow = FlowExpandPVC(m)
+		taskFlow = genExpandPVCFlow(m)
 	case clusterstatus.MountBackupVolume:
-		taskFlow = FlowMountBackupVolume(m)
+		taskFlow = genMountBackupVolumeFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil

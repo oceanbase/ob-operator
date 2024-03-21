@@ -192,20 +192,20 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case constants.TenantOpRunning:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpChangePwd:
-			taskFlow = ChangeTenantRootPassword()
+			taskFlow = genChangeTenantRootPasswordFlow(m)
 		case constants.TenantOpFailover:
-			taskFlow = ActivateStandbyTenantOp()
+			taskFlow = genActivateStandbyTenantOpFlow(m)
 		case constants.TenantOpSwitchover:
-			taskFlow = SwitchoverTenants()
+			taskFlow = genSwitchoverTenantsFlow(m)
 		case constants.TenantOpUpgrade:
-			taskFlow = UpgradeTenant()
+			taskFlow = genUpgradeTenantFlow(m)
 		case constants.TenantOpReplayLog:
-			taskFlow = ReplayLogOfStandby()
+			taskFlow = genReplayLogOfStandbyFlow(m)
 		}
 	case constants.TenantOpReverting:
 		switch m.Resource.Spec.Type {
 		case constants.TenantOpSwitchover:
-			taskFlow = RevertSwitchoverTenants()
+			taskFlow = genRevertSwitchoverTenantsFlow(m)
 		default:
 			err = errors.New("unsupported operation type")
 		}

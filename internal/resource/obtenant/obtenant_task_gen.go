@@ -2,14 +2,14 @@
 package obtenant
 
 func init() {
-	taskMap.Register(tCheckTenantTask, CheckTenantTask)
-	taskMap.Register(tCheckPoolAndConfigTask, CheckPoolAndConfigTask)
-	taskMap.Register(tCreateTenantTaskWithClear, CreateTenantTaskWithClear)
-	taskMap.Register(tCreateResourcePoolAndConfigTask, CreateResourcePoolAndConfigTask)
-	taskMap.Register(tAddPoolTask, AddPoolTask)
-	taskMap.Register(tDeletePoolTask, DeletePoolTask)
-	taskMap.Register(tMaintainUnitConfigTask, MaintainUnitConfigTask)
-	taskMap.Register(tDeleteTenantTask, DeleteTenantTask)
+	taskMap.Register(tCheckTenant, CheckTenant)
+	taskMap.Register(tCheckPoolAndConfig, CheckPoolAndConfig)
+	taskMap.Register(tCreateTenantWithClear, CreateTenantWithClear)
+	taskMap.Register(tCreateResourcePoolAndConfig, CreateResourcePoolAndConfig)
+	taskMap.Register(tAddPool, AddPool)
+	taskMap.Register(tDeletePool, DeletePool)
+	taskMap.Register(tMaintainUnitConfig, MaintainUnitConfig)
+	taskMap.Register(tDeleteTenant, DeleteTenant)
 	taskMap.Register(tCheckAndApplyCharset, CheckAndApplyCharset)
 	taskMap.Register(tCreateEmptyStandbyTenant, CreateEmptyStandbyTenant)
 	taskMap.Register(tCheckPrimaryTenantLSIntegrity, CheckPrimaryTenantLSIntegrity)

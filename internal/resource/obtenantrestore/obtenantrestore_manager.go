@@ -30,7 +30,6 @@ import (
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -184,16 +183,15 @@ func (m *ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		return tasktypes.NewTaskFlow(m.Resource.Status.OperationContext), nil
 	}
 	var taskFlow *tasktypes.TaskFlow
-	var err error
 	status := m.Resource.Status.Status
 	// get task flow depending on BackupPolicy status
 	switch status {
 	case constants.RestoreJobStarting:
-		taskFlow, err = task.GetRegistry().Get(fStartRestoreFlow)
+		taskFlow = genStartRestoreJobFlow(m)
 	case constants.RestoreJobStatusActivating:
-		taskFlow, err = task.GetRegistry().Get(fRestoreAsPrimaryFlow)
+		taskFlow = genRestoreAsPrimaryFlow(m)
 	case constants.RestoreJobStatusReplaying:
-		taskFlow, err = task.GetRegistry().Get(fRestoreAsStandbyFlow)
+		taskFlow = genRestoreAsStandbyFlow(m)
 	case constants.RestoreJobRunning:
 		fallthrough
 	case constants.RestoreJobCanceled:
@@ -204,10 +202,6 @@ func (m *ObTenantRestoreManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		fallthrough
 	default:
 		return nil, nil
-	}
-
-	if err != nil {
-		return nil, err
 	}
 
 	if taskFlow.OperationContext.OnFailure.Strategy == "" {

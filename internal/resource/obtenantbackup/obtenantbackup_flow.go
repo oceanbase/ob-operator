@@ -18,7 +18,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func CreateBackupJobInDB() *tasktypes.TaskFlow {
+func genCreateBackupJobInDBFlow(_ *OBTenantBackupManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fCreateBackupJobInOB,

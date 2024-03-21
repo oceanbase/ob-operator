@@ -17,7 +17,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func FlowStartRestoreJob() *tasktypes.TaskFlow {
+func genStartRestoreJobFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fStartRestoreFlow,
@@ -30,7 +30,7 @@ func FlowStartRestoreJob() *tasktypes.TaskFlow {
 	}
 }
 
-func FlowRestoreAsPrimary() *tasktypes.TaskFlow {
+func genRestoreAsPrimaryFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fRestoreAsPrimaryFlow,
@@ -43,7 +43,7 @@ func FlowRestoreAsPrimary() *tasktypes.TaskFlow {
 	}
 }
 
-func FlowRestoreAsStandby() *tasktypes.TaskFlow {
+func genRestoreAsStandbyFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fRestoreAsStandbyFlow,

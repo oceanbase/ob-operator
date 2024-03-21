@@ -212,31 +212,31 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create observer when create obcluster")
-			taskFlow = PrepareOBServerForBootstrap()
+			taskFlow = genPrepareOBServerForBootstrapFlow(m)
 		} else {
 			// created normally
 			m.Logger.Info("Create observer when obcluster already exists")
-			taskFlow = CreateOBServer()
+			taskFlow = genCreateOBServerFlow(m)
 		}
 	case serverstatus.BootstrapReady:
-		taskFlow = MaintainOBServerAfterBootstrap()
+		taskFlow = genMaintainOBServerAfterBootstrapFlow(m)
 	case serverstatus.Deleting:
-		taskFlow = DeleteOBServerFinalizer()
+		taskFlow = genDeleteOBServerFinalizerFlow(m)
 	case serverstatus.Upgrade:
-		taskFlow = UpgradeOBServer()
+		taskFlow = genUpgradeOBServerFlow(m)
 	case serverstatus.Recover:
-		taskFlow = RecoverOBServer()
+		taskFlow = genRecoverOBServerFlow(m)
 	case serverstatus.Annotate:
-		taskFlow = FlowAnnotateOBServerPod()
+		taskFlow = genAnnotateOBServerPodFlow(m)
 	case serverstatus.AddServer:
-		taskFlow = AddServerInOB()
+		taskFlow = genAddServerInOBFlow(m)
 	case serverstatus.ScaleUp:
-		taskFlow = ScaleUpOBServer()
+		taskFlow = genScaleUpOBServerFlow(m)
 	case serverstatus.ExpandPVC:
-		taskFlow = FlowExpandPVC()
+		taskFlow = genExpandPVCFlow(m)
 	case serverstatus.MountBackupVolume:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to mount backup volume")
-		taskFlow = FlowMountBackupVolume()
+		taskFlow = genMountBackupVolumeFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for observer")
 		return nil, nil

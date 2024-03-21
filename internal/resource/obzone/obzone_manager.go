@@ -30,7 +30,6 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
-	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -93,37 +92,38 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if obcluster.Status.Status == clusterstatus.New {
 			// created when create obcluster
 			m.Logger.Info("Create obzone when create obcluster")
-			taskFlow = PrepareOBZoneForBootstrap()
+			taskFlow = genPrepareOBZoneForBootstrapFlow(m)
 		} else {
 			// created normally
 			m.Logger.Info("Create obzone when obcluster already exists")
-			taskFlow = CreateOBZone()
+			taskFlow = genCreateOBZoneFlow(m)
 		}
 	case zonestatus.MigrateFromExisting:
-		taskFlow = MigrateOBZoneFromExisting()
+		taskFlow = genMigrateOBZoneFromExistingFlow(m)
 	case zonestatus.BootstrapReady:
-		taskFlow = MaintainOBZoneAfterBootstrap()
+		taskFlow = genMaintainOBZoneAfterBootstrapFlow(m)
 	case zonestatus.AddOBServer:
-		taskFlow = AddOBServer()
+		taskFlow = genAddOBServerFlow(m)
 	case zonestatus.DeleteOBServer:
-		taskFlow = FlowDeleteOBServer()
+		taskFlow = genDeleteOBServerFlow(m)
 	case zonestatus.Deleting:
-		taskFlow = DeleteOBZoneFinalizer()
+		taskFlow = genDeleteOBZoneFinalizerFlow(m)
 	case zonestatus.ScaleUp:
-		taskFlow = FlowScaleUpOBServers()
+		taskFlow = genScaleUpOBServersFlow(m)
 	case zonestatus.ExpandPVC:
-		taskFlow = FlowExpandPVC()
+		taskFlow = FlowExpandPVC(m)
 	case zonestatus.MountBackupVolume:
-		taskFlow = FlowMountBackupVolume()
+		taskFlow = genMountBackupVolumeFlow(m)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
 			return nil, errors.Wrap(err, "Get obcluster")
 		}
 		if len(obcluster.Status.OBZoneStatus) >= 3 {
-			return task.GetRegistry().Get(fUpgradeOBZone)
+			taskFlow = genUpgradeOBZoneFlow(m)
+		} else {
+			taskFlow = genForceUpgradeOBZoneFlow(m)
 		}
-		return task.GetRegistry().Get(fForceUpgradeOBZone)
 		// TODO upgrade
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obzone")

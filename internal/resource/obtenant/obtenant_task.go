@@ -40,7 +40,7 @@ import (
 
 var taskMap = builder.NewTaskHub[*OBTenantManager]()
 
-func CheckTenantTask(m *OBTenantManager) tasktypes.TaskError {
+func CheckTenant(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	tenantExist, err := m.tenantExist(tenantName)
 	if err != nil {
@@ -55,7 +55,7 @@ func CheckTenantTask(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func CheckPoolAndConfigTask(m *OBTenantManager) tasktypes.TaskError {
+func CheckPoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	client, err := m.getClusterSysClient()
 	if err != nil {
@@ -102,11 +102,11 @@ func CheckPoolAndConfigTask(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func CreateTenantTaskWithClear(m *OBTenantManager) tasktypes.TaskError {
+func CreateTenantWithClear(m *OBTenantManager) tasktypes.TaskError {
 	err := CreateTenantTask(m)
 	// clean created resource, restore to the initial state
 	if err != nil {
-		err := DeleteTenantTask(m)
+		err := DeleteTenant(m)
 		if err != nil {
 			err = errors.Wrapf(err, "delete tenant when creating tenant")
 			return err
@@ -115,7 +115,7 @@ func CreateTenantTaskWithClear(m *OBTenantManager) tasktypes.TaskError {
 	return err
 }
 
-func CreateResourcePoolAndConfigTask(m *OBTenantManager) tasktypes.TaskError {
+func CreateResourcePoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 
 	for _, pool := range m.OBTenant.Spec.Pools {
@@ -128,7 +128,7 @@ func CreateResourcePoolAndConfigTask(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func AddPoolTask(m *OBTenantManager) tasktypes.TaskError {
+func AddPool(m *OBTenantManager) tasktypes.TaskError {
 	// handle add pool
 	poolSpecs := m.getPoolsForAdd()
 	for _, addPool := range poolSpecs {
@@ -140,7 +140,7 @@ func AddPoolTask(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func DeletePoolTask(m *OBTenantManager) tasktypes.TaskError {
+func DeletePool(m *OBTenantManager) tasktypes.TaskError {
 	// handle delete pool
 	poolStatuses := m.getPoolsForDelete()
 	for _, poolStatus := range poolStatuses {
@@ -152,7 +152,7 @@ func DeletePoolTask(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func MaintainUnitConfigTask(m *OBTenantManager) tasktypes.TaskError {
+func MaintainUnitConfig(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 
 	version, err := m.getOBVersion()
@@ -166,7 +166,7 @@ func MaintainUnitConfigTask(m *OBTenantManager) tasktypes.TaskError {
 	return errors.New("no match version for check and set unit config")
 }
 
-func DeleteTenantTask(m *OBTenantManager) tasktypes.TaskError {
+func DeleteTenant(m *OBTenantManager) tasktypes.TaskError {
 	var err error
 	tenantName := m.OBTenant.Spec.TenantName
 	m.Logger.Info("Delete Tenant", "tenantName", tenantName)

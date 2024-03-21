@@ -142,7 +142,7 @@ func (m *OBTenantBackupManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.Resource.Status.Status == constants.BackupJobStatusInitializing {
 		switch m.Resource.Spec.Type {
 		case constants.BackupJobTypeFull, constants.BackupJobTypeIncr:
-			taskFlow = CreateBackupJobInDB()
+			taskFlow = genCreateBackupJobInDBFlow(m)
 		}
 	}
 	return taskFlow, nil

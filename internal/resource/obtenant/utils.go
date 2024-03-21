@@ -800,10 +800,10 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() tasktypes.TaskError {
 }
 
 func CreateResourcePoolAndConfigTaskWithClear(m *OBTenantManager) error {
-	err := CreateResourcePoolAndConfigTask(m)
+	err := CreateResourcePoolAndConfig(m)
 	// clean created resource, restore to the initial state
 	if err != nil {
-		err := DeleteTenantTask(m)
+		err := DeleteTenant(m)
 		if err != nil {
 			err = errors.Wrapf(err, "delete tenant when creating tenant")
 			return err

@@ -17,7 +17,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func FlowSetOBParameter() *tasktypes.TaskFlow {
+func genSetOBParameterFlow(_ *OBParameterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fSetOBParameter,

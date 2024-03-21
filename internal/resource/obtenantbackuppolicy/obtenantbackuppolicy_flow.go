@@ -17,7 +17,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-func PrepareBackupPolicy() *tasktypes.TaskFlow {
+func genPrepareBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fPrepareBackupPolicy,
@@ -30,7 +30,7 @@ func PrepareBackupPolicy() *tasktypes.TaskFlow {
 	}
 }
 
-func StartBackupJob() *tasktypes.TaskFlow {
+func genStartBackupJobFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fStartBackupJob,
@@ -43,7 +43,7 @@ func StartBackupJob() *tasktypes.TaskFlow {
 	}
 }
 
-func StopBackupPolicy() *tasktypes.TaskFlow {
+func genStopBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fStopBackupPolicy,
@@ -53,7 +53,7 @@ func StopBackupPolicy() *tasktypes.TaskFlow {
 	}
 }
 
-func MaintainRunningPolicy() *tasktypes.TaskFlow {
+func genMaintainRunningPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMaintainRunningPolicy,
@@ -66,7 +66,7 @@ func MaintainRunningPolicy() *tasktypes.TaskFlow {
 	}
 }
 
-func FlowPauseBackup() *tasktypes.TaskFlow {
+func genPauseBackupFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fPauseBackup,
@@ -76,7 +76,7 @@ func FlowPauseBackup() *tasktypes.TaskFlow {
 	}
 }
 
-func FlowResumeBackup() *tasktypes.TaskFlow {
+func genResumeBackupFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fResumeBackup,
