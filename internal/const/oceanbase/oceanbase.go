@@ -18,11 +18,11 @@ var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "e
 var ReservedParameters = [...]string{"cpu_count", "datafile_size", "log_disk_size", "enable_syslog_recycle", "max_syslog_file_count"}
 
 const (
-	BootstrapTimeoutSeconds       = 300
-	LocalityChangeTimeoutSeconds  = 3600
-	DefaultStateWaitTimeout       = 300
+	BootstrapTimeoutSeconds       = 2100
+	LocalityChangeTimeoutSeconds  = 86400 // 1 day
+	DefaultStateWaitTimeout       = 1800
 	TimeConsumingStateWaitTimeout = 3600
-	ServerDeleteTimeoutSeconds    = 86400
+	ServerDeleteTimeoutSeconds    = 604800 // 7 days
 	GigaConverter                 = 1 << 30
 	MegaConverter                 = 1 << 20
 )
