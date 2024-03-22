@@ -16,7 +16,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -90,7 +89,6 @@ func (t *recorder) GenerateTelemetryRecord(object any, objectType, eventType, re
 		select {
 		case ch <- record:
 		case <-ctx.Done():
-		case <-time.After(DefaultWaitThrottlerSeconds * time.Second):
 		default:
 		}
 	}(t.ctx, t.chanIn())
