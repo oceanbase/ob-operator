@@ -13,25 +13,23 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"io"
+	"context"
+	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/golang-lru/v2/expirable"
-	"github.com/sirupsen/logrus"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
-	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/tools/remotecommand"
 
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -44,46 +42,59 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func onEvictfunc(key string, value *Session) {
+func onEvictFunc(key string, value *response.OBConnection) {
 	return
 }
 
-var sessionMap = expirable.NewLRU(100, onEvictfunc, time.Minute*10)
+var sessionMap = expirable.NewLRU(100, onEvictFunc, time.Minute*10)
 
-type Session struct {
-	Stdin     *os.File
-	Stdout    *os.File
-	Stderr    *os.File
-	Namespace string `json:"namespace"`
-	Cluster   string `json:"cluster,omitempty"`
-	Tenant    string `json:"tenant,omitempty"`
-	Pod       string `json:"pod"`
-	ClientIP  string `json:"clientIp"`
-	SessionID string `json:"sessionId"`
-	User      string `json:"user"`
-	Password  string `json:"password"`
+type wsWrapper struct {
+	conn   *websocket.Conn
+	cancel context.CancelFunc
 }
 
-type TerminalSizeQueue struct {
-	sizes chan *remotecommand.TerminalSize
-}
-
-func (q *TerminalSizeQueue) Next() *remotecommand.TerminalSize {
-	size, ok := <-q.sizes
-	if !ok {
-		return nil
-	}
-	return size
-}
-
-func (q *TerminalSizeQueue) SetSize(size *remotecommand.TerminalSize) {
-	select {
-	case q.sizes <- size:
-	default:
+func newWsWrapper(conn *websocket.Conn, cancel context.CancelFunc) wsWrapper {
+	return wsWrapper{
+		conn:   conn,
+		cancel: cancel,
 	}
 }
 
-func CreateOBClusterConnSession(c *gin.Context) (*Session, error) {
+func (w wsWrapper) Read(p []byte) (int, error) {
+	_, r, err := w.conn.NextReader()
+	if err != nil {
+		log.Println("read message error: ", err)
+		w.cancel()
+		return 0, err
+	}
+	w.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	return r.Read(p)
+}
+
+func (w wsWrapper) Write(p []byte) (int, error) {
+	err := w.conn.WriteMessage(websocket.TextMessage, p)
+	if err != nil {
+		log.Println("write message error: ", err)
+		w.cancel()
+		return 0, err
+	}
+	w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	return len(p), nil
+}
+
+// @ID CreateOBClusterConnection
+// @Summary Create oceanbase cluster connection
+// @Description Create oceanbase cluster connection terminal
+// @Tags Terminal
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.OBConnection}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/session [PUT]
+// @Security ApiKeyAuth
+func CreateOBClusterConnSession(c *gin.Context) (*response.OBConnection, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {
@@ -93,6 +104,13 @@ func CreateOBClusterConnSession(c *gin.Context) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	secret, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Get(c, obcluster.Spec.UserSecrets.Root, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	passwd := string(secret.Data["password"])
+
 	pods, err := client.GetClient().ClientSet.CoreV1().Pods(nn.Namespace).List(c, metav1.ListOptions{
 		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obcluster.Name,
 		FieldSelector: "status.phase=Running",
@@ -104,19 +122,33 @@ func CreateOBClusterConnSession(c *gin.Context) (*Session, error) {
 		return nil, httpErr.NewBadRequest("no running pods found in obcluster")
 	}
 
-	sess := &Session{}
+	sess := &response.OBConnection{}
 	sess.ClientIP = c.ClientIP()
 	sess.SessionID = rand.String(32)
 	sess.Namespace = nn.Namespace
 	sess.Cluster = nn.Name
 	sess.Pod = pods.Items[0].Name
+	sess.User = "root"
+	sess.Password = passwd
 
 	sessionMap.Add(sess.SessionID, sess)
 
 	return sess, nil
 }
 
-func ConnectDatabase(c *gin.Context) (*Session, error) {
+// @ID ConnectDatabase
+// @Summary Connect to oceanbase database
+// @Description Connect to oceanbase database in websocket
+// @Tags Terminal
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.OBConnection}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/conn/{sessionId} [GET]
+// @Security ApiKeyAuth
+func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 	type ConnectReq struct {
 		SessionId string `json:"sessionId" uri:"sessionId" binding:"required"`
 	}
@@ -148,65 +180,45 @@ func ConnectDatabase(c *gin.Context) (*Session, error) {
 	}
 	defer conn.Close()
 
-	logrus.Infof("websocket connected: %s, session ID: %s", conn.RemoteAddr().String(), req.SessionId)
+	log.Printf("websocket connected: %s, session ID: %s", conn.RemoteAddr().String(), req.SessionId)
 
-	config := client.GetClient().GetConfig()
+	var cmdPwdPart string
+	if session.Password == "" {
+		cmdPwdPart = ""
+	} else {
+		cmdPwdPart = " -p" + session.Password
+	}
 
-	execRequest := client.GetClient().ClientSet.CoreV1().RESTClient().Post().
-		Resource("pods").
-		Namespace(session.Namespace).
-		Name(session.Pod).
-		SubResource("exec").
-		VersionedParams(&corev1.PodExecOptions{
-			Command:   []string{"/bin/bash"},
-			Container: "observer",
-			Stdin:     true,
-			Stdout:    true,
-			Stderr:    true,
-			TTY:       true,
-		}, scheme.ParameterCodec)
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
 
-	sizeQueue := &TerminalSizeQueue{sizes: make(chan *remotecommand.TerminalSize, 1)}
-	sizeQueue.SetSize(&remotecommand.TerminalSize{Width: colsNum, Height: rowsNum})
+	wsOut := newWsWrapper(conn, cancel)
+	wsIn := newWsWrapper(conn, cancel)
 
-	exec, err := remotecommand.NewSPDYExecutor(config, "POST", execRequest.URL())
-	if err != nil {
+	sizeQueue := k8s.NewResizeQueue()
+	sizeQueue.SetSize(colsNum, rowsNum)
+
+	execReq := &k8s.KubeExecRequest{
+		// Namespace: "default",
+		// PodName:   "nginx-app-7f6fdf9556-282sw",
+		// Container: "nginx",
+		// Command:   []string{"/bin/bash"},
+		Namespace:   session.Namespace,
+		PodName:     session.Pod,
+		Container:   "observer",
+		Command:     []string{"/bin/bash", "-c", "yum install -y mysql && mysql -uroot -h127.0.0.1 -P2881" + cmdPwdPart},
+		Stdin:       wsIn,
+		Stdout:      wsOut,
+		Stderr:      wsOut,
+		TTY:         true,
+		ResizeQueue: sizeQueue,
+	}
+
+	if err := k8s.KubeExec(ctx, execReq); err != nil {
+		log.Printf("kube exec error: %v\n", err)
 		return nil, httpErr.NewInternal(err.Error())
 	}
 
-	err = exec.StreamWithContext(c, remotecommand.StreamOptions{
-		Stdout:            websocketWrapper{conn},
-		Stderr:            websocketWrapper{conn},
-		Stdin:             websocketWrapper{conn},
-		Tty:               true,
-		TerminalSizeQueue: sizeQueue,
-	})
-	if err != nil {
-		return nil, httpErr.NewInternal(err.Error())
-	}
-
-	return session, nil
-}
-
-type websocketWrapper struct {
-	conn *websocket.Conn
-}
-
-var _ io.Reader = websocketWrapper{}
-var _ io.Writer = websocketWrapper{}
-
-func (w websocketWrapper) Read(p []byte) (int, error) {
-	_, r, err := w.conn.NextReader()
-	if err != nil {
-		return 0, err
-	}
-	return r.Read(p)
-}
-
-func (w websocketWrapper) Write(p []byte) (int, error) {
-	err := w.conn.WriteMessage(websocket.TextMessage, p)
-	if err != nil {
-		return 0, err
-	}
-	return len(p), nil
+	log.Printf("websocket disconnected: %s, session ID: %s\n", conn.RemoteAddr().String(), req.SessionId)
+	return nil, nil
 }

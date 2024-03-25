@@ -66,7 +66,6 @@ func ListMetricClasses(scope, language string) ([]response.MetricClass, error) {
 	if err != nil {
 		return metricClasses, err
 	}
-	logger.Debugf("metric configs contents: %s", string(metricConfigContent))
 	metricConfigMap := make(map[string][]response.MetricClass)
 	// TODO: Do not unmarshal the file every time, cache the result
 	err = yaml.Unmarshal(metricConfigContent, &metricConfigMap)
