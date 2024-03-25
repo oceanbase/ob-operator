@@ -13,17 +13,23 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
@@ -66,16 +72,38 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 // @Tags Info
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=response.StatisticDataResponse}
+// @Success 200 object response.APIResponse{data=response.StatisticData}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/statistics [GET]
 // @Security ApiKeyAuth
-func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
+func GetStatistics(c *gin.Context) (*response.StatisticData, error) {
 	reportData := response.StatisticData{}
+	targetNamespaces := []string{}
+
+	k8sNodes, err := k8s.ListNodes()
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	for i := range k8sNodes {
+		if k8sNodes[i].Info == nil {
+			continue
+		}
+		if k8sNodes[i].Info.InternalIP != "" {
+			hash := md5.Sum([]byte(k8sNodes[i].Info.InternalIP))
+			k8sNodes[i].Info.InternalIP = hex.EncodeToString(hash[:])
+		}
+		if k8sNodes[i].Info.ExternalIP != "" {
+			hash := md5.Sum([]byte(k8sNodes[i].Info.ExternalIP))
+			k8sNodes[i].Info.ExternalIP = hex.EncodeToString(hash[:])
+		}
+		k8sNodes[i].Info.Labels = []common.KVPair{}
+	}
+	reportData.K8sNodes = k8sNodes
+
 	clusterList := v1alpha1.OBClusterList{}
-	err := clients.ClusterClient.List(c, corev1.NamespaceAll, &clusterList, metav1.ListOptions{})
+	err = clients.ClusterClient.List(c, corev1.NamespaceAll, &clusterList, metav1.ListOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -83,6 +111,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	for i := range clusterList.Items {
 		modelCluster := telemetry.TransformReportOBCluster(&clusterList.Items[i])
 		reportData.Clusters = append(reportData.Clusters, *modelCluster)
+		targetNamespaces = append(targetNamespaces, clusterList.Items[i].Namespace)
 	}
 
 	zoneList := v1alpha1.OBZoneList{}
@@ -134,11 +163,32 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+
+	// Get deployment named oceanbase-controller-manager in oceanbase-system namespace
+	deployment, err := clt.ClientSet.AppsV1().Deployments("").Get(c, "oceanbase-controller-manager", metav1.GetOptions{})
+	if err != nil {
+		if !kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+	} else {
+		targetNamespaces = append(targetNamespaces, deployment.Namespace)
+		for _, container := range deployment.Spec.Template.Spec.Containers {
+			if container.Name == "manager" {
+				reportData.OperatorVersion = container.Image
+			}
+		}
+	}
+
+	ossMask := regexp.MustCompile(`oss://\w+`)
 	reportData.WarningEvents = make([]models.K8sEvent, 0, len(eventList.Items))
 	for i := range eventList.Items {
+		// If the namespace of the event is not in the targetNamespaces, skip it
+		if !contains(targetNamespaces, eventList.Items[i].Namespace) {
+			continue
+		}
 		modelEvent := &models.K8sEvent{
 			Reason:         eventList.Items[i].Reason,
-			Message:        eventList.Items[i].Message,
+			Message:        ossMask.ReplaceAllString(eventList.Items[i].Message, "oss://***"),
 			Name:           eventList.Items[i].Name,
 			Namespace:      eventList.Items[i].Namespace,
 			LastTimestamp:  eventList.Items[i].LastTimestamp.Format(time.DateTime),
@@ -149,13 +199,17 @@ func GetStatistics(c *gin.Context) (*response.StatisticDataResponse, error) {
 		}
 		reportData.WarningEvents = append(reportData.WarningEvents, *modelEvent)
 	}
-	reportData.Version = Version
 
-	currentTime := time.Now()
 	logger.Debugf("Get statistic data: %+v", reportData)
-	return &response.StatisticDataResponse{
-		Component: telemetry.TelemetryComponentDashboard,
-		Time:      currentTime.Format(time.DateTime),
-		Content:   &reportData,
-	}, nil
+	return &reportData, nil
+}
+
+// contains checks if the target is in the arr
+func contains[T comparable](arr []T, target T) bool {
+	for _, a := range arr {
+		if a == target {
+			return true
+		}
+	}
+	return false
 }
