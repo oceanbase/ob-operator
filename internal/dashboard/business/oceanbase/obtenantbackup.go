@@ -230,6 +230,7 @@ func buildBackupPolicyModelType(p *v1alpha1.OBTenantBackupPolicy) *response.Back
 				PieceIntervalDays: dayToNumber(p.Spec.LogArchive.SwitchPieceInterval),
 			},
 		},
+		UID:                 string(p.UID),
 		TenantName:          p.Spec.TenantCRName,
 		Name:                p.Name,
 		Namespace:           p.Namespace,
@@ -248,6 +249,7 @@ func buildBackupJobModelType(p *v1alpha1.OBTenantBackup) *response.BackupJob {
 		return nil
 	}
 	res := &response.BackupJob{
+		UID:              string(p.UID),
 		Name:             p.Name,
 		Namespace:        p.Name,
 		Type:             string(p.Spec.Type),

@@ -160,6 +160,7 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 
 func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt := &response.OBTenantOverview{}
+	rt.UID = string(t.UID)
 	rt.Name = t.Name
 	rt.Namespace = t.Namespace
 	rt.CreateTime = t.CreationTimestamp.Format("2006-01-02 15:04:05")
@@ -244,7 +245,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 			Namespace: nn.Namespace,
 		},
 		StringData: map[string]string{
-			"password": rand.String(20),
+			"password": p.RootPassword, // For simplicity, use the same password as root
 		},
 	}, v1.CreateOptions{})
 	if err != nil {

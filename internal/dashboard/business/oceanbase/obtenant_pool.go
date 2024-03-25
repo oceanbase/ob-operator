@@ -21,21 +21,22 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
-func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (bool, error) {
+func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (*response.OBTenantDetail, error) {
 	cpuCount, err := resource.ParseQuantity(p.UnitConfig.CPUCount)
 	if err != nil {
-		return false, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+		return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
 	}
 	memorySize, err := resource.ParseQuantity(p.UnitConfig.MemorySize)
 	if err != nil {
-		return false, oberr.NewBadRequest("invalid memory size: " + err.Error())
+		return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
 	}
 	logDiskSize, err := resource.ParseQuantity(p.UnitConfig.LogDiskSize)
 	if err != nil {
-		return false, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+		return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
 	}
 
 	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
@@ -43,16 +44,16 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 		Name:      nn.Name,
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	for _, pool := range tenantCR.Spec.Pools {
 		if pool.Zone == nn.ZoneName {
-			return false, oberr.NewBadRequest("pool already exists")
+			return nil, oberr.NewBadRequest("pool already exists")
 		}
 	}
 	clusterCR, err := clients.GetOBCluster(ctx, nn.Namespace, tenantCR.Spec.ClusterName)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	for _, zone := range clusterCR.Spec.Topology {
 		if zone.Zone == nn.ZoneName {
@@ -74,29 +75,29 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 					LogDiskSize: logDiskSize,
 				},
 			})
-			_, err = clients.UpdateOBTenant(ctx, tenantCR)
+			newTenant, err := clients.UpdateOBTenant(ctx, tenantCR)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			return true, nil
+			return buildDetailFromApiType(newTenant), nil
 		}
 	}
-	return false, oberr.NewBadRequest("zone not found in the cluster")
+	return nil, oberr.NewBadRequest("zone not found in the cluster")
 }
 
-func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error) {
+func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (*response.OBTenantDetail, error) {
 	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	switch len(tenantCR.Spec.Pools) {
 	case 1:
-		return false, oberr.NewBadRequest("at least one pool is required")
+		return nil, oberr.NewBadRequest("at least one pool is required")
 	case 2:
-		return false, oberr.NewBadRequest("Error 4179 (HY000): forbidden to delete 1 of 2 units due to locality principal")
+		return nil, oberr.NewBadRequest("Error 4179 (HY000): forbidden to delete 1 of 2 units due to locality principal")
 	default:
 	}
 	remainPools := make([]v1alpha1.ResourcePoolSpec, 0, len(tenantCR.Spec.Pools)-1)
@@ -106,24 +107,24 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (bool, error
 		}
 	}
 	if len(remainPools) == len(tenantCR.Spec.Pools) {
-		return false, oberr.NewBadRequest("pool not found")
+		return nil, oberr.NewBadRequest("pool not found")
 	}
 
 	tenantCR.Spec.Pools = remainPools
-	_, err = clients.UpdateOBTenant(ctx, tenantCR)
+	newTenant, err := clients.UpdateOBTenant(ctx, tenantCR)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	return true, nil
+	return buildDetailFromApiType(newTenant), nil
 }
 
-func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (bool, error) {
+func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (*response.OBTenantDetail, error) {
 	tenantCR, err := clients.GetOBTenant(ctx, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,
 	})
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	for i, pool := range tenantCR.Spec.Pools {
 		if pool.Zone == nn.ZoneName {
@@ -149,12 +150,12 @@ func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Tena
 					tenantCR.Spec.Pools[i].UnitConfig.IopsWeight = p.UnitConfig.IopsWeight
 				}
 			}
-			_, err = clients.UpdateOBTenant(ctx, tenantCR)
+			newTenant, err := clients.UpdateOBTenant(ctx, tenantCR)
 			if err != nil {
-				return false, err
+				return nil, err
 			}
-			return true, nil
+			return buildDetailFromApiType(newTenant), nil
 		}
 	}
-	return false, oberr.NewBadRequest("pool not found")
+	return nil, oberr.NewBadRequest("pool not found")
 }

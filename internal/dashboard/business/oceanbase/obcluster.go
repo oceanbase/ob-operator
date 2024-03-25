@@ -34,6 +34,7 @@ import (
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 const (
@@ -70,6 +71,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		return nil, errors.Wrap(err, "failed to build obcluster topology")
 	}
 	return &response.OBClusterOverview{
+		UID:          string(obcluster.UID),
 		Namespace:    obcluster.Namespace,
 		Name:         obcluster.Name,
 		ClusterName:  obcluster.Spec.ClusterName,
@@ -478,36 +480,44 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	return obcluster
 }
 
-func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) error {
+func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) (*response.OBCluster, error) {
 	obcluster := generateOBClusterInstance(param)
 	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
 	if err != nil {
-		return errors.Wrap(err, "Create secrets for obcluster")
+		return nil, errors.Wrap(err, "Create secrets for obcluster")
 	}
 	logger.Infof("Generated obcluster instance:%v", obcluster)
-	return clients.CreateOBCluster(ctx, obcluster)
+	cluster, err := clients.CreateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
 }
 
-func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, updateParam *param.UpgradeOBClusterParam) error {
+func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, updateParam *param.UpgradeOBClusterParam) (*response.OBCluster, error) {
 	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
-		return errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
 	}
 	obcluster.Spec.OBServerTemplate.Image = updateParam.Image
-	return clients.UpdateOBCluster(ctx, obcluster)
+	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
 }
 
-func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, scaleParam *param.ScaleOBServerParam) error {
+func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, scaleParam *param.ScaleOBServerParam) (*response.OBCluster, error) {
 	obcluster, err := clients.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	if err != nil {
-		return errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	if obcluster.Status.Status != clusterstatus.Running {
-		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	}
+	// if obcluster.Status.Status != clusterstatus.Running {
+	// 	return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
+	// }
 	found := false
 	replicaChanged := false
 	for idx, obzone := range obcluster.Spec.Topology {
@@ -521,22 +531,26 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 		}
 	}
 	if !found {
-		return errors.Errorf("obzone %s not found in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
+		return nil, errors.Errorf("obzone %s not found in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
 	if !replicaChanged {
-		return errors.Errorf("obzone %s replica already satisfied in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
+		return nil, errors.Errorf("obzone %s replica already satisfied in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	return clients.UpdateOBCluster(ctx, obcluster)
+	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
 }
 
-func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) error {
+func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) (*response.OBCluster, error) {
 	obcluster, err := clients.GetOBCluster(ctx, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	if err != nil {
-		return errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	if obcluster.Status.Status != clusterstatus.Running {
-		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	}
+	// if obcluster.Status.Status != clusterstatus.Running {
+	// 	return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
+	// }
 	newTopology := make([]apitypes.OBZoneTopology, 0)
 	found := false
 	for _, obzone := range obcluster.Spec.Topology {
@@ -547,23 +561,27 @@ func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) err
 		}
 	}
 	if !found {
-		return errors.Errorf("obzone %s not found in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
+		return nil, errors.Errorf("obzone %s not found in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
 	obcluster.Spec.Topology = newTopology
-	return clients.UpdateOBCluster(ctx, obcluster)
+	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
 }
 
-func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, zone *param.ZoneTopology) error {
+func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, zone *param.ZoneTopology) (*response.OBCluster, error) {
 	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
-		return errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
-	if obcluster.Status.Status != clusterstatus.Running {
-		return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	}
+	// if obcluster.Status.Status != clusterstatus.Running {
+	// 	return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
+	// }
 	for _, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone == zone.Zone {
-			return errors.Errorf("obzone %s already exists", zone.Zone)
+			return nil, errors.Errorf("obzone %s already exists", zone.Zone)
 		}
 	}
 	obcluster.Spec.Topology = append(obcluster.Spec.Topology, apitypes.OBZoneTopology{
@@ -571,7 +589,11 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
 	})
-	return clients.UpdateOBCluster(ctx, obcluster)
+	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
 }
 
 func GetOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) (*response.OBCluster, error) {
@@ -582,8 +604,9 @@ func GetOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentit
 	return buildOBClusterResponse(ctx, obcluster)
 }
 
-func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) error {
-	return clients.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) (bool, error) {
+	err := clients.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	return err == nil, err
 }
 
 func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic, error) {

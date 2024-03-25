@@ -705,6 +705,8 @@ definitions:
       type:
         description: 'Enum: FULL, INCR, ARCHIVE, CLEAN'
         type: string
+      uid:
+        type: string
     type: object
   response.BackupPolicy:
     properties:
@@ -756,6 +758,8 @@ definitions:
       status:
         type: string
       tenantName:
+        type: string
+      uid:
         type: string
     required:
     - archivePath
@@ -975,6 +979,8 @@ definitions:
         items:
           $ref: '#/definitions/response.OBZone'
         type: array
+      uid:
+        type: string
       version:
         type: string
     type: object
@@ -1000,6 +1006,8 @@ definitions:
         items:
           $ref: '#/definitions/response.OBZone'
         type: array
+      uid:
+        type: string
     type: object
   response.OBClusterResources:
     properties:
@@ -1123,6 +1131,9 @@ definitions:
         items:
           $ref: '#/definitions/response.OBTenantReplica'
         type: array
+      uid:
+        description: Unique identifier of the resource
+        type: string
       unitNumber:
         description: Number of units in every zone
         type: integer
@@ -1167,6 +1178,9 @@ definitions:
         items:
           $ref: '#/definitions/response.OBTenantReplica'
         type: array
+      uid:
+        description: Unique identifier of the resource
+        type: string
       unitNumber:
         description: Number of units in every zone
         type: integer
@@ -1289,6 +1303,12 @@ definitions:
         items:
           $ref: '#/definitions/models.OBCluster'
         type: array
+      k8sNodes:
+        items:
+          $ref: '#/definitions/response.K8sNode'
+        type: array
+      operatorVersion:
+        type: string
       servers:
         items:
           $ref: '#/definitions/models.OBServer'
@@ -1297,8 +1317,6 @@ definitions:
         items:
           $ref: '#/definitions/models.OBTenant'
         type: array
-      version:
-        type: string
       warningEvents:
         items:
           $ref: '#/definitions/models.K8sEvent'
@@ -1307,15 +1325,6 @@ definitions:
         items:
           $ref: '#/definitions/models.OBZone'
         type: array
-    type: object
-  response.StatisticDataResponse:
-    properties:
-      component:
-        type: string
-      content:
-        $ref: '#/definitions/response.StatisticData'
-      time:
-        type: string
     type: object
   response.StorageClass:
     properties:
@@ -1793,7 +1802,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1882,7 +1896,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1973,7 +1992,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2020,7 +2044,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2066,7 +2095,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2118,7 +2152,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2718,7 +2757,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -2759,7 +2798,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -2800,7 +2839,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -3024,7 +3063,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.StatisticDataResponse'
+                  $ref: '#/definitions/response.StatisticData'
               type: object
         "400":
           description: Bad Request

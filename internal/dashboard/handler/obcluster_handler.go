@@ -84,12 +84,7 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	obcluster, err := oceanbase.GetOBCluster(c, obclusterIdentity)
-	if err != nil {
-		return nil, err
-	}
-	logger.Debugf("Get obcluster: %v", obcluster)
-	return obcluster, nil
+	return oceanbase.GetOBCluster(c, obclusterIdentity)
 }
 
 // @ID CreateOBCluster
@@ -99,13 +94,13 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.CreateOBClusterParam true "create obcluster request body"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBCluster}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [POST]
 // @Security ApiKeyAuth
-func CreateOBCluster(c *gin.Context) (any, error) {
+func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	param := &param.CreateOBClusterParam{}
 	err := c.Bind(param)
 	if err != nil {
@@ -116,11 +111,7 @@ func CreateOBCluster(c *gin.Context) (any, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Create obcluster with param: %+v", param)
-	err = oceanbase.CreateOBCluster(c, param)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return oceanbase.CreateOBCluster(c, param)
 }
 
 // @ID UpgradeOBCluster
@@ -132,13 +123,13 @@ func CreateOBCluster(c *gin.Context) (any, error) {
 // @Param namespace path string true "obcluster namespace"
 // @Param name path string true "obcluster name"
 // @Param body body param.UpgradeOBClusterParam true "upgrade obcluster request body"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBCluster}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [POST]
 // @Security ApiKeyAuth
-func UpgradeOBCluster(c *gin.Context) (any, error) {
+func UpgradeOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	updateParam := &param.UpgradeOBClusterParam{}
 	err := c.BindUri(obclusterIdentity)
@@ -150,11 +141,7 @@ func UpgradeOBCluster(c *gin.Context) (any, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Upgrade obcluster with param: %+v", updateParam)
-	err = oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return oceanbase.UpgradeObCluster(c, obclusterIdentity, updateParam)
 }
 
 // @ID DeleteOBCluster
@@ -165,23 +152,19 @@ func UpgradeOBCluster(c *gin.Context) (any, error) {
 // @Produce application/json
 // @Param namespace path string true "obcluster namespace"
 // @Param name path string true "obcluster name"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=bool}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteOBCluster(c *gin.Context) (any, error) {
+func DeleteOBCluster(c *gin.Context) (bool, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+		return false, httpErr.NewBadRequest(err.Error())
 	}
-	err = oceanbase.DeleteOBCluster(c, obclusterIdentity)
-	if err != nil {
-		return nil, httpErr.NewInternal(err.Error())
-	}
-	return nil, nil
+	return oceanbase.DeleteOBCluster(c, obclusterIdentity)
 }
 
 // @ID AddOBZone
@@ -193,13 +176,13 @@ func DeleteOBCluster(c *gin.Context) (any, error) {
 // @Param namespace path string true "obcluster namespace"
 // @Param name path string true "obcluster name"
 // @Param body body param.ZoneTopology true "add obzone request body"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBCluster}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones [POST]
 // @Security ApiKeyAuth
-func AddOBZone(c *gin.Context) (any, error) {
+func AddOBZone(c *gin.Context) (*response.OBCluster, error) {
 	obclusterIdentity := &param.K8sObjectIdentity{}
 	err := c.BindUri(obclusterIdentity)
 	if err != nil {
@@ -211,11 +194,7 @@ func AddOBZone(c *gin.Context) (any, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Add obzone with param: %+v", param)
-	err = oceanbase.AddOBZone(c, obclusterIdentity, param)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return oceanbase.AddOBZone(c, obclusterIdentity, param)
 }
 
 // @ID ScaleOBServer
@@ -228,13 +207,13 @@ func AddOBZone(c *gin.Context) (any, error) {
 // @Param name path string true "obcluster name"
 // @Param obzoneName path string true "obzone name"
 // @Param body body param.ScaleOBServerParam true "scale observer request body"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBCluster}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/obzones/{obzoneName}/scale [POST]
 // @Security ApiKeyAuth
-func ScaleOBServer(c *gin.Context) (any, error) {
+func ScaleOBServer(c *gin.Context) (*response.OBCluster, error) {
 	obzoneIdentity := &param.OBZoneIdentity{}
 	err := c.BindUri(obzoneIdentity)
 	if err != nil {
@@ -246,11 +225,7 @@ func ScaleOBServer(c *gin.Context) (any, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Scale observer with param: %+v", scaleParam)
-	err = oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 }
 
 // @ID DeleteOBZone
@@ -262,7 +237,7 @@ func ScaleOBServer(c *gin.Context) (any, error) {
 // @Param namespace path string true "obcluster namespace"
 // @Param name path string true "obcluster name"
 // @Param obzoneName path string true "obzone name"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=response.OBCluster}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
@@ -274,11 +249,7 @@ func DeleteOBZone(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	err = oceanbase.DeleteOBZone(c, obzoneIdentity)
-	if err != nil {
-		return nil, err
-	}
-	return nil, nil
+	return oceanbase.DeleteOBZone(c, obzoneIdentity)
 }
 
 // @ID ListOBClusterResources
