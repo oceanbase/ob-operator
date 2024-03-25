@@ -67,7 +67,7 @@ func (w wsWrapper) Read(p []byte) (int, error) {
 		w.cancel()
 		return 0, err
 	}
-	_ = w.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_ = w.conn.SetReadDeadline(time.Now().Add(10 * time.Minute))
 	return r.Read(p)
 }
 
@@ -78,7 +78,7 @@ func (w wsWrapper) Write(p []byte) (int, error) {
 		w.cancel()
 		return 0, err
 	}
-	_ = w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	_ = w.conn.SetWriteDeadline(time.Now().Add(10 * time.Minute))
 	return len(p), nil
 }
 
