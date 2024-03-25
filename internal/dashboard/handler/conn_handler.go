@@ -42,8 +42,8 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-func onEvictFunc(key string, value *response.OBConnection) {
-	return
+func onEvictFunc(key string, _ *response.OBConnection) {
+	log.Printf("session expired: %s\n", key)
 }
 
 var sessionMap = expirable.NewLRU(100, onEvictFunc, time.Minute*10)
@@ -67,7 +67,7 @@ func (w wsWrapper) Read(p []byte) (int, error) {
 		w.cancel()
 		return 0, err
 	}
-	w.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+	_ = w.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	return r.Read(p)
 }
 
@@ -78,7 +78,7 @@ func (w wsWrapper) Write(p []byte) (int, error) {
 		w.cancel()
 		return 0, err
 	}
-	w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+	_ = w.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 	return len(p), nil
 }
 
