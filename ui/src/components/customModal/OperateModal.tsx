@@ -14,7 +14,6 @@ interface OperateModalProps {
   type: API.ModalType;
   params?: any;
 }
-//todo OperateModal传参换一下params
 export default function OperateModal({
   type,
   ...props
