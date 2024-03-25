@@ -103,7 +103,7 @@ func (m *OceanbaseOperationManager) StopZone(zoneName string) error {
 	}
 	err = m.ExecWithDefaultTimeout(sql.StopZone, zoneName)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when start zone")
+		m.Logger.Error(err, "Got exception when stop zone")
 		return errors.Wrap(err, "Start zone")
 	}
 	return nil
