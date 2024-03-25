@@ -170,6 +170,15 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item
                 name={['unitConfig', 'logDiskSize']}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.ResourcePools.EnterTheLogDiskSize',
+                      defaultMessage: '请输入日志磁盘大小',
+                    }),
+                  },
+                ]}
                 label={
                   <Tooltip
                     title={intl.formatMessage({

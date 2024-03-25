@@ -128,7 +128,7 @@ export default function TenantOverview() {
     //     id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
     //     defaultMessage: 'Unit规格管理',
     //   }),
-    //   onClick: () => openOperateModal('modifyUnitSpecification'),
+    //   onClick: () => openOperateModal('editResourcePools'),
     //   show: tenantDetail?.info.tenantRole === 'PRIMARY',
     //   isMore: false,
     // },
@@ -342,9 +342,8 @@ export default function TenantOverview() {
           visible={operateModalVisible}
           setVisible={setOperateModalVisible}
           successCallback={operateSuccess}
-          defaultValue={defaultUnitCount}
-          defaultValueForUnitDetail={{
-            // clusterList: formatClustersTopology(clusterList, tenantDetail),
+          params={{
+            defaultUnitCount,
             clusterList: clusterList,
             essentialParameter,
             clusterResourceName: tenantDetail?.info.clusterResourceName,

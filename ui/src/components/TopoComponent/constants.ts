@@ -76,22 +76,43 @@ const clusterOperateOfTenant: OperateTypeLabel = [
   },
 ];
 
-const zoneOperateOfTenant: OperateTypeLabel = [
-  {
-    value: 'modifyUnitSpecification',
-    label: intl.formatMessage({
-      id: 'Dashboard.components.TopoComponent.constants.AdjustUnitSpecifications',
-      defaultMessage: '调整 Unit 规格',
-    }),
-  },
-];
+const getZoneOperateOfTenant = (
+  haveResourcePool: boolean,
+): OperateTypeLabel => {
+  return haveResourcePool
+    ? [
+        {
+          value: 'editResourcePools',
+          label: intl.formatMessage({
+            id: 'Dashboard.components.TopoComponent.constants.EditResourcePool',
+            defaultMessage: '编辑资源池',
+          }),
+        },
+        {
+          value: 'deleteResourcePool',
+          label: intl.formatMessage({
+            id: 'Dashboard.components.TopoComponent.constants.DeleteAResourcePool',
+            defaultMessage: '删除资源池',
+          }),
+        },
+      ]
+    : [
+        {
+          value: 'createResourcePools',
+          label: intl.formatMessage({
+            id: 'Dashboard.components.TopoComponent.constants.AddAResourcePool',
+            defaultMessage: '新增资源池',
+          }),
+        },
+      ];
+};
 
 export {
   clusterOperate,
   clusterOperateOfTenant,
+  getZoneOperateOfTenant,
   serverOperate,
   zoneOperate,
-  zoneOperateOfTenant,
 };
 
 export type { OperateTypeLabel };

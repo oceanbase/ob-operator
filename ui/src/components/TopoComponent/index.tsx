@@ -11,16 +11,18 @@ import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
+import { getClusterFromTenant, getZonesOptions } from '@/pages/Tenant/helper';
 import { deleteObcluster, deleteObzone, getClusterDetailReq } from '@/services';
+import { deleteObtenantPool } from '@/services/tenant';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode, config } from './G6register';
 import type { OperateTypeLabel } from './constants';
 import {
   clusterOperate,
   clusterOperateOfTenant,
+  getZoneOperateOfTenant,
   serverOperate,
   zoneOperate,
-  zoneOperateOfTenant,
 } from './constants';
 import { appenAutoShapeListener, checkIsSame, getServerNumber } from './helper';
 
@@ -29,6 +31,9 @@ interface TopoProps {
   namespace?: string;
   clusterNameOfKubectl?: string; // k8s resource name
   header?: ReactElement;
+  resourcePoolDefaultValue?: any;
+  refreshTenant?: () => void;
+  defaultUnitCount?: number;
 }
 
 //Cluster topology diagram component
@@ -37,11 +42,13 @@ export default function TopoComponent({
   header,
   namespace,
   clusterNameOfKubectl,
+  resourcePoolDefaultValue,
+  refreshTenant,
+  defaultUnitCount,
 }: TopoProps) {
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
-  const zoneOperateList = tenantReplicas ? zoneOperateOfTenant : zoneOperate;
   const modelRef = useRef<HTMLInputElement>(null);
   const [visible, setVisible] = useState<boolean>(false);
   const [operateList, setOprateList] =
@@ -79,6 +86,7 @@ export default function TopoComponent({
       },
     },
   );
+
   //Node more icon click event
   const handleClick = (evt: IG6GraphEvent) => {
     if (modelRef.current) {
@@ -87,8 +95,18 @@ export default function TopoComponent({
           setOprateList(clusterOperateList);
           break;
         case 'zone':
-          setOprateList(zoneOperateList);
-          chooseZoneName.current = evt.item?._cfg?.model?.label as string;
+          const zone = evt.item?._cfg?.model?.label as string;
+          if (tenantReplicas) {
+            const { setEditZone } = resourcePoolDefaultValue;
+            if (setEditZone) setEditZone(zone);
+            const haveResourcePool = !!tenantReplicas?.find(
+              (replica) => replica.zone === zone,
+            );
+            setOprateList(getZoneOperateOfTenant(haveResourcePool));
+          } else {
+            setOprateList(zoneOperate);
+          }
+          chooseZoneName.current = zone;
           break;
         case 'server':
           setOprateList(serverOperate);
@@ -171,6 +189,21 @@ export default function TopoComponent({
     graph.current.render();
     appenAutoShapeListener(graph.current);
   };
+  // delete resource pool
+  const deleteResourcePool = async (zoneName: string) => {
+    const [ns, name] = getNSName();
+    const res = await deleteObtenantPool({ ns, name, zoneName });
+    if (res.successful) {
+      if (refreshTenant) refreshTenant();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
+            defaultMessage: '删除成功',
+          }),
+      );
+    }
+  };
 
   /**
    * Call up the operation and maintenance operation modal
@@ -215,9 +248,29 @@ export default function TopoComponent({
       setOperateModalVisible(true);
     }
 
-    if (operate === 'modifyUnitSpecification') {
-      modalType.current = 'modifyUnitSpecification';
+    if (operate === 'editResourcePools') {
+      modalType.current = 'editResourcePools';
       setOperateModalVisible(true);
+    }
+
+    if (operate === 'createResourcePools') {
+      modalType.current = 'createResourcePools';
+      setOperateModalVisible(true);
+    }
+
+    if (operate === 'deleteResourcePool') {
+      modalType.current = 'deleteResourcePool';
+      showDeleteConfirm({
+        onOk: () => deleteResourcePool(chooseZoneName.current),
+        title: intl.formatMessage(
+          {
+            id: 'Dashboard.components.TopoComponent.AreYouSureYouWant',
+            defaultMessage:
+              '确定要删除该租户在{{chooseZoneNameCurrent}}上的资源池吗？',
+          },
+          { chooseZoneNameCurrent: chooseZoneName.current },
+        ),
+      });
     }
   };
 
@@ -286,6 +339,7 @@ export default function TopoComponent({
       modelRef.current?.removeEventListener('mouseleave', mouseLeave);
     };
   }, []);
+  const isCreatePool = modalType.current === 'createResourcePools';
 
   // Use different pictures for nodes in different states
   return (
@@ -320,8 +374,22 @@ export default function TopoComponent({
         visible={operateModalVisible}
         setVisible={setOperateModalVisible}
         successCallback={operateSuccess}
-        zoneName={chooseZoneName.current}
-        defaultValue={chooseServerNum}
+        params={{
+          zoneName: chooseZoneName.current,
+          defaultValue: chooseServerNum,
+          defaultUnitCount: defaultUnitCount,
+          ...resourcePoolDefaultValue,
+          newResourcePool: isCreatePool,
+          zonesOptions: isCreatePool
+            ? getZonesOptions(
+                getClusterFromTenant(
+                  resourcePoolDefaultValue?.clusterList,
+                  resourcePoolDefaultValue?.clusterResourceName,
+                ),
+                resourcePoolDefaultValue?.replicaList,
+              )
+            : undefined,
+        }}
       />
     </div>
   );

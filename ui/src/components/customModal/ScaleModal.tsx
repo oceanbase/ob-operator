@@ -8,17 +8,20 @@ import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 
 interface ScaleModalProps {
-  zoneName?: string;
-  defaultValue?: number;
+  params?:{
+    zoneName?: string;
+    defaultValue?: number;
+  }
 }
 
 export default function ScaleModal({
   visible,
   setVisible,
   successCallback,
-  zoneName,
-  defaultValue = 1,
+  params,
 }: ScaleModalProps & CommonModalType) {
+  const zoneName = params?.zoneName;
+  const defaultValue = params?.defaultValue;
   const [form] = Form.useForm();
   const handleSubmit = async () => {
     try {

@@ -12,22 +12,18 @@ import ModifyUnitDetailModal from './ModifyUnitDetailModal';
 
 interface OperateModalProps {
   type: API.ModalType;
-  zoneName?: any;
-  defaultValue?: any;
-  disabled?: boolean;
-  defaultValueForUnitDetail?: any;
+  params?: any;
 }
-
+//todo OperateModal传参换一下params
 export default function OperateModal({
   type,
-  defaultValueForUnitDetail,
   ...props
 }: OperateModalProps & CommonModalType) {
   if (type === 'addZone') {
     return <AddZoneModal {...props} />;
   }
 
-  if (type === 'scaleServer' && props.zoneName) {
+  if (type === 'scaleServer' && props?.params?.zoneName) {
     return <ScaleModal {...props} />;
   }
 
@@ -53,8 +49,12 @@ export default function OperateModal({
     return <UpgradeTenantModal {...props} />;
   }
 
-  if(type === 'modifyUnitSpecification'){
-    return <ModifyUnitDetailModal {...defaultValueForUnitDetail} {...props} />
+  if(type === 'editResourcePools'){
+    return <ModifyUnitDetailModal {...props} />
+  }
+  
+  if(type === 'createResourcePools'){
+    return <ModifyUnitDetailModal {...props} />
   }
 
   if(type === 'changeUnitCount'){

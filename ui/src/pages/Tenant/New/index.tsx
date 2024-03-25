@@ -47,37 +47,40 @@ export default function New() {
 
   const onFinish = async (values: any) => {
     const reqData = formatNewTenantForm(values, clusterName, publicKey);
-    if (!reqData.pools?.length) {
-      message.warning(
-        intl.formatMessage({
-          id: 'Dashboard.Tenant.New.SelectAtLeastOneZone',
-          defaultMessage: '至少选择一个Zone',
-        }),
-      );
-      return;
-    }
-    const ns = clusterList.filter(
-      (cluster) => cluster.clusterId === selectClusterId,
-    )[0]?.namespace;
-    const res = await createTenant({
-      namespace: ns,
-      ...formatNewTenantForm(values, clusterName, publicKey),
-    });
-    if (res.successful) {
-      message.success(
-        intl.formatMessage({
-          id: 'Dashboard.Tenant.New.TenantCreatedSuccessfully',
-          defaultMessage: '创建租户成功',
-        }),
-        3,
-      );
-      form.resetFields();
-      history.back();
-    }
+    // if (!reqData.pools?.length) {
+    //   message.warning(
+    //     intl.formatMessage({
+    //       id: 'Dashboard.Tenant.New.SelectAtLeastOneZone',
+    //       defaultMessage: '至少选择一个Zone',
+    //     }),
+    //   );
+    //   return;
+    // }
+    console.log('reqData',reqData);
+    
+    // const ns = clusterList.filter(
+    //   (cluster) => cluster.clusterId === selectClusterId,
+    // )[0]?.namespace;
+    // const res = await createTenant({
+    //   namespace: ns,
+    //   ...reqData,
+    // });
+    // if (res.successful) {
+    //   message.success(
+    //     intl.formatMessage({
+    //       id: 'Dashboard.Tenant.New.TenantCreatedSuccessfully',
+    //       defaultMessage: '创建租户成功',
+    //     }),
+    //     3,
+    //   );
+    //   form.resetFields();
+    //   history.back();
+    // }
   };
 
   const initialValues = {
     connectWhiteList: ['%'],
+    obcluster:'test'
   };
 
   useUpdateEffect(() => {

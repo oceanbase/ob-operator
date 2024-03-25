@@ -6,16 +6,16 @@ import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import type { MaxResourceType } from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
 import {
-  findMinParameter,
-  modifyZoneCheckedStatus,
+findMinParameter,
+modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
-import { createObtenantPool, patchObtenantPool } from '@/services/tenant';
+import { createObtenantPool,patchObtenantPool } from '@/services/tenant';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
-import { Col, Form, Row, Select, message } from 'antd';
+import { Col,Form,Row,Select,message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -46,30 +46,36 @@ const formatReplicaList = (
 };
 
 type UnitConfigType = {
-  clusterList?: API.SimpleClusterList;
-  clusterResourceName?: string;
-  essentialParameter?: API.EssentialParametersType;
-  setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
-  editZone?: string;
-  replicaList?: API.ReplicaDetailType[];
-  newResourcePool?: boolean;
-  setEditZone?: React.Dispatch<React.SetStateAction<string>>;
-  zonesOptions?: API.OptionsType;
+  params:{
+    clusterList?: API.SimpleClusterList;
+    clusterResourceName?: string;
+    essentialParameter?: API.EssentialParametersType;
+    setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
+    editZone?: string;
+    replicaList?: API.ReplicaDetailType[];
+    newResourcePool?: boolean;
+    setEditZone?: React.Dispatch<React.SetStateAction<string>>;
+    zonesOptions?: API.OptionsType;
+    zoneName?: string;
+  }
 };
 
 export default function ModifyUnitDetailModal({
   visible,
   setVisible,
   successCallback,
-  clusterList = [],
-  setClusterList,
-  essentialParameter = {},
-  clusterResourceName = '',
-  editZone,
-  replicaList,
-  newResourcePool = false,
-  setEditZone,
-  zonesOptions,
+  params:{
+    clusterList = [],
+    setClusterList,
+    essentialParameter = {},
+    clusterResourceName = '',
+    editZone,
+    replicaList,
+    newResourcePool = false,
+    setEditZone,
+    zonesOptions,
+    zoneName
+  }
 }: CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
   const [minMemory, setMinMemory] = useState<number>(2);
@@ -204,6 +210,12 @@ export default function ModifyUnitDetailModal({
       setSelectZones([editZone]);
     }
   }, [editZone]);
+
+  useEffect(() => {
+    if (zoneName && newResourcePool && zonesOptions?.length) {
+      form.setFieldValue('zoneName', zoneName);
+    }
+  }, [zoneName, newResourcePool]);
 
   return (
     <CustomModal

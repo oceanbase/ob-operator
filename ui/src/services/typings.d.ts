@@ -26,6 +26,7 @@ declare namespace API {
   type ClusterInfo = {
     name: string;
     namespace: string;
+    clusterName: string;
     status: string;
     image: string;
     rootPasswordSecret: string;
@@ -153,7 +154,9 @@ declare namespace API {
     | 'switchTenant'
     | 'upgradeTenant'
     | 'changeUnitCount'
-    | 'modifyUnitSpecification'
+    | 'editResourcePools'
+    | 'createResourcePools'
+    | 'deleteResourcePool'
     | 'deleteCluster'
     | 'deleteZone'
 

@@ -657,5 +657,16 @@
   "Dashboard.Detail.Overview.BasicInfo.ReplicaDistribution": "Replica distribution",
   "Dashboard.Tenant.New.ResourcePools.SelectTheZoneToDeploy": "Select the Zone to deploy the resource pool",
   "Dashboard.Tenant.New.ResourcePools.ResourceUnitSpecifications": "Resource Unit specifications",
-  "Dashboard.Tenant.New.SelectAtLeastOneZone": "Select at least one Zone"
+  "Dashboard.Tenant.New.SelectAtLeastOneZone": "Select at least one Zone",
+  "Dashboard.pages.Cluster.ClusterList.ResourceName": "Resource Name",
+  "Dashboard.Detail.Overview.ZoneTable.ZoneResourceName": "Zone Resource Name",
+  "Dashboard.Detail.Overview.ZoneTable.ZoneName": "Zone name",
+  "Dashboard.Cluster.New.Observer.EnterLabel": "Enter {label}",
+  "Dashboard.Cluster.New.Observer.EnterAnImage": "Enter an image",
+  "Dashboard.Tenant.New.ResourcePools.EnterTheLogDiskSize": "Enter the log disk size.",
+  "Dashboard.pages.Tenant.TenantsList.ReplicaDistribution": "Replica distribution",
+  "Dashboard.components.TopoComponent.constants.EditResourcePool": "Edit resource pool",
+  "Dashboard.components.TopoComponent.constants.DeleteAResourcePool": "Delete a resource pool",
+  "Dashboard.components.TopoComponent.constants.AddAResourcePool": "Add a resource pool",
+  "Dashboard.components.TopoComponent.AreYouSureYouWant": "Are you sure you want to delete the tenant's resource pool on {chooseZoneNameCurrent}?"
 }

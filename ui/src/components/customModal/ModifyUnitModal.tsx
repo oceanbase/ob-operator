@@ -1,7 +1,7 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { patchTenantConfiguration } from '@/services/tenant';
 import { intl } from '@/utils/intl';
-import { Form, InputNumber, message } from 'antd';
+import { Form,InputNumber,message } from 'antd';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -13,11 +13,13 @@ type FieldType = {
 export default function ModifyUnitModal({
   visible,
   setVisible,
-  defaultValue = 1,
+  params = {
+    defaultUnitCount: 1,
+  },
   successCallback,
-}: CommonModalType & { defaultValue: number }) {
+}: CommonModalType & { params: { defaultUnitCount: number } }) {
   const [form] = Form.useForm();
-
+  const { defaultUnitCount } = params;
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -48,10 +50,10 @@ export default function ModifyUnitModal({
   };
 
   useEffect(() => {
-    if (defaultValue !== form.getFieldValue('unitNum')) {
+    if (defaultUnitCount !== form.getFieldValue('unitNum')) {
       form.resetFields();
     }
-  }, [defaultValue]);
+  }, [defaultUnitCount]);
 
   return (
     <CustomModal
@@ -65,7 +67,7 @@ export default function ModifyUnitModal({
     >
       <Form
         form={form}
-        initialValues={{ unitNum: defaultValue }}
+        initialValues={{ unitNum: defaultUnitCount }}
         onFinish={onFinish}
         style={{ maxWidth: 600 }}
         autoComplete="off"

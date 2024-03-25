@@ -38,7 +38,7 @@ export default function ZoneItem({
         <Form.Item noStyle name={checkedFormName}>
           <Checkbox
             checked={checked}
-            disabled={isEdit}
+            disabled={isEdit || !obZoneResource}
             style={{ marginRight: 24 }}
             onChange={(e) => checkBoxOnChange(e.target.checked, name)}
           />
@@ -46,7 +46,7 @@ export default function ZoneItem({
       ) : (
         <Checkbox
           checked={checked}
-          disabled={isEdit}
+          disabled={isEdit || !obZoneResource}
           style={{ marginRight: 24 }}
           onChange={(e) => checkBoxOnChange(e.target.checked, name)}
         />

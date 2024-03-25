@@ -64,6 +64,7 @@ const BACKUP_RESULT_STATUS = ['RUNNING','FAILED','PAUSED'];
 
 const CLUSTER_INFO_CONFIG = [
   'name',
+  'clusterName',
   'namespace',
   'status',
   'image',
@@ -78,6 +79,7 @@ const CLUSTER_INFO_CONFIG = [
 
 const TOPO_INFO_CONFIG = [
   'name',
+  'clusterName',
   'namespace',
   'status',
   'image',

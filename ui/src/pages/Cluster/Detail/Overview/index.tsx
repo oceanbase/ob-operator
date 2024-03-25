@@ -65,7 +65,7 @@ const ClusterOverview: React.FC = () => {
     setOperateModalVisible(true);
   };
   const handleUpgrade = () => {
-    modalType.current = 'upgrade';
+    modalType.current = 'upgradeCluster';
     setOperateModalVisible(true);
   };
 
@@ -170,8 +170,10 @@ const ClusterOverview: React.FC = () => {
         visible={operateModalVisible}
         setVisible={setOperateModalVisible}
         successCallback={operateSuccess}
-        zoneName={chooseZoneName.current}
-        defaultValue={chooseServerNum}
+        params={{
+          zoneName:chooseZoneName.current,
+          defaultValue:chooseServerNum
+        }}
       />
     </PageContainer>
   );

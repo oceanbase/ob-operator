@@ -60,7 +60,7 @@ export default function Replicas({
     return keys;
   };
 
-  const deleteZone = async (zoneName: string) => {
+  const deleteResourcePool = async (zoneName: string) => {
     const [ns, name] = getNSName();
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
@@ -78,12 +78,12 @@ export default function Replicas({
   const editResourcePool = (zone: string) => {
     operateType.current = 'edit';
     setEditZone(zone);
-    openOperateModal('modifyUnitSpecification');
+    openOperateModal('editResourcePools');
   };
 
   const addResourcePool = () => {
     operateType.current = 'create';
-    openOperateModal('modifyUnitSpecification');
+    openOperateModal('createResourcePools');
   };
 
   return (
@@ -141,7 +141,7 @@ export default function Replicas({
                   <Button
                     onClick={() => {
                       showDeleteConfirm({
-                        onOk: () => deleteZone(replica.zone),
+                        onOk: () => deleteResourcePool(replica.zone),
                         title: intl.formatMessage(
                           {
                             id: 'Dashboard.Detail.Overview.Replicas.AreYouSureYouWant',
