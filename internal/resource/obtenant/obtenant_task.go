@@ -1178,7 +1178,7 @@ func (m *OBTenantManager) CreateUserWithCredentials() tasktypes.TaskError {
 			}
 		}
 
-		if standbyROPwd == "" && secret != nil {
+		if standbyROPwd == "" {
 			standbyROPwd = string(secret.Data["password"])
 		}
 
