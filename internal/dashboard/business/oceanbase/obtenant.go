@@ -53,8 +53,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			TenantRole:       apitypes.TenantRole(p.TenantRole),
 
 			// guard non-nil
-			Pools:  []v1alpha1.ResourcePoolSpec{},
-			Source: &v1alpha1.TenantSourceSpec{},
+			Pools: []v1alpha1.ResourcePoolSpec{},
 		},
 	}
 
@@ -105,8 +104,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 
 	if p.Source != nil {
 		t.Spec.Source = &v1alpha1.TenantSourceSpec{
-			Tenant:  p.Source.Tenant,
-			Restore: &v1alpha1.RestoreSourceSpec{},
+			Tenant: p.Source.Tenant,
 		}
 		if p.Source.Restore != nil {
 			t.Spec.Source.Restore = &v1alpha1.RestoreSourceSpec{
