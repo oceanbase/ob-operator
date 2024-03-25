@@ -12,12 +12,7 @@ See the Mulan PSL v2 for more details.
 
 package response
 
-import "os"
-
 type OBConnection struct {
-	Stdin     *os.File
-	Stdout    *os.File
-	Stderr    *os.File
 	Namespace string `json:"namespace"`
 	Cluster   string `json:"cluster,omitempty"`
 	Tenant    string `json:"tenant,omitempty"`
