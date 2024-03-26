@@ -303,7 +303,7 @@ func MaintainOBParameter(m *OBClusterManager) tasktypes.TaskError {
 			err := m.CreateOBParameter(&parameter)
 			if err != nil {
 				// since parameter is not a big problem, just log the error
-				m.Logger.Error(err, "Crate obparameter failed", "param", parameter.Name)
+				m.Logger.Error(err, "Create obparameter failed", "param", parameter.Name)
 			}
 		} else if parameterStatus.Value != parameter.Value {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter value not matched, need update", "param", parameter.Name)
