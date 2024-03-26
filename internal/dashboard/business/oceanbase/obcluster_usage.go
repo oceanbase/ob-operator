@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 import (
-	"cmp"
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -126,7 +125,14 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 	return serverUsages, zoneMapping
 }
 
-func max[t cmp.Ordered](a, b t) t {
+type OrderedType interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64 |
+		~string
+}
+
+func max[t OrderedType](a, b t) t {
 	if a > b {
 		return a
 	}
