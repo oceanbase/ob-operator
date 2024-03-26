@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 import (
+	"cmp"
 	"context"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -94,10 +95,10 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 		zoneResource := &response.OBZoneAvaiableResource{
 			ServerCount:       1,
 			OBZone:            gvserver.Zone,
-			AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
-			AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
-			AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
-			AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
+			AvailableCPU:      max(gvserver.CPUCapacity-gvserver.CPUAssigned, 0),
+			AvailableMemory:   max(gvserver.MemCapacity-gvserver.MemAssigned, 0),
+			AvailableLogDisk:  max(gvserver.LogDiskCapacity-gvserver.LogDiskAssigned, 0),
+			AvailableDataDisk: max(gvserver.DataDiskCapacity-gvserver.DataDiskAllocated, 0),
 		}
 		serverUsage := response.OBServerAvailableResource{
 			OBServerIP:             gvserver.ServerIP,
@@ -123,4 +124,11 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 		serverUsages = append(serverUsages, serverUsage)
 	}
 	return serverUsages, zoneMapping
+}
+
+func max[t cmp.Ordered](a, b t) t {
+	if a > b {
+		return a
+	}
+	return b
 }
