@@ -4,7 +4,8 @@ PROJECT=oceanbase-dashboard
 PROCESSOR=4
 PWD ?= $(shell pwd)
 
-DASHBOARD_VERSION ?= 1.0.0
+DASHBOARD_VERSION ?= 0.2.0
+DASHBOARD_IMG ?= oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
 INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/dashboard/handler
@@ -45,3 +46,11 @@ dep-install: ## Install dependencies for oceanbase-dashboard
 .PHONY: dev-dashboard
 dev-dashboard: ## Run oceanbase-dashboard in dev mode
 	go run $(BUILD_FLAG) ./cmd/dashboard/main.go
+
+.PHONY: dashboard-docker-build
+dashboard-docker-build: ## build oceanbase-dashboard image
+	docker build -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
+
+.PHONY: dashboard-docker-push
+dashboard-docker-push: ## push oceanbase-dashboard image
+	docker push ${DASHBOARD_IMG}
