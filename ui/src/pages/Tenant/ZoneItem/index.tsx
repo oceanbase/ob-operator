@@ -74,14 +74,14 @@ export default function ZoneItem({
             CPU {obZoneResource['availableCPU']}
           </span>
           <span style={{ marginRight: 12 }}>
-            Memory {obZoneResource['availableMemory'] / (1 << 30)}GB
+            Memory {obZoneResource['availableMemory'] }GB
           </span>
           <span>
             {intl.formatMessage({
               id: 'Dashboard.Tenant.New.ResourcePools.LogDiskSize',
               defaultMessage: '日志磁盘大小',
             })}
-            {obZoneResource['availableLogDisk'] / (1 << 30)}GB
+            {obZoneResource['availableLogDisk']}GB
           </span>
         </Col>
       )}

@@ -58,9 +58,9 @@ const MINIMAL_CONFIG = {
   redoLog: 30,
 };
 
-const RESULT_STATUS = ['running','failed'];
+const RESULT_STATUS = ['running', 'failed'];
 
-const BACKUP_RESULT_STATUS = ['RUNNING','FAILED','PAUSED'];
+const BACKUP_RESULT_STATUS = ['RUNNING', 'FAILED', 'PAUSED'];
 
 const CLUSTER_INFO_CONFIG = [
   'name',
@@ -74,8 +74,8 @@ const CLUSTER_INFO_CONFIG = [
   'monitor',
   'rootPasswordSecret',
   'mode',
-  'parameters'
-]
+  'parameters',
+];
 
 const TOPO_INFO_CONFIG = [
   'name',
@@ -85,29 +85,46 @@ const TOPO_INFO_CONFIG = [
   'image',
   'mode',
   'rootPasswordSecret',
-]
+];
 
 const RESOURCE_NAME_REG = /^[a-z\-]+$/;
 // use for tenant name or zone name
-const TZ_NAME_REG =  /^[_a-zA-Z][^-\n]*$/;
+const TZ_NAME_REG = /^[_a-zA-Z][^-\n]*$/;
+
+const MIN_RESOURCE_CONFIG = {
+  minCPU: 1,
+  minLogDisk: 5,
+  minMemory: 2,
+  minIops: 1024,
+  maxIops: 1024,
+};
+
+const getMinResource = (defaultValue?: any) => {
+  return {
+    ...MIN_RESOURCE_CONFIG,
+    ...defaultValue,
+  };
+};
 
 export {
+  BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
   CLUSTER_IMG_MAP,
+  CLUSTER_INFO_CONFIG,
   COLOR_MAP,
   MINIMAL_CONFIG,
+  MIN_RESOURCE_CONFIG,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
   REFRESH_TENANT_TIME,
+  RESOURCE_NAME_REG,
+  RESULT_STATUS,
   SERVER_IMG_MAP,
   STATUS,
   SUFFIX_UNIT,
-  ZONE_IMG_MAP,
-  RESULT_STATUS,
-  BACKUP_RESULT_STATUS,
-  RESOURCE_NAME_REG,
+  TOPO_INFO_CONFIG,
   TZ_NAME_REG,
-  CLUSTER_INFO_CONFIG,
-  TOPO_INFO_CONFIG
+  ZONE_IMG_MAP,
+  getMinResource,
 };

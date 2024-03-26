@@ -1,5 +1,5 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT } from '@/constants';
+import { SUFFIX_UNIT, getMinResource } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card, Col, Form, Row, Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
@@ -21,6 +21,14 @@ export type MaxResourceType = {
   maxMemory?: number;
 };
 
+export type MinResourceConfig = {
+  minCPU: number;
+  minMemory: number;
+  minLogDisk: number;
+  minIops: number;
+  maxIops: number;
+};
+
 export default function ResourcePools({
   selectClusterId,
   clusterList,
@@ -28,7 +36,9 @@ export default function ResourcePools({
   setClusterList,
   form,
 }: ResourcePoolsProps) {
-  const [minMemory, setMinMemory] = useState<number>(2);
+  const [minResource, setMinResource] = useState<MinResourceConfig>(
+    getMinResource(),
+  );
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
 
@@ -53,19 +63,33 @@ export default function ResourcePools({
 
   useEffect(() => {
     if (essentialParameter) {
-      setMinMemory(essentialParameter.minPoolMemory / (1 << 30));
-    }
-  }, [essentialParameter]);
-
-  useEffect(() => {
-    if (essentialParameter) {
       if (selectZones.length === 0) {
         setMaxResource({});
         return;
       }
-      setMaxResource(findMinParameter(selectZones, essentialParameter));
+      const maxResource = findMinParameter(selectZones, essentialParameter);
+      if (maxResource.maxCPU < minResource.minCPU) {
+        maxResource.maxCPU = minResource.minCPU;
+      }
+      if (maxResource.maxLogDisk < minResource.minLogDisk) {
+        maxResource.maxLogDisk = minResource.minLogDisk;
+      }
+      if (maxResource.maxMemory < minResource.minMemory) {
+        maxResource.maxMemory = minResource.minMemory;
+      }
+      setMaxResource(maxResource);
     }
-  }, [selectZones]);
+  }, [selectZones, essentialParameter]);
+
+  useEffect(() => {
+    if (essentialParameter) {
+      setMinResource(
+        getMinResource({
+          minMemory: essentialParameter?.minPoolMemory,
+        }),
+      );
+    }
+  }, [essentialParameter]);
 
   return (
     <Card
@@ -115,6 +139,20 @@ export default function ResourcePools({
                       defaultMessage: '请输入 CPU (核)',
                     }),
                   },
+                  () => ({
+                    validator() {
+                      if (
+                        essentialParameter &&
+                        findMinParameter(selectZones, essentialParameter)
+                          .maxCPU < minResource.minCPU
+                      ) {
+                        return Promise.reject(
+                          new Error('可用 CPU 过小， Zone 无法创建 Unit'),
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
                 ]}
                 label="CPU"
               >
@@ -127,7 +165,7 @@ export default function ResourcePools({
                       })}
                     </div>
                   }
-                  min={1}
+                  min={minResource.minCPU}
                   max={maxResource.maxCPU}
                   placeholder={intl.formatMessage({
                     id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
@@ -145,19 +183,33 @@ export default function ResourcePools({
                     required: true,
                     message: intl.formatMessage({
                       id: 'Dashboard.Tenant.New.ResourcePools.EnterMemorySize',
-                      defaultMessage: '请输入Memory size',
+                      defaultMessage: '请输入 Memory size',
                     }),
                   },
+                  () => ({
+                    validator() {
+                      if (
+                        essentialParameter &&
+                        findMinParameter(selectZones, essentialParameter)
+                          .maxMemory < minResource.minMemory
+                      ) {
+                        return Promise.reject(
+                          new Error(
+                            '可用 Memory size 过小，Zone 将无法创建 Unit',
+                          ),
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
                 ]}
                 label="Memory"
               >
                 <InputNumber
                   addonAfter={SUFFIX_UNIT}
-                  min={minMemory}
+                  min={minResource.minMemory}
                   max={
-                    maxResource.maxMemory
-                      ? maxResource.maxMemory / (1 << 30)
-                      : undefined
+                    maxResource.maxMemory ? maxResource.maxMemory : undefined
                   }
                   placeholder={intl.formatMessage({
                     id: 'Dashboard.Tenant.New.ResourcePools.PleaseEnter',
@@ -178,6 +230,22 @@ export default function ResourcePools({
                       defaultMessage: '请输入日志磁盘大小',
                     }),
                   },
+                  () => ({
+                    validator() {
+                      if (
+                        essentialParameter &&
+                        findMinParameter(selectZones, essentialParameter)
+                          .maxLogDisk < minResource.minLogDisk
+                      ) {
+                        return Promise.reject(
+                          new Error(
+                            '可用日志磁盘空间过小， Zone 无法创建 Unit',
+                          ),
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  }),
                 ]}
                 label={
                   <Tooltip
@@ -194,11 +262,9 @@ export default function ResourcePools({
                 }
               >
                 <InputNumber
-                  min={5}
+                  min={minResource.minLogDisk}
                   max={
-                    maxResource.maxLogDisk
-                      ? maxResource.maxLogDisk / (1 << 30)
-                      : undefined
+                    maxResource.maxLogDisk ? maxResource.maxLogDisk : undefined
                   }
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
@@ -212,7 +278,7 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
                 <InputNumber
-                  min={1024}
+                  min={minResource.minIops}
                   placeholder="min"
                   style={{ width: '100%' }}
                 />
@@ -221,7 +287,7 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
                 <InputNumber
-                  min={1024}
+                  min={minResource.maxIops}
                   placeholder="max"
                   style={{ width: '100%' }}
                 />
