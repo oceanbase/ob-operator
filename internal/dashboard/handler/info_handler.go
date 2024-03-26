@@ -82,7 +82,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticData, error) {
 	reportData := response.StatisticData{}
 	targetNamespaces := []string{}
 
-	k8sNodes, err := k8s.ListNodes()
+	k8sNodes, err := k8s.ListNodes(c)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

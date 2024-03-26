@@ -45,7 +45,7 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 		Name:       c.Query("name"),
 		Namespace:  c.Query("namespace"),
 	}
-	events, err := k8s.ListEvents(queryEventParam)
+	events, err := k8s.ListEvents(c, queryEventParam)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,8 @@ func ListK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/nodes [GET]
 // @Security ApiKeyAuth
-func ListK8sNodes(_ *gin.Context) ([]response.K8sNode, error) {
-	nodes, err := k8s.ListNodes()
+func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
+	nodes, err := k8s.ListNodes(c)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +86,8 @@ func ListK8sNodes(_ *gin.Context) ([]response.K8sNode, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/namespaces [GET]
 // @Security ApiKeyAuth
-func ListK8sNamespaces(_ *gin.Context) ([]response.Namespace, error) {
-	namespaces, err := k8s.ListNamespaces()
+func ListK8sNamespaces(c *gin.Context) ([]response.Namespace, error) {
+	namespaces, err := k8s.ListNamespaces(c)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +107,8 @@ func ListK8sNamespaces(_ *gin.Context) ([]response.Namespace, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/storageClasses [GET]
 // @Security ApiKeyAuth
-func ListK8sStorageClasses(_ *gin.Context) ([]response.StorageClass, error) {
-	storageClasses, err := k8s.ListStorageClasses()
+func ListK8sStorageClasses(c *gin.Context) ([]response.StorageClass, error) {
+	storageClasses, err := k8s.ListStorageClasses(c)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func CreateK8sNamespace(c *gin.Context) (any, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Create k8s namespace: %+v", param)
-	err = k8s.CreateNamespace(param)
+	err = k8s.CreateNamespace(c, param)
 	if err != nil {
 		return nil, err
 	}

@@ -21,20 +21,20 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func ListNamespaces() (*corev1.NamespaceList, error) {
+func ListNamespaces(ctx context.Context) (*corev1.NamespaceList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Namespaces().List(context.TODO(), metav1.ListOptions{
+	return client.ClientSet.CoreV1().Namespaces().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
 }
 
-func CreateNamespace(namespace string) error {
+func CreateNamespace(ctx context.Context, namespace string) error {
 	namespaceObject := corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: namespace,
 		},
 	}
 	client := client.GetClient()
-	_, err := client.ClientSet.CoreV1().Namespaces().Create(context.TODO(), &namespaceObject, metav1.CreateOptions{})
+	_, err := client.ClientSet.CoreV1().Namespaces().Create(ctx, &namespaceObject, metav1.CreateOptions{})
 	return err
 }

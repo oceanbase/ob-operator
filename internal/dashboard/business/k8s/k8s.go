@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package k8s
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -43,8 +44,8 @@ const (
 	RoleLabelPrefix = "node-role.kubernetes.io"
 )
 
-func CreateNamespace(param *param.CreateNamespaceParam) error {
-	return resource.CreateNamespace(param.Namespace)
+func CreateNamespace(ctx context.Context, param *param.CreateNamespaceParam) error {
+	return resource.CreateNamespace(ctx, param.Namespace)
 }
 
 func extractNodeStatus(node *corev1.Node) string {
@@ -101,11 +102,11 @@ func extractNodeConditions(node *corev1.Node) []response.K8sNodeCondition {
 	return conditions
 }
 
-func extractNodeResource(node *corev1.Node) *response.K8sNodeResource {
+func extractNodeResource(ctx context.Context, node *corev1.Node) *response.K8sNodeResource {
 	nodeResource := &response.K8sNodeResource{}
 	nodeResource.CpuTotal = node.Status.Capacity.Cpu().AsApproximateFloat64()
 	nodeResource.MemoryTotal = node.Status.Capacity.Memory().AsApproximateFloat64() / constant.GB
-	podList, err := resource.ListAllPods()
+	podList, err := resource.ListAllPods(ctx)
 	if err == nil {
 		cpuRequested := 0.0
 		memoryRequested := 0.0
@@ -132,7 +133,7 @@ func extractNodeResource(node *corev1.Node) *response.K8sNodeResource {
 	return nodeResource
 }
 
-func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
+func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
 	events := make([]response.K8sEvent, 0)
 	listOptions := &metav1.ListOptions{}
 	var selectors []string
@@ -170,7 +171,7 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 	if len(selectors) > 0 {
 		listOptions.FieldSelector = strings.Join(selectors, ",")
 	}
-	eventList, err := resource.ListEvents(ns, listOptions)
+	eventList, err := resource.ListEvents(ctx, ns, listOptions)
 	logger.Infof("Query events with param: %+v", queryEventParam)
 	if err == nil {
 		for _, event := range eventList.Items {
@@ -189,9 +190,9 @@ func ListEvents(queryEventParam *param.QueryEventParam) ([]response.K8sEvent, er
 	return events, err
 }
 
-func ListNodes() ([]response.K8sNode, error) {
+func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 	nodes := make([]response.K8sNode, 0)
-	nodeList, err := resource.ListNodes()
+	nodeList, err := resource.ListNodes(ctx)
 	if err == nil {
 		for _, node := range nodeList.Items {
 			internalAddress, externalAddress := extractNodeAddress(&node)
@@ -212,16 +213,29 @@ func ListNodes() ([]response.K8sNode, error) {
 
 			nodes = append(nodes, response.K8sNode{
 				Info:     nodeInfo,
-				Resource: extractNodeResource(&node),
+				Resource: extractNodeResource(ctx, &node),
 			})
 		}
 	}
 	return nodes, err
 }
 
-func ListStorageClasses() ([]response.StorageClass, error) {
+func ListNodeResources(ctx context.Context) ([]response.K8sNodeResource, error) {
+	nodeList, err := resource.ListNodes(ctx)
+	if err != nil {
+		return nil, err
+	}
+	nodeResources := make([]response.K8sNodeResource, 0, len(nodeList.Items))
+	for _, node := range nodeList.Items {
+		nodeResource := extractNodeResource(ctx, &node)
+		nodeResources = append(nodeResources, *nodeResource)
+	}
+	return nodeResources, nil
+}
+
+func ListStorageClasses(ctx context.Context) ([]response.StorageClass, error) {
 	storageClasses := make([]response.StorageClass, 0)
-	storageClassList, err := resource.ListStorageClasses()
+	storageClassList, err := resource.ListStorageClasses(ctx)
 	if err == nil {
 		for _, storageClass := range storageClassList.Items {
 			volumeBindingMode := string(storagev1.VolumeBindingImmediate)
@@ -251,9 +265,9 @@ func ListStorageClasses() ([]response.StorageClass, error) {
 	return storageClasses, err
 }
 
-func ListNamespaces() ([]response.Namespace, error) {
+func ListNamespaces(ctx context.Context) ([]response.Namespace, error) {
 	namespaces := make([]response.Namespace, 0)
-	namespaceList, err := resource.ListNamespaces()
+	namespaceList, err := resource.ListNamespaces(ctx)
 	if err == nil {
 		for _, namespace := range namespaceList.Items {
 			namespaces = append(namespaces, response.Namespace{
