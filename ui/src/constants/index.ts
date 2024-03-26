@@ -106,6 +106,29 @@ const getMinResource = (defaultValue?: any) => {
   };
 };
 
+const MODE_MAP = new Map([
+  [
+    'NORMAL',
+    {
+      text: '常规模式',
+    },
+  ],
+  [
+    'STANDALONE',
+    {
+      text: '单体模式',
+      limit: '要求内核版本 >= 4.2.0.0',
+    },
+  ],
+  [
+    'SERVICE',
+    {
+      text: 'Service模式',
+      limit: '要求内核版本 >= 4.2.3.0',
+    },
+  ],
+]);
+
 export {
   BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
@@ -114,6 +137,7 @@ export {
   COLOR_MAP,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
+  MODE_MAP,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,

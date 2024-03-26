@@ -1,6 +1,6 @@
-import { COLOR_MAP } from '@/constants';
+import { COLOR_MAP,MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Col, Descriptions, Switch, Tag } from 'antd';
+import { Card,Col,Descriptions,Switch,Tag } from 'antd';
 import { useState } from 'react';
 
 import styles from './index.less';
@@ -117,7 +117,7 @@ export default function BasicInfo({
               defaultMessage: '集群模式',
             })}
           >
-            {mode || '-'}
+            {MODE_MAP.get(mode)?.text || '-'}
           </Descriptions.Item>
           <Descriptions.Item
             label={intl.formatMessage({

@@ -1,12 +1,12 @@
-import { getStorageClasses } from '@/services';
+import { createObclusterReq,getStorageClasses } from '@/services';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Form, Row, message } from 'antd';
+import { Button,Form,Row,message } from 'antd';
 import { useState } from 'react';
-import { createObclusterReq } from '@/services';
 
+import { MODE_MAP } from '@/constants';
 import { encryptText,usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
@@ -52,7 +52,7 @@ export default function New() {
     }
   };
   const initialValues = {
-    mode:'NORMAL',
+    mode: MODE_MAP.get('NORMAL')?.text,
     topology: [
       {
         zone: 'zone1',
@@ -86,7 +86,7 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button type='primary' key="submit" onClick={() => form.submit()}>
+        <Button type="primary" key="submit" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'dashboard.Cluster.New.Submit',
             defaultMessage: '提交',
