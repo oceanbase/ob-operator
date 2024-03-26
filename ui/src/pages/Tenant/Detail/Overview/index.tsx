@@ -328,7 +328,7 @@ export default function TenantOverview() {
           {tenantDetail && (
             <EventsTable
               defaultExpand={true}
-              objectType="OBTENANT"
+              objectType={['OBTENANT', 'OBBACKUPPOLICY']}
               collapsible={true}
               name={tenantDetail?.info.name}
             />

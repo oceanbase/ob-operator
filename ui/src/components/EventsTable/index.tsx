@@ -137,7 +137,7 @@ export default function EventsTable({
   defaultExpand = false,
   name
 }: EventsTableProps) {
-  const defaultParams = {};
+  const defaultParams:API.EventParams = {};
   if(objectType){
     defaultParams.objectType = objectType;
   }

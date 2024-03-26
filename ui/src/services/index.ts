@@ -29,13 +29,9 @@ export async function infoReq() {
 }
 
 /**
- * 不传参数表示返回所有
+ * If no parameters are passed, all events will be returned.
  */
-export async function getEventsReq(params: {
-  type?: API.EventType;
-  objectType?: API.EventObjectType;
-  name?: string;
-}) {
+export async function getEventsReq(params: API.EventParams) {
   const r = await request(`${clusterPrefix}/events`, {
     method: 'GET',
     params,
@@ -371,7 +367,7 @@ export async function getStorageClasses(): Promise<API.StorageClassesResponse> {
   return r;
 }
 
-export async function getAllMetrics(type: API.EventObjectType) {
+export async function getAllMetrics(type: API.MetricScope) {
   const r = await request('/api/v1/metrics', {
     method: 'GET',
     params: { scope: type },

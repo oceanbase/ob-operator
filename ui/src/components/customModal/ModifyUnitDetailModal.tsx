@@ -60,6 +60,12 @@ type UnitConfigType = {
   }
 };
 
+type MinResourceConfig = {
+  minCPU: number;
+  minMemory: number;
+  minLogDisk: number;
+}
+
 export default function ModifyUnitDetailModal({
   visible,
   setVisible,
@@ -78,8 +84,14 @@ export default function ModifyUnitDetailModal({
   }
 }: CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
-  const [minMemory, setMinMemory] = useState<number>(2);
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
+  const [minResource, setMinResource] = useState<MinResourceConfig>(
+    {
+      minCPU: 0,
+      minLogDisk: 5,
+      minMemory: essentialParameter.minPoolMemory / (1 << 30) || 2,
+    },
+  );
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
@@ -163,6 +175,41 @@ export default function ModifyUnitDetailModal({
     }
     return result;
   };
+
+  const checkIsSame = (newMinResource: MinResourceConfig): boolean => {
+    for (let key of Object.keys(minResource)) {
+      if (newMinResource[key] !== minResource[key]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const balanceMinResource = (maxResource: MaxResourceType) => {
+    let newMinResource = { ...minResource };
+    if (
+      (maxResource.maxCPU || maxResource.maxCPU === 0) &&
+      maxResource.maxCPU < minResource.minCPU
+    ) {
+      newMinResource.minCPU = maxResource.maxCPU;
+    }
+    if (
+      (maxResource.maxLogDisk || maxResource.maxLogDisk === 0) &&
+      maxResource.maxLogDisk < minResource.minLogDisk
+    ) {
+      newMinResource.minLogDisk = maxResource.maxLogDisk;
+    }
+    if (
+      (maxResource.maxMemory || maxResource.maxMemory === 0) &&
+      maxResource.maxMemory < minResource.minMemory
+    ) {
+      newMinResource.minMemory = maxResource.maxMemory;
+    }
+    if (!checkIsSame(newMinResource)) {
+      setMinResource(newMinResource);
+    }
+  };
+
   let targetCluster = clusterList.find(
     (cluster) => cluster.name === clusterResourceName,
   );
@@ -177,9 +224,13 @@ export default function ModifyUnitDetailModal({
   }
 
   const selectOptions = formatReplicaList(replicaList || []);
+
   useEffect(() => {
     if (essentialParameter) {
-      setMinMemory(essentialParameter.minPoolMemory / (1 << 30));
+      setMinResource({
+        ...minResource,
+        minMemory: essentialParameter.minPoolMemory / (1 << 30),
+      });
     }
   }, [essentialParameter]);
 
@@ -189,7 +240,9 @@ export default function ModifyUnitDetailModal({
         setMaxResource({});
         return;
       }
-      setMaxResource(findMinParameter(selectZones, essentialParameter));
+      const maxResource = findMinParameter(selectZones, essentialParameter);
+      setMaxResource(maxResource);
+      balanceMinResource(maxResource);
     }
   }, [selectZones, essentialParameter]);
 
@@ -339,7 +392,7 @@ export default function ModifyUnitDetailModal({
               ]}
             >
               <InputNumber
-                min={1}
+                min={minResource.minCPU}
                 max={maxResource.maxCPU}
                 addonAfter={intl.formatMessage({
                   id: 'Dashboard.components.customModal.ModifyUnitDetailModal.Nuclear',
@@ -367,7 +420,7 @@ export default function ModifyUnitDetailModal({
               ]}
             >
               <InputNumber
-                min={minMemory}
+                min={minResource.minMemory}
                 max={
                   maxResource.maxMemory
                     ? maxResource.maxMemory / (1 << 30)
@@ -396,7 +449,7 @@ export default function ModifyUnitDetailModal({
               name={['unitConfig', 'logDiskSize']}
             >
               <InputNumber
-                min={5}
+                min={minResource.minLogDisk}
                 max={
                   maxResource.maxLogDisk
                     ? maxResource.maxLogDisk / (1 << 30)
