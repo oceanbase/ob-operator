@@ -15,6 +15,8 @@ package oceanbase
 import (
 	"context"
 	"fmt"
+	"log"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -31,6 +33,7 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -131,9 +134,10 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			default:
 				respCluster.Mode = modelcommon.ClusterModeNormal
 			}
-		} else {
-			respCluster.Mode = modelcommon.ClusterModeNormal
 		}
+	}
+	if respCluster.Mode == "" {
+		respCluster.Mode = modelcommon.ClusterModeNormal
 	}
 	if obcluster.Spec.OBServerTemplate != nil {
 		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
@@ -164,6 +168,9 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 	if err != nil {
 		return nil, errors.Wrapf(err, "List obzone of obcluster %s %s", obcluster.Namespace, obcluster.Name)
 	}
+	sort.Slice(obzoneList.Items, func(i, j int) bool {
+		return obzoneList.Items[i].Name < obzoneList.Items[j].Name
+	})
 	topology := make([]response.OBZone, 0, len(obzoneList.Items))
 	for _, obzone := range obzoneList.Items {
 		observers := make([]response.OBServer, 0)
@@ -171,6 +178,9 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		if err != nil {
 			return nil, errors.Wrapf(err, "List observers of obzone %s %s", obzone.Namespace, obzone.Name)
 		}
+		sort.Slice(observerList.Items, func(i, j int) bool {
+			return observerList.Items[i].Name < observerList.Items[j].Name
+		})
 		for _, observer := range observerList.Items {
 			logger.Debugf("add observer %s to result", observer.Name)
 			observers = append(observers, response.OBServer{
@@ -480,9 +490,42 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	return obcluster
 }
 
+func JudgeResourceEnoughForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) error {
+	nodes, err := k8s.ListNodeResources(ctx)
+	if err != nil {
+		return oberr.Wrap(err, oberr.ErrInternal, "List resource of nodes")
+	}
+	requiredMem := obcluster.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() / constant.GB
+	requiredCpu := obcluster.Spec.OBServerTemplate.Resource.Cpu.AsApproximateFloat64()
+	unmetCount := 0
+	for _, zone := range obcluster.Spec.Topology {
+		unmetCount += zone.Replica
+	}
+	log.Println("unmetCount", unmetCount)
+	for _, node := range nodes {
+		if unmetCount == 0 {
+			break
+		}
+		log.Println("node", node.MemoryFree, node.CpuFree, requiredMem, requiredCpu)
+		for node.MemoryFree > requiredMem && node.CpuFree > requiredCpu && unmetCount > 0 {
+			unmetCount--
+			node.MemoryFree -= requiredMem
+			node.CpuFree -= requiredCpu
+		}
+	}
+	if unmetCount > 0 {
+		return oberr.NewBadRequest("Resource not enough in k8s cluster")
+	}
+	return nil
+}
+
 func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) (*response.OBCluster, error) {
 	obcluster := generateOBClusterInstance(param)
-	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
+	err := JudgeResourceEnoughForOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, err
+	}
+	err = clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
 	if err != nil {
 		return nil, errors.Wrap(err, "Create secrets for obcluster")
 	}
@@ -520,11 +563,13 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	// }
 	found := false
 	replicaChanged := false
+	var scaleDelta int
 	for idx, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone == obzoneIdentity.OBZoneName {
 			found = true
 			if obzone.Replica != scaleParam.Replicas {
 				replicaChanged = true
+				scaleDelta = scaleParam.Replicas - obzone.Replica
 				logger.Infof("Scale obzone %s from %d to %d", obzone.Zone, obzone.Replica, scaleParam.Replicas)
 				obcluster.Spec.Topology[idx].Replica = scaleParam.Replicas
 			}
@@ -535,6 +580,13 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	}
 	if !replicaChanged {
 		return nil, errors.Errorf("obzone %s replica already satisfied in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
+	}
+	// Judge whether the resource is enough for obcluster if the replica increases
+	if scaleDelta > 0 {
+		err := JudgeResourceEnoughForOBCluster(ctx, obcluster)
+		if err != nil {
+			return nil, err
+		}
 	}
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {
@@ -589,6 +641,10 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
 	})
+	err = JudgeResourceEnoughForOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, err
+	}
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
