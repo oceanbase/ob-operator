@@ -668,5 +668,16 @@
   "Dashboard.components.TopoComponent.constants.EditResourcePool": "编辑资源池",
   "Dashboard.components.TopoComponent.constants.DeleteAResourcePool": "删除资源池",
   "Dashboard.components.TopoComponent.constants.AddAResourcePool": "新增资源池",
-  "Dashboard.components.TopoComponent.AreYouSureYouWant": "确定要删除该租户在{chooseZoneNameCurrent}上的资源池吗？"
+  "Dashboard.components.TopoComponent.AreYouSureYouWant": "确定要删除该租户在{chooseZoneNameCurrent}上的资源池吗？",
+  "Dashboard.Tenant.New.ResourcePools.ZoneCannotCreateAUnit": "可用 CPU 过小， Zone 无法创建 Unit",
+  "Dashboard.Tenant.New.ResourcePools.IfTheAvailableMemorySize": "可用 Memory size 过小，Zone 将无法创建 Unit",
+  "Dashboard.Tenant.New.ResourcePools.ZoneCannotCreateAUnit.1": "可用日志磁盘空间过小， Zone 无法创建 Unit",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.ZoneCannotCreateAUnit": "可用 CPU 过小， Zone 无法创建 Unit",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.IfTheAvailableMemorySize": "可用 Memory size 过小，Zone 将无法创建 Unit",
+  "Dashboard.components.customModal.ModifyUnitDetailModal.ZoneCannotCreateAUnit.1": "可用日志磁盘空间过小， Zone 无法创建 Unit",
+  "Dashboard.src.constants.RegularMode": "常规模式",
+  "Dashboard.src.constants.MonomerMode": "单体模式",
+  "Dashboard.src.constants.RequiredKernelVersion": "要求内核版本 >= 4.2.0.0",
+  "Dashboard.src.constants.ServiceMode": "Service模式",
+  "Dashboard.src.constants.RequiredKernelVersion.1": "要求内核版本 >= 4.2.3.0"
 }

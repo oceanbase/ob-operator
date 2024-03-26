@@ -147,7 +147,13 @@ export default function ResourcePools({
                           .maxCPU < minResource.minCPU
                       ) {
                         return Promise.reject(
-                          new Error('可用 CPU 过小， Zone 无法创建 Unit'),
+                          new Error(
+                            intl.formatMessage({
+                              id: 'Dashboard.Tenant.New.ResourcePools.ZoneCannotCreateAUnit',
+                              defaultMessage:
+                                '可用 CPU 过小， Zone 无法创建 Unit',
+                            }),
+                          ),
                         );
                       }
                       return Promise.resolve();
@@ -195,7 +201,11 @@ export default function ResourcePools({
                       ) {
                         return Promise.reject(
                           new Error(
-                            '可用 Memory size 过小，Zone 将无法创建 Unit',
+                            intl.formatMessage({
+                              id: 'Dashboard.Tenant.New.ResourcePools.IfTheAvailableMemorySize',
+                              defaultMessage:
+                                '可用 Memory size 过小，Zone 将无法创建 Unit',
+                            }),
                           ),
                         );
                       }
@@ -239,7 +249,11 @@ export default function ResourcePools({
                       ) {
                         return Promise.reject(
                           new Error(
-                            '可用日志磁盘空间过小， Zone 无法创建 Unit',
+                            intl.formatMessage({
+                              id: 'Dashboard.Tenant.New.ResourcePools.ZoneCannotCreateAUnit.1',
+                              defaultMessage:
+                                '可用日志磁盘空间过小， Zone 无法创建 Unit',
+                            }),
                           ),
                         );
                       }

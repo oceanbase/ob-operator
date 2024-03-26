@@ -10,6 +10,7 @@ import serverOperating from '@/assets/server/warning.svg';
 import zoneDeleting from '@/assets/zone/deleting.svg';
 import zoneOperating from '@/assets/zone/operating.svg';
 import zoneRunning from '@/assets/zone/running.svg';
+import { intl } from '@/utils/intl';
 
 //Unify status constants and colors
 const STATUS = ['running', 'deleting', 'operating'];
@@ -110,21 +111,38 @@ const MODE_MAP = new Map([
   [
     'NORMAL',
     {
-      text: '常规模式',
+      text: intl.formatMessage({
+        id: 'Dashboard.src.constants.RegularMode',
+        defaultMessage: '常规模式',
+      }),
     },
   ],
+
   [
     'STANDALONE',
     {
-      text: '单体模式',
-      limit: '要求内核版本 >= 4.2.0.0',
+      text: intl.formatMessage({
+        id: 'Dashboard.src.constants.MonomerMode',
+        defaultMessage: '单体模式',
+      }),
+      limit: intl.formatMessage({
+        id: 'Dashboard.src.constants.RequiredKernelVersion',
+        defaultMessage: '要求内核版本 >= 4.2.0.0',
+      }),
     },
   ],
+
   [
     'SERVICE',
     {
-      text: 'Service模式',
-      limit: '要求内核版本 >= 4.2.3.0',
+      text: intl.formatMessage({
+        id: 'Dashboard.src.constants.ServiceMode',
+        defaultMessage: 'Service模式',
+      }),
+      limit: intl.formatMessage({
+        id: 'Dashboard.src.constants.RequiredKernelVersion.1',
+        defaultMessage: '要求内核版本 >= 4.2.3.0',
+      }),
     },
   ],
 ]);
