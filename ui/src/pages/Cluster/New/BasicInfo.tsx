@@ -1,7 +1,7 @@
 import { intl } from '@/utils/intl';
 import { PlusOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { Card,Col,Divider,Form,Input,Row,Select,Tooltip } from 'antd';
+import { Card, Col, Divider, Form, Input, Row, Select, Tooltip } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 import PasswordInput from '@/components/PasswordInput';
@@ -158,6 +158,13 @@ export default function BasicInfo({
                     message: intl.formatMessage({
                       id: 'OBDashboard.Cluster.New.BasicInfo.EnterAKSResource',
                       defaultMessage: '请输入k8s资源名称',
+                    }),
+                  },
+                  {
+                    pattern: /\D/,
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Cluster.New.BasicInfo.ResourceNamesCannotUsePure',
+                      defaultMessage: '资源名不能使用纯数字',
                     }),
                   },
                   resourceNameRule,

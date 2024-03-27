@@ -1,5 +1,5 @@
 import { intl } from '@/utils/intl';
-type OperateTypeLabel = { value: string; label: string }[];
+type OperateTypeLabel = { value: string; label: string; disabled?: boolean }[];
 
 const clusterOperate: OperateTypeLabel = [
   {
@@ -78,6 +78,7 @@ const clusterOperateOfTenant: OperateTypeLabel = [
 
 const getZoneOperateOfTenant = (
   haveResourcePool: boolean,
+  tenantReplicas: API.ReplicaDetailType[]
 ): OperateTypeLabel => {
   return haveResourcePool
     ? [
@@ -87,6 +88,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.EditResourcePool',
             defaultMessage: '编辑资源池',
           }),
+          disabled: false
         },
         {
           value: 'deleteResourcePool',
@@ -94,6 +96,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.DeleteAResourcePool',
             defaultMessage: '删除资源池',
           }),
+          disabled: tenantReplicas.length <= 2
         },
       ]
     : [
@@ -103,6 +106,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.AddAResourcePool',
             defaultMessage: '新增资源池',
           }),
+          disabled: false
         },
       ];
 };

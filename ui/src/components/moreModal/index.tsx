@@ -1,11 +1,11 @@
+import type { OperateTypeLabel } from '../TopoComponent/constants';
 import styles from './index.less';
 
 interface MoreModalProps {
   visible: boolean;
   ItemClick: (value: API.ModalType) => void;
-  list: { value: string; label: string }[];
+  list: OperateTypeLabel;
   innerRef: any;
-  disable: boolean;
 }
 
 export default function MoreModal({
@@ -13,7 +13,6 @@ export default function MoreModal({
   list,
   ItemClick,
   innerRef,
-  disable,
 }: MoreModalProps) {
   return (
     <div className={styles.moreModalContainer}>
@@ -24,12 +23,14 @@ export default function MoreModal({
         {list.map((item, index) => (
           <li
             style={
-              disable
+              item?.disabled
                 ? { color: 'rgba(0, 0, 0, 0.45)', cursor: 'not-allowed' }
                 : {}
             }
             onClick={
-              !disable ? () => ItemClick(item.value as API.ModalType) : () => {}
+              !item?.disabled
+                ? () => ItemClick(item.value as API.ModalType)
+                : () => {}
             }
             key={index}
           >

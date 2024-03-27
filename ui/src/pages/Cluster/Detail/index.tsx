@@ -4,7 +4,7 @@ import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
-import { Outlet, history, useLocation, useParams } from '@umijs/max';
+import { Outlet, history, useLocation, useParams, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 const subSideMenus: MenuItem[] = [
   {
@@ -40,6 +40,7 @@ const ClusterDetail: React.FC = () => {
   const params = useParams();
   const user = localStorage.getItem('user');
   const location = useLocation();
+  const { appInfo } = useModel('global');
   const { clusterId } = params;
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
@@ -109,7 +110,7 @@ const ClusterDetail: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: '1.0.0',
+            version: appInfo?.version,
           },
         }}
         menus={menus}
