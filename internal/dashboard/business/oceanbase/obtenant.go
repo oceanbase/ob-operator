@@ -15,6 +15,7 @@ package oceanbase
 import (
 	"context"
 	"errors"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -300,6 +301,9 @@ func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*respo
 	if err != nil {
 		return nil, err
 	}
+	sort.Slice(tenantList.Items, func(i, j int) bool {
+		return tenantList.Items[i].Name < tenantList.Items[j].Name
+	})
 	tenants := make([]*response.OBTenantOverview, 0, len(tenantList.Items))
 	for i := range tenantList.Items {
 		tenants = append(tenants, buildOverviewFromApiType(&tenantList.Items[i]))
