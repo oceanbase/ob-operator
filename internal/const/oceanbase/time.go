@@ -33,11 +33,11 @@ const (
 )
 
 const (
-	BootstrapTimeoutSeconds       = 300
-	LocalityChangeTimeoutSeconds  = 3600
-	DefaultStateWaitTimeout       = 300
+	BootstrapTimeoutSeconds       = 2100
+	LocalityChangeTimeoutSeconds  = 86400 // 1 day
+	DefaultStateWaitTimeout       = 1800
 	TimeConsumingStateWaitTimeout = 3600
-	ServerDeleteTimeoutSeconds    = 86400
+	ServerDeleteTimeoutSeconds    = 604800 // 7 days
 )
 
 const (

@@ -1,9 +1,12 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT } from '@/constants';
+import { SUFFIX_UNIT, getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
-import type { MaxResourceType } from '@/pages/Tenant/New/ResourcePools';
+import type {
+  MaxResourceType,
+  MinResourceConfig,
+} from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
 import {
   findMinParameter,
@@ -46,34 +49,42 @@ const formatReplicaList = (
 };
 
 type UnitConfigType = {
-  clusterList?: API.SimpleClusterList;
-  clusterResourceName?: string;
-  essentialParameter?: API.EssentialParametersType;
-  setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
-  editZone?: string;
-  replicaList?: API.ReplicaDetailType[];
-  newResourcePool?: boolean;
-  setEditZone?: React.Dispatch<React.SetStateAction<string>>;
-  zonesOptions?: API.OptionsType;
+  params: {
+    clusterList?: API.SimpleClusterList;
+    clusterResourceName?: string;
+    essentialParameter?: API.EssentialParametersType;
+    setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
+    editZone?: string;
+    replicaList?: API.ReplicaDetailType[];
+    newResourcePool?: boolean;
+    setEditZone?: React.Dispatch<React.SetStateAction<string>>;
+    zonesOptions?: API.OptionsType;
+    zoneName?: string;
+  };
 };
 
 export default function ModifyUnitDetailModal({
   visible,
   setVisible,
   successCallback,
-  clusterList = [],
-  setClusterList,
-  essentialParameter = {},
-  clusterResourceName = '',
-  editZone,
-  replicaList,
-  newResourcePool = false,
-  setEditZone,
-  zonesOptions,
+  params: {
+    clusterList = [],
+    setClusterList,
+    essentialParameter = {},
+    clusterResourceName = '',
+    editZone,
+    replicaList,
+    newResourcePool = false,
+    setEditZone,
+    zonesOptions,
+    zoneName,
+  },
 }: CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
-  const [minMemory, setMinMemory] = useState<number>(2);
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
+  const [minResource, setMinResource] = useState<MinResourceConfig>(
+    getMinResource({ minMemory: essentialParameter.minPoolMemory }),
+  );
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
@@ -157,6 +168,7 @@ export default function ModifyUnitDetailModal({
     }
     return result;
   };
+
   let targetCluster = clusterList.find(
     (cluster) => cluster.name === clusterResourceName,
   );
@@ -171,9 +183,13 @@ export default function ModifyUnitDetailModal({
   }
 
   const selectOptions = formatReplicaList(replicaList || []);
+
   useEffect(() => {
     if (essentialParameter) {
-      setMinMemory(essentialParameter.minPoolMemory / (1 << 30));
+      setMinResource({
+        ...minResource,
+        minMemory: essentialParameter.minPoolMemory,
+      });
     }
   }, [essentialParameter]);
 
@@ -183,7 +199,17 @@ export default function ModifyUnitDetailModal({
         setMaxResource({});
         return;
       }
-      setMaxResource(findMinParameter(selectZones, essentialParameter));
+      const maxResource = findMinParameter(selectZones, essentialParameter);
+      if (maxResource.maxCPU < minResource.minCPU) {
+        maxResource.maxCPU = minResource.minCPU;
+      }
+      if (maxResource.maxLogDisk < minResource.minLogDisk) {
+        maxResource.maxLogDisk = minResource.minLogDisk;
+      }
+      if (maxResource.maxMemory < minResource.minMemory) {
+        maxResource.maxMemory = minResource.minMemory;
+      }
+      setMaxResource(maxResource);
     }
   }, [selectZones, essentialParameter]);
 
@@ -204,6 +230,12 @@ export default function ModifyUnitDetailModal({
       setSelectZones([editZone]);
     }
   }, [editZone]);
+
+  useEffect(() => {
+    if (zoneName && newResourcePool && zonesOptions?.length) {
+      form.setFieldValue('zoneName', zoneName);
+    }
+  }, [zoneName, newResourcePool]);
 
   return (
     <CustomModal
@@ -324,10 +356,30 @@ export default function ModifyUnitDetailModal({
                     defaultMessage: '请输入 CPU 核数',
                   }),
                 },
+                () => ({
+                  validator() {
+                    if (
+                      essentialParameter &&
+                      findMinParameter(selectZones, essentialParameter).maxCPU <
+                        minResource.minCPU
+                    ) {
+                      return Promise.reject(
+                        new Error(
+                          intl.formatMessage({
+                            id: 'Dashboard.components.customModal.ModifyUnitDetailModal.ZoneCannotCreateAUnit',
+                            defaultMessage:
+                              '可用 CPU 过小， Zone 无法创建 Unit',
+                          }),
+                        ),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                }),
               ]}
             >
               <InputNumber
-                min={1}
+                min={minResource.minCPU}
                 max={maxResource.maxCPU}
                 addonAfter={intl.formatMessage({
                   id: 'Dashboard.components.customModal.ModifyUnitDetailModal.Nuclear',
@@ -352,15 +404,31 @@ export default function ModifyUnitDetailModal({
                     defaultMessage: '请输入 Memory',
                   }),
                 },
+                () => ({
+                  validator() {
+                    if (
+                      essentialParameter &&
+                      findMinParameter(selectZones, essentialParameter)
+                        .maxMemory < minResource.minMemory
+                    ) {
+                      return Promise.reject(
+                        new Error(
+                          intl.formatMessage({
+                            id: 'Dashboard.components.customModal.ModifyUnitDetailModal.IfTheAvailableMemorySize',
+                            defaultMessage:
+                              '可用 Memory size 过小，Zone 将无法创建 Unit',
+                          }),
+                        ),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                }),
               ]}
             >
               <InputNumber
-                min={minMemory}
-                max={
-                  maxResource.maxMemory
-                    ? maxResource.maxMemory / (1 << 30)
-                    : undefined
-                }
+                min={minResource.minMemory}
+                max={maxResource.maxMemory ? maxResource.maxMemory : undefined}
                 addonAfter={SUFFIX_UNIT}
                 placeholder={intl.formatMessage({
                   id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
@@ -379,16 +447,34 @@ export default function ModifyUnitDetailModal({
                     defaultMessage: '请输入 logDiskSize',
                   }),
                 },
+                () => ({
+                  validator() {
+                    if (
+                      essentialParameter &&
+                      findMinParameter(selectZones, essentialParameter)
+                        .maxLogDisk < minResource.minLogDisk
+                    ) {
+                      return Promise.reject(
+                        new Error(
+                          intl.formatMessage({
+                            id: 'Dashboard.components.customModal.ModifyUnitDetailModal.ZoneCannotCreateAUnit.1',
+                            defaultMessage:
+                              '可用日志磁盘空间过小， Zone 无法创建 Unit',
+                          }),
+                        ),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                }),
               ]}
               label="LogDiskSize"
               name={['unitConfig', 'logDiskSize']}
             >
               <InputNumber
-                min={5}
+                min={minResource.minLogDisk}
                 max={
-                  maxResource.maxLogDisk
-                    ? maxResource.maxLogDisk / (1 << 30)
-                    : undefined
+                  maxResource.maxLogDisk ? maxResource.maxLogDisk : undefined
                 }
                 addonAfter={SUFFIX_UNIT}
                 placeholder={intl.formatMessage({
@@ -415,7 +501,7 @@ export default function ModifyUnitDetailModal({
                   name={['unitConfig', 'minIops']}
                 >
                   <InputNumber
-                    min={1024}
+                    min={minResource.minIops}
                     placeholder={intl.formatMessage({
                       id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
                       defaultMessage: '请输入',
@@ -438,7 +524,7 @@ export default function ModifyUnitDetailModal({
                   name={['unitConfig', 'maxIops']}
                 >
                   <InputNumber
-                    min={1024}
+                    min={minResource.maxIops}
                     placeholder={intl.formatMessage({
                       id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
                       defaultMessage: '请输入',

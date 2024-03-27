@@ -144,7 +144,7 @@ export default function BasicInfo({
               defaultMessage: 'Unit 数量',
             })}
           >
-            <InputNumber style={{ width: '100%' }} />
+            <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>

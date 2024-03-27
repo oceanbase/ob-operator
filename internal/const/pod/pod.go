@@ -13,5 +13,5 @@ See the Mulan PSL v2 for more details.
 package pod
 
 const (
-	ReadyTimeoutSeconds = 300
+	ReadyTimeoutSeconds = 1800
 )

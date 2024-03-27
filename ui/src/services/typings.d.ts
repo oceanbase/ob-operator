@@ -13,6 +13,8 @@ declare namespace API {
     memoryPercent: number;
   };
 
+  type MetricScope = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
+
   type NodeSelector = {
     key: string;
     value: string;
@@ -26,6 +28,7 @@ declare namespace API {
   type ClusterInfo = {
     name: string;
     namespace: string;
+    clusterName: string;
     status: string;
     image: string;
     rootPasswordSecret: string;
@@ -118,6 +121,13 @@ declare namespace API {
     value:string;
   }[]
 
+  type EventParams = {
+    type?: API.EventType;
+    objectType?: API.EventObjectType;
+    name?: string;
+    namespace?: string;
+  }
+
   interface ClusterListResponse extends CommonResponse {
     data: ClusterItem[];
   }
@@ -153,7 +163,9 @@ declare namespace API {
     | 'switchTenant'
     | 'upgradeTenant'
     | 'changeUnitCount'
-    | 'modifyUnitSpecification'
+    | 'editResourcePools'
+    | 'createResourcePools'
+    | 'deleteResourcePool'
     | 'deleteCluster'
     | 'deleteZone'
 
@@ -184,7 +196,7 @@ declare namespace API {
 
   type MonitorUseTarget = 'OVERVIEW' | 'DETAIL';
 
-  type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
+  type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBBACKUPPOLICY' | EventObjectType[];
 
   type TenantRole = 'PRIMARY' | 'STANDBY';
 

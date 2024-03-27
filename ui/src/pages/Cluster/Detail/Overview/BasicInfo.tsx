@@ -1,4 +1,4 @@
-import { COLOR_MAP } from '@/constants';
+import { COLOR_MAP,MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card,Col,Descriptions,Switch,Tag } from 'antd';
 import { useState } from 'react';
@@ -17,9 +17,10 @@ export default function BasicInfo({
   backupVolume,
   monitor,
   parameters,
+  clusterName,
   extra = true,
   style,
-}: API.ClusterInfo & { style?: React.CSSProperties,extra?: boolean }) {
+}: API.ClusterInfo & { style?: React.CSSProperties; extra?: boolean }) {
   const [checked, setChecked] = useState<boolean>(false);
   const OBServerConfig = extra
     ? [
@@ -75,12 +76,12 @@ export default function BasicInfo({
         },
       ]
     : [];
-  
+
   return (
     <Col span={24}>
       <Card style={style}>
         <Descriptions
-          column={4}
+          column={5}
           title={intl.formatMessage({
             id: 'Dashboard.Detail.Overview.BasicInfo.BasicClusterInformation',
             defaultMessage: '集群基本信息',
@@ -90,6 +91,14 @@ export default function BasicInfo({
             label={intl.formatMessage({
               id: 'OBDashboard.Detail.Overview.BasicInfo.ClusterName',
               defaultMessage: '集群名：',
+            })}
+          >
+            {clusterName}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.ResourceName',
+              defaultMessage: '资源名',
             })}
           >
             {name}
@@ -108,7 +117,7 @@ export default function BasicInfo({
               defaultMessage: '集群模式',
             })}
           >
-            {mode || '-'}
+            {MODE_MAP.get(mode)?.text || '-'}
           </Descriptions.Item>
           <Descriptions.Item
             label={intl.formatMessage({
@@ -159,6 +168,7 @@ export default function BasicInfo({
             />
           </div>
         )}
+
         {checked && extra && (
           <div className={styles.detailConfig}>
             <Descriptions

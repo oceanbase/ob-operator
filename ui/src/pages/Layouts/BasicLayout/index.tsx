@@ -5,6 +5,7 @@ import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
 import { Outlet, history, useLocation } from '@umijs/max';
+import { infoReq } from '@/services';
 import { useRequest } from 'ahooks';
 
 const BasicLayout: React.FC = () => {
@@ -18,7 +19,8 @@ const BasicLayout: React.FC = () => {
       }
     },
   });
-
+  const { data:appInfoRes } = useRequest(infoReq)
+  const appInfo = appInfoRes?.data;
   // const Title = () => (
   //   <img
   //     style={{ height: 20, marginLeft: -16, paddingLeft: 6,cursor:'pointer' }}
@@ -68,6 +70,7 @@ const BasicLayout: React.FC = () => {
       </Menu.Item>
     </Menu>
   );
+  
 
   return (
     <div>
@@ -84,7 +87,7 @@ const BasicLayout: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: '1.0.0',
+            version: appInfo?.version || '1.0.0',
           },
         }}
       >

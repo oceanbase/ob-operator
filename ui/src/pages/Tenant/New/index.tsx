@@ -56,12 +56,13 @@ export default function New() {
       );
       return;
     }
+    
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
     const res = await createTenant({
       namespace: ns,
-      ...formatNewTenantForm(values, clusterName, publicKey),
+      ...reqData,
     });
     if (res.successful) {
       message.success(

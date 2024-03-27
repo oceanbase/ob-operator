@@ -29,13 +29,9 @@ export async function infoReq() {
 }
 
 /**
- * 不传参数表示返回所有
+ * If no parameters are passed, all events will be returned.
  */
-export async function getEventsReq(params: {
-  type?: API.EventType;
-  objectType?: API.EventObjectType;
-  name?: string;
-}) {
+export async function getEventsReq(params: API.EventParams) {
   const r = await request(`${clusterPrefix}/events`, {
     method: 'GET',
     params,
@@ -371,7 +367,7 @@ export async function getStorageClasses(): Promise<API.StorageClassesResponse> {
   return r;
 }
 
-export async function getAllMetrics(type: API.EventObjectType) {
+export async function getAllMetrics(type: API.MetricScope) {
   const r = await request('/api/v1/metrics', {
     method: 'GET',
     params: { scope: type },
@@ -456,5 +452,28 @@ export async function getEssentialParameters({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
-  return request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
+  // return request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
+  const r = await request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
+  const formatResourceAttr = ['availableDataDisk','availableLogDisk','availableMemory']
+  if(r.successful){
+    r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
+    r.data.obServerResources.forEach((item)=>{
+      for(let attr of formatResourceAttr){
+        item[attr] = item[attr] / (1<<30)
+        // if(attr === 'availableMemory' && item.obZone === 'zone1'){
+        //   item[attr] = 3
+        // }
+      }
+    })
+    Object.keys(r.data.obZoneResourceMap).forEach((key)=>{
+      for(let attr of formatResourceAttr){
+        r.data.obZoneResourceMap[key][attr] = r.data.obZoneResourceMap[key][attr] / (1 << 30);
+        // if(attr === 'availableMemory' && key === 'zone1'){
+        //   r.data.obZoneResourceMap[key][attr] = 3
+        // }
+      }
+    }) 
+    return r
+  }
+  return r;
 }

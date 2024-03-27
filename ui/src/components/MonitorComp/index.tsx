@@ -23,7 +23,7 @@ interface MonitorCompProps {
   filterLabel: API.MetricsLabels;
   queryRange: QueryRangeType;
   isRefresh?: boolean;
-  queryScope:API.EventObjectType;
+  queryScope:API.MetricScope;
   type: API.MonitorUseTarget;
   groupLabels:API.LableKeys[];
   useFor?: API.MonitorUseFor;
