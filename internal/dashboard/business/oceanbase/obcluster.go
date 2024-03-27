@@ -280,6 +280,9 @@ func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
 	if err != nil {
 		return obclusters, errors.Wrap(err, "failed to list obclusters")
 	}
+	sort.Slice(obclusterList.Items, func(i, j int) bool {
+		return obclusterList.Items[i].Name < obclusterList.Items[j].Name
+	})
 	for _, obcluster := range obclusterList.Items {
 		resp, err := buildOBClusterOverview(ctx, &obcluster)
 		if err != nil {
