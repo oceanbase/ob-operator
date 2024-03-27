@@ -119,7 +119,7 @@ func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 		m.Logger.Info("Create observer", "server", serverName)
 		err := m.Client.Create(m.Ctx, observer)
 		if err != nil {
-			m.Logger.Error(err, "create observer failed", "server", serverName)
+			m.Logger.Error(err, "Create observer failed", "server", serverName)
 			return errors.Wrap(err, "create observer")
 		}
 		m.Recorder.Event(m.OBZone, "CreateObServer", "CreateObserver", fmt.Sprintf("Create observer %s", serverName))
@@ -178,6 +178,7 @@ func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 		obzone, err := m.getOBZone()
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
+			return nil
 		} else if m.OBZone.Spec.Topology.Replica == len(obzone.Status.OBServerStatus) {
 			m.Logger.Info("OBZone replica matched")
 			matched = true

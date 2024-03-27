@@ -233,16 +233,16 @@ func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 	}
 	if observer != nil && observer.Status != "deleting" {
 		if observer.Status == "deleting" {
-			m.Logger.Info("observer is deleting", "observer", observerInfo.Ip)
+			m.Logger.Info("OBServer is deleting", "observer", observerInfo.Ip)
 		} else {
-			m.Logger.Info("need to delete observer")
+			m.Logger.Info("Need to delete observer")
 			err = operationManager.DeleteServer(observerInfo)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to delete observer %s", observerInfo.Ip)
 			}
 		}
 	} else {
-		m.Logger.Info("observer already deleted", "observer", observerInfo.Ip)
+		m.Logger.Info("OBServer already deleted", "observer", observerInfo.Ip)
 	}
 	return nil
 }

@@ -61,7 +61,7 @@ func (r *OBParameterReconciler) Reconcile(ctx context.Context, req ctrl.Request)
 			// obparameter not found, just return
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "get obparameter error")
+		logger.Error(err, "Get obparameter error")
 		return ctrl.Result{}, err
 	}
 

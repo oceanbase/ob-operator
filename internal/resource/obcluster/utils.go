@@ -129,37 +129,32 @@ func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseO
 }
 
 func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("begin create user", "username", userName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Begin to create user", "username", userName)
 	password, err := resourceutils.ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
 	if err != nil {
 		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get password", "username", userName, "password", password)
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get oceanbase operation manager")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish get operationmanager", "username", userName)
 	err = oceanbaseOperationManager.CreateUser(userName)
 	if err != nil {
 		m.Logger.Error(err, "Create user")
 		return errors.Wrapf(err, "Create user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish create user", "username", userName)
 	err = oceanbaseOperationManager.SetUserPassword(userName, password)
 	if err != nil {
 		m.Logger.Error(err, "Set user password")
 		return errors.Wrapf(err, "Set password for user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish set user password", "username", userName)
 	object := "*.*"
 	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
 	if err != nil {
 		m.Logger.Error(err, "Grant privilege")
 		return errors.Wrapf(err, "Grant privilege for user %s", userName)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("finish grant user privilege", "username", userName)
 	return nil
 }
 

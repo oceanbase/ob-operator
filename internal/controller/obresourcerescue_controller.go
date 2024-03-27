@@ -78,13 +78,13 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		gvk := schema.FromAPIVersionAndKind(gvStr, rescue.Spec.TargetKind)
 		mapping, err := r.Client.RESTMapper().RESTMapping(gvk.GroupKind(), gvk.Version)
 		if err != nil {
-			logger.Error(err, "failed to get REST mapping", "gvk", gvk)
+			logger.Error(err, "Failed to get REST mapping", "gvk", gvk)
 			return ctrl.Result{}, err
 		}
 
 		uns, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Get(ctx, rescue.Spec.TargetResName, metav1.GetOptions{})
 		if err != nil {
-			logger.Error(err, "failed to get the target resource", "resource kind", rescue.Spec.TargetKind, "resource name", rescue.Spec.TargetResName)
+			logger.Error(err, "Failed to get the target resource", "resource kind", rescue.Spec.TargetKind, "resource name", rescue.Spec.TargetResName)
 			return ctrl.Result{}, err
 		}
 
@@ -93,13 +93,13 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			uns.SetFinalizers(nil)
 			_, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Update(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Error(err, "failed to update finalizers of the target resource")
+				logger.Error(err, "Failed to update finalizers of the target resource")
 				return ctrl.Result{}, err
 			}
 			if uns.GetDeletionTimestamp() == nil {
 				err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Delete(ctx, rescue.Spec.TargetResName, metav1.DeleteOptions{})
 				if err != nil {
-					logger.Error(err, "failed to delete the target resource")
+					logger.Error(err, "Failed to delete the target resource")
 					return ctrl.Result{}, err
 				}
 			}
@@ -109,12 +109,12 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				unstructured.SetNestedField(uns.Object, rescue.Spec.TargetStatus, "status", "status"),
 			)
 			if err != nil {
-				logger.Error(err, "failed to reset fields of the target resource")
+				logger.Error(err, "Failed to reset fields of the target resource")
 				return ctrl.Result{}, err
 			}
 			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Error(err, "failed to update status of the target resource")
+				logger.Error(err, "Failed to update status of the target resource")
 				return ctrl.Result{}, err
 			}
 		case "retry":
@@ -122,20 +122,20 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			// operationContext.FailureRule.RetryCount = 0
 			context, exist, err := unstructured.NestedMap(uns.Object, "status", "operationContext")
 			if err != nil {
-				logger.Error(err, "failed to get operationContext fields of the target resource")
+				logger.Error(err, "Failed to get operationContext fields of the target resource")
 				return ctrl.Result{}, nil
 			}
 			if !exist {
-				logger.Info("operationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				logger.Info("OperationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
 				return ctrl.Result{}, nil
 			}
 			_, exist, err = unstructured.NestedMap(context, "failureRule")
 			if err != nil {
-				logger.Error(err, "failed to get failureStrategy field of the target resource")
+				logger.Error(err, "Failed to get failureStrategy field of the target resource")
 				return ctrl.Result{}, nil
 			}
 			if !exist {
-				logger.Info("failureStrategy not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				logger.Info("FailureStrategy not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
 				return ctrl.Result{}, nil
 			}
 
@@ -146,12 +146,12 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 				unstructured.SetNestedField(uns.Object, retryCount, "status", "operationContext", "failureRule", "retryCount"),
 			)
 			if err != nil {
-				logger.Error(err, "failed to set operationContext fields of the target resource")
+				logger.Error(err, "Failed to set operationContext fields of the target resource")
 				return ctrl.Result{}, err
 			}
 			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Error(err, "failed to update status of the target resource")
+				logger.Error(err, "Failed to update status of the target resource")
 				return ctrl.Result{}, err
 			}
 		case "skip":
@@ -159,21 +159,21 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			// When coordinator finds that the task status is `successful`, it will go on the following steps.
 			_, exist, err := unstructured.NestedMap(uns.Object, "status", "operationContext")
 			if err != nil {
-				logger.Error(err, "failed to get operationContext fields of the target resource")
+				logger.Error(err, "Failed to get operationContext fields of the target resource")
 				return ctrl.Result{}, nil
 			}
 			if !exist {
-				logger.Info("operationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
+				logger.Info("OperationContext not found", "resource kind", uns.GetKind(), "resource name", uns.GetName())
 				return ctrl.Result{}, nil
 			}
 			err = unstructured.SetNestedField(uns.Object, taskstatus.Successful, "status", "operationContext", "taskStatus")
 			if err != nil {
-				logger.Error(err, "failed to reset fields of the target resource")
+				logger.Error(err, "Failed to reset fields of the target resource")
 				return ctrl.Result{}, err
 			}
 			_, err = r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).UpdateStatus(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Error(err, "failed to update status of the target resource")
+				logger.Error(err, "Failed to update status of the target resource")
 				return ctrl.Result{}, err
 			}
 		case "ignore-deletion":
@@ -185,7 +185,7 @@ func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Req
 			uns.SetAnnotations(annotations)
 			_, err := r.Dynamic.Resource(mapping.Resource).Namespace(rescue.GetNamespace()).Update(ctx, uns, metav1.UpdateOptions{})
 			if err != nil {
-				logger.Error(err, "failed to update annotations of the target resource")
+				logger.Error(err, "Failed to update annotations of the target resource")
 				return ctrl.Result{}, err
 			}
 		}

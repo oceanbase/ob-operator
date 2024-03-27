@@ -345,13 +345,13 @@ func WatchRestoreJobToFinish(m *OBTenantManager) tasktypes.TaskError {
 		if runningRestore.Status.Status == constants.RestoreJobSuccessful {
 			break
 		} else if runningRestore.Status.Status == constants.RestoreJobFailed {
-			m.Recorder.Event(m.OBTenant, "RestoreJobFailed", "", "restore job failed")
+			m.Recorder.Event(m.OBTenant, "RestoreJobFailed", "", "Restore job failed")
 			return errors.New("Restore job failed")
 		}
 		time.Sleep(5 * time.Second)
 	}
 	tenantWhiteListMap.Store(m.OBTenant.Spec.TenantName, m.OBTenant.Spec.ConnectWhiteList)
-	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "restore job finished successfully")
+	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "Restore job finished successfully")
 	return nil
 }
 
