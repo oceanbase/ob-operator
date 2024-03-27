@@ -1,14 +1,15 @@
 import { intl } from '@/utils/intl';
 import { PlusOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { Card, Col, Divider, Form, Input, Row, Select, Tooltip } from 'antd';
+import { Card,Col,Divider,Form,Input,Row,Select,Tooltip } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 import PasswordInput from '@/components/PasswordInput';
 import AddNSModal from '@/components/customModal/AddNSModal';
+import { MODE_MAP } from '@/constants';
+import { resourceNameRule } from '@/constants/rules';
 import { getNameSpaces } from '@/services';
 import { useState } from 'react';
-import { resourceNameRule } from '@/constants/rules';
 import styles from './index.less';
 
 interface BasicInfoProps {
@@ -219,7 +220,21 @@ export default function BasicInfo({
                   id: 'Dashboard.Cluster.New.BasicInfo.PleaseSelect',
                   defaultMessage: '请选择',
                 })}
-                options={CLUSTER_MODE}
+                optionLabelProp="value"
+                options={Array.from(MODE_MAP.keys()).map((key) => ({
+                  value: MODE_MAP.get(key)?.text,
+                  label: (
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <span>{MODE_MAP.get(key)?.text}</span>
+                      <span>{MODE_MAP.get(key)?.limit}</span>
+                    </div>
+                  ),
+                }))}
               />
             </Form.Item>
           </Col>

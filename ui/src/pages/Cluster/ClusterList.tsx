@@ -1,7 +1,7 @@
 import { intl } from '@/utils/intl';
 import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button, Col, Table, Tag, Card } from 'antd';
+import { Button, Card, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -95,11 +95,23 @@ const columns: ColumnsType<DataType> = [
       id: 'OBDashboard.pages.Cluster.ClusterList.ClusterName',
       defaultMessage: '集群名',
     }),
+    dataIndex: 'clusterName',
+    key: 'clusterName',
+    render: (value, record) => (
+      <Link
+        to={`ns=${record.namespace}&nm=${record.name}&clusterName=${record.clusterName}`}
+      >
+        {value}
+      </Link>
+    ),
+  },
+  {
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Cluster.ClusterList.ResourceName',
+      defaultMessage: '资源名',
+    }),
     dataIndex: 'name',
     key: 'name',
-    render: (value, record) => (
-      <Link to={`ns=${record.namespace}&nm=${record.name}&clusterName=${record.clusterName}`}>{value}</Link>
-    ),
   },
   {
     title: intl.formatMessage({
@@ -185,7 +197,7 @@ export default function ClusterList({
           columns={columns}
           dataSource={clusterList}
           scroll={{ x: 1200 }}
-          pagination={{simple:true}}
+          pagination={{ simple: true }}
           rowKey="name"
           bordered
           sticky
