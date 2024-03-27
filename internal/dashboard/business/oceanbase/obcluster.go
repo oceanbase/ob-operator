@@ -15,7 +15,6 @@ package oceanbase
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strings"
 
@@ -497,16 +496,20 @@ func JudgeResourceEnoughForOBCluster(ctx context.Context, obcluster *v1alpha1.OB
 	}
 	requiredMem := obcluster.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() / constant.GB
 	requiredCpu := obcluster.Spec.OBServerTemplate.Resource.Cpu.AsApproximateFloat64()
+
+	// Judge whether the remain resource is enough for monitor
+	if obcluster.Spec.MonitorTemplate != nil {
+		requiredMem += obcluster.Spec.MonitorTemplate.Resource.Memory.AsApproximateFloat64() / constant.GB
+		requiredCpu += obcluster.Spec.MonitorTemplate.Resource.Cpu.AsApproximateFloat64()
+	}
 	unmetCount := 0
 	for _, zone := range obcluster.Spec.Topology {
 		unmetCount += zone.Replica
 	}
-	log.Println("unmetCount", unmetCount)
 	for _, node := range nodes {
 		if unmetCount == 0 {
 			break
 		}
-		log.Println("node", node.MemoryFree, node.CpuFree, requiredMem, requiredCpu)
 		for node.MemoryFree > requiredMem && node.CpuFree > requiredCpu && unmetCount > 0 {
 			unmetCount--
 			node.MemoryFree -= requiredMem
