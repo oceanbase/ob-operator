@@ -224,6 +224,9 @@ func ScaleOBServer(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	if scaleParam.Replicas <= 0 {
+		return nil, httpErr.NewBadRequest("Replicas must be greater than 0")
+	}
 	logger.Infof("Scale observer with param: %+v", scaleParam)
 	return oceanbase.ScaleOBServer(c, obzoneIdentity, scaleParam)
 }

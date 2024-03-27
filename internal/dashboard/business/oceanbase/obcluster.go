@@ -609,6 +609,9 @@ func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) (*r
 	// if obcluster.Status.Status != clusterstatus.Running {
 	// 	return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
 	// }
+	if len(obcluster.Spec.Topology) <= 2 {
+		return nil, oberr.NewBadRequest("Forbid to delete zone when the number of zone <= 2")
+	}
 	newTopology := make([]apitypes.OBZoneTopology, 0)
 	found := false
 	for _, obzone := range obcluster.Spec.Topology {
