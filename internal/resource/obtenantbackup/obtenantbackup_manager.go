@@ -154,7 +154,7 @@ func (m *OBTenantBackupManager) PrintErrEvent(err error) {
 
 func (m *OBTenantBackupManager) ArchiveResource() {
 	m.Logger.Info("Archive obtenant backup job", "obtenant backup job", m.Resource.Name)
-	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant backup job")
+	m.Recorder.Event(m.Resource, "Archive", "", "Archive obtenant backup job")
 	m.Resource.Status.Status = "Failed"
 	m.Resource.Status.OperationContext = nil
 }
@@ -197,7 +197,7 @@ func (m *OBTenantBackupManager) maintainRunningBackupJob() error {
 	job := m.Resource
 	con, err := m.getObOperationClient()
 	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
+		logger.Error(err, "Failed to get ob operation client")
 		return err
 	}
 	var targetJob *model.OBBackupJob
@@ -243,13 +243,13 @@ func (m *OBTenantBackupManager) maintainRunningBackupCleanJob() error {
 	job := m.Resource
 	con, err := m.getObOperationClient()
 	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
+		logger.Error(err, "Failed to get ob operation client")
 		return err
 	}
 
 	latest, err := con.GetLatestBackupCleanJob()
 	if err != nil {
-		logger.Error(err, "failed to query latest backup clean job")
+		logger.Error(err, "Failed to query latest backup clean job")
 		return err
 	}
 	if latest != nil {
@@ -277,13 +277,13 @@ func (m *OBTenantBackupManager) maintainRunningArchiveLogJob() error {
 	job := m.Resource
 	con, err := m.getObOperationClient()
 	if err != nil {
-		logger.Error(err, "failed to get ob operation client")
+		logger.Error(err, "Failed to get ob operation client")
 		return err
 	}
 
 	latest, err := con.GetLatestArchiveLogJob()
 	if err != nil {
-		logger.Error(err, "failed to query latest archive log job")
+		logger.Error(err, "Failed to query latest archive log job")
 		return err
 	}
 	if latest != nil {

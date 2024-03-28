@@ -272,7 +272,7 @@ func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
 	for _, obcluster := range obclusterList.Items {
 		resp, err := buildOBClusterOverview(ctx, &obcluster)
 		if err != nil {
-			logger.Errorf("failed to build obcluster response: %v", err)
+			logger.Errorf("Failed to build obcluster response: %v", err)
 		}
 		obclusters = append(obclusters, *resp)
 	}

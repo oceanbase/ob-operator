@@ -61,7 +61,7 @@ func GetOBUpgradeRoute(param *OBUpgradeRouteParam) ([]VersionDep, error) {
 		if os.IsNotExist(err) {
 			return nil, errors.New(fmt.Sprint("cannot find file: ", filePath))
 		}
-		log.Info("cat not read file: ", filePath, err)
+		log.Info("Can not read file: ", filePath, err)
 		return nil, err
 	}
 	var versionDep []VersionDep
@@ -177,7 +177,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 					v.Precursor = node
 					queue = append(queue, v)
 					visited.Add(v)
-					log.Println("visited", v.Version, len(v.Next))
+					log.Println("Visited", v.Version, len(v.Next))
 				}
 			}
 		}

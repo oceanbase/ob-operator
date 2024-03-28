@@ -44,7 +44,7 @@ func getThrottler() *throttler {
 		throttlerSingleton.client = *http.DefaultClient
 
 		throttlerSingleton.startWorkers()
-		getLogger().Println("telemetry throttler started", "#worker:", DefaultThrottlerWorkerCount)
+		getLogger().Println("Telemetry throttler started", "#worker:", DefaultThrottlerWorkerCount)
 	})
 	return throttlerSingleton
 }
@@ -92,15 +92,18 @@ func (t *throttler) startWorkers() {
 						return
 					}
 					res, err := t.sendTelemetryRecord(record)
-					if debugMode {
-						if err != nil {
-							getLogger().Printf("send telemetry record error: %v\n", err)
+					if err == nil && res != nil && res.Body != nil {
+						if debugMode {
+							bts, err := io.ReadAll(res.Body)
+							if err != nil {
+								getLogger().Printf("Read response body error: %v\n", err)
+							} else {
+								getLogger().Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
+							}
+						} else {
+							_, _ = io.Copy(io.Discard, res.Body)
 						}
-						bts, err := io.ReadAll(res.Body)
-						if err != nil {
-							getLogger().Printf("read response body error: %v\n", err)
-						}
-						getLogger().Printf("[Event %s.%s] %s\n", record.ResourceType, record.EventType, string(bts))
+						_ = res.Body.Close()
 					}
 				case <-ctx.Done():
 					getLogger().Println(ctx.Err())

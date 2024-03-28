@@ -220,7 +220,7 @@ func (m *ObTenantRestoreManager) PrintErrEvent(err error) {
 
 func (m *ObTenantRestoreManager) ArchiveResource() {
 	m.Logger.Info("Archive obtenant restore job", "obtenant restore job", m.Resource.Name)
-	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant restore job")
+	m.Recorder.Event(m.Resource, "Archive", "", "Archive obtenant restore job")
 	m.Resource.Status.Status = "Failed"
 	m.Resource.Status.OperationContext = nil
 }
