@@ -1,8 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
-import { RESOURCE_NAME_REG,TZ_NAME_REG } from '@/constants';
+import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Form,Input,Row,Select } from 'antd';
+import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
@@ -63,6 +63,7 @@ export default function BasicInfo({
         <Col span={8}>
           <Form.Item
             name={['name']}
+            validateFirst
             rules={[
               {
                 required: true,
@@ -76,6 +77,13 @@ export default function BasicInfo({
                 message: intl.formatMessage({
                   id: 'Dashboard.Tenant.New.BasicInfo.ResourceNamesCanOnlyConsist',
                   defaultMessage: '资源名只能由小写字母和 - 组成',
+                }),
+              },
+              {
+                pattern: /\D/,
+                message: intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure',
+                  defaultMessage: '资源名不能使用纯数字',
                 }),
               },
             ]}
@@ -159,10 +167,10 @@ export default function BasicInfo({
           </Form.Item>
         </Col>
         {/* <Col span={8}>
-            <Form.Item name={["charset"]} label="字符集">
-              <Select />
-            </Form.Item>
-           </Col> */}
+             <Form.Item name={["charset"]} label="字符集">
+               <Select />
+             </Form.Item>
+            </Col> */}
       </Row>
     </Card>
   );

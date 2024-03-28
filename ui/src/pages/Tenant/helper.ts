@@ -275,3 +275,26 @@ export const getZonesOptions = (
   });
   return formatReplicToOption(newReplicas);
 };
+
+export const getOriginResourceUsages = (
+  resourceUsages: API.EssentialParametersType | undefined,
+  current: API.ReplicaDetailType | undefined,
+) => {
+  if (!resourceUsages) return;
+  if(!current) return resourceUsages;
+  const originResourceUsages = cloneDeep(resourceUsages);
+  originResourceUsages.obServerResources.forEach((resource) => {
+    if (resource.obZone === current.zone) {
+      resource.availableCPU += Number(current.minCPU);
+      resource.availableLogDisk += Number(current.logDiskSize);
+      resource.availableMemory += Number(current.memorySize);
+      originResourceUsages.obZoneResourceMap[current.zone].availableCPU +=
+        Number(current.minCPU);
+      originResourceUsages.obZoneResourceMap[current.zone].availableLogDisk +=
+        Number(current.logDiskSize.split('Gi')[0]);
+      originResourceUsages.obZoneResourceMap[current.zone].availableMemory +=
+        Number(current.memorySize.split('Gi')[0]);
+    }
+  });
+  return originResourceUsages;
+};

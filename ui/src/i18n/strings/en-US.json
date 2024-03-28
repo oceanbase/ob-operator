@@ -679,5 +679,7 @@
   "Dashboard.src.constants.MonomerMode": "Monomer mode",
   "Dashboard.src.constants.RequiredKernelVersion": "Required kernel version> = 4.2.0.0",
   "Dashboard.src.constants.ServiceMode": "Service mode",
-  "Dashboard.src.constants.RequiredKernelVersion.1": "Required kernel version> = 4.2.3.0"
+  "Dashboard.src.constants.RequiredKernelVersion.1": "Required kernel version> = 4.2.3.0",
+  "Dashboard.Cluster.New.BasicInfo.ResourceNamesCannotUsePure": "Resource names cannot use pure numbers.",
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "Resource names cannot use pure numbers."
 }

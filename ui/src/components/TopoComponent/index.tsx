@@ -1,30 +1,30 @@
 import MoreModal from '@/components/moreModal';
 import { intl } from '@/utils/intl';
-import G6, { IG6GraphEvent } from '@antv/g6';
+import G6,{ IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
-import { useRequest, useUpdateEffect } from 'ahooks';
+import { useRequest,useUpdateEffect } from 'ahooks';
 import { message } from 'antd';
 import _ from 'lodash';
-import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
-import { getClusterFromTenant, getZonesOptions } from '@/pages/Tenant/helper';
-import { deleteObcluster, deleteObzone, getClusterDetailReq } from '@/services';
+import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '@/pages/Tenant/helper';
+import { deleteObcluster,deleteObzone,getClusterDetailReq } from '@/services';
 import { deleteObtenantPool } from '@/services/tenant';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
-import { ReactNode, config } from './G6register';
+import { ReactNode,config } from './G6register';
 import type { OperateTypeLabel } from './constants';
 import {
-  clusterOperate,
-  clusterOperateOfTenant,
-  getZoneOperateOfTenant,
-  serverOperate,
-  zoneOperate,
+clusterOperate,
+clusterOperateOfTenant,
+getZoneOperateOfTenant,
+serverOperate,
+zoneOperate,
 } from './constants';
-import { appenAutoShapeListener, checkIsSame, getServerNumber } from './helper';
+import { appenAutoShapeListener,checkIsSame,getServerNumber,haveDisabledOperate } from './helper';
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
@@ -55,7 +55,6 @@ export default function TopoComponent({
     useState<OperateTypeLabel>(clusterOperateList);
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
-  const [operateDisable, setOperateDisable] = useState<boolean>(false);
 
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
@@ -102,7 +101,9 @@ export default function TopoComponent({
             const haveResourcePool = !!tenantReplicas?.find(
               (replica) => replica.zone === zone,
             );
-            setOprateList(getZoneOperateOfTenant(haveResourcePool));
+            setOprateList(
+              getZoneOperateOfTenant(haveResourcePool, tenantReplicas),
+            );
           } else {
             setOprateList(zoneOperate);
           }
@@ -276,22 +277,27 @@ export default function TopoComponent({
 
   const mouseEnter = () => setInModal(true);
   const mouseLeave = () => setInModal(false);
-  //Re-acquire data after successful operation and maintenance operations
-  const operateSuccess = () => {
-    getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
-  };
+  // //Re-acquire data after successful operation and maintenance operations
+  // const operateSuccess = () => {
+  //   getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+  // };
 
   //Used to re-render the view after data update
   useUpdateEffect(() => {
     let checkStatusTimer: NodeJS.Timer;
     //polling
     if (!RESULT_STATUS.includes(originTopoData.topoData.status)) {
-      if (!operateDisable) setOperateDisable(true);
+      if (!haveDisabledOperate(operateList))
+        setOprateList(operateList.map((item) => ({ ...item, disabled: true })));
+
       checkStatusTimer = setInterval(() => {
         getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
       }, 3000);
     } else {
-      if (operateDisable) setOperateDisable(false);
+      if (haveDisabledOperate(operateList))
+        setOprateList(
+          operateList.map((item) => ({ ...item, disabled: false })),
+        );
     }
     if (graph.current) {
       if (!checkIsSame(beforeTopoData.current, originTopoData.topoData)) {
@@ -339,7 +345,7 @@ export default function TopoComponent({
       modelRef.current?.removeEventListener('mouseleave', mouseLeave);
     };
   }, []);
-  const isCreatePool = modalType.current === 'createResourcePools';
+  const isCreateResourcePool = modalType.current === 'createResourcePools';
 
   // Use different pictures for nodes in different states
   return (
@@ -362,25 +368,33 @@ export default function TopoComponent({
             visible={visible}
             list={operateList}
             ItemClick={ItemClickOperate}
-            disable={operateDisable}
           />
         ),
 
-        [operateDisable, visible],
+        [operateList, visible],
       )}
 
       <OperateModal
         type={modalType.current}
         visible={operateModalVisible}
         setVisible={setOperateModalVisible}
-        successCallback={operateSuccess}
+        successCallback={refreshTenant}
         params={{
           zoneName: chooseZoneName.current,
           defaultValue: chooseServerNum,
           defaultUnitCount: defaultUnitCount,
           ...resourcePoolDefaultValue,
-          newResourcePool: isCreatePool,
-          zonesOptions: isCreatePool
+          essentialParameter: isCreateResourcePool
+            ? resourcePoolDefaultValue.essentialParameter
+            : getOriginResourceUsages(
+                resourcePoolDefaultValue.essentialParameter,
+                resourcePoolDefaultValue?.replicaList?.find(
+                  (replica) =>
+                    replica.zone === resourcePoolDefaultValue.editZone,
+                ),
+              ),
+          newResourcePool: isCreateResourcePool,
+          zonesOptions: isCreateResourcePool
             ? getZonesOptions(
                 getClusterFromTenant(
                   resourcePoolDefaultValue?.clusterList,

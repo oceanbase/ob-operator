@@ -21,7 +21,7 @@ import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
 import { cloneDeep } from 'lodash';
 import { useEffect,useRef,useState } from 'react';
-import { getClusterFromTenant,getZonesOptions } from '../../helper';
+import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '../../helper';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -303,6 +303,8 @@ export default function TenantOverview() {
     }
   }, [clusterList, tenantDetail]);
 
+  const isCreateResourcePool = operateTypeRef.current === 'create';
+
   return (
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
@@ -345,23 +347,29 @@ export default function TenantOverview() {
           params={{
             defaultUnitCount,
             clusterList: clusterList,
-            essentialParameter,
+            editZone,
+            essentialParameter: isCreateResourcePool
+              ? essentialParameter
+              : getOriginResourceUsages(
+                  essentialParameter,
+                  tenantDetail?.replicas?.find(
+                    (replica) => replica.zone === editZone,
+                  ),
+                ),
             clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
             setEditZone,
             replicaList: tenantDetail?.replicas,
-            editZone,
-            newResourcePool: operateTypeRef.current === 'create',
-            zonesOptions:
-              operateTypeRef.current === 'create'
-                ? getZonesOptions(
-                    getClusterFromTenant(
-                      clusterList,
-                      tenantDetail?.info.clusterResourceName,
-                    ),
-                    tenantDetail?.replicas,
-                  )
-                : undefined,
+            newResourcePool: isCreateResourcePool,
+            zonesOptions: isCreateResourcePool
+              ? getZonesOptions(
+                  getClusterFromTenant(
+                    clusterList,
+                    tenantDetail?.info.clusterResourceName,
+                  ),
+                  tenantDetail?.replicas,
+                )
+              : undefined,
           }}
         />
       </PageContainer>
