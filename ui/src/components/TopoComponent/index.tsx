@@ -385,9 +385,9 @@ export default function TopoComponent({
           defaultUnitCount: defaultUnitCount,
           ...resourcePoolDefaultValue,
           essentialParameter: isCreateResourcePool
-            ? resourcePoolDefaultValue.essentialParameter
+            ? resourcePoolDefaultValue?.essentialParameter
             : getOriginResourceUsages(
-                resourcePoolDefaultValue.essentialParameter,
+                resourcePoolDefaultValue?.essentialParameter,
                 resourcePoolDefaultValue?.replicaList?.find(
                   (replica) =>
                     replica.zone === resourcePoolDefaultValue.editZone,
