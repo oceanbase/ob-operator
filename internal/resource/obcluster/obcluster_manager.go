@@ -285,18 +285,6 @@ func (m *OBClusterManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
 }
 
-func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
-	// this label always exists
-	obzoneList := &v1alpha1.OBZoneList{}
-	err := m.Client.List(m.Ctx, obzoneList, client.MatchingLabels{
-		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
-	}, client.InNamespace(m.OBCluster.Namespace))
-	if err != nil {
-		return nil, errors.Wrap(err, "get obzone list")
-	}
-	return obzoneList, nil
-}
-
 func (m *OBClusterManager) ArchiveResource() {
 	m.Logger.Info("Archive obcluster", "obcluster", m.OBCluster.Name)
 	m.Recorder.Event(m.OBCluster, "Archive", "", "Archive obcluster")
