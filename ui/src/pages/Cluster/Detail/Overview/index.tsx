@@ -9,7 +9,8 @@ import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
-import { deleteObcluster,getClusterDetailReq } from '@/services';
+import { getClusterDetailReq } from '@/services';
+import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import BasicInfo from './BasicInfo';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
@@ -17,7 +18,7 @@ import { getNSName } from './helper';
 
 //集群详情概览页
 const ClusterOverview: React.FC = () => {
-  const { setChooseClusterName } = useModel('global');
+  const { setChooseClusterName, appInfo } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   const [[ns, name]] = useState(getNSName());
@@ -43,7 +44,7 @@ const ClusterOverview: React.FC = () => {
     },
   );
   const handleDelete = async () => {
-    const res = await deleteObcluster({ ns, name });
+    const res = await deleteClusterReportWrap({ ns, name, version: appInfo.version });
     if (res.successful) {
       message.success(
         intl.formatMessage({
