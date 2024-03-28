@@ -291,16 +291,12 @@ func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 
 	cmdArgs := []string{"/bin/bash", "-c", fmt.Sprintf("mysql -u%s -h%s -P2881 -A", term.User, term.Host)}
 	if term.Password != "" {
-		cmdArgs[2] = cmdArgs[2] + fmt.Sprintf(" -p'%s'", term.Password)
+		cmdArgs[2] += fmt.Sprintf(" -p'%s'", term.Password)
 	}
 	sizeQueue := k8s.NewResizeQueue()
 	sizeQueue.SetSize(colsNum, rowsNum)
 
 	execReq := &k8s.KubeExecRequest{
-		// Namespace: "default",
-		// PodName:   "nginx-app-7f6fdf9556-282sw",
-		// Container: "nginx",
-		// Command:   []string{"/bin/bash"},
 		Namespace:   os.Getenv("USER_NAMESPACE"),
 		PodName:     os.Getenv("HOSTNAME"),
 		Container:   "dashboard",
