@@ -21,12 +21,12 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func ListAllEvents(listOptions *metav1.ListOptions) (*corev1.EventList, error) {
+func ListAllEvents(ctx context.Context, listOptions *metav1.ListOptions) (*corev1.EventList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Events(corev1.NamespaceAll).List(context.TODO(), *listOptions)
+	return client.ClientSet.CoreV1().Events(corev1.NamespaceAll).List(ctx, *listOptions)
 }
 
-func ListEvents(namespace string, listOptions *metav1.ListOptions) (*corev1.EventList, error) {
+func ListEvents(ctx context.Context, namespace string, listOptions *metav1.ListOptions) (*corev1.EventList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Events(namespace).List(context.TODO(), *listOptions)
+	return client.ClientSet.CoreV1().Events(namespace).List(ctx, *listOptions)
 }

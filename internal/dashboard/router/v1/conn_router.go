@@ -18,7 +18,8 @@ import (
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
-func InitInfoRoutes(g *gin.RouterGroup) {
-	g.GET("/info", h.Wrap(h.GetProcessInfo))
-	g.GET("/statistics", h.Wrap(h.GetStatistics))
+func InitTerminalRoutes(g *gin.RouterGroup) {
+	g.PUT("/obclusters/namespace/:namespace/name/:name/terminal", h.Wrap(h.CreateOBClusterConnTerminal))
+	g.PUT("/obtenants/:namespace/:name/terminal", h.Wrap(h.CreateOBTenantConnTerminal))
+	g.GET("/terminal/:terminalId", h.Wrap(h.ConnectDatabase))
 }

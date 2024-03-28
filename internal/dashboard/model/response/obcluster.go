@@ -52,6 +52,7 @@ type OBMetrics struct {
 }
 
 type OBClusterOverview struct {
+	UID          string   `json:"uid"`
 	Name         string   `json:"name"`
 	Namespace    string   `json:"namespace"`
 	ClusterName  string   `json:"clusterName"`

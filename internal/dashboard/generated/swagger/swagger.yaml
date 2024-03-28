@@ -705,6 +705,8 @@ definitions:
       type:
         description: 'Enum: FULL, INCR, ARCHIVE, CLEAN'
         type: string
+      uid:
+        type: string
     type: object
   response.BackupPolicy:
     properties:
@@ -756,6 +758,8 @@ definitions:
       status:
         type: string
       tenantName:
+        type: string
+      uid:
         type: string
     required:
     - archivePath
@@ -975,6 +979,8 @@ definitions:
         items:
           $ref: '#/definitions/response.OBZone'
         type: array
+      uid:
+        type: string
       version:
         type: string
     type: object
@@ -1000,6 +1006,8 @@ definitions:
         items:
           $ref: '#/definitions/response.OBZone'
         type: array
+      uid:
+        type: string
     type: object
   response.OBClusterResources:
     properties:
@@ -1020,6 +1028,23 @@ definitions:
       count:
         type: integer
       status:
+        type: string
+    type: object
+  response.OBConnection:
+    properties:
+      clientIp:
+        type: string
+      cluster:
+        type: string
+      namespace:
+        type: string
+      pod:
+        type: string
+      tenant:
+        type: string
+      terminalId:
+        type: string
+      user:
         type: string
     type: object
   response.OBMetrics:
@@ -1123,6 +1148,9 @@ definitions:
         items:
           $ref: '#/definitions/response.OBTenantReplica'
         type: array
+      uid:
+        description: Unique identifier of the resource
+        type: string
       unitNumber:
         description: Number of units in every zone
         type: integer
@@ -1167,6 +1195,9 @@ definitions:
         items:
           $ref: '#/definitions/response.OBTenantReplica'
         type: array
+      uid:
+        description: Unique identifier of the resource
+        type: string
       unitNumber:
         description: Number of units in every zone
         type: integer
@@ -1289,6 +1320,12 @@ definitions:
         items:
           $ref: '#/definitions/models.OBCluster'
         type: array
+      k8sNodes:
+        items:
+          $ref: '#/definitions/response.K8sNode'
+        type: array
+      operatorVersion:
+        type: string
       servers:
         items:
           $ref: '#/definitions/models.OBServer'
@@ -1297,8 +1334,6 @@ definitions:
         items:
           $ref: '#/definitions/models.OBTenant'
         type: array
-      version:
-        type: string
       warningEvents:
         items:
           $ref: '#/definitions/models.K8sEvent'
@@ -1307,15 +1342,6 @@ definitions:
         items:
           $ref: '#/definitions/models.OBZone'
         type: array
-    type: object
-  response.StatisticDataResponse:
-    properties:
-      component:
-        type: string
-      content:
-        $ref: '#/definitions/response.StatisticData'
-      time:
-        type: string
     type: object
   response.StorageClass:
     properties:
@@ -1559,6 +1585,41 @@ paths:
       summary: list k8s storage classes
       tags:
       - Cluster
+  /api/v1/conn/{terminalId}:
+    get:
+      consumes:
+      - application/json
+      description: Connect to oceanbase database in websocket
+      operationId: ConnectDatabase
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Connect to oceanbase database
+      tags:
+      - Terminal
   /api/v1/info:
     get:
       consumes:
@@ -1793,7 +1854,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1882,7 +1948,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -1973,7 +2044,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2020,7 +2096,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2066,7 +2147,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2118,7 +2204,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBCluster'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -2136,6 +2227,41 @@ paths:
       summary: scale observer
       tags:
       - OBCluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}/terminal:
+    put:
+      consumes:
+      - application/json
+      description: Create oceanbase cluster connection terminal
+      operationId: CreateOBClusterConnection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create oceanbase cluster connection
+      tags:
+      - Terminal
   /api/v1/obclusters/statistic:
     get:
       consumes:
@@ -2718,7 +2844,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -2759,7 +2885,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -2800,7 +2926,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  type: boolean
+                  $ref: '#/definitions/response.OBTenantDetail'
               type: object
         "400":
           description: Bad Request
@@ -2872,6 +2998,41 @@ paths:
       summary: Change tenant role of specific tenant
       tags:
       - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/terminal:
+    put:
+      consumes:
+      - application/json
+      description: Create oceanbase tenant connection terminal
+      operationId: CreateOBTenantConnection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create oceanbase tenant connection
+      tags:
+      - Terminal
   /api/v1/obtenants/{namespace}/{name}/userCredentials:
     post:
       consumes:
@@ -3024,7 +3185,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/response.StatisticDataResponse'
+                  $ref: '#/definitions/response.StatisticData'
               type: object
         "400":
           description: Bad Request

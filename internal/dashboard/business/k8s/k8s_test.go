@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package k8s
 
 import (
+	"context"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -20,8 +22,9 @@ import (
 )
 
 var _ = Describe("K8s", func() {
+	ctx := context.Background()
 	It("Test ListEvents", func() {
-		events, err := ListEvents(&param.QueryEventParam{
+		events, err := ListEvents(ctx, &param.QueryEventParam{
 			ObjectType: "Pod",
 			Type:       "Normal",
 			Namespace:  "kube-system",
@@ -31,19 +34,19 @@ var _ = Describe("K8s", func() {
 	})
 
 	It("Test ListNamespaces", func() {
-		namespaces, err := ListNamespaces()
+		namespaces, err := ListNamespaces(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(namespaces).ShouldNot(BeNil())
 	})
 
 	It("Test ListNodes", func() {
-		nodes, err := ListNodes()
+		nodes, err := ListNodes(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(nodes).ShouldNot(BeNil())
 	})
 
 	It("Test ListStorageClasses", func() {
-		scs, err := ListStorageClasses()
+		scs, err := ListStorageClasses(ctx)
 		Expect(err).ShouldNot(HaveOccurred())
 		Expect(scs).ShouldNot(BeNil())
 	})

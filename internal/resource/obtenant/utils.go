@@ -889,7 +889,7 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 			}
 		}
 
-		if standbyROPwd == "" && secret != nil {
+		if standbyROPwd == "" {
 			standbyROPwd = string(secret.Data["password"])
 		}
 

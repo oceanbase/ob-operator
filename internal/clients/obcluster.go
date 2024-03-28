@@ -20,7 +20,6 @@ import (
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -75,52 +74,20 @@ func CreateSecretsForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluste
 	return nil
 }
 
-func CreateOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) error {
-	logger.Infof("create obcluster with instance: %v", obcluster)
-	client := client.GetClient()
-	objectMap, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obcluster)
-	if err != nil {
-		return errors.Wrap(err, "Convert obcluster to unsturctured")
-	}
-	unstructuredObj := &unstructured.Unstructured{
-		Object: objectMap,
-	}
-	unstructuredObj.SetGroupVersionKind(schema.OBClusterResKind)
-	logger.Infof("create obcluster with unstructured: %v", unstructuredObj)
-	_, err = client.DynamicClient.Resource(schema.OBClusterRes).Namespace(obcluster.Namespace).Create(ctx, unstructuredObj, metav1.CreateOptions{})
-	return err
+func CreateOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBCluster, error) {
+	return ClusterClient.Create(ctx, obcluster, metav1.CreateOptions{})
 }
 
-func UpdateOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) error {
-	client := client.GetClient()
-	unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obcluster)
-	if err != nil {
-		return errors.Wrap(err, "Convert obcluster to unstructured")
-	}
-	_, err = client.DynamicClient.Resource(schema.OBClusterRes).Namespace(obcluster.Namespace).Update(ctx, &unstructured.Unstructured{
-		Object: unstructuredObj,
-	}, metav1.UpdateOptions{})
-	return err
+func UpdateOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBCluster, error) {
+	return ClusterClient.Update(ctx, obcluster, metav1.UpdateOptions{})
 }
 
 func GetOBCluster(ctx context.Context, namespace, name string) (*v1alpha1.OBCluster, error) {
-	client := client.GetClient()
-	obj, err := client.DynamicClient.Resource(schema.OBClusterRes).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var obcluster v1alpha1.OBCluster
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &obcluster)
-	if err != nil {
-		return nil, err
-	}
-	return &obcluster, nil
+	return ClusterClient.Get(ctx, namespace, name, metav1.GetOptions{})
 }
 
 func DeleteOBCluster(ctx context.Context, namespace, name string) error {
-	client := client.GetClient()
-	err := client.DynamicClient.Resource(schema.OBClusterRes).Namespace(namespace).Delete(ctx, name, metav1.DeleteOptions{})
-	return err
+	return ClusterClient.Delete(ctx, namespace, name, metav1.DeleteOptions{})
 }
 
 func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {

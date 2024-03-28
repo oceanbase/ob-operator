@@ -24,9 +24,9 @@ import (
 
 var timeout int64 = k8sconst.DefaultClientListTimeoutSeconds
 
-func ListNodes() (*corev1.NodeList, error) {
+func ListNodes(ctx context.Context) (*corev1.NodeList, error) {
 	client := client.GetClient()
-	return client.ClientSet.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{
+	return client.ClientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
 }
