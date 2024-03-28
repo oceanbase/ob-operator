@@ -1,24 +1,24 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT, getMinResource } from '@/constants';
+import { SUFFIX_UNIT,getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import type {
-  MaxResourceType,
-  MinResourceConfig,
+MaxResourceType,
+MinResourceConfig,
 } from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
 import {
-  findMinParameter,
-  modifyZoneCheckedStatus,
+findMinParameter,
+modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
-import { createObtenantPool, patchObtenantPool } from '@/services/tenant';
+import { createObtenantPool,patchObtenantPool } from '@/services/tenant';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
-import { Col, Form, Row, Select, message } from 'antd';
+import { Col,Form,Row,Select,message } from 'antd';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -72,9 +72,9 @@ export default function ModifyUnitDetailModal({
     setClusterList,
     essentialParameter = {},
     clusterResourceName = '',
-    editZone,
+    editZone, 
     replicaList,
-    newResourcePool = false,
+    newResourcePool = false, // This parameter can be used to determine whether to edit or add
     setEditZone,
     zonesOptions,
     zoneName,
@@ -128,8 +128,12 @@ export default function ModifyUnitDetailModal({
             defaultMessage: '修改成功',
           }),
       );
-      successCallback();
+      if (successCallback) successCallback();
       form.resetFields();
+      if (setEditZone) {
+        setEditZone('');
+        setSelectZones([]);
+      }
       setVisible(false);
     }
   };

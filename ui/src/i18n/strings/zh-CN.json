@@ -679,5 +679,7 @@
   "Dashboard.src.constants.MonomerMode": "单体模式",
   "Dashboard.src.constants.RequiredKernelVersion": "要求内核版本 >= 4.2.0.0",
   "Dashboard.src.constants.ServiceMode": "Service模式",
-  "Dashboard.src.constants.RequiredKernelVersion.1": "要求内核版本 >= 4.2.3.0"
+  "Dashboard.src.constants.RequiredKernelVersion.1": "要求内核版本 >= 4.2.3.0",
+  "Dashboard.Cluster.New.BasicInfo.ResourceNamesCannotUsePure": "资源名不能使用纯数字",
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "资源名不能使用纯数字"
 }
