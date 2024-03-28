@@ -207,12 +207,7 @@ export async function scaleObserver({
   name,
   zoneName,
   replicas,
-}: {
-  namespace: string;
-  name: string;
-  zoneName: string;
-  replicas: number;
-}) {
+}: API.ScaleObserverPrams) {
   const r = await request(
     `${obClusterPrefix}/namespace/${namespace}/name/${name}/obzones/${zoneName}/scale`,
     {
@@ -235,13 +230,7 @@ export async function addObzone({
   namespace,
   name,
   ...body
-}: {
-  namespace: string;
-  name: string;
-  zone: string;
-  replicas: number;
-  nodeSelector: { key: string; value: string }[];
-}) {
+}: API.AddZoneParams) {
   const r = await request(
     `${obClusterPrefix}/namespace/${namespace}/name/${name}/obzones`,
     { method: 'POST', data: body },
@@ -260,10 +249,7 @@ export async function addObzone({
 export async function deleteObcluster({
   ns,
   name,
-}: {
-  ns: string;
-  name: string;
-}) {
+}: API.NamespaceAndName) {
   const r = await request(`${obClusterPrefix}/namespace/${ns}/name/${name}`, {
     method: 'DELETE',
   });
@@ -278,9 +264,7 @@ export async function deleteObzone({
   ns,
   name,
   zoneName,
-}: {
-  ns: string;
-  name: string;
+}: API.NamespaceAndName & {
   zoneName: string;
 }) {
   const r = await request(

@@ -3,30 +3,31 @@ import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import {
-deletePolicyOfTenant,
-updateBackupPolicyOfTenant,
-} from '@/services/tenant';
+  deleteBackupReportWrap,
+  editBackupReportWrap,
+} from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
+import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
-Button,
-Card,
-Col,
-Descriptions,
-Form,
-InputNumber,
-Row,
-Select,
-Space,
-message
+  Button,
+  Card,
+  Col,
+  Descriptions,
+  Form,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  message,
 } from 'antd';
 import dayjs from 'dayjs';
-import { useRef,useState } from 'react';
+import { useRef, useState } from 'react';
 import {
-checkIsSame,
-checkScheduleDatesHaveFull,
-formatBackupForm,
-formatBackupPolicyData,
+  checkIsSame,
+  checkScheduleDatesHaveFull,
+  formatBackupForm,
+  formatBackupPolicyData,
 } from '../../helper';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
@@ -45,6 +46,7 @@ export default function BackupConfiguration({
   setBackupPolicy,
   backupPolicyRefresh,
 }: BackupConfigurationProps) {
+  const { appInfo } = useModel('global');
   const [form] = Form.useForm();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -121,7 +123,7 @@ export default function BackupConfiguration({
     scheduleTime: dayjs(backupPolicy.scheduleTime, 'HH:mm'),
   };
 
-  const { run: deleteBackupPolicyReq } = useRequest(deletePolicyOfTenant, {
+  const { run: deleteBackupPolicyReq } = useRequest(deleteBackupReportWrap, {
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -136,7 +138,10 @@ export default function BackupConfiguration({
       name,
       status: backupPolicy.status === 'PAUSED' ? 'RUNNING' : 'PAUSED',
     };
-    const { successful, data } = await updateBackupPolicyOfTenant(param);
+    const { successful, data } = await editBackupReportWrap({
+      ...param,
+      version: appInfo.version,
+    });
     if (successful) {
       if (data.status === backupPolicy.status) {
         backupPolicyRefresh();
@@ -186,10 +191,11 @@ export default function BackupConfiguration({
       );
       return;
     }
-    const { successful, data } = await updateBackupPolicyOfTenant({
+    const { successful, data } = await editBackupReportWrap({
       ns,
       name,
       ...formatBackupForm(values, publicKey),
+      version: appInfo.version,
     });
     if (successful) {
       curConfig.current = formatBackupForm(form.getFieldsValue(), publicKey);
@@ -251,7 +257,8 @@ export default function BackupConfiguration({
             danger
             onClick={() =>
               showDeleteConfirm({
-                onOk: () => deleteBackupPolicyReq({ ns, name }),
+                onOk: () =>
+                  deleteBackupPolicyReq({ ns, name, version: appInfo.version }),
                 title: intl.formatMessage({
                   id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
                   defaultMessage: '确定要删除该备份策略吗？',

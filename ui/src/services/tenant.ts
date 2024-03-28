@@ -190,14 +190,18 @@ export async function replayLogOfTenant({
   });
 }
 
+// Used to activate tenants or switch between primary and standby tenants
 export async function changeTenantRole({
   ns,
   name,
-}: API.NamespaceAndName): Promise<API.CommonResponse> {
+  ...body
+}: API.NamespaceAndName & API.RoleReqParam ): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/role`, {
     method: 'POST',
+    data: body
   });
 }
+
 export async function changeTenantPassword({
   ns,
   name,
