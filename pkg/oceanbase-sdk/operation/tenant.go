@@ -280,14 +280,14 @@ func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string
 			m.Logger.Error(err, "Failed to get tenant info")
 		}
 		if tenant.PreviousLocality == "" {
-			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("tenant locality change finished", "tenant name", name)
+			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Tenant locality change finished", "tenant name", name)
 			finished = true
 			break
 		}
 		time.Sleep(1 * time.Second)
 	}
 	if !finished {
-		return errors.Errorf("tenant %s locality change still not finished after %d seconds", name, timeoutSeconds)
+		return errors.Errorf("Tenant %s locality change still not finished after %d seconds", name, timeoutSeconds)
 	}
 	return nil
 }

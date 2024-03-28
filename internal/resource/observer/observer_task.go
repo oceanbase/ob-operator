@@ -97,7 +97,7 @@ func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
 }
 
 func CreateOBPod(m *OBServerManager) tasktypes.TaskError {
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("create observer pod")
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create observer pod")
 	obcluster, err := m.getOBCluster()
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
@@ -218,7 +218,7 @@ func CreateOBPVC(m *OBServerManager) tasktypes.TaskError {
 }
 
 func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("delete observer in cluster")
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Delete observer in cluster")
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "Get oceanbase operation manager failed")
@@ -297,7 +297,7 @@ func WaitOBServerPodReady(m *OBServerManager) tasktypes.TaskError {
 			}
 		}
 		if observerPodRestarted {
-			m.Logger.Info("observer pod restarted")
+			m.Logger.Info("OBServer pod restarted")
 			break
 		}
 		time.Sleep(time.Second)
@@ -312,7 +312,7 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
-	m.Logger.Info("wait observer active in cluster")
+	m.Logger.Info("Wait for observer to be active in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
@@ -347,7 +347,7 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 	if m.OBServer.SupportStaticIP() {
 		return nil
 	}
-	m.Logger.Info("wait observer deleted in cluster")
+	m.Logger.Info("Wait for observer to be deleted in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,

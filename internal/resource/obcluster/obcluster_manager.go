@@ -80,7 +80,7 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	// newly created cluster
 	var taskFlow *tasktypes.TaskFlow
-	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("create task flow according to obcluster status")
+	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to obcluster status")
 	switch m.OBCluster.Status.Status {
 	// create obcluster, return taskFlow to bootstrap obcluster
 	case clusterstatus.MigrateFromExisting:
@@ -282,7 +282,7 @@ func (m *OBClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskF
 }
 
 func (m *OBClusterManager) PrintErrEvent(err error) {
-	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "task exec failed", err.Error())
+	m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
 func (m *OBClusterManager) ArchiveResource() {
