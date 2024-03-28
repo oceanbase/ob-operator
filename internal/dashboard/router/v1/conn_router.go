@@ -10,16 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package response
+package v1
 
-type OBConnection struct {
-	Namespace  string `json:"namespace"`
-	Cluster    string `json:"cluster,omitempty"`
-	Tenant     string `json:"tenant,omitempty"`
-	Pod        string `json:"pod"`
-	ClientIP   string `json:"clientIp"`
-	TerminalID string `json:"terminalId"`
-	User       string `json:"user"`
-	Password   string `json:"-"`
-	Host       string `json:"-"`
+import (
+	"github.com/gin-gonic/gin"
+
+	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
+)
+
+func InitTerminalRoutes(g *gin.RouterGroup) {
+	g.PUT("/obclusters/namespace/:namespace/name/:name/terminal", h.Wrap(h.CreateOBClusterConnTerminal))
+	g.PUT("/obtenants/:namespace/:name/terminal", h.Wrap(h.CreateOBTenantConnTerminal))
+	g.GET("/terminal/:terminalId", h.Wrap(h.ConnectDatabase))
 }
