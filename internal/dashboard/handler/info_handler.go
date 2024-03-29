@@ -165,7 +165,7 @@ func GetStatistics(c *gin.Context) (*response.StatisticData, error) {
 	}
 
 	// Get deployment named oceanbase-controller-manager in oceanbase-system namespace
-	deployment, err := clt.ClientSet.AppsV1().Deployments("").Get(c, "oceanbase-controller-manager", metav1.GetOptions{})
+	deployment, err := clt.ClientSet.AppsV1().Deployments("oceanbase-system").Get(c, "oceanbase-controller-manager", metav1.GetOptions{})
 	if err != nil {
 		if !kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewInternal(err.Error())
