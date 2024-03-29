@@ -58,7 +58,6 @@ var _ webhook.Defaulter = &OBCluster{}
 func (r *OBCluster) Default() {
 	// fill default essential parameters, memory_limit, datafile_maxsize and datafile_next
 
-	obclusterlog.Info("fill in default values of obcluster")
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
 	if ok {
@@ -68,7 +67,7 @@ func (r *OBCluster) Default() {
 			Value: memoryLimit,
 		}
 	} else {
-		obclusterlog.Error(errors.New("failed to parse memory size"), "parse observer's memory size failed")
+		obclusterlog.Error(errors.New("Failed to parse memory size"), "parse observer's memory size failed")
 	}
 	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if ok {
@@ -83,7 +82,7 @@ func (r *OBCluster) Default() {
 			Value: datafileNextSize,
 		}
 	} else {
-		obclusterlog.Error(errors.New("failed to parse datafile size"), "parse observer's datafile size failed")
+		obclusterlog.Error(errors.New("Failed to parse datafile size"), "parse observer's datafile size failed")
 	}
 	parameterMap["enable_syslog_recycle"] = apitypes.Parameter{
 		Name:  "enable_syslog_recycle",
@@ -304,7 +303,7 @@ func (r *OBCluster) validateMutation() error {
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size", "Failed to parse memory limit"))
 		} else if memoryLimit.AsApproximateFloat64() > r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size overflow", "memory limit exceeds observer's resource"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "memory limit size overflow", "Memory limit exceeds observer's resource"))
 		}
 
 		if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
@@ -323,7 +322,7 @@ func (r *OBCluster) validateMutation() error {
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size", "Failed to parse datafile max size"))
 		} else if datafileMax.AsApproximateFloat64() > r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size overflow", "datafile maxsize exceeds observer's data storage size"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("parameters"), "datafile max size overflow", "Datafile maxsize exceeds observer's data storage size"))
 		}
 	}
 

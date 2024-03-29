@@ -1,9 +1,10 @@
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
+import { getTenant } from '@/services/tenant';
+import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useNavigate, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
 import { checkScheduleDatesHaveFull, formatBackupForm } from '../../helper';
@@ -14,6 +15,7 @@ import SchduleSelectFormItem from './SchduleSelectFormItem';
 import ScheduleTimeFormItem from './ScheduleTimeFormItem';
 const { Password } = Input;
 export default function NewBackup() {
+  const { appInfo } = useModel('global');
   const navigate = useNavigate();
   const [ns, name] = getNSName();
   const [form] = Form.useForm();
@@ -35,10 +37,11 @@ export default function NewBackup() {
       );
       return;
     }
-    const res = await createBackupPolicyOfTenant({
+    const res = await createBackupReportWrap({
       ns,
       name,
       ...formatBackupForm(values, publicKey),
+      version: appInfo.version
     });
     if (res.successful) {
       message.success(

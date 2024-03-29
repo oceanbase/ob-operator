@@ -76,6 +76,14 @@ declare namespace API {
     servers: Server[];
   };
 
+  type AddZoneParams = {
+    namespace: string;
+    name: string;
+    zone: string;
+    replicas: number;
+    nodeSelector: { key: string; value: string }[];
+  }
+
   type Server = {
     name: string;
     namespace: string;
@@ -85,6 +93,13 @@ declare namespace API {
     metrics: Metrics;
     zone?: string; //所属zone
   };
+
+  type ScaleObserverPrams = {
+    namespace: string;
+    name: string;
+    zoneName: string;
+    replicas: number;
+  }
 
   type ClusterDetail = {
     info: ClusterInfo;
@@ -203,6 +218,11 @@ declare namespace API {
   type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
 
   type DestType = 'NFS' | 'OSS';
+
+  type RoleReqParam = {
+    failover?: boolean;
+    switchover?: boolean;
+  };
 
   type ReplicaDetailType = {
     iopsWeight: number;

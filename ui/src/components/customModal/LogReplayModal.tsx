@@ -29,7 +29,7 @@ export default function LogReplayModal({
     const res = await replayLogOfTenant({ namespace, name, ...values });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

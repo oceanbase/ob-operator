@@ -21,15 +21,13 @@ import (
 	"flag"
 	"os"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
+	//+kubebuilder:scaffold:imports
 
 	"go.uber.org/zap/zapcore"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -38,7 +36,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/controller"
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
-	//+kubebuilder:scaffold:imports
 )
 
 var (
@@ -113,7 +110,7 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
-		setupLog.Error(err, "unable to start manager")
+		setupLog.Error(err, "Unable to start manager")
 		os.Exit(1)
 	}
 
@@ -122,7 +119,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBClusterControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBCluster")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBCluster")
 		os.Exit(1)
 	}
 	if err = (&controller.OBZoneReconciler{
@@ -130,7 +127,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBZoneControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBZone")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBZone")
 		os.Exit(1)
 	}
 	if err = (&controller.OBServerReconciler{
@@ -138,7 +135,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBServerControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBServer")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBServer")
 		os.Exit(1)
 	}
 	if err = (&controller.OBParameterReconciler{
@@ -146,7 +143,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBParameterControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBParameter")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBParameter")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantReconciler{
@@ -154,7 +151,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBTenantControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBTenant")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenant")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantBackupReconciler{
@@ -162,7 +159,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor(config.OBTenantBackupControllerName)),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackup")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantBackup")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantRestoreReconciler{
@@ -170,7 +167,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBTenantRestoreControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBTenantRestore")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantRestore")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantBackupPolicyReconciler{
@@ -178,7 +175,7 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupPolicyControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBTenantBackupPolicy")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
 	}
 	if err = (&controller.OBTenantOperationReconciler{
@@ -186,48 +183,48 @@ func main() {
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor(config.OBTenantOperationControllerName),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBTenantOperation")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantOperation")
 		os.Exit(1)
 	}
 	if err = (controller.NewOBResourceRescueReconciler(mgr)).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "OBResourceRescue")
+		setupLog.Error(err, "Unable to create controller", "controller", "OBResourceRescue")
 		os.Exit(1)
 	}
 	if os.Getenv("DISABLE_WEBHOOKS") != "true" {
 		if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantBackupPolicy")
+			setupLog.Error(err, "Unable to create webhook", "webhook", "OBTenantBackupPolicy")
 			os.Exit(1)
 		}
 		if err = (&v1alpha1.OBTenant{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenant")
+			setupLog.Error(err, "Unable to create webhook", "webhook", "OBTenant")
 			os.Exit(1)
 		}
 		if err = (&v1alpha1.OBTenantOperation{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "OBTenantOperation")
+			setupLog.Error(err, "Unable to create webhook", "webhook", "OBTenantOperation")
 			os.Exit(1)
 		}
 		if err = (&v1alpha1.OBCluster{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "OBCluster")
+			setupLog.Error(err, "Unable to create webhook", "webhook", "OBCluster")
 			os.Exit(1)
 		}
 		if err = (&v1alpha1.OBResourceRescue{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "OBResourceRescue")
+			setupLog.Error(err, "Unable to create webhook", "webhook", "OBResourceRescue")
 			os.Exit(1)
 		}
 	}
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
+		setupLog.Error(err, "Unable to set up health check")
 		os.Exit(1)
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
+		setupLog.Error(err, "Unable to set up ready check")
 		os.Exit(1)
 	}
 
 	rcd := telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
-	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "start ob-operator", nil)
+	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
 
 	setupLog.WithValues(
 		"namespace", namespace,
@@ -239,7 +236,7 @@ func main() {
 	).Info("starting manager")
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
+		setupLog.Error(err, "Failed to start manager")
 		os.Exit(1)
 	}
 }

@@ -27,11 +27,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	resobtenant "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
-
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 // OBTenantReconciler reconciles a OBTenant object
@@ -67,7 +66,7 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			// observer not found, just return
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "get obtenant error")
+		logger.Error(err, "Get obtenant error")
 		return ctrl.Result{}, err
 	}
 
@@ -77,7 +76,7 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			controllerutil.AddFinalizer(obtenant, finalizerName)
 			err := r.Client.Update(ctx, obtenant)
 			if err != nil {
-				logger.Error(err, "got error when update finalizers")
+				logger.Error(err, "Got error when update finalizers")
 				return ctrl.Result{}, err
 			}
 		}

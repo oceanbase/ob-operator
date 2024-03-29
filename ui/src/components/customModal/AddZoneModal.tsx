@@ -3,8 +3,9 @@ import { Form, Input, message } from 'antd';
 
 import { RULER_ZONE } from '@/constants/rules';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { addObzone } from '@/services';
+import { addObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
 import InputNumber from '../InputNumber';
+import { useModel } from '@umijs/max';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 import NodeSelector from '../NodeSelector';
@@ -19,7 +20,7 @@ export default function AddZoneModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
-
+  const { appInfo } = useModel('global');
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -33,10 +34,10 @@ export default function AddZoneModal({
   } 
   const onFinish = async (values: any) => {
     const [namespace, name] = getNSName();
-    const res = await addObzone({ namespace, name, ...values });
+    const res = await addObzoneReportWrap({ namespace, name, ...values, version: appInfo.version });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

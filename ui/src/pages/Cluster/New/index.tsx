@@ -1,7 +1,8 @@
-import { createObclusterReq,getStorageClasses } from '@/services';
+import { getStorageClasses } from '@/services';
+import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useNavigate, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Form,Row,message } from 'antd';
 import { useState } from 'react';
@@ -16,6 +17,7 @@ import Parameters from './Parameters';
 import Topo from './Topo';
 
 export default function New() {
+  const { appInfo } = useModel('global');
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [passwordVal, setPasswordVal] = useState('');
@@ -43,7 +45,7 @@ export default function New() {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     
-    const res = await createObclusterReq(values);
+    const res = await createClusterReportWrap({...values, version: appInfo.version});
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();

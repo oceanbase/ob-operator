@@ -62,7 +62,7 @@ func LoginRequired() gin.HandlerFunc {
 			session.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
 			err := session.Save()
 			if err != nil {
-				log.Errorf("failed to save session: %v", err)
+				log.Errorf("Failed to save session: %v", err)
 				c.AbortWithStatusJSON(500, gin.H{
 					"message": "failed to save session",
 				})
@@ -88,7 +88,7 @@ func RefreshExpiration() gin.HandlerFunc {
 		session.Set("expiration", expiration.Unix())
 		err := session.Save()
 		if err != nil {
-			log.Errorf("failed to save session: %v", err)
+			log.Errorf("Failed to save session: %v", err)
 			c.AbortWithStatusJSON(500, gin.H{
 				"message": "failed to save session",
 			})

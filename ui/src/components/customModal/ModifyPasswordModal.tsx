@@ -36,7 +36,7 @@ export default function ModifyPasswordModal({
     });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

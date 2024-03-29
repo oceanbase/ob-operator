@@ -92,12 +92,12 @@ func (m *OBTenantManager) InitStatus() {
 
 	if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Restore != nil {
 		m.OBTenant.Status.Status = tenantstatus.Restoring
-		m.Recorder.Event(m.OBTenant, "InitRestore", "", "start restoring")
+		m.Recorder.Event(m.OBTenant, "InitRestore", "", "Start restoring")
 	} else if m.OBTenant.Spec.Source != nil && m.OBTenant.Spec.Source.Tenant != nil {
-		m.Recorder.Event(m.OBTenant, "InitEmptyStandby", "", "start creating empty standby")
+		m.Recorder.Event(m.OBTenant, "InitEmptyStandby", "", "Start creating empty standby")
 		m.OBTenant.Status.Status = tenantstatus.CreatingEmptyStandby
 	} else {
-		m.Recorder.Event(m.OBTenant, "Init", "", "start creating")
+		m.Recorder.Event(m.OBTenant, "Init", "", "Start creating")
 		m.OBTenant.Status.Status = tenantstatus.CreatingTenant
 	}
 }
@@ -301,7 +301,7 @@ func (m *OBTenantManager) PrintErrEvent(err error) {
 
 func (m *OBTenantManager) ArchiveResource() {
 	m.Logger.Info("Archive obtenant", "obtenant", m.OBTenant.Name)
-	m.Recorder.Event(m.OBTenant, "Archive", "", "archive obtenant")
+	m.Recorder.Event(m.OBTenant, "Archive", "", "Archive obtenant")
 	m.OBTenant.Status.OperationContext = nil
 	m.OBTenant.Status.Status = "Failed"
 }
@@ -320,7 +320,7 @@ func (m *OBTenantManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
-		m.Logger.Error(err, "get obcluster failed", "clusterName", clusterName, "namespaced", m.OBTenant.Namespace)
+		m.Logger.Error(err, "Failed to get obcluster", "clusterName", clusterName, "namespaced", m.OBTenant.Namespace)
 		return nil, errors.Wrap(err, "get obcluster failed")
 	}
 	return obcluster, nil

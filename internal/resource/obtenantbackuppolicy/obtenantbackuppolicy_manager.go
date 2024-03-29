@@ -118,7 +118,7 @@ func (m *ObTenantBackupPolicyManager) InitStatus() {
 	m.BackupPolicy.Status = v1alpha1.OBTenantBackupPolicyStatus{
 		Status: constants.BackupPolicyStatusPreparing,
 	}
-	m.Recorder.Event(m.BackupPolicy, "Init", "", "init status")
+	m.Recorder.Event(m.BackupPolicy, "Init", "", "Init status")
 	err = m.syncTenantInformation()
 	if err != nil {
 		m.PrintErrEvent(err)
@@ -362,7 +362,7 @@ func (m *ObTenantBackupPolicyManager) PrintErrEvent(err error) {
 
 func (m *ObTenantBackupPolicyManager) ArchiveResource() {
 	m.Logger.Info("Archive obtenant backup policy", "obtenant backup policy", m.BackupPolicy.Name)
-	m.Recorder.Event(m.BackupPolicy, "Archive", "", "archive obtenant backup policy")
+	m.Recorder.Event(m.BackupPolicy, "Archive", "", "Archive obtenant backup policy")
 	m.BackupPolicy.Status.Status = "Failed"
 	m.BackupPolicy.Status.OperationContext = nil
 }
@@ -375,7 +375,7 @@ func (m *ObTenantBackupPolicyManager) getOBCluster() (*v1alpha1.OBCluster, error
 		Name:      clusterName,
 	}, obcluster)
 	if err != nil {
-		m.Logger.Error(err, "get obcluster failed", "clusterName", clusterName, "namespaced", m.BackupPolicy.Namespace)
+		m.Logger.Error(err, "Failed to get obcluster", "clusterName", clusterName, "namespaced", m.BackupPolicy.Namespace)
 		return nil, errors.Wrap(err, "get obcluster failed")
 	}
 	return obcluster, nil
@@ -397,7 +397,7 @@ func (m *ObTenantBackupPolicyManager) getOBTenantCR() (*v1alpha1.OBTenant, error
 	}, tenant)
 	if err != nil {
 		if !kubeerrors.IsNotFound(err) {
-			m.Logger.Error(err, "get obtenant failed", "tenantCRName", tenantCRName, "namespaced", m.BackupPolicy.Namespace)
+			m.Logger.Error(err, "Failed to get obtenant", "tenantCRName", tenantCRName, "namespaced", m.BackupPolicy.Namespace)
 		}
 		return nil, err
 	}
