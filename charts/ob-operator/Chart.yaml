@@ -1,6 +1,0 @@
-apiVersion: v2
-appVersion: 2.1.1
-description: A Helm chart for OB-Operator
-name: ob-operator
-type: application
-version: 2.1.1

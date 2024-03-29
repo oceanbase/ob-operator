@@ -1,9 +1,0 @@
-apiVersion: oceanbase.oceanbase.com/v1alpha1
-kind: OBTenantOperation
-metadata:
-  name: op-activate
-  namespace: oceanbase
-spec:
-  type: "FAILOVER"
-  failover:
-    standbyTenant: "t1s"
