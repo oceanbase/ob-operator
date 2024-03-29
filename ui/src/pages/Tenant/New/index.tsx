@@ -6,7 +6,7 @@ import {
 import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate, useModel } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
 import { Button, Col, Form, Row, message } from 'antd';
 import { useEffect, useState } from 'react';
@@ -16,7 +16,6 @@ import ResourcePools from './ResourcePools';
 import TenantSource from './TenantSource';
 // New tenant page
 export default function New() {
-  const { appInfo } = useModel('global');
   const navigate = useNavigate();
   const publicKey = usePublicKey();
   const [form] = Form.useForm();
@@ -64,7 +63,6 @@ export default function New() {
     const res = await createTenantReportWrap({
       namespace: ns,
       ...reqData,
-      version: appInfo.version
     });
     if (res.successful) {
       message.success(

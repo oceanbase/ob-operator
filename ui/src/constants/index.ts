@@ -49,6 +49,12 @@ const REFRESH_FREQUENCY = 15;
 // Number of monitoring points
 const POINT_NUMBER = 15;
 
+// two minutes
+const CHECK_STORAGE_INTERVAL = 1000 * 120;
+
+// three hours
+const STATISTICS_INTERVAL = 1000 * 60 * 60 * 3;
+
 const SUFFIX_UNIT = 'GB';
 
 const MINIMAL_CONFIG = {
@@ -150,6 +156,7 @@ const MODE_MAP = new Map([
 export {
   BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
+  CHECK_STORAGE_INTERVAL,
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
@@ -163,6 +170,7 @@ export {
   RESOURCE_NAME_REG,
   RESULT_STATUS,
   SERVER_IMG_MAP,
+  STATISTICS_INTERVAL,
   STATUS,
   SUFFIX_UNIT,
   TOPO_INFO_CONFIG,

@@ -16,7 +16,7 @@ import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useModel } from '@umijs/max';
+import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
 import { cloneDeep } from 'lodash';
@@ -40,7 +40,6 @@ export type OperateType = 'edit'|'create';
 export type ClusterNSName = { ns?: string; name?: string };
 
 export default function TenantOverview() {
-  const { appInfo } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //Current operation and maintenance modal type
@@ -77,7 +76,7 @@ export default function TenantOverview() {
   };
 
   const handleDelete = async () => {
-    const res = await deleteTenantReportWrap({ ns, name, version: appInfo.version });
+    const res = await deleteTenantReportWrap({ ns, name });
     if (res.successful) {
       message.success(
         intl.formatMessage({

@@ -1,4 +1,7 @@
 import type { PoolDetailType } from '@/components/customModal/ModifyUnitDetailModal';
+import { getAppInfo, getStatistics } from '@/services';
+import { REPORT_PARAMS_MAP, reportData } from '@/services/reportRequest';
+import { STATISTICS_INTERVAL } from '@/constants';
 import { intl } from '@/utils/intl';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
@@ -40,7 +43,10 @@ export const formatStatisticData = (
   return r;
 };
 
-export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'create') => {
+export const formatPatchPoolData = (
+  originUnitData: PoolDetailType,
+  type: 'edit' | 'create',
+) => {
   let newOriginUnitData: PoolDetailType = {
     unitConfig: {},
   };
@@ -50,13 +56,13 @@ export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'
     memorySize: originUnitData.unitConfig.memorySize + 'Gi',
     cpuCount: String(originUnitData.unitConfig.cpuCount),
   };
-  if(type === 'create'){
+  if (type === 'create') {
     newOriginUnitData.zoneName = originUnitData.zoneName;
     newOriginUnitData.priority = originUnitData.priority;
   }
-  if(type === 'edit'){
+  if (type === 'edit') {
     Object.keys(originUnitData).forEach((key) => {
-      if(key !== 'unitConfig'){
+      if (key !== 'unitConfig') {
         newOriginUnitData.zoneName = key;
       }
       if (originUnitData[key]?.priority) {
@@ -65,4 +71,36 @@ export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'
     });
   }
   return newOriginUnitData;
+};
+
+export const getAppInfoFromStorage = async (): Promise<API.AppInfo> => {
+  try {
+    let appInfo: API.AppInfo = JSON.parse(sessionStorage.getItem('appInfo'));
+    if (!appInfo) {
+      appInfo = (await getAppInfo()).data;
+    }
+    return appInfo;
+  }catch(err){
+    throw new Error(err)
+  }
+};
+
+export const isReportTimeExpired = (lastTimestamp: number): boolean => {
+  return Date.now() - lastTimestamp >= STATISTICS_INTERVAL;
+};
+
+export const reportPollData = async () => {
+  try {
+    const appInfo = await getAppInfoFromStorage();
+    if (!appInfo.reportStatistics) return;
+    let { data } = await getStatistics();
+    await reportData({
+      ...REPORT_PARAMS_MAP['polling'],
+      version: appInfo.version,
+      data,
+    });
+    localStorage.setItem('lastReportTime', Date.now().toString());
+  } catch (err) {
+    throw new Error(err);
+  }
 };
