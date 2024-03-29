@@ -8,14 +8,14 @@ const config: Config = {
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://powerfooi.github.io',
+  url: 'https://oceanbase.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/ob-operator',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'powerfooi', // Usually your GitHub org/user name.
+  organizationName: 'oceanbase', // Usually your GitHub org/user name.
   projectName: 'ob-operator', // Usually your repo name.
 
   onBrokenLinks: 'throw',
@@ -56,6 +56,7 @@ const config: Config = {
 
   trailingSlash: false,
   themeConfig: {
+    // TODO: Replace with oceanbase docs index
     algolia: {
       appId: 'QK0JZ42KY7',
       apiKey: '36bae2ea61a954b3c70a3ae5ef68dea7',
