@@ -1,0 +1,82 @@
+{
+  "version.label": {
+    "message": "下一篇",
+    "description": "The label for version current"
+  },
+  "sidebar.oboperatorSidebar.category.ob-operator-user-guide": {
+    "message": " ob-operator 用户手册",
+    "description": "The label for category ob-operator-user-guide in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.cluster-management-of-ob-operator": {
+    "message": "集群管理",
+    "description": "The label for category cluster-management-of-ob-operator in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.zone-management": {
+    "message": "Zone 管理",
+    "description": "The label for category zone-management in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.server-management": {
+    "message": "Server 管理",
+    "description": "The label for category server-management in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.tenant-management-of-ob-operator": {
+    "message": "租户管理",
+    "description": "The label for category tenant-management-of-ob-operator in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.modify-tenant-of-ob-operator": {
+    "message": "修改租户",
+    "description": "The label for category modify-tenant-of-ob-operator in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.high-availability": {
+    "message": "高可用",
+    "description": "The label for category high-availability in sidebar oboperatorSidebar"
+  },
+  "sidebar.oboperatorSidebar.category.appendix": {
+    "message": "附录",
+    "description": "The label for category appendix in sidebar oboperatorSidebar"
+  },
+  "sidebar.obdSidebar.category.user-guide": {
+    "message": "用户手册",
+    "description": "The label for category user-guide in sidebar obdSidebar"
+  },
+  "sidebar.obdSidebar.category.obd-command": {
+    "message": "obd 命令",
+    "description": "The label for category obd-command in sidebar obdSidebar"
+  },
+  "sidebar.obdSidebar.category.faq": {
+    "message": "FAQ",
+    "description": "The label for category faq in sidebar obdSidebar"
+  },
+  "sidebar.manualSidebar.category.Manage resources": {
+    "message": "资源运维",
+    "description": "The label for category Manage resources in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Cluster management": {
+    "message": "集群管理",
+    "description": "The label for category Cluster management in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Zone management": {
+    "message": "Zone 管理",
+    "description": "The label for category Zone management in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Server management": {
+    "message": "Server 管理",
+    "description": "The label for category Server management in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Tenant management": {
+    "message": "租户管理",
+    "description": "The label for category Tenant management in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Modify tenant": {
+    "message": "修改租户配置",
+    "description": "The label for category Modify tenant in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.High availability": {
+    "message": "高可用",
+    "description": "The label for category High availability in sidebar manualSidebar"
+  },
+  "sidebar.manualSidebar.category.Appendix": {
+    "message": "附录",
+    "description": "The label for category Appendix in sidebar manualSidebar"
+  }
+}

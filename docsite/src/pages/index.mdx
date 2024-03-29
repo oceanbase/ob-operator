@@ -1,8 +1,8 @@
+import Link from "@docusaurus/Link";
+
 # ob-operator
 
 The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
-
-此文档也提供[中文版](./README-CN.md)。
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.
@@ -30,7 +30,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 * Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
 ```
 
 * Development
@@ -46,7 +46,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
 ```
 
 #### Using terraform
@@ -95,7 +95,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
@@ -131,7 +131,7 @@ helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
 ```
 
-![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
+![oceanbase-dashboard-install](/img/oceanbase-dashboard-install.jpg)
 
 After OceanBase Dashboard is successfully installed, a default user admin is created with a random password, you can check the password using the command printed after installation.
 ```
@@ -141,18 +141,18 @@ A service of type NodePort is created by default, you can check the address and 
 ```
 kubectl get svc oceanbase-dashboard-ob-dashboard
 ```
-![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
+![oceanbase-dashboard-service](/img/oceanbase-dashboard-service.jpg)
 
 Login with admin user and password
-![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-overview](/img/oceanbase-dashboard-overview.jpg)
 
 ## Project Architecture
 
 ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
 
-![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
+![ob-operator Architecture](/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the [Architecture Document](./docsite/docs/developer/arch.md).
+For more detailed information about the architecture, please refer to the <Link to="docs/developer/arch">Architecture Document</Link>.
 
 
 ## Features
@@ -186,9 +186,9 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-- [Architecture](docsite/docs/developer/arch.md)
-- [Contributor Guidance](docsite/docs/developer/contributor-guidance.md)
-- [User Manual](https://en.oceanbase.com/docs/community-ob-operator-doc-en-10000000001123466)
+- <Link to="docs/developer/arch">Architecture</Link>
+- <Link to="docs/developer/contributor-guidance">Contributor Guidance</Link>
+- <Link to="docs/manual/what-is-ob-operator">User Manual</Link>
 
 ## Getting Help
 
@@ -197,7 +197,7 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [Official Website](https://open.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- DingTalk Group ([QRCode](./docsite/static/img/dingtalk-operator-users.png))
+- DingTalk Group ([QRCode](/img/dingtalk-operator-users.png))
 - WeChat Group (Add the assistant with WeChat ID: OBCE666)
 
 ## Contributing
