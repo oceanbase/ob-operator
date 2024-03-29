@@ -86,7 +86,7 @@ export default function ZoneTable({
           return (
             <>
               <Button
-                style={{ marginRight: 10 }}
+                style={{ paddingLeft: 0 }}
                 onClick={() => {
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
