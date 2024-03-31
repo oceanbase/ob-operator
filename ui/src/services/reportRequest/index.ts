@@ -1,3 +1,4 @@
+import { getAppInfoFromStorage } from '@/utils/helper';
 import { request } from '@umijs/max';
 
 type ResourceType =
@@ -29,7 +30,7 @@ type EventType =
 type ReportDataParms = {
   resourceType: ResourceType;
   eventType: EventType;
-  version: string;
+  version?: string;
   data: any;
 };
 
@@ -41,6 +42,11 @@ const REPORT_URL = 'http://openwebapi.test.alipay.net/api/web/oceanbase/report';
 // const queryUrl = 'http://openwebapi.test.alipay.net/api/web/oceanbase/query';
 const REPORT_COMPONENT = 'oceanbase-dashboard';
 export const REPORT_PARAMS_MAP: ReportMapType = {
+  // polling
+  polling: {
+    resourceType: 'Statistics',
+    eventType: 'Normal',
+  },
   // cluster
   createCluster: {
     resourceType: 'OBCluster',
@@ -133,16 +139,17 @@ export const REPORT_PARAMS_MAP: ReportMapType = {
 export async function reportData({
   resourceType,
   eventType,
-  version,
   data,
-}: ReportDataParms) {
-  await request(REPORT_URL, {
+}: ReportDataParms): Promise<any> {
+  const appInfo = await getAppInfoFromStorage();
+
+  return await request(REPORT_URL, {
     method: 'POST',
     data: {
       content: JSON.stringify({
         resourceType,
         eventType,
-        version,
+        version: appInfo.version,
         body: data,
       }),
       component: REPORT_COMPONENT,

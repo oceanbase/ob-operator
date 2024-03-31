@@ -22,8 +22,14 @@ export async function logoutReq() {
   });
 }
 
-export async function infoReq() {
+export async function getAppInfo():Promise<API.AppInfoResponse> {
   return request('/api/v1/info', {
+    method: 'GET',
+  });
+}
+
+export async function getStatistics(): Promise<API.SysStatisticsDataResponse> {
+  return request('/api/v1/statistics', {
     method: 'GET',
   });
 }

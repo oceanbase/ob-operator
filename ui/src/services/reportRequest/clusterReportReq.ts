@@ -8,18 +8,11 @@ import {
   upgradeObcluster,
 } from '..';
 
-export async function createClusterReportWrap({
-  version,
-  ...params
-}: {
-  version: string;
-  body: any;
-}) {
+export async function createClusterReportWrap({ ...params }: { body: any }) {
   const r = await createObclusterReq(params);
   if (r.successful) {
     reportData({
       ...REPORT_PARAMS_MAP['createCluster'],
-      version,
       data: r.data,
     });
   }
@@ -27,14 +20,12 @@ export async function createClusterReportWrap({
 }
 
 export async function deleteClusterReportWrap({
-  version,
   ...params
-}: API.NamespaceAndName & { version: string }) {
+}: API.NamespaceAndName) {
   const r = await deleteObcluster(params);
   if (r.successful) {
     reportData({
       ...REPORT_PARAMS_MAP['deleteCluster'],
-      version,
       data: r.data,
     });
   }
@@ -42,52 +33,44 @@ export async function deleteClusterReportWrap({
 }
 
 export async function upgradeClusterReportWrap({
-  version,
   ...params
-}: API.NamespaceAndName & { version: string; image: string }) {
+}: API.NamespaceAndName & { image: string }) {
   const r = await upgradeObcluster(params);
   if (r.successful) {
     reportData({
       ...REPORT_PARAMS_MAP['upgradeCluster'],
-      version,
       data: r.data,
     });
   }
   return r;
 }
 
-export async function addObzoneReportWrap({
-  version,
-  ...params
-}: API.AddZoneParams & { version: string }) {
+export async function addObzoneReportWrap({ ...params }: API.AddZoneParams) {
   const r = await addObzone(params);
   if (r.successful) {
-    reportData({ ...REPORT_PARAMS_MAP['addZone'], version, data: r.data });
+    reportData({ ...REPORT_PARAMS_MAP['addZone'], data: r.data });
   }
   return r;
 }
 
 export async function deleteObzoneReportWrap({
-  version,
   ...params
 }: API.NamespaceAndName & {
   zoneName: string;
-  version: string;
 }) {
   const r = await deleteObzone(params);
   if (r.successful) {
-    reportData({ ...REPORT_PARAMS_MAP['deleteZone'], version, data: r.data });
+    reportData({ ...REPORT_PARAMS_MAP['deleteZone'], data: r.data });
   }
   return r;
 }
 
 export async function scaleObserverReportWrap({
-  version,
   ...params
-}: API.ScaleObserverPrams & { version: string }) {
+}: API.ScaleObserverPrams) {
   const r = await scaleObserver(params);
   if (r.successful) {
-    reportData({ ...REPORT_PARAMS_MAP['scaleZone'], version, data: r.data });
+    reportData({ ...REPORT_PARAMS_MAP['scaleZone'], data: r.data });
   }
   return r;
 }

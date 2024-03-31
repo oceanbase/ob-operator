@@ -7,6 +7,196 @@ declare namespace API {
     password: string;
   }
 
+  type AppInfo = {
+    appName: string;
+    publicKey: string;
+    reportStatistics: boolean;
+    version: string;
+  };
+
+  type SysStatisticsData = {
+    data: {
+      backupPolicies: [
+        {
+          archiveDestType: string;
+          archiveSwitchPieceInterval: string;
+          bakDataDestType: string;
+          bakDataFullCrontab: string;
+          bakDataIncrCrontab: string;
+          encryptBakData: boolean;
+          name: string;
+          namespace: string;
+          runningFlow: string;
+          runningTask: string;
+          status: string;
+          taskStatus: string;
+          tenantCR: string;
+          tenantName: string;
+          uid: string;
+        },
+      ];
+      clusters: [
+        {
+          clusterId: number;
+          clusterMode: string;
+          clusterName: string;
+          configuredBackupVolume: boolean;
+          configuredMonitor: boolean;
+          cpu: number;
+          dataStorage: {
+            storageClass: string;
+            storageSize: number;
+          };
+          image: string;
+          independentPVC: boolean;
+          memory: number;
+          name: string;
+          namespace: string;
+          redoLogStorage: {
+            storageClass: string;
+            storageSize: number;
+          };
+          runningFlow: string;
+          runningTask: string;
+          singlePVC: boolean;
+          status: string;
+          sysLogStorage: {
+            storageClass: string;
+            storageSize: number;
+          };
+          taskStatus: string;
+          uid: string;
+          zones: [
+            {
+              replica: number;
+              status: string;
+              zoneName: string;
+            },
+          ];
+        },
+      ];
+      k8sNodes: [
+        {
+          info: {
+            conditions: [
+              {
+                message: string;
+                reason: string;
+                type: string;
+              },
+            ];
+            cri: string;
+            externalIP: string;
+            internalIP: string;
+            kernel: string;
+            labels: [
+              {
+                key: string;
+                value: string;
+              },
+            ];
+            name: string;
+            os: string;
+            roles: [string];
+            status: string;
+            uptime: number;
+            version: string;
+          };
+          resource: {
+            cpuFree: number;
+            cpuTotal: number;
+            cpuUsed: number;
+            memoryFree: number;
+            memoryTotal: number;
+            memoryUsed: number;
+          };
+        },
+      ];
+      operatorVersion: string;
+      servers: [
+        {
+          clusterCR: string;
+          clusterId: number;
+          clusterName: string;
+          cni: string;
+          image: string;
+          name: string;
+          namespace: string;
+          podIPHash: string;
+          podPhase: string;
+          runningFlow: string;
+          runningTask: string;
+          serviceIPHash: string;
+          status: string;
+          taskStatus: string;
+          uid: string;
+          zoneName: string;
+        },
+      ];
+      tenants: [
+        {
+          archiveDestType: string;
+          bakDataDestType: string;
+          clusterName: string;
+          name: string;
+          namespace: string;
+          primaryTenant: string;
+          runningFlow: string;
+          runningTask: string;
+          status: string;
+          taskStatus: string;
+          tenantName: string;
+          tenantRole: string;
+          topology: [
+            {
+              IOPSWeight: number;
+              logDiskSize: number;
+              maxCPU: number;
+              maxIOPS: number;
+              memorySize: number;
+              minCPU: number;
+              minIOPS: number;
+              priority: number;
+              type: string;
+              unitNumber: number;
+              zone: string;
+            },
+          ];
+          uid: string;
+          unitNumber: number;
+        },
+      ];
+      warningEvents: [
+        {
+          count: number;
+          firstTimestamp: string;
+          kind: string;
+          lastTimestamp: string;
+          message: string;
+          name: string;
+          namespace: string;
+          reason: string;
+          resourceName: string;
+        },
+      ];
+      zones: [
+        {
+          clusterCR: string;
+          clusterId: number;
+          clusterName: string;
+          image: string;
+          name: string;
+          namespace: string;
+          runningFlow: string;
+          runningTask: string;
+          status: string;
+          taskStatus: string;
+          uid: string;
+        },
+      ];
+    };
+  };
+
   type Metrics = {
     cpuPercent: number;
     diskPercent: number;
@@ -21,9 +211,9 @@ declare namespace API {
   };
 
   type Storage = {
-    size:number;
-    storageClass:string;
-  }
+    size: number;
+    storageClass: string;
+  };
 
   type ClusterInfo = {
     name: string;
@@ -33,7 +223,7 @@ declare namespace API {
     image: string;
     rootPasswordSecret: string;
     mode: ClusterMode;
-    resource?:{
+    resource?: {
       cpu: number;
       memory: number;
     };
@@ -82,7 +272,7 @@ declare namespace API {
     zone: string;
     replicas: number;
     nodeSelector: { key: string; value: string }[];
-  }
+  };
 
   type Server = {
     name: string;
@@ -99,7 +289,7 @@ declare namespace API {
     name: string;
     zoneName: string;
     replicas: number;
-  }
+  };
 
   type ClusterDetail = {
     info: ClusterInfo;
@@ -126,22 +316,22 @@ declare namespace API {
   } & ClusterInfo;
 
   type TooltipData = {
-    label:string | Element;
-    value:string;
-    toolTipData:any[]
-  }
+    label: string | Element;
+    value: string;
+    toolTipData: any[];
+  };
 
   type OptionsType = {
-    label:string;
-    value:string;
-  }[]
+    label: string;
+    value: string;
+  }[];
 
   type EventParams = {
     type?: API.EventType;
     objectType?: API.EventObjectType;
     name?: string;
     namespace?: string;
-  }
+  };
 
   interface ClusterListResponse extends CommonResponse {
     data: ClusterItem[];
@@ -158,7 +348,7 @@ declare namespace API {
     namespace: string;
     topology: Topology[];
     status: string;
-  }
+  };
 
   type SimpleClusterList = SimpleCluster[];
 
@@ -182,7 +372,7 @@ declare namespace API {
     | 'createResourcePools'
     | 'deleteResourcePool'
     | 'deleteCluster'
-    | 'deleteZone'
+    | 'deleteZone';
 
   type LableKeys =
     | 'ob_cluster_name'
@@ -203,7 +393,7 @@ declare namespace API {
     filterData?: API.ClusterItem[] | API.TenantDetail[];
   };
 
-  type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE'
+  type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE';
 
   type MonitorUseFor = 'cluster' | 'tenant';
 
@@ -211,7 +401,11 @@ declare namespace API {
 
   type MonitorUseTarget = 'OVERVIEW' | 'DETAIL';
 
-  type EventObjectType = 'OBCLUSTER' | 'OBTENANT' | 'OBBACKUPPOLICY' | EventObjectType[];
+  type EventObjectType =
+    | 'OBCLUSTER'
+    | 'OBTENANT'
+    | 'OBBACKUPPOLICY'
+    | EventObjectType[];
 
   type TenantRole = 'PRIMARY' | 'STANDBY';
 
@@ -289,7 +483,7 @@ declare namespace API {
     maxIops?: number;
     memorySize: string;
     minIops?: number;
-  }
+  };
 
   type PoolConfig = {
     priority: number;
@@ -306,7 +500,7 @@ declare namespace API {
   type TenantBody = {
     connectWhiteList?: string;
     name: string;
-    namespace?:string;
+    namespace?: string;
     obcluster: string;
     pools?: {
       priority: number;
@@ -398,6 +592,14 @@ declare namespace API {
     successful: boolean;
   }
 
+  interface SysStatisticsDataResponse extends CommonResponse {
+    data: SysStatisticsData;
+  }
+
+  interface AppInfoResponse extends CommonResponse {
+    data: AppInfo;
+  }
+
   interface StatisticDataResponse extends CommonResponse {
     data: StatisticData;
   }
@@ -467,7 +669,7 @@ declare namespace API {
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
     scheduleType: string;
-  }
+  };
 
   type ReplayLogType = {
     timestamp: string;

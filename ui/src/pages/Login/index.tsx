@@ -1,23 +1,23 @@
-import { intl } from '@/utils/intl'
-import { LockOutlined, UserOutlined } from '@ant-design/icons'
-import { useNavigate } from '@umijs/max'
-import { Button, Form, Input } from 'antd'
-import React from 'react'
+import { intl } from '@/utils/intl';
+import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { useNavigate } from '@umijs/max';
+import { Button, Form, Input } from 'antd';
+import React from 'react';
 
-import logoSrc from '@/assets/oceanbase_logo.svg'
-import { encryptText, usePublicKey } from '@/hook/usePublicKey'
-import { loginReq } from '@/services'
-import styles from './index.less'
+import logoSrc from '@/assets/oceanbase_logo.svg';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { loginReq } from '@/services';
+import styles from './index.less';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const publicKey = usePublicKey();
 
-  const onFinish = async(values: API.User) => {
+  const onFinish = async (values: API.User) => {
     values.password = encryptText(values.password, publicKey) as string;
     const res = await loginReq(values);
-    
-    if(res.successful){
+
+    if (res.successful) {
       navigate('/overview');
       localStorage.setItem('user', values.username);
     }
@@ -38,7 +38,11 @@ const Login: React.FC = () => {
           name="username"
           rules={[{ required: true, message: 'Please input your Username!' }]}
         >
-          <Input style={{width:300}} prefix={<UserOutlined />} placeholder="Username" />
+          <Input
+            style={{ width: 300 }}
+            prefix={<UserOutlined />}
+            placeholder="Username"
+          />
         </Form.Item>
         <Form.Item
           name="password"
@@ -51,8 +55,8 @@ const Login: React.FC = () => {
           />
         </Form.Item>
 
-        <Form.Item style={{display:'flex',justifyContent:'center'}}>
-          <Button style={{width:270}} type="primary" htmlType="submit">
+        <Form.Item style={{ display: 'flex', justifyContent: 'center' }}>
+          <Button style={{ width: 270 }} type="primary" htmlType="submit">
             {intl.formatMessage({
               id: 'dashboard.pages.Login.Login',
               defaultMessage: '登录',
@@ -65,4 +69,3 @@ const Login: React.FC = () => {
 };
 
 export default Login;
-

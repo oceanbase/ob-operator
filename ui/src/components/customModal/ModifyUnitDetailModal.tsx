@@ -20,7 +20,6 @@ import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { useEffect,useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
-import { useModel } from '@umijs/max';
 
 import { Col,Form,Row,Select,message } from 'antd';
 import type { CommonModalType } from '.';
@@ -84,7 +83,6 @@ export default function ModifyUnitDetailModal({
     zoneName,
   },
 }: CommonModalType & UnitConfigType) {
-  const { appInfo } = useModel('global');
   const [form] = Form.useForm<PoolDetailType>();
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [minResource, setMinResource] = useState<MinResourceConfig>(
@@ -123,7 +121,6 @@ export default function ModifyUnitDetailModal({
       ns,
       name,
       zoneName,
-      version:appInfo.version,
       ...reqData,
     });
     if (res.successful) {
