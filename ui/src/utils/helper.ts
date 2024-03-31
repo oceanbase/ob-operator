@@ -70,11 +70,11 @@ export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'
 };
 
 
-export const strTrim = (obj: ObjType):ObjType => {
+export const strTrim = (obj: ObjType): ObjType => {
   Object.keys(obj).forEach((key: keyof ObjType) => {
     if (typeof obj[key] === 'string') {
       obj[key] = obj[key].trim();
-    } else {
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
       strTrim(obj[key]);
     }
   });

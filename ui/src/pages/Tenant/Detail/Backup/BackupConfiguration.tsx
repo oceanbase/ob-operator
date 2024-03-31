@@ -78,21 +78,6 @@ export default function BackupConfiguration({
         id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupMediaType',
         defaultMessage: '备份介质类型',
       }),
-      editRender: (
-        <Select
-          style={{ width: 216 }}
-          options={[
-            {
-              label: 'OSS',
-              value: 'OSS',
-            },
-            {
-              label: 'NFS',
-              value: 'NFS',
-            },
-          ]}
-        />
-      ),
     },
   };
   if (backupPolicy.ossAccessSecret) {

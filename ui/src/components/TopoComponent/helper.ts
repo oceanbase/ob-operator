@@ -33,7 +33,7 @@ type TooltipInfo = {
   minIops: number;
 };
 
-type GraphNodeType = {
+export type GraphNodeType = {
   id: string;
   label: string;
   status: string;
