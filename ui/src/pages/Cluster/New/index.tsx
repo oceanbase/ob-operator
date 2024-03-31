@@ -5,6 +5,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Form,Row,message } from 'antd';
+import { strTrim } from '@/utils/helper';
 import { useState } from 'react';
 
 import { MODE_MAP } from '@/constants';
@@ -45,7 +46,7 @@ export default function New() {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     
-    const res = await createClusterReportWrap({...values, version: appInfo.version});
+    const res = await createClusterReportWrap({...strTrim(values), version: appInfo.version});
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();

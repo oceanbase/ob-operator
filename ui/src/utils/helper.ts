@@ -4,6 +4,8 @@ type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
 type StatisticDataType = { status: StatisticStatus; count: number }[];
 
+type ObjType = { [key: string]: any };
+
 export const getInitialObjOfKeys = (targetObj: any, keys: string[]) => {
   return keys.reduce((pre, cur) => {
     pre[cur] = targetObj[cur];
@@ -65,4 +67,16 @@ export const formatPatchPoolData = (originUnitData: PoolDetailType,type:'edit'|'
     });
   }
   return newOriginUnitData;
+};
+
+
+export const strTrim = (obj: ObjType):ObjType => {
+  Object.keys(obj).forEach((key: keyof ObjType) => {
+    if (typeof obj[key] === 'string') {
+      obj[key] = obj[key].trim();
+    } else {
+      strTrim(obj[key]);
+    }
+  });
+  return obj;
 };
