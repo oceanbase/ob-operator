@@ -23,8 +23,8 @@ import {
 clusterOperate,
 clusterOperateOfTenant,
 getZoneOperateOfTenant,
+getZoneOperateOfCluster,
 serverOperate,
-zoneOperate,
 } from './constants';
 import { appenAutoShapeListener,checkIsSame,getServerNumber,haveDisabledOperate } from './helper';
 
@@ -107,7 +107,7 @@ export default function TopoComponent({
               getZoneOperateOfTenant(haveResourcePool, tenantReplicas),
             );
           } else {
-            setOprateList(zoneOperate);
+            setOprateList(getZoneOperateOfCluster(originTopoData?.topoData));
           }
           chooseZoneName.current = zone;
           break;
