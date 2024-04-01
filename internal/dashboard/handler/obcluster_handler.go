@@ -29,18 +29,18 @@ import (
 // @Tags OBCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=[]response.OBClusterStastistic}
+// @Success 200 object response.APIResponse{data=[]response.OBClusterStatistic}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/statistic [GET]
-func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStastistic, error) {
-	obclusterStastics, err := oceanbase.GetOBClusterStatistic(c)
+func GetOBClusterStatistic(c *gin.Context) ([]response.OBClusterStatistic, error) {
+	obclusterStatistics, err := oceanbase.GetOBClusterStatistic(c)
 	if err != nil {
 		return nil, err
 	}
-	logger.Debugf("Get obcluster statistic: %v", obclusterStastics)
-	return obclusterStastics, nil
+	logger.Debugf("Get obcluster statistic: %v", obclusterStatistics)
+	return obclusterStatistics, nil
 }
 
 // @ID ListOBClusters

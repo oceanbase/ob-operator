@@ -676,6 +676,10 @@ definitions:
         type: string
       successful:
         type: boolean
+    required:
+    - data
+    - message
+    - successful
     type: object
   response.BackupJob:
     properties:
@@ -707,6 +711,17 @@ definitions:
         type: string
       uid:
         type: string
+    required:
+    - backupPolicyName
+    - name
+    - namespace
+    - path
+    - startTime
+    - status
+    - statusInDatabase
+    - tenantName
+    - type
+    - uid
     type: object
   response.BackupPolicy:
     properties:
@@ -764,7 +779,14 @@ definitions:
     required:
     - archivePath
     - bakDataPath
+    - createTime
     - destType
+    - events
+    - name
+    - namespace
+    - status
+    - tenantName
+    - uid
     type: object
   response.DashboardInfo:
     properties:
@@ -776,6 +798,11 @@ definitions:
         type: boolean
       version:
         type: string
+    required:
+    - appName
+    - publicKey
+    - reportStatistics
+    - version
     type: object
   response.K8sEvent:
     properties:
@@ -795,6 +822,15 @@ definitions:
         type: string
       type:
         type: string
+    required:
+    - count
+    - firstOccur
+    - lastSeen
+    - message
+    - namespace
+    - object
+    - reason
+    - type
     type: object
   response.K8sNode:
     properties:
@@ -811,6 +847,10 @@ definitions:
         type: string
       type:
         type: string
+    required:
+    - message
+    - reason
+    - type
     type: object
   response.K8sNodeInfo:
     properties:
@@ -844,6 +884,19 @@ definitions:
         type: integer
       version:
         type: string
+    required:
+    - conditions
+    - cri
+    - externalIP
+    - internalIP
+    - kernel
+    - labels
+    - name
+    - os
+    - roles
+    - status
+    - uptime
+    - version
     type: object
   response.K8sNodeResource:
     properties:
@@ -859,6 +912,13 @@ definitions:
         type: number
       memoryUsed:
         type: number
+    required:
+    - cpuFree
+    - cpuTotal
+    - cpuUsed
+    - memoryFree
+    - memoryTotal
+    - memoryUsed
     type: object
   response.Metric:
     properties:
@@ -879,6 +939,10 @@ definitions:
         type: array
       name:
         type: string
+    required:
+    - description
+    - metricGroups
+    - name
     type: object
   response.MetricData:
     properties:
@@ -888,6 +952,9 @@ definitions:
         items:
           $ref: '#/definitions/response.MetricValue'
         type: array
+    required:
+    - metric
+    - values
     type: object
   response.MetricGroup:
     properties:
@@ -899,6 +966,10 @@ definitions:
         type: array
       name:
         type: string
+    required:
+    - description
+    - metrics
+    - name
     type: object
   response.MetricMeta:
     properties:
@@ -910,6 +981,11 @@ definitions:
         type: string
       unit:
         type: string
+    required:
+    - description
+    - key
+    - name
+    - unit
     type: object
   response.MetricValue:
     properties:
@@ -917,6 +993,9 @@ definitions:
         type: number
       value:
         type: number
+    required:
+    - timestamp
+    - value
     type: object
   response.MonitorSpec:
     properties:
@@ -924,6 +1003,9 @@ definitions:
         type: string
       resource:
         $ref: '#/definitions/response.ResourceSpecRender'
+    required:
+    - image
+    - resource
     type: object
   response.NFSVolumeSpec:
     properties:
@@ -931,6 +1013,9 @@ definitions:
         type: string
       path:
         type: string
+    required:
+    - address
+    - path
     type: object
   response.Namespace:
     properties:
@@ -938,6 +1023,9 @@ definitions:
         type: string
       status:
         type: string
+    required:
+    - namespace
+    - status
     type: object
   response.OBCluster:
     properties:
@@ -1047,15 +1135,20 @@ definitions:
         type: array
       obZoneResourceMap:
         additionalProperties:
-          $ref: '#/definitions/response.OBZoneAvaiableResource'
+          $ref: '#/definitions/response.OBZoneAvailableResource'
         type: object
+    required:
+    - minPoolMemory
     type: object
-  response.OBClusterStastistic:
+  response.OBClusterStatistic:
     properties:
       count:
         type: integer
       status:
         type: string
+    required:
+    - count
+    - status
     type: object
   response.OBMetrics:
     properties:
@@ -1065,6 +1158,10 @@ definitions:
         type: integer
       memoryPercent:
         type: integer
+    required:
+    - cpuPercent
+    - diskPercent
+    - memoryPercent
     type: object
   response.OBServer:
     properties:
@@ -1080,6 +1177,12 @@ definitions:
         type: string
       statusDetail:
         type: string
+    required:
+    - address
+    - name
+    - namespace
+    - status
+    - statusDetail
     type: object
   response.OBServerAvailableResource:
     properties:
@@ -1103,6 +1206,14 @@ definitions:
       serverCount:
         example: 3
         type: integer
+    required:
+    - availableCPU
+    - availableDataDisk
+    - availableLogDisk
+    - availableMemory
+    - obServerIP
+    - obZone
+    - serverCount
     type: object
   response.OBServerStorage:
     properties:
@@ -1112,6 +1223,10 @@ definitions:
         $ref: '#/definitions/response.StorageSpec'
       sysLogStorage:
         $ref: '#/definitions/response.StorageSpec'
+    required:
+    - dataStorage
+    - redoLogStorage
+    - sysLogStorage
     type: object
   response.OBTenantDetail:
     properties:
@@ -1142,7 +1257,7 @@ definitions:
         $ref: '#/definitions/response.RestoreSource'
       rootCredential:
         type: string
-      standbyROCredentail:
+      standbyROCredential:
         type: string
       status:
         description: Status of the tenant
@@ -1166,6 +1281,19 @@ definitions:
         type: integer
       version:
         type: string
+    required:
+    - charset
+    - clusterResourceName
+    - createTime
+    - locality
+    - name
+    - namespace
+    - primaryZone
+    - status
+    - tenantName
+    - tenantRole
+    - uid
+    - unitNumber
     type: object
   response.OBTenantOverview:
     description: Brief information about OBTenant
@@ -1211,6 +1339,19 @@ definitions:
       unitNumber:
         description: Number of units in every zone
         type: integer
+    required:
+    - charset
+    - clusterResourceName
+    - createTime
+    - locality
+    - name
+    - namespace
+    - primaryZone
+    - status
+    - tenantName
+    - tenantRole
+    - uid
+    - unitNumber
     type: object
   response.OBTenantReplica:
     properties:
@@ -1235,6 +1376,17 @@ definitions:
         type: string
       zone:
         type: string
+    required:
+    - iopsWeight
+    - logDiskSize
+    - maxCPU
+    - maxIops
+    - memorySize
+    - minCPU
+    - minIops
+    - priority
+    - type
+    - zone
     type: object
   response.OBTenantStatistic:
     properties:
@@ -1242,6 +1394,9 @@ definitions:
         type: integer
       status:
         type: string
+    required:
+    - count
+    - status
     type: object
   response.OBZone:
     properties:
@@ -1275,8 +1430,15 @@ definitions:
         type: array
       zone:
         type: string
+    required:
+    - name
+    - namespace
+    - replicas
+    - status
+    - statusDetail
+    - zone
     type: object
-  response.OBZoneAvaiableResource:
+  response.OBZoneAvailableResource:
     properties:
       availableCPU:
         example: 12
@@ -1296,6 +1458,13 @@ definitions:
       serverCount:
         example: 3
         type: integer
+    required:
+    - availableCPU
+    - availableDataDisk
+    - availableLogDisk
+    - availableMemory
+    - obZone
+    - serverCount
     type: object
   response.ResourceSpecRender:
     properties:
@@ -1303,6 +1472,9 @@ definitions:
         type: integer
       memory:
         type: string
+    required:
+    - cpu
+    - memory
     type: object
   response.RestoreSource:
     properties:
@@ -1319,6 +1491,10 @@ definitions:
         type: string
       until:
         type: string
+    required:
+    - archiveSource
+    - bakDataSource
+    - type
     type: object
   response.StatisticData:
     properties:
@@ -1352,6 +1528,14 @@ definitions:
         items:
           $ref: '#/definitions/models.OBZone'
         type: array
+    required:
+    - backupPolicies
+    - clusters
+    - k8sNodes
+    - servers
+    - tenants
+    - warningEvents
+    - zones
     type: object
   response.StorageClass:
     properties:
@@ -1373,6 +1557,12 @@ definitions:
         type: string
       volumeBindingMode:
         type: string
+    required:
+    - allowVolumeExpansion
+    - name
+    - provisioner
+    - reclaimPolicy
+    - volumeBindingMode
     type: object
   response.StorageSpec:
     properties:
@@ -1380,6 +1570,9 @@ definitions:
         type: string
       storageClass:
         type: string
+    required:
+    - size
+    - storageClass
     type: object
 info:
   contact: {}
@@ -2219,7 +2412,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/response.OBClusterStastistic'
+                    $ref: '#/definitions/response.OBClusterStatistic'
                   type: array
               type: object
         "400":

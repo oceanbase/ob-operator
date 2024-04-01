@@ -674,8 +674,8 @@ func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIden
 	return err == nil, err
 }
 
-func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic, error) {
-	statisticResult := make([]response.OBClusterStastistic, 0)
+func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStatistic, error) {
+	statisticResult := make([]response.OBClusterStatistic, 0)
 	obclusterList, err := clients.ListAllOBClusters(ctx)
 	if err != nil {
 		return statisticResult, errors.Wrap(err, "failed to list obclusters")
@@ -699,16 +699,16 @@ func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStastistic,
 		}
 	}
 	statisticResult = append(statisticResult,
-		response.OBClusterStastistic{
+		response.OBClusterStatistic{
 			Status: StatusRunning,
 			Count:  runningCount,
-		}, response.OBClusterStastistic{
+		}, response.OBClusterStatistic{
 			Status: StatusDeleting,
 			Count:  deletingCount,
-		}, response.OBClusterStastistic{
+		}, response.OBClusterStatistic{
 			Status: StatusOperating,
 			Count:  operatingCount,
-		}, response.OBClusterStastistic{
+		}, response.OBClusterStatistic{
 			Status: StatusFailed,
 			Count:  failedCount,
 		})

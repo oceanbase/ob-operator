@@ -135,7 +135,7 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 		OBTenantOverview: *buildOverviewFromApiType(t),
 	}
 	rt.RootCredential = t.Status.Credentials.Root
-	rt.StandbyROCredentail = t.Status.Credentials.StandbyRO
+	rt.StandbyROCredential = t.Status.Credentials.StandbyRO
 
 	if t.Status.Source != nil && t.Status.Source.Tenant != nil {
 		rt.PrimaryTenant = *t.Status.Source.Tenant
