@@ -3,14 +3,14 @@ import { getClusterDetailReq } from '@/services';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
-import { getNSName } from '../Overview/helper';
+import { useParams } from '@umijs/max';
 import type { FilterDataType,LabelType } from '@/components/MonitorDetail';
 
 import { getFilterData } from '@/components/MonitorDetail/helper';
 
 
 export default function Monitor() {
-  const [[ns, name, clusterName]] = useState(getNSName());
+  const { ns, name, clusterName } = useParams();
   const [filterData, setFilterData] = useState<FilterDataType>({
     zoneList: [],
     serverList: [],

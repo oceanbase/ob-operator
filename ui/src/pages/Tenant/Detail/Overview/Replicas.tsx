@@ -1,6 +1,6 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Button, Col, Descriptions, message } from 'antd';
@@ -51,6 +51,7 @@ export default function Replicas({
   operateType,
   cluster,
 }: ReplicasProps) {
+  const { ns, name } = useParams();
   const sortKeys = (keys: string[]) => {
     const minCpuIdx = keys.findIndex((key) => key === 'minCPU');
     const memorySizeIdx = keys.findIndex((key) => key === 'memorySize');
@@ -61,7 +62,6 @@ export default function Replicas({
   };
 
   const deleteResourcePool = async (zoneName: string) => {
-    const [ns, name] = getNSName();
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
       refreshTenant();

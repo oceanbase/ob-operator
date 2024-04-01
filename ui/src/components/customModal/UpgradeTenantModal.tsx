@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { upgradeTenantCompatibilityVersion } from '@/services/tenant';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -12,6 +12,7 @@ export default function UpgradeTenantModal({
   setVisible,
   successCallback,
 }: CommonModalType) {
+  const { ns, name } = useParams();
   const { run: upgradeTenant } = useRequest(upgradeTenantCompatibilityVersion, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -28,7 +29,6 @@ export default function UpgradeTenantModal({
     },
   });
   const handleSubmit = async () => {
-    const [ns, name] = getNSName();
     await upgradeTenant({ ns, name });
   };
   const handleCancel = () => setVisible(false);

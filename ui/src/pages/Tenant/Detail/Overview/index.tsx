@@ -2,7 +2,7 @@ import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import {
 getEssentialParameters as getEssentialParametersReq,
 getSimpleClusterList,
@@ -47,7 +47,7 @@ export default function TenantOverview() {
   const operateTypeRef = useRef<OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
-  const [[ns, name]] = useState(getNSName());
+  const { ns, name } = useParams();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [editZone, setEditZone] = useState<string>('');
   useRequest(getSimpleClusterList, {
