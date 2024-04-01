@@ -18,7 +18,7 @@ import { getNSName } from './helper';
 
 //集群详情概览页
 const ClusterOverview: React.FC = () => {
-  const { setChooseClusterName, appInfo } = useModel('global');
+  const { setChooseClusterName } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   const [[ns, name]] = useState(getNSName());
@@ -44,7 +44,7 @@ const ClusterOverview: React.FC = () => {
     },
   );
   const handleDelete = async () => {
-    const res = await deleteClusterReportWrap({ ns, name, version: appInfo.version });
+    const res = await deleteClusterReportWrap({ ns, name });
     if (res.successful) {
       message.success(
         intl.formatMessage({

@@ -110,7 +110,7 @@ test   running   6m2s
 
 ### Connecting to the OceanBase Cluster
 
-Use the following command to find the POD IP of the observer. The naming convention for PODs is {cluster_name}-{cluster_id}-{zone}-uuid:
+Use the following command to find the POD IP of the observer. The naming convention for PODs is `${cluster_name}-${cluster_id}-${zone}-uuid`:
 
 ```shell
 kubectl get pods -o wide
@@ -131,7 +131,7 @@ helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
 ```
 
-![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-install.jpg)
+![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
 
 After OceanBase Dashboard is successfully installed, a default user admin is created with a random password, you can check the password using the command printed after installation.
 ```
@@ -141,18 +141,18 @@ A service of type NodePort is created by default, you can check the address and 
 ```
 kubectl get svc oceanbase-dashboard-ob-dashboard
 ```
-![oceanbase-dashboard-service](./docs/img/oceanbase-dashboard-service.jpg)
+![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
 Login with admin user and password
-![oceanbase-dashboard-overview](./docs/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
 
 ## Project Architecture
 
 ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
 
-![ob-operator Architecture](./docs/img/ob-operator-arch.png)
+![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the [Architecture Document](./docs/en_US/arch.md).
+For more detailed information about the architecture, please refer to the [Architecture Document](./docsite/docs/developer/arch.md).
 
 
 ## Features
@@ -186,8 +186,8 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-- [Architecture](docs/en_US/arch.md)
-- [Contributor Guidance](docs/en_US/contributor-guidance.md)
+- [Architecture](docsite/docs/developer/arch.md)
+- [Contributor Guidance](docsite/docs/developer/contributor-guidance.md)
 - [User Manual](https://en.oceanbase.com/docs/community-ob-operator-doc-en-10000000001123466)
 
 ## Getting Help
@@ -197,7 +197,7 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [Official Website](https://open.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- DingTalk Group ([QRCode](./docs/img/dingtalk-operator-users.png))
+- DingTalk Group ([QRCode](./docsite/static/img/dingtalk-operator-users.png))
 - WeChat Group (Add the assistant with WeChat ID: OBCE666)
 
 ## Contributing

@@ -4,7 +4,6 @@ import CustomModal from '.';
 
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { useModel } from '@umijs/max';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 
@@ -21,7 +20,6 @@ export default function ScaleModal({
   successCallback,
   params,
 }: ScaleModalProps & CommonModalType) {
-  const { appInfo } = useModel('global');
   const zoneName = params?.zoneName;
   const defaultValue = params?.defaultValue;
   const [form] = Form.useForm();
@@ -39,7 +37,6 @@ export default function ScaleModal({
       name,
       zoneName,
       replicas: val.replicas,
-      version: appInfo.version
     });
     if (res.successful) {
       message.success(res.message);

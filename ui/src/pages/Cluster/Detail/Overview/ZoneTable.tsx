@@ -5,7 +5,6 @@ import type { ColumnType } from 'antd/es/table';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { COLOR_MAP } from '@/constants';
 import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { useModel } from '@umijs/max';
 import { getNSName } from './helper';
 
 interface ZoneTableProps {
@@ -25,7 +24,6 @@ export default function ZoneTable({
   setChooseServerNum,
   clusterStatus,
 }: ZoneTableProps) {
-  const { appInfo } = useModel('global');
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
       {
@@ -88,7 +86,7 @@ export default function ZoneTable({
           return (
             <>
               <Button
-                style={{ marginRight: 10 }}
+                style={{ paddingLeft: 0 }}
                 onClick={() => {
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
@@ -140,7 +138,6 @@ export default function ZoneTable({
       ns,
       name,
       zoneName,
-      version: appInfo.version
     });
     if (res.successful) {
       message.success(

@@ -1,6 +1,5 @@
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { modifyUnitNumReportWrap } from '@/services/reportRequest/tenantReportReq';
-import { useModel } from '@umijs/max';
 import { intl } from '@/utils/intl';
 import { Form,InputNumber,message } from 'antd';
 import { useEffect } from 'react';
@@ -19,7 +18,6 @@ export default function ModifyUnitModal({
   },
   successCallback,
 }: CommonModalType & { params: { defaultUnitCount: number } }) {
-  const { appInfo } = useModel('global');
   const [form] = Form.useForm();
   const { defaultUnitCount } = params;
   const handleSubmit = async () => {
@@ -36,7 +34,6 @@ export default function ModifyUnitModal({
       ns: namespace,
       name,
       ...values,
-      version: appInfo.version
     });
     if (res.successful) {
       message.success(

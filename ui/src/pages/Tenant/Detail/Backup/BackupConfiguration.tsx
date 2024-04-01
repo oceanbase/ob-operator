@@ -7,7 +7,6 @@ import {
   editBackupReportWrap,
 } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
-import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Button,
@@ -46,7 +45,6 @@ export default function BackupConfiguration({
   setBackupPolicy,
   backupPolicyRefresh,
 }: BackupConfigurationProps) {
-  const { appInfo } = useModel('global');
   const [form] = Form.useForm();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -123,10 +121,7 @@ export default function BackupConfiguration({
       name,
       status: backupPolicy.status === 'PAUSED' ? 'RUNNING' : 'PAUSED',
     };
-    const { successful, data } = await editBackupReportWrap({
-      ...param,
-      version: appInfo.version,
-    });
+    const { successful, data } = await editBackupReportWrap(param);
     if (successful) {
       if (data.status === backupPolicy.status) {
         backupPolicyRefresh();
@@ -180,7 +175,6 @@ export default function BackupConfiguration({
       ns,
       name,
       ...formatBackupForm(values, publicKey),
-      version: appInfo.version,
     });
     if (successful) {
       curConfig.current = formatBackupForm(form.getFieldsValue(), publicKey);
@@ -243,7 +237,7 @@ export default function BackupConfiguration({
             onClick={() =>
               showDeleteConfirm({
                 onOk: () =>
-                  deleteBackupPolicyReq({ ns, name, version: appInfo.version }),
+                  deleteBackupPolicyReq({ ns, name }),
                 title: intl.formatMessage({
                   id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
                   defaultMessage: '确定要删除该备份策略吗？',

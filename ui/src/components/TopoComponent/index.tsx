@@ -48,7 +48,6 @@ export default function TopoComponent({
   refreshTenant,
   defaultUnitCount,
 }: TopoProps) {
-  const { appInfo } = useModel('global');
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -124,7 +123,7 @@ export default function TopoComponent({
   };
   //delete cluster
   const clusterDelete = async () => {
-    const res = await deleteClusterReportWrap({ ns, name, version: appInfo.version });
+    const res = await deleteClusterReportWrap({ ns, name });
     if (res.successful) {
       message.success(res.message);
       getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
@@ -136,7 +135,6 @@ export default function TopoComponent({
       ns,
       name,
       zoneName: chooseZoneName.current,
-      version: appInfo.version
     });
     if (res.successful) {
       message.success(
