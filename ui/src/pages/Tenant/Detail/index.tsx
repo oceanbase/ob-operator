@@ -43,7 +43,7 @@ const TenantDetail: React.FC = () => {
   const user = localStorage.getItem('user');
   const [version, setVersion] = useState<string>('');
   const location = useLocation();
-  const { tenantId } = params;
+  const { ns,name,tenantName } = params;
 
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
@@ -59,21 +59,21 @@ const TenantDetail: React.FC = () => {
         id: 'Dashboard.Tenant.Detail.Overview',
         defaultMessage: '概览',
       }),
-      link: `/tenant/${tenantId}`,
+      link: `/tenant/${ns}/${name}/${tenantName}`,
     },
     {
       title: intl.formatMessage({
         id: 'Dashboard.Tenant.Detail.TopologyDiagram',
         defaultMessage: '拓扑图',
       }),
-      link: `/tenant/${tenantId}/topo`,
+      link: `/tenant/${ns}/${name}/${tenantName}/topo`,
     },
     {
       title: intl.formatMessage({
         id: 'Dashboard.Tenant.Detail.Backup',
         defaultMessage: '备份',
       }),
-      link: `/tenant/${tenantId}/backup`,
+      link: `/tenant/${ns}/${name}/${tenantName}/backup`,
     },
     {
       title: intl.formatMessage({
@@ -81,7 +81,7 @@ const TenantDetail: React.FC = () => {
         defaultMessage: '性能监控',
       }),
       key: 'monitor',
-      link: `/tenant/${tenantId}/monitor`,
+      link: `/tenant/${ns}/${name}/${tenantName}/monitor`,
     },
   ];
 

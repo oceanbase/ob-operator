@@ -44,7 +44,7 @@ const ClusterDetail: React.FC = () => {
   const [version, setVersion] = useState<string>('');
   const location = useLocation();
   const { reportDataInterval } = useModel('global');
-  const { clusterId } = params;
+  const { ns, name, clusterName } = params;
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -60,14 +60,14 @@ const ClusterDetail: React.FC = () => {
         id: 'dashboard.Cluster.Detail.Overview',
         defaultMessage: '概览',
       }),
-      link: `/cluster/${clusterId}`,
+      link: `/cluster/${ns}/${name}/${clusterName}`,
     },
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.TopologyDiagram',
         defaultMessage: '拓扑图',
       }),
-      link: `/cluster/${clusterId}/topo`,
+      link: `/cluster/${ns}/${name}/${clusterName}/topo`,
     },
     {
       title: intl.formatMessage({
@@ -75,7 +75,7 @@ const ClusterDetail: React.FC = () => {
         defaultMessage: '性能监控',
       }),
       key: 'monitor',
-      link: `/cluster/${clusterId}/monitor`,
+      link: `/cluster/${ns}/${name}/${clusterName}/monitor`,
     },
     {
       title: intl.formatMessage({
@@ -83,7 +83,7 @@ const ClusterDetail: React.FC = () => {
         defaultMessage: '租户',
       }),
       key: 'tenant',
-      link: `/cluster/${clusterId}/tenant`,
+      link: `/cluster/${ns}/${name}/${clusterName}/tenant`,
     },
   ];
 

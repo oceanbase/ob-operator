@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { changeTenantRole } from '@/services/tenant';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -12,6 +12,7 @@ export default function SwitchTenantModal({
   setVisible,
   successCallback,
 }: CommonModalType) {
+  const { ns, name } = useParams();
   const { run: activateTenant } = useRequest(changeTenantRole, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -23,7 +24,6 @@ export default function SwitchTenantModal({
     },
   });
   const handleSubmit = async () => {
-    const [ns, name] = getNSName();
     await activateTenant({ ns, name, switchover: true });
   };
   const handleCancel = () => setVisible(false);

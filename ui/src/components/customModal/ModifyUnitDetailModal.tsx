@@ -1,7 +1,7 @@
 import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT,getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import type {
 MaxResourceType,
@@ -14,7 +14,7 @@ modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
 import { 
 patchObtenantPoolReportWrap, 
-createTenantReportWrap 
+createObtenantPoolReportWrap 
 } from '@/services/reportRequest/tenantReportReq';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
@@ -84,6 +84,7 @@ export default function ModifyUnitDetailModal({
   },
 }: CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
+  const { ns, name } = useParams();
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [minResource, setMinResource] = useState<MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter.minPoolMemory }),
@@ -93,7 +94,7 @@ export default function ModifyUnitDetailModal({
   );
   const selectZone = Form.useWatch('selectZone', form);
   const obtenantPoolReq = newResourcePool
-    ? createTenantReportWrap
+    ? createObtenantPoolReportWrap
     : patchObtenantPoolReportWrap;
 
   const handleSubmit = async () => {
@@ -112,7 +113,6 @@ export default function ModifyUnitDetailModal({
   };
 
   const onFinish = async (values: any) => {
-    const [ns, name] = getNSName();
     const { zoneName, ...reqData } = formatPatchPoolData(
       values,
       newResourcePool ? 'create' : 'edit',

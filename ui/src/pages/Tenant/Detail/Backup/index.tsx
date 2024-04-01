@@ -1,6 +1,6 @@
 import EmptyImg from '@/assets/empty.svg';
 import { BACKUP_RESULT_STATUS,REFRESH_TENANT_TIME } from '@/constants';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { getBackupPolicy,getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
@@ -13,7 +13,7 @@ import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
 
 export default function Backup() {
-  const [ns, name] = getNSName();
+  const { ns, name } = useParams();
   const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout>()
 

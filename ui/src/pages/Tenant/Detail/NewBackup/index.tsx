@@ -1,5 +1,5 @@
 import { usePublicKey } from '@/hook/usePublicKey';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { getTenant } from '@/services/tenant';
 import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
@@ -17,7 +17,7 @@ import ScheduleTimeFormItem from './ScheduleTimeFormItem';
 const { Password } = Input;
 export default function NewBackup() {
   const navigate = useNavigate();
-  const [ns, name] = getNSName();
+  const { ns, name } = useParams();
   const [form] = Form.useForm();
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
