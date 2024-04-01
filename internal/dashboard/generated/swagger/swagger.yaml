@@ -794,6 +794,8 @@ definitions:
         type: string
       publicKey:
         type: string
+      reportHost:
+        type: string
       reportStatistics:
         type: boolean
       version:
@@ -801,6 +803,7 @@ definitions:
     required:
     - appName
     - publicKey
+    - reportHost
     - reportStatistics
     - version
     type: object

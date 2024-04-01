@@ -4014,6 +4014,7 @@ const docTemplate = `{
             "required": [
                 "appName",
                 "publicKey",
+                "reportHost",
                 "reportStatistics",
                 "version"
             ],
@@ -4022,6 +4023,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "publicKey": {
+                    "type": "string"
+                },
+                "reportHost": {
                     "type": "string"
                 },
                 "reportStatistics": {

@@ -4007,6 +4007,7 @@
             "required": [
                 "appName",
                 "publicKey",
+                "reportHost",
                 "reportStatistics",
                 "version"
             ],
@@ -4015,6 +4016,9 @@
                     "type": "string"
                 },
                 "publicKey": {
+                    "type": "string"
+                },
+                "reportHost": {
                     "type": "string"
                 },
                 "reportStatistics": {

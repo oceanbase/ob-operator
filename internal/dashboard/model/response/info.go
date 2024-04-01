@@ -17,4 +17,5 @@ type DashboardInfo struct {
 	Version          string `json:"version" binding:"required"`
 	PublicKey        string `json:"publicKey" binding:"required"`
 	ReportStatistics bool   `json:"reportStatistics" binding:"required"`
+	ReportHost       string `json:"reportHost" binding:"required"`
 }

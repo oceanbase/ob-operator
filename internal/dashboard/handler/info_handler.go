@@ -61,7 +61,8 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 		AppName:          "oceanbase-dashboard",
 		Version:          strings.Join([]string{Version, CommitHash, BuildTime}, "-"),
 		PublicKey:        string(pubBytes),
-		ReportStatistics: os.Getenv("DISABLE_REPORT_STATISTICS") != "true",
+		ReportStatistics: os.Getenv(telemetry.DisableTelemetryEnvName) != "true",
+		ReportHost:       telemetry.TelemetryReportScheme + "://" + telemetry.TelemetryReportHost,
 	}, nil
 }
 
