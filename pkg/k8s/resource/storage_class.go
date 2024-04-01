@@ -21,9 +21,9 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func ListStorageClasses() (*storagev1.StorageClassList, error) {
+func ListStorageClasses(ctx context.Context) (*storagev1.StorageClassList, error) {
 	client := client.GetClient()
-	return client.ClientSet.StorageV1().StorageClasses().List(context.TODO(), metav1.ListOptions{
+	return client.ClientSet.StorageV1().StorageClasses().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
 }

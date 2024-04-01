@@ -29,4 +29,6 @@ var (
 	ErrNotReady           ErrorType = "NotReady"
 	ErrNotImplemented     ErrorType = "NotImplemented"
 	ErrServiceUnavailable ErrorType = "ServiceUnavailable"
+
+	ErrInsufficientResource ErrorType = "InsufficientResource"
 )

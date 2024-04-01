@@ -613,23 +613,23 @@ func GetOBTenantStatistic(c *gin.Context) ([]response.OBTenantStatistic, error) 
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.TenantPoolSpec true "create obtenant pool request body"
-// @Success 200 object response.APIResponse{data=bool}
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PUT]
 // @Security ApiKeyAuth
-func CreateOBTenantPool(c *gin.Context) (bool, error) {
+func CreateOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := param.TenantPoolName{}
 	err := c.BindUri(&nn)
 	if err != nil {
-		return false, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 
 	p := param.TenantPoolSpec{}
 	err = c.BindJSON(&p)
 	if err != nil {
-		return false, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Create obtenant pool with param: %+v", p)
 	return oceanbase.CreateTenantPool(c, nn, &p)
@@ -641,17 +641,17 @@ func CreateOBTenantPool(c *gin.Context) (bool, error) {
 // @Description Delete an obtenant pool in a specific namespace
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=bool}
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [DELETE]
 // @Security ApiKeyAuth
-func DeleteOBTenantPool(c *gin.Context) (bool, error) {
+func DeleteOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := param.TenantPoolName{}
 	err := c.BindUri(&nn)
 	if err != nil {
-		return false, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 
 	return oceanbase.DeleteTenantPool(c, nn)
@@ -664,23 +664,23 @@ func DeleteOBTenantPool(c *gin.Context) (bool, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.TenantPoolSpec true "patch obtenant pool request body"
-// @Success 200 object response.APIResponse{data=bool}
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PATCH]
 // @Security ApiKeyAuth
-func PatchOBTenantPool(c *gin.Context) (bool, error) {
+func PatchOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 	nn := param.TenantPoolName{}
 	err := c.BindUri(&nn)
 	if err != nil {
-		return false, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 
 	p := param.TenantPoolSpec{}
 	err = c.BindJSON(&p)
 	if err != nil {
-		return false, httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	logger.Infof("Patch obtenant pool with param: %+v", p)
 	return oceanbase.PatchTenantPool(c, nn, &p)

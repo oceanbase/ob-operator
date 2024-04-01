@@ -94,10 +94,10 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 		zoneResource := &response.OBZoneAvaiableResource{
 			ServerCount:       1,
 			OBZone:            gvserver.Zone,
-			AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
-			AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
-			AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
-			AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
+			AvailableCPU:      max(gvserver.CPUCapacity-gvserver.CPUAssigned, 0),
+			AvailableMemory:   max(gvserver.MemCapacity-gvserver.MemAssigned, 0),
+			AvailableLogDisk:  max(gvserver.LogDiskCapacity-gvserver.LogDiskAssigned, 0),
+			AvailableDataDisk: max(gvserver.DataDiskCapacity-gvserver.DataDiskAllocated, 0),
 		}
 		serverUsage := response.OBServerAvailableResource{
 			OBServerIP:             gvserver.ServerIP,
@@ -123,4 +123,18 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 		serverUsages = append(serverUsages, serverUsage)
 	}
 	return serverUsages, zoneMapping
+}
+
+type OrderedType interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64 |
+		~string
+}
+
+func max[t OrderedType](a, b t) t {
+	if a > b {
+		return a
+	}
+	return b
 }

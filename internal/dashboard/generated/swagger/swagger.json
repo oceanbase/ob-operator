@@ -728,7 +728,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -873,7 +885,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -934,7 +958,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1006,7 +1042,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1076,7 +1124,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1155,7 +1215,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2260,7 +2332,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2317,7 +2389,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2385,7 +2457,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2687,7 +2759,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.StatisticDataResponse"
+                                            "$ref": "#/definitions/response.StatisticData"
                                         }
                                     }
                                 }
@@ -3756,6 +3828,9 @@
                 "type": {
                     "description": "Enum: FULL, INCR, ARCHIVE, CLEAN",
                     "type": "string"
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
@@ -3831,6 +3906,9 @@
                     "type": "string"
                 },
                 "tenantName": {
+                    "type": "string"
+                },
+                "uid": {
                     "type": "string"
                 }
             }
@@ -4162,6 +4240,9 @@
                         "$ref": "#/definitions/response.OBZone"
                     }
                 },
+                "uid": {
+                    "type": "string"
+                },
                 "version": {
                     "type": "string"
                 }
@@ -4199,6 +4280,9 @@
                     "items": {
                         "$ref": "#/definitions/response.OBZone"
                     }
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
@@ -4379,6 +4463,10 @@
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
                 },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
+                },
                 "unitNumber": {
                     "description": "Number of units in every zone",
                     "type": "integer"
@@ -4438,6 +4526,10 @@
                     "items": {
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
+                },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
                 },
                 "unitNumber": {
                     "description": "Number of units in every zone",
@@ -4621,6 +4713,15 @@
                         "$ref": "#/definitions/models.OBCluster"
                     }
                 },
+                "k8sNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sNode"
+                    }
+                },
+                "operatorVersion": {
+                    "type": "string"
+                },
                 "servers": {
                     "type": "array",
                     "items": {
@@ -4633,9 +4734,6 @@
                         "$ref": "#/definitions/models.OBTenant"
                     }
                 },
-                "version": {
-                    "type": "string"
-                },
                 "warningEvents": {
                     "type": "array",
                     "items": {
@@ -4647,20 +4745,6 @@
                     "items": {
                         "$ref": "#/definitions/models.OBZone"
                     }
-                }
-            }
-        },
-        "response.StatisticDataResponse": {
-            "type": "object",
-            "properties": {
-                "component": {
-                    "type": "string"
-                },
-                "content": {
-                    "$ref": "#/definitions/response.StatisticData"
-                },
-                "time": {
-                    "type": "string"
                 }
             }
         },

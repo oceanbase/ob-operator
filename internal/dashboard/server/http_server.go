@@ -62,6 +62,9 @@ func (s *HTTPServer) RegisterRouter() error {
 }
 
 func NewHTTPServer() *HTTPServer {
+	if os.Getenv("DEBUG_DASHBOARD") != "true" {
+		gin.SetMode(gin.ReleaseMode)
+	}
 	return &HTTPServer{
 		Router: gin.New(),
 		Server: &http.Server{},
