@@ -3,9 +3,8 @@ import { PageContainer } from '@ant-design/pro-components'
 import { intl } from '@/utils/intl'
 import { OBTerminal } from '@/components/Terminal/terminal'
 import { Button, Row, message } from 'antd'
-import { request } from '@umijs/max'
+import { request, useParams } from '@umijs/max'
 import { useRequest } from 'ahooks'
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import BasicInfo from '../Overview/BasicInfo'
 import { getTenant } from '@/services/tenant'
 
@@ -20,7 +19,7 @@ const TenantConnection: React.FC = () => {
     }
   }
 
-  const [[ns, name]] = useState(getNSName());
+  const {ns, name} = useParams();
 
   const { data: tenantDetailResponse, run: getTenantDetail } = useRequest(getTenant, {
     manual: true,
@@ -37,7 +36,7 @@ const TenantConnection: React.FC = () => {
   })
 
   useEffect(() => {
-    getTenantDetail({ ns, name });
+    getTenantDetail({ ns: ns!, name: name! });
   }, []);
 
   const [terminalId, setTerminalId] = useState<string>()
