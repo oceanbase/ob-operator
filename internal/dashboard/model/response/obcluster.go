@@ -52,16 +52,16 @@ type OBMetrics struct {
 }
 
 type OBClusterOverview struct {
-	UID          string   `json:"uid"`
-	Name         string   `json:"name"`
-	Namespace    string   `json:"namespace"`
-	ClusterName  string   `json:"clusterName"`
-	ClusterId    int64    `json:"clusterId"`
-	Status       string   `json:"status"`
-	StatusDetail string   `json:"statusDetail"`
-	CreateTime   int64    `json:"createTime"`
-	Image        string   `json:"image"`
-	Topology     []OBZone `json:"topology"`
+	UID          string   `json:"uid" binding:"required"`
+	Name         string   `json:"name" binding:"required"`
+	Namespace    string   `json:"namespace" binding:"required"`
+	ClusterName  string   `json:"clusterName" binding:"required"`
+	ClusterId    int64    `json:"clusterId" binding:"required"`
+	Status       string   `json:"status" binding:"required"`
+	StatusDetail string   `json:"statusDetail" binding:"required"`
+	CreateTime   int64    `json:"createTime" binding:"required"`
+	Image        string   `json:"image" binding:"required"`
+	Topology     []OBZone `json:"topology" binding:"required"`
 }
 
 type OBCluster struct {
@@ -79,14 +79,14 @@ type ResourceSpecRender struct {
 }
 
 type OBClusterExtra struct {
-	Resource ResourceSpecRender `json:"resource"`
-	Storage  OBServerStorage    `json:"storage"`
+	Resource ResourceSpecRender `json:"resource" binding:"required"`
+	Storage  OBServerStorage    `json:"storage" binding:"required"`
 
-	RootPasswordSecret string             `json:"rootPasswordSecret"`
-	Parameters         []common.KVPair    `json:"parameters"`
+	RootPasswordSecret string             `json:"rootPasswordSecret" binding:"required"`
+	Parameters         []common.KVPair    `json:"parameters" binding:"required"`
 	Monitor            *MonitorSpec       `json:"monitor"`
 	BackupVolume       *NFSVolumeSpec     `json:"backupVolume"`
-	Mode               common.ClusterMode `json:"mode"`
+	Mode               common.ClusterMode `json:"mode" binding:"required"`
 }
 
 type MonitorSpec struct {

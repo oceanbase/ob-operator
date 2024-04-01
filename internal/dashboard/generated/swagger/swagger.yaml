@@ -983,6 +983,22 @@ definitions:
         type: string
       version:
         type: string
+    required:
+    - clusterId
+    - clusterName
+    - createTime
+    - image
+    - mode
+    - name
+    - namespace
+    - parameters
+    - resource
+    - rootPasswordSecret
+    - status
+    - statusDetail
+    - storage
+    - topology
+    - uid
     type: object
   response.OBClusterOverview:
     properties:
@@ -1008,6 +1024,17 @@ definitions:
         type: array
       uid:
         type: string
+    required:
+    - clusterId
+    - clusterName
+    - createTime
+    - image
+    - name
+    - namespace
+    - status
+    - statusDetail
+    - topology
+    - uid
     type: object
   response.OBClusterResources:
     properties:

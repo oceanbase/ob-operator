@@ -4254,6 +4254,23 @@ const docTemplate = `{
         },
         "response.OBCluster": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "mode",
+                "name",
+                "namespace",
+                "parameters",
+                "resource",
+                "rootPasswordSecret",
+                "status",
+                "statusDetail",
+                "storage",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "backupVolume": {
                     "$ref": "#/definitions/response.NFSVolumeSpec"
@@ -4322,6 +4339,18 @@ const docTemplate = `{
         },
         "response.OBClusterOverview": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "name",
+                "namespace",
+                "status",
+                "statusDetail",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "clusterId": {
                     "type": "integer"
