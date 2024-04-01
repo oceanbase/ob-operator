@@ -8,6 +8,7 @@ import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
 import { checkScheduleDatesHaveFull, formatBackupForm } from '../../helper';
+import { strTrim } from '@/utils/helper';
 import BasicInfo from '../Overview/BasicInfo';
 import AdvancedConfiguration from './AdvancedConfiguration';
 import BakMethodsList from './BakMethodsList';
@@ -39,7 +40,7 @@ export default function NewBackup() {
     const res = await createBackupReportWrap({
       ns,
       name,
-      ...formatBackupForm(values, publicKey)
+      ...formatBackupForm(strTrim(values), publicKey)
     });
     if (res.successful) {
       message.success(
