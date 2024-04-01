@@ -23,11 +23,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 // @ID ListAllTenants
@@ -693,4 +697,96 @@ func PatchOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 	}
 	logger.Infof("Patch obtenant pool with param: %+v", p)
 	return oceanbase.PatchTenantPool(c, nn, &p)
+}
+
+// @ID ListOBTenantRelatedEvents
+// @Tags OBTenant
+// @Summary List related events of specific tenant
+// @Description List related events of specific tenant, including restore, backup and backup policy events
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]response.K8sEvent}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/related-events [GET]
+// @Security ApiKeyAuth
+func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+
+	obtenant, err := clients.TenantClient.Get(c, nn.Namespace, nn.Name, metav1.GetOptions{})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewBadRequest("obtenant not found")
+		}
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	events := []response.K8sEvent{}
+	// Get related events of obtenant
+
+	restoreList := &v1alpha1.OBTenantRestoreList{}
+	err = clients.RestoreJobClient.List(c, nn.Namespace, restoreList, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelTenantName, obtenant.Name),
+	})
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	if len(restoreList.Items) > 0 {
+		names := make([]string, 0, len(restoreList.Items))
+		for _, r := range restoreList.Items {
+			names = append(names, r.Name)
+		}
+		events = append(events, GetScopedEvents(c, nn.Namespace, "OBTenantRestore", names)...)
+	}
+
+	policy, err := oceanbase.GetTenantBackupPolicy(c, types.NamespacedName{Namespace: nn.Namespace, Name: nn.Name})
+	if err != nil {
+		if !kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+	} else if policy != nil {
+		policyEvents, err := client.GetClient().ClientSet.CoreV1().Events(policy.Namespace).List(c, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("involvedObject.kind=OBTenantBackupPolicy,involvedObject.name=%s", policy.Name),
+		})
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+
+		for _, e := range policyEvents.Items {
+			events = append(events, response.K8sEvent{
+				Namespace:  e.Namespace,
+				Reason:     e.Reason,
+				Message:    e.Message,
+				Type:       e.Type,
+				Object:     e.InvolvedObject.Kind + "/" + e.InvolvedObject.Name,
+				FirstOccur: e.FirstTimestamp.Unix(),
+				LastSeen:   e.LastTimestamp.Unix(),
+			})
+		}
+
+		backupJobs := &v1alpha1.OBTenantBackupList{}
+		err = clients.BackupJobClient.List(c, policy.Namespace, backupJobs, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefBackupPolicy, policy.Name),
+		})
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+
+		if len(backupJobs.Items) > 0 {
+			names := make([]string, 0, len(backupJobs.Items))
+			for _, b := range backupJobs.Items {
+				names = append(names, b.Name)
+			}
+			events = append(events, GetScopedEvents(c, policy.Namespace, "OBTenantBackup", names)...)
+		}
+	}
+
+	logger.Debugf("Get related events of obtenant: %v", nn)
+	return events, nil
 }

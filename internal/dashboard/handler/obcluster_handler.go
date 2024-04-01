@@ -13,14 +13,22 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 // @ID GetOBClusterStatistic
@@ -281,4 +289,96 @@ func ListOBClusterResources(c *gin.Context) (*response.OBClusterResources, error
 	}
 	logger.Debugf("Get resource usages of obcluster: %v", obclusterIdentity)
 	return usages, nil
+}
+
+// @ID ListOBClusterRelatedEvents
+// @Summary list related events
+// @Description list related events of specific obcluster, including obzone and observer.
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Success 200 object response.APIResponse{data=[]response.K8sEvent}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/{namespace}/{name}/related-events [GET]
+// @Security ApiKeyAuth
+func ListOBClusterRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
+	nn := &param.K8sObjectIdentity{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	obcluster, err := clients.ClusterClient.Get(c, nn.Namespace, nn.Name, metav1.GetOptions{})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewBadRequest("obcluster not found")
+		}
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	obzoneList := &v1alpha1.OBZoneList{}
+	err = clients.ZoneClient.List(c, nn.Namespace, obzoneList, metav1.ListOptions{
+		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obcluster.Name,
+	})
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	observerList := &v1alpha1.OBServerList{}
+	err = clients.ServerClient.List(c, nn.Namespace, observerList, metav1.ListOptions{
+		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obcluster.Name,
+	})
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	var events []response.K8sEvent
+
+	if len(obzoneList.Items) > 0 {
+		names := make([]string, 0, len(obzoneList.Items))
+		for _, obzone := range obzoneList.Items {
+			names = append(names, obzone.Name)
+		}
+		events = append(events, GetScopedEvents(c, nn.Namespace, "OBZone", names)...)
+	}
+
+	if len(observerList.Items) > 0 {
+		names := make([]string, 0, len(observerList.Items))
+		for _, obzone := range observerList.Items {
+			names = append(names, obzone.Name)
+		}
+		events = append(events, GetScopedEvents(c, nn.Namespace, "OBServer", names)...)
+	}
+
+	logger.Debugf("Get related events of obcluster: %v", nn)
+	return events, nil
+}
+
+func GetScopedEvents(ctx context.Context, ns, kind string, scoped []string) []response.K8sEvent {
+	eventList, err := client.GetClient().ClientSet.CoreV1().Events(ns).List(ctx, metav1.ListOptions{
+		FieldSelector: "involvedObject.kind=" + kind,
+	})
+	if err != nil {
+		return nil
+	}
+	existMapping := make(map[string]struct{})
+	for _, item := range scoped {
+		existMapping[item] = struct{}{}
+	}
+	var events []response.K8sEvent
+	for _, event := range eventList.Items {
+		if _, ok := existMapping[event.InvolvedObject.Name]; ok {
+			events = append(events, response.K8sEvent{
+				Namespace:  event.Namespace,
+				Message:    event.Message,
+				Reason:     event.Reason,
+				Type:       event.Type,
+				Object:     event.InvolvedObject.Kind + "/" + event.InvolvedObject.Name,
+				Count:      event.Count,
+				FirstOccur: event.FirstTimestamp.Unix(),
+				LastSeen:   event.LastTimestamp.Unix(),
+			})
+		}
+	}
+	return events
 }

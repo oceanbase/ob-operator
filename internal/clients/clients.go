@@ -26,5 +26,6 @@ var (
 	BackupJobClient    = client.NewDynamicResourceClient[*v1alpha1.OBTenantBackup](schema.OBTenantBackupGVR, schema.OBTenantBackupKind)
 	OperationClient    = client.NewDynamicResourceClient[*v1alpha1.OBTenantOperation](schema.OBTenantOperationGVR, schema.OBTenantOperationKind)
 	BackupPolicyClient = client.NewDynamicResourceClient[*v1alpha1.OBTenantBackupPolicy](schema.OBTenantBackupPolicyGVR, schema.OBTenantBackupPolicyKind)
-	RescueClient       = client.NewDynamicResourceClient[*v1alpha1.OBResourceRescue](schema.OBResourceRescueGVR, schema.OBResourceRescueResource)
+	RescueClient       = client.NewDynamicResourceClient[*v1alpha1.OBResourceRescue](schema.OBResourceRescueGVR, schema.OBResourceRescueKind)
+	RestoreJobClient   = client.NewDynamicResourceClient[*v1alpha1.OBTenantRestore](schema.OBTenantRestoreGVR, schema.OBTenantRestoreKind)
 )

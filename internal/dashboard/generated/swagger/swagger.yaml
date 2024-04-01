@@ -2048,6 +2048,55 @@ paths:
       summary: create obcluster
       tags:
       - OBCluster
+  /api/v1/obclusters/{namespace}/{name}/related-events:
+    get:
+      consumes:
+      - application/json
+      description: list related events of specific obcluster, including obzone and
+        observer.
+      operationId: ListOBClusterRelatedEvents
+      parameters:
+      - description: obcluster namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obcluster name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.K8sEvent'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list related events
+      tags:
+      - OBCluster
   /api/v1/obclusters/{namespace}/{name}/resource-usages:
     get:
       consumes:
@@ -3125,6 +3174,55 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Create obtenant pool
+      tags:
+      - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/related-events:
+    get:
+      consumes:
+      - application/json
+      description: List related events of specific tenant, including restore, backup
+        and backup policy events
+      operationId: ListOBTenantRelatedEvents
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/response.K8sEvent'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List related events of specific tenant
       tags:
       - OBTenant
   /api/v1/obtenants/{namespace}/{name}/role:
