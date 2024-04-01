@@ -2747,6 +2747,22 @@ paths:
       - application/json
       description: Delete an obtenant pool in a specific namespace
       operationId: DeleteOBTenantPool
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: obzone name
+        in: path
+        name: zoneName
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2788,6 +2804,21 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/param.TenantPoolSpec'
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: obzone name
+        in: path
+        name: zoneName
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2829,6 +2860,21 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/param.TenantPoolSpec'
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: obzone name
+        in: path
+        name: zoneName
+        required: true
+        type: string
       produces:
       - application/json
       responses:

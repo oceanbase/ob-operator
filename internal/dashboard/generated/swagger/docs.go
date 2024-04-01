@@ -2325,6 +2325,27 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2384,6 +2405,29 @@ const docTemplate = `{
                 ],
                 "summary": "Delete obtenant pool",
                 "operationId": "DeleteOBTenantPool",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2450,6 +2494,27 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {

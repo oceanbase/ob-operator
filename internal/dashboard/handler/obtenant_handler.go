@@ -617,6 +617,9 @@ func GetOBTenantStatistic(c *gin.Context) ([]response.OBTenantStatistic, error) 
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Param zoneName path string true "obzone name"
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PUT]
 // @Security ApiKeyAuth
 func CreateOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
@@ -645,6 +648,9 @@ func CreateOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Param zoneName path string true "obzone name"
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [DELETE]
 // @Security ApiKeyAuth
 func DeleteOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
@@ -668,6 +674,9 @@ func DeleteOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Param zoneName path string true "obzone name"
 // @Router /api/v1/obtenants/{namespace}/{name}/pools/{zoneName} [PATCH]
 // @Security ApiKeyAuth
 func PatchOBTenantPool(c *gin.Context) (*response.OBTenantDetail, error) {
