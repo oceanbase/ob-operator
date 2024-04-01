@@ -52,7 +52,7 @@ func (m *OBClusterManager) GetStatus() string {
 
 func (m *OBClusterManager) InitStatus() {
 	m.Logger.Info("Newly created cluster, init status")
-	m.Recorder.Event(m.OBCluster, "Init", "", "newly created cluster, init status")
+	m.Recorder.Event(m.OBCluster, "Init", "", "Newly created cluster, init status")
 	_, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
 	initialStatus := clusterstatus.New
 	if migrateAnnoExist {
@@ -287,7 +287,7 @@ func (m *OBClusterManager) PrintErrEvent(err error) {
 
 func (m *OBClusterManager) ArchiveResource() {
 	m.Logger.Info("Archive obcluster", "obcluster", m.OBCluster.Name)
-	m.Recorder.Event(m.OBCluster, "Archive", "", "archive obcluster")
+	m.Recorder.Event(m.OBCluster, "Archive", "", "Archive obcluster")
 	m.OBCluster.Status.Status = "Failed"
 	m.OBCluster.Status.OperationContext = nil
 }

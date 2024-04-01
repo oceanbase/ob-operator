@@ -8,11 +8,11 @@ getEssentialParameters as getEssentialParametersReq,
 getSimpleClusterList,
 } from '@/services';
 import {
-deleteTenent,
 getBackupJobs,
 getBackupPolicy,
 getTenant,
 } from '@/services/tenant';
+import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
@@ -76,7 +76,7 @@ export default function TenantOverview() {
   };
 
   const handleDelete = async () => {
-    const res = await deleteTenent({ ns, name });
+    const res = await deleteTenantReportWrap({ ns, name });
     if (res.successful) {
       message.success(
         intl.formatMessage({

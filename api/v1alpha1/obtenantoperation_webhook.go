@@ -105,7 +105,7 @@ func (r *OBTenantOperation) Default() {
 			Name:      secondaryTenantName,
 		}, secondaryTenant)
 		if err != nil {
-			obtenantoperationlog.Error(err, "get tenant")
+			// obtenantoperationlog.Error(err, "get tenant")
 			return
 		}
 		secondMeta := secondaryTenant.GetObjectMeta()

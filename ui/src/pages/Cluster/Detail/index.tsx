@@ -1,11 +1,13 @@
 import logoImg from '@/assets/logo1.svg';
 import { logoutReq } from '@/services';
+import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
-import { Outlet, history, useLocation, useParams, useModel } from '@umijs/max';
+import { Outlet, history, useLocation, useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import { useEffect, useState } from 'react';
 const subSideMenus: MenuItem[] = [
   {
     title: intl.formatMessage({
@@ -39,13 +41,15 @@ const subSideMenus: MenuItem[] = [
 const ClusterDetail: React.FC = () => {
   const params = useParams();
   const user = localStorage.getItem('user');
+  const [version, setVersion] = useState<string>('');
   const location = useLocation();
-  const { appInfo } = useModel('global');
+  const { reportDataInterval } = useModel('global');
   const { clusterId } = params;
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
       if (data.successful) {
+        clearInterval(reportDataInterval.current);
         history.push('/login');
       }
     },
@@ -98,6 +102,12 @@ const ClusterDetail: React.FC = () => {
     </Menu>
   );
 
+  useEffect(() => {
+    getAppInfoFromStorage().then((appInfo) => {
+      setVersion(appInfo.version);
+    });
+  }, []);
+
   return (
     <div>
       <BasicLayout
@@ -110,7 +120,7 @@ const ClusterDetail: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: appInfo?.version,
+            version,
           },
         }}
         menus={menus}

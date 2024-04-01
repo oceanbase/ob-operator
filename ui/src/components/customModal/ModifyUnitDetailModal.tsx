@@ -12,7 +12,10 @@ import {
 findMinParameter,
 modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
-import { createObtenantPool,patchObtenantPool } from '@/services/tenant';
+import { 
+patchObtenantPoolReportWrap, 
+createTenantReportWrap 
+} from '@/services/reportRequest/tenantReportReq';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { useEffect,useState } from 'react';
@@ -90,8 +93,8 @@ export default function ModifyUnitDetailModal({
   );
   const selectZone = Form.useWatch('selectZone', form);
   const obtenantPoolReq = newResourcePool
-    ? createObtenantPool
-    : patchObtenantPool;
+    ? createTenantReportWrap
+    : patchObtenantPoolReportWrap;
 
   const handleSubmit = async () => {
     try {

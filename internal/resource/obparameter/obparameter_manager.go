@@ -193,7 +193,7 @@ func (m *OBParameterManager) PrintErrEvent(err error) {
 
 func (m *OBParameterManager) ArchiveResource() {
 	m.Logger.Info("Archive obparameter", "obparameter", m.OBParameter.Name)
-	m.Recorder.Event(m.OBParameter, "Archive", "", "archive obparameter")
+	m.Recorder.Event(m.OBParameter, "Archive", "", "Archive obparameter")
 	m.OBParameter.Status.Status = "Failed"
 	m.OBParameter.Status.OperationContext = nil
 }

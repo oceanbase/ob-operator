@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { upgradeObcluster } from '@/services';
+import { upgradeClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -15,7 +15,6 @@ export default function UpgradeModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
-
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -26,10 +25,10 @@ export default function UpgradeModal({
   const handleCancel = () => setVisible(false);
   const onFinish = async ({ image }: any) => {
     const [ns, name] = getNSName();
-    const res = await upgradeObcluster({ ns, name, image });
+    const res = await upgradeClusterReportWrap({ ns, name, image });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

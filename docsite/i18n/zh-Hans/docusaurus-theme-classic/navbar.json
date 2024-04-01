@@ -1,0 +1,70 @@
+{
+  "title": {
+    "message": "ob-operator",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "OceanBase Logo",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentations": {
+    "message": "文档",
+    "description": "Navbar item with label Documentations"
+  },
+  "item.label.Blog": {
+    "message": "博客",
+    "description": "Navbar item with label Blog"
+  },
+  "item.label.GitHub": {
+    "message": "GitHub",
+    "description": "Navbar item with label GitHub"
+  },
+  "item.label.ob-operator": {
+    "message": "ob-operator",
+    "description": "Navbar item with label ob-operator"
+  },
+  "item.label.Tutorial": {
+    "message": "教程",
+    "description": "Navbar item with label Tutorial"
+  },
+  "item.label.API Reference": {
+    "message": "API 参考",
+    "description": "Navbar item with label API Reference"
+  },
+  "item.label.Manual": {
+    "message": "用户手册",
+    "description": "Navbar item with label Manual"
+  },
+  "item.label.Developers": {
+    "message": "开发手册",
+    "description": "Navbar item with label Developers"
+  },
+  "item.label.Change log": {
+    "message": "更新日志",
+    "description": "Navbar item with label Change log"
+  },
+  "item.label.Architecture": {
+    "message": "架构设计",
+    "description": "Navbar item with label Architecture"
+  },
+  "item.label.Development on Laptop": {
+    "message": "在本地开发 ob-operator",
+    "description": "Navbar item with label Development on Laptop"
+  },
+  "item.label.Deploy a Cluster on laptop": {
+    "message": "在本地通过 ob-operator 部署集群",
+    "description": "Navbar item with label Deploy a Cluster on laptop"
+  },
+  "item.label.Development": {
+    "message": "如何构建",
+    "description": "Navbar item with label Development"
+  },
+  "item.label.Contributing": {
+    "message": "贡献指南",
+    "description": "Navbar item with label Contributing"
+  },
+  "item.label.Developer": {
+    "message": "开发手册",
+    "description": "Navbar item with label Developer"
+  }
+}

@@ -23,13 +23,13 @@ export default function ActivateTenantModal({
           }),
         );
         setVisible(false);
-        successCallback();
+        if(successCallback)successCallback();
       }
     },
   });
   const handleSubmit = async () => {
     const [ns, name] = getNSName();
-    await activateTenant({ ns, name });
+    await activateTenant({ ns, name, failover: true });
   };
   const handleCancel = () => setVisible(false);
 

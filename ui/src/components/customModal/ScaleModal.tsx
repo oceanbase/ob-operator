@@ -3,7 +3,7 @@ import { Form, InputNumber, message } from 'antd';
 import CustomModal from '.';
 
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { scaleObserver } from '@/services';
+import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 
@@ -32,7 +32,7 @@ export default function ScaleModal({
   const onFinish = async (val: any) => {
     if (!zoneName) throw new Error('zoneName is not defined');
     const [namespace, name] = getNSName();
-    const res = await scaleObserver({
+    const res = await scaleObserverReportWrap({
       namespace,
       name,
       zoneName,
@@ -40,7 +40,7 @@ export default function ScaleModal({
     });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

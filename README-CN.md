@@ -15,7 +15,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，如果您无法访问官方制品托管在 `quay.io` 镜像站的镜像，可通过下面的指令安装我们转托在 `docker.io` 中的制品：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
 本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。
@@ -29,7 +29,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_r
 * 稳定版本
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
 ```
 
 * 开发版本
@@ -45,7 +45,7 @@ Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安�
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.0
 ```
 
 #### 使用 terraform
@@ -94,7 +94,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
 ```
 
 一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
@@ -109,7 +109,7 @@ test   running   6m2s
 
 ### 连接集群
 
-通过以下命令查找 observer 的 POD IP，POD 名的规则是 {cluster_name}-{cluster_id}-{zone}-uuid：
+通过以下命令查找 observer 的 POD IP，POD 名的规则是 `${cluster_name}-${cluster_id}-${zone}-uuid`：
 
 ```shell
 kubectl get pods -o wide
@@ -130,7 +130,7 @@ helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
 ```
 
-![oceanbase-dashboard-install](./docs/img/oceanbase-dashboard-install.jpg)
+![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
 
 OceanBase Dashboard 成功安装之后, 会自动创建一个 admin 用户和随机密码，可以通过如下命令查看密码。
 ```
@@ -140,18 +140,18 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 kubectl get svc oceanbase-dashboard-ob-dashboard
 ```
-![oceanbase-dashboard-service](./docs/img/oceanbase-dashboard-service.jpg)
+![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
 使用 admin 账号和查看到的密码登录。
-![oceanbase-dashboard-overview](./docs/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
 
 ## 项目架构
 
 ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、全局的任务管理器实例以及解决长调度的任务流机制完成对 OceanBase 集群及相关应用的控制和管理。ob-operator 的架构大致如下图所示：
 
-![ob-operator 架构设计](./docs/img/ob-operator-arch.png)
+![ob-operator 架构设计](./docsite/static/img/ob-operator-arch.png)
 
-有关架构细节可参见[架构设计文档](./docs/zh_CN/arch.md)。
+有关架构细节可参见[架构设计文档](./docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)。
 
 ## 特性
 
@@ -185,9 +185,9 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 文档
 
-- [ob-operator 架构设计](docs/zh_CN/arch.md)
-- [部署 ob-operator](docs/zh_CN/deploy.md)
-- [开发手册](docs/en_US/development.md)（英文）
+- [ob-operator 架构设计](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)
+- [部署 ob-operator](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/deploy.md)
+- [开发手册](docsite/docs/developer/development.md)（英文）
 - [用户手册](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367)
 
 ## 获取帮助
@@ -197,7 +197,7 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [官方网站](https://open.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- 钉钉群（[二维码](./docs/img/dingtalk-operator-users.png)）
+- 钉钉群（[二维码](./docsite/static/img/dingtalk-operator-users.png)）
 - 微信群（请添加小助手微信，微信号: OBCE666）
 
 ## 参与开发

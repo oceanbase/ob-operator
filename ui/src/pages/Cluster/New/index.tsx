@@ -1,4 +1,5 @@
-import { createObclusterReq,getStorageClasses } from '@/services';
+import { getStorageClasses } from '@/services';
+import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
@@ -43,7 +44,7 @@ export default function New() {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     
-    const res = await createObclusterReq(values);
+    const res = await createClusterReportWrap({...values});
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();

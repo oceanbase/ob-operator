@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react';
-import { infoReq } from '@/services';
+import { getAppInfoFromStorage } from '@/utils/helper';
 import JSEncrypt from 'jsencrypt';
 
 export const usePublicKey = () => {
   const [publicKey, setPublicKey] = React.useState<string>('');
 
   useEffect(() => {
-    infoReq().then((res) => {
-      setPublicKey(res.data.publicKey); 
+    getAppInfoFromStorage().then((appInfo) => {
+      setPublicKey(appInfo.publicKey); 
     }).catch((err) => {
       console.log(err)
     });

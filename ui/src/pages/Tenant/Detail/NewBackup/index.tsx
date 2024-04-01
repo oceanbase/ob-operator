@@ -1,6 +1,7 @@
 import { usePublicKey } from '@/hook/usePublicKey';
 import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { createBackupPolicyOfTenant, getTenant } from '@/services/tenant';
+import { getTenant } from '@/services/tenant';
+import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
@@ -35,10 +36,10 @@ export default function NewBackup() {
       );
       return;
     }
-    const res = await createBackupPolicyOfTenant({
+    const res = await createBackupReportWrap({
       ns,
       name,
-      ...formatBackupForm(values, publicKey),
+      ...formatBackupForm(values, publicKey)
     });
     if (res.successful) {
       message.success(

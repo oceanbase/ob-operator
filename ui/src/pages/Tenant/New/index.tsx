@@ -3,7 +3,7 @@ import {
   getEssentialParameters as getEssentialParametersReq,
   getSimpleClusterList,
 } from '@/services';
-import { createTenant } from '@/services/tenant';
+import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
@@ -60,7 +60,7 @@ export default function New() {
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
-    const res = await createTenant({
+    const res = await createTenantReportWrap({
       namespace: ns,
       ...reqData,
     });
