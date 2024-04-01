@@ -379,7 +379,7 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		}
 	} else {
 		// Get ip_list from primary tenant
-		aps, err := con.ListTenantAccessPoints(tenantCR)
+		aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
 		if err != nil {
 			return "", err
 		}
