@@ -86,6 +86,7 @@ export default function Topo() {
             replicaList: tenantTopoData?.replicas,
             editZone,
           }}
+          status={tenantTopoData?.info?.status}
           refreshTenant={reGetTenantDetail}
           header={
             <BasicInfo

@@ -6,15 +6,21 @@ import { useRequest,useUpdateEffect } from 'ahooks';
 import { message } from 'antd';
 import _ from 'lodash';
 import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
-import { useModel } from '@umijs/max';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
-import { getClusterFromTenant, getOriginResourceUsages, getZonesOptions } from '@/pages/Tenant/helper';
+import {
+getClusterFromTenant,
+getOriginResourceUsages,
+getZonesOptions,
+} from '@/pages/Tenant/helper';
 import { getClusterDetailReq } from '@/services';
-import { deleteClusterReportWrap, deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
+import {
+deleteClusterReportWrap,
+deleteObzoneReportWrap,
+} from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
 import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode,config } from './G6register';
@@ -22,11 +28,12 @@ import type { OperateTypeLabel } from './constants';
 import {
 clusterOperate,
 clusterOperateOfTenant,
-getZoneOperateOfTenant,
+getClusterOperates,
 getZoneOperateOfCluster,
+getZoneOperateOfTenant,
 serverOperate,
 } from './constants';
-import { appenAutoShapeListener,checkIsSame,getServerNumber,haveDisabledOperate } from './helper';
+import { appenAutoShapeListener,checkIsSame,getServerNumber } from './helper';
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
@@ -36,6 +43,7 @@ interface TopoProps {
   resourcePoolDefaultValue?: any;
   refreshTenant?: () => void;
   defaultUnitCount?: number;
+  status?: string;
 }
 
 //Cluster topology diagram component
@@ -47,17 +55,18 @@ export default function TopoComponent({
   resourcePoolDefaultValue,
   refreshTenant,
   defaultUnitCount,
+  status,
 }: TopoProps) {
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
   const modelRef = useRef<HTMLInputElement>(null);
+
   const [visible, setVisible] = useState<boolean>(false);
   const [operateList, setOprateList] =
     useState<OperateTypeLabel>(clusterOperateList);
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
-
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
       ? [namespace, clusterNameOfKubectl]
@@ -87,13 +96,21 @@ export default function TopoComponent({
       },
     },
   );
+  const clusterStatus = useRef(originTopoData?.basicInfo?.status);
+  const tenantStatus = useRef(status);
 
   //Node more icon click event
   const handleClick = (evt: IG6GraphEvent) => {
     if (modelRef.current) {
       switch (evt.item?._cfg?.model?.type) {
         case 'cluster':
-          setOprateList(clusterOperateList);
+          let disabled = tenantReplicas
+            ? clusterStatus.current !== 'running' ||
+              tenantStatus.current !== 'running'
+            : clusterStatus.current !== 'running';
+          setOprateList(
+            getClusterOperates(clusterOperateList, disabled),
+          );
           break;
         case 'zone':
           const zone = evt.item?._cfg?.model?.label as string;
@@ -104,10 +121,20 @@ export default function TopoComponent({
               (replica) => replica.zone === zone,
             );
             setOprateList(
-              getZoneOperateOfTenant(haveResourcePool, tenantReplicas),
+              getZoneOperateOfTenant(
+                haveResourcePool,
+                tenantReplicas,
+                tenantStatus.current,
+                clusterStatus.current
+              ),
             );
           } else {
-            setOprateList(getZoneOperateOfCluster(originTopoData?.topoData));
+            setOprateList(
+              getZoneOperateOfCluster(
+                originTopoData?.topoData,
+                clusterStatus.current,
+              ),
+            );
           }
           chooseZoneName.current = zone;
           break;
@@ -287,19 +314,12 @@ export default function TopoComponent({
   //Used to re-render the view after data update
   useUpdateEffect(() => {
     let checkStatusTimer: NodeJS.Timer;
+    clusterStatus.current = originTopoData?.basicInfo?.status;
     //polling
     if (!RESULT_STATUS.includes(originTopoData.topoData.status)) {
-      if (!haveDisabledOperate(operateList))
-        setOprateList(operateList.map((item) => ({ ...item, disabled: true })));
-
       checkStatusTimer = setInterval(() => {
         getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
       }, 3000);
-    } else {
-      if (haveDisabledOperate(operateList))
-        setOprateList(
-          operateList.map((item) => ({ ...item, disabled: false })),
-        );
     }
     if (graph.current) {
       if (!checkIsSame(beforeTopoData.current, originTopoData.topoData)) {
@@ -314,6 +334,10 @@ export default function TopoComponent({
       if (checkStatusTimer) clearInterval(checkStatusTimer);
     };
   }, [originTopoData]);
+
+  useUpdateEffect(() => {
+    tenantStatus.current = status;
+  }, [status]);
 
   /**
    * Mouseleave will be triggered when the modal is opened,
@@ -373,7 +397,7 @@ export default function TopoComponent({
           />
         ),
 
-        [operateList, visible],
+        [operateList, visible, status],
       )}
 
       <OperateModal
