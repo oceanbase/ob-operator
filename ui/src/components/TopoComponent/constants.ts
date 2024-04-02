@@ -1,4 +1,5 @@
 import { intl } from '@/utils/intl';
+import { clone } from 'lodash';
 import type { GraphNodeType } from './helper';
 type OperateTypeLabel = { value: string; label: string; disabled?: boolean }[];
 
@@ -81,6 +82,8 @@ const clusterOperateOfTenant: OperateTypeLabel = [
 const getZoneOperateOfTenant = (
   haveResourcePool: boolean,
   tenantReplicas: API.ReplicaDetailType[],
+  tenantStatus?: string,
+  clusterStatus?: string,
 ): OperateTypeLabel => {
   return haveResourcePool
     ? [
@@ -90,7 +93,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.EditResourcePool',
             defaultMessage: '编辑资源池',
           }),
-          disabled: false,
+          disabled: tenantStatus !== 'running' || clusterStatus !== 'running',
         },
         {
           value: 'deleteResourcePool',
@@ -98,7 +101,10 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.DeleteAResourcePool',
             defaultMessage: '删除资源池',
           }),
-          disabled: tenantReplicas.length <= 2,
+          disabled:
+            tenantReplicas.length <= 2 ||
+            tenantStatus !== 'running' ||
+            clusterStatus !== 'running',
         },
       ]
     : [
@@ -108,25 +114,40 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.AddAResourcePool',
             defaultMessage: '新增资源池',
           }),
-          disabled: false,
+          disabled: tenantStatus !== 'running' || clusterStatus !== 'running',
         },
       ];
 };
 
 const getZoneOperateOfCluster = (
   topoData: GraphNodeType | undefined,
+  status: string,
 ): OperateTypeLabel => {
   if (!topoData) return [];
-  const isDisabled = topoData?.children?.length <= 2;
+  const isDisabled = topoData?.children?.length <= 2 || status !== 'running';
   zoneOperate.forEach((operate) => {
     if (operate.value === 'deleteZone') operate.disabled = isDisabled;
+    if (operate.value === 'scaleServer')
+      operate.disabled = status !== 'running';
   });
   return zoneOperate;
+};
+
+const getClusterOperates = (
+  clusterOperateList: OperateTypeLabel,
+  disabled: boolean,
+): OperateTypeLabel => {
+  const res = clone(clusterOperateList);
+  res.forEach((item) => {
+    item.disabled = disabled;
+  });
+  return res;
 };
 
 export {
   clusterOperate,
   clusterOperateOfTenant,
+  getClusterOperates,
   getZoneOperateOfCluster,
   getZoneOperateOfTenant,
   serverOperate,

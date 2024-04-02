@@ -12,9 +12,9 @@ import {
 findMinParameter,
 modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
-import { 
-patchObtenantPoolReportWrap, 
-createObtenantPoolReportWrap 
+import {
+createObtenantPoolReportWrap,
+patchObtenantPoolReportWrap
 } from '@/services/reportRequest/tenantReportReq';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
@@ -89,6 +89,7 @@ export default function ModifyUnitDetailModal({
   const [minResource, setMinResource] = useState<MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter.minPoolMemory }),
   );
+  
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
@@ -282,7 +283,12 @@ export default function ModifyUnitDetailModal({
                 style={{ marginRight: 24 }}
               >
                 {/* <Input placeholder={'请输入'} /> */}
-                <Select options={zonesOptions} />
+                <Select
+                  onChange={(val: string) => {
+                    setSelectZones([val]);
+                  }}
+                  options={zonesOptions}
+                />
               </Form.Item>
             </Col>
             <Col span={4}>
@@ -355,6 +361,7 @@ export default function ModifyUnitDetailModal({
             <Form.Item
               label="CPU"
               name={['unitConfig', 'cpuCount']}
+              validateFirst
               rules={[
                 {
                   required: true,
@@ -402,6 +409,7 @@ export default function ModifyUnitDetailModal({
           <Col span={8}>
             <Form.Item
               label="Memory"
+              validateFirst
               name={['unitConfig', 'memorySize']}
               rules={[
                 {
@@ -446,6 +454,7 @@ export default function ModifyUnitDetailModal({
           </Col>
           <Col span={8}>
             <Form.Item
+              validateFirst
               rules={[
                 {
                   required: true,

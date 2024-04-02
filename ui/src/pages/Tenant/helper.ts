@@ -286,8 +286,8 @@ export const getOriginResourceUsages = (
   originResourceUsages.obServerResources.forEach((resource) => {
     if (resource.obZone === current.zone) {
       resource.availableCPU += Number(current.minCPU);
-      resource.availableLogDisk += Number(current.logDiskSize);
-      resource.availableMemory += Number(current.memorySize);
+      resource.availableLogDisk += Number(current.logDiskSize.split('Gi')[0]);
+      resource.availableMemory += Number(current.memorySize.split('Gi')[0]);
       originResourceUsages.obZoneResourceMap[current.zone].availableCPU +=
         Number(current.minCPU);
       originResourceUsages.obZoneResourceMap[current.zone].availableLogDisk +=
