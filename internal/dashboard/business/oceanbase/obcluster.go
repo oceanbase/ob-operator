@@ -74,9 +74,9 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		return nil, errors.Wrap(err, "failed to build obcluster topology")
 	}
 	clusterMode := modelcommon.ClusterModeNormal
-	labels := obcluster.GetLabels()
-	if labels != nil {
-		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
+	annotations := obcluster.GetAnnotations()
+	if annotations != nil {
+		if mode, ok := annotations[oceanbaseconst.AnnotationsMode]; ok {
 			switch mode {
 			case oceanbaseconst.ModeStandalone:
 				clusterMode = modelcommon.ClusterModeStandalone
@@ -466,9 +466,9 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	topology := buildOBClusterTopology(param.Topology)
 	obcluster := &v1alpha1.OBCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: param.Namespace,
-			Name:      param.Name,
-			Labels:    map[string]string{},
+			Namespace:   param.Namespace,
+			Name:        param.Name,
+			Annotations: map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
 			ClusterName:      param.ClusterName,
@@ -483,9 +483,9 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	}
 	switch param.Mode {
 	case modelcommon.ClusterModeStandalone:
-		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 	case modelcommon.ClusterModeService:
-		obcluster.Labels[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
+		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
 	default:
 	}
 	return obcluster
