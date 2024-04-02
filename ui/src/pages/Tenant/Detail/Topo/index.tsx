@@ -17,7 +17,7 @@ export default function Topo() {
   const [editZone, setEditZone] = useState<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
-  const { data: tenantResponse,refresh: reGetTenantDetail } = useRequest(getTenant, {
+  const { data: tenantResponse,refresh: reGetTenantDetail,loading } = useRequest(getTenant, {
     defaultParams: [{ ns, name }],
     onSuccess:({ data, successful }) => {
       if (successful) {
@@ -88,6 +88,7 @@ export default function Topo() {
           }}
           status={tenantTopoData?.info?.status}
           refreshTenant={reGetTenantDetail}
+          loading={loading}
           header={
             <BasicInfo
               info={tenantTopoData.info}

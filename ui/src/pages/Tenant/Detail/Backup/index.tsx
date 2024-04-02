@@ -17,7 +17,7 @@ export default function Backup() {
   const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout>()
 
-  const { refresh: backupPolicyRefresh } = useRequest(getBackupPolicy, {
+  const { refresh: backupPolicyRefresh, loading } = useRequest(getBackupPolicy, {
     defaultParams: [{ ns, name }],
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -42,7 +42,7 @@ export default function Backup() {
   }, []);
   
   return (
-    <PageContainer>
+    <PageContainer loading={loading}>
       {!backupPolicy ? (
         <Card
           style={{

@@ -22,7 +22,7 @@ const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
   const [clusterNames, setClusterNames] = useState<LabelType[]>([]);
 
-  const { data: clusterListRes } = useRequest(getObclusterListReq, {
+  const { data: clusterListRes, loading } = useRequest(getObclusterListReq, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
         let clusterNames: LabelType[] = data.map((item) => ({
@@ -41,6 +41,7 @@ const ClusterPage: React.FC = () => {
     <PageContainer>
       <Row gutter={[16, 16]}>
         <ClusterList
+          loading={loading}
           clusterList={clusterList}
           handleAddCluster={handleAddCluster}
         />

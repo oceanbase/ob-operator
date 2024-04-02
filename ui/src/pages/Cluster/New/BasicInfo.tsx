@@ -26,29 +26,6 @@ export default function BasicInfo({
   // control the modal for adding a new namespace
   const [visible, setVisible] = useState(false);
   const { data, run: getNS } = useRequest(getNameSpaces);
-  const CLUSTER_MODE = [
-    {
-      value: 'NORMAL',
-      label: intl.formatMessage({
-        id: 'Dashboard.Cluster.New.BasicInfo.RegularMode',
-        defaultMessage: '常规模式',
-      }),
-    },
-    {
-      value: 'STANDLONE',
-      label: intl.formatMessage({
-        id: 'Dashboard.Cluster.New.BasicInfo.MonomerMode',
-        defaultMessage: '单体模式',
-      }),
-    },
-    {
-      value: 'SERVICE',
-      label: intl.formatMessage({
-        id: 'Dashboard.Cluster.New.BasicInfo.ServiceMode',
-        defaultMessage: 'Service模式',
-      }),
-    },
-  ];
 
   const filterOption = (
     input: string,
@@ -227,9 +204,10 @@ export default function BasicInfo({
                   id: 'Dashboard.Cluster.New.BasicInfo.PleaseSelect',
                   defaultMessage: '请选择',
                 })}
-                optionLabelProp="value"
+                optionLabelProp="selectLabel"
                 options={Array.from(MODE_MAP.keys()).map((key) => ({
-                  value: MODE_MAP.get(key)?.text,
+                  value: key,
+                  selectLabel:MODE_MAP.get(key)?.text,
                   label: (
                     <div
                       style={{
