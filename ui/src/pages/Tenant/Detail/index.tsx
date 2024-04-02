@@ -89,7 +89,7 @@ const TenantDetail: React.FC = () => {
         defaultMessage: '连接租户',
       }),
       key: 'connection',
-      link: `/tenant/${tenantId}/connection`,
+      link: `/tenant/${ns}/${name}/${tenantName}/connection`,
     },
   ];
 

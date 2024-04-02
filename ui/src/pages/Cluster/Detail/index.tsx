@@ -91,7 +91,7 @@ const ClusterDetail: React.FC = () => {
         defaultMessage: '连接集群',
       }),
       key: 'connection',
-      link: `/cluster/${clusterId}/connection`,
+      link: `/cluster/${ns}/${name}/${clusterName}/connection`,
     },
   ];
 
