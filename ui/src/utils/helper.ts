@@ -113,7 +113,5 @@ export const reportPollData = async () => {
       data,
     });
     localStorage.setItem('lastReportTime', Date.now().toString());
-  } catch (err) {
-    throw new Error(err);
-  }
+  } catch (err) {}
 };

@@ -1,18 +1,21 @@
 import { getAppInfo } from '@/services';
+import { useModel } from '@umijs/max';
 import JSEncrypt from 'jsencrypt';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 export const usePublicKey = () => {
-  const [publicKey, setPublicKey] = React.useState<string>('');
+  const { publicKey, setPublicKey } = useModel('global');
 
   useEffect(() => {
-    getAppInfo()
-      .then(({ data }) => {
-        setPublicKey(data.publicKey);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (!publicKey) {
+      getAppInfo()
+        .then(({ data }) => {
+          setPublicKey(data.publicKey);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   }, []);
 
   return publicKey;
