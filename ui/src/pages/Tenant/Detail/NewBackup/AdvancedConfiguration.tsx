@@ -102,7 +102,7 @@ export default function AdvancedConfiguration({
                 ]}
                 name={['jobKeepDays']}
               >
-                <InputNumber disabled={disable} />
+                <InputNumber min={1} disabled={disable} />
               </Form.Item>
             )}
           </Col>
@@ -132,7 +132,7 @@ export default function AdvancedConfiguration({
                 ]}
                 name={['recoveryDays']}
               >
-                <InputNumber disabled={disable} />
+                <InputNumber min={1} disabled={disable} />
               </Form.Item>
             )}
           </Col>

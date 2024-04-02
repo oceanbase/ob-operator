@@ -1,12 +1,12 @@
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
-import { useParams } from '@umijs/max';
 import {
   deleteBackupReportWrap,
   editBackupReportWrap,
 } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Button,
@@ -16,8 +16,8 @@ import {
   Form,
   InputNumber,
   Row,
-  Select,
   Space,
+  Typography,
   message,
 } from 'antd';
 import dayjs from 'dayjs';
@@ -40,6 +40,8 @@ interface BackupConfigurationProps {
   backupPolicyRefresh: () => void;
 }
 
+const { Text } = Typography;
+
 export default function BackupConfiguration({
   backupPolicy,
   setBackupPolicy,
@@ -52,36 +54,41 @@ export default function BackupConfiguration({
   const { ns, name } = useParams();
   const publicKey = usePublicKey();
 
-  const INFO_CONFIG = {
-    archivePath: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.LogArchivePath',
-        defaultMessage: '日志归档路径',
-      }),
-    },
-    bakDataPath: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.DataBackupPath',
-        defaultMessage: '数据备份路径',
-      }),
-    },
-    status: {
+  const INFO_CONFIG_ARR = [
+    {
       label: intl.formatMessage({
         id: 'Dashboard.Detail.Backup.BackupConfiguration.Status',
         defaultMessage: '状态',
       }),
+      value: 'status',
     },
-    destType: {
+    {
       label: intl.formatMessage({
         id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupMediaType',
         defaultMessage: '备份介质类型',
       }),
+      value: 'destType',
     },
-  };
+    {
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupConfiguration.LogArchivePath',
+        defaultMessage: '日志归档路径',
+      }),
+      value: 'archivePath',
+    },
+    {
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Backup.BackupConfiguration.DataBackupPath',
+        defaultMessage: '数据备份路径',
+      }),
+      value: 'bakDataPath',
+    },
+  ];
   if (backupPolicy.ossAccessSecret) {
-    INFO_CONFIG.ossAccessSecret = {
+    INFO_CONFIG_ARR.splice(2, 0, {
+      value: 'ossAccessSecret',
       label: 'OSS Access Secret',
-    };
+    });
   }
   const DATE_CONFIG = {
     jobKeepDays: intl.formatMessage({
@@ -236,8 +243,7 @@ export default function BackupConfiguration({
             danger
             onClick={() =>
               showDeleteConfirm({
-                onOk: () =>
-                  deleteBackupPolicyReq({ ns, name }),
+                onOk: () => deleteBackupPolicyReq({ ns, name }),
                 title: intl.formatMessage({
                   id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
                   defaultMessage: '确定要删除该备份策略吗？',
@@ -259,22 +265,17 @@ export default function BackupConfiguration({
         initialValues={initialValues}
       >
         <Row style={{ marginBottom: 24 }} gutter={[12, 12]}>
-          {Object.keys(INFO_CONFIG).map((key, index) => (
-            <Col style={{ display: 'flex' }} key={index} span={8}>
-              {isEdit && INFO_CONFIG[key].editRender ? (
-                <Form.Item label={INFO_CONFIG[key].label} name={key}>
-                  {INFO_CONFIG[key].editRender}
-                </Form.Item>
-              ) : (
-                <>
-                  <span
-                    style={{ marginRight: 8, color: '#8592AD', flexShrink: 0 }}
-                  >
-                    {INFO_CONFIG[key].label}:
-                  </span>
-                  <span>{backupPolicy[key]}</span>
-                </>
-              )}
+          {INFO_CONFIG_ARR.map((infoItem, index) => (
+            <Col key={index} span={8}>
+              <span style={{ marginRight: 8, color: '#8592AD', flexShrink: 0 }}>
+                {infoItem.label}:
+              </span>
+              <Text
+                style={{ width: 316 }}
+                ellipsis={{ tooltip: backupPolicy[infoItem.value] }}
+              >
+                {backupPolicy[infoItem.value]}
+              </Text>
             </Col>
           ))}
         </Row>

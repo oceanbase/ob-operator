@@ -13,7 +13,7 @@ import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
 
 export default function Backup() {
-  const { ns, name } = useParams();
+  const { ns, name, tenantName } = useParams();
   const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout>()
 
@@ -72,7 +72,7 @@ export default function Backup() {
           <Button
             type="primary"
             onClick={() =>
-              history.push(`/tenant/ns=${ns}&nm=${name}/backup/new`)
+              history.push(`/tenant/${ns}/${name}/${tenantName}/backup/new`)
             }
           >
             {intl.formatMessage({
