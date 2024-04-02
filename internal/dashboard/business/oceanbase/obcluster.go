@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -506,6 +507,18 @@ func JudgeResourceEnoughForOBCluster(ctx context.Context, obcluster *v1alpha1.OB
 	unmetCount := 0
 	for _, zone := range obcluster.Spec.Topology {
 		unmetCount += zone.Replica
+	}
+	if obcluster.Status.Status == "running" {
+		existing, err := clients.ClusterClient.Get(ctx, obcluster.Namespace, obcluster.Name, metav1.GetOptions{})
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				return oberr.NewBadRequest("OBCluster not found")
+			}
+			return oberr.Wrap(err, oberr.ErrInternal, "Get obcluster")
+		}
+		for _, zone := range existing.Spec.Topology {
+			unmetCount -= zone.Replica
+		}
 	}
 	for _, node := range nodes {
 		if unmetCount == 0 {
