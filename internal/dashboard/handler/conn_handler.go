@@ -105,6 +105,8 @@ func (w wsWrapper) Close() error {
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/terminal [PUT]
+// @Param namespace path string true "namespace"
+// @Param name path string true "name"
 // @Security ApiKeyAuth
 func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error) {
 	nn := &param.K8sObjectIdentity{}
@@ -160,6 +162,8 @@ func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error)
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obtenants/{namespace}/{name}/terminal [PUT]
+// @Param namespace path string true "namespace"
+// @Param name path string true "name"
 // @Security ApiKeyAuth
 func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) {
 	nn := &param.K8sObjectIdentity{}
@@ -248,6 +252,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/conn/{terminalId} [GET]
+// @Param terminalId path string true "terminalId"
 // @Security ApiKeyAuth
 func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 	type ConnectReq struct {

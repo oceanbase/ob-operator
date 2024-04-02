@@ -373,6 +373,15 @@ const docTemplate = `{
                 ],
                 "summary": "Connect to oceanbase database",
                 "operationId": "ConnectDatabase",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "terminalId",
+                        "name": "terminalId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -1336,6 +1345,22 @@ const docTemplate = `{
                 ],
                 "summary": "Create oceanbase cluster connection",
                 "operationId": "CreateOBClusterConnection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2713,6 +2738,22 @@ const docTemplate = `{
                 ],
                 "summary": "Create oceanbase tenant connection",
                 "operationId": "CreateOBTenantConnection",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

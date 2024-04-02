@@ -1591,6 +1591,12 @@ paths:
       - application/json
       description: Connect to oceanbase database in websocket
       operationId: ConnectDatabase
+      parameters:
+      - description: terminalId
+        in: path
+        name: terminalId
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -2233,6 +2239,17 @@ paths:
       - application/json
       description: Create oceanbase cluster connection terminal
       operationId: CreateOBClusterConnection
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -3004,6 +3021,17 @@ paths:
       - application/json
       description: Create oceanbase tenant connection terminal
       operationId: CreateOBTenantConnection
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
