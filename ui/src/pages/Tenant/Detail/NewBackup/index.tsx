@@ -17,7 +17,7 @@ import ScheduleTimeFormItem from './ScheduleTimeFormItem';
 const { Password } = Input;
 export default function NewBackup() {
   const navigate = useNavigate();
-  const { ns, name } = useParams();
+  const { ns, name, tenantName } = useParams();
   const [form] = Form.useForm();
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
@@ -75,11 +75,11 @@ export default function NewBackup() {
           id: 'Dashboard.Detail.NewBackup.CreateATenantBackupPolicy',
           defaultMessage: '创建租户备份策略',
         }),
-        onBack: () => navigate(`/tenant/ns=${ns}&nm=${name}/backup`),
+        onBack: () => navigate(`/tenant/${ns}/${name}/${tenantName}/backup`),
       }}
       footer={[
         <Button
-          onClick={() => navigate(`/tenant/ns=${ns}&nm=${name}/backup`)}
+          onClick={() => navigate(`/tenant/${ns}/${name}/${tenantName}/backup`)}
           key="cancel"
         >
           {intl.formatMessage({

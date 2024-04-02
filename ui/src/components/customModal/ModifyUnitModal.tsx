@@ -89,6 +89,7 @@ export default function ModifyUnitModal({
           ]}
         >
           <InputNumber
+            min={1}
             placeholder={intl.formatMessage({
               id: 'Dashboard.components.customModal.ModifyUnitModal.PleaseEnter',
               defaultMessage: '请输入',

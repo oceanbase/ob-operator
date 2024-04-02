@@ -1,7 +1,8 @@
+import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Tag } from 'antd';
+import { Button,Card,Col,Table,Tag,Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -25,8 +26,10 @@ interface CanvasPieProps {
 
 interface ClusterListProps {
   handleAddCluster: () => void;
-  clusterList: any;
+  clusterList: API.ClusterItem[] | undefined;
 }
+
+const { Text } = Typography;
 
 const CanvasPie = ({ percent, name }: CanvasPieProps) => {
   const data = [
@@ -92,26 +95,16 @@ const CanvasPie = ({ percent, name }: CanvasPieProps) => {
 const columns: ColumnsType<DataType> = [
   {
     title: intl.formatMessage({
-      id: 'OBDashboard.pages.Cluster.ClusterList.ClusterName',
-      defaultMessage: '集群名',
-    }),
-    dataIndex: 'clusterName',
-    key: 'clusterName',
-    render: (value, record) => (
-      <Link
-        to={`${record.namespace}/${record.name}/${record.clusterName}`}
-      >
-        {value}
-      </Link>
-    ),
-  },
-  {
-    title: intl.formatMessage({
       id: 'Dashboard.pages.Cluster.ClusterList.ResourceName',
       defaultMessage: '资源名',
     }),
     dataIndex: 'name',
     key: 'name',
+    render: (value, record) => (
+      <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
+        {value}
+      </Link>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -120,6 +113,39 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'namespace',
     key: 'namespace',
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Cluster.ClusterList.ClusterName',
+      defaultMessage: '集群名',
+    }),
+    dataIndex: 'clusterName',
+    key: 'clusterName',
+  },
+  {
+    title: '集群模式',
+    dataIndex: 'mode',
+    key: 'mode',
+    render: (value) => <span>{MODE_MAP.get(value)?.text}</span>,
+  },
+  {
+    title: 'Zone 数量',
+    dataIndex: 'zoneCount',
+    key: 'zoneCount',
+    render: (_, record) => <span>{record?.topology?.length}</span>,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Cluster.ClusterList.Image',
+      defaultMessage: '镜像',
+    }),
+    dataIndex: 'image',
+    key: 'image',
+    render: (value) => (
+      <Text style={{ width: 216 }} ellipsis={{ tooltip: value }}>
+        {value}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -138,14 +164,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'createTime',
     key: 'createTime',
   },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Cluster.ClusterList.Image',
-      defaultMessage: '镜像',
-    }),
-    dataIndex: 'image',
-    key: 'image',
-  },
+
   //监控还未返回
   // {
   //   title: '监控',
@@ -174,7 +193,7 @@ const columns: ColumnsType<DataType> = [
 
 export default function ClusterList({
   handleAddCluster,
-  clusterList,
+  clusterList = [],
 }: ClusterListProps) {
   return (
     <Col span={24}>
