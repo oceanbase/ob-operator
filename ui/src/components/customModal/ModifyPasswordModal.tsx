@@ -1,4 +1,4 @@
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { changeTenantPassword } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
@@ -16,6 +16,7 @@ export default function ModifyPasswordModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
+  const { ns, name } = useParams();
   const publicKey = usePublicKey()
 
   const handleSubmit = async () => {
@@ -27,16 +28,15 @@ export default function ModifyPasswordModal({
 
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
     const res = await changeTenantPassword({
-      ns: namespace,
+      ns,
       name,
       User: 'root',
       Password: encryptText(values.password,publicKey) as string,
     });
     if (res.successful) {
       message.success(res.message);
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

@@ -292,7 +292,7 @@ func (m *OBServerManager) PrintErrEvent(err error) {
 
 func (m *OBServerManager) ArchiveResource() {
 	m.Logger.Info("Archive observer", "observer", m.OBServer.Name)
-	m.Recorder.Event(m.OBServer, "Archive", "", "archive observer")
+	m.Recorder.Event(m.OBServer, "Archive", "", "Archive observer")
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
 }

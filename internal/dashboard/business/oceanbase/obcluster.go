@@ -286,7 +286,7 @@ func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
 	for _, obcluster := range obclusterList.Items {
 		resp, err := buildOBClusterOverview(ctx, &obcluster)
 		if err != nil {
-			logger.Errorf("failed to build obcluster response: %v", err)
+			logger.Errorf("Failed to build obcluster response: %v", err)
 		}
 		obclusters = append(obclusters, *resp)
 	}
@@ -564,9 +564,9 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	// if obcluster.Status.Status != clusterstatus.Running {
-	// 	return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	// }
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
 	found := false
 	replicaChanged := false
 	var scaleDelta int
@@ -606,9 +606,9 @@ func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) (*r
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
-	// if obcluster.Status.Status != clusterstatus.Running {
-	// 	return errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	// }
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
 	if len(obcluster.Spec.Topology) <= 2 {
 		return nil, oberr.NewBadRequest("Forbid to delete zone when the number of zone <= 2")
 	}
@@ -637,9 +637,9 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
-	// if obcluster.Status.Status != clusterstatus.Running {
-	// 	return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
-	// }
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
 	for _, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone == zone.Zone {
 			return nil, errors.Errorf("obzone %s already exists", zone.Zone)

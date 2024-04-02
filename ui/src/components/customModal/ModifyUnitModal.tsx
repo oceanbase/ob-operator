@@ -1,5 +1,5 @@
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { patchTenantConfiguration } from '@/services/tenant';
+import { useParams } from '@umijs/max';
+import { modifyUnitNumReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { Form,InputNumber,message } from 'antd';
 import { useEffect } from 'react';
@@ -19,6 +19,7 @@ export default function ModifyUnitModal({
   successCallback,
 }: CommonModalType & { params: { defaultUnitCount: number } }) {
   const [form] = Form.useForm();
+  const { ns, name } = useParams();
   const { defaultUnitCount } = params;
   const handleSubmit = async () => {
     try {
@@ -29,9 +30,8 @@ export default function ModifyUnitModal({
 
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
-    const res = await patchTenantConfiguration({
-      ns: namespace,
+    const res = await modifyUnitNumReportWrap({
+      ns,
       name,
       ...values,
     });
@@ -43,7 +43,7 @@ export default function ModifyUnitModal({
             defaultMessage: '修改成功',
           }),
       );
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

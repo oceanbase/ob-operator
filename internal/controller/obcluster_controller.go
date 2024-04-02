@@ -76,7 +76,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			// obcluster not found, just return
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "get obcluster error")
+		logger.Error(err, "Get obcluster error")
 		return ctrl.Result{}, err
 	}
 

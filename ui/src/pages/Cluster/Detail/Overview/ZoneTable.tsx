@@ -4,9 +4,8 @@ import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { COLOR_MAP } from '@/constants';
-import { deleteObzone } from '@/services';
-import { getNSName } from './helper';
-
+import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { useParams } from '@umijs/max';
 interface ZoneTableProps {
   zones: API.Zone[];
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,6 +23,7 @@ export default function ZoneTable({
   setChooseServerNum,
   clusterStatus,
 }: ZoneTableProps) {
+  const { ns, name } = useParams();
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
       {
@@ -86,7 +86,7 @@ export default function ZoneTable({
           return (
             <>
               <Button
-                style={{ marginRight: 10 }}
+                style={{ paddingLeft: 0 }}
                 onClick={() => {
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
@@ -100,7 +100,7 @@ export default function ZoneTable({
                 })}
               </Button>
               <Button
-                style={clusterStatus !== 'failed' ? { color: '#ff4b4b' } : {}}
+                style={(clusterStatus !== 'failed' && zones.length > 2) ? { color: '#ff4b4b' } : {}}
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),
@@ -110,7 +110,7 @@ export default function ZoneTable({
                     }),
                   });
                 }}
-                disabled={clusterStatus === 'failed'}
+                disabled={clusterStatus === 'failed' || zones.length <= 2}
                 type="link"
               >
                 {intl.formatMessage({
@@ -133,8 +133,7 @@ export default function ZoneTable({
   };
   //删除的ns和name是集群的
   const handleDelete = async (zoneName: string) => {
-    const [ns, name] = getNSName();
-    const res = await deleteObzone({
+    const res = await deleteObzoneReportWrap({
       ns,
       name,
       zoneName,

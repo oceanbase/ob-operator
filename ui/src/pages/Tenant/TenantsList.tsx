@@ -22,7 +22,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     render: (value, record) => (
       <Link
         replace
-        to={`/tenant/ns=${record.namespace}&nm=${record.name}&tenantName=${record.tenantName}`}
+        to={`/tenant/${record.namespace}/${record.name}/${record.tenantName}`}
       >
         {value}
       </Link>

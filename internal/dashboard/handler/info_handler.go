@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -165,12 +164,15 @@ func GetStatistics(c *gin.Context) (*response.StatisticData, error) {
 	}
 
 	// Get deployment named oceanbase-controller-manager in oceanbase-system namespace
-	deployment, err := clt.ClientSet.AppsV1().Deployments("").Get(c, "oceanbase-controller-manager", metav1.GetOptions{})
+	deployments, err := clt.ClientSet.AppsV1().Deployments(corev1.NamespaceAll).List(c, metav1.ListOptions{
+		LabelSelector: "app.kubernetes.io/created-by=ob-operator-generate,app.kubernetes.io/component=manager",
+	})
 	if err != nil {
-		if !kubeerrors.IsNotFound(err) {
-			return nil, httpErr.NewInternal(err.Error())
-		}
+		return nil, httpErr.NewInternal(err.Error())
+	} else if len(deployments.Items) == 0 {
+		logger.Warn("No deployment named oceanbase-controller-manager found")
 	} else {
+		deployment := &deployments.Items[0]
 		targetNamespaces = append(targetNamespaces, deployment.Namespace)
 		for _, container := range deployment.Spec.Template.Spec.Containers {
 			if container.Name == "manager" {

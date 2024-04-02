@@ -6,23 +6,24 @@ import { useRequest,useUpdateEffect } from 'ahooks';
 import { message } from 'antd';
 import _ from 'lodash';
 import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
+import { useParams } from '@umijs/max';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
-import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '@/pages/Tenant/helper';
-import { deleteObcluster,deleteObzone,getClusterDetailReq } from '@/services';
+import { getClusterFromTenant, getOriginResourceUsages, getZonesOptions } from '@/pages/Tenant/helper';
+import { getClusterDetailReq } from '@/services';
+import { deleteClusterReportWrap, deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
-import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode,config } from './G6register';
 import type { OperateTypeLabel } from './constants';
 import {
 clusterOperate,
 clusterOperateOfTenant,
 getZoneOperateOfTenant,
+getZoneOperateOfCluster,
 serverOperate,
-zoneOperate,
 } from './constants';
 import { appenAutoShapeListener,checkIsSame,getServerNumber,haveDisabledOperate } from './helper';
 
@@ -46,6 +47,7 @@ export default function TopoComponent({
   refreshTenant,
   defaultUnitCount,
 }: TopoProps) {
+  const { ns:urlNs, name:urlName } = useParams();
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -59,7 +61,7 @@ export default function TopoComponent({
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
       ? [namespace, clusterNameOfKubectl]
-      : getNSName(),
+      : [urlNs, urlName],
   );
 
   //Control the visibility of operation and maintenance modal
@@ -105,7 +107,7 @@ export default function TopoComponent({
               getZoneOperateOfTenant(haveResourcePool, tenantReplicas),
             );
           } else {
-            setOprateList(zoneOperate);
+            setOprateList(getZoneOperateOfCluster(originTopoData?.topoData));
           }
           chooseZoneName.current = zone;
           break;
@@ -121,7 +123,7 @@ export default function TopoComponent({
   };
   //delete cluster
   const clusterDelete = async () => {
-    const res = await deleteObcluster({ ns, name });
+    const res = await deleteClusterReportWrap({ ns, name });
     if (res.successful) {
       message.success(res.message);
       getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
@@ -129,7 +131,7 @@ export default function TopoComponent({
   };
   //delete zone
   const zoneDelete = async () => {
-    const res = await deleteObzone({
+    const res = await deleteObzoneReportWrap({
       ns,
       name,
       zoneName: chooseZoneName.current,
@@ -192,7 +194,6 @@ export default function TopoComponent({
   };
   // delete resource pool
   const deleteResourcePool = async (zoneName: string) => {
-    const [ns, name] = getNSName();
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
       if (refreshTenant) refreshTenant();

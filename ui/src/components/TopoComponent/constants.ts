@@ -1,4 +1,5 @@
 import { intl } from '@/utils/intl';
+import type { GraphNodeType } from './helper';
 type OperateTypeLabel = { value: string; label: string; disabled?: boolean }[];
 
 const clusterOperate: OperateTypeLabel = [
@@ -39,6 +40,7 @@ const zoneOperate: OperateTypeLabel = [
       id: 'dashboard.Detail.Topo.constants.DeleteZone',
       defaultMessage: '删除zone',
     }),
+    disabled: false,
   },
 ];
 
@@ -78,7 +80,7 @@ const clusterOperateOfTenant: OperateTypeLabel = [
 
 const getZoneOperateOfTenant = (
   haveResourcePool: boolean,
-  tenantReplicas: API.ReplicaDetailType[]
+  tenantReplicas: API.ReplicaDetailType[],
 ): OperateTypeLabel => {
   return haveResourcePool
     ? [
@@ -88,7 +90,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.EditResourcePool',
             defaultMessage: '编辑资源池',
           }),
-          disabled: false
+          disabled: false,
         },
         {
           value: 'deleteResourcePool',
@@ -96,7 +98,7 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.DeleteAResourcePool',
             defaultMessage: '删除资源池',
           }),
-          disabled: tenantReplicas.length <= 2
+          disabled: tenantReplicas.length <= 2,
         },
       ]
     : [
@@ -106,14 +108,26 @@ const getZoneOperateOfTenant = (
             id: 'Dashboard.components.TopoComponent.constants.AddAResourcePool',
             defaultMessage: '新增资源池',
           }),
-          disabled: false
+          disabled: false,
         },
       ];
+};
+
+const getZoneOperateOfCluster = (
+  topoData: GraphNodeType | undefined,
+): OperateTypeLabel => {
+  if (!topoData) return [];
+  const isDisabled = topoData?.children?.length <= 2;
+  zoneOperate.forEach((operate) => {
+    if (operate.value === 'deleteZone') operate.disabled = isDisabled;
+  });
+  return zoneOperate;
 };
 
 export {
   clusterOperate,
   clusterOperateOfTenant,
+  getZoneOperateOfCluster,
   getZoneOperateOfTenant,
   serverOperate,
   zoneOperate,

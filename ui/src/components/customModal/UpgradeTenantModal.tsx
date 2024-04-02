@@ -2,8 +2,8 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { changeTenantRole } from '@/services/tenant';
+import { useParams } from '@umijs/max';
+import { upgradeTenantCompatibilityVersion } from '@/services/tenant';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -12,7 +12,8 @@ export default function UpgradeTenantModal({
   setVisible,
   successCallback,
 }: CommonModalType) {
-  const { run: activateTenant } = useRequest(changeTenantRole, {
+  const { ns, name } = useParams();
+  const { run: upgradeTenant } = useRequest(upgradeTenantCompatibilityVersion, {
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -23,13 +24,12 @@ export default function UpgradeTenantModal({
           }),
         );
         setVisible(false);
-        successCallback();
+        if(successCallback) successCallback();
       }
     },
   });
   const handleSubmit = async () => {
-    const [ns, name] = getNSName();
-    await activateTenant({ ns, name });
+    await upgradeTenant({ ns, name });
   };
   const handleCancel = () => setVisible(false);
 
