@@ -26,7 +26,8 @@ interface CanvasPieProps {
 
 interface ClusterListProps {
   handleAddCluster: () => void;
-  clusterList: API.ClusterItem[] | undefined;
+  clusterList: any;
+  loading: boolean;
 }
 
 const { Text } = Typography;
@@ -193,11 +194,12 @@ const columns: ColumnsType<DataType> = [
 
 export default function ClusterList({
   handleAddCluster,
-  clusterList = [],
+  clusterList,
+  loading
 }: ClusterListProps) {
   return (
     <Col span={24}>
-      <Card>
+      <Card >
         <div className={styles.clusterHeader}>
           <h2>
             {intl.formatMessage({
@@ -213,6 +215,7 @@ export default function ClusterList({
           </Button>
         </div>
         <Table
+          loading={loading}
           columns={columns}
           dataSource={clusterList}
           scroll={{ x: 1200 }}

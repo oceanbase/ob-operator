@@ -91,6 +91,7 @@ export default function TenantOverview() {
   const {
     data: tenantDetailResponse,
     run: getTenantDetail,
+    loading,
     refresh: reGetTenantDetail,
   } = useRequest(getTenant, {
     manual: true,
@@ -309,10 +310,7 @@ export default function TenantOverview() {
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
         <Row justify="start" gutter={[16, 16]}>
-          {tenantDetail && (
-            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
-          )}
-
+            <BasicInfo loading={loading} info={tenantDetail?.info} source={tenantDetail?.source} />
           {tenantDetail && tenantDetail.replicas && (
             <Replicas
               refreshTenant={reGetTenantDetail}
@@ -336,7 +334,7 @@ export default function TenantOverview() {
             />
           )}
 
-          <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
+          <Backups loading={loading} backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 
         <OperateModal

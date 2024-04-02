@@ -54,7 +54,7 @@ export default function New() {
     }
   };
   const initialValues = {
-    mode: MODE_MAP.get('NORMAL')?.text,
+    mode: 'NORMAL',
     topology: [
       {
         zone: 'zone1',

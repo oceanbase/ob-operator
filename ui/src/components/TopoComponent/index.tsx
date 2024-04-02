@@ -2,11 +2,11 @@ import MoreModal from '@/components/moreModal';
 import { intl } from '@/utils/intl';
 import G6,{ IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
+import { useParams } from '@umijs/max';
 import { useRequest,useUpdateEffect } from 'ahooks';
-import { message } from 'antd';
+import { Spin,message } from 'antd';
 import _ from 'lodash';
 import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
-import { useParams } from '@umijs/max';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
@@ -34,6 +34,7 @@ getZoneOperateOfTenant,
 serverOperate,
 } from './constants';
 import { appenAutoShapeListener,checkIsSame,getServerNumber } from './helper';
+import styles from './index.less'
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
@@ -44,6 +45,7 @@ interface TopoProps {
   refreshTenant?: () => void;
   defaultUnitCount?: number;
   status?: string;
+  loading?: boolean;
 }
 
 //Cluster topology diagram component
@@ -56,6 +58,7 @@ export default function TopoComponent({
   refreshTenant,
   defaultUnitCount,
   status,
+  loading
 }: TopoProps) {
   const { ns:urlNs, name:urlName } = useParams();
   const clusterOperateList = tenantReplicas
@@ -88,7 +91,7 @@ export default function TopoComponent({
   //Number of servers in the selected zone
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //If the topoData cluster status is operating, it needs to be polled.
-  let { data: originTopoData, run: getTopoData } = useRequest(
+  let { data: originTopoData, run: getTopoData, loading:clusterTopoLoading } = useRequest(
     getClusterDetailReq,
     {
       manual: true,
@@ -372,7 +375,7 @@ export default function TopoComponent({
     };
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
-
+  
   // Use different pictures for nodes in different states
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
@@ -385,7 +388,6 @@ export default function TopoComponent({
               {...(originTopoData.basicInfo as API.ClusterInfo)}
             />
           )}
-
       <div style={{ height: '100%' }} id="topoContainer"></div>
       {useMemo(
         () => (
@@ -430,6 +432,11 @@ export default function TopoComponent({
               )
             : undefined,
         }}
+      />
+      <Spin
+        spinning={Boolean(clusterTopoLoading || loading)}
+        size="large"
+        className={styles.topoSpin}
       />
     </div>
   );

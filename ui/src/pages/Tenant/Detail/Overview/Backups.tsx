@@ -6,11 +6,12 @@ import type { ColumnsType } from 'antd/es/table';
 interface BackupsProps {
   backupPolicy?: API.BackupPolicy;
   backupJobs?: API.BackupJob[];
+  loading?: boolean;
 }
 
 const { Text } = Typography;
 
-export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
+export default function Backups({ backupPolicy, backupJobs, loading }: BackupsProps) {
   const PolicyConfig = {
     destType: {
       text: intl.formatMessage({
@@ -187,6 +188,7 @@ export default function Backups({ backupPolicy, backupJobs }: BackupsProps) {
   return (
     <Col span={24}>
       <CollapsibleCard
+        loading={loading}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({

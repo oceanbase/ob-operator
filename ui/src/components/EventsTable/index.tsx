@@ -145,21 +145,21 @@ export default function EventsTable({
     defaultParams.name = name;
   }
   
-  const { data } = useRequest(getEventsReq, {
+  const { data,loading } = useRequest(getEventsReq, {
     defaultParams: [defaultParams],
   });
 
   const CustomCard = (props) => {
-    const { title } = props;
+    const { title, loading } = props;
     
     return (
       <>
         {cardType === 'proCard' ? (
-          <ProCard title={title} collapsible={collapsible}>
+          <ProCard loading={loading} title={title} collapsible={collapsible}>
             {props.children}
           </ProCard>
         ) : (
-          <CollapsibleCard defaultExpand={defaultExpand} title={title} collapsible={collapsible}>
+          <CollapsibleCard loading={loading} defaultExpand={defaultExpand} title={title} collapsible={collapsible}>
             {props.children}
           </CollapsibleCard>
         )}
@@ -170,6 +170,7 @@ export default function EventsTable({
   return (
     <Col span={24}>
       <CustomCard
+        loading={loading}
         title={
           <h2 style={{marginBottom:0}}>
             {intl.formatMessage({

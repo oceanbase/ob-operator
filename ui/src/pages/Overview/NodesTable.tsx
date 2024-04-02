@@ -151,10 +151,10 @@ const columns: ColumnsType<DataType> = [
 ];
 
 export default function NodesTable() {
-  const { data } = useRequest(getNodeInfoReq);
+  const { data,loading } = useRequest(getNodeInfoReq);
   return (
     <Col span={24}>
-      <Card>
+      <Card loading={loading}>
         <h2>
           {intl.formatMessage({
             id: 'OBDashboard.pages.Overview.NodesTable.Node',
