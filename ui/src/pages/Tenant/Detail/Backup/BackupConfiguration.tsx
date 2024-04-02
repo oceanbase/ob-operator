@@ -54,32 +54,6 @@ export default function BackupConfiguration({
   const { ns, name } = useParams();
   const publicKey = usePublicKey();
 
-  const INFO_CONFIG = {
-    status: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.Status',
-        defaultMessage: '状态',
-      }),
-    },
-    destType: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupMediaType',
-        defaultMessage: '备份介质类型',
-      }),
-    },
-    archivePath: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.LogArchivePath',
-        defaultMessage: '日志归档路径',
-      }),
-    },
-    bakDataPath: {
-      label: intl.formatMessage({
-        id: 'Dashboard.Detail.Backup.BackupConfiguration.DataBackupPath',
-        defaultMessage: '数据备份路径',
-      }),
-    },
-  };
   const INFO_CONFIG_ARR = [
     {
       label: intl.formatMessage({
@@ -115,9 +89,6 @@ export default function BackupConfiguration({
       value: 'ossAccessSecret',
       label: 'OSS Access Secret',
     });
-    INFO_CONFIG.ossAccessSecret = {
-      label: 'OSS Access Secret',
-    };
   }
   const DATE_CONFIG = {
     jobKeepDays: intl.formatMessage({
