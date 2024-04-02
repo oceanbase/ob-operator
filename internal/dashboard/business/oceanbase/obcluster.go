@@ -72,6 +72,19 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build obcluster topology")
 	}
+	clusterMode := modelcommon.ClusterModeNormal
+	labels := obcluster.GetLabels()
+	if labels != nil {
+		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
+			switch mode {
+			case oceanbaseconst.ModeStandalone:
+				clusterMode = modelcommon.ClusterModeStandalone
+			case oceanbaseconst.ModeService:
+				clusterMode = modelcommon.ClusterModeService
+			default:
+			}
+		}
+	}
 	return &response.OBClusterOverview{
 		UID:          string(obcluster.UID),
 		Namespace:    obcluster.Namespace,
@@ -83,6 +96,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
+		Mode:         clusterMode,
 	}, nil
 }
 
@@ -121,22 +135,6 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		respCluster.BackupVolume = &response.NFSVolumeSpec{}
 		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
 		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
-	}
-	labels := obcluster.GetLabels()
-	if labels != nil {
-		if mode, ok := labels[oceanbaseconst.AnnotationsMode]; ok {
-			switch mode {
-			case oceanbaseconst.ModeStandalone:
-				respCluster.Mode = modelcommon.ClusterModeStandalone
-			case oceanbaseconst.ModeService:
-				respCluster.Mode = modelcommon.ClusterModeService
-			default:
-				respCluster.Mode = modelcommon.ClusterModeNormal
-			}
-		}
-	}
-	if respCluster.Mode == "" {
-		respCluster.Mode = modelcommon.ClusterModeNormal
 	}
 	if obcluster.Spec.OBServerTemplate != nil {
 		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{

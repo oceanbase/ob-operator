@@ -1101,6 +1101,8 @@ definitions:
         type: integer
       image:
         type: string
+      mode:
+        $ref: '#/definitions/common.ClusterMode'
       name:
         type: string
       namespace:
@@ -1120,6 +1122,7 @@ definitions:
     - clusterName
     - createTime
     - image
+    - mode
     - name
     - namespace
     - status

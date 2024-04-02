@@ -4607,6 +4607,7 @@ const docTemplate = `{
                 "clusterName",
                 "createTime",
                 "image",
+                "mode",
                 "name",
                 "namespace",
                 "status",
@@ -4626,6 +4627,9 @@ const docTemplate = `{
                 },
                 "image": {
                     "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
                 },
                 "name": {
                     "type": "string"

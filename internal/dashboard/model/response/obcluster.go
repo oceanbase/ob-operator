@@ -62,6 +62,8 @@ type OBClusterOverview struct {
 	CreateTime   int64    `json:"createTime" binding:"required"`
 	Image        string   `json:"image" binding:"required"`
 	Topology     []OBZone `json:"topology" binding:"required"`
+
+	Mode common.ClusterMode `json:"mode" binding:"required"`
 }
 
 type OBCluster struct {
@@ -82,11 +84,10 @@ type OBClusterExtra struct {
 	Resource ResourceSpecRender `json:"resource" binding:"required"`
 	Storage  OBServerStorage    `json:"storage" binding:"required"`
 
-	RootPasswordSecret string             `json:"rootPasswordSecret" binding:"required"`
-	Parameters         []common.KVPair    `json:"parameters" binding:"required"`
-	Monitor            *MonitorSpec       `json:"monitor"`
-	BackupVolume       *NFSVolumeSpec     `json:"backupVolume"`
-	Mode               common.ClusterMode `json:"mode" binding:"required"`
+	RootPasswordSecret string          `json:"rootPasswordSecret" binding:"required"`
+	Parameters         []common.KVPair `json:"parameters" binding:"required"`
+	Monitor            *MonitorSpec    `json:"monitor"`
+	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
 }
 
 type MonitorSpec struct {
