@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history,useModel } from '@umijs/max';
+import { history,useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,message } from 'antd';
 import { useEffect,useRef,useState } from 'react';
@@ -14,14 +14,13 @@ import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportR
 import BasicInfo from './BasicInfo';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
-import { getNSName } from './helper';
 
 //集群详情概览页
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
-  const [[ns, name]] = useState(getNSName());
+  const {ns, name} = useParams();
   const chooseZoneName = useRef<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);

@@ -15,6 +15,7 @@ package oceanbase
 import (
 	"context"
 	"errors"
+	"sort"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -53,8 +54,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 			TenantRole:       apitypes.TenantRole(p.TenantRole),
 
 			// guard non-nil
-			Pools:  []v1alpha1.ResourcePoolSpec{},
-			Source: &v1alpha1.TenantSourceSpec{},
+			Pools: []v1alpha1.ResourcePoolSpec{},
 		},
 	}
 
@@ -105,8 +105,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 
 	if p.Source != nil {
 		t.Spec.Source = &v1alpha1.TenantSourceSpec{
-			Tenant:  p.Source.Tenant,
-			Restore: &v1alpha1.RestoreSourceSpec{},
+			Tenant: p.Source.Tenant,
 		}
 		if p.Source.Restore != nil {
 			t.Spec.Source.Restore = &v1alpha1.RestoreSourceSpec{
@@ -160,6 +159,7 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 
 func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt := &response.OBTenantOverview{}
+	rt.UID = string(t.UID)
 	rt.Name = t.Name
 	rt.Namespace = t.Namespace
 	rt.CreateTime = t.CreationTimestamp.Format("2006-01-02 15:04:05")
@@ -244,7 +244,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 			Namespace: nn.Namespace,
 		},
 		StringData: map[string]string{
-			"password": rand.String(20),
+			"password": p.RootPassword, // For simplicity, use the same password as root
 		},
 	}, v1.CreateOptions{})
 	if err != nil {
@@ -301,6 +301,9 @@ func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*respo
 	if err != nil {
 		return nil, err
 	}
+	sort.Slice(tenantList.Items, func(i, j int) bool {
+		return tenantList.Items[i].Name < tenantList.Items[j].Name
+	})
 	tenants := make([]*response.OBTenantOverview, 0, len(tenantList.Items))
 	for i := range tenantList.Items {
 		tenants = append(tenants, buildOverviewFromApiType(&tenantList.Items[i]))

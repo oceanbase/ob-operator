@@ -14,6 +14,7 @@ package response
 
 // @Description Brief information about OBTenant
 type OBTenantOverview struct {
+	UID         string            `json:"uid"`                 // Unique identifier of the resource
 	Name        string            `json:"name"`                // Name of the resource
 	Namespace   string            `json:"namespace"`           // Namespace of the resource
 	TenantName  string            `json:"tenantName"`          // Name of the tenant in the database

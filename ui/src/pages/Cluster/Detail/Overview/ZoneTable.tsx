@@ -5,8 +5,7 @@ import type { ColumnType } from 'antd/es/table';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { COLOR_MAP } from '@/constants';
 import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { getNSName } from './helper';
-
+import { useParams } from '@umijs/max';
 interface ZoneTableProps {
   zones: API.Zone[];
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,6 +23,7 @@ export default function ZoneTable({
   setChooseServerNum,
   clusterStatus,
 }: ZoneTableProps) {
+  const { ns, name } = useParams();
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
       {
@@ -133,7 +133,6 @@ export default function ZoneTable({
   };
   //删除的ns和name是集群的
   const handleDelete = async (zoneName: string) => {
-    const [ns, name] = getNSName();
     const res = await deleteObzoneReportWrap({
       ns,
       name,

@@ -46,7 +46,7 @@ export default [
             ],
           },
           {
-            path: 'cluster/:clusterId',
+            path: 'cluster/:ns/:name/:clusterName',
             component: 'Cluster/Detail',
             name: '集群详情',
             routes: [
@@ -71,14 +71,14 @@ export default [
                 name: '集群下的租户',
               },
               {
-                path: '/cluster/:clusterId',
+                path: '/cluster/:ns/:name/:clusterName',
                 redirect: 'overview',
                 name: '概览页',
               },
             ],
           },
           {
-            path: 'tenant/:tenantId',
+            path: 'tenant/:ns/:name/:tenantName',
             component: 'Tenant/Detail',
             name: '租户详情',
             routes: [
@@ -108,7 +108,7 @@ export default [
                 name: '租户详情监控',
               },
               {
-                path: '/tenant/:tenantId',
+                path: '/tenant/:ns/:name/:tenantName',
                 redirect: 'overview',
                 name: '概览页',
               },

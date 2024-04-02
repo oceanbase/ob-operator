@@ -1,7 +1,7 @@
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import {
   deleteBackupReportWrap,
   editBackupReportWrap,
@@ -49,7 +49,7 @@ export default function BackupConfiguration({
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const curConfig = useRef({});
-  const [ns, name] = getNSName();
+  const { ns, name } = useParams();
   const publicKey = usePublicKey();
 
   const INFO_CONFIG = {

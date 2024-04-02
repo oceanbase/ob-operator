@@ -19,6 +19,7 @@ import (
 type BackupPolicy struct {
 	param.BackupPolicyBase `json:",inline"`
 
+	UID                 string `json:"uid"`
 	TenantName          string `json:"tenantName"`
 	Name                string `json:"name"`
 	Namespace           string `json:"namespace"`
@@ -31,6 +32,7 @@ type BackupPolicy struct {
 }
 
 type BackupJob struct {
+	UID       string `json:"uid"`
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 	// Enum: FULL, INCR, ARCHIVE, CLEAN

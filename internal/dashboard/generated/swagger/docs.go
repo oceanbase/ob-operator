@@ -735,7 +735,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -880,7 +892,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -941,7 +965,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1013,7 +1049,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1083,7 +1131,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1162,7 +1222,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -2267,7 +2339,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2324,7 +2396,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2392,7 +2464,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2694,7 +2766,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.StatisticDataResponse"
+                                            "$ref": "#/definitions/response.StatisticData"
                                         }
                                     }
                                 }
@@ -3763,6 +3835,9 @@ const docTemplate = `{
                 "type": {
                     "description": "Enum: FULL, INCR, ARCHIVE, CLEAN",
                     "type": "string"
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
@@ -3838,6 +3913,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tenantName": {
+                    "type": "string"
+                },
+                "uid": {
                     "type": "string"
                 }
             }
@@ -4169,6 +4247,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.OBZone"
                     }
                 },
+                "uid": {
+                    "type": "string"
+                },
                 "version": {
                     "type": "string"
                 }
@@ -4206,6 +4287,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/response.OBZone"
                     }
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
@@ -4386,6 +4470,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
                 },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
+                },
                 "unitNumber": {
                     "description": "Number of units in every zone",
                     "type": "integer"
@@ -4445,6 +4533,10 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
+                },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
                 },
                 "unitNumber": {
                     "description": "Number of units in every zone",
@@ -4628,6 +4720,15 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.OBCluster"
                     }
                 },
+                "k8sNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sNode"
+                    }
+                },
+                "operatorVersion": {
+                    "type": "string"
+                },
                 "servers": {
                     "type": "array",
                     "items": {
@@ -4640,9 +4741,6 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.OBTenant"
                     }
                 },
-                "version": {
-                    "type": "string"
-                },
                 "warningEvents": {
                     "type": "array",
                     "items": {
@@ -4654,20 +4752,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.OBZone"
                     }
-                }
-            }
-        },
-        "response.StatisticDataResponse": {
-            "type": "object",
-            "properties": {
-                "component": {
-                    "type": "string"
-                },
-                "content": {
-                    "$ref": "#/definitions/response.StatisticData"
-                },
-                "time": {
-                    "type": "string"
                 }
             }
         },

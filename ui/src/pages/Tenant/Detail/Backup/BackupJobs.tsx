@@ -1,4 +1,4 @@
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { getBackupJobs } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
@@ -8,8 +8,8 @@ import { useState } from 'react';
 import JobTable from './JobTable';
 
 export default function BackupJobs() {
+  const { ns, name } = useParams();
   const [curSelect, setCurSelect] = useState<API.JobType>('FULL');
-  const [ns, name] = getNSName();
   const { data: backupJobsResponse } = useRequest(
     () => {
       return getBackupJobs({ ns, name, type: curSelect });

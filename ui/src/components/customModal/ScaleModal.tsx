@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { Form, InputNumber, message } from 'antd';
 import CustomModal from '.';
 
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
@@ -21,6 +21,7 @@ export default function ScaleModal({
   params,
 }: ScaleModalProps & CommonModalType) {
   const zoneName = params?.zoneName;
+  const { ns:namespace, name } = useParams();
   const defaultValue = params?.defaultValue;
   const [form] = Form.useForm();
   const handleSubmit = async () => {
@@ -31,7 +32,6 @@ export default function ScaleModal({
   };
   const onFinish = async (val: any) => {
     if (!zoneName) throw new Error('zoneName is not defined');
-    const [namespace, name] = getNSName();
     const res = await scaleObserverReportWrap({
       namespace,
       name,

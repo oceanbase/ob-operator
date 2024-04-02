@@ -6,6 +6,7 @@ import { useRequest,useUpdateEffect } from 'ahooks';
 import { message } from 'antd';
 import _ from 'lodash';
 import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
+import { useParams } from '@umijs/max';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
@@ -22,7 +23,6 @@ deleteClusterReportWrap,
 deleteObzoneReportWrap,
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
-import { getNSName } from '../../pages/Cluster/Detail/Overview/helper';
 import { ReactNode,config } from './G6register';
 import type { OperateTypeLabel } from './constants';
 import {
@@ -57,6 +57,7 @@ export default function TopoComponent({
   defaultUnitCount,
   status,
 }: TopoProps) {
+  const { ns:urlNs, name:urlName } = useParams();
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -70,7 +71,7 @@ export default function TopoComponent({
   const [[ns, name]] = useState(
     namespace && clusterNameOfKubectl
       ? [namespace, clusterNameOfKubectl]
-      : getNSName(),
+      : [urlNs, urlName],
   );
 
   //Control the visibility of operation and maintenance modal
@@ -221,7 +222,6 @@ export default function TopoComponent({
   };
   // delete resource pool
   const deleteResourcePool = async (zoneName: string) => {
-    const [ns, name] = getNSName();
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
       if (refreshTenant) refreshTenant();
