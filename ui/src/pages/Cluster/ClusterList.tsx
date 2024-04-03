@@ -166,7 +166,16 @@ const columns: ColumnsType<DataType> = [
     render: (value, record) => (
       <Tag color={COLOR_MAP.get(value)}>
         {' '}
-        {value === 'operating' ? `${value}/${record.statusDetail}` : value}{' '}
+        {value === 'operating' ? (
+          <Text
+            style={{ width: 110, color: '#d48806',fontSize:12 }}
+            ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
+          >
+            {value}/{record.statusDetail}
+          </Text>
+        ) : (
+          value
+        )}{' '}
       </Tag>
     ),
   },

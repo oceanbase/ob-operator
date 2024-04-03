@@ -91,7 +91,7 @@ export default function ZoneTable({
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
                 }}
-                disabled={clusterStatus === 'failed'}
+                disabled={clusterStatus !== 'running'}
                 type="link"
               >
                 {intl.formatMessage({
@@ -100,7 +100,7 @@ export default function ZoneTable({
                 })}
               </Button>
               <Button
-                style={(clusterStatus !== 'failed' && zones.length > 2) ? { color: '#ff4b4b' } : {}}
+                style={(clusterStatus === 'running' && zones.length > 2) ? { color: '#ff4b4b' } : {}}
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),
@@ -110,7 +110,7 @@ export default function ZoneTable({
                     }),
                   });
                 }}
-                disabled={clusterStatus === 'failed' || zones.length <= 2}
+                disabled={clusterStatus !== 'running' || zones.length <= 2}
                 type="link"
               >
                 {intl.formatMessage({
@@ -131,7 +131,6 @@ export default function ZoneTable({
     typeRef.current = 'scaleServer';
     setVisible(true);
   };
-  //删除的ns和name是集群的
   const handleDelete = async (zoneName: string) => {
     const res = await deleteObzoneReportWrap({
       ns,

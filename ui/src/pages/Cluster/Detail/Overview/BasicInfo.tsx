@@ -1,10 +1,11 @@
 import { COLOR_MAP,MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Descriptions,Switch,Tag } from 'antd';
+import { Card,Col,Descriptions,Switch,Tag,Typography } from 'antd';
 import { useState } from 'react';
 
 import styles from './index.less';
 
+const { Text } = Typography;
 export default function BasicInfo({
   name,
   namespace,
@@ -126,7 +127,18 @@ export default function BasicInfo({
               defaultMessage: '集群状态',
             })}
           >
-            <Tag color={COLOR_MAP.get(status)}>{status === 'operating' ? `${status}/${statusDetail}` : status}</Tag>
+            <Tag color={COLOR_MAP.get(status)}>
+              {status === 'operating' ? (
+                <Text
+                  style={{ width: 120, color: '#d48806', fontSize: 12 }}
+                  ellipsis={{ tooltip: `${status}/${statusDetail}` }}
+                >
+                  {status}/{statusDetail}
+                </Text>
+              ) : (
+                status
+              )}
+            </Tag>
           </Descriptions.Item>
           <Descriptions.Item
             span={2}
