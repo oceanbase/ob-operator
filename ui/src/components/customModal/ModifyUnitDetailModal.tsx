@@ -1,7 +1,6 @@
 import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT,getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
-import { useParams } from '@umijs/max';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import type {
 MaxResourceType,
@@ -18,6 +17,7 @@ patchObtenantPoolReportWrap
 } from '@/services/reportRequest/tenantReportReq';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
+import { useParams } from '@umijs/max';
 import { useEffect,useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
@@ -73,7 +73,7 @@ export default function ModifyUnitDetailModal({
   params: {
     clusterList = [],
     setClusterList,
-    essentialParameter = {},
+    essentialParameter,
     clusterResourceName = '',
     editZone, 
     replicaList,
@@ -87,7 +87,7 @@ export default function ModifyUnitDetailModal({
   const { ns, name } = useParams();
   const [maxResource, setMaxResource] = useState<MaxResourceType>({});
   const [minResource, setMinResource] = useState<MinResourceConfig>(
-    getMinResource({ minMemory: essentialParameter.minPoolMemory }),
+    getMinResource({ minMemory: essentialParameter?.minPoolMemory }),
   );
   
   const [selectZones, setSelectZones] = useState<string[]>(

@@ -1,40 +1,44 @@
 import MoreModal from '@/components/moreModal';
 import { intl } from '@/utils/intl';
-import G6,{ IG6GraphEvent } from '@antv/g6';
+import G6, { IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
 import { useParams } from '@umijs/max';
-import { useRequest,useUpdateEffect } from 'ahooks';
-import { Spin,message } from 'antd';
+import { useRequest, useUpdateEffect } from 'ahooks';
+import { Spin, message } from 'antd';
 import _ from 'lodash';
-import { ReactElement,useEffect,useMemo,useRef,useState } from 'react';
+import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
 import {
-getClusterFromTenant,
-getOriginResourceUsages,
-getZonesOptions,
+  getClusterFromTenant,
+  getOriginResourceUsages,
+  getZonesOptions,
 } from '@/pages/Tenant/helper';
 import { getClusterDetailReq } from '@/services';
 import {
-deleteClusterReportWrap,
-deleteObzoneReportWrap,
+  deleteClusterReportWrap,
+  deleteObzoneReportWrap,
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
-import { ReactNode,config } from './G6register';
+import { ReactNode, config } from './G6register';
 import type { OperateTypeLabel } from './constants';
 import {
-clusterOperate,
-clusterOperateOfTenant,
-getClusterOperates,
-getZoneOperateOfCluster,
-getZoneOperateOfTenant,
-serverOperate,
+  clusterOperate,
+  clusterOperateOfTenant,
+  getClusterOperates,
+  getZoneOperateOfCluster,
+  getZoneOperateOfTenant,
+  serverOperate,
 } from './constants';
-import { appenAutoShapeListener,checkIsSame,getServerNumber } from './helper';
-import styles from './index.less'
+import {
+  appenAutoShapeListener,
+  checkTopoDataIsSame,
+  getServerNumber,
+} from './helper';
+import styles from './index.less';
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
@@ -58,9 +62,9 @@ export default function TopoComponent({
   refreshTenant,
   defaultUnitCount,
   status,
-  loading
+  loading,
 }: TopoProps) {
-  const { ns:urlNs, name:urlName } = useParams();
+  const { ns: urlNs, name: urlName } = useParams();
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -85,21 +89,22 @@ export default function TopoComponent({
   //The currently clicked node id
   const currentId = useRef<string>('');
   const graph = useRef<any>(null);
-  const beforeTopoData = useRef<any>(null);
+  const preTopoData = useRef<any>(null);
   //The zone name selected when clicking the more icon
   const chooseZoneName = useRef<string>('');
   //Number of servers in the selected zone
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //If the topoData cluster status is operating, it needs to be polled.
-  let { data: originTopoData, run: getTopoData, loading:clusterTopoLoading } = useRequest(
-    getClusterDetailReq,
-    {
-      manual: true,
-      onBefore: () => {
-        beforeTopoData.current = originTopoData?.topoData;
-      },
+  let {
+    data: originTopoData,
+    run: getTopoData,
+    loading: clusterTopoLoading,
+  } = useRequest(getClusterDetailReq, {
+    manual: true,
+    onBefore: () => {
+      preTopoData.current = originTopoData?.topoData;
     },
-  );
+  });
   const clusterStatus = useRef(originTopoData?.basicInfo?.status);
   const tenantStatus = useRef(status);
 
@@ -112,9 +117,7 @@ export default function TopoComponent({
             ? clusterStatus.current !== 'running' ||
               tenantStatus.current !== 'running'
             : clusterStatus.current !== 'running';
-          setOprateList(
-            getClusterOperates(clusterOperateList, disabled),
-          );
+          setOprateList(getClusterOperates(clusterOperateList, disabled));
           break;
         case 'zone':
           const zone = evt.item?._cfg?.model?.label as string;
@@ -129,7 +132,7 @@ export default function TopoComponent({
                 haveResourcePool,
                 tenantReplicas,
                 tenantStatus.current,
-                clusterStatus.current
+                clusterStatus.current,
               ),
             );
           } else {
@@ -156,7 +159,13 @@ export default function TopoComponent({
   const clusterDelete = async () => {
     const res = await deleteClusterReportWrap({ ns, name });
     if (res.successful) {
-      message.success(res.message);
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.TopoComponent.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
       getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
     }
   };
@@ -309,10 +318,10 @@ export default function TopoComponent({
 
   const mouseEnter = () => setInModal(true);
   const mouseLeave = () => setInModal(false);
-  // //Re-acquire data after successful operation and maintenance operations
-  // const operateSuccess = () => {
-  //   getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
-  // };
+  //Re-acquire data after successful operation and maintenance operations
+  const operateSuccess = () => {
+    getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+  };
 
   //Used to re-render the view after data update
   useUpdateEffect(() => {
@@ -325,9 +334,9 @@ export default function TopoComponent({
       }, 3000);
     }
     if (graph.current) {
-      if (!checkIsSame(beforeTopoData.current, originTopoData.topoData)) {
+      if (!checkTopoDataIsSame(preTopoData.current, originTopoData.topoData)) {
         let _topoData = _.cloneDeep(originTopoData.topoData);
-        beforeTopoData.current = _topoData;
+        preTopoData.current = _topoData;
         graph.current.changeData(_topoData);
       }
     } else {
@@ -337,6 +346,12 @@ export default function TopoComponent({
       if (checkStatusTimer) clearInterval(checkStatusTimer);
     };
   }, [originTopoData]);
+
+  useUpdateEffect(() => {
+    if (graph.current) {
+      getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+    }
+  }, [tenantReplicas]);
 
   useUpdateEffect(() => {
     tenantStatus.current = status;
@@ -375,7 +390,7 @@ export default function TopoComponent({
     };
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
-  
+
   // Use different pictures for nodes in different states
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
@@ -388,6 +403,7 @@ export default function TopoComponent({
               {...(originTopoData.basicInfo as API.ClusterInfo)}
             />
           )}
+
       <div style={{ height: '100%' }} id="topoContainer"></div>
       {useMemo(
         () => (
@@ -406,7 +422,10 @@ export default function TopoComponent({
         type={modalType.current}
         visible={operateModalVisible}
         setVisible={setOperateModalVisible}
-        successCallback={refreshTenant}
+        successCallback={() => {
+          if (refreshTenant) refreshTenant();
+          operateSuccess();
+        }}
         params={{
           zoneName: chooseZoneName.current,
           defaultValue: chooseServerNum,
@@ -433,6 +452,7 @@ export default function TopoComponent({
             : undefined,
         }}
       />
+
       <Spin
         spinning={Boolean(clusterTopoLoading || loading)}
         size="large"

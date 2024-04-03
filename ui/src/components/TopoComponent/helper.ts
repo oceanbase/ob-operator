@@ -223,7 +223,7 @@ export const formatTopoData = (
 /**
  * Determine whether the old and new topoData attribute values are exactly the same
  */
-export const checkIsSame = (oldTopoData: any, newTopoData: any): boolean => {
+export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
