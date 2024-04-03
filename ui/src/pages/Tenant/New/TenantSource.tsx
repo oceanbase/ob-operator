@@ -2,23 +2,23 @@ import { getAllTenants } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import {
-Card,
-Col,
-DatePicker,
-Form,
-Input,
-Row,
-Select,
-Space,
-Switch,
-TimePicker,
-Tooltip,
+  Card,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Row,
+  Select,
+  Space,
+  Switch,
+  TimePicker,
+  Tooltip,
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import moment from 'moment';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './index.less';
 
 interface TenantSourceProps {
@@ -71,7 +71,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
   const { run: getTenants, data: tenantListRes } = useRequest(getAllTenants);
 
   const tenantList = tenantListRes?.data
-    .filter((item) => item.status === 'running')
+    .filter((item) => item.status === 'running' && item.tenantRole === 'PRIMARY')
     .map((tenant) => ({
       label: tenant.name,
       value: tenant.name,
@@ -435,9 +435,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                           ]}
                           name={['source', 'restore', 'until', 'date']}
                         >
-                          <DatePicker 
-                            disabledDate={disabledDate}
-                          />
+                          <DatePicker disabledDate={disabledDate} />
                         </Form.Item>
                       </Col>
                       <Col span={12}>

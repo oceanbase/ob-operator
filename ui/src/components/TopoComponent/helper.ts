@@ -233,22 +233,6 @@ export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean
   return true;
 };
 
-// export const checkReplicasIsSame = (
-//   oldReplicas: API.ReplicaDetailType[],
-//   newReplicas: API.ReplicaDetailType[],
-// ): boolean => {
-//   for (let oldReplica of oldReplicas) {
-//     const newReplica = newReplicas.find(
-//       (item) => item.zone === oldReplica.zone,
-//     );
-//     if (!newReplica) return false;
-//     for (let key of Object.keys(oldReplica)) {
-//       if (oldReplica[key] !== newReplica[key]) return false;
-//     }
-//   }
-//   return true;
-// };
-
 export const getServerNumber = (
   topoData: GraphNodeType,
   zoneName: string,
