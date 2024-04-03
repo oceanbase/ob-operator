@@ -12,11 +12,13 @@ interface DataType {
   namespace: string;
   name: string;
   status: string;
+  statusDetail: string;
   createTime: string;
   image: string;
   cpuPercent: string;
   memoryPercent: string;
   diskPercent: string;
+  clusterName: string;
 }
 
 interface CanvasPieProps {
@@ -124,13 +126,19 @@ const columns: ColumnsType<DataType> = [
     key: 'clusterName',
   },
   {
-    title: '集群模式',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Cluster.ClusterList.ClusterMode',
+      defaultMessage: '集群模式',
+    }),
     dataIndex: 'mode',
     key: 'mode',
     render: (value) => <span>{MODE_MAP.get(value)?.text}</span>,
   },
   {
-    title: 'Zone 数量',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
+      defaultMessage: 'Zone 数量',
+    }),
     dataIndex: 'zoneCount',
     key: 'zoneCount',
     render: (_, record) => <span>{record?.topology?.length}</span>,
@@ -155,7 +163,12 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+    render: (value, record) => (
+      <Tag color={COLOR_MAP.get(value)}>
+        {' '}
+        {value === 'operating' ? `${value}/${record.statusDetail}` : value}{' '}
+      </Tag>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -195,11 +208,11 @@ const columns: ColumnsType<DataType> = [
 export default function ClusterList({
   handleAddCluster,
   clusterList,
-  loading
+  loading,
 }: ClusterListProps) {
   return (
     <Col span={24}>
-      <Card >
+      <Card>
         <div className={styles.clusterHeader}>
           <h2>
             {intl.formatMessage({

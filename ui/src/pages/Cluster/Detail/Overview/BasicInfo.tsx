@@ -9,6 +9,7 @@ export default function BasicInfo({
   name,
   namespace,
   status,
+  statusDetail,
   image,
   mode,
   rootPasswordSecret,
@@ -90,7 +91,7 @@ export default function BasicInfo({
           <Descriptions.Item
             label={intl.formatMessage({
               id: 'OBDashboard.Detail.Overview.BasicInfo.ClusterName',
-              defaultMessage: '集群名：',
+              defaultMessage: '集群名',
             })}
           >
             {clusterName}
@@ -106,7 +107,7 @@ export default function BasicInfo({
           <Descriptions.Item
             label={intl.formatMessage({
               id: 'OBDashboard.Detail.Overview.BasicInfo.Namespace',
-              defaultMessage: '命名空间：',
+              defaultMessage: '命名空间',
             })}
           >
             {namespace}
@@ -125,13 +126,13 @@ export default function BasicInfo({
               defaultMessage: '集群状态',
             })}
           >
-            <Tag color={COLOR_MAP.get(status)}>{status}</Tag>
+            <Tag color={COLOR_MAP.get(status)}>{status === 'operating' ? `${status}/${statusDetail}` : status}</Tag>
           </Descriptions.Item>
           <Descriptions.Item
             span={2}
             label={intl.formatMessage({
               id: 'OBDashboard.Detail.Overview.BasicInfo.Image',
-              defaultMessage: '镜像：',
+              defaultMessage: '镜像',
             })}
           >
             {image}

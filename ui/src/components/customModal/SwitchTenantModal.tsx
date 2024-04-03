@@ -2,8 +2,8 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { useParams } from '@umijs/max';
 import { changeTenantRole } from '@/services/tenant';
+import { useParams } from '@umijs/max';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -17,9 +17,14 @@ export default function SwitchTenantModal({
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
-        message.success('操作成功');
+        message.success(
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded',
+            defaultMessage: '操作成功',
+          }),
+        );
         setVisible(false);
-        if(successCallback) successCallback();
+        if (successCallback) successCallback();
       }
     },
   });

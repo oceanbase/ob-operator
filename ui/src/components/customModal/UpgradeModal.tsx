@@ -1,8 +1,8 @@
 import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 
-import { useParams } from '@umijs/max';
 import { upgradeClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { useParams } from '@umijs/max';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -27,8 +27,14 @@ export default function UpgradeModal({
   const onFinish = async ({ image }: any) => {
     const res = await upgradeClusterReportWrap({ ns, name, image });
     if (res.successful) {
-      message.success(res.message);
-      if(successCallback) successCallback();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.UpgradeModal.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

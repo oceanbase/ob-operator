@@ -19,6 +19,7 @@ const COLOR_MAP = new Map([
   ['deleting', 'volcano'],
   ['operating', 'gold'],
   ['creating', 'blue'],
+  ['failed', 'red']
 ]);
 const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
@@ -74,6 +75,7 @@ const CLUSTER_INFO_CONFIG = [
   'clusterName',
   'namespace',
   'status',
+  'statusDetail',
   'image',
   'resource',
   'storage',
@@ -89,6 +91,7 @@ const TOPO_INFO_CONFIG = [
   'clusterName',
   'namespace',
   'status',
+  'statusDetail',
   'image',
   'mode',
   'rootPasswordSecret',

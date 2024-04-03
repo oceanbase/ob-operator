@@ -16,7 +16,7 @@ export default function LogReplayModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
-  const { ns:namespace, name } = useParams();
+  const { ns: namespace, name } = useParams();
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -28,8 +28,14 @@ export default function LogReplayModal({
   const onFinish = async (values: any) => {
     const res = await replayLogOfTenant({ namespace, name, ...values });
     if (res.successful) {
-      message.success(res.message);
-      if(successCallback) successCallback();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.LogReplayModal.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

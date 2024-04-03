@@ -247,7 +247,7 @@ declare namespace API {
       key: string;
       value: string;
     }[];
-    // statusDetail: string;
+    statusDetail: string;
     // createTime: string;
     // metrics: Metrics;
     // clusterId: number;

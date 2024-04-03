@@ -143,9 +143,9 @@
   "OBDashboard.pages.Cluster.ClusterList.CreationTime": "创建时间",
   "OBDashboard.pages.Cluster.ClusterList.Image": "镜像",
   "OBDashboard.pages.Cluster.ClusterList.CreateACluster": "创建集群",
-  "OBDashboard.Detail.Overview.BasicInfo.ClusterName": "集群名：",
-  "OBDashboard.Detail.Overview.BasicInfo.Namespace": "命名空间：",
-  "OBDashboard.Detail.Overview.BasicInfo.Image": "镜像：",
+  "OBDashboard.Detail.Overview.BasicInfo.ClusterName": "集群名",
+  "OBDashboard.Detail.Overview.BasicInfo.Namespace": "命名空间",
+  "OBDashboard.Detail.Overview.BasicInfo.Image": "镜像",
   "OBDashboard.Detail.Overview.BasicInfo.ClusterStatus": "集群状态",
   "OBDashboard.Detail.Overview.ServerTable.ServerName": "Server名",
   "OBDashboard.Detail.Overview.ServerTable.Namespace": "命名空间",
@@ -681,5 +681,14 @@
   "Dashboard.src.constants.ServiceMode": "Service模式",
   "Dashboard.src.constants.RequiredKernelVersion.1": "要求内核版本 >= 4.2.3.0",
   "Dashboard.Cluster.New.BasicInfo.ResourceNamesCannotUsePure": "资源名不能使用纯数字",
-  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "资源名不能使用纯数字"
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "资源名不能使用纯数字",
+  "Dashboard.pages.Cluster.ClusterList.ClusterMode": "集群模式",
+  "Dashboard.pages.Cluster.ClusterList.NumberOfZones": "Zone 数量",
+  "Dashboard.components.TopoComponent.OperationSucceeded": "操作成功！",
+  "Dashboard.components.customModal.AddZoneModal.OperationSucceeded": "操作成功！",
+  "Dashboard.components.customModal.LogReplayModal.OperationSucceeded": "操作成功！",
+  "Dashboard.components.customModal.ModifyPasswordModal.OperationSucceeded": "操作成功！",
+  "Dashboard.components.customModal.ScaleModal.OperationSucceeded": "操作成功！",
+  "Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded": "操作成功",
+  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "操作成功！"
 }

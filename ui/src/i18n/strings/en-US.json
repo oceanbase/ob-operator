@@ -143,9 +143,9 @@
   "OBDashboard.pages.Cluster.ClusterList.CreationTime": "Creation time",
   "OBDashboard.pages.Cluster.ClusterList.Image": "Image",
   "OBDashboard.pages.Cluster.ClusterList.CreateACluster": "Create a cluster",
-  "OBDashboard.Detail.Overview.BasicInfo.ClusterName": "Cluster name:",
-  "OBDashboard.Detail.Overview.BasicInfo.Namespace": "Namespace:",
-  "OBDashboard.Detail.Overview.BasicInfo.Image": "Image:",
+  "OBDashboard.Detail.Overview.BasicInfo.ClusterName": "Cluster name",
+  "OBDashboard.Detail.Overview.BasicInfo.Namespace": "Namespace",
+  "OBDashboard.Detail.Overview.BasicInfo.Image": "Image",
   "OBDashboard.Detail.Overview.BasicInfo.ClusterStatus": "Cluster status",
   "OBDashboard.Detail.Overview.ServerTable.ServerName": "Server Name",
   "OBDashboard.Detail.Overview.ServerTable.Namespace": "Namespace",
@@ -681,5 +681,14 @@
   "Dashboard.src.constants.ServiceMode": "Service mode",
   "Dashboard.src.constants.RequiredKernelVersion.1": "Required kernel version> = 4.2.3.0",
   "Dashboard.Cluster.New.BasicInfo.ResourceNamesCannotUsePure": "Resource names cannot use pure numbers.",
-  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "Resource names cannot use pure numbers."
+  "Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure": "Resource names cannot use pure numbers.",
+  "Dashboard.pages.Cluster.ClusterList.ClusterMode": "Cluster mode",
+  "Dashboard.pages.Cluster.ClusterList.NumberOfZones": "Number of zones",
+  "Dashboard.components.TopoComponent.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.components.customModal.AddZoneModal.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.components.customModal.LogReplayModal.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.components.customModal.ModifyPasswordModal.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.components.customModal.ScaleModal.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded": "Operation succeeded",
+  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "Operation succeeded!"
 }

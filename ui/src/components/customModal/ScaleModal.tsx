@@ -2,16 +2,16 @@ import { intl } from '@/utils/intl';
 import { Form, InputNumber, message } from 'antd';
 import CustomModal from '.';
 
-import { useParams } from '@umijs/max';
 import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { useParams } from '@umijs/max';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 
 interface ScaleModalProps {
-  params?:{
+  params?: {
     zoneName?: string;
     defaultValue?: number;
-  }
+  };
 }
 
 export default function ScaleModal({
@@ -21,7 +21,7 @@ export default function ScaleModal({
   params,
 }: ScaleModalProps & CommonModalType) {
   const zoneName = params?.zoneName;
-  const { ns:namespace, name } = useParams();
+  const { ns: namespace, name } = useParams();
   const defaultValue = params?.defaultValue;
   const [form] = Form.useForm();
   const handleSubmit = async () => {
@@ -39,8 +39,14 @@ export default function ScaleModal({
       replicas: val.replicas,
     });
     if (res.successful) {
-      message.success(res.message);
-      if(successCallback) successCallback();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.ScaleModal.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }
