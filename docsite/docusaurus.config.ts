@@ -56,12 +56,14 @@ const config: Config = {
 
   trailingSlash: false,
   themeConfig: {
-    // TODO: Replace with oceanbase docs index
     algolia: {
-      appId: 'QK0JZ42KY7',
-      apiKey: '36bae2ea61a954b3c70a3ae5ef68dea7',
-      indexName: 'powerfooiio',
-      contextualSearch: true,
+      appId: '6JQM9QDU5V',
+      apiKey: '75f5591a502e47777a08a02b96bc09a1',
+      indexName: 'oceanbaseio',
+      contextualSearch: false,
+      searchPagePath: false,
+      // @ts-ignore
+      maxResultsPerGroup: 20,
     },
     image: 'img/logo.png',
     navbar: {
