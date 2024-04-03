@@ -55,7 +55,7 @@ const ClusterConnection: React.FC = () => {
             }} />
           ) : (
             <Button onClick={async () => {
-              if ((clusterDetail.info as API.ClusterInfo).status === 'failed') {
+              if ((clusterDetail.info as API.ClusterInfo).status !== 'running') {
                 message.error('集群未运行')
                 return
               }

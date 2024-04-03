@@ -21,7 +21,7 @@ const TenantConnection: React.FC = () => {
 
   const {ns, name} = useParams();
 
-  const { data: tenantDetailResponse, run: getTenantDetail } = useRequest(getTenant, {
+  const { data: tenantDetailResponse, run: getTenantDetail, loading } = useRequest(getTenant, {
     manual: true,
   });
 
@@ -51,7 +51,7 @@ const TenantConnection: React.FC = () => {
       />
       <Row gutter={[16, 16]}>
         {tenantDetail && (
-          <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+          <BasicInfo info={tenantDetail.info} source={tenantDetail.source} loading={loading} />
         )}
         <div style={{margin: 12, width: '100%'}}>
           {terminalId ? (
@@ -61,7 +61,7 @@ const TenantConnection: React.FC = () => {
             }} />
           ) : (
             <Button onClick={async () => {
-              if (!tenantDetail || tenantDetail.info.status === 'failed') {
+              if (!tenantDetail || tenantDetail.info.status !== 'running') {
                 message.error('租户未正常运行')
                 return
               }
