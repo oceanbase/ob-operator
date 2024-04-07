@@ -197,11 +197,11 @@ export function findMinParameter(
         ),
         maxLogDisk: Math.max(
           result.maxLogDisk!,
-          essentialParameter[zone]['availableCPU'],
+          essentialParameter[zone]['availableLogDisk'],
         ),
         maxMemory: Math.max(
           result.maxMemory!,
-          essentialParameter[zone]['availableCPU'],
+          essentialParameter[zone]['availableMemory'],
         ),
       };
     }
