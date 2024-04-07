@@ -16,6 +16,7 @@ package obtenant
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -219,7 +220,14 @@ func CreateEmptyStandbyTenant(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.OBTenant.Namespace, *m.OBTenant.Spec.Source.Tenant)
+	ns := m.OBTenant.GetNamespace()
+	tenantCRName := *m.OBTenant.Spec.Source.Tenant
+	splits := strings.Split(*m.OBTenant.Spec.Source.Tenant, "/")
+	if len(splits) == 2 {
+		ns = splits[0]
+		tenantCRName = splits[1]
+	}
+	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, ns, tenantCRName)
 	if err != nil {
 		return err
 	}

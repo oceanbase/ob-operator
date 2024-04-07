@@ -214,25 +214,42 @@ func (r *OBTenant) validateMutation() error {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("tenantRole"), r.Spec.TenantRole, "Standby must have a source option, but both restore and tenantRef are nil now"))
 		} else if r.Spec.Source.Tenant != nil {
 			tenant := &OBTenant{}
+			ns := r.GetNamespace()
+			tenantCR := *r.Spec.Source.Tenant
+			splits := strings.Split(*r.Spec.Source.Tenant, "/")
+			switch len(splits) {
+			case 0, 1:
+			case 2:
+				if splits[0] == "" {
+					return field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), tenantCR, "Given tenant namespace is empty")
+				}
+				if splits[1] == "" {
+					return field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), tenantCR, "Given tenant name is empty")
+				}
+				ns = splits[0]
+				tenantCR = splits[1]
+			default:
+				return field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), tenantCR, "Given tenant name is invalid, it should be namespace/name or name format")
+			}
 			err = tenantClt.Get(context.TODO(), types.NamespacedName{
-				Namespace: r.GetNamespace(),
-				Name:      *r.Spec.Source.Tenant,
+				Namespace: ns,
+				Name:      tenantCR,
 			}, tenant)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), tenantCR, "Given tenant not found in namespace "+ns))
 				} else {
 					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
 				}
 			}
 			cluster := &OBCluster{}
 			err = tenantClt.Get(context.Background(), types.NamespacedName{
-				Namespace: r.GetNamespace(),
+				Namespace: ns,
 				Name:      tenant.Spec.ClusterName,
 			}, cluster)
 			if err != nil {
 				if apierrors.IsNotFound(err) {
-					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), r.Spec.Source.Tenant, "Given tenant not found in namespace"+r.GetNamespace()))
+					allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("tenant"), tenantCR, "Given tenant not found in namespace "+ns))
 				} else {
 					allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("source").Child("tenant"), err))
 				}
