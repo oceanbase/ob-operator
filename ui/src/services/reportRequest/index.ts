@@ -38,9 +38,6 @@ type ReportMapType = {
   [T: string]: { resourceType: ResourceType; eventType: EventType };
 };
 
-const REPORT_URL = 'http://openwebapi.test.alipay.net/api/web/oceanbase/report';
-// const queryUrl = 'http://openwebapi.test.alipay.net/api/web/oceanbase/query';
-const REPORT_COMPONENT = 'oceanbase-dashboard';
 export const REPORT_PARAMS_MAP: ReportMapType = {
   // polling
   polling: {
@@ -143,7 +140,7 @@ export async function reportData({
 }: ReportDataParms): Promise<any> {
   const appInfo = await getAppInfoFromStorage();
 
-  return await request(REPORT_URL, {
+  return await request(`${appInfo.reportHost}/api/web/oceanbase/report`, {
     method: 'POST',
     data: {
       content: JSON.stringify({
@@ -152,7 +149,7 @@ export async function reportData({
         version: appInfo.version,
         body: data,
       }),
-      component: REPORT_COMPONENT,
+      component: appInfo.appName,
     },
   });
 }

@@ -12,6 +12,7 @@ declare namespace API {
     publicKey: string;
     reportStatistics: boolean;
     version: string;
+    reportHost: string;
   };
 
   type SysStatisticsData = {
