@@ -168,7 +168,7 @@ const columns: ColumnsType<DataType> = [
         {' '}
         {value === 'operating' ? (
           <Text
-            style={{ width: 110, color: '#d48806',fontSize:12 }}
+            style={{ maxWidth: 110, color: '#d48806',fontSize:12 }}
             ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
           >
             {value}/{record.statusDetail}

@@ -1,6 +1,6 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
-import { clone,cloneDeep } from 'lodash';
+import { clone, cloneDeep } from 'lodash';
 import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
@@ -56,11 +56,11 @@ export function formatNewTenantForm(
       }
       if (originFormData[key]['restore']) {
         let { until } = originFormData[key]['restore'];
-        
+
         result[key]['restore'] = {
           ...originFormData[key]['restore'],
           until:
-            (until && until.date && until.time)
+            until && until.date && until.time
               ? {
                   timestamp:
                     dayjs(until.date).format('YYYY-MM-DD') +
@@ -69,7 +69,7 @@ export function formatNewTenantForm(
                 }
               : { unlimited: true },
         };
-        if(originFormData[key]?.restore?.type === 'OSS'){
+        if (originFormData[key]?.restore?.type === 'OSS') {
           result[key]['restore']['ossAccessId'] = encryptText(
             originFormData[key]['restore'].ossAccessId,
             publicKey,
@@ -175,29 +175,38 @@ export function checkIsSame(
   return true;
 }
 
-function findMinValue(
-  key: 'availableCPU' | 'availableLogDisk' | 'availableMemory',
-  resources: API.ServerResource[],
-) {
-  if (!resources.length) return [];
-  return resources.sort((pre, cur) => cur[key] - pre[key])[0][key];
-}
-
 export function findMinParameter(
   zones: string[],
   essentialParameter: API.EssentialParametersType,
 ): MaxResourceType {
-  
-  const { obServerResources } = essentialParameter;
-  const selectResources = obServerResources.filter((resource) =>
-    zones.includes(resource.obZone),
-  );
-  
-  return {
-    maxCPU: findMinValue('availableCPU', selectResources),
-    maxLogDisk: findMinValue('availableLogDisk', selectResources),
-    maxMemory: findMinValue('availableMemory', selectResources),
-  };
+  let result: MaxResourceType = {};
+  for (let zone of zones) {
+    if (Object.keys(result).length === 0) {
+      result = {
+        maxCPU: essentialParameter.obZoneResourceMap[zone]['availableCPU'],
+        maxLogDisk:
+          essentialParameter.obZoneResourceMap[zone]['availableLogDisk'],
+        maxMemory:
+          essentialParameter.obZoneResourceMap[zone]['availableMemory'],
+      };
+    } else {
+      result = {
+        maxCPU: Math.max(
+          result.maxCPU!,
+          essentialParameter[zone]['availableCPU'],
+        ),
+        maxLogDisk: Math.max(
+          result.maxLogDisk!,
+          essentialParameter[zone]['availableLogDisk'],
+        ),
+        maxMemory: Math.max(
+          result.maxMemory!,
+          essentialParameter[zone]['availableMemory'],
+        ),
+      };
+    }
+  }
+  return result;
 }
 
 /**
@@ -281,19 +290,19 @@ export const getOriginResourceUsages = (
   current: API.ReplicaDetailType | undefined,
 ) => {
   if (!resourceUsages) return;
-  if(!current) return resourceUsages;
+  if (!current) return resourceUsages;
   const originResourceUsages = cloneDeep(resourceUsages);
-  originResourceUsages.obServerResources.forEach((resource) => {
-    if (resource.obZone === current.zone) {
-      resource.availableCPU += Number(current.minCPU);
-      resource.availableLogDisk += Number(current.logDiskSize.split('Gi')[0]);
-      resource.availableMemory += Number(current.memorySize.split('Gi')[0]);
-      originResourceUsages.obZoneResourceMap[current.zone].availableCPU +=
-        Number(current.minCPU);
-      originResourceUsages.obZoneResourceMap[current.zone].availableLogDisk +=
-        Number(current.logDiskSize.split('Gi')[0]);
-      originResourceUsages.obZoneResourceMap[current.zone].availableMemory +=
-        Number(current.memorySize.split('Gi')[0]);
+  Object.keys(originResourceUsages.obZoneResourceMap).forEach((key) => {
+    if (key === current.zone) {
+      originResourceUsages.obZoneResourceMap[key].availableCPU += Number(
+        current.minCPU,
+      );
+      originResourceUsages.obZoneResourceMap[key].availableLogDisk += Number(
+        current.logDiskSize.split('Gi')[0],
+      );
+      originResourceUsages.obZoneResourceMap[key].availableMemory += Number(
+        current.memorySize.split('Gi')[0],
+      );
     }
   });
   return originResourceUsages;
