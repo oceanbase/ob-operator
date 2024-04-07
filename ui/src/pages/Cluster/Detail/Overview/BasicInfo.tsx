@@ -130,7 +130,7 @@ export default function BasicInfo({
             <Tag color={COLOR_MAP.get(status)}>
               {status === 'operating' ? (
                 <Text
-                  style={{ width: 120, color: '#d48806', fontSize: 12 }}
+                  style={{ maxWidth: 120, color: '#d48806', fontSize: 12 }}
                   ellipsis={{ tooltip: `${status}/${statusDetail}` }}
                 >
                   {status}/{statusDetail}
