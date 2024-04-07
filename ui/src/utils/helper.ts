@@ -93,9 +93,7 @@ export const getAppInfoFromStorage = async (): Promise<API.AppInfo> => {
       appInfo = (await getAppInfo()).data;
     }
     return appInfo;
-  }catch(err){
-    throw new Error(err)
-  }
+  } catch (err) {}
 };
 
 export const isReportTimeExpired = (lastTimestamp: number): boolean => {
