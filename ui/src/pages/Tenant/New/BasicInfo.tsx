@@ -1,8 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
-import { RESOURCE_NAME_REG,TZ_NAME_REG } from '@/constants';
+import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Form,Input,Row,Select } from 'antd';
+import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
@@ -25,7 +25,7 @@ export default function BasicInfo({
     .map((cluster) => ({
       value: cluster.clusterId,
       label: cluster.name,
-      status: cluster.status
+      status: cluster.status,
     }));
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
@@ -56,7 +56,10 @@ export default function BasicInfo({
             })}
           >
             <Select
-              placeholder="请选择"
+              placeholder={intl.formatMessage({
+                id: 'Dashboard.Tenant.New.BasicInfo.PleaseSelect',
+                defaultMessage: '请选择',
+              })}
               onChange={(value) => selectClusterChange(value)}
               optionLabelProp="selectLabel"
               options={clusterOptions.map((option) => ({
@@ -185,10 +188,10 @@ export default function BasicInfo({
           </Form.Item>
         </Col>
         {/* <Col span={8}>
-             <Form.Item name={["charset"]} label="字符集">
-               <Select />
-             </Form.Item>
-            </Col> */}
+              <Form.Item name={["charset"]} label="字符集">
+                <Select />
+              </Form.Item>
+             </Col> */}
       </Row>
     </Card>
   );
