@@ -262,7 +262,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 			return nil, oberr.NewInternal(err.Error())
 		}
 		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
-			return nil, oberr.NewBadRequest("primary tenant is not primary")
+			return nil, oberr.NewBadRequest("the target tenant is not primary tenant")
 		}
 
 		// Match root password
