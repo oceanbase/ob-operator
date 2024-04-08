@@ -348,6 +348,7 @@ func ListOBClusterRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 			names = append(names, obzone.Name)
 		}
 		events = append(events, GetScopedEvents(c, nn.Namespace, "OBServer", names)...)
+		events = append(events, GetScopedEvents(c, nn.Namespace, "Pod", names)...)
 	}
 
 	logger.Debugf("Get related events of obcluster: %v", nn)
