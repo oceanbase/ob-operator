@@ -19,30 +19,30 @@ import (
 type BackupPolicy struct {
 	param.BackupPolicyBase `json:",inline"`
 
-	UID                 string `json:"uid"`
-	TenantName          string `json:"tenantName"`
-	Name                string `json:"name"`
-	Namespace           string `json:"namespace"`
-	Status              string `json:"status"`
+	UID                 string `json:"uid" binding:"required"`
+	TenantName          string `json:"tenantName" binding:"required"`
+	Name                string `json:"name" binding:"required"`
+	Namespace           string `json:"namespace" binding:"required"`
+	Status              string `json:"status" binding:"required"`
 	OSSAccessSecret     string `json:"ossAccessSecret,omitempty"`
 	BakEncryptionSecret string `json:"bakEncryptionSecret,omitempty"`
 
-	CreateTime string     `json:"createTime"`
-	Events     []K8sEvent `json:"events"`
+	CreateTime string     `json:"createTime" binding:"required"`
+	Events     []K8sEvent `json:"events" binding:"required"`
 }
 
 type BackupJob struct {
-	UID       string `json:"uid"`
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
+	UID       string `json:"uid" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	Namespace string `json:"namespace" binding:"required"`
 	// Enum: FULL, INCR, ARCHIVE, CLEAN
-	Type             string `json:"type"`
-	TenantName       string `json:"tenantName"`
-	BackupPolicyName string `json:"backupPolicyName"`
-	Path             string `json:"path"`      // Empty for Clean job
-	StartTime        string `json:"startTime"` // Start time of the backup job, StartScnDisplay for ARCHIVE job
-	EndTime          string `json:"endTime"`   // End time of the backup job, empty for ARCHIVE job
-	Status           string `json:"status"`
-	StatusInDatabase string `json:"statusInDatabase"`
+	Type             string `json:"type" binding:"required"`
+	TenantName       string `json:"tenantName" binding:"required"`
+	BackupPolicyName string `json:"backupPolicyName" binding:"required"`
+	Path             string `json:"path" binding:"required"`      // Empty for Clean job
+	StartTime        string `json:"startTime" binding:"required"` // Start time of the backup job, StartScnDisplay for ARCHIVE job
+	EndTime          string `json:"endTime"`                      // End time of the backup job, empty for ARCHIVE job
+	Status           string `json:"status" binding:"required"`
+	StatusInDatabase string `json:"statusInDatabase" binding:"required"`
 	EncryptionSecret string `json:"encryptionSecret,omitempty"`
 }

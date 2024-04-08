@@ -1279,7 +1279,85 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/response.OBClusterStastistic"
+                                                "$ref": "#/definitions/response.OBClusterStatistic"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obclusters/{namespace}/{name}/related-events": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list related events of specific obcluster, including obzone and observer.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBCluster"
+                ],
+                "summary": "list related events",
+                "operationId": "ListOBClusterRelatedEvents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obcluster namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obcluster name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.K8sEvent"
                                             }
                                         }
                                     }
@@ -2318,6 +2396,27 @@
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2377,6 +2476,29 @@
                 ],
                 "summary": "Delete obtenant pool",
                 "operationId": "DeleteOBTenantPool",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2443,6 +2565,27 @@
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2458,6 +2601,84 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/related-events": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List related events of specific tenant, including restore, backup and backup policy events",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBTenant"
+                ],
+                "summary": "List related events of specific tenant",
+                "operationId": "ListOBTenantRelatedEvents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.K8sEvent"
+                                            }
                                         }
                                     }
                                 }
@@ -3779,6 +4000,11 @@
         },
         "response.APIResponse": {
             "type": "object",
+            "required": [
+                "data",
+                "message",
+                "successful"
+            ],
             "properties": {
                 "data": {},
                 "message": {
@@ -3791,6 +4017,18 @@
         },
         "response.BackupJob": {
             "type": "object",
+            "required": [
+                "backupPolicyName",
+                "name",
+                "namespace",
+                "path",
+                "startTime",
+                "status",
+                "statusInDatabase",
+                "tenantName",
+                "type",
+                "uid"
+            ],
             "properties": {
                 "backupPolicyName": {
                     "type": "string"
@@ -3839,7 +4077,14 @@
             "required": [
                 "archivePath",
                 "bakDataPath",
-                "destType"
+                "createTime",
+                "destType",
+                "events",
+                "name",
+                "namespace",
+                "status",
+                "tenantName",
+                "uid"
             ],
             "properties": {
                 "archivePath": {
@@ -3915,11 +4160,21 @@
         },
         "response.DashboardInfo": {
             "type": "object",
+            "required": [
+                "appName",
+                "publicKey",
+                "reportHost",
+                "reportStatistics",
+                "version"
+            ],
             "properties": {
                 "appName": {
                     "type": "string"
                 },
                 "publicKey": {
+                    "type": "string"
+                },
+                "reportHost": {
                     "type": "string"
                 },
                 "reportStatistics": {
@@ -3932,6 +4187,16 @@
         },
         "response.K8sEvent": {
             "type": "object",
+            "required": [
+                "count",
+                "firstOccur",
+                "lastSeen",
+                "message",
+                "namespace",
+                "object",
+                "reason",
+                "type"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -3972,6 +4237,11 @@
         },
         "response.K8sNodeCondition": {
             "type": "object",
+            "required": [
+                "message",
+                "reason",
+                "type"
+            ],
             "properties": {
                 "message": {
                     "type": "string"
@@ -3986,6 +4256,20 @@
         },
         "response.K8sNodeInfo": {
             "type": "object",
+            "required": [
+                "conditions",
+                "cri",
+                "externalIP",
+                "internalIP",
+                "kernel",
+                "labels",
+                "name",
+                "os",
+                "roles",
+                "status",
+                "uptime",
+                "version"
+            ],
             "properties": {
                 "conditions": {
                     "type": "array",
@@ -4036,6 +4320,14 @@
         },
         "response.K8sNodeResource": {
             "type": "object",
+            "required": [
+                "cpuFree",
+                "cpuTotal",
+                "cpuUsed",
+                "memoryFree",
+                "memoryTotal",
+                "memoryUsed"
+            ],
             "properties": {
                 "cpuFree": {
                     "type": "number"
@@ -4073,6 +4365,11 @@
         },
         "response.MetricClass": {
             "type": "object",
+            "required": [
+                "description",
+                "metricGroups",
+                "name"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4090,6 +4387,10 @@
         },
         "response.MetricData": {
             "type": "object",
+            "required": [
+                "metric",
+                "values"
+            ],
             "properties": {
                 "metric": {
                     "$ref": "#/definitions/response.Metric"
@@ -4104,6 +4405,11 @@
         },
         "response.MetricGroup": {
             "type": "object",
+            "required": [
+                "description",
+                "metrics",
+                "name"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4121,6 +4427,12 @@
         },
         "response.MetricMeta": {
             "type": "object",
+            "required": [
+                "description",
+                "key",
+                "name",
+                "unit"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4138,6 +4450,10 @@
         },
         "response.MetricValue": {
             "type": "object",
+            "required": [
+                "timestamp",
+                "value"
+            ],
             "properties": {
                 "timestamp": {
                     "type": "number"
@@ -4149,6 +4465,10 @@
         },
         "response.MonitorSpec": {
             "type": "object",
+            "required": [
+                "image",
+                "resource"
+            ],
             "properties": {
                 "image": {
                     "type": "string"
@@ -4160,6 +4480,10 @@
         },
         "response.NFSVolumeSpec": {
             "type": "object",
+            "required": [
+                "address",
+                "path"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -4171,6 +4495,10 @@
         },
         "response.Namespace": {
             "type": "object",
+            "required": [
+                "namespace",
+                "status"
+            ],
             "properties": {
                 "namespace": {
                     "type": "string"
@@ -4182,6 +4510,23 @@
         },
         "response.OBCluster": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "mode",
+                "name",
+                "namespace",
+                "parameters",
+                "resource",
+                "rootPasswordSecret",
+                "status",
+                "statusDetail",
+                "storage",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "backupVolume": {
                     "$ref": "#/definitions/response.NFSVolumeSpec"
@@ -4250,6 +4595,19 @@
         },
         "response.OBClusterOverview": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "mode",
+                "name",
+                "namespace",
+                "status",
+                "statusDetail",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "clusterId": {
                     "type": "integer"
@@ -4262,6 +4620,9 @@
                 },
                 "image": {
                     "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
                 },
                 "name": {
                     "type": "string"
@@ -4288,6 +4649,9 @@
         },
         "response.OBClusterResources": {
             "type": "object",
+            "required": [
+                "minPoolMemory"
+            ],
             "properties": {
                 "minPoolMemory": {
                     "type": "integer",
@@ -4302,13 +4666,17 @@
                 "obZoneResourceMap": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/response.OBZoneAvaiableResource"
+                        "$ref": "#/definitions/response.OBZoneAvailableResource"
                     }
                 }
             }
         },
-        "response.OBClusterStastistic": {
+        "response.OBClusterStatistic": {
             "type": "object",
+            "required": [
+                "count",
+                "status"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -4320,6 +4688,11 @@
         },
         "response.OBMetrics": {
             "type": "object",
+            "required": [
+                "cpuPercent",
+                "diskPercent",
+                "memoryPercent"
+            ],
             "properties": {
                 "cpuPercent": {
                     "type": "integer"
@@ -4334,6 +4707,13 @@
         },
         "response.OBServer": {
             "type": "object",
+            "required": [
+                "address",
+                "name",
+                "namespace",
+                "status",
+                "statusDetail"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -4357,6 +4737,15 @@
         },
         "response.OBServerAvailableResource": {
             "type": "object",
+            "required": [
+                "availableCPU",
+                "availableDataDisk",
+                "availableLogDisk",
+                "availableMemory",
+                "obServerIP",
+                "obZone",
+                "serverCount"
+            ],
             "properties": {
                 "availableCPU": {
                     "type": "integer",
@@ -4389,6 +4778,11 @@
         },
         "response.OBServerStorage": {
             "type": "object",
+            "required": [
+                "dataStorage",
+                "redoLogStorage",
+                "sysLogStorage"
+            ],
             "properties": {
                 "dataStorage": {
                     "$ref": "#/definitions/response.StorageSpec"
@@ -4403,6 +4797,20 @@
         },
         "response.OBTenantDetail": {
             "type": "object",
+            "required": [
+                "charset",
+                "clusterResourceName",
+                "createTime",
+                "locality",
+                "name",
+                "namespace",
+                "primaryZone",
+                "status",
+                "tenantName",
+                "tenantRole",
+                "uid",
+                "unitNumber"
+            ],
             "properties": {
                 "charset": {
                     "description": "Charset of the tenant",
@@ -4441,7 +4849,7 @@
                 "rootCredential": {
                     "type": "string"
                 },
-                "standbyROCredentail": {
+                "standbyROCredential": {
                     "type": "string"
                 },
                 "status": {
@@ -4479,6 +4887,20 @@
         "response.OBTenantOverview": {
             "description": "Brief information about OBTenant",
             "type": "object",
+            "required": [
+                "charset",
+                "clusterResourceName",
+                "createTime",
+                "locality",
+                "name",
+                "namespace",
+                "primaryZone",
+                "status",
+                "tenantName",
+                "tenantRole",
+                "uid",
+                "unitNumber"
+            ],
             "properties": {
                 "charset": {
                     "description": "Charset of the tenant",
@@ -4539,6 +4961,18 @@
         },
         "response.OBTenantReplica": {
             "type": "object",
+            "required": [
+                "iopsWeight",
+                "logDiskSize",
+                "maxCPU",
+                "maxIops",
+                "memorySize",
+                "minCPU",
+                "minIops",
+                "priority",
+                "type",
+                "zone"
+            ],
             "properties": {
                 "iopsWeight": {
                     "type": "integer"
@@ -4575,6 +5009,10 @@
         },
         "response.OBTenantStatistic": {
             "type": "object",
+            "required": [
+                "count",
+                "status"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -4586,6 +5024,14 @@
         },
         "response.OBZone": {
             "type": "object",
+            "required": [
+                "name",
+                "namespace",
+                "replicas",
+                "status",
+                "statusDetail",
+                "zone"
+            ],
             "properties": {
                 "affinities": {
                     "type": "array",
@@ -4634,8 +5080,16 @@
                 }
             }
         },
-        "response.OBZoneAvaiableResource": {
+        "response.OBZoneAvailableResource": {
             "type": "object",
+            "required": [
+                "availableCPU",
+                "availableDataDisk",
+                "availableLogDisk",
+                "availableMemory",
+                "obZone",
+                "serverCount"
+            ],
             "properties": {
                 "availableCPU": {
                     "type": "integer",
@@ -4665,6 +5119,10 @@
         },
         "response.ResourceSpecRender": {
             "type": "object",
+            "required": [
+                "cpu",
+                "memory"
+            ],
             "properties": {
                 "cpu": {
                     "type": "integer"
@@ -4676,6 +5134,11 @@
         },
         "response.RestoreSource": {
             "type": "object",
+            "required": [
+                "archiveSource",
+                "bakDataSource",
+                "type"
+            ],
             "properties": {
                 "archiveSource": {
                     "type": "string"
@@ -4700,6 +5163,15 @@
         },
         "response.StatisticData": {
             "type": "object",
+            "required": [
+                "backupPolicies",
+                "clusters",
+                "k8sNodes",
+                "servers",
+                "tenants",
+                "warningEvents",
+                "zones"
+            ],
             "properties": {
                 "backupPolicies": {
                     "type": "array",
@@ -4750,6 +5222,13 @@
         },
         "response.StorageClass": {
             "type": "object",
+            "required": [
+                "allowVolumeExpansion",
+                "name",
+                "provisioner",
+                "reclaimPolicy",
+                "volumeBindingMode"
+            ],
             "properties": {
                 "allowVolumeExpansion": {
                     "type": "boolean"
@@ -4782,6 +5261,10 @@
         },
         "response.StorageSpec": {
             "type": "object",
+            "required": [
+                "size",
+                "storageClass"
+            ],
             "properties": {
                 "size": {
                     "type": "string"

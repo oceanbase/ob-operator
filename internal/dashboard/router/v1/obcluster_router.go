@@ -29,4 +29,5 @@ func InitOBClusterRoutes(g *gin.RouterGroup) {
 	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.Wrap(h.ScaleOBServer))
 	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone))
 	g.GET("/obclusters/:namespace/:name/resource-usages", h.Wrap(h.ListOBClusterResources))
+	g.GET("/obclusters/:namespace/:name/related-events", h.Wrap(h.ListOBClusterRelatedEvents))
 }

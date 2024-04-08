@@ -87,11 +87,11 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	return essentials, nil
 }
 
-func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailableResource, map[string]*response.OBZoneAvaiableResource) {
-	zoneMapping := make(map[string]*response.OBZoneAvaiableResource)
+func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailableResource, map[string]*response.OBZoneAvailableResource) {
+	zoneMapping := make(map[string]*response.OBZoneAvailableResource)
 	serverUsages := make([]response.OBServerAvailableResource, 0, len(gvservers))
 	for _, gvserver := range gvservers {
-		zoneResource := &response.OBZoneAvaiableResource{
+		zoneResource := &response.OBZoneAvailableResource{
 			ServerCount:       1,
 			OBZone:            gvserver.Zone,
 			AvailableCPU:      max(gvserver.CPUCapacity-gvserver.CPUAssigned, 0),
@@ -100,8 +100,8 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 			AvailableDataDisk: max(gvserver.DataDiskCapacity-gvserver.DataDiskAllocated, 0),
 		}
 		serverUsage := response.OBServerAvailableResource{
-			OBServerIP:             gvserver.ServerIP,
-			OBZoneAvaiableResource: *zoneResource,
+			OBServerIP:              gvserver.ServerIP,
+			OBZoneAvailableResource: *zoneResource,
 		}
 		if _, ok := zoneMapping[gvserver.Zone]; !ok {
 			zoneMapping[gvserver.Zone] = zoneResource

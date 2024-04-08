@@ -15,44 +15,44 @@ package response
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
 type K8sEvent struct {
-	Namespace  string `json:"namespace"`
-	Type       string `json:"type"`
-	Count      int32  `json:"count"`
-	FirstOccur int64  `json:"firstOccur"`
-	LastSeen   int64  `json:"lastSeen"`
-	Reason     string `json:"reason"`
-	Object     string `json:"object"`
-	Message    string `json:"message"`
+	Namespace  string `json:"namespace" binding:"required"`
+	Type       string `json:"type" binding:"required"`
+	Count      int32  `json:"count" binding:"required"`
+	FirstOccur int64  `json:"firstOccur" binding:"required"`
+	LastSeen   int64  `json:"lastSeen" binding:"required"`
+	Reason     string `json:"reason" binding:"required"`
+	Object     string `json:"object" binding:"required"`
+	Message    string `json:"message" binding:"required"`
 }
 
 type K8sNodeCondition struct {
-	Type    string `json:"type"`
-	Reason  string `json:"reason"`
-	Message string `json:"message"`
+	Type    string `json:"type" binding:"required"`
+	Reason  string `json:"reason" binding:"required"`
+	Message string `json:"message" binding:"required"`
 }
 
 type K8sNodeInfo struct {
-	Name       string             `json:"name"`
-	Status     string             `json:"status"`
-	Conditions []K8sNodeCondition `json:"conditions"`
-	Roles      []string           `json:"roles"`
-	Labels     []common.KVPair    `json:"labels"`
-	Uptime     int64              `json:"uptime"`
-	Version    string             `json:"version"`
-	InternalIP string             `json:"internalIP"`
-	ExternalIP string             `json:"externalIP"`
-	OS         string             `json:"os"`
-	Kernel     string             `json:"kernel"`
-	CRI        string             `json:"cri"`
+	Name       string             `json:"name" binding:"required"`
+	Status     string             `json:"status" binding:"required"`
+	Conditions []K8sNodeCondition `json:"conditions" binding:"required"`
+	Roles      []string           `json:"roles" binding:"required"`
+	Labels     []common.KVPair    `json:"labels" binding:"required"`
+	Uptime     int64              `json:"uptime" binding:"required"`
+	Version    string             `json:"version" binding:"required"`
+	InternalIP string             `json:"internalIP" binding:"required"`
+	ExternalIP string             `json:"externalIP" binding:"required"`
+	OS         string             `json:"os" binding:"required"`
+	Kernel     string             `json:"kernel" binding:"required"`
+	CRI        string             `json:"cri" binding:"required"`
 }
 
 type K8sNodeResource struct {
-	CpuTotal    float64 `json:"cpuTotal"`
-	CpuUsed     float64 `json:"cpuUsed"`
-	CpuFree     float64 `json:"cpuFree"`
-	MemoryTotal float64 `json:"memoryTotal"`
-	MemoryUsed  float64 `json:"memoryUsed"`
-	MemoryFree  float64 `json:"memoryFree"`
+	CpuTotal    float64 `json:"cpuTotal" binding:"required"`
+	CpuUsed     float64 `json:"cpuUsed" binding:"required"`
+	CpuFree     float64 `json:"cpuFree" binding:"required"`
+	MemoryTotal float64 `json:"memoryTotal" binding:"required"`
+	MemoryUsed  float64 `json:"memoryUsed" binding:"required"`
+	MemoryFree  float64 `json:"memoryFree" binding:"required"`
 }
 
 type K8sNode struct {
@@ -61,16 +61,16 @@ type K8sNode struct {
 }
 
 type Namespace struct {
-	Namespace string `json:"namespace"`
-	Status    string `json:"status"`
+	Namespace string `json:"namespace" binding:"required"`
+	Status    string `json:"status" binding:"required"`
 }
 
 type StorageClass struct {
-	Name                 string          `json:"name"`
-	Provisioner          string          `json:"provisioner"`
-	ReclaimPolicy        string          `json:"reclaimPolicy"`
-	VolumeBindingMode    string          `json:"volumeBindingMode"`
-	AllowVolumeExpansion bool            `json:"allowVolumeExpansion"`
+	Name                 string          `json:"name" binding:"required"`
+	Provisioner          string          `json:"provisioner" binding:"required"`
+	ReclaimPolicy        string          `json:"reclaimPolicy" binding:"required"`
+	VolumeBindingMode    string          `json:"volumeBindingMode" binding:"required"`
+	AllowVolumeExpansion bool            `json:"allowVolumeExpansion" binding:"required"`
 	MountOptions         []string        `json:"mountOptions,omitempty"`
 	Parameters           []common.KVPair `json:"parameters,omitempty"`
 }
