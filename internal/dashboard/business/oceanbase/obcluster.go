@@ -22,7 +22,6 @@ import (
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,7 +32,6 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -491,58 +489,9 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	return obcluster
 }
 
-func JudgeResourceEnoughForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) error {
-	nodes, err := k8s.ListNodeResources(ctx)
-	if err != nil {
-		return oberr.Wrap(err, oberr.ErrInternal, "List resource of nodes")
-	}
-	requiredMem := obcluster.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() / constant.GB
-	requiredCpu := obcluster.Spec.OBServerTemplate.Resource.Cpu.AsApproximateFloat64()
-
-	// Judge whether the remain resource is enough for monitor
-	if obcluster.Spec.MonitorTemplate != nil {
-		requiredMem += obcluster.Spec.MonitorTemplate.Resource.Memory.AsApproximateFloat64() / constant.GB
-		requiredCpu += obcluster.Spec.MonitorTemplate.Resource.Cpu.AsApproximateFloat64()
-	}
-	unmetCount := 0
-	for _, zone := range obcluster.Spec.Topology {
-		unmetCount += zone.Replica
-	}
-	if obcluster.Status.Status == "running" {
-		existing, err := clients.ClusterClient.Get(ctx, obcluster.Namespace, obcluster.Name, metav1.GetOptions{})
-		if err != nil {
-			if kubeerrors.IsNotFound(err) {
-				return oberr.NewBadRequest("OBCluster not found")
-			}
-			return oberr.Wrap(err, oberr.ErrInternal, "Get obcluster")
-		}
-		for _, zone := range existing.Spec.Topology {
-			unmetCount -= zone.Replica
-		}
-	}
-	for _, node := range nodes {
-		if unmetCount == 0 {
-			break
-		}
-		for node.MemoryFree > requiredMem && node.CpuFree > requiredCpu && unmetCount > 0 {
-			unmetCount--
-			node.MemoryFree -= requiredMem
-			node.CpuFree -= requiredCpu
-		}
-	}
-	if unmetCount > 0 {
-		return oberr.NewBadRequest("Resource not enough in k8s cluster")
-	}
-	return nil
-}
-
 func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) (*response.OBCluster, error) {
 	obcluster := generateOBClusterInstance(param)
-	err := JudgeResourceEnoughForOBCluster(ctx, obcluster)
-	if err != nil {
-		return nil, err
-	}
-	err = clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
+	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
 	if err != nil {
 		return nil, errors.Wrap(err, "Create secrets for obcluster")
 	}
@@ -580,13 +529,11 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	}
 	found := false
 	replicaChanged := false
-	var scaleDelta int
 	for idx, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone == obzoneIdentity.OBZoneName {
 			found = true
 			if obzone.Replica != scaleParam.Replicas {
 				replicaChanged = true
-				scaleDelta = scaleParam.Replicas - obzone.Replica
 				logger.Infof("Scale obzone %s from %d to %d", obzone.Zone, obzone.Replica, scaleParam.Replicas)
 				obcluster.Spec.Topology[idx].Replica = scaleParam.Replicas
 			}
@@ -597,13 +544,6 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 	}
 	if !replicaChanged {
 		return nil, errors.Errorf("obzone %s replica already satisfied in obcluster %s %s", obzoneIdentity.OBZoneName, obzoneIdentity.Namespace, obzoneIdentity.Name)
-	}
-	// Judge whether the resource is enough for obcluster if the replica increases
-	if scaleDelta > 0 {
-		err := JudgeResourceEnoughForOBCluster(ctx, obcluster)
-		if err != nil {
-			return nil, err
-		}
 	}
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {
@@ -661,10 +601,6 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
 	})
-	err = JudgeResourceEnoughForOBCluster(ctx, obcluster)
-	if err != nil {
-		return nil, err
-	}
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {
 		return nil, oberr.NewInternal(err.Error())
