@@ -16,8 +16,10 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -213,6 +215,20 @@ func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	return buildDetailFromApiType(tenant), nil
 }
 
+func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
+	k8sclient := client.GetClient()
+	_, err := k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      nn.Name,
+			Namespace: nn.Namespace,
+		},
+		StringData: map[string]string{
+			"password": password,
+		},
+	}, v1.CreateOptions{})
+	return err
+}
+
 func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.CreateOBTenantParam) (*response.OBTenantDetail, error) {
 	t, err := buildOBTenantApiType(nn, p)
 	if err != nil {
@@ -223,32 +239,85 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	}
 
 	k8sclient := client.GetClient()
-	if t.Spec.Credentials.Root != "" {
-		_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
-			ObjectMeta: v1.ObjectMeta{
-				Name:      t.Spec.Credentials.Root,
-				Namespace: nn.Namespace,
-			},
-			StringData: map[string]string{
-				"password": p.RootPassword,
-			},
-		}, v1.CreateOptions{})
+
+	if p.Source != nil && p.Source.Tenant != nil {
+		// Check primary tenant
+		ns := nn.Namespace
+		tenantCR := *p.Source.Tenant
+		if strings.Contains(*p.Source.Tenant, "/") {
+			splits := strings.Split(*p.Source.Tenant, "/")
+			if len(splits) != 2 {
+				return nil, oberr.NewBadRequest("invalid tenant name")
+			}
+			ns, tenantCR = splits[0], splits[1]
+		}
+		existing, err := clients.GetOBTenant(ctx, types.NamespacedName{
+			Namespace: ns,
+			Name:      tenantCR,
+		})
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				return nil, oberr.NewBadRequest("primary tenant not found")
+			}
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
+			return nil, oberr.NewBadRequest("primary tenant is not primary")
+		}
+
+		// Match root password
+		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}
-	}
-	t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-	_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      t.Spec.Credentials.StandbyRO,
+		if pwd, ok := rootSecret.Data["password"]; ok {
+			if p.RootPassword != string(pwd) {
+				return nil, oberr.NewBadRequest("root password not match")
+			}
+			if t.Spec.Credentials.Root != "" {
+				err = createPasswordSecret(ctx, types.NamespacedName{
+					Namespace: nn.Namespace,
+					Name:      t.Spec.Credentials.Root,
+				}, p.RootPassword)
+				if err != nil {
+					return nil, oberr.NewInternal(err.Error())
+				}
+			}
+		}
+
+		// Fetch standbyro password
+		standbyroSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.StandbyRO, v1.GetOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if pwd, ok := standbyroSecret.Data["password"]; ok {
+			t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
+			err = createPasswordSecret(ctx, types.NamespacedName{
+				Namespace: nn.Namespace,
+				Name:      t.Spec.Credentials.StandbyRO,
+			}, string(pwd))
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+	} else {
+		if t.Spec.Credentials.Root != "" {
+			err = createPasswordSecret(ctx, types.NamespacedName{
+				Namespace: nn.Namespace,
+				Name:      t.Spec.Credentials.Root,
+			}, p.RootPassword)
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+		t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
+		err = createPasswordSecret(ctx, types.NamespacedName{
 			Namespace: nn.Namespace,
-		},
-		StringData: map[string]string{
-			"password": p.RootPassword, // For simplicity, use the same password as root
-		},
-	}, v1.CreateOptions{})
-	if err != nil {
-		return nil, oberr.NewInternal(err.Error())
+			Name:      t.Spec.Credentials.StandbyRO,
+		}, rand.String(32))
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
 	}
 
 	if p.Source != nil && p.Source.Restore != nil {
