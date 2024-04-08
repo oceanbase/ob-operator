@@ -320,6 +320,7 @@ export default function TenantOverview() {
                 clusterList,
                 tenantDetail.info.clusterResourceName,
               )}
+              tenantStatus={tenantDetail?.info?.status}
               setEditZone={setEditZone}
               editZone={editZone}
               operateType={operateTypeRef}

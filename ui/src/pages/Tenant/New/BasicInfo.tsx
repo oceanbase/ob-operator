@@ -25,6 +25,7 @@ export default function BasicInfo({
     .map((cluster) => ({
       value: cluster.clusterId,
       label: cluster.name,
+      status: cluster.status,
     }));
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
@@ -55,8 +56,28 @@ export default function BasicInfo({
             })}
           >
             <Select
+              placeholder={intl.formatMessage({
+                id: 'Dashboard.Tenant.New.BasicInfo.PleaseSelect',
+                defaultMessage: '请选择',
+              })}
               onChange={(value) => selectClusterChange(value)}
-              options={clusterOptions}
+              optionLabelProp="selectLabel"
+              options={clusterOptions.map((option) => ({
+                value: option.value,
+                selectLabel: option.label,
+                disabled: option.status !== 'running',
+                label: (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    <span>{option.status}</span>
+                  </div>
+                ),
+              }))}
             />
           </Form.Item>
         </Col>
@@ -167,10 +188,10 @@ export default function BasicInfo({
           </Form.Item>
         </Col>
         {/* <Col span={8}>
-             <Form.Item name={["charset"]} label="字符集">
-               <Select />
-             </Form.Item>
-            </Col> */}
+              <Form.Item name={["charset"]} label="字符集">
+                <Select />
+              </Form.Item>
+             </Col> */}
       </Row>
     </Card>
   );

@@ -690,5 +690,6 @@
   "Dashboard.components.customModal.ModifyPasswordModal.OperationSucceeded": "操作成功！",
   "Dashboard.components.customModal.ScaleModal.OperationSucceeded": "操作成功！",
   "Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded": "操作成功",
-  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "操作成功！"
+  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "操作成功！",
+  "Dashboard.Tenant.New.BasicInfo.PleaseSelect": "请选择"
 }

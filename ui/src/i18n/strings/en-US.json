@@ -690,5 +690,6 @@
   "Dashboard.components.customModal.ModifyPasswordModal.OperationSucceeded": "Operation succeeded!",
   "Dashboard.components.customModal.ScaleModal.OperationSucceeded": "Operation succeeded!",
   "Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded": "Operation succeeded",
-  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "Operation succeeded!"
+  "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "Operation succeeded!",
+  "Dashboard.Tenant.New.BasicInfo.PleaseSelect": "Please select"
 }
