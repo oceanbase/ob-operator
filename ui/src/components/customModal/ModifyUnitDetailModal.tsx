@@ -504,15 +504,6 @@ export default function ModifyUnitDetailModal({
             <Row gutter={24}>
               <Col>
                 <Form.Item
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterMiniops',
-                        defaultMessage: '请输入 minIops',
-                      }),
-                    },
-                  ]}
                   label="min iops"
                   name={['unitConfig', 'minIops']}
                 >
@@ -527,15 +518,6 @@ export default function ModifyUnitDetailModal({
               </Col>
               <Col>
                 <Form.Item
-                  rules={[
-                    {
-                      required: true,
-                      message: intl.formatMessage({
-                        id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterMaxiops',
-                        defaultMessage: '请输入 maxIops',
-                      }),
-                    },
-                  ]}
                   label="max iops"
                   name={['unitConfig', 'maxIops']}
                 >
@@ -556,15 +538,6 @@ export default function ModifyUnitDetailModal({
                 id: 'Dashboard.components.customModal.ModifyUnitDetailModal.IopsWeight',
                 defaultMessage: 'iops权重',
               })}
-              rules={[
-                {
-                  required: true,
-                  message: intl.formatMessage({
-                    id: 'Dashboard.components.customModal.ModifyUnitDetailModal.EnterIopsWeight',
-                    defaultMessage: '请输入 iops权重',
-                  }),
-                },
-              ]}
               name={['unitConfig', 'iopsWeight']}
             >
               <InputNumber

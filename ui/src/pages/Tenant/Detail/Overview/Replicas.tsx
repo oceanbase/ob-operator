@@ -9,6 +9,7 @@ import styles from './index.less';
 
 interface ReplicasProps {
   replicaList: API.ReplicaDetailType[];
+  tenantStatus: string;
   refreshTenant: () => void;
   openOperateModal: (type: API.ModalType) => void;
   setEditZone: React.Dispatch<React.SetStateAction<string>>;
@@ -50,6 +51,7 @@ export default function Replicas({
   setEditZone,
   operateType,
   cluster,
+  tenantStatus
 }: ReplicasProps) {
   const { ns, name } = useParams();
   const sortKeys = (keys: string[]) => {
@@ -101,7 +103,7 @@ export default function Replicas({
         extra={
           <Button
             type="primary"
-            disabled={cluster?.topology?.length === replicaList.length}
+            disabled={cluster?.topology?.length === replicaList.length || tenantStatus !== 'running'}
             onClick={addResourcePool}
           >
             {intl.formatMessage({
@@ -131,6 +133,7 @@ export default function Replicas({
                 <div>
                   <Button
                     onClick={() => editResourcePool(replica.zone)}
+                    disabled={tenantStatus !== 'running'}
                     type="link"
                   >
                     {intl.formatMessage({
@@ -153,7 +156,7 @@ export default function Replicas({
                       });
                     }}
                     disabled={
-                      replicaList.length === 2 || replicaList.length === 1
+                      replicaList.length <= 2 || tenantStatus !== 'running'
                     }
                     type="link"
                     danger
