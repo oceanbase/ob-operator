@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
@@ -32,9 +33,8 @@ const (
 	PasswordKey = "password"
 )
 
-// TODO: generate random password
 func generatePassword() string {
-	return "pass"
+	return rand.String(16)
 }
 
 func createPasswordSecret(ctx context.Context, namespace, name, password string) error {
