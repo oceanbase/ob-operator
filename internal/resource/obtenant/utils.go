@@ -170,19 +170,26 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 
 	// step 2.2: Wait for task finished
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
+	timeout := time.NewTimer(time.Second * oceanbaseconst.DefaultStateWaitTimeout)
+	defer timeout.Stop()
+loop:
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+		select {
+		case <-timeout.C:
+			return errors.New("Timeout when waiting for 'ALTER_TENANT' job for addPool")
+		default:
+			exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+			}
+			if !exist {
+				break loop
+			}
+			time.Sleep(config.PollingJobSleepTime)
 		}
-		if !exist {
-			break
-		}
-		time.Sleep(config.PollingJobSleepTime)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
-
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Succeed add poolAdd", "deleted poolName", poolAdd.Zone)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' job for addPool succeeded", "tenantName", tenantName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Adding pool succeeded", "Added pool name", poolAdd.Zone)
 	return nil
 }
 
@@ -715,16 +722,23 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 	}
 
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for deletePool Finished", "tenantName", tenantName)
-
+	timeout := time.NewTimer(time.Second * oceanbaseconst.DefaultStateWaitTimeout)
+	defer timeout.Stop()
+loop:
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+		select {
+		case <-timeout.C:
+			return errors.New("Timeout when waiting for 'ALTER_TENANT' job for deleting pool task")
+		default:
+			exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Failed to get rs job of tenant %s", tenantName))
+			}
+			if !exist {
+				break loop
+			}
+			time.Sleep(config.PollingJobSleepTime)
 		}
-		if !exist {
-			break
-		}
-		time.Sleep(config.PollingJobSleepTime)
 	}
 
 	// step 1.2: update resource pool list

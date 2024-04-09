@@ -270,7 +270,7 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 	return output, nil
 }
 
-func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
+func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
 	password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get root password")
@@ -304,6 +304,12 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
 			Namespace: obcluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind:       obcluster.Kind,
+				APIVersion: obcluster.APIVersion,
+				Name:       obcluster.Name,
+				UID:        obcluster.UID,
+			}},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -317,25 +323,32 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		},
 	}
 	logger.Info("Create run upgrade script job", "script", filepath)
-	err = c.Create(context.Background(), &job)
+	err = c.Create(ctx, &job)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create run upgrade script job for obcluster %s", obcluster.Name)
 	}
 
 	var jobObject *batchv1.Job
+	timeout := time.NewTimer(time.Second * oceanbaseconst.WaitForJobTimeoutSeconds)
+	defer timeout.Stop()
+loop:
 	for {
-		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
-		if err != nil {
-			logger.Error(err, "Failed to get job")
-			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+		select {
+		case <-timeout.C:
+			logger.Info("Timeout to wait for job")
+		default:
+			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			jobObject, err = GetJob(c, obcluster.Namespace, jobName)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+			}
+			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+				logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			} else {
+				logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
+				break loop
+			}
 		}
-		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
-		} else {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-			break
-		}
-		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
 	if jobObject.Status.Succeeded == 1 {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")

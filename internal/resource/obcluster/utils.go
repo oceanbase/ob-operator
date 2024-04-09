@@ -372,29 +372,31 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) erro
 	return nil
 }
 
-// TODO: add timeout
 func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
-	upgradeFinished := false
+	timeout := time.NewTimer(time.Second * oceanbaseconst.WaitForJobTimeoutSeconds)
+	defer timeout.Stop()
+outerLoop:
 	for {
-		zones, err := m.listOBZones()
-		if err != nil {
-			return errors.Wrap(err, "Failed to get obzone list")
-		}
-		for _, zone := range zones.Items {
-			if zone.Name != zoneName {
-				continue
+		select {
+		case <-timeout.C:
+			return errors.New("Timeout to wait obzone upgrade finished")
+		default:
+			zones, err := m.listOBZones()
+			if err != nil {
+				return errors.Wrap(err, "Failed to get obzone list")
 			}
-			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
-			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
-				upgradeFinished = true
-				break
+			for _, zone := range zones.Items {
+				if zone.Name != zoneName {
+					continue
+				}
+				m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
+				if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
+					m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
+					break outerLoop
+				}
 			}
+			time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
 		}
-		if upgradeFinished {
-			m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
-			break
-		}
-		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
 	}
 	return nil
 }

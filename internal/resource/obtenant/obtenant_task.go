@@ -341,22 +341,31 @@ func CreateTenantRestoreJobCR(m *OBTenantManager) tasktypes.TaskError {
 
 func WatchRestoreJobToFinish(m *OBTenantManager) tasktypes.TaskError {
 	var err error
+	// Tenant restoring is in common quite a slow process, so we need to wait for a longer time
+	timeout := time.NewTimer(time.Second * oceanbaseconst.LocalityChangeTimeoutSeconds)
+	defer timeout.Stop()
+loop:
 	for {
-		runningRestore := &v1alpha1.OBTenantRestore{}
-		err = m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.OBTenant.GetNamespace(),
-			Name:      m.OBTenant.Name + "-restore",
-		}, runningRestore)
-		if err != nil {
-			return err
+		select {
+		case <-timeout.C:
+			return errors.New("Timeout when waiting for restore job to finish")
+		default:
+			runningRestore := &v1alpha1.OBTenantRestore{}
+			err = m.Client.Get(m.Ctx, types.NamespacedName{
+				Namespace: m.OBTenant.GetNamespace(),
+				Name:      m.OBTenant.Name + "-restore",
+			}, runningRestore)
+			if err != nil {
+				return err
+			}
+			if runningRestore.Status.Status == constants.RestoreJobSuccessful {
+				break loop
+			} else if runningRestore.Status.Status == constants.RestoreJobFailed {
+				m.Recorder.Event(m.OBTenant, "RestoreJobFailed", "", "Restore job failed")
+				return errors.New("Restore job failed")
+			}
+			time.Sleep(5 * time.Second)
 		}
-		if runningRestore.Status.Status == constants.RestoreJobSuccessful {
-			break
-		} else if runningRestore.Status.Status == constants.RestoreJobFailed {
-			m.Recorder.Event(m.OBTenant, "RestoreJobFailed", "", "Restore job failed")
-			return errors.New("Restore job failed")
-		}
-		time.Sleep(5 * time.Second)
 	}
 	tenantWhiteListMap.Store(m.OBTenant.Spec.TenantName, m.OBTenant.Spec.ConnectWhiteList)
 	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "Restore job finished successfully")
@@ -527,18 +536,26 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 			return err
 		}
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' job of adding pool task", "tenantName", tenantName)
+	timeout := time.NewTimer(time.Second * oceanbaseconst.DefaultStateWaitTimeout)
+	defer timeout.Stop()
+loop:
 	for {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+		select {
+		case <-timeout.C:
+			return errors.New("Timeout when waiting for 'ALTER_TENANT' Job of adding pool task to finish")
+		default:
+			exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+			}
+			if !exist {
+				break loop
+			}
+			time.Sleep(config.PollingJobSleepTime)
 		}
-		if !exist {
-			break
-		}
-		time.Sleep(config.PollingJobSleepTime)
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' Job of adding pool task succeeded", "tenantName", tenantName)
 	return nil
 }
 

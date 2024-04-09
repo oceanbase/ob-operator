@@ -37,6 +37,7 @@ const (
 	LocalityChangeTimeoutSeconds  = 86400 // 1 day
 	DefaultStateWaitTimeout       = 1800
 	TimeConsumingStateWaitTimeout = 3600
+	WaitForJobTimeoutSeconds      = 7200
 	ServerDeleteTimeoutSeconds    = 604800 // 7 days
 )
 
