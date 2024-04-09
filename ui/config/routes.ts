@@ -71,6 +71,11 @@ export default [
                 name: '集群下的租户',
               },
               {
+                path: 'connection',
+                component: 'Cluster/Detail/Connection',
+                name: '连接集群',
+              },
+              {
                 path: '/cluster/:ns/:name/:clusterName',
                 redirect: 'overview',
                 name: '概览页',
@@ -106,6 +111,11 @@ export default [
                 path: 'monitor',
                 component: 'Tenant/Detail/Monitor',
                 name: '租户详情监控',
+              },
+              {
+                path: 'connection',
+                component: 'Tenant/Detail/Connection',
+                name: '连接租户',
               },
               {
                 path: '/tenant/:ns/:name/:tenantName',

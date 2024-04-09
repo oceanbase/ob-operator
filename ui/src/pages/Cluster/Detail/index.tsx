@@ -85,6 +85,14 @@ const ClusterDetail: React.FC = () => {
       key: 'tenant',
       link: `/cluster/${ns}/${name}/${clusterName}/tenant`,
     },
+    {
+      title: intl.formatMessage({
+        id: 'Dashboard.Cluster.Detail.Connection',
+        defaultMessage: '连接集群',
+      }),
+      key: 'connection',
+      link: `/cluster/${ns}/${name}/${clusterName}/connection`,
+    },
   ];
 
   const userMenu = (
