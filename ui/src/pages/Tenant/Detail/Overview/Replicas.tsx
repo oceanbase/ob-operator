@@ -1,6 +1,6 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Button, Col, Descriptions, message } from 'antd';
@@ -9,6 +9,7 @@ import styles from './index.less';
 
 interface ReplicasProps {
   replicaList: API.ReplicaDetailType[];
+  tenantStatus: string;
   refreshTenant: () => void;
   openOperateModal: (type: API.ModalType) => void;
   setEditZone: React.Dispatch<React.SetStateAction<string>>;
@@ -50,7 +51,9 @@ export default function Replicas({
   setEditZone,
   operateType,
   cluster,
+  tenantStatus
 }: ReplicasProps) {
+  const { ns, name } = useParams();
   const sortKeys = (keys: string[]) => {
     const minCpuIdx = keys.findIndex((key) => key === 'minCPU');
     const memorySizeIdx = keys.findIndex((key) => key === 'memorySize');
@@ -60,8 +63,7 @@ export default function Replicas({
     return keys;
   };
 
-  const deleteZone = async (zoneName: string) => {
-    const [ns, name] = getNSName();
+  const deleteResourcePool = async (zoneName: string) => {
     const res = await deleteObtenantPool({ ns, name, zoneName });
     if (res.successful) {
       refreshTenant();
@@ -78,12 +80,12 @@ export default function Replicas({
   const editResourcePool = (zone: string) => {
     operateType.current = 'edit';
     setEditZone(zone);
-    openOperateModal('modifyUnitSpecification');
+    openOperateModal('editResourcePools');
   };
 
   const addResourcePool = () => {
     operateType.current = 'create';
-    openOperateModal('modifyUnitSpecification');
+    openOperateModal('createResourcePools');
   };
 
   return (
@@ -101,7 +103,7 @@ export default function Replicas({
         extra={
           <Button
             type="primary"
-            disabled={cluster?.topology?.length === replicaList.length}
+            disabled={cluster?.topology?.length === replicaList.length || tenantStatus !== 'running'}
             onClick={addResourcePool}
           >
             {intl.formatMessage({
@@ -131,6 +133,7 @@ export default function Replicas({
                 <div>
                   <Button
                     onClick={() => editResourcePool(replica.zone)}
+                    disabled={tenantStatus !== 'running'}
                     type="link"
                   >
                     {intl.formatMessage({
@@ -141,7 +144,7 @@ export default function Replicas({
                   <Button
                     onClick={() => {
                       showDeleteConfirm({
-                        onOk: () => deleteZone(replica.zone),
+                        onOk: () => deleteResourcePool(replica.zone),
                         title: intl.formatMessage(
                           {
                             id: 'Dashboard.Detail.Overview.Replicas.AreYouSureYouWant',
@@ -153,7 +156,7 @@ export default function Replicas({
                       });
                     }}
                     disabled={
-                      replicaList.length === 2 || replicaList.length === 1
+                      replicaList.length <= 2 || tenantStatus !== 'running'
                     }
                     type="link"
                     danger

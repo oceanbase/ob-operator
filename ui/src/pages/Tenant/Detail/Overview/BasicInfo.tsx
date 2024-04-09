@@ -3,10 +3,11 @@ import { intl } from '@/utils/intl';
 import { Card, Col, Descriptions, Tag } from 'antd';
 
 export default function BasicInfo({
-  info,
-  source,
+  info = {},
+  source = {},
+  loading,
   style,
-}: API.TenantBasicInfo & { style?: React.CSSProperties }) {
+}: API.TenantBasicInfo & { style?: React.CSSProperties; loading: boolean }) {
   const InfoConfig = {
     name: intl.formatMessage({
       id: 'Dashboard.Detail.Overview.BasicInfo.ResourceName',
@@ -76,6 +77,7 @@ export default function BasicInfo({
   return (
     <Col span={24}>
       <Card
+        loading={loading}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({

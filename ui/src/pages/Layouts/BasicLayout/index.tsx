@@ -1,23 +1,34 @@
 import logoImg from '@/assets/logo1.svg';
 import { logoutReq } from '@/services';
+import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
-import { Outlet, history, useLocation } from '@umijs/max';
+import { Outlet, history, useLocation, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import { useEffect, useState } from 'react';
 
 const BasicLayout: React.FC = () => {
   const location = useLocation();
   const user = localStorage.getItem('user');
+  const [version, setVersion] = useState<string>('');
+  const { reportDataInterval } = useModel('global');
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
       if (data.successful) {
         history.push('/login');
+        clearInterval(reportDataInterval.current);
       }
     },
   });
+
+  useEffect(() => {
+    getAppInfoFromStorage().then((appInfo) => {
+      setVersion(appInfo.version);
+    });
+  }, []);
 
   // const Title = () => (
   //   <img
@@ -84,7 +95,7 @@ const BasicLayout: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: '1.0.0',
+            version,
           },
         }}
       >

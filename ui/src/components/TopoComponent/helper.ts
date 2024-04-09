@@ -1,13 +1,14 @@
 import {
-  BADGE_IMG_MAP,
-  CLUSTER_IMG_MAP,
-  SERVER_IMG_MAP,
-  ZONE_IMG_MAP,
-  TOPO_INFO_CONFIG
+BADGE_IMG_MAP,
+CLUSTER_IMG_MAP,
+SERVER_IMG_MAP,
+TOPO_INFO_CONFIG,
+ZONE_IMG_MAP
 } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Graph, IG6GraphEvent, INode, IShape } from '@antv/g6';
+import { Graph,IG6GraphEvent,INode,IShape } from '@antv/g6';
 import _ from 'lodash';
+import type { OperateTypeLabel } from './constants';
 
 export type ShapeEventListner = (
   event: IG6GraphEvent,
@@ -32,7 +33,7 @@ type TooltipInfo = {
   minIops: number;
 };
 
-type GraphNodeType = {
+export type GraphNodeType = {
   id: string;
   label: string;
   status: string;
@@ -222,7 +223,7 @@ export const formatTopoData = (
 /**
  * Determine whether the old and new topoData attribute values are exactly the same
  */
-export const checkIsSame = (oldTopoData: any, newTopoData: any): boolean => {
+export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
@@ -243,4 +244,8 @@ export const getServerNumber = (
     }
   }
   return 0;
+};
+
+export const haveDisabledOperate = (operateList: OperateTypeLabel) => {
+  return operateList.find((operate) => operate.disabled);
 };

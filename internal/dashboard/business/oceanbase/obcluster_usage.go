@@ -87,21 +87,21 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	return essentials, nil
 }
 
-func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailableResource, map[string]*response.OBZoneAvaiableResource) {
-	zoneMapping := make(map[string]*response.OBZoneAvaiableResource)
+func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailableResource, map[string]*response.OBZoneAvailableResource) {
+	zoneMapping := make(map[string]*response.OBZoneAvailableResource)
 	serverUsages := make([]response.OBServerAvailableResource, 0, len(gvservers))
 	for _, gvserver := range gvservers {
-		zoneResource := &response.OBZoneAvaiableResource{
+		zoneResource := &response.OBZoneAvailableResource{
 			ServerCount:       1,
 			OBZone:            gvserver.Zone,
-			AvailableCPU:      gvserver.CPUCapacity - gvserver.CPUAssigned,
-			AvailableMemory:   gvserver.MemCapacity - gvserver.MemAssigned,
-			AvailableLogDisk:  gvserver.LogDiskCapacity - gvserver.LogDiskAssigned,
-			AvailableDataDisk: gvserver.DataDiskCapacity - gvserver.DataDiskAllocated,
+			AvailableCPU:      max(gvserver.CPUCapacity-gvserver.CPUAssigned, 0),
+			AvailableMemory:   max(gvserver.MemCapacity-gvserver.MemAssigned, 0),
+			AvailableLogDisk:  max(gvserver.LogDiskCapacity-gvserver.LogDiskAssigned, 0),
+			AvailableDataDisk: max(gvserver.DataDiskCapacity-gvserver.DataDiskAllocated, 0),
 		}
 		serverUsage := response.OBServerAvailableResource{
-			OBServerIP:             gvserver.ServerIP,
-			OBZoneAvaiableResource: *zoneResource,
+			OBServerIP:              gvserver.ServerIP,
+			OBZoneAvailableResource: *zoneResource,
 		}
 		if _, ok := zoneMapping[gvserver.Zone]; !ok {
 			zoneMapping[gvserver.Zone] = zoneResource
@@ -123,4 +123,18 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 		serverUsages = append(serverUsages, serverUsage)
 	}
 	return serverUsages, zoneMapping
+}
+
+type OrderedType interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
+		~float32 | ~float64 |
+		~string
+}
+
+func max[t OrderedType](a, b t) t {
+	if a > b {
+		return a
+	}
+	return b
 }

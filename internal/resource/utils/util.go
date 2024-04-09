@@ -232,15 +232,15 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
 		} else {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
 			break
 		}
 		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
 	if jobObject.Status.Succeeded == 1 {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded", "job", fullJobName)
+		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded", "job", fullJobName)
 		clientSet := k8sclient.GetClient()
 		podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 			LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
@@ -254,18 +254,18 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 		res := clientSet.ClientSet.CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOpts)
 		logs, err := res.Stream(context.TODO())
 		if err != nil {
-			logger.Error(err, "failed to get job logs")
+			logger.Error(err, "Failed to get job logs")
 		} else {
 			defer logs.Close()
 			_, err = io.Copy(&outputBuffer, logs)
 			if err != nil {
-				logger.Error(err, "failed to copy logs")
+				logger.Error(err, "Failed to copy logs")
 			}
 			output = outputBuffer.String()
 		}
 	} else {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("job failed", "job", fullJobName)
-		return "", errors.Wrapf(err, "failed to run job %s", fullJobName)
+		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", fullJobName)
+		return "", errors.Wrapf(err, "Failed to run job %s", fullJobName)
 	}
 	return output, nil
 }
@@ -330,17 +330,17 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("job is still running")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
 		} else {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("job finished")
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
 			break
 		}
 		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
 	if jobObject.Status.Succeeded == 1 {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("job succeeded")
+		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
 	} else {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("job failed", "job", jobName)
+		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
 		return errors.Wrap(err, "Failed to run upgrade script job")
 	}
 	return nil
@@ -379,7 +379,7 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		}
 	} else {
 		// Get ip_list from primary tenant
-		aps, err := con.ListTenantAccessPoints(tenantCR)
+		aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
 		if err != nil {
 			return "", err
 		}

@@ -1,6 +1,7 @@
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
 import TenantsList from '@/pages/Tenant/TenantsList';
+import { useParams } from '@umijs/max';
 import { getClusterDetailReq } from '@/services';
 import { getAllTenants } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
@@ -8,7 +9,6 @@ import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col,Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
-import { getNSName } from '../Overview/helper';
 
 const defaultQueryRange = {
   step: 20,
@@ -17,7 +17,7 @@ const defaultQueryRange = {
 };
 
 export default function Tenant() {
-  const [ns, name, clusterName] = getNSName();
+  const { ns, name, clusterName } = useParams();
   const navigate = useNavigate();
   const { data: tenantsListResponse, run: getTenantsList } = useRequest(
     getAllTenants,

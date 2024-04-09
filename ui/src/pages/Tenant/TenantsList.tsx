@@ -1,7 +1,7 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button,Card,Col,Table,Tag } from 'antd';
+import { Button, Card, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import styles from './index.less';
@@ -22,7 +22,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     render: (value, record) => (
       <Link
         replace
-        to={`/tenant/ns=${record.namespace}&nm=${record.name}&tenantName=${record.tenantName}`}
+        to={`/tenant/${record.namespace}/${record.name}/${record.tenantName}`}
       >
         {value}
       </Link>
@@ -61,7 +61,10 @@ const columns: ColumnsType<API.TenantDetail> = [
     key: 'tenantRole',
   },
   {
-    title: 'locality',
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Tenant.TenantsList.ReplicaDistribution',
+      defaultMessage: '副本分布',
+    }),
     dataIndex: 'locality',
     key: 'locality',
   },

@@ -68,7 +68,7 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 	}
 	tenantWhiteListMap.Store(tenantName, m.OBTenant.Spec.ConnectWhiteList)
 	// Create user or change password of root, do not return error
-	m.Recorder.Event(m.OBTenant, "Create", "", "create OBTenant successfully")
+	m.Recorder.Event(m.OBTenant, "Create", "", "Create OBTenant successfully")
 	return nil
 }
 
@@ -889,7 +889,7 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 			}
 		}
 
-		if standbyROPwd == "" && secret != nil {
+		if standbyROPwd == "" {
 			standbyROPwd = string(secret.Data["password"])
 		}
 

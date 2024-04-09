@@ -1,8 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
-import { RESOURCE_NAME_REG,TZ_NAME_REG } from '@/constants';
+import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Form,Input,Row,Select } from 'antd';
+import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
@@ -25,6 +25,7 @@ export default function BasicInfo({
     .map((cluster) => ({
       value: cluster.clusterId,
       label: cluster.name,
+      status: cluster.status,
     }));
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
@@ -55,14 +56,35 @@ export default function BasicInfo({
             })}
           >
             <Select
+              placeholder={intl.formatMessage({
+                id: 'Dashboard.Tenant.New.BasicInfo.PleaseSelect',
+                defaultMessage: '请选择',
+              })}
               onChange={(value) => selectClusterChange(value)}
-              options={clusterOptions}
+              optionLabelProp="selectLabel"
+              options={clusterOptions.map((option) => ({
+                value: option.value,
+                selectLabel: option.label,
+                disabled: option.status !== 'running',
+                label: (
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <span>{option.label}</span>
+                    <span>{option.status}</span>
+                  </div>
+                ),
+              }))}
             />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item
             name={['name']}
+            validateFirst
             rules={[
               {
                 required: true,
@@ -76,6 +98,13 @@ export default function BasicInfo({
                 message: intl.formatMessage({
                   id: 'Dashboard.Tenant.New.BasicInfo.ResourceNamesCanOnlyConsist',
                   defaultMessage: '资源名只能由小写字母和 - 组成',
+                }),
+              },
+              {
+                pattern: /\D/,
+                message: intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.BasicInfo.ResourceNamesCannotUsePure',
+                  defaultMessage: '资源名不能使用纯数字',
                 }),
               },
             ]}
@@ -144,7 +173,7 @@ export default function BasicInfo({
               defaultMessage: 'Unit 数量',
             })}
           >
-            <InputNumber style={{ width: '100%' }} />
+            <InputNumber min={1} style={{ width: '100%' }} />
           </Form.Item>
         </Col>
         <Col span={8}>
@@ -159,10 +188,10 @@ export default function BasicInfo({
           </Form.Item>
         </Col>
         {/* <Col span={8}>
-            <Form.Item name={["charset"]} label="字符集">
-              <Select />
-            </Form.Item>
-           </Col> */}
+              <Form.Item name={["charset"]} label="字符集">
+                <Select />
+              </Form.Item>
+             </Col> */}
       </Row>
     </Card>
   );

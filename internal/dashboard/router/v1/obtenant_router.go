@@ -37,4 +37,5 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.PUT("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.CreateOBTenantPool))
 	g.DELETE("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.DeleteOBTenantPool))
 	g.PATCH("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.PatchOBTenantPool))
+	g.GET("/obtenants/:namespace/:name/related-events", h.Wrap(h.ListOBTenantRelatedEvents))
 }

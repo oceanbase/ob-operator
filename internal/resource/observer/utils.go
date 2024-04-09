@@ -132,7 +132,7 @@ func (m *OBServerManager) setRecoveryStatus() {
 		m.Logger.Info("Current server can keep static ip address or the cluster runs as standalone, recover by recreating pod")
 		m.OBServer.Status.Status = serverstatus.Recover
 	} else {
-		m.Logger.Info("observer not recoverable, delete current observer and wait recreate")
+		m.Logger.Info("OBServer is not recoverable, delete current observer and wait recreate")
 		m.OBServer.Status.Status = serverstatus.Unrecoverable
 	}
 }
@@ -481,7 +481,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 			svc, err := m.getSvc()
 			if err != nil {
 				if kubeerrors.IsNotFound(err) {
-					m.Logger.Info("svc not found")
+					m.Logger.Info("Svc not found")
 				} else {
 					m.Logger.Error(err, "Failed to get svc")
 				}
@@ -546,7 +546,7 @@ func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
 			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 		}
 	default:
-		m.Logger.Info("static ip not supported, set empty annotation")
+		m.Logger.Info("Static ip not supported, set empty annotation")
 	}
 	return annotations
 }

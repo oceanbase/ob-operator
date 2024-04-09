@@ -1,0 +1,66 @@
+{
+  "link.title.Docs": {
+    "message": "文档",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Community": {
+    "message": "社区",
+    "description": "The title of the footer links column with title=Community in the footer"
+  },
+  "link.title.More": {
+    "message": "更多",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.ob-operator": {
+    "message": "ob-operator",
+    "description": "The label of footer link with label=ob-operator linking to https://github.com/oceanbase/ob-operator"
+  },
+  "link.item.label.Tutorial": {
+    "message": "教程",
+    "description": "The label of footer link with label=Tutorial linking to docs/tutorial/intro"
+  },
+  "link.item.label.Stack Overflow": {
+    "message": "Stack Overflow",
+    "description": "The label of footer link with label=Stack Overflow linking to https://stackoverflow.com/questions/tagged/oceanbase"
+  },
+  "link.item.label.Slack": {
+    "message": "Slack",
+    "description": "The label of footer link with label=Slack linking to https://oceanbase.slack.com/"
+  },
+  "link.item.label.Forum (in Chinese)": {
+    "message": "论坛",
+    "description": "The label of footer link with label=Forum (in Chinese) linking to https://ask.oceanbase.com/"
+  },
+  "link.item.label.Blog": {
+    "message": "博客",
+    "description": "The label of footer link with label=Blog linking to /blog"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/oceanbase"
+  },
+  "copyright": {
+    "message": "Copyright © 2024 OceanBase, Inc. Built with Docusaurus.",
+    "description": "The footer copyright"
+  },
+  "link.title.Repos": {
+    "message": "代码仓库",
+    "description": "The title of the footer links column with title=Repos in the footer"
+  },
+  "link.item.label.Manual": {
+    "message": "用户手册",
+    "description": "The label of footer link with label=Manual linking to /docs/manual/what-is-ob-operator"
+  },
+  "link.item.label.Architecture": {
+    "message": "架构设计",
+    "description": "The label of footer link with label=Architecture linking to /docs/developer/arch"
+  },
+  "link.item.label.Development": {
+    "message": "开发指南",
+    "description": "The label of footer link with label=Development linking to /docs/developer/develop-locally"
+  },
+  "link.item.label.OceanBase CE": {
+    "message": "OceanBase 社区版",
+    "description": "The label of footer link with label=OceanBase CE linking to https://github.com/oceanbase/oceanbase"
+  }
+}

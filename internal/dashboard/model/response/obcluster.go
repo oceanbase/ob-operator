@@ -16,27 +16,27 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 )
 
-type OBClusterStastistic struct {
-	Status string `json:"status"`
-	Count  int    `json:"count"`
+type OBClusterStatistic struct {
+	Status string `json:"status" binding:"required"`
+	Count  int    `json:"count" binding:"required"`
 }
 
 type OBServer struct {
-	Namespace    string     `json:"namespace"`
-	Name         string     `json:"name"`
-	Status       string     `json:"status"`
-	StatusDetail string     `json:"statusDetail"`
-	Address      string     `json:"address"`
+	Namespace    string     `json:"namespace" binding:"required"`
+	Name         string     `json:"name" binding:"required"`
+	Status       string     `json:"status" binding:"required"`
+	StatusDetail string     `json:"statusDetail" binding:"required"`
+	Address      string     `json:"address" binding:"required"`
 	Metrics      *OBMetrics `json:"metrics"`
 }
 
 type OBZone struct {
-	Namespace    string          `json:"namespace"`
-	Name         string          `json:"name"`
-	Zone         string          `json:"zone"`
-	Replicas     int             `json:"replicas"`
-	Status       string          `json:"status"`
-	StatusDetail string          `json:"statusDetail"`
+	Namespace    string          `json:"namespace" binding:"required"`
+	Name         string          `json:"name" binding:"required"`
+	Zone         string          `json:"zone" binding:"required"`
+	Replicas     int             `json:"replicas" binding:"required"`
+	Status       string          `json:"status" binding:"required"`
+	StatusDetail string          `json:"statusDetail" binding:"required"`
 	RootService  string          `json:"rootService,omitempty"`
 	OBServers    []OBServer      `json:"observers,omitempty"`
 	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
@@ -46,21 +46,24 @@ type OBZone struct {
 }
 
 type OBMetrics struct {
-	CpuPercent    int `json:"cpuPercent"`
-	MemoryPercent int `json:"memoryPercent"`
-	DiskPercent   int `json:"diskPercent"`
+	CpuPercent    int `json:"cpuPercent" binding:"required"`
+	MemoryPercent int `json:"memoryPercent" binding:"required"`
+	DiskPercent   int `json:"diskPercent" binding:"required"`
 }
 
 type OBClusterOverview struct {
-	Name         string   `json:"name"`
-	Namespace    string   `json:"namespace"`
-	ClusterName  string   `json:"clusterName"`
-	ClusterId    int64    `json:"clusterId"`
-	Status       string   `json:"status"`
-	StatusDetail string   `json:"statusDetail"`
-	CreateTime   int64    `json:"createTime"`
-	Image        string   `json:"image"`
-	Topology     []OBZone `json:"topology"`
+	UID          string   `json:"uid" binding:"required"`
+	Name         string   `json:"name" binding:"required"`
+	Namespace    string   `json:"namespace" binding:"required"`
+	ClusterName  string   `json:"clusterName" binding:"required"`
+	ClusterId    int64    `json:"clusterId" binding:"required"`
+	Status       string   `json:"status" binding:"required"`
+	StatusDetail string   `json:"statusDetail" binding:"required"`
+	CreateTime   int64    `json:"createTime" binding:"required"`
+	Image        string   `json:"image" binding:"required"`
+	Topology     []OBZone `json:"topology" binding:"required"`
+
+	Mode common.ClusterMode `json:"mode" binding:"required"`
 }
 
 type OBCluster struct {
@@ -73,58 +76,57 @@ type OBCluster struct {
 }
 
 type ResourceSpecRender struct {
-	Cpu      int64  `json:"cpu"`
-	MemoryGB string `json:"memory"`
+	Cpu      int64  `json:"cpu" binding:"required"`
+	MemoryGB string `json:"memory" binding:"required"`
 }
 
 type OBClusterExtra struct {
-	Resource ResourceSpecRender `json:"resource"`
-	Storage  OBServerStorage    `json:"storage"`
+	Resource ResourceSpecRender `json:"resource" binding:"required"`
+	Storage  OBServerStorage    `json:"storage" binding:"required"`
 
-	RootPasswordSecret string             `json:"rootPasswordSecret"`
-	Parameters         []common.KVPair    `json:"parameters"`
-	Monitor            *MonitorSpec       `json:"monitor"`
-	BackupVolume       *NFSVolumeSpec     `json:"backupVolume"`
-	Mode               common.ClusterMode `json:"mode"`
+	RootPasswordSecret string          `json:"rootPasswordSecret" binding:"required"`
+	Parameters         []common.KVPair `json:"parameters" binding:"required"`
+	Monitor            *MonitorSpec    `json:"monitor"`
+	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
 }
 
 type MonitorSpec struct {
-	Image    string             `json:"image"`
-	Resource ResourceSpecRender `json:"resource"`
+	Image    string             `json:"image" binding:"required"`
+	Resource ResourceSpecRender `json:"resource" binding:"required"`
 }
 
 type NFSVolumeSpec struct {
-	Address string `json:"address"`
-	Path    string `json:"path"`
+	Address string `json:"address" binding:"required"`
+	Path    string `json:"path" binding:"required"`
 }
 
 type OBServerStorage struct {
-	DataStorage    StorageSpec `json:"dataStorage"`
-	RedoLogStorage StorageSpec `json:"redoLogStorage"`
-	SysLogStorage  StorageSpec `json:"sysLogStorage"`
+	DataStorage    StorageSpec `json:"dataStorage" binding:"required"`
+	RedoLogStorage StorageSpec `json:"redoLogStorage" binding:"required"`
+	SysLogStorage  StorageSpec `json:"sysLogStorage" binding:"required"`
 }
 
 type StorageSpec struct {
-	StorageClass string `json:"storageClass"`
-	SizeGB       string `json:"size"`
+	StorageClass string `json:"storageClass" binding:"required"`
+	SizeGB       string `json:"size" binding:"required"`
 }
 
 type OBClusterResources struct {
-	MinPoolMemory     int64                              `json:"minPoolMemory" example:"2147483648"`
-	OBServerResources []OBServerAvailableResource        `json:"obServerResources"`
-	OBZoneResourceMap map[string]*OBZoneAvaiableResource `json:"obZoneResourceMap"`
+	MinPoolMemory     int64                               `json:"minPoolMemory" example:"2147483648" binding:"required"`
+	OBServerResources []OBServerAvailableResource         `json:"obServerResources"`
+	OBZoneResourceMap map[string]*OBZoneAvailableResource `json:"obZoneResourceMap"`
 }
 
 type OBServerAvailableResource struct {
-	OBServerIP             string `json:"obServerIP"`
-	OBZoneAvaiableResource `json:",inline"`
+	OBServerIP              string `json:"obServerIP" binding:"required"`
+	OBZoneAvailableResource `json:",inline"`
 }
 
-type OBZoneAvaiableResource struct {
-	ServerCount       int64  `json:"serverCount" example:"3"`
-	OBZone            string `json:"obZone" example:"zone1"`
-	AvailableLogDisk  int64  `json:"availableLogDisk" example:"5368709120"`
-	AvailableDataDisk int64  `json:"availableDataDisk" example:"16106127360"`
-	AvailableMemory   int64  `json:"availableMemory" example:"5368709120"`
-	AvailableCPU      int64  `json:"availableCPU" example:"12"`
+type OBZoneAvailableResource struct {
+	ServerCount       int64  `json:"serverCount" example:"3" binding:"required"`
+	OBZone            string `json:"obZone" example:"zone1" binding:"required"`
+	AvailableLogDisk  int64  `json:"availableLogDisk" example:"5368709120" binding:"required"`
+	AvailableDataDisk int64  `json:"availableDataDisk" example:"16106127360" binding:"required"`
+	AvailableMemory   int64  `json:"availableMemory" example:"5368709120" binding:"required"`
+	AvailableCPU      int64  `json:"availableCPU" example:"12" binding:"required"`
 }

@@ -2,11 +2,11 @@ import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 
 import { RULER_ZONE } from '@/constants/rules';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { addObzone } from '@/services';
-import InputNumber from '../InputNumber';
+import { addObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { useParams } from '@umijs/max';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
+import InputNumber from '../InputNumber';
 import NodeSelector from '../NodeSelector';
 
 type FieldType = {
@@ -19,7 +19,7 @@ export default function AddZoneModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
-
+  const { ns: namespace, name } = useParams();
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -27,16 +27,21 @@ export default function AddZoneModal({
     } catch (err) {}
   };
 
-  const handleCancel = () =>{
+  const handleCancel = () => {
     form.resetFields();
     setVisible(false);
-  } 
+  };
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
-    const res = await addObzone({ namespace, name, ...values });
+    const res = await addObzoneReportWrap({ namespace, name, ...values });
     if (res.successful) {
-      message.success(res.message);
-      successCallback();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.AddZoneModal.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }
@@ -103,46 +108,46 @@ export default function AddZoneModal({
         </Form.Item>
         {/* 如果不能为空的话应该需要添加默认值 */}
         {/* <p>node-selector:</p>
-            <Form.List name="nodeSelector">
-             {(fields, { add, remove }) => (
-               <>
-                 {fields.map(({ key, name, ...restField }) => (
-                   <Space
-                     key={key}
-                     style={{ display: 'flex', marginBottom: 8 }}
-                     align="baseline"
-                   >
-                     <Form.Item
-                       {...restField}
-                       name={[name, 'key']}
-                       rules={[{ required: true, message: '请输入key' }]}
-                     >
-                       <Input placeholder="key" />
-                     </Form.Item>
-                     :
-                     <Form.Item
-                       {...restField}
-                       name={[name, 'value']}
-                       rules={[{ required: true, message: '请输入value' }]}
-                     >
-                       <Input placeholder="value" />
-                     </Form.Item>
-                     <MinusCircleOutlined onClick={() => remove(name)} />
-                   </Space>
-                 ))}
-                 <Form.Item>
-                   <Button
-                     type="dashed"
-                     onClick={() => add()}
-                     block
-                     icon={<PlusOutlined />}
-                   >
-                     添加node-selector
-                   </Button>
-                 </Form.Item>
-               </>
-             )}
-            </Form.List> */}
+             <Form.List name="nodeSelector">
+              {(fields, { add, remove }) => (
+                <>
+                  {fields.map(({ key, name, ...restField }) => (
+                    <Space
+                      key={key}
+                      style={{ display: 'flex', marginBottom: 8 }}
+                      align="baseline"
+                    >
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'key']}
+                        rules={[{ required: true, message: '请输入key' }]}
+                      >
+                        <Input placeholder="key" />
+                      </Form.Item>
+                      :
+                      <Form.Item
+                        {...restField}
+                        name={[name, 'value']}
+                        rules={[{ required: true, message: '请输入value' }]}
+                      >
+                        <Input placeholder="value" />
+                      </Form.Item>
+                      <MinusCircleOutlined onClick={() => remove(name)} />
+                    </Space>
+                  ))}
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      onClick={() => add()}
+                      block
+                      icon={<PlusOutlined />}
+                    >
+                      添加node-selector
+                    </Button>
+                  </Form.Item>
+                </>
+              )}
+             </Form.List> */}
         <NodeSelector
           showLabel={true}
           formName="nodeSelector"

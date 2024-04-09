@@ -119,6 +119,7 @@ const reactStyles = {
 
 function ReactNode(handleClick?: any) {
   return ({ cfg }: any) => {
+    // Zones not included in the tenant will be disabled
     const { label, status, typeText, disable } = cfg;
     return (
       <Group>
@@ -191,7 +192,7 @@ function ReactNode(handleClick?: any) {
           </Text>
           {cfg.type !== 'server' && (
             <Image
-              onClick={disable ? null : handleClick}
+              onClick={ handleClick}
               id={cfg.label}
               style={{
                 position: 'absolute',
@@ -199,7 +200,7 @@ function ReactNode(handleClick?: any) {
                 y: 16,
                 width: 2.5,
                 height: 16,
-                cursor: disable ? 'auto' : 'pointer',
+                cursor:'pointer',
                 img: moreImg,
               }}
               name="moreImg"

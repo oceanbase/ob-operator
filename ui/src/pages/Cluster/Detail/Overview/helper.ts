@@ -1,38 +1,6 @@
 // Functions without UI
 import { CLUSTER_INFO_CONFIG, RESULT_STATUS } from "@/constants";
 
-/**
- * Get the namespace, name and cluster name or tenant name through the path of the url
- *
- * @returns {Array} [namespace,name]
- * @example /cluster/ns=oceanbase&nm=test/overview => [oceanbase,test]
- */
-const getNSName = () => {
-  let pathArr = location.hash.split('/'),
-    res: string[] = [];
-  if (!pathArr.length) return res;
-  for (let path of pathArr) {
-    
-    if (path.split('&').length === 3) {
-      const [ns, name,clusterOrTenantName] = path.split('&');
-      if (ns.split('=')[0] === 'ns' && name.split('=')[0] === 'nm') {
-        res[0] = ns.split('=')[1];
-        res[1] = name.split('=')[1];
-        res[2] = clusterOrTenantName.split('=')[1];
-      }
-      return res;
-    }else if(path.split('&').length === 2){
-      const [ns, name] = path.split('&');
-      if (ns.split('=')[0] === 'ns' && name.split('=')[0] === 'nm') {
-        res[0] = ns.split('=')[1];
-        res[1] = name.split('=')[1];
-      }
-      return res;
-    }
-  }
-  return res;
-};
-
 // if there is cluster｜zone｜server whose status isn't running,the return status is operating.
 const formatClusterData = (responseData: any): API.ClusterDetail => {
   const res: any = {
@@ -84,4 +52,4 @@ const formatClusterData = (responseData: any): API.ClusterDetail => {
   return res;
 };
 
-export { formatClusterData, getNSName };
+export { formatClusterData };

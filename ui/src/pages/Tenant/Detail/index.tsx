@@ -1,11 +1,13 @@
 import logoImg from '@/assets/logo1.svg';
 import { logoutReq } from '@/services';
+import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
 import { Outlet, history, useLocation, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import { useEffect, useState } from 'react';
 const subSideMenus: MenuItem[] = [
   {
     title: intl.formatMessage({
@@ -39,8 +41,9 @@ const subSideMenus: MenuItem[] = [
 const TenantDetail: React.FC = () => {
   const params = useParams();
   const user = localStorage.getItem('user');
+  const [version, setVersion] = useState<string>('');
   const location = useLocation();
-  const { tenantId } = params;
+  const { ns,name,tenantName } = params;
 
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
@@ -56,21 +59,21 @@ const TenantDetail: React.FC = () => {
         id: 'Dashboard.Tenant.Detail.Overview',
         defaultMessage: '概览',
       }),
-      link: `/tenant/${tenantId}`,
+      link: `/tenant/${ns}/${name}/${tenantName}`,
     },
     {
       title: intl.formatMessage({
         id: 'Dashboard.Tenant.Detail.TopologyDiagram',
         defaultMessage: '拓扑图',
       }),
-      link: `/tenant/${tenantId}/topo`,
+      link: `/tenant/${ns}/${name}/${tenantName}/topo`,
     },
     {
       title: intl.formatMessage({
         id: 'Dashboard.Tenant.Detail.Backup',
         defaultMessage: '备份',
       }),
-      link: `/tenant/${tenantId}/backup`,
+      link: `/tenant/${ns}/${name}/${tenantName}/backup`,
     },
     {
       title: intl.formatMessage({
@@ -78,7 +81,7 @@ const TenantDetail: React.FC = () => {
         defaultMessage: '性能监控',
       }),
       key: 'monitor',
-      link: `/tenant/${tenantId}/monitor`,
+      link: `/tenant/${ns}/${name}/${tenantName}/monitor`,
     },
   ];
 
@@ -97,6 +100,12 @@ const TenantDetail: React.FC = () => {
     </Menu>
   );
 
+  useEffect(() => {
+    getAppInfoFromStorage().then((appInfo) => {
+      setVersion(appInfo.version);
+    });
+  }, []);
+
   return (
     <div>
       <BasicLayout
@@ -109,7 +118,7 @@ const TenantDetail: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: '1.0.0',
+            version,
           },
         }}
         menus={menus}

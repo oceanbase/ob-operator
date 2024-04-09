@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history,useModel } from '@umijs/max';
+import { history,useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,message } from 'antd';
 import { useEffect,useRef,useState } from 'react';
@@ -9,18 +9,18 @@ import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
-import { deleteObcluster,getClusterDetailReq } from '@/services';
+import { getClusterDetailReq } from '@/services';
+import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import BasicInfo from './BasicInfo';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
-import { getNSName } from './helper';
 
 //集群详情概览页
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
-  const [[ns, name]] = useState(getNSName());
+  const {ns, name} = useParams();
   const chooseZoneName = useRef<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
@@ -43,7 +43,7 @@ const ClusterOverview: React.FC = () => {
     },
   );
   const handleDelete = async () => {
-    const res = await deleteObcluster({ ns, name });
+    const res = await deleteClusterReportWrap({ ns, name });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -65,7 +65,7 @@ const ClusterOverview: React.FC = () => {
     setOperateModalVisible(true);
   };
   const handleUpgrade = () => {
-    modalType.current = 'upgrade';
+    modalType.current = 'upgradeCluster';
     setOperateModalVisible(true);
   };
 
@@ -170,8 +170,10 @@ const ClusterOverview: React.FC = () => {
         visible={operateModalVisible}
         setVisible={setOperateModalVisible}
         successCallback={operateSuccess}
-        zoneName={chooseZoneName.current}
-        defaultValue={chooseServerNum}
+        params={{
+          zoneName:chooseZoneName.current,
+          defaultValue:chooseServerNum
+        }}
       />
     </PageContainer>
   );

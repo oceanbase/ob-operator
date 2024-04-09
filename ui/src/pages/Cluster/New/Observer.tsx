@@ -1,17 +1,17 @@
 import { intl } from '@/utils/intl';
 import {
-Button,
-Card,
-Col,
-Form,
-Input,
-InputNumber,
-Row,
-Tooltip,
+  Button,
+  Card,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Tooltip,
 } from 'antd';
 
 import SelectWithTooltip from '@/components/SelectWithTooltip';
-import { MINIMAL_CONFIG,SUFFIX_UNIT } from '@/constants';
+import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
 import { clone } from 'lodash';
 import styles from './index.less';
@@ -62,23 +62,24 @@ export const TooltipItemContent = ({ item }) => {
   );
 };
 
-
 export default function Observer({ storageClasses, form }: any) {
   const CustomItem = (prop: any) => {
-    const { label } = prop;
+    const { label, message } = prop;
     return (
       <Form.Item
         {...prop}
         rules={[
           {
             required: true,
-            message: intl.formatMessage(
-              {
-                id: 'OBDashboard.Cluster.New.Observer.EnterLabel',
-                defaultMessage: '请输入{label}',
-              },
-              { label: label },
-            ),
+            message:
+              message ||
+              intl.formatMessage(
+                {
+                  id: 'Dashboard.Cluster.New.Observer.EnterLabel',
+                  defaultMessage: '请输入{{label}}',
+                },
+                { label: label },
+              ),
           },
         ]}
       >
@@ -113,7 +114,6 @@ export default function Observer({ storageClasses, form }: any) {
     });
   };
 
-
   return (
     <Col span={24}>
       <Card
@@ -130,6 +130,10 @@ export default function Observer({ storageClasses, form }: any) {
         <Tooltip title={observerToolTipText}>
           <CustomItem
             style={{ width: '50%' }}
+            message={intl.formatMessage({
+              id: 'Dashboard.Cluster.New.Observer.EnterAnImage',
+              defaultMessage: '请输入镜像',
+            })}
             label={
               <>
                 {intl.formatMessage({

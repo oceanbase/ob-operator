@@ -65,7 +65,7 @@ func (r *OBZoneReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			// obzone not found, just return
 			return ctrl.Result{}, nil
 		}
-		logger.Error(err, "get obzone error")
+		logger.Error(err, "Get obzone error")
 		return ctrl.Result{}, err
 	}
 

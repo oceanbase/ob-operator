@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package response
 
 type APIResponse struct {
-	Data       any    `json:"data"`
-	Message    string `json:"message"`
-	Successful bool   `json:"successful"`
+	Data       any    `json:"data" binding:"required"`
+	Message    string `json:"message" binding:"required"`
+	Successful bool   `json:"successful" binding:"required"`
 }

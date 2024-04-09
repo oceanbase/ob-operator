@@ -3,11 +3,12 @@ import {
   getEssentialParameters as getEssentialParametersReq,
   getSimpleClusterList,
 } from '@/services';
-import { createTenant } from '@/services/tenant';
+import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
+import { strTrim } from '@/utils/helper';
 import { Button, Col, Form, Row, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { formatNewTenantForm } from '../helper';
@@ -46,7 +47,7 @@ export default function New() {
   const essentialParameter = essentialParameterRes?.data;
 
   const onFinish = async (values: any) => {
-    const reqData = formatNewTenantForm(values, clusterName, publicKey);
+    const reqData = formatNewTenantForm(strTrim(values), clusterName, publicKey);
     if (!reqData.pools?.length) {
       message.warning(
         intl.formatMessage({
@@ -56,12 +57,13 @@ export default function New() {
       );
       return;
     }
+    
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
-    const res = await createTenant({
+    const res = await createTenantReportWrap({
       namespace: ns,
-      ...formatNewTenantForm(values, clusterName, publicKey),
+      ...reqData,
     });
     if (res.successful) {
       message.success(

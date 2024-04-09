@@ -56,16 +56,9 @@ export function formatNewTenantForm(
       }
       if (originFormData[key]['restore']) {
         let { until } = originFormData[key]['restore'];
+
         result[key]['restore'] = {
           ...originFormData[key]['restore'],
-          ossAccessId: encryptText(
-            originFormData[key]['restore'].ossAccessId,
-            publicKey,
-          ),
-          ossAccessKey: encryptText(
-            originFormData[key]['restore'].ossAccessKey,
-            publicKey,
-          ),
           until:
             until && until.date && until.time
               ? {
@@ -76,6 +69,16 @@ export function formatNewTenantForm(
                 }
               : { unlimited: true },
         };
+        if (originFormData[key]?.restore?.type === 'OSS') {
+          result[key]['restore']['ossAccessId'] = encryptText(
+            originFormData[key]['restore'].ossAccessId,
+            publicKey,
+          );
+          result[key]['restore']['ossAccessKey'] = encryptText(
+            originFormData[key]['restore'].ossAccessKey,
+            publicKey,
+          );
+        }
         if (originFormData[key]['restore'].bakEncryptionPassword) {
           result[key]['restore']['bakEncryptionPassword'] = encryptText(
             originFormData[key]['restore'].bakEncryptionPassword,
@@ -93,7 +96,6 @@ export function formatNewTenantForm(
       result[key] = originFormData[key];
     }
   });
-  delete result.source?.restore?.until;
   return result;
 }
 /**
@@ -173,26 +175,38 @@ export function checkIsSame(
   return true;
 }
 
-function findMinValue(
-  key: 'availableCPU' | 'availableLogDisk' | 'availableMemory',
-  resources: API.ServerResource[],
-) {
-  return resources.sort((pre, cur) => cur[key] - pre[key])[0][key];
-}
-
 export function findMinParameter(
   zones: string[],
   essentialParameter: API.EssentialParametersType,
 ): MaxResourceType {
-  const { obServerResources } = essentialParameter;
-  const selectResources = obServerResources.filter((resource) =>
-    zones.includes(resource.obZone),
-  );
-  return {
-    maxCPU: findMinValue('availableCPU', selectResources),
-    maxLogDisk: findMinValue('availableLogDisk', selectResources),
-    maxMemory: findMinValue('availableMemory', selectResources),
-  };
+  let result: MaxResourceType = {};
+  for (let zone of zones) {
+    if (Object.keys(result).length === 0) {
+      result = {
+        maxCPU: essentialParameter.obZoneResourceMap[zone]['availableCPU'],
+        maxLogDisk:
+          essentialParameter.obZoneResourceMap[zone]['availableLogDisk'],
+        maxMemory:
+          essentialParameter.obZoneResourceMap[zone]['availableMemory'],
+      };
+    } else {
+      result = {
+        maxCPU: Math.max(
+          result.maxCPU!,
+          essentialParameter[zone]['availableCPU'],
+        ),
+        maxLogDisk: Math.max(
+          result.maxLogDisk!,
+          essentialParameter[zone]['availableLogDisk'],
+        ),
+        maxMemory: Math.max(
+          result.maxMemory!,
+          essentialParameter[zone]['availableMemory'],
+        ),
+      };
+    }
+  }
+  return result;
 }
 
 /**
@@ -248,14 +262,20 @@ const formatReplicToOption = (
   }));
 };
 
+const filterAbnormalZone = (zones: API.Topology[]): API.Topology[] => {
+  return zones.filter(
+    (zone) =>
+      !!zone.observers.find((server) => server.statusDetail === 'running'),
+  );
+};
+
 export const getZonesOptions = (
   cluster: API.SimpleCluster | undefined,
   replicaList: API.ReplicaDetailType[] | undefined,
 ): API.OptionsType => {
   if (!replicaList) return [];
   if (!cluster) return formatReplicToOption(replicaList);
-  const { topology } = cluster;
-  const newReplicas = topology.filter((zone) => {
+  const newReplicas = filterAbnormalZone(cluster.topology).filter((zone) => {
     if (replicaList.find((replica) => replica.zone === zone.zone)) {
       return false;
     } else {
@@ -263,4 +283,27 @@ export const getZonesOptions = (
     }
   });
   return formatReplicToOption(newReplicas);
+};
+
+export const getOriginResourceUsages = (
+  resourceUsages: API.EssentialParametersType | undefined,
+  current: API.ReplicaDetailType | undefined,
+) => {
+  if (!resourceUsages) return;
+  if (!current) return resourceUsages;
+  const originResourceUsages = cloneDeep(resourceUsages);
+  Object.keys(originResourceUsages.obZoneResourceMap).forEach((key) => {
+    if (key === current.zone) {
+      originResourceUsages.obZoneResourceMap[key].availableCPU += Number(
+        current.minCPU,
+      );
+      originResourceUsages.obZoneResourceMap[key].availableLogDisk += Number(
+        current.logDiskSize.split('Gi')[0],
+      );
+      originResourceUsages.obZoneResourceMap[key].availableMemory += Number(
+        current.memorySize.split('Gi')[0],
+      );
+    }
+  });
+  return originResourceUsages;
 };

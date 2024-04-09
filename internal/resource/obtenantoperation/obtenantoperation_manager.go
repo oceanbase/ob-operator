@@ -170,7 +170,7 @@ func (m *ObTenantOperationManager) UpdateStatus() error {
 
 func (m *ObTenantOperationManager) ArchiveResource() {
 	m.Logger.Info("Archive obtenant operation", "obtenant operation", m.Resource.Name)
-	m.Recorder.Event(m.Resource, "Archive", "", "archive obtenant operation")
+	m.Recorder.Event(m.Resource, "Archive", "", "Archive obtenant operation")
 	m.Resource.Status.Status = "Failed"
 	m.Resource.Status.OperationContext = nil
 }

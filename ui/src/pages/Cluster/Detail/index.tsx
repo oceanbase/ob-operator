@@ -1,11 +1,13 @@
 import logoImg from '@/assets/logo1.svg';
 import { logoutReq } from '@/services';
+import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
-import { Outlet, history, useLocation, useParams } from '@umijs/max';
+import { Outlet, history, useLocation, useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import { useEffect, useState } from 'react';
 const subSideMenus: MenuItem[] = [
   {
     title: intl.formatMessage({
@@ -39,12 +41,15 @@ const subSideMenus: MenuItem[] = [
 const ClusterDetail: React.FC = () => {
   const params = useParams();
   const user = localStorage.getItem('user');
+  const [version, setVersion] = useState<string>('');
   const location = useLocation();
-  const { clusterId } = params;
+  const { reportDataInterval } = useModel('global');
+  const { ns, name, clusterName } = params;
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
       if (data.successful) {
+        clearInterval(reportDataInterval.current);
         history.push('/login');
       }
     },
@@ -55,14 +60,14 @@ const ClusterDetail: React.FC = () => {
         id: 'dashboard.Cluster.Detail.Overview',
         defaultMessage: '概览',
       }),
-      link: `/cluster/${clusterId}`,
+      link: `/cluster/${ns}/${name}/${clusterName}`,
     },
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.TopologyDiagram',
         defaultMessage: '拓扑图',
       }),
-      link: `/cluster/${clusterId}/topo`,
+      link: `/cluster/${ns}/${name}/${clusterName}/topo`,
     },
     {
       title: intl.formatMessage({
@@ -70,7 +75,7 @@ const ClusterDetail: React.FC = () => {
         defaultMessage: '性能监控',
       }),
       key: 'monitor',
-      link: `/cluster/${clusterId}/monitor`,
+      link: `/cluster/${ns}/${name}/${clusterName}/monitor`,
     },
     {
       title: intl.formatMessage({
@@ -78,7 +83,7 @@ const ClusterDetail: React.FC = () => {
         defaultMessage: '租户',
       }),
       key: 'tenant',
-      link: `/cluster/${clusterId}/tenant`,
+      link: `/cluster/${ns}/${name}/${clusterName}/tenant`,
     },
   ];
 
@@ -97,6 +102,12 @@ const ClusterDetail: React.FC = () => {
     </Menu>
   );
 
+  useEffect(() => {
+    getAppInfoFromStorage().then((appInfo) => {
+      setVersion(appInfo.version);
+    });
+  }, []);
+
   return (
     <div>
       <BasicLayout
@@ -109,7 +120,7 @@ const ClusterDetail: React.FC = () => {
           locales: ['zh-CN', 'en-US'],
           appData: {
             shortName: 'ob dashboard',
-            version: '1.0.0',
+            version,
           },
         }}
         menus={menus}

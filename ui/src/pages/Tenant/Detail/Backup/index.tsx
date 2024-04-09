@@ -1,6 +1,6 @@
 import EmptyImg from '@/assets/empty.svg';
 import { BACKUP_RESULT_STATUS,REFRESH_TENANT_TIME } from '@/constants';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { getBackupPolicy,getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
@@ -13,11 +13,11 @@ import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
 
 export default function Backup() {
-  const [ns, name] = getNSName();
+  const { ns, name, tenantName } = useParams();
   const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout>()
 
-  const { refresh: backupPolicyRefresh } = useRequest(getBackupPolicy, {
+  const { refresh: backupPolicyRefresh, loading } = useRequest(getBackupPolicy, {
     defaultParams: [{ ns, name }],
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -42,7 +42,7 @@ export default function Backup() {
   }, []);
   
   return (
-    <PageContainer>
+    <PageContainer loading={loading}>
       {!backupPolicy ? (
         <Card
           style={{
@@ -72,7 +72,7 @@ export default function Backup() {
           <Button
             type="primary"
             onClick={() =>
-              history.push(`/tenant/ns=${ns}&nm=${name}/backup/new`)
+              history.push(`/tenant/${ns}/${name}/${tenantName}/backup/new`)
             }
           >
             {intl.formatMessage({

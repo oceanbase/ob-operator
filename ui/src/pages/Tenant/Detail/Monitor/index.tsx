@@ -1,6 +1,6 @@
 import type { FilterDataType,LabelType } from '@/components/MonitorDetail';
 import MonitorDetail from '@/components/MonitorDetail';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import { getTenant } from '@/services/tenant';
 import { useRequest } from 'ahooks';
 import { useEffect,useState } from 'react';
@@ -10,7 +10,7 @@ import { getFilterData } from '@/components/MonitorDetail/helper';
 
 
 export default function Monitor() {
-  const [[ns, name, tenantName]] = useState(getNSName());
+  const { ns, name, tenantName } = useParams();
   const [filterLabel, setFilterLabel] = useState<LabelType[]>([
     {
       key: 'tenant_name',

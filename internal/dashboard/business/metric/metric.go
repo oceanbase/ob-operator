@@ -66,7 +66,6 @@ func ListMetricClasses(scope, language string) ([]response.MetricClass, error) {
 	if err != nil {
 		return metricClasses, err
 	}
-	logger.Debugf("metric configs contents: %s", string(metricConfigContent))
 	metricConfigMap := make(map[string][]response.MetricClass)
 	// TODO: Do not unmarshal the file every time, cache the result
 	err = yaml.Unmarshal(metricConfigContent, &metricConfigMap)
@@ -166,7 +165,7 @@ func QueryMetricData(queryParam *param.MetricQuery) []response.MetricData {
 			go func(metric string, ch chan []response.MetricData) {
 				defer wg.Done()
 				expr := replaceQueryVariables(exprTemplate, queryParam.Labels, queryParam.GroupLabels, queryParam.QueryRange.Step)
-				logger.Infof("query with expr: %s, range: %v", expr, queryParam.QueryRange)
+				logger.Infof("Query with expr: %s, range: %v", expr, queryParam.QueryRange)
 				queryRangeResp := &external.PrometheusQueryRangeResponse{}
 				resp, err := client.R().SetQueryParams(map[string]string{
 					"start": strconv.FormatFloat(queryParam.QueryRange.StartTimestamp, 'f', 3, 64),

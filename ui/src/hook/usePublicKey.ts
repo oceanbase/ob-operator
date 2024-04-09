@@ -1,23 +1,31 @@
-import React, { useEffect } from 'react';
-import { infoReq } from '@/services';
+import { getAppInfo } from '@/services';
+import { useModel } from '@umijs/max';
 import JSEncrypt from 'jsencrypt';
+import { useEffect } from 'react';
 
 export const usePublicKey = () => {
-  const [publicKey, setPublicKey] = React.useState<string>('');
+  const { publicKey, setPublicKey } = useModel('global');
 
   useEffect(() => {
-    infoReq().then((res) => {
-      setPublicKey(res.data.publicKey); 
-    }).catch((err) => {
-      console.log(err)
-    });
-  }, [])
+    if (!publicKey) {
+      getAppInfo()
+        .then(({ data }) => {
+          setPublicKey(data.publicKey);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
+  }, []);
 
   return publicKey;
-}
+};
 
-export const encryptText = (text: string, publicKey: string): string | false => {
-  const encrypt = new JSEncrypt(); 
+export const encryptText = (
+  text: string,
+  publicKey: string,
+): string | false => {
+  const encrypt = new JSEncrypt();
   encrypt.setPublicKey(publicKey);
   return encrypt.encrypt(text);
-}
+};

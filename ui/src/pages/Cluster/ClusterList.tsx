@@ -1,7 +1,8 @@
+import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button, Col, Table, Tag, Card } from 'antd';
+import { Button,Card,Col,Table,Tag,Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -11,11 +12,13 @@ interface DataType {
   namespace: string;
   name: string;
   status: string;
+  statusDetail: string;
   createTime: string;
   image: string;
   cpuPercent: string;
   memoryPercent: string;
   diskPercent: string;
+  clusterName: string;
 }
 
 interface CanvasPieProps {
@@ -26,7 +29,10 @@ interface CanvasPieProps {
 interface ClusterListProps {
   handleAddCluster: () => void;
   clusterList: any;
+  loading: boolean;
 }
+
+const { Text } = Typography;
 
 const CanvasPie = ({ percent, name }: CanvasPieProps) => {
   const data = [
@@ -92,13 +98,15 @@ const CanvasPie = ({ percent, name }: CanvasPieProps) => {
 const columns: ColumnsType<DataType> = [
   {
     title: intl.formatMessage({
-      id: 'OBDashboard.pages.Cluster.ClusterList.ClusterName',
-      defaultMessage: '集群名',
+      id: 'Dashboard.pages.Cluster.ClusterList.ResourceName',
+      defaultMessage: '资源名',
     }),
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link to={`ns=${record.namespace}&nm=${record.name}&clusterName=${record.clusterName}`}>{value}</Link>
+      <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
+        {value}
+      </Link>
     ),
   },
   {
@@ -111,12 +119,65 @@ const columns: ColumnsType<DataType> = [
   },
   {
     title: intl.formatMessage({
+      id: 'OBDashboard.pages.Cluster.ClusterList.ClusterName',
+      defaultMessage: '集群名',
+    }),
+    dataIndex: 'clusterName',
+    key: 'clusterName',
+  },
+  {
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Cluster.ClusterList.ClusterMode',
+      defaultMessage: '集群模式',
+    }),
+    dataIndex: 'mode',
+    key: 'mode',
+    render: (value) => <span>{MODE_MAP.get(value)?.text}</span>,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
+      defaultMessage: 'Zone 数量',
+    }),
+    dataIndex: 'zoneCount',
+    key: 'zoneCount',
+    render: (_, record) => <span>{record?.topology?.length}</span>,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Cluster.ClusterList.Image',
+      defaultMessage: '镜像',
+    }),
+    dataIndex: 'image',
+    key: 'image',
+    render: (value) => (
+      <Text style={{ width: 216 }} ellipsis={{ tooltip: value }}>
+        {value}
+      </Text>
+    ),
+  },
+  {
+    title: intl.formatMessage({
       id: 'OBDashboard.pages.Cluster.ClusterList.Status',
       defaultMessage: '状态',
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+    render: (value, record) => (
+      <Tag color={COLOR_MAP.get(value)}>
+        {' '}
+        {value === 'operating' ? (
+          <Text
+            style={{ maxWidth: 110, color: '#d48806',fontSize:12 }}
+            ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
+          >
+            {value}/{record.statusDetail}
+          </Text>
+        ) : (
+          value
+        )}{' '}
+      </Tag>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -126,14 +187,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'createTime',
     key: 'createTime',
   },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Cluster.ClusterList.Image',
-      defaultMessage: '镜像',
-    }),
-    dataIndex: 'image',
-    key: 'image',
-  },
+
   //监控还未返回
   // {
   //   title: '监控',
@@ -163,6 +217,7 @@ const columns: ColumnsType<DataType> = [
 export default function ClusterList({
   handleAddCluster,
   clusterList,
+  loading,
 }: ClusterListProps) {
   return (
     <Col span={24}>
@@ -182,10 +237,11 @@ export default function ClusterList({
           </Button>
         </div>
         <Table
+          loading={loading}
           columns={columns}
           dataSource={clusterList}
           scroll={{ x: 1200 }}
-          pagination={{simple:true}}
+          pagination={{ simple: true }}
           rowKey="name"
           bordered
           sticky

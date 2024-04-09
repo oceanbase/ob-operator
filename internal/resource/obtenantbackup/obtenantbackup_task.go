@@ -50,6 +50,6 @@ func CreateBackupJobInOB(m *OBTenantBackupManager) tasktypes.TaskError {
 	}
 
 	// job.Status.BackupJob = latest
-	m.Recorder.Event(job, "Create", "", "create backup job successfully")
+	m.Recorder.Event(job, "Create", "", "Create backup job successfully")
 	return nil
 }

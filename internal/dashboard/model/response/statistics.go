@@ -12,16 +12,20 @@ See the Mulan PSL v2 for more details.
 
 package response
 
-import "github.com/oceanbase/ob-operator/internal/telemetry/models"
+import (
+	"github.com/oceanbase/ob-operator/internal/telemetry/models"
+)
 
 type StatisticData struct {
-	Version        string                  `json:"version"`
-	Clusters       []models.OBCluster      `json:"clusters"`
-	Zones          []models.OBZone         `json:"zones"`
-	Servers        []models.OBServer       `json:"servers"`
-	Tenants        []models.OBTenant       `json:"tenants"`
-	BackupPolicies []models.OBBackupPolicy `json:"backupPolicies"`
-	WarningEvents  []models.K8sEvent       `json:"warningEvents"`
+	OperatorVersion string `json:"operatorVersion"`
+
+	K8sNodes       []K8sNode               `json:"k8sNodes" binding:"required"`
+	Clusters       []models.OBCluster      `json:"clusters" binding:"required"`
+	Zones          []models.OBZone         `json:"zones" binding:"required"`
+	Servers        []models.OBServer       `json:"servers" binding:"required"`
+	Tenants        []models.OBTenant       `json:"tenants" binding:"required"`
+	BackupPolicies []models.OBBackupPolicy `json:"backupPolicies" binding:"required"`
+	WarningEvents  []models.K8sEvent       `json:"warningEvents" binding:"required"`
 }
 
 type StatisticDataResponse struct {

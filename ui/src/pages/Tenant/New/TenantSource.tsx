@@ -14,7 +14,10 @@ import {
   TimePicker,
   Tooltip,
 } from 'antd';
+import type { RangePickerProps } from 'antd/es/date-picker';
 import { FormInstance } from 'antd/lib/form';
+import dayjs from 'dayjs';
+import moment from 'moment';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
@@ -36,7 +39,6 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
     marginBottom: 24,
   };
   const h3Style = { marginBottom: 0, marginRight: 12 };
-  //主租户和备租户
   const tenantRole = [
     {
       label: 'PRIMARY',
@@ -68,10 +70,49 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
 
   const { run: getTenants, data: tenantListRes } = useRequest(getAllTenants);
 
-  const tenantList = tenantListRes?.data.map((tenant) => ({
-    label: tenant.name,
-    value: tenant.name,
-  }));
+  const tenantList = tenantListRes?.data
+    .filter((item) => item.status === 'running' && item.tenantRole === 'PRIMARY')
+    .map((tenant) => ({
+      label: tenant.name,
+      value: tenant.name,
+    }));
+
+  const range = (start: number, end: number) => {
+    const result = [];
+    for (let i = start; i < end; i++) {
+      result.push(i);
+    }
+    return result;
+  };
+
+  const disabledDateTime: RangePickerProps['disabledTime'] = (_) => {
+    const isToday = _?.date() === moment().date();
+    if (!isToday)
+      return {
+        disabledHours: () => [],
+        disabledMinutes: () => [],
+        disabledSeconds: () => [],
+      };
+    return {
+      disabledHours: () => range(0, 24).splice(moment().hour() + 1, 24),
+      disabledMinutes: (hour) => {
+        if (hour === moment().hour()) {
+          return range(0, 60).splice(moment().minute() + 1, 60);
+        }
+        return [];
+      },
+      disabledSeconds: (hour, minute) => {
+        if (hour === moment().hour() && minute === moment().minute()) {
+          return range(0, 60).splice(moment().second(), 60);
+        }
+        return [];
+      },
+    };
+  };
+
+  const disabledDate: RangePickerProps['disabledDate'] = (current) => {
+    return current && current > dayjs().endOf('day');
+  };
 
   useEffect(() => {
     if (synchronizeChecked && clusterName) {
@@ -394,7 +435,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                           ]}
                           name={['source', 'restore', 'until', 'date']}
                         >
-                          <DatePicker />
+                          <DatePicker disabledDate={disabledDate} />
                         </Form.Item>
                       </Col>
                       <Col span={12}>
@@ -416,7 +457,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
                           })}
                           name={['source', 'restore', 'until', 'time']}
                         >
-                          <TimePicker />
+                          <TimePicker disabledTime={disabledDateTime} />
                         </Form.Item>
                       </Col>
                     </Row>

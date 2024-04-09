@@ -1,9 +1,9 @@
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { changeTenantPassword } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { useParams } from '@umijs/max';
 import { Form, Input, message } from 'antd';
 import type { CommonModalType } from '.';
-import { usePublicKey, encryptText } from '@/hook/usePublicKey';
 import CustomModal from '.';
 
 type FieldType = {
@@ -16,7 +16,8 @@ export default function ModifyPasswordModal({
   successCallback,
 }: CommonModalType) {
   const [form] = Form.useForm();
-  const publicKey = usePublicKey()
+  const { ns, name } = useParams();
+  const publicKey = usePublicKey();
 
   const handleSubmit = async () => {
     try {
@@ -27,16 +28,21 @@ export default function ModifyPasswordModal({
 
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
     const res = await changeTenantPassword({
-      ns: namespace,
+      ns,
       name,
       User: 'root',
-      Password: encryptText(values.password,publicKey) as string,
+      Password: encryptText(values.password, publicKey) as string,
     });
     if (res.successful) {
-      message.success(res.message);
-      successCallback();
+      message.success(
+        res.message ||
+          intl.formatMessage({
+            id: 'Dashboard.components.customModal.ModifyPasswordModal.OperationSucceeded',
+            defaultMessage: '操作成功！',
+          }),
+      );
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

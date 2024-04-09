@@ -735,7 +735,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -880,7 +892,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -941,7 +965,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1013,7 +1049,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1083,7 +1131,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1162,7 +1222,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.OBCluster"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1214,7 +1286,85 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/response.OBClusterStastistic"
+                                                "$ref": "#/definitions/response.OBClusterStatistic"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obclusters/{namespace}/{name}/related-events": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list related events of specific obcluster, including obzone and observer.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBCluster"
+                ],
+                "summary": "list related events",
+                "operationId": "ListOBClusterRelatedEvents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obcluster namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obcluster name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.K8sEvent"
                                             }
                                         }
                                     }
@@ -2253,6 +2403,27 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2267,7 +2438,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2312,6 +2483,29 @@ const docTemplate = `{
                 ],
                 "summary": "Delete obtenant pool",
                 "operationId": "DeleteOBTenantPool",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -2324,7 +2518,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
                                         }
                                     }
                                 }
@@ -2378,6 +2572,27 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/param.TenantPoolSpec"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obzone name",
+                        "name": "zoneName",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -2392,7 +2607,85 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "boolean"
+                                            "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obtenants/{namespace}/{name}/related-events": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List related events of specific tenant, including restore, backup and backup policy events",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBTenant"
+                ],
+                "summary": "List related events of specific tenant",
+                "operationId": "ListOBTenantRelatedEvents",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/response.K8sEvent"
+                                            }
                                         }
                                     }
                                 }
@@ -2694,7 +2987,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/response.StatisticDataResponse"
+                                            "$ref": "#/definitions/response.StatisticData"
                                         }
                                     }
                                 }
@@ -3714,6 +4007,11 @@ const docTemplate = `{
         },
         "response.APIResponse": {
             "type": "object",
+            "required": [
+                "data",
+                "message",
+                "successful"
+            ],
             "properties": {
                 "data": {},
                 "message": {
@@ -3726,6 +4024,18 @@ const docTemplate = `{
         },
         "response.BackupJob": {
             "type": "object",
+            "required": [
+                "backupPolicyName",
+                "name",
+                "namespace",
+                "path",
+                "startTime",
+                "status",
+                "statusInDatabase",
+                "tenantName",
+                "type",
+                "uid"
+            ],
             "properties": {
                 "backupPolicyName": {
                     "type": "string"
@@ -3763,6 +4073,9 @@ const docTemplate = `{
                 "type": {
                     "description": "Enum: FULL, INCR, ARCHIVE, CLEAN",
                     "type": "string"
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
@@ -3771,7 +4084,14 @@ const docTemplate = `{
             "required": [
                 "archivePath",
                 "bakDataPath",
-                "destType"
+                "createTime",
+                "destType",
+                "events",
+                "name",
+                "namespace",
+                "status",
+                "tenantName",
+                "uid"
             ],
             "properties": {
                 "archivePath": {
@@ -3839,16 +4159,29 @@ const docTemplate = `{
                 },
                 "tenantName": {
                     "type": "string"
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
         "response.DashboardInfo": {
             "type": "object",
+            "required": [
+                "appName",
+                "publicKey",
+                "reportHost",
+                "reportStatistics",
+                "version"
+            ],
             "properties": {
                 "appName": {
                     "type": "string"
                 },
                 "publicKey": {
+                    "type": "string"
+                },
+                "reportHost": {
                     "type": "string"
                 },
                 "reportStatistics": {
@@ -3861,6 +4194,16 @@ const docTemplate = `{
         },
         "response.K8sEvent": {
             "type": "object",
+            "required": [
+                "count",
+                "firstOccur",
+                "lastSeen",
+                "message",
+                "namespace",
+                "object",
+                "reason",
+                "type"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -3901,6 +4244,11 @@ const docTemplate = `{
         },
         "response.K8sNodeCondition": {
             "type": "object",
+            "required": [
+                "message",
+                "reason",
+                "type"
+            ],
             "properties": {
                 "message": {
                     "type": "string"
@@ -3915,6 +4263,20 @@ const docTemplate = `{
         },
         "response.K8sNodeInfo": {
             "type": "object",
+            "required": [
+                "conditions",
+                "cri",
+                "externalIP",
+                "internalIP",
+                "kernel",
+                "labels",
+                "name",
+                "os",
+                "roles",
+                "status",
+                "uptime",
+                "version"
+            ],
             "properties": {
                 "conditions": {
                     "type": "array",
@@ -3965,6 +4327,14 @@ const docTemplate = `{
         },
         "response.K8sNodeResource": {
             "type": "object",
+            "required": [
+                "cpuFree",
+                "cpuTotal",
+                "cpuUsed",
+                "memoryFree",
+                "memoryTotal",
+                "memoryUsed"
+            ],
             "properties": {
                 "cpuFree": {
                     "type": "number"
@@ -4002,6 +4372,11 @@ const docTemplate = `{
         },
         "response.MetricClass": {
             "type": "object",
+            "required": [
+                "description",
+                "metricGroups",
+                "name"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4019,6 +4394,10 @@ const docTemplate = `{
         },
         "response.MetricData": {
             "type": "object",
+            "required": [
+                "metric",
+                "values"
+            ],
             "properties": {
                 "metric": {
                     "$ref": "#/definitions/response.Metric"
@@ -4033,6 +4412,11 @@ const docTemplate = `{
         },
         "response.MetricGroup": {
             "type": "object",
+            "required": [
+                "description",
+                "metrics",
+                "name"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4050,6 +4434,12 @@ const docTemplate = `{
         },
         "response.MetricMeta": {
             "type": "object",
+            "required": [
+                "description",
+                "key",
+                "name",
+                "unit"
+            ],
             "properties": {
                 "description": {
                     "type": "string"
@@ -4067,6 +4457,10 @@ const docTemplate = `{
         },
         "response.MetricValue": {
             "type": "object",
+            "required": [
+                "timestamp",
+                "value"
+            ],
             "properties": {
                 "timestamp": {
                     "type": "number"
@@ -4078,6 +4472,10 @@ const docTemplate = `{
         },
         "response.MonitorSpec": {
             "type": "object",
+            "required": [
+                "image",
+                "resource"
+            ],
             "properties": {
                 "image": {
                     "type": "string"
@@ -4089,6 +4487,10 @@ const docTemplate = `{
         },
         "response.NFSVolumeSpec": {
             "type": "object",
+            "required": [
+                "address",
+                "path"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -4100,6 +4502,10 @@ const docTemplate = `{
         },
         "response.Namespace": {
             "type": "object",
+            "required": [
+                "namespace",
+                "status"
+            ],
             "properties": {
                 "namespace": {
                     "type": "string"
@@ -4111,6 +4517,23 @@ const docTemplate = `{
         },
         "response.OBCluster": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "mode",
+                "name",
+                "namespace",
+                "parameters",
+                "resource",
+                "rootPasswordSecret",
+                "status",
+                "statusDetail",
+                "storage",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "backupVolume": {
                     "$ref": "#/definitions/response.NFSVolumeSpec"
@@ -4169,6 +4592,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.OBZone"
                     }
                 },
+                "uid": {
+                    "type": "string"
+                },
                 "version": {
                     "type": "string"
                 }
@@ -4176,6 +4602,19 @@ const docTemplate = `{
         },
         "response.OBClusterOverview": {
             "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "createTime",
+                "image",
+                "mode",
+                "name",
+                "namespace",
+                "status",
+                "statusDetail",
+                "topology",
+                "uid"
+            ],
             "properties": {
                 "clusterId": {
                     "type": "integer"
@@ -4188,6 +4627,9 @@ const docTemplate = `{
                 },
                 "image": {
                     "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
                 },
                 "name": {
                     "type": "string"
@@ -4206,11 +4648,17 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/response.OBZone"
                     }
+                },
+                "uid": {
+                    "type": "string"
                 }
             }
         },
         "response.OBClusterResources": {
             "type": "object",
+            "required": [
+                "minPoolMemory"
+            ],
             "properties": {
                 "minPoolMemory": {
                     "type": "integer",
@@ -4225,13 +4673,17 @@ const docTemplate = `{
                 "obZoneResourceMap": {
                     "type": "object",
                     "additionalProperties": {
-                        "$ref": "#/definitions/response.OBZoneAvaiableResource"
+                        "$ref": "#/definitions/response.OBZoneAvailableResource"
                     }
                 }
             }
         },
-        "response.OBClusterStastistic": {
+        "response.OBClusterStatistic": {
             "type": "object",
+            "required": [
+                "count",
+                "status"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -4243,6 +4695,11 @@ const docTemplate = `{
         },
         "response.OBMetrics": {
             "type": "object",
+            "required": [
+                "cpuPercent",
+                "diskPercent",
+                "memoryPercent"
+            ],
             "properties": {
                 "cpuPercent": {
                     "type": "integer"
@@ -4257,6 +4714,13 @@ const docTemplate = `{
         },
         "response.OBServer": {
             "type": "object",
+            "required": [
+                "address",
+                "name",
+                "namespace",
+                "status",
+                "statusDetail"
+            ],
             "properties": {
                 "address": {
                     "type": "string"
@@ -4280,6 +4744,15 @@ const docTemplate = `{
         },
         "response.OBServerAvailableResource": {
             "type": "object",
+            "required": [
+                "availableCPU",
+                "availableDataDisk",
+                "availableLogDisk",
+                "availableMemory",
+                "obServerIP",
+                "obZone",
+                "serverCount"
+            ],
             "properties": {
                 "availableCPU": {
                     "type": "integer",
@@ -4312,6 +4785,11 @@ const docTemplate = `{
         },
         "response.OBServerStorage": {
             "type": "object",
+            "required": [
+                "dataStorage",
+                "redoLogStorage",
+                "sysLogStorage"
+            ],
             "properties": {
                 "dataStorage": {
                     "$ref": "#/definitions/response.StorageSpec"
@@ -4326,6 +4804,20 @@ const docTemplate = `{
         },
         "response.OBTenantDetail": {
             "type": "object",
+            "required": [
+                "charset",
+                "clusterResourceName",
+                "createTime",
+                "locality",
+                "name",
+                "namespace",
+                "primaryZone",
+                "status",
+                "tenantName",
+                "tenantRole",
+                "uid",
+                "unitNumber"
+            ],
             "properties": {
                 "charset": {
                     "description": "Charset of the tenant",
@@ -4364,7 +4856,7 @@ const docTemplate = `{
                 "rootCredential": {
                     "type": "string"
                 },
-                "standbyROCredentail": {
+                "standbyROCredential": {
                     "type": "string"
                 },
                 "status": {
@@ -4386,6 +4878,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
                 },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
+                },
                 "unitNumber": {
                     "description": "Number of units in every zone",
                     "type": "integer"
@@ -4398,6 +4894,20 @@ const docTemplate = `{
         "response.OBTenantOverview": {
             "description": "Brief information about OBTenant",
             "type": "object",
+            "required": [
+                "charset",
+                "clusterResourceName",
+                "createTime",
+                "locality",
+                "name",
+                "namespace",
+                "primaryZone",
+                "status",
+                "tenantName",
+                "tenantRole",
+                "uid",
+                "unitNumber"
+            ],
             "properties": {
                 "charset": {
                     "description": "Charset of the tenant",
@@ -4446,6 +4956,10 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.OBTenantReplica"
                     }
                 },
+                "uid": {
+                    "description": "Unique identifier of the resource",
+                    "type": "string"
+                },
                 "unitNumber": {
                     "description": "Number of units in every zone",
                     "type": "integer"
@@ -4454,6 +4968,18 @@ const docTemplate = `{
         },
         "response.OBTenantReplica": {
             "type": "object",
+            "required": [
+                "iopsWeight",
+                "logDiskSize",
+                "maxCPU",
+                "maxIops",
+                "memorySize",
+                "minCPU",
+                "minIops",
+                "priority",
+                "type",
+                "zone"
+            ],
             "properties": {
                 "iopsWeight": {
                     "type": "integer"
@@ -4490,6 +5016,10 @@ const docTemplate = `{
         },
         "response.OBTenantStatistic": {
             "type": "object",
+            "required": [
+                "count",
+                "status"
+            ],
             "properties": {
                 "count": {
                     "type": "integer"
@@ -4501,6 +5031,14 @@ const docTemplate = `{
         },
         "response.OBZone": {
             "type": "object",
+            "required": [
+                "name",
+                "namespace",
+                "replicas",
+                "status",
+                "statusDetail",
+                "zone"
+            ],
             "properties": {
                 "affinities": {
                     "type": "array",
@@ -4549,8 +5087,16 @@ const docTemplate = `{
                 }
             }
         },
-        "response.OBZoneAvaiableResource": {
+        "response.OBZoneAvailableResource": {
             "type": "object",
+            "required": [
+                "availableCPU",
+                "availableDataDisk",
+                "availableLogDisk",
+                "availableMemory",
+                "obZone",
+                "serverCount"
+            ],
             "properties": {
                 "availableCPU": {
                     "type": "integer",
@@ -4580,6 +5126,10 @@ const docTemplate = `{
         },
         "response.ResourceSpecRender": {
             "type": "object",
+            "required": [
+                "cpu",
+                "memory"
+            ],
             "properties": {
                 "cpu": {
                     "type": "integer"
@@ -4591,6 +5141,11 @@ const docTemplate = `{
         },
         "response.RestoreSource": {
             "type": "object",
+            "required": [
+                "archiveSource",
+                "bakDataSource",
+                "type"
+            ],
             "properties": {
                 "archiveSource": {
                     "type": "string"
@@ -4615,6 +5170,15 @@ const docTemplate = `{
         },
         "response.StatisticData": {
             "type": "object",
+            "required": [
+                "backupPolicies",
+                "clusters",
+                "k8sNodes",
+                "servers",
+                "tenants",
+                "warningEvents",
+                "zones"
+            ],
             "properties": {
                 "backupPolicies": {
                     "type": "array",
@@ -4628,6 +5192,15 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.OBCluster"
                     }
                 },
+                "k8sNodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sNode"
+                    }
+                },
+                "operatorVersion": {
+                    "type": "string"
+                },
                 "servers": {
                     "type": "array",
                     "items": {
@@ -4639,9 +5212,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/models.OBTenant"
                     }
-                },
-                "version": {
-                    "type": "string"
                 },
                 "warningEvents": {
                     "type": "array",
@@ -4657,22 +5227,15 @@ const docTemplate = `{
                 }
             }
         },
-        "response.StatisticDataResponse": {
-            "type": "object",
-            "properties": {
-                "component": {
-                    "type": "string"
-                },
-                "content": {
-                    "$ref": "#/definitions/response.StatisticData"
-                },
-                "time": {
-                    "type": "string"
-                }
-            }
-        },
         "response.StorageClass": {
             "type": "object",
+            "required": [
+                "allowVolumeExpansion",
+                "name",
+                "provisioner",
+                "reclaimPolicy",
+                "volumeBindingMode"
+            ],
             "properties": {
                 "allowVolumeExpansion": {
                     "type": "boolean"
@@ -4705,6 +5268,10 @@ const docTemplate = `{
         },
         "response.StorageSpec": {
             "type": "object",
+            "required": [
+                "size",
+                "storageClass"
+            ],
             "properties": {
                 "size": {
                     "type": "string"

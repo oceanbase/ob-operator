@@ -2,17 +2,17 @@ import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
+import { useParams } from '@umijs/max';
 import {
 getEssentialParameters as getEssentialParametersReq,
 getSimpleClusterList,
 } from '@/services';
 import {
-deleteTenent,
 getBackupJobs,
 getBackupPolicy,
 getTenant,
 } from '@/services/tenant';
+import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
@@ -21,7 +21,7 @@ import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
 import { cloneDeep } from 'lodash';
 import { useEffect,useRef,useState } from 'react';
-import { getClusterFromTenant,getZonesOptions } from '../../helper';
+import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '../../helper';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -47,7 +47,7 @@ export default function TenantOverview() {
   const operateTypeRef = useRef<OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
-  const [[ns, name]] = useState(getNSName());
+  const { ns, name } = useParams();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [editZone, setEditZone] = useState<string>('');
   useRequest(getSimpleClusterList, {
@@ -76,7 +76,7 @@ export default function TenantOverview() {
   };
 
   const handleDelete = async () => {
-    const res = await deleteTenent({ ns, name });
+    const res = await deleteTenantReportWrap({ ns, name });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -91,6 +91,7 @@ export default function TenantOverview() {
   const {
     data: tenantDetailResponse,
     run: getTenantDetail,
+    loading,
     refresh: reGetTenantDetail,
   } = useRequest(getTenant, {
     manual: true,
@@ -128,7 +129,7 @@ export default function TenantOverview() {
     //     id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
     //     defaultMessage: 'Unit规格管理',
     //   }),
-    //   onClick: () => openOperateModal('modifyUnitSpecification'),
+    //   onClick: () => openOperateModal('editResourcePools'),
     //   show: tenantDetail?.info.tenantRole === 'PRIMARY',
     //   isMore: false,
     // },
@@ -303,14 +304,13 @@ export default function TenantOverview() {
     }
   }, [clusterList, tenantDetail]);
 
+  const isCreateResourcePool = operateTypeRef.current === 'create';
+
   return (
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
         <Row justify="start" gutter={[16, 16]}>
-          {tenantDetail && (
-            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
-          )}
-
+            <BasicInfo loading={loading} info={tenantDetail?.info} source={tenantDetail?.source} />
           {tenantDetail && tenantDetail.replicas && (
             <Replicas
               refreshTenant={reGetTenantDetail}
@@ -320,6 +320,7 @@ export default function TenantOverview() {
                 clusterList,
                 tenantDetail.info.clusterResourceName,
               )}
+              tenantStatus={tenantDetail?.info?.status}
               setEditZone={setEditZone}
               editZone={editZone}
               operateType={operateTypeRef}
@@ -328,13 +329,13 @@ export default function TenantOverview() {
           {tenantDetail && (
             <EventsTable
               defaultExpand={true}
-              objectType="OBTENANT"
+              objectType={['OBTENANT', 'OBBACKUPPOLICY']}
               collapsible={true}
               name={tenantDetail?.info.name}
             />
           )}
 
-          <Backups backupJobs={backupJobs} backupPolicy={backupPolicy} />
+          <Backups loading={loading} backupJobs={backupJobs} backupPolicy={backupPolicy} />
         </Row>
 
         <OperateModal
@@ -342,27 +343,32 @@ export default function TenantOverview() {
           visible={operateModalVisible}
           setVisible={setOperateModalVisible}
           successCallback={operateSuccess}
-          defaultValue={defaultUnitCount}
-          defaultValueForUnitDetail={{
-            // clusterList: formatClustersTopology(clusterList, tenantDetail),
+          params={{
+            defaultUnitCount,
             clusterList: clusterList,
-            essentialParameter,
+            editZone,
+            essentialParameter: isCreateResourcePool
+              ? essentialParameter
+              : getOriginResourceUsages(
+                  essentialParameter,
+                  tenantDetail?.replicas?.find(
+                    (replica) => replica.zone === editZone,
+                  ),
+                ),
             clusterResourceName: tenantDetail?.info.clusterResourceName,
             setClusterList,
             setEditZone,
             replicaList: tenantDetail?.replicas,
-            editZone,
-            newResourcePool: operateTypeRef.current === 'create',
-            zonesOptions:
-              operateTypeRef.current === 'create'
-                ? getZonesOptions(
-                    getClusterFromTenant(
-                      clusterList,
-                      tenantDetail?.info.clusterResourceName,
-                    ),
-                    tenantDetail?.replicas,
-                  )
-                : undefined,
+            newResourcePool: isCreateResourcePool,
+            zonesOptions: isCreateResourcePool
+              ? getZonesOptions(
+                  getClusterFromTenant(
+                    clusterList,
+                    tenantDetail?.info.clusterResourceName,
+                  ),
+                  tenantDetail?.replicas,
+                )
+              : undefined,
           }}
         />
       </PageContainer>

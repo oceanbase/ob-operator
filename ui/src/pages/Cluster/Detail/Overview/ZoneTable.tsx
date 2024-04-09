@@ -1,19 +1,18 @@
 import { intl } from '@/utils/intl'; //@ts-nocheck
-import { Button,Card,Col,Table,Tag,message } from 'antd';
+import { Button, Card, Col, Table, Tag, message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import { COLOR_MAP } from '@/constants';
-import { deleteObzone } from '@/services';
-import { getNSName } from './helper';
-
+import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { useParams } from '@umijs/max';
 interface ZoneTableProps {
   zones: API.Zone[];
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
   chooseZoneRef: React.MutableRefObject<string>;
   typeRef: React.MutableRefObject<API.ModalType>;
   setChooseServerNum: React.Dispatch<React.SetStateAction<number>>;
-  clusterStatus:'running' | 'failed' | 'operating'
+  clusterStatus: 'running' | 'failed' | 'operating';
 }
 
 export default function ZoneTable({
@@ -22,14 +21,15 @@ export default function ZoneTable({
   chooseZoneRef,
   typeRef,
   setChooseServerNum,
-  clusterStatus
+  clusterStatus,
 }: ZoneTableProps) {
+  const { ns, name } = useParams();
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
       {
         title: intl.formatMessage({
-          id: 'OBDashboard.Detail.Overview.ZoneTable.ZoneName',
-          defaultMessage: 'Zone名',
+          id: 'Dashboard.Detail.Overview.ZoneTable.ZoneResourceName',
+          defaultMessage: 'Zone 资源名',
         }),
         dataIndex: 'name',
         key: 'name',
@@ -44,7 +44,10 @@ export default function ZoneTable({
         key: 'namespace',
       },
       {
-        title: 'zone',
+        title: intl.formatMessage({
+          id: 'Dashboard.Detail.Overview.ZoneTable.ZoneName',
+          defaultMessage: 'Zone 名',
+        }),
         dataIndex: 'zone',
         key: 'zone',
       },
@@ -83,12 +86,12 @@ export default function ZoneTable({
           return (
             <>
               <Button
-                style={{ marginRight: 10 }}
+                style={{ paddingLeft: 0 }}
                 onClick={() => {
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
                 }}
-                disabled={clusterStatus === 'failed'}
+                disabled={clusterStatus !== 'running'}
                 type="link"
               >
                 {intl.formatMessage({
@@ -97,7 +100,7 @@ export default function ZoneTable({
                 })}
               </Button>
               <Button
-                style={clusterStatus !== 'failed' ? { color: '#ff4b4b' } : {}}
+                style={(clusterStatus === 'running' && zones.length > 2) ? { color: '#ff4b4b' } : {}}
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),
@@ -107,7 +110,7 @@ export default function ZoneTable({
                     }),
                   });
                 }}
-                disabled={clusterStatus === 'failed'}
+                disabled={clusterStatus !== 'running' || zones.length <= 2}
                 type="link"
               >
                 {intl.formatMessage({
@@ -128,10 +131,8 @@ export default function ZoneTable({
     typeRef.current = 'scaleServer';
     setVisible(true);
   };
-  //删除的ns和name是集群的
-  const handleDelete = async (zoneName:string) => {
-    const [ns, name] = getNSName();
-    const res = await deleteObzone({
+  const handleDelete = async (zoneName: string) => {
+    const res = await deleteObzoneReportWrap({
       ns,
       name,
       zoneName,
@@ -150,7 +151,7 @@ export default function ZoneTable({
       <Card>
         <Table
           rowKey="name"
-          pagination={{simple:true}}
+          pagination={{ simple: true }}
           columns={getZoneColumns(handleDelete, clickScale)}
           dataSource={zones}
         />

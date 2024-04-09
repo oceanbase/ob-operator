@@ -175,7 +175,7 @@ func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 
 func (m *OBZoneManager) ArchiveResource() {
 	m.Logger.Info("Archive obzone", "obzone", m.OBZone.Name)
-	m.Recorder.Event(m.OBZone, "Archive", "", "archive obzone")
+	m.Recorder.Event(m.OBZone, "Archive", "", "Archive obzone")
 	m.OBZone.Status.Status = "Failed"
 	m.OBZone.Status.OperationContext = nil
 }

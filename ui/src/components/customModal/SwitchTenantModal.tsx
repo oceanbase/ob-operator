@@ -2,8 +2,8 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
 import { changeTenantRole } from '@/services/tenant';
+import { useParams } from '@umijs/max';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
 
@@ -12,24 +12,24 @@ export default function SwitchTenantModal({
   setVisible,
   successCallback,
 }: CommonModalType) {
+  const { ns, name } = useParams();
   const { run: activateTenant } = useRequest(changeTenantRole, {
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
         message.success(
           intl.formatMessage({
-            id: 'Dashboard.components.customModal.SwitchTenantModal.TheStandbyTenantHasBeen',
-            defaultMessage: '激活备租户成功',
+            id: 'Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded',
+            defaultMessage: '操作成功',
           }),
         );
         setVisible(false);
-        successCallback();
+        if (successCallback) successCallback();
       }
     },
   });
   const handleSubmit = async () => {
-    const [ns, name] = getNSName();
-    await activateTenant({ ns, name });
+    await activateTenant({ ns, name, switchover: true });
   };
   const handleCancel = () => setVisible(false);
 

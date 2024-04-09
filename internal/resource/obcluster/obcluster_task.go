@@ -193,7 +193,7 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 		m.Logger.Info("Create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
 		if err != nil {
-			m.Logger.Error(err, "create obzone failed", "zone", zone.Zone)
+			m.Logger.Error(err, "Failed to create obzone", "zone", zone.Zone)
 			return errors.Wrap(err, "create obzone")
 		}
 		m.Recorder.Event(m.OBCluster, "CreateOBZone", "", fmt.Sprintf("Create obzone %s successfully", zoneName))
@@ -303,7 +303,7 @@ func MaintainOBParameter(m *OBClusterManager) tasktypes.TaskError {
 			err := m.CreateOBParameter(&parameter)
 			if err != nil {
 				// since parameter is not a big problem, just log the error
-				m.Logger.Error(err, "Crate obparameter failed", "param", parameter.Name)
+				m.Logger.Error(err, "Create obparameter failed", "param", parameter.Name)
 			}
 		} else if parameterStatus.Value != parameter.Value {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter value not matched, need update", "param", parameter.Name)
@@ -389,7 +389,7 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	if jobObject.Status.Succeeded == 1 {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
 	} else {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is failed", "job", jobName)
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
@@ -493,7 +493,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 			zoneList = append(zoneList, zone)
 		}
 	}
-	m.Logger.Info("Modify sys pool's zone list when add zone", "zone list", zoneList)
+	m.Logger.Info("Modify sys pool's zone list", "zone list", zoneList)
 	err = oceanbaseOperationManager.AlterPool(&model.PoolParam{
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: zoneList,
@@ -549,7 +549,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 		if !found {
 			newReplicas := obutil.OmitZoneFromReplicas(replicas, r.Zone)
 			locality = obutil.ConvertToLocalityStr(newReplicas)
-			m.Logger.Info("Modify sys tenant's locality when delete zone", "locality", locality)
+			m.Logger.Info("Modify sys tenant's locality when deleting zone", "locality", locality)
 			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
 				TenantName: oceanbaseconst.SysTenant,
 				Locality:   locality,

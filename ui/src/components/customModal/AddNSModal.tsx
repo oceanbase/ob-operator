@@ -25,7 +25,7 @@ export default function AddNSModal({
           }),
         );
         setVisible(false);
-        successCallback(newNamespace.current);
+        if(successCallback)successCallback(newNamespace.current);
       }
     },
   });

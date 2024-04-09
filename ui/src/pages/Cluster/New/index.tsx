@@ -1,12 +1,14 @@
 import { getStorageClasses } from '@/services';
+import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Form, Row, message } from 'antd';
+import { Button,Form,Row,message } from 'antd';
+import { strTrim } from '@/utils/helper';
 import { useState } from 'react';
-import { createObclusterReq } from '@/services';
 
+import { MODE_MAP } from '@/constants';
 import { encryptText,usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
@@ -43,7 +45,7 @@ export default function New() {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     
-    const res = await createObclusterReq(values);
+    const res = await createClusterReportWrap({...strTrim(values)});
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();
@@ -52,7 +54,7 @@ export default function New() {
     }
   };
   const initialValues = {
-    mode:'NORMAL',
+    mode: 'NORMAL',
     topology: [
       {
         zone: 'zone1',
@@ -86,7 +88,7 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button type='primary' key="submit" onClick={() => form.submit()}>
+        <Button type="primary" key="submit" onClick={() => form.submit()}>
           {intl.formatMessage({
             id: 'dashboard.Cluster.New.Submit',
             defaultMessage: '提交',

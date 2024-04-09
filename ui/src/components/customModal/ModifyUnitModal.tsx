@@ -1,7 +1,7 @@
-import { getNSName } from '@/pages/Cluster/Detail/Overview/helper';
-import { patchTenantConfiguration } from '@/services/tenant';
+import { useParams } from '@umijs/max';
+import { modifyUnitNumReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
-import { Form, InputNumber, message } from 'antd';
+import { Form,InputNumber,message } from 'antd';
 import { useEffect } from 'react';
 import type { CommonModalType } from '.';
 import CustomModal from '.';
@@ -13,11 +13,14 @@ type FieldType = {
 export default function ModifyUnitModal({
   visible,
   setVisible,
-  defaultValue = 1,
+  params = {
+    defaultUnitCount: 1,
+  },
   successCallback,
-}: CommonModalType & { defaultValue: number }) {
+}: CommonModalType & { params: { defaultUnitCount: number } }) {
   const [form] = Form.useForm();
-
+  const { ns, name } = useParams();
+  const { defaultUnitCount } = params;
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -27,9 +30,8 @@ export default function ModifyUnitModal({
 
   const handleCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
-    const [namespace, name] = getNSName();
-    const res = await patchTenantConfiguration({
-      ns: namespace,
+    const res = await modifyUnitNumReportWrap({
+      ns,
       name,
       ...values,
     });
@@ -41,17 +43,17 @@ export default function ModifyUnitModal({
             defaultMessage: '修改成功',
           }),
       );
-      successCallback();
+      if(successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }
   };
 
   useEffect(() => {
-    if (defaultValue !== form.getFieldValue('unitNum')) {
+    if (defaultUnitCount !== form.getFieldValue('unitNum')) {
       form.resetFields();
     }
-  }, [defaultValue]);
+  }, [defaultUnitCount]);
 
   return (
     <CustomModal
@@ -65,7 +67,7 @@ export default function ModifyUnitModal({
     >
       <Form
         form={form}
-        initialValues={{ unitNum: defaultValue }}
+        initialValues={{ unitNum: defaultUnitCount }}
         onFinish={onFinish}
         style={{ maxWidth: 600 }}
         autoComplete="off"
@@ -87,6 +89,7 @@ export default function ModifyUnitModal({
           ]}
         >
           <InputNumber
+            min={1}
             placeholder={intl.formatMessage({
               id: 'Dashboard.components.customModal.ModifyUnitModal.PleaseEnter',
               defaultMessage: '请输入',
