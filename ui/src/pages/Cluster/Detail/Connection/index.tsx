@@ -3,11 +3,10 @@ import { PageContainer } from '@ant-design/pro-components'
 import { intl } from '@/utils/intl'
 import { OBTerminal } from '@/components/Terminal/terminal'
 import { Button, Row, message } from 'antd'
-import { request } from '@umijs/max'
+import { request, useParams } from '@umijs/max'
 import { useRequest } from 'ahooks'
 import { getClusterDetailReq } from '@/services'
 import BasicInfo from '../Overview/BasicInfo'
-import { useParams } from '@umijs/max'
 
 
 const ClusterConnection: React.FC = () => {
