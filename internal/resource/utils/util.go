@@ -329,34 +329,61 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 	}
 
 	var jobObject *batchv1.Job
-	timeout := time.NewTimer(time.Second * oceanbaseconst.WaitForJobTimeoutSeconds)
-	defer timeout.Stop()
-loop:
+	check := func() (bool, error) {
+		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
+		if err != nil {
+			return false, errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			return false, nil
+		} else if jobObject.Status.Succeeded == 1 {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
+			return true, nil
+		} else {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
+			return false, errors.Wrap(err, "Failed to run upgrade script job")
+		}
+	}
+	err = CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
+		return errors.Wrap(err, "Failed to wait for job to finish")
+	}
+	return nil
+}
+
+type CheckJobFunc func() (bool, error)
+
+// CheckJobWithTimeout checks job with timeout, return error if timeout or job failed.
+// First parameter is the function to check job status, return true if job finished, false if not.
+// Second parameter is the timeout duration, default to 1800s.
+// Third parameter is the interval to check job status, default to 3s.
+func CheckJobWithTimeout(f CheckJobFunc, ds ...time.Duration) error {
+	timeout := time.Second * oceanbaseconst.DefaultStateWaitTimeout
+	interval := time.Second * oceanbaseconst.CheckJobInterval
+	if len(ds) > 0 {
+		timeout = ds[0]
+	}
+	if len(ds) > 1 {
+		interval = ds[1]
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 	for {
 		select {
-		case <-timeout.C:
-			logger.Info("Timeout to wait for job")
+		case <-timer.C:
+			return errors.New("Timeout to wait for job")
 		default:
-			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-			jobObject, err = GetJob(c, obcluster.Namespace, jobName)
+			time.Sleep(interval)
+			finished, err := f()
 			if err != nil {
-				return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+				return err
 			}
-			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
-			} else {
-				logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-				break loop
+			if finished {
+				return nil
 			}
 		}
 	}
-	if jobObject.Status.Succeeded == 1 {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-	} else {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
-		return errors.Wrap(err, "Failed to run upgrade script job")
-	}
-	return nil
 }
 
 func GetCNIFromAnnotation(pod *corev1.Pod) string {

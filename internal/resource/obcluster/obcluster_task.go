@@ -378,32 +378,23 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	var jobObject *batchv1.Job
-	timeout := time.NewTimer(time.Second * oceanbaseconst.WaitForJobTimeoutSeconds)
-	defer timeout.Stop()
-loop:
-	for {
-		select {
-		case <-timeout.C:
-			return errors.New("Timeout to wait validate job")
-		default:
-			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
-			if err != nil {
-				return errors.Wrap(err, "Failed to get job")
-			}
-			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
-			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-				break loop
-			}
+	check := func() (bool, error) {
+		jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+		if err != nil {
+			return false, errors.Wrap(err, "Failed to get job")
+		}
+		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			return false, nil
+		} else if jobObject.Status.Succeeded == 1 {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
+			return true, nil
+		} else {
+			return false, errors.Wrap(err, "Failed to run validate job")
 		}
 	}
-
-	if jobObject.Status.Succeeded == 1 {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-	} else {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
