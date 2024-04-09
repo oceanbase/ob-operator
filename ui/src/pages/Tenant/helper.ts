@@ -191,17 +191,17 @@ export function findMinParameter(
       };
     } else {
       result = {
-        maxCPU: Math.max(
+        maxCPU: Math.min(
           result.maxCPU!,
-          essentialParameter[zone]['availableCPU'],
+          essentialParameter.obZoneResourceMap[zone]['availableCPU'],
         ),
-        maxLogDisk: Math.max(
+        maxLogDisk: Math.min(
           result.maxLogDisk!,
-          essentialParameter[zone]['availableLogDisk'],
+          essentialParameter.obZoneResourceMap[zone]['availableLogDisk'],
         ),
-        maxMemory: Math.max(
+        maxMemory: Math.min(
           result.maxMemory!,
-          essentialParameter[zone]['availableMemory'],
+          essentialParameter.obZoneResourceMap[zone]['availableMemory'],
         ),
       };
     }
