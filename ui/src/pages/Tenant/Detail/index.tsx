@@ -83,6 +83,14 @@ const TenantDetail: React.FC = () => {
       key: 'monitor',
       link: `/tenant/${ns}/${name}/${tenantName}/monitor`,
     },
+    {
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.Connection',
+        defaultMessage: '连接租户',
+      }),
+      key: 'connection',
+      link: `/tenant/${ns}/${name}/${tenantName}/connection`,
+    },
   ];
 
   const userMenu = (

@@ -1,6 +1,6 @@
 # ob-operator
 
-The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
+`ob-operator` is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
 
 此文档也提供[中文版](./README-CN.md)。
 
@@ -172,7 +172,7 @@ The upcoming features include:
 
 ## Supported OceanBase Versions
 
-ob-operator supports OceanBase v4.x versions. The validated versions include 4.1.x and 4.2.x. It will continue to support new versions of the OceanBase community edition.
+ob-operator supports OceanBase v4.x versions. Some features may require a specific OceanBase version. Please consult the documentation for details.
 
 OceanBase v3.x versions are currently not supported by ob-operator.
 
@@ -186,19 +186,21 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-- [Architecture](docsite/docs/developer/arch.md)
-- [Contributor Guidance](docsite/docs/developer/contributor-guidance.md)
-- [User Manual](https://en.oceanbase.com/docs/community-ob-operator-doc-en-10000000001123466)
+- [Architecture](https://oceanbase.github.io/ob-operator/docs/developer/arch)
+- [Contributor Guidance](https://oceanbase.github.io/ob-operator/docs/developer/contributor-guidance)
+- [User Manual](https://oceanbase.github.io/ob-operator/docs/manual/what-is-ob-operator)
 
 ## Getting Help
 
 If you encounter any issues while using ob-operator, please feel free to seek help through the following channels:
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [Official Website](https://open.oceanbase.com/)
+- [Official Forum](https://ask.oceanbase.com/) (in Chinese)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- DingTalk Group ([QRCode](./docsite/static/img/dingtalk-operator-users.png))
 - WeChat Group (Add the assistant with WeChat ID: OBCE666)
+- [DingTalk Group](https://h5.dingtalk.com/ecologicalOrg/index.html?code=v1,k1,8FudApZjHxgVTScBrgtz2mBfmEvOuiPm5J5dTS5tos4=&origin=11#/inviteOutsideJoin)
+
+<img src="./docsite/static/img/dingtalk-operator-users.png" width="200px" alt="DingTalk Group QRCode" />
 
 ## Contributing
 

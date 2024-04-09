@@ -1156,6 +1156,23 @@ definitions:
     - count
     - status
     type: object
+  response.OBConnection:
+    properties:
+      clientIp:
+        type: string
+      cluster:
+        type: string
+      namespace:
+        type: string
+      pod:
+        type: string
+      tenant:
+        type: string
+      terminalId:
+        type: string
+      user:
+        type: string
+    type: object
   response.OBMetrics:
     properties:
       cpuPercent:
@@ -1794,6 +1811,47 @@ paths:
       summary: list k8s storage classes
       tags:
       - Cluster
+  /api/v1/conn/{terminalId}:
+    get:
+      consumes:
+      - application/json
+      description: Connect to oceanbase database in websocket
+      operationId: ConnectDatabase
+      parameters:
+      - description: terminalId
+        in: path
+        name: terminalId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Connect to oceanbase database
+      tags:
+      - Terminal
   /api/v1/info:
     get:
       consumes:
@@ -2450,6 +2508,52 @@ paths:
       summary: scale observer
       tags:
       - OBCluster
+  /api/v1/obclusters/namespace/{namespace}/name/{name}/terminal:
+    put:
+      consumes:
+      - application/json
+      description: Create oceanbase cluster connection terminal
+      operationId: CreateOBClusterConnection
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create oceanbase cluster connection
+      tags:
+      - Terminal
   /api/v1/obclusters/statistic:
     get:
       consumes:
@@ -3281,6 +3385,52 @@ paths:
       summary: Change tenant role of specific tenant
       tags:
       - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/terminal:
+    put:
+      consumes:
+      - application/json
+      description: Create oceanbase tenant connection terminal
+      operationId: CreateOBTenantConnection
+      parameters:
+      - description: namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create oceanbase tenant connection
+      tags:
+      - Terminal
   /api/v1/obtenants/{namespace}/{name}/userCredentials:
     post:
       consumes:
