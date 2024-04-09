@@ -171,7 +171,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 
 ## 支持的 OceanBase 版本
 
-支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+支持 OceanBase v4.x 版本，已经验证过的有 4.1.x，4.2.x 和 4.3.x 版本，后续会不断支持 OceanBase 社区版的新版本。
 
 暂不支持 OceanBase v3.x 版本。
 
@@ -195,7 +195,7 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 如果您在使用 ob-operator 时遇到任何问题，欢迎通过以下方式寻求帮助：
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [官方网站](https://open.oceanbase.com/)
+- [官方论坛](https://ask.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
 - 钉钉群（[二维码](./docsite/static/img/dingtalk-operator-users.png)）
 - 微信群（请添加小助手微信，微信号: OBCE666）
