@@ -35,7 +35,7 @@ spec:
             - name: USER_NAMESPACE
               value: {{ .Values.userNamespace | default .Release.Namespace }}
         - name: prometheus
-          image: prom/prometheus
+          image: prom/prometheus:v2.51.1
           resources:
             requests:
               cpu: 100m
@@ -54,7 +54,7 @@ spec:
             - name: prometheus-storage-volume
               mountPath: /prometheus/
         - name: alertmanager
-          image: prom/alertmanager:latest
+          image: prom/alertmanager:v0.27.0
           args:
             - "--config.file=/etc/alertmanager/config.yml"
             - "--storage.path=/alertmanager"
@@ -71,8 +71,6 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/alertmanager
-            - name: templates-volume
-              mountPath: /etc/alertmanager-templates
             - name: alertmanager
               mountPath: /alertmanager
       volumes:
@@ -80,9 +78,6 @@ spec:
         - name: config-volume
           configMap:
             name: alertmanager-config
-        - name: templates-volume
-          configMap:
-            name: alertmanager-templates
         - name: alertmanager
           emptyDir: {}
       # volumes for prometheus
