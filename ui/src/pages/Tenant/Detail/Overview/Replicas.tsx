@@ -64,7 +64,7 @@ export default function Replicas({
   };
 
   const deleteResourcePool = async (zoneName: string) => {
-    const res = await deleteObtenantPool({ ns, name, zoneName });
+    const res = await deleteObtenantPool({ ns:ns!, name:name!, zoneName });
     if (res.successful) {
       refreshTenant();
       message.success(
