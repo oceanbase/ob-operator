@@ -171,7 +171,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 
 ## 支持的 OceanBase 版本
 
-支持 OceanBase v4.x 版本，已经验证过的有 4.1.x，4.2.x 和 4.3.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase 版本，可参考用户手册获取详细信息。
 
 暂不支持 OceanBase v3.x 版本。
 
@@ -185,10 +185,9 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 文档
 
-- [ob-operator 架构设计](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)
-- [部署 ob-operator](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/deploy.md)
-- [开发手册](docsite/docs/developer/development.md)（英文）
-- [用户手册](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367)
+- [架构设计](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)
+- [开发手册](https://oceanbase.github.io/ob-operator/docs/developer/contributor-guidance)（英文）
+- [用户手册](https://oceanbase.github.io/ob-operator/zh-Hans/docs/manual/what-is-ob-operator)
 
 ## 获取帮助
 
@@ -197,8 +196,10 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
 - [官方论坛](https://ask.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- 钉钉群（[二维码](./docsite/static/img/dingtalk-operator-users.png)）
 - 微信群（请添加小助手微信，微信号: OBCE666）
+- [钉钉群](https://h5.dingtalk.com/ecologicalOrg/index.html?code=v1,k1,8FudApZjHxgVTScBrgtz2mBfmEvOuiPm5J5dTS5tos4=&origin=11#/inviteOutsideJoin)
+
+<img src="./docsite/static/img/dingtalk-operator-users.png" width="200px" alt="钉钉群二维码" />
 
 ## 参与开发
 
