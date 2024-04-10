@@ -113,3 +113,7 @@ export const reportPollData = async () => {
     localStorage.setItem('lastReportTime', Date.now().toString());
   } catch (err) {}
 };
+
+export function floorToTwoDecimalPlaces(num:number) {
+  return Math.floor(num * 100) / 100;
+}

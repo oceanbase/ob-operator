@@ -7,7 +7,6 @@ interface ZoneItemProps {
   checked: boolean;
   obZoneResource: any;
   checkBoxOnChange: (checked: boolean, name: string) => void;
-  key: number;
   priorityName?:string[]|string;
   isEdit?:boolean;
   checkedFormName?:string[]|string;
@@ -15,7 +14,6 @@ interface ZoneItemProps {
 
 export default function ZoneItem({
   name,
-  key,
   checked,
   obZoneResource,
   checkBoxOnChange,
@@ -25,7 +23,6 @@ export default function ZoneItem({
 }: ZoneItemProps) {
   return (
     <div
-      key={key}
       style={{
         width: '100%',
         display: 'flex',
@@ -63,7 +60,7 @@ export default function ZoneItem({
         </Form.Item>
       </Col>
       {obZoneResource && (
-        <Col style={{ marginLeft: 12 }} span={12}>
+        <Col style={{ marginLeft: 12 }} span={16}>
           <span style={{ marginRight: 12 }}>
             {intl.formatMessage({
               id: 'Dashboard.Tenant.New.ResourcePools.AvailableResources',
