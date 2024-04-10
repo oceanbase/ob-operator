@@ -352,6 +352,12 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
 			Namespace: m.OBCluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind:       m.OBCluster.Kind,
+				APIVersion: m.OBCluster.APIVersion,
+				Name:       m.OBCluster.Name,
+				UID:        m.OBCluster.UID,
+			}},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -372,31 +378,30 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	var jobObject *batchv1.Job
-	for {
-		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+	check := func() (bool, error) {
 		jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
 		if err != nil {
-			m.Logger.Error(err, "Failed to get job")
+			return false, errors.Wrap(err, "Failed to get job")
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			return false, nil
+		} else if jobObject.Status.Succeeded == 1 {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
+			return true, nil
 		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-			break
+			return false, errors.Wrap(err, "Failed to run validate job")
 		}
 	}
-
-	if jobObject.Status.Succeeded == 1 {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-	} else {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
 }
 
 func UpgradeCheck(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
 }
 
 func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
@@ -436,10 +441,9 @@ func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func BeginUpgrade(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
 }
 
-// TODO: add timeout
 func RollingUpgradeByZone(m *OBClusterManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		zones, err := m.listOBZones()
@@ -463,7 +467,7 @@ func RollingUpgradeByZone(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func FinishUpgrade(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
 }
 
 func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {

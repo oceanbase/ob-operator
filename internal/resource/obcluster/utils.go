@@ -372,13 +372,11 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) erro
 	return nil
 }
 
-// TODO: add timeout
 func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
-	upgradeFinished := false
-	for {
+	check := func() (bool, error) {
 		zones, err := m.listOBZones()
 		if err != nil {
-			return errors.Wrap(err, "Failed to get obzone list")
+			return false, errors.Wrap(err, "Failed to get obzone list")
 		}
 		for _, zone := range zones.Items {
 			if zone.Name != zoneName {
@@ -386,15 +384,15 @@ func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
 			}
 			m.Logger.Info("Check obzone upgrade status", "obzone", zoneName)
 			if zone.Status.Status == zonestatus.Running && zone.Status.Image == m.OBCluster.Spec.OBServerTemplate.Image {
-				upgradeFinished = true
-				break
+				m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
+				return true, nil
 			}
 		}
-		if upgradeFinished {
-			m.Logger.Info("OBZone upgrade finished", "obzone", zoneName)
-			break
-		}
-		time.Sleep(time.Second * oceanbaseconst.CommonCheckInterval)
+		return false, nil
+	}
+	err := resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
+		return errors.Wrap(err, "Timeout to wait obzone upgrade finished")
 	}
 	return nil
 }

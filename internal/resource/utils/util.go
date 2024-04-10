@@ -270,7 +270,7 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 	return output, nil
 }
 
-func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
+func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
 	password, err := ReadPassword(c, obcluster.Namespace, obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get root password")
@@ -304,6 +304,12 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
 			Namespace: obcluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind:       obcluster.Kind,
+				APIVersion: obcluster.APIVersion,
+				Name:       obcluster.Name,
+				UID:        obcluster.UID,
+			}},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -317,33 +323,67 @@ func ExecuteUpgradeScript(c client.Client, logger *logr.Logger, obcluster *v1alp
 		},
 	}
 	logger.Info("Create run upgrade script job", "script", filepath)
-	err = c.Create(context.Background(), &job)
+	err = c.Create(ctx, &job)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to create run upgrade script job for obcluster %s", obcluster.Name)
 	}
 
 	var jobObject *batchv1.Job
-	for {
+	check := func() (bool, error) {
 		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
 		if err != nil {
-			logger.Error(err, "Failed to get job")
-			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
+			return false, errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
 			logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			return false, nil
+		} else if jobObject.Status.Succeeded == 1 {
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
+			return true, nil
 		} else {
-			logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-			break
+			logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
+			return false, errors.Wrap(err, "Failed to run upgrade script job")
 		}
-		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
-	if jobObject.Status.Succeeded == 1 {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-	} else {
-		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
-		return errors.Wrap(err, "Failed to run upgrade script job")
+	err = CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
+		return errors.Wrap(err, "Failed to wait for job to finish")
 	}
 	return nil
+}
+
+type CheckJobFunc func() (bool, error)
+
+// CheckJobWithTimeout checks job with timeout, return error if timeout or job failed.
+// First parameter is the function to check job status, return true if job finished, false if not.
+// Second parameter is the timeout duration, default to 1800s.
+// Third parameter is the interval to check job status, default to 3s.
+func CheckJobWithTimeout(f CheckJobFunc, ds ...time.Duration) error {
+	timeout := time.Second * oceanbaseconst.DefaultStateWaitTimeout
+	interval := time.Second * oceanbaseconst.CheckJobInterval
+	if len(ds) > 0 {
+		timeout = ds[0]
+	}
+	if len(ds) > 1 {
+		interval = ds[1]
+	}
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	for {
+		select {
+		case <-timer.C:
+			return errors.New("Timeout to wait for job")
+		default:
+			time.Sleep(interval)
+			finished, err := f()
+			if err != nil {
+				return err
+			}
+			if finished {
+				return nil
+			}
+		}
+	}
 }
 
 func GetCNIFromAnnotation(pod *corev1.Pod) string {
