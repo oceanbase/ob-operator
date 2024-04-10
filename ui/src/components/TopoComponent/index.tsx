@@ -43,7 +43,7 @@ import styles from './index.less';
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
   namespace?: string;
-  clusterNameOfKubectl?: string; // k8s resource name
+  clusterNameOfKubectl?: string; // k8s resource name of cluster
   header?: ReactElement;
   resourcePoolDefaultValue?: any;
   refreshTenant?: () => void;
@@ -157,7 +157,7 @@ export default function TopoComponent({
   };
   //delete cluster
   const clusterDelete = async () => {
-    const res = await deleteClusterReportWrap({ ns, name });
+    const res = await deleteClusterReportWrap({ ns:ns!, name:name! });
     if (res.successful) {
       message.success(
         res.message ||
@@ -166,14 +166,14 @@ export default function TopoComponent({
             defaultMessage: '操作成功！',
           }),
       );
-      getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+      getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
     }
   };
   //delete zone
   const zoneDelete = async () => {
     const res = await deleteObzoneReportWrap({
-      ns,
-      name,
+      ns:ns!,
+      name:name!,
       zoneName: chooseZoneName.current,
     });
     if (res.successful) {
@@ -184,7 +184,7 @@ export default function TopoComponent({
             defaultMessage: '删除成功',
           }),
       );
-      getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+      getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
     }
   };
   //Initialize g6
@@ -234,7 +234,7 @@ export default function TopoComponent({
   };
   // delete resource pool
   const deleteResourcePool = async (zoneName: string) => {
-    const res = await deleteObtenantPool({ ns, name, zoneName });
+    const res = await deleteObtenantPool({ ns:urlNs!, name:urlName!, zoneName });
     if (res.successful) {
       if (refreshTenant) refreshTenant();
       message.success(
@@ -320,7 +320,7 @@ export default function TopoComponent({
   const mouseLeave = () => setInModal(false);
   //Re-acquire data after successful operation and maintenance operations
   const operateSuccess = () => {
-    getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+    getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
   };
 
   //Used to re-render the view after data update
@@ -330,7 +330,7 @@ export default function TopoComponent({
     //polling
     if (!RESULT_STATUS.includes(originTopoData.topoData.status)) {
       checkStatusTimer = setInterval(() => {
-        getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+        getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
       }, 3000);
     }
     if (graph.current) {
@@ -349,7 +349,7 @@ export default function TopoComponent({
 
   useUpdateEffect(() => {
     if (graph.current) {
-      getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+      getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
     }
   }, [tenantReplicas]);
 
@@ -382,7 +382,7 @@ export default function TopoComponent({
       modelRef.current.addEventListener('mouseleave', mouseLeave);
     }
 
-    getTopoData({ ns, name, useFor: 'topo', tenantReplicas });
+    getTopoData({ ns:ns!, name:name!, useFor: 'topo', tenantReplicas });
 
     return () => {
       modelRef.current?.removeEventListener('mouseenter', mouseEnter);
