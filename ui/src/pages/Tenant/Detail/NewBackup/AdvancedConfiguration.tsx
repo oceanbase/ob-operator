@@ -39,7 +39,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.EncryptedBackup',
-                defaultMessage: '加密备份：',
+                defaultMessage: '加密备份',
               })}
             </label>
             <Switch
@@ -80,7 +80,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.BackupTaskRetention',
-                defaultMessage: '备份任务保留：',
+                defaultMessage: '备份任务保留',
               })}
             </label>
             <Switch
@@ -110,7 +110,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.DataRecoveryWindow',
-                defaultMessage: '数据恢复窗口：',
+                defaultMessage: '数据恢复窗口',
               })}
             </label>
             <Switch
@@ -126,7 +126,7 @@ export default function AdvancedConfiguration({
                     required: true,
                     message: intl.formatMessage({
                       id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.EnterTheDataRecoveryWindow',
-                      defaultMessage: '请输入数据恢复窗口：',
+                      defaultMessage: '请输入数据恢复窗口',
                     }),
                   },
                 ]}
