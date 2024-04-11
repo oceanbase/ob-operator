@@ -236,7 +236,7 @@
   "OBDashboard.pages.Overview.NodesTable.NodeName": "节点名",
   "OBDashboard.pages.Overview.NodesTable.Status": "状态",
   "OBDashboard.pages.Overview.NodesTable.Role": "角色",
-  "OBDashboard.pages.Overview.NodesTable.RunningTime": "已运行时间",
+  "OBDashboard.pages.Overview.NodesTable.RunningTime": "启动时间",
   "OBDashboard.pages.Overview.NodesTable.Version": "版本",
   "OBDashboard.pages.Overview.NodesTable.InternalIpAddress": "内部IP",
   "OBDashboard.pages.Overview.NodesTable.ExternalIpAddress": "外部IP",
@@ -407,7 +407,7 @@
   "Dashboard.Tenant.New.BasicInfo.PleaseEnterTheNumberOf": "请输入Unit 数量",
   "Dashboard.Tenant.New.BasicInfo.NumberOfUnits": "Unit 数量",
   "Dashboard.Tenant.New.BasicInfo.ConnectionWhitelist": "连接白名单",
-  "Dashboard.Tenant.New.ResourcePools.Weight": "权重",
+  "Dashboard.Tenant.New.ResourcePools.Priority": "优先级",
   "Dashboard.Tenant.New.ResourcePools.ResourcePool": "资源池",
   "Dashboard.Tenant.New.ResourcePools.PleaseEnterCpuCore": "请输入 CPU (核)",
   "Dashboard.Tenant.New.ResourcePools.Nuclear": "核",
@@ -691,5 +691,9 @@
   "Dashboard.components.customModal.ScaleModal.OperationSucceeded": "操作成功！",
   "Dashboard.components.customModal.SwitchTenantModal.OperationSucceeded": "操作成功",
   "Dashboard.components.customModal.UpgradeModal.OperationSucceeded": "操作成功！",
-  "Dashboard.Tenant.New.BasicInfo.PleaseSelect": "请选择"
+  "Dashboard.Tenant.New.BasicInfo.PleaseSelect": "请选择",
+  "Dashboard.Detail.Overview.BasicInfo.ClusterInformation": "集群信息",
+  "Dashboard.Detail.Overview.ServerTable.ServerList": "Server 列表",
+  "Dashboard.Detail.Overview.ZoneTable.ZoneList": "Zone 列表",
+  "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "天"
 }

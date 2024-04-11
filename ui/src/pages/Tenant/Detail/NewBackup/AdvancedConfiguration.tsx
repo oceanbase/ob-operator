@@ -102,7 +102,14 @@ export default function AdvancedConfiguration({
                 ]}
                 name={['jobKeepDays']}
               >
-                <InputNumber min={1} disabled={disable} />
+                <InputNumber
+                  min={1}
+                  addonAfter={intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                    defaultMessage: '天',
+                  })}
+                  disabled={disable}
+                />
               </Form.Item>
             )}
           </Col>
@@ -132,7 +139,14 @@ export default function AdvancedConfiguration({
                 ]}
                 name={['recoveryDays']}
               >
-                <InputNumber min={1} disabled={disable} />
+                <InputNumber
+                  min={1}
+                  addonAfter={intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                    defaultMessage: '天',
+                  })}
+                  disabled={disable}
+                />
               </Form.Item>
             )}
           </Col>
@@ -143,7 +157,15 @@ export default function AdvancedConfiguration({
               defaultMessage: '归档切片间隔',
             })}
           >
-            <InputNumber disabled={disable} min={1} max={7} />
+            <InputNumber
+              disabled={disable}
+              addonAfter={intl.formatMessage({
+                id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                defaultMessage: '天',
+              })}
+              min={1}
+              max={7}
+            />
           </Form.Item>
         </Row>
       )}

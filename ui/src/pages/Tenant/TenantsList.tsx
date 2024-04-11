@@ -101,21 +101,24 @@ export default function TenantsList({
 }: TenantsListProps) {
   return (
     <Col span={24}>
-      <Card>
-        <div className={styles.clusterHeader}>
-          <h2>
-            {intl.formatMessage({
-              id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
-              defaultMessage: '租户列表',
-            })}
-          </h2>
-          <Button onClick={turnToCreateTenant} type="primary">
-            {intl.formatMessage({
-              id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
-              defaultMessage: '创建租户',
-            })}
-          </Button>
-        </div>
+      <Card
+        title={
+          <div className={styles.clusterHeader}>
+            <h2>
+              {intl.formatMessage({
+                id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
+                defaultMessage: '租户列表',
+              })}
+            </h2>
+            <Button onClick={turnToCreateTenant} type="primary">
+              {intl.formatMessage({
+                id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
+                defaultMessage: '创建租户',
+              })}
+            </Button>
+          </div>
+        }
+      >
         <Table
           columns={columns}
           dataSource={tenantsList}

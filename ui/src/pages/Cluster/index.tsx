@@ -17,7 +17,6 @@ const defaultQueryRange:QueryRangeType = {
   startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 }
 
-//集群概览页
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
   const [clusterNames, setClusterNames] = useState<LabelType[]>([]);

@@ -1,6 +1,6 @@
-import { COLOR_MAP,MODE_MAP } from '@/constants';
+import { COLOR_MAP, MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Descriptions,Switch,Tag,Typography } from 'antd';
+import { Card, Col, Descriptions, Switch, Tag, Typography } from 'antd';
 import { useState } from 'react';
 
 import styles from './index.less';
@@ -81,7 +81,17 @@ export default function BasicInfo({
 
   return (
     <Col span={24}>
-      <Card style={style}>
+      <Card
+        style={style}
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.ClusterInformation',
+              defaultMessage: '集群信息',
+            })}
+          </h2>
+        }
+      >
         <Descriptions
           column={5}
           title={intl.formatMessage({

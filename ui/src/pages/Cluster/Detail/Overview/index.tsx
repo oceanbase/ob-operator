@@ -1,9 +1,9 @@
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history,useModel, useParams } from '@umijs/max';
+import { history, useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Row,message } from 'antd';
-import { useEffect,useRef,useState } from 'react';
+import { Button, Row, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
@@ -20,7 +20,7 @@ const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
-  const {ns, name} = useParams();
+  const { ns, name } = useParams();
   const chooseZoneName = useRef<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
@@ -142,7 +142,6 @@ const ClusterOverview: React.FC = () => {
         {clusterDetail && (
           <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
         )}
-
         {clusterDetail && (
           <ZoneTable
             clusterStatus={clusterDetail.status}
@@ -153,16 +152,14 @@ const ClusterOverview: React.FC = () => {
             setChooseServerNum={setChooseServerNum}
           />
         )}
-
+        {clusterDetail && (
+          <ServerTable servers={clusterDetail.servers as API.Server[]} />
+        )}
         {clusterDetail && (
           <EventsTable
             objectType="OBCLUSTER"
             name={clusterDetail?.info?.name}
           />
-        )}
-
-        {clusterDetail && (
-          <ServerTable servers={clusterDetail.servers as API.Server[]} />
         )}
       </Row>
       <OperateModal
@@ -171,8 +168,8 @@ const ClusterOverview: React.FC = () => {
         setVisible={setOperateModalVisible}
         successCallback={operateSuccess}
         params={{
-          zoneName:chooseZoneName.current,
-          defaultValue:chooseServerNum
+          zoneName: chooseZoneName.current,
+          defaultValue: chooseServerNum,
         }}
       />
     </PageContainer>

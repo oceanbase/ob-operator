@@ -2,7 +2,7 @@ import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button,Card,Col,Table,Tag,Typography } from 'antd';
+import { Button, Card, Col, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -168,7 +168,7 @@ const columns: ColumnsType<DataType> = [
         {' '}
         {value === 'operating' ? (
           <Text
-            style={{ maxWidth: 110, color: '#d48806',fontSize:12 }}
+            style={{ maxWidth: 110, color: '#d48806', fontSize: 12 }}
             ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
           >
             {value}/{record.statusDetail}
@@ -221,21 +221,24 @@ export default function ClusterList({
 }: ClusterListProps) {
   return (
     <Col span={24}>
-      <Card>
-        <div className={styles.clusterHeader}>
-          <h2>
-            {intl.formatMessage({
-              id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
-              defaultMessage: '集群列表',
-            })}
-          </h2>
-          <Button onClick={handleAddCluster} type="primary">
-            {intl.formatMessage({
-              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-              defaultMessage: '创建集群',
-            })}
-          </Button>
-        </div>
+      <Card
+        title={
+          <div className={styles.clusterHeader}>
+            <h2 style={{ marginBottom: 0 }}>
+              {intl.formatMessage({
+                id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
+                defaultMessage: '集群列表',
+              })}
+            </h2>
+            <Button onClick={handleAddCluster} type="primary">
+              {intl.formatMessage({
+                id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+                defaultMessage: '创建集群',
+              })}
+            </Button>
+          </div>
+        }
+      >
         <Table
           loading={loading}
           columns={columns}
