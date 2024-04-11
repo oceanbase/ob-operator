@@ -9,6 +9,7 @@ import styles from './index.less';
 interface TenantsListProps {
   tenantsList: API.TenantDetail[] | undefined;
   turnToCreateTenant: () => void;
+  loading?: boolean;
 }
 
 const columns: ColumnsType<API.TenantDetail> = [
@@ -98,13 +99,15 @@ const columns: ColumnsType<API.TenantDetail> = [
 export default function TenantsList({
   tenantsList,
   turnToCreateTenant,
+  loading,
 }: TenantsListProps) {
   return (
     <Col span={24}>
       <Card
+        loading={loading}
         title={
           <div className={styles.clusterHeader}>
-            <h2>
+            <h2 style={{ marginBottom: 0 }}>
               {intl.formatMessage({
                 id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
                 defaultMessage: '租户列表',
