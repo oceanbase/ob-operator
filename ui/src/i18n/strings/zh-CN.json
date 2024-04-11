@@ -620,7 +620,7 @@
   "Dashboard.Detail.Overview.Backups.Name": "名称",
   "Dashboard.Detail.Overview.Backups.Path": "路径",
   "Dashboard.Detail.Overview.Backups.EncryptionKeySecret": "加密密钥 Secret",
-  "Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation": "租户基本信息",
+  "Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation": "租户信息",
   "Dashboard.Detail.Overview.Replicas.Priority": "优先级",
   "Dashboard.Detail.Overview.Replicas.ReplicaType": "副本类型",
   "Dashboard.Detail.Overview.Replicas.MaximumAvailableCpu": "最大可用 CPU",
