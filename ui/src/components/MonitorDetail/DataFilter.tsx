@@ -145,11 +145,12 @@ export default function DataFilter({
             </span>
           </>
         )}
-        {intl.formatMessage({
-          id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
-          defaultMessage: '自动刷新：',
-        })}
-
+        <span className={styles.autoRefreshText}>
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
+            defaultMessage: '自动刷新',
+          })}
+        </span>
         <Switch
           checked={isRefresh}
           onChange={(value) => {
