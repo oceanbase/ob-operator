@@ -52,8 +52,8 @@ export default function ZoneItem({
         <Form.Item
           name={priorityName}
           label={intl.formatMessage({
-            id: 'Dashboard.Tenant.New.ResourcePools.Weight',
-            defaultMessage: '权重',
+            id: 'Dashboard.Tenant.New.ResourcePools.Priority',
+            defaultMessage: '优先级',
           })}
         >
           <InputNumber style={{ width: '100%' }} disabled={!checked} />
