@@ -231,7 +231,7 @@ func OBClusterHealthCheck(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
-	_ = resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, "")
+	_ = resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, "")
 	return nil
 }
 
@@ -241,7 +241,7 @@ func OBZoneHealthCheck(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
 	zoneOpt := fmt.Sprintf("-z '%s'", m.OBZone.Spec.Topology.Zone)
-	_ = resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, zoneOpt)
+	_ = resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, obcluster, oceanbaseconst.UpgradeHealthCheckerScriptPath, zoneOpt)
 	return nil
 }
 

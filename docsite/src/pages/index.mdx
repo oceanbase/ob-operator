@@ -2,7 +2,7 @@ import Link from "@docusaurus/Link";
 
 # ob-operator
 
-The ob-operator is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
+`ob-operator` is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.
@@ -30,7 +30,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 * Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
 ```
 
 * Development
@@ -46,7 +46,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.0
 ```
 
 #### Using terraform
@@ -95,7 +95,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
@@ -172,7 +172,7 @@ The upcoming features include:
 
 ## Supported OceanBase Versions
 
-ob-operator supports OceanBase v4.x versions. The validated versions include 4.1.x and 4.2.x. It will continue to support new versions of the OceanBase community edition.
+ob-operator supports OceanBase v4.x versions. Some features may require a specific OceanBase version. Please consult the documentation for details.
 
 OceanBase v3.x versions are currently not supported by ob-operator.
 
@@ -195,7 +195,7 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 If you encounter any issues while using ob-operator, please feel free to seek help through the following channels:
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [Official Website](https://open.oceanbase.com/)
+- [Official Forum](https://ask.oceanbase.com/) (in Chinese)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
 - DingTalk Group ([QRCode](/img/dingtalk-operator-users.png))
 - WeChat Group (Add the assistant with WeChat ID: OBCE666)
