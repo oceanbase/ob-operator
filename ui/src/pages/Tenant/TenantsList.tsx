@@ -9,6 +9,7 @@ import styles from './index.less';
 interface TenantsListProps {
   tenantsList: API.TenantDetail[] | undefined;
   turnToCreateTenant: () => void;
+  loading?: boolean;
 }
 
 const columns: ColumnsType<API.TenantDetail> = [
@@ -98,24 +99,29 @@ const columns: ColumnsType<API.TenantDetail> = [
 export default function TenantsList({
   tenantsList,
   turnToCreateTenant,
+  loading,
 }: TenantsListProps) {
   return (
     <Col span={24}>
-      <Card>
-        <div className={styles.clusterHeader}>
-          <h2>
-            {intl.formatMessage({
-              id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
-              defaultMessage: '租户列表',
-            })}
-          </h2>
-          <Button onClick={turnToCreateTenant} type="primary">
-            {intl.formatMessage({
-              id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
-              defaultMessage: '创建租户',
-            })}
-          </Button>
-        </div>
+      <Card
+        loading={loading}
+        title={
+          <div className={styles.clusterHeader}>
+            <h2 style={{ marginBottom: 0 }}>
+              {intl.formatMessage({
+                id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
+                defaultMessage: '租户列表',
+              })}
+            </h2>
+            <Button onClick={turnToCreateTenant} type="primary">
+              {intl.formatMessage({
+                id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
+                defaultMessage: '创建租户',
+              })}
+            </Button>
+          </div>
+        }
+      >
         <Table
           columns={columns}
           dataSource={tenantsList}

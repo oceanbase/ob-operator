@@ -100,7 +100,11 @@ export default function ZoneTable({
                 })}
               </Button>
               <Button
-                style={(clusterStatus === 'running' && zones.length > 2) ? { color: '#ff4b4b' } : {}}
+                style={
+                  clusterStatus === 'running' && zones.length > 2
+                    ? { color: '#ff4b4b' }
+                    : {}
+                }
                 onClick={() => {
                   showDeleteConfirm({
                     onOk: () => remove(record.zone),
@@ -148,7 +152,16 @@ export default function ZoneTable({
   };
   return (
     <Col span={24}>
-      <Card>
+      <Card
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.ZoneTable.ZoneList',
+              defaultMessage: 'Zone 列表',
+            })}
+          </h2>
+        }
+      >
         <Table
           rowKey="name"
           pagination={{ simple: true }}

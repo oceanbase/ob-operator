@@ -3,6 +3,7 @@ import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -442,25 +443,18 @@ export async function getEssentialParameters({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
-  // return request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
   const r = await request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
   const formatResourceAttr = ['availableDataDisk','availableLogDisk','availableMemory']
   if(r.successful){
     r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
     r.data.obServerResources.forEach((item)=>{
       for(let attr of formatResourceAttr){
-        item[attr] = item[attr] / (1<<30)
-        // if(attr === 'availableMemory' && item.obZone === 'zone1'){
-        //   item[attr] = 3
-        // }
+        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1<<30)); 
       }
     })
     Object.keys(r.data.obZoneResourceMap).forEach((key)=>{
       for(let attr of formatResourceAttr){
-        r.data.obZoneResourceMap[key][attr] = r.data.obZoneResourceMap[key][attr] / (1 << 30);
-        // if(attr === 'availableMemory' && key === 'zone1'){
-        //   r.data.obZoneResourceMap[key][attr] = 3
-        // }
+        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(r.data.obZoneResourceMap[key][attr] / (1 << 30));
       }
     }) 
     return r

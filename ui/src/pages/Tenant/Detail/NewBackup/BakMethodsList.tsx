@@ -20,7 +20,7 @@ export default function BakMethodsList({
   const dataSource = scheduleValue || form?.getFieldValue('scheduleDates');
 
   return (
-    <Space direction="vertical" style={{ marginBottom: 24 }}>
+    <Space direction="vertical" style={{ marginBottom: 24, width: 440 }}>
       <h3>
         {intl.formatMessage({
           id: 'Dashboard.Detail.NewBackup.BakMethodsList.BackupData',
@@ -41,6 +41,8 @@ export default function BakMethodsList({
             label={
               dataSource?.mode === 'Monthly' ? day : WEEK_TEXT_MAP.get(day)
             }
+            labelCol={{span:6}}
+            wrapperCol={{span:18}}
             style={{ marginBottom: 0 }}
             key={index}
           >

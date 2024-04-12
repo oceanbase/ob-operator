@@ -1,5 +1,5 @@
 import { intl } from '@/utils/intl';
-import { Col, Table, Tag, Card } from 'antd';
+import { Card, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -96,12 +96,21 @@ const getServerColums = () => {
 export default function ServerTable({ servers }: { servers: API.Server[] }) {
   return (
     <Col span={24}>
-      <Card>
+      <Card
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.ServerTable.ServerList',
+              defaultMessage: 'Server 列表',
+            })}
+          </h2>
+        }
+      >
         <Table
           columns={getServerColums()}
           rowKey="name"
           dataSource={servers}
-          pagination={{simple:true}}
+          pagination={{ simple: true }}
           sticky
         />
       </Card>
