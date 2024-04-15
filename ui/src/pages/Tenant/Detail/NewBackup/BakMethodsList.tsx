@@ -2,6 +2,8 @@ import { WEEK_TEXT_MAP } from '@/constants/schedule';
 import { intl } from '@/utils/intl';
 import { Form, Radio, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
+import type { NewBackupForm } from '.';
+
 
 interface BacMethodsListProps {
   scheduleValue?: {
@@ -9,7 +11,7 @@ interface BacMethodsListProps {
     days: number[];
   };
   disable?: boolean;
-  form?: FormInstance<any>;
+  form?: FormInstance<NewBackupForm>;
 }
 
 export default function BakMethodsList({
@@ -20,7 +22,7 @@ export default function BakMethodsList({
   const dataSource = scheduleValue || form?.getFieldValue('scheduleDates');
 
   return (
-    <Space direction="vertical" style={{ marginBottom: 24 }}>
+    <Space direction="vertical" style={{ marginBottom: 24, width: 440 }}>
       <h3>
         {intl.formatMessage({
           id: 'Dashboard.Detail.NewBackup.BakMethodsList.BackupData',
@@ -41,6 +43,8 @@ export default function BakMethodsList({
             label={
               dataSource?.mode === 'Monthly' ? day : WEEK_TEXT_MAP.get(day)
             }
+            labelCol={{span:6}}
+            wrapperCol={{span:18}}
             style={{ marginBottom: 0 }}
             key={index}
           >

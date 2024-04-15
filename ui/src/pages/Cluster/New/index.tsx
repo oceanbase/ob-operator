@@ -8,7 +8,6 @@ import { Button,Form,Row,message } from 'antd';
 import { strTrim } from '@/utils/helper';
 import { useState } from 'react';
 
-import { MODE_MAP } from '@/constants';
 import { encryptText,usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
@@ -19,12 +18,12 @@ import Topo from './Topo';
 
 export default function New() {
   const navigate = useNavigate();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState('');
   const { data: storageClassesRes } = useRequest(getStorageClasses, {
     onSuccess: ({ successful, data }) => {
       if (successful && data.length === 1) {
-        let { value } = data[0];
+        const { value } = data[0];
         form.setFieldValue(['observer', 'storage'], {
           data: {
             storageClass: value,
@@ -41,7 +40,7 @@ export default function New() {
   });
   const publicKey = usePublicKey();
   const storageClasses = storageClassesRes?.data;
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: API.CreateClusterData) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     

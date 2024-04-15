@@ -1,14 +1,16 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
-import { clone, cloneDeep } from 'lodash';
+import { clone,cloneDeep } from 'lodash';
+import type { NewBackupForm,ScheduleDates } from './Detail/NewBackup';
+import type { NewTenantForm,UnitConfig } from './New';
 import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
   if (typeof val === 'number') return true;
   return !!val;
 };
-const formatUnitConfig = (unitConfig: any): API.UnitConfig => {
-  let _unitConfig = clone(unitConfig);
+const formatUnitConfig = (unitConfig: UnitConfig): API.UnitConfig => {
+  const _unitConfig: API.UnitConfig = clone(unitConfig);
   _unitConfig['cpuCount'] = String(_unitConfig['cpuCount']);
   if (isExist(_unitConfig['logDiskSize'])) {
     _unitConfig['logDiskSize'] = _unitConfig['logDiskSize'] + 'Gi';
@@ -20,14 +22,14 @@ const formatUnitConfig = (unitConfig: any): API.UnitConfig => {
 };
 
 export function formatNewTenantForm(
-  originFormData: any,
+  originFormData: NewTenantForm,
   clusterName: string,
   publicKey: string,
 ): API.TenantBody {
-  let result: API.TenantBody = {};
-  Object.keys(originFormData).forEach((key) => {
+  const result: API.TenantBody = {};
+  Object.keys(originFormData).forEach((key: keyof NewTenantForm) => {
     if (key === 'connectWhiteList') {
-      result[key] = originFormData[key].join(',');
+      result[key] = originFormData[key]?.join(',');
     } else if (key === 'obcluster') {
       result[key] = clusterName;
     } else if (key === 'pools') {
@@ -36,7 +38,7 @@ export function formatNewTenantForm(
           return originFormData[key][zoneKey].checked;
         })
         .map((zoneName) => {
-          const { priority } = originFormData[key]?.[zoneName];
+          const priority = originFormData[key]?.[zoneName]?.priority;
           return priority || priority === 0
             ? {
                 zone: zoneName,
@@ -49,16 +51,16 @@ export function formatNewTenantForm(
               };
         });
     } else if (key === 'source') {
-      if (originFormData[key]['tenant'] || originFormData[key]['restore'])
+      if (originFormData[key]!['tenant'] || originFormData[key]!['restore'])
         result[key] = {};
-      if (originFormData[key]['tenant']) {
-        result[key]['tenant'] = originFormData[key]['tenant'];
+      if (originFormData[key]!['tenant']) {
+        result[key]!['tenant'] = originFormData[key]!['tenant'];
       }
-      if (originFormData[key]['restore']) {
-        let { until } = originFormData[key]['restore'];
+      if (originFormData[key]!['restore']) {
+        const { until } = originFormData[key]!['restore'];
 
         result[key]['restore'] = {
-          ...originFormData[key]['restore'],
+          ...originFormData[key]!['restore'],
           until:
             until && until.date && until.time
               ? {
@@ -70,26 +72,29 @@ export function formatNewTenantForm(
               : { unlimited: true },
         };
         if (originFormData[key]?.restore?.type === 'OSS') {
-          result[key]['restore']['ossAccessId'] = encryptText(
-            originFormData[key]['restore'].ossAccessId,
-            publicKey,
-          );
-          result[key]['restore']['ossAccessKey'] = encryptText(
-            originFormData[key]['restore'].ossAccessKey,
-            publicKey,
-          );
+          result[key]!['restore']!['ossAccessId'] =
+            encryptText(
+              originFormData[key]!['restore'].ossAccessId!,
+              publicKey,
+            ) || '';
+          result[key]!['restore']!['ossAccessKey'] =
+            encryptText(
+              originFormData[key]!['restore'].ossAccessKey!,
+              publicKey,
+            ) || '';
         }
-        if (originFormData[key]['restore'].bakEncryptionPassword) {
-          result[key]['restore']['bakEncryptionPassword'] = encryptText(
-            originFormData[key]['restore'].bakEncryptionPassword,
-            publicKey,
-          );
+        if (originFormData[key]?.restore?.bakEncryptionPassword) {
+          result[key]!['restore']!['bakEncryptionPassword'] =
+            encryptText(
+              originFormData[key]!['restore'].bakEncryptionPassword!,
+              publicKey,
+            ) || '';
         } else {
-          delete result[key]['restore']['bakEncryptionPassword'];
+          delete result[key]!['restore']!['bakEncryptionPassword'];
         }
       }
     } else if (key === 'rootPassword') {
-      result[key] = encryptText(originFormData[key], publicKey);
+      result[key] = encryptText(originFormData[key], publicKey) || '';
     } else if (key === 'unitConfig') {
       result[key] = formatUnitConfig(originFormData[key]);
     } else {
@@ -103,22 +108,22 @@ export function formatNewTenantForm(
  *
  * format scheduleDates
  */
-export function formatBackupForm(originFormData: any, publicKey?: string) {
-  let formData = clone(originFormData);
+export function formatBackupForm(
+  originFormData: NewBackupForm,
+  publicKey: string,
+): API.TenantPolicy {
+  const formData: API.TenantPolicy = clone(originFormData);
   if (formData.bakEncryptionPassword) {
-    formData.bakEncryptionPassword = publicKey
-      ? encryptText(originFormData.bakEncryptionPassword, publicKey)
-      : originFormData.bakEncryptionPassword;
+    formData.bakEncryptionPassword =
+      encryptText(originFormData.bakEncryptionPassword!, publicKey) || '';
   }
   if (formData.ossAccessId) {
-    formData.ossAccessId = publicKey
-      ? encryptText(originFormData.ossAccessId, publicKey)
-      : originFormData.ossAccessId;
+    formData.ossAccessId =
+      encryptText(originFormData.ossAccessId!, publicKey) || '';
   }
   if (formData.ossAccessKey)
-    formData.ossAccessKey = publicKey
-      ? encryptText(originFormData.ossAccessKey, publicKey)
-      : originFormData.ossAccessId;
+    formData.ossAccessKey =
+      encryptText(originFormData.ossAccessKey!, publicKey) || '';
   formData.scheduleTime = dayjs(formData.scheduleTime).format('HH:mm');
   formData.scheduleType = formData.scheduleDates.mode;
   delete formData.scheduleDates.days;
@@ -130,9 +135,11 @@ export function formatBackupForm(originFormData: any, publicKey?: string) {
   return formData;
 }
 
-export function formatBackupPolicyData(backupPolicy: API.BackupPolicy) {
+export function formatBackupPolicyData(
+  backupPolicy: API.BackupPolicy,
+): ScheduleDates | undefined {
   if (!backupPolicy) return;
-  let result: any = {};
+  const result: ScheduleDates = {};
   result.days = backupPolicy.scheduleDates.map((item) => item.day);
   result.mode = backupPolicy.scheduleType;
   result.days.forEach((day, index) => {
@@ -146,8 +153,8 @@ function checkDateIsSame(
   curDates: API.ScheduleDatesType,
 ): boolean {
   if (preDates.length !== curDates.length) return false;
-  for (let preDate of preDates) {
-    let targetItem = curDates.find((curDate) => curDate.day === preDate.day);
+  for (const preDate of preDates) {
+    const targetItem = curDates.find((curDate) => curDate.day === preDate.day);
     if (!targetItem) return false;
     if (targetItem.backupType !== preDate.backupType) return false;
   }
@@ -158,7 +165,7 @@ export function checkIsSame(
   preData: API.BackupPolicy,
   curData: API.BackupConfigEditable,
 ): boolean {
-  for (let key of Object.keys(curData)) {
+  for (const key of Object.keys(curData)) {
     if (key === 'scheduleDates') {
       if (
         !checkDateIsSame(preData['scheduleDates'], curData['scheduleDates'])
@@ -180,7 +187,7 @@ export function findMinParameter(
   essentialParameter: API.EssentialParametersType,
 ): MaxResourceType {
   let result: MaxResourceType = {};
-  for (let zone of zones) {
+  for (const zone of zones) {
     if (Object.keys(result).length === 0) {
       result = {
         maxCPU: essentialParameter.obZoneResourceMap[zone]['availableCPU'],
@@ -223,7 +230,7 @@ export const modifyZoneCheckedStatus = (
   },
 ) => {
   const _clusterList = cloneDeep(clusterList);
-  for (let cluster of _clusterList) {
+  for (const cluster of _clusterList) {
     if (cluster.clusterId === target.id || cluster.name === target.name) {
       cluster.topology.forEach((zoneItem) => {
         if (zoneItem.zone === zone) {
@@ -236,7 +243,7 @@ export const modifyZoneCheckedStatus = (
 };
 
 export const checkScheduleDatesHaveFull = (scheduleDates): boolean => {
-  for (let key of Object.keys(scheduleDates)) {
+  for (const key of Object.keys(scheduleDates)) {
     if (!isNaN(key)) {
       if (scheduleDates[key] === 'Full') {
         return true;

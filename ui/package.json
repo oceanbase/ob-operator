@@ -8,7 +8,8 @@
     "postinstall": "max setup",
     "setup": "max setup",
     "start": "npm run dev",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "prepare": "cd .. && husky ui/.husky"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -22,7 +23,7 @@
     "ahooks": "^3.7.8",
     "antd": "^5.4.0",
     "copy-to-clipboard": "^3.3.3",
-    "i18next": "^23.10.1",
+    "i18next": "^23.11.1",
     "jsencrypt": "^3.3.2",
     "lodash": "^4.17.21",
     "moment": "^2.29.4"
@@ -35,6 +36,7 @@
     "eslint": "^9.0.0",
     "eslint-plugin-react": "^7.34.1",
     "globals": "^15.0.0",
+    "husky": "^9.0.11",
     "lint-staged": "^13.2.0",
     "prettier": "^2.8.7",
     "prettier-plugin-organize-imports": "^3.2.2",

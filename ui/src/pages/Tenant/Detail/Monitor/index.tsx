@@ -1,7 +1,8 @@
 import type { FilterDataType,LabelType } from '@/components/MonitorDetail';
 import MonitorDetail from '@/components/MonitorDetail';
-import { useParams } from '@umijs/max';
 import { getTenant } from '@/services/tenant';
+import { PageContainer } from '@ant-design/pro-components';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect,useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
@@ -38,18 +39,20 @@ export default function Monitor() {
   }, []);
   const tenantDetail = tenantDetailResponse?.data;
   return (
-    <MonitorDetail
-      filterData={filterData}
-      setFilterData={setFilterData}
-      filterLabel={filterLabel}
-      setFilterLabel={setFilterLabel}
-      queryScope='OBTENANT'
-      groupLabels={['tenant_name']}
-      basicInfo={
-        tenantDetail && (
-          <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
-        )
-      }
-    />
+    <PageContainer>
+      <MonitorDetail
+        filterData={filterData}
+        setFilterData={setFilterData}
+        filterLabel={filterLabel}
+        setFilterLabel={setFilterLabel}
+        queryScope="OBTENANT"
+        groupLabels={['tenant_name']}
+        basicInfo={
+          tenantDetail && (
+            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+          )
+        }
+      />
+    </PageContainer>
   );
 }

@@ -123,12 +123,13 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
 ### OceanBase Dashboard
-We are excited to unveil the initial release of our innovative OceanBase Kubernetes Dashboard v0.1.0, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. As part of our ongoing commitment to development and improvement, we are proud to offer this first version to our users while actively working on new features and enhancements for future updates.
+We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates.
 
 Deploy OceanBase Dashboard is pretty simple, just run the following commands
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
+helm repo update ob-operator
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)

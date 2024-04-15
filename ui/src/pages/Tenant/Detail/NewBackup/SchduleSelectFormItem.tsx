@@ -4,11 +4,12 @@ import type { FormInstance } from 'antd';
 import { Form, Space } from 'antd';
 import { clone } from 'lodash';
 import type { ParamsType } from './ScheduleSelectComp';
+import type { NewBackupForm, ScheduleDates } from '.';
 import ScheduleSelectComp from './ScheduleSelectComp';
 
 interface SchduleSelectFormItemProps {
-  form: FormInstance<any>;
-  scheduleValue: any;
+  form: FormInstance<NewBackupForm>;
+  scheduleValue: ScheduleDates;
   disable?: boolean;
 }
 
@@ -18,12 +19,12 @@ export default function SchduleSelectFormItem({
   disable = false,
 }: SchduleSelectFormItemProps) {
   /**
-   * When the scheduling cycle changes,
+   * When the scheduling period changes,
    * ensure that the backup data method
    * can be changed accordingly.
    */
   useUpdateEffect(() => {
-    let newScheduleValue = clone(scheduleValue);
+    const newScheduleValue = clone(scheduleValue);
     scheduleValue.days.forEach((key: number) => {
       if (!scheduleValue[String(key)]) {
         newScheduleValue[key] = 'Full';
@@ -49,7 +50,7 @@ export default function SchduleSelectFormItem({
       <Form.Item
         rules={[
           () => ({
-            validator: (_: any, value: ParamsType) => {
+            validator: (_: unknown, value: ParamsType) => {
               if (!value.days.length) {
                 return Promise.reject(
                   new Error(

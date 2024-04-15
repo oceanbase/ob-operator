@@ -17,7 +17,6 @@ const defaultQueryRange:QueryRangeType = {
   startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 }
 
-//集群概览页
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
   const [clusterNames, setClusterNames] = useState<LabelType[]>([]);
@@ -25,7 +24,7 @@ const ClusterPage: React.FC = () => {
   const { data: clusterListRes, loading } = useRequest(getObclusterListReq, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        let clusterNames: LabelType[] = data.map((item) => ({
+        const clusterNames: LabelType[] = data.map((item) => ({
           key: 'ob_cluster_name',
           value: item.clusterName,
         }));

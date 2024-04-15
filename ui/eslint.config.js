@@ -10,6 +10,16 @@ export default [
   {
     plugins: {
       pluginReactConfig: react,
-    }
+    },
+  },
+  {
+    rules: {
+      'no-empty': 'off',
+      'no-useless-escape': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
+  {
+    ignores: ['**/i18n/strings/*','**/G6register.tsx','**/.umi/*'],
   },
 ];

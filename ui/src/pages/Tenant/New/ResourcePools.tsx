@@ -6,12 +6,13 @@ import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
 import ZoneItem from '../ZoneItem';
 import { findMinParameter, modifyZoneCheckedStatus } from '../helper';
+import type { NewTenantForm } from '.';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
   selectClusterId?: number;
   clusterList: API.SimpleClusterList;
-  form: FormInstance<any>;
+  form: FormInstance<NewTenantForm>;
   setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
   essentialParameter?: API.EssentialParametersType;
 }

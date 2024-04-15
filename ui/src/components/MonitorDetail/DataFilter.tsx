@@ -1,23 +1,23 @@
-import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
+import { POINT_NUMBER,REFRESH_FREQUENCY } from '@/constants';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
-import { Col, DatePicker, Row, Select, Switch, Card } from 'antd';
+import { Card,Col,DatePicker,Row,Select,Switch } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
+import localeEn from 'antd/es/date-picker/locale/en_US';
+import localeZn from 'antd/es/date-picker/locale/zh_CN';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import moment from 'moment';
-import { useEffect, useState } from 'react';
-import localeZn from 'antd/es/date-picker/locale/zh_CN';
-import localeEn from 'antd/es/date-picker/locale/en_US';
-import { getLocale } from 'umi';
 import 'dayjs/locale/zh-cn';
+import moment from 'moment';
+import { useEffect,useState } from 'react';
+import { getLocale } from 'umi';
 import { caculateStep } from './helper';
 import type {
-  FilterDataType,
-  Label,
-  LabelType,
-  OptionType,
-  QueryRangeType,
+FilterDataType,
+Label,
+LabelType,
+OptionType,
+QueryRangeType,
 } from './index';
 import styles from './index.less';
 
@@ -145,11 +145,12 @@ export default function DataFilter({
             </span>
           </>
         )}
-        {intl.formatMessage({
-          id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
-          defaultMessage: '自动刷新：',
-        })}
-
+        <span className={styles.autoRefreshText}>
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
+            defaultMessage: '自动刷新',
+          })}
+        </span>
         <Switch
           checked={isRefresh}
           onChange={(value) => {
@@ -161,7 +162,7 @@ export default function DataFilter({
   };
 
   const clearLabel = (current: LabelType[], key: Label): LabelType[] => {
-    let newLable = [...current];
+    const newLable = [...current];
     const idx = newLable.findIndex((item: LabelType) => item.key === key);
     if (idx !== -1) {
       newLable.splice(idx, 1);
@@ -175,7 +176,7 @@ export default function DataFilter({
     key: Label,
     value: string,
   ): LabelType[] => {
-    let newLable = [...current];
+    const newLable = [...current];
     const idx = newLable.findIndex((item: LabelType) => item.key === key);
     if (idx !== -1) {
       newLable[idx] = { key, value };
@@ -189,8 +190,8 @@ export default function DataFilter({
   };
 
   const handleLabel = (val: string | undefined): LabelType[] => {
-    let isClear: boolean = !Boolean(val),
-      currentLable = [...filterLabel];
+    const isClear: boolean = !val;
+    let currentLable = [...filterLabel];
     if (isClear) {
       //clear obzone&svr_ip
       currentLable = clearLabel(clearLabel(filterLabel, 'obzone'), 'svr_ip');
@@ -224,7 +225,7 @@ export default function DataFilter({
   };
 
   const serverSelectChange = (val: string | undefined) => {
-    const isClear: boolean = !Boolean(val);
+    const isClear: boolean = !val;
     let lable: LabelType[] = [...filterLabel];
     if (isClear) {
       lable = clearLabel(lable, 'svr_ip');
@@ -292,8 +293,8 @@ export default function DataFilter({
 
   useUpdateEffect(() => {
     if (selectRange !== 'custom') {
-      let nowTimestamp = new Date().valueOf();
-      let startTimestamp = nowTimestamp - (selectRange as number);
+      const nowTimestamp = new Date().valueOf();
+      const startTimestamp = nowTimestamp - (selectRange as number);
       setDateValue([dayjs(startTimestamp), dayjs(nowTimestamp)]);
     }
   }, [selectRange]);
@@ -303,8 +304,8 @@ export default function DataFilter({
       const [startDate, endDate] = dateValue;
 
       if (startDate && endDate) {
-        let startTimestamp = Math.ceil(startDate.valueOf() / 1000);
-        let endTimestamp = Math.ceil(endDate.valueOf() / 1000);
+        const startTimestamp = Math.ceil(startDate.valueOf() / 1000);
+        const endTimestamp = Math.ceil(endDate.valueOf() / 1000);
         setQueryRange({
           startTimestamp,
           endTimestamp,
@@ -317,10 +318,14 @@ export default function DataFilter({
   return (
     <Card
       style={{ marginTop: 12 }}
-      title={intl.formatMessage({
-        id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
-        defaultMessage: '数据筛选',
-      })}
+      title={
+        <h2 style={{marginBottom: 0}}>
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
+            defaultMessage: '数据筛选',
+          })}
+        </h2>
+      }
       extra={<AutoRefresh />}
     >
       <Row gutter={12} style={{ alignItems: 'center' }}>

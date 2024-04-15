@@ -116,7 +116,7 @@ function getZoneTypeText(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
 }
 
 function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
-  let targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
+  const targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
   if (targetZone) {
     return {
       maxCPU: targetZone.maxCPU,
@@ -130,9 +130,9 @@ function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
 }
 
 function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
-  let children = [];
-  for (let zone of zoneList) {
-    let temp: GraphNodeType = {
+  const children = [];
+  for (const zone of zoneList) {
+    const temp: GraphNodeType = {
       id: '',
       label: '',
       status: '',
@@ -141,8 +141,8 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       badgeImg: '',
       disable: false,
     };
-    let typeText = getZoneTypeText(zone, tenantReplicas || []);
-    let tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
+    const typeText = getZoneTypeText(zone, tenantReplicas || []);
+    const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
@@ -186,7 +186,7 @@ export const formatTopoData = (
   basicInfo: BasicInfoType;
 } => {
   if (!responseData) return responseData;
-  let topoData: GraphNodeType = {
+  const topoData: GraphNodeType = {
     id: responseData.namespace + responseData.name,
     label: intl.formatMessage({
       id: 'OBDashboard.Detail.Topo.helper.Cluster',
@@ -207,8 +207,8 @@ export const formatTopoData = (
   //   status: responseData.status,
   //   image: responseData.image,
   // };
-  let basicInfo:API.ClusterInfo = {};
-  for(let key of Object.keys(responseData)){
+  const basicInfo:API.ClusterInfo = {};
+  for(const key of Object.keys(responseData)){
     if(TOPO_INFO_CONFIG.includes(key)){
       basicInfo[key] = responseData[key];
     }
@@ -227,7 +227,7 @@ export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean
   if (!_.matches(oldTopoData)(newTopoData)) return false;
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
-    let newZone = newTopoData.children[idx];
+    const newZone = newTopoData.children[idx];
     if (newZone.children.length > oldZone.children.length) return false;
   });
   return true;
@@ -238,7 +238,7 @@ export const getServerNumber = (
   zoneName: string,
 ): number => {
   const zones = topoData.children || [];
-  for (let zone of zones) {
+  for (const zone of zones) {
     if (zone.label === zoneName) {
       return zone.children?.length || 0;
     }

@@ -5,7 +5,6 @@ import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
 import { Empty, Spin } from 'antd';
-import _ from 'lodash';
 import moment from 'moment';
 import { useRef, useState } from 'react';
 
@@ -70,8 +69,8 @@ export default function LineGraph({
   };
 
   const lineInstanceRender = (metricsData: any) => {
-    let values: number[] = [];
-    for (let metric of metricsData) {
+    const values: number[] = [];
+    for (const metric of metricsData) {
       values.push(metric.value);
     }
       
@@ -86,7 +85,7 @@ export default function LineGraph({
         tickCount: POINT_NUMBER,
         label: {
           formatter: (text: number) => {
-            let time = moment.unix(Math.ceil(text / 1000)).format('HH:mm');
+            const time = moment.unix(Math.ceil(text / 1000)).format('HH:mm');
             return time;
           },
         },

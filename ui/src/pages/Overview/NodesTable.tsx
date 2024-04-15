@@ -1,7 +1,7 @@
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Col, Progress, Table, Tag } from 'antd';
-import type { ColumnsType, TableProps } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 
 import CustomTooltip from '@/components/CustomTooltip';
 import { getNodeInfoReq } from '@/services';
@@ -64,7 +64,7 @@ const columns: ColumnsType<DataType> = [
   {
     title: intl.formatMessage({
       id: 'OBDashboard.pages.Overview.NodesTable.RunningTime',
-      defaultMessage: '已运行时间',
+      defaultMessage: '启动时间',
     }),
     dataIndex: 'uptime',
     key: 'uptime',
@@ -151,21 +151,25 @@ const columns: ColumnsType<DataType> = [
 ];
 
 export default function NodesTable() {
-  const { data,loading } = useRequest(getNodeInfoReq);
+  const { data, loading } = useRequest(getNodeInfoReq);
   return (
     <Col span={24}>
-      <Card loading={loading}>
-        <h2>
-          {intl.formatMessage({
-            id: 'OBDashboard.pages.Overview.NodesTable.Node',
-            defaultMessage: '节点',
-          })}
-        </h2>
+      <Card
+        loading={loading}
+        title={
+          <h2 style={{marginBottom:0}}>
+            {intl.formatMessage({
+              id: 'OBDashboard.pages.Overview.NodesTable.Node',
+              defaultMessage: '节点',
+            })}
+          </h2>
+        }
+      >
         <Table
           columns={columns}
-          dataSource={data as any}
+          dataSource={data}
           rowKey="name"
-          pagination={{simple:true}}
+          pagination={{ simple: true }}
           scroll={{ x: 1500 }}
           sticky
         />

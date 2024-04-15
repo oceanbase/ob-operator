@@ -1,6 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Col, Descriptions, Tag } from 'antd';
+import { Card,Col,Descriptions,Tag } from 'antd';
 
 export default function BasicInfo({
   info = {},
@@ -67,8 +67,8 @@ export default function BasicInfo({
     until: 'until',
   };
 
-  const checkSource = (source: any) => {
-    Object.keys(source).forEach((key) => {
+  const checkSource = (source: API.Source) => {
+    Object.keys(source).forEach((key: keyof API.Source) => {
       if (source[key]) return true;
     });
     return false;
@@ -82,7 +82,7 @@ export default function BasicInfo({
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
               id: 'Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation',
-              defaultMessage: '租户基本信息',
+              defaultMessage: '租户信息',
             })}
           </h2>
         }
@@ -90,7 +90,7 @@ export default function BasicInfo({
       >
         <Descriptions column={5}>
           {Object.keys(InfoConfig).map(
-            (key: keyof typeof InfoConfig, index) => {
+            (key, index) => {
               return (
                 <Descriptions.Item key={index} label={InfoConfig[key]}>
                   {key !== 'status' ? (

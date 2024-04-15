@@ -27,10 +27,10 @@ export async function getTenant({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.TenantBasicInfoResponse> {
-  let r = await request(`${tenantPrefix}/${ns}/${name}`, {
+  const r = await request(`${tenantPrefix}/${ns}/${name}`, {
     method: 'GET',
   });
-  let infoKeys = [
+  const infoKeys = [
     'charset',
     'clusterResourceName',
     'tenantName',
@@ -42,7 +42,7 @@ export async function getTenant({
     'locality',
     'primaryZone'
   ];
-  let res: API.TenantBasicInfo = {
+  const res: API.TenantBasicInfo = {
     info: {},
     source: {},
     replicas: [],
@@ -120,7 +120,7 @@ export async function getBackupPolicy({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.BackupPolicyResponse> {
-  let r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
+  const r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
   const keys = [
     'destType',
     'archivePath',
@@ -154,8 +154,8 @@ export async function getBackupJobs({
   type: API.JobType;
   limit?: number;
 }): Promise<API.BackupJobsResponse> {
-  let limitQuery = limit ? `?limit=${limit}` : '';
-  let r = await request(
+  const limitQuery = limit ? `?limit=${limit}` : '';
+  const r = await request(
     `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs${limitQuery}`,
   );
   let res: API.BackupJob[] = [];

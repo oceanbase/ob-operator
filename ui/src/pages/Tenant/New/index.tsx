@@ -4,22 +4,64 @@ import {
   getSimpleClusterList,
 } from '@/services';
 import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
+import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
-import { strTrim } from '@/utils/helper';
 import { Button, Col, Form, Row, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { formatNewTenantForm } from '../helper';
 import BasicInfo from './BasicInfo';
 import ResourcePools from './ResourcePools';
 import TenantSource from './TenantSource';
+
+export type UnitConfig = {
+  cpuCount: number;
+  memorySize: number;
+  logDiskSize: number;
+  minIops?: number;
+  maxIops?: number;
+  iopsWeight?: number;
+};
+
+export interface NewTenantForm {
+  obcluster: string;
+  name: string;
+  tenantName: string;
+  rootPassword: string;
+  unitNum: number;
+  connectWhiteList?: string[];
+  unitConfig: UnitConfig;
+  tenantRole?: API.TenantRole;
+  source?: {
+    restore: {
+      type: API.DestType;
+      archiveSource: string;
+      bakDataSource: string;
+      bakEncryptionPassword?: string;
+      ossAccessId?: string;
+      ossAccessKey?: string;
+      until?: {
+        date: Date;
+        time: Date;
+      };
+    };
+    tenant?: string;
+  };
+  pools: {
+    [T: string]: {
+      checked: boolean;
+      priority: number | undefined;
+    };
+  };
+}
+
 // New tenant page
 export default function New() {
   const navigate = useNavigate();
   const publicKey = usePublicKey();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<NewTenantForm>();
   const [passwordVal, setPasswordVal] = useState('');
   const [selectClusterId, setSelectClusterId] = useState<number>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
@@ -46,8 +88,12 @@ export default function New() {
   )[0]?.name;
   const essentialParameter = essentialParameterRes?.data;
 
-  const onFinish = async (values: any) => {
-    const reqData = formatNewTenantForm(strTrim(values), clusterName, publicKey);
+  const onFinish = async (values: NewTenantForm) => {
+    const reqData = formatNewTenantForm(
+      strTrim(values),
+      clusterName,
+      publicKey,
+    );
     if (!reqData.pools?.length) {
       message.warning(
         intl.formatMessage({
@@ -57,7 +103,7 @@ export default function New() {
       );
       return;
     }
-    
+
     const ns = clusterList.filter(
       (cluster) => cluster.clusterId === selectClusterId,
     )[0]?.namespace;
