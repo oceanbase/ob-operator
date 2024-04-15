@@ -184,7 +184,7 @@ OBCLUSTER:
       name: trans_multi_partition_count
       unit: times/s
     name: Transaction count
-  name: Database performance
+  name: Database Performance
 OBTENANT:
 - description: Performance and SQL
   metricGroups:
@@ -365,7 +365,7 @@ OBTENANT:
     name: CPU Utilization
   - description: Tenant memory usage pecent
     metrics:
-    - description: tenant memory usage pecent
+    - description: Tenant memory usage pecent
       key: ob_memory_percent
       name: memory_usage
       unit: '%'
@@ -407,7 +407,7 @@ OBTENANT:
       unit: ''
     name: Cursors
   name: Performance and SQL
-- description: transaction
+- description: Transaction
   metricGroups:
   - description: Average number of transactions processed per second
     metrics:
@@ -497,7 +497,7 @@ OBTENANT:
       name: trans_multi_partition_count
       unit: times/s
     name: Transaction count
-  name: transaction
+  name: Transaction
 - description: Storage and Cache
   metricGroups:
   - description: OB writable data memory
@@ -589,7 +589,7 @@ OBTENANT:
       key: row_cache_hit_ratio
       name: row_cache
       unit: '%'
-    - description: execution plan cache hit rate
+    - description: Execution plan cache hit rate
       key: plan_cache_hit_ratio
       name: plan_cache
       unit: '%'
@@ -631,8 +631,8 @@ OBTENANT:
     name: Cache request total count
   name: Storage and Cache
 OBCLUSTER_OVERVIEW:
-- description: obluster overview
-  name: obcluster overview
+- description: OBCluster Overview
+  name: OBCluster Overview
   metricGroups:
   - description: Average number of SQL statements processed per second
     metrics:

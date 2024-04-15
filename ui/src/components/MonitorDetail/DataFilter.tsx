@@ -1,23 +1,23 @@
-import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
+import { POINT_NUMBER,REFRESH_FREQUENCY } from '@/constants';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
-import { Col, DatePicker, Row, Select, Switch, Card } from 'antd';
+import { Card,Col,DatePicker,Row,Select,Switch } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
+import localeEn from 'antd/es/date-picker/locale/en_US';
+import localeZn from 'antd/es/date-picker/locale/zh_CN';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
-import moment from 'moment';
-import { useEffect, useState } from 'react';
-import localeZn from 'antd/es/date-picker/locale/zh_CN';
-import localeEn from 'antd/es/date-picker/locale/en_US';
-import { getLocale } from 'umi';
 import 'dayjs/locale/zh-cn';
+import moment from 'moment';
+import { useEffect,useState } from 'react';
+import { getLocale } from 'umi';
 import { caculateStep } from './helper';
 import type {
-  FilterDataType,
-  Label,
-  LabelType,
-  OptionType,
-  QueryRangeType,
+FilterDataType,
+Label,
+LabelType,
+OptionType,
+QueryRangeType,
 } from './index';
 import styles from './index.less';
 
@@ -145,11 +145,12 @@ export default function DataFilter({
             </span>
           </>
         )}
-        {intl.formatMessage({
-          id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
-          defaultMessage: '自动刷新：',
-        })}
-
+        <span className={styles.autoRefreshText}>
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Monitor.DataFilter.AutoRefresh',
+            defaultMessage: '自动刷新',
+          })}
+        </span>
         <Switch
           checked={isRefresh}
           onChange={(value) => {
@@ -317,10 +318,14 @@ export default function DataFilter({
   return (
     <Card
       style={{ marginTop: 12 }}
-      title={intl.formatMessage({
-        id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
-        defaultMessage: '数据筛选',
-      })}
+      title={
+        <h2 style={{marginBottom: 0}}>
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
+            defaultMessage: '数据筛选',
+          })}
+        </h2>
+      }
       extra={<AutoRefresh />}
     >
       <Row gutter={12} style={{ alignItems: 'center' }}>

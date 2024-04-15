@@ -18,7 +18,7 @@ export default function SchduleSelectFormItem({
   disable = false,
 }: SchduleSelectFormItemProps) {
   /**
-   * When the scheduling cycle changes,
+   * When the scheduling period changes,
    * ensure that the backup data method
    * can be changed accordingly.
    */

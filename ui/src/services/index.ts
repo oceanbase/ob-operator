@@ -3,6 +3,7 @@ import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl'; //@ts-nocheck
 import { request } from '@umijs/max';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -448,12 +449,12 @@ export async function getEssentialParameters({
     r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
     r.data.obServerResources.forEach((item)=>{
       for(let attr of formatResourceAttr){
-        item[attr] = item[attr] / (1<<30)
+        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1<<30)); 
       }
     })
     Object.keys(r.data.obZoneResourceMap).forEach((key)=>{
       for(let attr of formatResourceAttr){
-        r.data.obZoneResourceMap[key][attr] = r.data.obZoneResourceMap[key][attr] / (1 << 30);
+        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(r.data.obZoneResourceMap[key][attr] / (1 << 30));
       }
     }) 
     return r

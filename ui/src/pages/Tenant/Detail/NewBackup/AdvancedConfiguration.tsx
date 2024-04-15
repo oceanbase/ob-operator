@@ -39,7 +39,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.EncryptedBackup',
-                defaultMessage: '加密备份：',
+                defaultMessage: '加密备份',
               })}
             </label>
             <Switch
@@ -80,7 +80,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.BackupTaskRetention',
-                defaultMessage: '备份任务保留：',
+                defaultMessage: '备份任务保留',
               })}
             </label>
             <Switch
@@ -102,7 +102,14 @@ export default function AdvancedConfiguration({
                 ]}
                 name={['jobKeepDays']}
               >
-                <InputNumber min={1} disabled={disable} />
+                <InputNumber
+                  min={1}
+                  addonAfter={intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                    defaultMessage: '天',
+                  })}
+                  disabled={disable}
+                />
               </Form.Item>
             )}
           </Col>
@@ -110,7 +117,7 @@ export default function AdvancedConfiguration({
             <label className={styles.labelText}>
               {intl.formatMessage({
                 id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.DataRecoveryWindow',
-                defaultMessage: '数据恢复窗口：',
+                defaultMessage: '数据恢复窗口',
               })}
             </label>
             <Switch
@@ -126,13 +133,20 @@ export default function AdvancedConfiguration({
                     required: true,
                     message: intl.formatMessage({
                       id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.EnterTheDataRecoveryWindow',
-                      defaultMessage: '请输入数据恢复窗口：',
+                      defaultMessage: '请输入数据恢复窗口',
                     }),
                   },
                 ]}
                 name={['recoveryDays']}
               >
-                <InputNumber min={1} disabled={disable} />
+                <InputNumber
+                  min={1}
+                  addonAfter={intl.formatMessage({
+                    id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                    defaultMessage: '天',
+                  })}
+                  disabled={disable}
+                />
               </Form.Item>
             )}
           </Col>
@@ -143,7 +157,15 @@ export default function AdvancedConfiguration({
               defaultMessage: '归档切片间隔',
             })}
           >
-            <InputNumber disabled={disable} min={1} max={7} />
+            <InputNumber
+              disabled={disable}
+              addonAfter={intl.formatMessage({
+                id: 'Dashboard.Detail.NewBackup.AdvancedConfiguration.Days',
+                defaultMessage: '天',
+              })}
+              min={1}
+              max={7}
+            />
           </Form.Item>
         </Row>
       )}
