@@ -2,30 +2,30 @@ import { getAllTenants } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import {
-  Card,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Row,
-  Select,
-  Space,
-  Switch,
-  TimePicker,
-  Tooltip,
+Card,
+Col,
+DatePicker,
+Form,
+Input,
+Row,
+Select,
+Space,
+Switch,
+TimePicker,
+Tooltip,
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import moment from 'moment';
-import { useEffect, useState } from 'react';
+import { useEffect,useState } from 'react';
 import styles from './index.less';
 
 interface TenantSourceProps {
-  clusterName: string;
+  ns: string;
 }
 type RoleType = 'PRIMARY' | 'STANDBY';
 const { Password } = Input;
-export default function TenantSource({ clusterName }: TenantSourceProps) {
+export default function TenantSource({ ns }: TenantSourceProps) {
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [recoverChecked, setRecoverChecked] = useState<boolean>(false);
   const [synchronizeChecked, setSynchronizeChecked] = useState<boolean>(false);
@@ -113,10 +113,10 @@ export default function TenantSource({ clusterName }: TenantSourceProps) {
   };
 
   useEffect(() => {
-    if (synchronizeChecked && clusterName) {
-      getTenants(clusterName);
+    if (synchronizeChecked && ns) {
+      getTenants({ ns });
     }
-  }, [synchronizeChecked, clusterName]);
+  }, [synchronizeChecked, ns]);
 
   useEffect(() => {
     const [cardBody] = document.querySelectorAll(

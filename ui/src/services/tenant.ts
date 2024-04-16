@@ -1,4 +1,4 @@
-import { formatStatisticData, getInitialObjOfKeys } from '@/utils/helper';
+import { formatStatisticData,getInitialObjOfKeys } from '@/utils/helper';
 import { request } from '@umijs/max';
 
 const tenantPrefix = '/api/v1/obtenants';
@@ -13,13 +13,19 @@ export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse
   };
 }
 
-export async function getAllTenants(
-  obcluster?: string,
-): Promise<API.TenantsListResponse> {
-  let query = '';
-  if (obcluster) query = `?obcluster=${obcluster}`;
-  return request(`${tenantPrefix}${query}`, {
+export async function getAllTenants({
+  obcluster,
+  ns,
+}: {
+  obcluster?: string;
+  ns?: string;
+}): Promise<API.TenantsListResponse> {
+  return request(`${tenantPrefix}`, {
     method: 'GET',
+    params: {
+      obcluster,
+      ns,
+    },
   });
 }
 
@@ -154,18 +160,17 @@ export async function getBackupJobs({
   type: API.JobType;
   limit?: number;
 }): Promise<API.BackupJobsResponse> {
-  const limitQuery = limit ? `?limit=${limit}` : '';
-  const r = await request(
-    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs${limitQuery}`,
-  );
+  const r = await request(`${tenantPrefix}/${ns}/${name}/backup/${type}/jobs`, {
+    params: { limit },
+  });
   let res: API.BackupJob[] = [];
   if (r.successful) {
     res = r.data?.map((job: API.BackupJob) => ({
       encryptionSecret: job.encryptionSecret,
-      endTime: job.endTime,
+      endTime: job.endTime.split('.')[0], // Intercept time string, accurate to seconds
       name: job.name,
       path: job.path,
-      startTime: job.startTime,
+      startTime: job.startTime.split('.')[0],
       status: job.status,
       statusInDatabase: job.statusInDatabase,
       type: job.type,
