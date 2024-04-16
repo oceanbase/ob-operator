@@ -1,11 +1,10 @@
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
 import TenantsList from '@/pages/Tenant/TenantsList';
-import { useParams } from '@umijs/max';
 import { getClusterDetailReq } from '@/services';
 import { getAllTenants } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useNavigate,useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col,Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
@@ -26,9 +25,9 @@ export default function Tenant() {
     },
   );
   const { data: clusterDetail } = useRequest(getClusterDetailReq, {
-    defaultParams: [{ name, ns }],
+    defaultParams: [{ name: name!, ns: ns! }],
     onSuccess: () => {
-      getTenantsList(name)
+      getTenantsList({ obcluster: name });
     },
   });
   const tenantsList = tenantsListResponse?.data;
