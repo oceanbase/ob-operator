@@ -1,4 +1,3 @@
-import type { FilterDataType,LabelType } from '@/components/MonitorDetail';
 import MonitorDetail from '@/components/MonitorDetail';
 import { getClusterDetailReq } from '@/services';
 import { PageContainer } from '@ant-design/pro-components';
@@ -12,12 +11,12 @@ import { getFilterData } from '@/components/MonitorDetail/helper';
 
 export default function Monitor() {
   const { ns, name, clusterName } = useParams();
-  const [filterData, setFilterData] = useState<FilterDataType>({
+  const [filterData, setFilterData] = useState<Monitor.FilterDataType>({
     zoneList: [],
     serverList: [],
     date: '',
   });
-  const [filterLabel, setFilterLabel] = useState<LabelType[]>([
+  const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([
     {
       key: 'ob_cluster_name',
       value: clusterName,

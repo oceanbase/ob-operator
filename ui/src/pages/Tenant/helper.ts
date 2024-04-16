@@ -1,15 +1,12 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
 import { clone,cloneDeep } from 'lodash';
-import type { NewBackupForm,ScheduleDates } from './Detail/NewBackup';
-import type { NewTenantForm,UnitConfig } from './New';
-import type { MaxResourceType } from './New/ResourcePools';
 
 const isExist = (val: string | number | undefined): boolean => {
   if (typeof val === 'number') return true;
   return !!val;
 };
-const formatUnitConfig = (unitConfig: UnitConfig): API.UnitConfig => {
+const formatUnitConfig = (unitConfig: API.UnitConfig): API.UnitConfig => {
   const _unitConfig: API.UnitConfig = clone(unitConfig);
   _unitConfig['cpuCount'] = String(_unitConfig['cpuCount']);
   if (isExist(_unitConfig['logDiskSize'])) {
@@ -22,12 +19,12 @@ const formatUnitConfig = (unitConfig: UnitConfig): API.UnitConfig => {
 };
 
 export function formatNewTenantForm(
-  originFormData: NewTenantForm,
+  originFormData: API.NewTenantForm,
   clusterName: string,
   publicKey: string,
 ): API.TenantBody {
   const result: API.TenantBody = {};
-  Object.keys(originFormData).forEach((key: keyof NewTenantForm) => {
+  Object.keys(originFormData).forEach((key: keyof API.NewTenantForm) => {
     if (key === 'connectWhiteList') {
       result[key] = originFormData[key]?.join(',');
     } else if (key === 'obcluster') {
@@ -109,7 +106,7 @@ export function formatNewTenantForm(
  * format scheduleDates
  */
 export function formatBackupForm(
-  originFormData: NewBackupForm,
+  originFormData: API.NewBackupForm,
   publicKey: string,
 ): API.TenantPolicy {
   const formData: API.TenantPolicy = clone(originFormData);
@@ -137,9 +134,9 @@ export function formatBackupForm(
 
 export function formatBackupPolicyData(
   backupPolicy: API.BackupPolicy,
-): ScheduleDates | undefined {
+): OBTenant.ScheduleDates | undefined {
   if (!backupPolicy) return;
-  const result: ScheduleDates = {};
+  const result: OBTenant.ScheduleDates = {};
   result.days = backupPolicy.scheduleDates.map((item) => item.day);
   result.mode = backupPolicy.scheduleType;
   result.days.forEach((day, index) => {
@@ -185,8 +182,8 @@ export function checkIsSame(
 export function findMinParameter(
   zones: string[],
   essentialParameter: API.EssentialParametersType,
-): MaxResourceType {
-  let result: MaxResourceType = {};
+): OBTenant.MaxResourceType {
+  let result: OBTenant.MaxResourceType = {};
   for (const zone of zones) {
     if (Object.keys(result).length === 0) {
       result = {

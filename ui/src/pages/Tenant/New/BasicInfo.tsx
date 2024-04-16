@@ -4,10 +4,9 @@ import { RESOURCE_NAME_REG, TZ_NAME_REG } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
-import type { NewTenantForm } from '.';
 
 interface BasicInfoProps {
-  form: FormInstance<NewTenantForm>;
+  form: FormInstance<API.NewTenantForm>;
   passwordVal: string;
   clusterList: API.SimpleClusterList;
   setSelectClusterId: React.Dispatch<React.SetStateAction<number | undefined>>;

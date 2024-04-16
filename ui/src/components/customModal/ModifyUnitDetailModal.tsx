@@ -2,10 +2,6 @@ import InputNumber from '@/components/InputNumber';
 import { SUFFIX_UNIT, getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
-import type {
-  MaxResourceType,
-  MinResourceConfig,
-} from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
 import {
   findMinParameter,
@@ -22,7 +18,7 @@ import { useEffect, useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
 import { Col, Form, Row, Select, message } from 'antd';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 export type PoolDetailType = {
@@ -82,11 +78,11 @@ export default function ModifyUnitDetailModal({
     zonesOptions,
     zoneName,
   },
-}: CommonModalType & UnitConfigType) {
+}: API.CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
   const { ns, name } = useParams();
-  const [maxResource, setMaxResource] = useState<MaxResourceType>({});
-  const [minResource, setMinResource] = useState<MinResourceConfig>(
+  const [maxResource, setMaxResource] = useState<OBTenant.MaxResourceType>({});
+  const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter?.minPoolMemory }),
   );
 

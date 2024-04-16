@@ -12,28 +12,21 @@ import moment from 'moment';
 import { useEffect,useState } from 'react';
 import { getLocale } from 'umi';
 import { caculateStep } from './helper';
-import type {
-FilterDataType,
-Label,
-LabelType,
-OptionType,
-QueryRangeType,
-} from './index';
 import styles from './index.less';
 
 interface DataFilterProps {
   isRefresh: boolean;
   realTime: string;
-  filterData: FilterDataType;
-  filterLabel: LabelType[];
-  queryRange: QueryRangeType;
-  setQueryRange: React.Dispatch<React.SetStateAction<QueryRangeType>>;
+  filterData: Monitor.FilterDataType;
+  filterLabel: Monitor.LabelType[];
+  queryRange: Monitor.QueryRangeType;
+  setQueryRange: React.Dispatch<React.SetStateAction<Monitor.QueryRangeType>>;
   setIsRefresh: React.Dispatch<React.SetStateAction<boolean>>;
-  setFilterLabel: React.Dispatch<React.SetStateAction<LabelType[]>>;
-  setFilterData: React.Dispatch<React.SetStateAction<FilterDataType>>;
+  setFilterLabel: React.Dispatch<React.SetStateAction<Monitor.LabelType[]>>;
+  setFilterData: React.Dispatch<React.SetStateAction<Monitor.FilterDataType>>;
 }
 const { RangePicker } = DatePicker;
-const DateSelectOption: OptionType[] = [
+const DateSelectOption: Monitor.OptionType[] = [
   {
     label: intl.formatMessage({
       id: 'OBDashboard.Detail.Monitor.DataFilter.CustomTime',
@@ -105,8 +98,8 @@ export default function DataFilter({
   setFilterLabel,
   setQueryRange,
 }: DataFilterProps) {
-  const [zoneOption, setZoneOption] = useState<OptionType[]>([]);
-  const [serverOption, setServerOption] = useState<OptionType[]>([]);
+  const [zoneOption, setZoneOption] = useState<Monitor.OptionType[]>([]);
+  const [serverOption, setServerOption] = useState<Monitor.OptionType[]>([]);
   const [selectZone, setSelectZone] = useState<string>();
   const [selectServer, setSelectServer] = useState<string>();
   const [dateValue, setDateValue] = useState<RangeValue>([
@@ -161,9 +154,9 @@ export default function DataFilter({
     );
   };
 
-  const clearLabel = (current: LabelType[], key: Label): LabelType[] => {
+  const clearLabel = (current: Monitor.LabelType[], key: Monitor.Label): Monitor.LabelType[] => {
     const newLable = [...current];
-    const idx = newLable.findIndex((item: LabelType) => item.key === key);
+    const idx = newLable.findIndex((item: Monitor.LabelType) => item.key === key);
     if (idx !== -1) {
       newLable.splice(idx, 1);
     }
@@ -172,12 +165,12 @@ export default function DataFilter({
 
   //替换 或者 添加
   const updateLable = (
-    current: LabelType[],
-    key: Label,
+    current: Monitor.LabelType[],
+    key: Monitor.Label,
     value: string,
-  ): LabelType[] => {
+  ): Monitor.LabelType[] => {
     const newLable = [...current];
-    const idx = newLable.findIndex((item: LabelType) => item.key === key);
+    const idx = newLable.findIndex((item: Monitor.LabelType) => item.key === key);
     if (idx !== -1) {
       newLable[idx] = { key, value };
     } else {
@@ -189,7 +182,7 @@ export default function DataFilter({
     return newLable;
   };
 
-  const handleLabel = (val: string | undefined): LabelType[] => {
+  const handleLabel = (val: string | undefined): Monitor.LabelType[] => {
     const isClear: boolean = !val;
     let currentLable = [...filterLabel];
     if (isClear) {
@@ -216,7 +209,7 @@ export default function DataFilter({
         return;
       }
       const filterServers = filterData.serverList.filter(
-        (server: OptionType) => {
+        (server: Monitor.OptionType) => {
           return server.zone === val;
         },
       );
@@ -226,7 +219,7 @@ export default function DataFilter({
 
   const serverSelectChange = (val: string | undefined) => {
     const isClear: boolean = !val;
-    let lable: LabelType[] = [...filterLabel];
+    let lable: Monitor.LabelType[] = [...filterLabel];
     if (isClear) {
       lable = clearLabel(lable, 'svr_ip');
     } else {

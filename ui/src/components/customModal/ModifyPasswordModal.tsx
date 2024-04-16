@@ -3,7 +3,7 @@ import { changeTenantPassword } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useParams } from '@umijs/max';
 import { Form, Input, message } from 'antd';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 type FieldType = {
@@ -14,7 +14,7 @@ export default function ModifyPasswordModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const [form] = Form.useForm();
   const { ns, name } = useParams();
   const publicKey = usePublicKey();

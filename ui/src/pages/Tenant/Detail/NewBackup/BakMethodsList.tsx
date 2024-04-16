@@ -2,8 +2,6 @@ import { WEEK_TEXT_MAP } from '@/constants/schedule';
 import { intl } from '@/utils/intl';
 import { Form, Radio, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
-import type { NewBackupForm } from '.';
-
 
 interface BacMethodsListProps {
   scheduleValue?: {
@@ -11,7 +9,7 @@ interface BacMethodsListProps {
     days: number[];
   };
   disable?: boolean;
-  form?: FormInstance<NewBackupForm>;
+  form?: FormInstance<API.NewBackupForm>;
 }
 
 export default function BakMethodsList({

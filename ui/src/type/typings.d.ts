@@ -793,4 +793,56 @@ declare namespace API {
   interface EssentialParametersTypeResponse extends CommonResponse {
     data: EssentialParametersType;
   }
+
+  // form data
+  interface NewBackupForm {
+    destType: API.DestType;
+    archivePath: string;
+    bakDataPath: string;
+    scheduleDates: OBTenant.ScheduleDates;
+    scheduleTime: Date;
+    ossAccessId?: string;
+    ossAccessKey?: string;
+    bakEncryptionPassword?: string;
+    jobKeepDays?: number;
+    recoveryDays?: number;
+    pieceIntervalDays?: number;
+  }
+
+  interface NewTenantForm {
+    obcluster: string;
+    name: string;
+    tenantName: string;
+    rootPassword: string;
+    unitNum: number;
+    connectWhiteList?: string[];
+    unitConfig: UnitConfig;
+    tenantRole?: API.TenantRole;
+    source?: {
+      restore: {
+        type: API.DestType;
+        archiveSource: string;
+        bakDataSource: string;
+        bakEncryptionPassword?: string;
+        ossAccessId?: string;
+        ossAccessKey?: string;
+        until?: {
+          date: Date;
+          time: Date;
+        };
+      };
+      tenant?: string;
+    };
+    pools: {
+      [T: string]: {
+        checked: boolean;
+        priority: number | undefined;
+      };
+    };
+  }
+  type CommonModalType = {
+    visible: boolean;
+    setVisible: (prop: boolean) => void;
+    successCallback?: (val?: any) => void;
+  };
 }

@@ -1,6 +1,5 @@
 import { POINT_NUMBER } from '@/constants';
 import { useRequestOfMonitor } from '@/hook/useRequestOfMonitor';
-import type { QueryRangeType } from '@/components/MonitorDetail';
 import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
@@ -8,18 +7,18 @@ import { Empty, Spin } from 'antd';
 import moment from 'moment';
 import { useRef, useState } from 'react';
 
-export type MetricType = {
+type MetricType = {
   description: string;
   name: string;
   key: string;
   unit: string;
 };
 
-export interface LineGraphProps {
+interface LineGraphProps {
   id: string;
   metrics: MetricType[];
   labels: API.MetricsLabels;
-  queryRange: QueryRangeType;
+  queryRange: Monitor.QueryRangeType;
   groupLabels:API.LableKeys[];
   height?: number;
   isRefresh?: boolean;

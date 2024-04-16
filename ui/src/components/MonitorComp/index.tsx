@@ -1,7 +1,6 @@
 import { useRequest } from 'ahooks';
 import { Card, Col, Row } from 'antd';
 
-import type { QueryRangeType } from '@/components/MonitorDetail';
 import { getAllMetrics } from '@/services';
 import IconTip from '../IconTip';
 import LineGraph from './LineGraph';
@@ -19,7 +18,7 @@ import styles from './index.less';
 
 interface MonitorCompProps {
   filterLabel: API.MetricsLabels;
-  queryRange: QueryRangeType;
+  queryRange: Monitor.QueryRangeType;
   isRefresh?: boolean;
   queryScope: API.MetricScope;
   type: API.MonitorUseTarget;

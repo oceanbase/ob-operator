@@ -19,25 +19,12 @@ export type ScheduleDates = {
   days: number[];
   mode: API.ScheduleType;
 };
-export interface NewBackupForm {
-  destType: API.DestType;
-  archivePath: string;
-  bakDataPath: string;
-  scheduleDates: ScheduleDates;
-  scheduleTime: Date;
-  ossAccessId?: string;
-  ossAccessKey?: string;
-  bakEncryptionPassword?: string;
-  jobKeepDays?: number;
-  recoveryDays?: number;
-  pieceIntervalDays?: number;
-}
 
 const { Password } = Input;
 export default function NewBackup() {
   const navigate = useNavigate();
   const { ns, name, tenantName } = useParams();
-  const [form] = Form.useForm<NewBackupForm>();
+  const [form] = Form.useForm<API.NewBackupForm>();
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
@@ -46,7 +33,7 @@ export default function NewBackup() {
     { label: 'NFS', value: 'NFS' },
   ];
 
-  const handleSubmit = async (values: NewBackupForm) => {
+  const handleSubmit = async (values: API.NewBackupForm) => {
     if (!checkScheduleDatesHaveFull(values.scheduleDates)) {
       message.warning(
         intl.formatMessage({

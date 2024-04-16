@@ -1,8 +1,6 @@
-import type { FilterDataType, OptionType } from '.';
-
-export const getFilterData = (detail: any): FilterDataType => {
-  const serverList: OptionType[] = [],
-    zoneList: OptionType[] = [],
+export const getFilterData = (detail: any): Monitor.FilterDataType => {
+  const serverList: Monitor.OptionType[] = [],
+    zoneList: Monitor.OptionType[] = [],
     res = {};
   if (detail.servers) {
     for (const server of detail.servers) {

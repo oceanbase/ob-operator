@@ -4,12 +4,11 @@ import type { FormInstance } from 'antd';
 import { Form, Space } from 'antd';
 import { clone } from 'lodash';
 import type { ParamsType } from './ScheduleSelectComp';
-import type { NewBackupForm, ScheduleDates } from '.';
 import ScheduleSelectComp from './ScheduleSelectComp';
 
 interface SchduleSelectFormItemProps {
-  form: FormInstance<NewBackupForm>;
-  scheduleValue: ScheduleDates;
+  form: FormInstance<API.NewBackupForm>;
+  scheduleValue: OBTenant.ScheduleDates;
   disable?: boolean;
 }
 

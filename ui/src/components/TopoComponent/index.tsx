@@ -24,7 +24,7 @@ import {
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
 import { ReactNode, config } from './G6register';
-import type { OperateTypeLabel } from './constants';
+import type { Topo } from '@/type/topo';
 import {
   clusterOperate,
   clusterOperateOfTenant,
@@ -72,7 +72,7 @@ export default function TopoComponent({
 
   const [visible, setVisible] = useState<boolean>(false);
   const [operateList, setOprateList] =
-    useState<OperateTypeLabel>(clusterOperateList);
+    useState<Topo.OperateTypeLabel>(clusterOperateList);
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [[ns, name]] = useState(

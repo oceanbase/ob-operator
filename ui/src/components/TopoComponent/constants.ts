@@ -1,9 +1,8 @@
+import type { Topo } from '@/type/topo';
 import { intl } from '@/utils/intl';
 import { clone } from 'lodash';
-import type { GraphNodeType } from './helper';
-type OperateTypeLabel = { value: string; label: string; disabled?: boolean }[];
 
-const clusterOperate: OperateTypeLabel = [
+const clusterOperate: Topo.OperateTypeLabel = [
   {
     value: 'addZone',
     label: intl.formatMessage({
@@ -27,7 +26,7 @@ const clusterOperate: OperateTypeLabel = [
   },
 ];
 
-const zoneOperate: OperateTypeLabel = [
+const zoneOperate: Topo.OperateTypeLabel = [
   {
     value: 'scaleServer',
     label: intl.formatMessage({
@@ -45,7 +44,7 @@ const zoneOperate: OperateTypeLabel = [
   },
 ];
 
-const serverOperate: OperateTypeLabel = [
+const serverOperate: Topo.OperateTypeLabel = [
   // {
   //   value: 'add',
   //   label: intl.formatMessage({
@@ -69,7 +68,7 @@ const serverOperate: OperateTypeLabel = [
   // },
 ];
 
-const clusterOperateOfTenant: OperateTypeLabel = [
+const clusterOperateOfTenant: Topo.OperateTypeLabel = [
   {
     value: 'changeUnitCount',
     label: intl.formatMessage({
@@ -84,7 +83,7 @@ const getZoneOperateOfTenant = (
   tenantReplicas: API.ReplicaDetailType[],
   tenantStatus?: string,
   clusterStatus?: string,
-): OperateTypeLabel => {
+): Topo.OperateTypeLabel => {
   return haveResourcePool
     ? [
         {
@@ -120,9 +119,9 @@ const getZoneOperateOfTenant = (
 };
 
 const getZoneOperateOfCluster = (
-  topoData: GraphNodeType | undefined,
+  topoData: Topo.GraphNodeType | undefined,
   status: string,
-): OperateTypeLabel => {
+): Topo.OperateTypeLabel => {
   if (!topoData) return [];
   const isDisabled = topoData?.children?.length <= 2 || status !== 'running';
   zoneOperate.forEach((operate) => {
@@ -134,9 +133,9 @@ const getZoneOperateOfCluster = (
 };
 
 const getClusterOperates = (
-  clusterOperateList: OperateTypeLabel,
+  clusterOperateList: Topo.OperateTypeLabel,
   disabled: boolean,
-): OperateTypeLabel => {
+): Topo.OperateTypeLabel => {
   const res = clone(clusterOperateList);
   res.forEach((item) => {
     item.disabled = disabled;
@@ -153,5 +152,3 @@ export {
   serverOperate,
   zoneOperate,
 };
-
-export type { OperateTypeLabel };

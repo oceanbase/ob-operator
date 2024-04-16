@@ -1,77 +1,14 @@
 import {
-BADGE_IMG_MAP,
-CLUSTER_IMG_MAP,
-SERVER_IMG_MAP,
-TOPO_INFO_CONFIG,
-ZONE_IMG_MAP
+  BADGE_IMG_MAP,
+  CLUSTER_IMG_MAP,
+  SERVER_IMG_MAP,
+  TOPO_INFO_CONFIG,
+  ZONE_IMG_MAP,
 } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Graph,IG6GraphEvent,INode,IShape } from '@antv/g6';
+import { Graph, INode } from '@antv/g6';
+import type { Topo } from '@/type/topo';
 import _ from 'lodash';
-import type { OperateTypeLabel } from './constants';
-
-export type ShapeEventListner = (
-  event: IG6GraphEvent,
-  node: INode | null,
-  shape: IShape,
-  graph: Graph,
-) => void;
-
-// interface TopoServer extends Server {
-//   img:string;
-//   badgeImg:string;
-// }
-type TopoServer = API.Server & {
-  img: string;
-  badgeImg: string;
-};
-
-type TooltipInfo = {
-  cpuCount: number;
-  memorySize: string;
-  maxIops: number;
-  minIops: number;
-};
-
-export type GraphNodeType = {
-  id: string;
-  label: string;
-  status: string;
-  type: string;
-  img: string;
-  badgeImg: string;
-  disable: boolean;
-  typeText?: string;
-  tooltipInfo?: TooltipInfo;
-  children?: GraphNodeType[];
-};
-
-type BasicInfoType = {
-  name: string;
-  namespace: string;
-  status: string;
-  image: string;
-};
-
-export interface EventAttrs {
-  onClick?: ShapeEventListner;
-  onDBClick?: ShapeEventListner;
-  onMouseEnter?: ShapeEventListner;
-  onMouseMove?: ShapeEventListner;
-  onMouseOut?: ShapeEventListner;
-  onMouseOver?: ShapeEventListner;
-  onMouseLeave?: ShapeEventListner;
-  onMouseDown?: ShapeEventListner;
-  onMouseUp?: ShapeEventListner;
-  onDragStart?: ShapeEventListner;
-  onDrag?: ShapeEventListner;
-  onDragEnd?: ShapeEventListner;
-  onDragEnter?: ShapeEventListner;
-  onDragLeave?: ShapeEventListner;
-  onDragOver?: ShapeEventListner;
-  onDrop?: ShapeEventListner;
-  onContextMenu?: ShapeEventListner;
-}
 
 const propsToEventMap = {
   click: 'onClick',
@@ -103,7 +40,7 @@ export function appenAutoShapeListener(graph: Graph) {
       const item = evt.item as INode;
       const graph = evt.currentTarget as Graph;
       const func =
-        (shape?.get(propName) as ShapeEventListner) || evt.target.cfg[propName];
+        (shape?.get(propName) as Topo.ShapeEventListner) || evt.target.cfg[propName];
       if (func) {
         func(evt, item, shape, graph);
       }
@@ -132,7 +69,7 @@ function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
 function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
   const children = [];
   for (const zone of zoneList) {
-    const temp: GraphNodeType = {
+    const temp: Topo.GraphNodeType = {
       id: '',
       label: '',
       status: '',
@@ -160,7 +97,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
     ) {
       temp.disable = true;
     }
-    temp.children = zone.observers.map((server: TopoServer) => {
+    temp.children = zone.observers.map((server: Topo.TopoServer) => {
       return {
         id: server.name + server.namespace,
         label: server.address,
@@ -182,11 +119,11 @@ export const formatTopoData = (
   responseData: any,
   tenantReplicas?: API.ReplicaDetailType[],
 ): {
-  topoData: GraphNodeType;
-  basicInfo: BasicInfoType;
+  topoData: Topo.GraphNodeType;
+  basicInfo: Topo.BasicInfoType;
 } => {
   if (!responseData) return responseData;
-  const topoData: GraphNodeType = {
+  const topoData: Topo.GraphNodeType = {
     id: responseData.namespace + responseData.name,
     label: intl.formatMessage({
       id: 'OBDashboard.Detail.Topo.helper.Cluster',
@@ -201,15 +138,15 @@ export const formatTopoData = (
   };
   topoData.children = getChildren(responseData.topology, tenantReplicas);
 
-  // let basicInfo: BasicInfoType = {
+  // let basicInfo: Topo.BasicInfoType = {
   //   name: responseData.name,
   //   namespace: responseData.namespace,
   //   status: responseData.status,
   //   image: responseData.image,
   // };
-  const basicInfo:API.ClusterInfo = {};
-  for(const key of Object.keys(responseData)){
-    if(TOPO_INFO_CONFIG.includes(key)){
+  const basicInfo: API.ClusterInfo = {};
+  for (const key of Object.keys(responseData)) {
+    if (TOPO_INFO_CONFIG.includes(key)) {
       basicInfo[key] = responseData[key];
     }
   }
@@ -223,7 +160,10 @@ export const formatTopoData = (
 /**
  * Determine whether the old and new topoData attribute values are exactly the same
  */
-export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean => {
+export const checkTopoDataIsSame = (
+  oldTopoData: any,
+  newTopoData: any,
+): boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
@@ -234,7 +174,7 @@ export const checkTopoDataIsSame = (oldTopoData: any, newTopoData: any): boolean
 };
 
 export const getServerNumber = (
-  topoData: GraphNodeType,
+  topoData: Topo.GraphNodeType,
   zoneName: string,
 ): number => {
   const zones = topoData.children || [];
@@ -246,6 +186,6 @@ export const getServerNumber = (
   return 0;
 };
 
-export const haveDisabledOperate = (operateList: OperateTypeLabel) => {
+export const haveDisabledOperate = (operateList: Topo.OperateTypeLabel) => {
   return operateList.find((operate) => operate.disabled);
 };

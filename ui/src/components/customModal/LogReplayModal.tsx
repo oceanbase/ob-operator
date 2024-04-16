@@ -3,7 +3,7 @@ import { useParams } from '@umijs/max';
 import { replayLogOfTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { DatePicker, Form, TimePicker, message } from 'antd';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 type FieldType = {
@@ -14,7 +14,7 @@ export default function LogReplayModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const [form] = Form.useForm();
   const { ns: namespace, name } = useParams();
   const handleSubmit = async () => {

@@ -234,20 +234,6 @@ export async function upgradeTenantCompatibilityVersion({
   });
 }
 
-export async function modifyUnitConfig({
-  ns,
-  name,
-  zone,
-  ...body
-}: API.NamespaceAndName & {
-  zone: string;
-} & API.UnitConfig): Promise<API.CommonResponse> {
-  return request(`${tenantPrefix}/${ns}/${name}/${zone}`, {
-    method: 'PUT',
-    data: body,
-  });
-}
-
 export async function patchTenantConfiguration({
   ns,
   name,

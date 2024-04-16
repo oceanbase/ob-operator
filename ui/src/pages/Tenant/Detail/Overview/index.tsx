@@ -33,16 +33,12 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
-export type OperateType = 'edit'|'create';
-
-export type ClusterNSName = { ns?: string; name?: string };
-
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
-  const operateTypeRef = useRef<OperateType>();
+  const operateTypeRef = useRef<OBTenant.OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const { ns, name } = useParams();
@@ -65,7 +61,7 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType, operateType?: OperateType) => {
+  const openOperateModal = (type: API.ModalType, operateType?: OBTenant.OperateType) => {
     if (operateType) {
       operateTypeRef.current = operateType;
     }

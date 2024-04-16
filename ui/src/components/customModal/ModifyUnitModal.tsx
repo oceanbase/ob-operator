@@ -3,7 +3,7 @@ import { modifyUnitNumReportWrap } from '@/services/reportRequest/tenantReportRe
 import { intl } from '@/utils/intl';
 import { Form,InputNumber,message } from 'antd';
 import { useEffect } from 'react';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 type FieldType = {
@@ -17,7 +17,7 @@ export default function ModifyUnitModal({
     defaultUnitCount: 1,
   },
   successCallback,
-}: CommonModalType & { params: { defaultUnitCount: number } }) {
+}: API.CommonModalType & { params: { defaultUnitCount: number } }) {
   const [form] = Form.useForm();
   const { ns, name } = useParams();
   const { defaultUnitCount } = params;
