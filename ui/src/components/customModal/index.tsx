@@ -11,12 +11,6 @@ interface CustomModalProps {
   width?: number;
 }
 
-export type CommonModalType = {
-  visible: boolean;
-  setVisible: (prop: boolean) => void;
-  successCallback?: (val?:any) => void;
-};
-
 export default function CustomModal(props: CustomModalProps) {
   const { isOpen, handleOk, handleCancel, title, width = 520 } = props;
   return (

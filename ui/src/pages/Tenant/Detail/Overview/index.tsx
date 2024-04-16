@@ -18,7 +18,6 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history,useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
-import { cloneDeep } from 'lodash';
 import { useEffect,useMemo,useRef,useState } from 'react';
 import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '../../helper';
 import Backups from './Backups';
@@ -34,16 +33,12 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
-export type OperateType = 'edit'|'create';
-
-export type ClusterNSName = { ns?: string; name?: string };
-
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
-  const operateTypeRef = useRef<OperateType>();
+  const operateTypeRef = useRef<OBTenant.OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const { ns, name } = useParams();
@@ -66,7 +61,7 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType, operateType?: OperateType) => {
+  const openOperateModal = (type: API.ModalType, operateType?: OBTenant.OperateType) => {
     if (operateType) {
       operateTypeRef.current = operateType;
     }
@@ -216,7 +211,7 @@ export default function TenantOverview() {
     }, 1000);
   };
   const header = () => {
-    let container = document.getElementById('tenant-detail-container');
+    const container = document.getElementById('tenant-detail-container');
     return {
       title: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.TenantOverview',
@@ -255,26 +250,6 @@ export default function TenantOverview() {
         </Tooltip>,
       ],
     };
-  };
-
-  /**
-   * @describe Filter the zones that exist in the tenant resource pool in the cluster
-   */
-  const formatClustersTopology = (
-    clusters: API.SimpleClusterList,
-    tenantDetail: API.TenantBasicInfo | undefined,
-  ) => {
-    const newClusters = cloneDeep(clusters);
-    if (!tenantDetail) return newClusters;
-    const { clusterResourceName } = tenantDetail.info;
-    const { replicas } = tenantDetail;
-    const cluster = getClusterFromTenant(newClusters,clusterResourceName)
-    if (cluster && cluster.topology) {
-      cluster.topology = cluster.topology.filter((zone) =>
-        replicas?.find((item) => item.zone === zone.zone),
-      );
-    }
-    return newClusters;
   };
 
   useEffect(() => {

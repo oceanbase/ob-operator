@@ -9,7 +9,7 @@ interface BacMethodsListProps {
     days: number[];
   };
   disable?: boolean;
-  form?: FormInstance<any>;
+  form?: FormInstance<API.NewBackupForm>;
 }
 
 export default function BakMethodsList({

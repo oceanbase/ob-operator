@@ -1,11 +1,9 @@
-import type { FilterDataType, OptionType } from '.';
-
-export const getFilterData = (detail: any): FilterDataType => {
-  let serverList: OptionType[] = [],
-    zoneList: OptionType[] = [],
+export const getFilterData = (detail: any): Monitor.FilterDataType => {
+  const serverList: Monitor.OptionType[] = [],
+    zoneList: Monitor.OptionType[] = [],
     res = {};
   if (detail.servers) {
-    for (let server of detail.servers) {
+    for (const server of detail.servers) {
       if (server.address)
         serverList.push({
           label: server.address,
@@ -18,7 +16,7 @@ export const getFilterData = (detail: any): FilterDataType => {
     }
   }
   if (detail.zones || detail.replicas) {
-    for (let zone of detail.zones || detail.replicas) {
+    for (const zone of detail.zones || detail.replicas) {
       if (zone.zone)
         zoneList.push({
           label: zone.zone,

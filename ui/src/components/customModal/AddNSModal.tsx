@@ -4,14 +4,14 @@ import { Form, Input, message } from 'antd';
 import { useRef } from 'react';
 
 import { createNameSpace } from '@/services';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 export default function AddNSModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const [form] = Form.useForm();
   const newNamespace = useRef<string>('')
   const { run: createNS } = useRequest(createNameSpace, {

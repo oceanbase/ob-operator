@@ -31,7 +31,7 @@ type ReportDataParms = {
   resourceType: ResourceType;
   eventType: EventType;
   version?: string;
-  data: any;
+  data: unknown;
 };
 
 type ReportMapType = {
@@ -137,7 +137,7 @@ export async function reportData({
   resourceType,
   eventType,
   data,
-}: ReportDataParms): Promise<any> {
+}: ReportDataParms): Promise<unknown> {
   const appInfo = await getAppInfoFromStorage();
 
   return await request(`${appInfo.reportHost}/api/web/oceanbase/report`, {

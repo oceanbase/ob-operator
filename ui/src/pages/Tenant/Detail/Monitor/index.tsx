@@ -1,4 +1,3 @@
-import type { FilterDataType,LabelType } from '@/components/MonitorDetail';
 import MonitorDetail from '@/components/MonitorDetail';
 import { getTenant } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
@@ -12,13 +11,13 @@ import { getFilterData } from '@/components/MonitorDetail/helper';
 
 export default function Monitor() {
   const { ns, name, tenantName } = useParams();
-  const [filterLabel, setFilterLabel] = useState<LabelType[]>([
+  const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([
     {
       key: 'tenant_name',
       value: tenantName,
     },
   ]);
-  const [filterData, setFilterData] = useState<FilterDataType>({
+  const [filterData, setFilterData] = useState<Monitor.FilterDataType>({
     zoneList: [],
     date: '',
   });

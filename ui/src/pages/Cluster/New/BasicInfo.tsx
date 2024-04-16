@@ -13,7 +13,7 @@ import { useState } from 'react';
 import styles from './index.less';
 
 interface BasicInfoProps {
-  form: FormInstance<any>;
+  form: FormInstance<API.CreateClusterData>;
   passwordVal: string;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;
 }

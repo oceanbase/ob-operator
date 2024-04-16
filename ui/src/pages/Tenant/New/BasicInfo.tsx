@@ -6,7 +6,7 @@ import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 interface BasicInfoProps {
-  form: FormInstance<any>;
+  form: FormInstance<API.NewTenantForm>;
   passwordVal: string;
   clusterList: API.SimpleClusterList;
   setSelectClusterId: React.Dispatch<React.SetStateAction<number | undefined>>;

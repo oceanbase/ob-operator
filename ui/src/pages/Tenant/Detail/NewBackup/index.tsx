@@ -1,24 +1,30 @@
 import { usePublicKey } from '@/hook/usePublicKey';
-import { useParams } from '@umijs/max';
-import { getTenant } from '@/services/tenant';
 import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
+import { getTenant } from '@/services/tenant';
+import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
 import { checkScheduleDatesHaveFull, formatBackupForm } from '../../helper';
-import { strTrim } from '@/utils/helper';
 import BasicInfo from '../Overview/BasicInfo';
 import AdvancedConfiguration from './AdvancedConfiguration';
 import BakMethodsList from './BakMethodsList';
 import SchduleSelectFormItem from './SchduleSelectFormItem';
 import ScheduleTimeFormItem from './ScheduleTimeFormItem';
+
+export type ScheduleDates = {
+  [T: number]: API.BackupType;
+  days: number[];
+  mode: API.ScheduleType;
+};
+
 const { Password } = Input;
 export default function NewBackup() {
   const navigate = useNavigate();
   const { ns, name, tenantName } = useParams();
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<API.NewBackupForm>();
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
@@ -27,7 +33,7 @@ export default function NewBackup() {
     { label: 'NFS', value: 'NFS' },
   ];
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: API.NewBackupForm) => {
     if (!checkScheduleDatesHaveFull(values.scheduleDates)) {
       message.warning(
         intl.formatMessage({
@@ -38,9 +44,9 @@ export default function NewBackup() {
       return;
     }
     const res = await createBackupReportWrap({
-      ns,
-      name,
-      ...formatBackupForm(strTrim(values), publicKey)
+      ns:ns!,
+      name:name!,
+      ...formatBackupForm(strTrim(values), publicKey),
     });
     if (res.successful) {
       message.success(
@@ -62,7 +68,7 @@ export default function NewBackup() {
     },
   };
   const { data: tenantDetailResponse } = useRequest(getTenant, {
-    defaultParams: [{ ns, name }],
+    defaultParams: [{ ns: ns!, name: name! }],
   });
 
   const tenantDetail = tenantDetailResponse?.data;

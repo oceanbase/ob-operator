@@ -15,7 +15,7 @@ import {
 import NodeSelector from '@/components/NodeSelector';
 import { RULER_ZONE } from '@/constants/rules';
 
-export default function Topo({ form }: { form: FormInstance<any> }) {
+export default function Topo({ form }: { form: FormInstance<API.CreateClusterData> }) {
   const getNowNodeSelector = (zoneIdx: number) => {
     return () => {
       const topologyData = form.getFieldValue('topology');

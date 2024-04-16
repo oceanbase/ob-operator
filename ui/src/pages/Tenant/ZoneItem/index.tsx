@@ -5,7 +5,7 @@ import { Checkbox,Col,Form } from 'antd';
 interface ZoneItemProps {
   name: string;
   checked: boolean;
-  obZoneResource: any;
+  obZoneResource: API.ZoneResource;
   checkBoxOnChange: (checked: boolean, name: string) => void;
   priorityName?:string[]|string;
   isEdit?:boolean;

@@ -4,7 +4,6 @@ import { useParams } from '@umijs/max';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { Button, Col, Descriptions, message } from 'antd';
-import type { OperateType } from '.';
 import styles from './index.less';
 
 interface ReplicasProps {
@@ -14,7 +13,7 @@ interface ReplicasProps {
   openOperateModal: (type: API.ModalType) => void;
   setEditZone: React.Dispatch<React.SetStateAction<string>>;
   cluster: API.SimpleCluster;
-  operateType: React.MutableRefObject<OperateType | undefined>;
+  operateType: React.MutableRefObject<OBTenant.OperateType | undefined>;
 }
 
 const LABEL_TEXT_MAP = {

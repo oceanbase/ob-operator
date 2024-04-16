@@ -28,15 +28,15 @@ export default function NodeSelector({
   ) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
 
   const dataFormat = (list: string[]): ListType[] => {
-    let res = [];
-    for (let item of list) {
+    const res = [];
+    for (const item of list) {
       res.push({ label: item, value: item });
     }
     return res;
   };
 
   const checkSeletorIsExist = (nodeSelector: any): boolean => {
-    for (let item of nodeSelector) {
+    for (const item of nodeSelector) {
       if (item && item.key) {
         return true;
       }
@@ -52,8 +52,8 @@ export default function NodeSelector({
   };
   // 获取value对应的keys
   const getAvailabelKeys = (data: string): string[] => {
-    let res = [];
-    for (let label of originLabels.current) {
+    const res = [];
+    for (const label of originLabels.current) {
       if (label.value === data) {
         res.push(label.key);
       }
@@ -62,8 +62,8 @@ export default function NodeSelector({
   };
   //获取key对应的values
   const getAvailabelValues = (data: string): string[] => {
-    let res = [];
-    for (let label of originLabels.current) {
+    const res = [];
+    for (const label of originLabels.current) {
       if (label.key === data) {
         res.push(label.value);
       }
@@ -81,7 +81,7 @@ export default function NodeSelector({
       let keys = getOriginKeys(); //key最后要格式化为 [{label:'',value:''}]
       //检查同一zone下面有哪些key已经选了
       if (checkSeletorIsExist(nodeSelector)) {
-        let selectKey: string[] = nodeSelector.map((item: any) =>
+        const selectKey: string[] = nodeSelector.map((item: any) =>
           item ? item.key : '',
         );
         keys = keys.filter((key) => {
@@ -152,7 +152,7 @@ export default function NodeSelector({
                         defaultMessage: '请选择',
                       })}
                       optionFilterProp="label"
-                      //@ts-ignore
+                      //@ts-expect-error Custom option component type is incompatible
                       filterOption={filterOption}
                       options={keyList}
                       allowClear
@@ -177,7 +177,6 @@ export default function NodeSelector({
                     <Select
                       onFocus={() =>
                         handleFocusKey(
-                          //   index,
                           selectorIdx,
                           'value',
                         )
@@ -188,7 +187,7 @@ export default function NodeSelector({
                         defaultMessage: '请选择',
                       })}
                       optionFilterProp="label"
-                      //@ts-ignore
+                      //@ts-expect-error Custom option component type is incompatible
                       filterOption={filterOption}
                       options={valList}
                       allowClear

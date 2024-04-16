@@ -8,7 +8,8 @@
     "postinstall": "max setup",
     "setup": "max setup",
     "start": "npm run dev",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "prepare": "cd .. && husky ui/.husky"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -35,6 +36,7 @@
     "eslint": "^9.0.0",
     "eslint-plugin-react": "^7.34.1",
     "globals": "^15.0.0",
+    "husky": "^9.0.11",
     "lint-staged": "^13.2.0",
     "prettier": "^2.8.7",
     "prettier-plugin-organize-imports": "^3.2.2",
