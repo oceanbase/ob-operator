@@ -2600,6 +2600,10 @@ paths:
         in: query
         name: obcluster
         type: string
+      - description: namespace to filter
+        in: query
+        name: ns
+        type: string
       produces:
       - application/json
       responses:
