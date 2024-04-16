@@ -30,4 +30,5 @@ jobs:
         with:
           mark_as_latest: false
           skip_existing: true
-          index_path: docsite/static/index.yaml
+          pages_branch: master
+          pages_index_path: docsite/static/index.yaml
