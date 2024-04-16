@@ -2,4 +2,11 @@
 package obtenantoperation
 
 func init() {
+	taskMap.Register(tChangeTenantRootPassword, ChangeTenantRootPassword)
+	taskMap.Register(tActivateStandbyTenant, ActivateStandbyTenant)
+	taskMap.Register(tCreateUsersForActivatedStandby, CreateUsersForActivatedStandby)
+	taskMap.Register(tSwitchTenantsRole, SwitchTenantsRole)
+	taskMap.Register(tSetTenantLogRestoreSource, SetTenantLogRestoreSource)
+	taskMap.Register(tUpgradeTenant, UpgradeTenant)
+	taskMap.Register(tReplayLogOfStandby, ReplayLogOfStandby)
 }
