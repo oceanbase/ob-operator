@@ -21,11 +21,11 @@ import { useEffect, useState } from 'react';
 import styles from './index.less';
 
 interface TenantSourceProps {
-  clusterName: string;
+  ns: string;
 }
 type RoleType = 'PRIMARY' | 'STANDBY';
 const { Password } = Input;
-export default function TenantSource({ clusterName }: TenantSourceProps) {
+export default function TenantSource({ ns }: TenantSourceProps) {
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [recoverChecked, setRecoverChecked] = useState<boolean>(false);
   const [synchronizeChecked, setSynchronizeChecked] = useState<boolean>(false);
@@ -69,7 +69,9 @@ export default function TenantSource({ clusterName }: TenantSourceProps) {
   const { run: getTenants, data: tenantListRes } = useRequest(getAllTenants);
 
   const tenantList = tenantListRes?.data
-    .filter((item) => item.status === 'running' && item.tenantRole === 'PRIMARY')
+    .filter(
+      (item) => item.status === 'running' && item.tenantRole === 'PRIMARY',
+    )
     .map((tenant) => ({
       label: tenant.name,
       value: tenant.name,
@@ -113,10 +115,10 @@ export default function TenantSource({ clusterName }: TenantSourceProps) {
   };
 
   useEffect(() => {
-    if (synchronizeChecked && clusterName) {
-      getTenants(clusterName);
+    if (synchronizeChecked && ns) {
+      getTenants({ ns });
     }
-  }, [synchronizeChecked, clusterName]);
+  }, [synchronizeChecked, ns]);
 
   useEffect(() => {
     const [cardBody] = document.querySelectorAll(

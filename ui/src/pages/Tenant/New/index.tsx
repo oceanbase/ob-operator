@@ -41,10 +41,10 @@ export default function New() {
     useRequest(getEssentialParametersReq, {
       manual: true,
     });
-  //Selected cluster resource name
-  const clusterName = clusterList.filter(
-    (cluster) => cluster.clusterId === selectClusterId,
-  )[0]?.name;
+  //Selected cluster's resource name and namespace
+  const { name: clusterName, namespace: ns } =
+    clusterList.filter((cluster) => cluster.clusterId === selectClusterId)[0] ||
+    {};
   const essentialParameter = essentialParameterRes?.data;
 
   const onFinish = async (values: API.NewTenantForm) => {
@@ -90,7 +90,7 @@ export default function New() {
   useUpdateEffect(() => {
     const { name, namespace } = clusterList.find(
       (cluster) => cluster.clusterId === selectClusterId,
-    );
+    ) || {};
     if (name && namespace) {
       getEssentialParameters({
         ns: namespace,
@@ -163,7 +163,7 @@ export default function New() {
             />
           </Col>
           <Col span={24}>
-            <TenantSource form={form} clusterName={clusterName} />
+            <TenantSource ns={ns}/>
           </Col>
         </Row>
       </Form>

@@ -1,6 +1,7 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
+import { WEEK_TEXT_MAP } from '@/constants/schedule';
 import { intl } from '@/utils/intl';
-import { Col,Descriptions,Table,Tooltip,Typography } from 'antd';
+import { Col, Descriptions, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface BackupsProps {
@@ -11,7 +12,11 @@ interface BackupsProps {
 
 const { Text } = Typography;
 
-export default function Backups({ backupPolicy, backupJobs, loading }: BackupsProps) {
+export default function Backups({
+  backupPolicy,
+  backupJobs,
+  loading,
+}: BackupsProps) {
   const PolicyConfig = {
     destType: {
       text: intl.formatMessage({
@@ -74,30 +79,53 @@ export default function Backups({ backupPolicy, backupJobs, loading }: BackupsPr
           <div>
             {fullArr.length ? (
               <p>
-                {intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.Backups.FullBackupTheFirstOf',
-                  defaultMessage: '全量备份：每个月第',
-                })}
-                {fullArr.map((item) => item.day).join(',')}
-                {intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.Backups.Days',
-                  defaultMessage: '天',
-                })}
+                {backupPolicy?.scheduleType === 'Monthly' ? (
+                  <>
+                    {' '}
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Backups.FullBackupTheFirstOf',
+                      defaultMessage: '全量备份：每个月第',
+                    })}
+                    {fullArr.map((item) => item.day).join(',')}
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Backups.Days',
+                      defaultMessage: '天',
+                    })}
+                  </>
+                ) : (
+                  <>
+                    全量备份：每周
+                    {fullArr
+                      .map((item) => WEEK_TEXT_MAP.get(item.day))
+                      .join(',')}
+                  </>
+                )}
               </p>
             ) : null}
 
             {incrementalArr.length ? (
               <p>
-                {intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.Backups.IncrementalBackupTheFirstOf',
-                  defaultMessage: '增量备份：每个月第',
-                })}
+                {backupPolicy?.scheduleType === 'Monthly' ? (
+                  <>
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Backups.IncrementalBackupTheFirstOf',
+                      defaultMessage: '增量备份：每个月第',
+                    })}
 
-                {incrementalArr.map((item) => item.day).join(',')}
-                {intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.Backups.Days',
-                  defaultMessage: '天',
-                })}
+                    {incrementalArr.map((item) => item.day).join(',')}
+                    {intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.Backups.Days',
+                      defaultMessage: '天',
+                    })}
+                  </>
+                ) : (
+                  <>
+                    增量备份：每周
+                    {incrementalArr
+                      .map((item) => WEEK_TEXT_MAP.get(item.day))
+                      .join(',')}
+                  </>
+                )}
               </p>
             ) : null}
           </div>
