@@ -404,20 +404,40 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	}
 }
 
-func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, con *operation.OceanbaseOperationManager, ns, tenantCR string) (string, error) {
+// GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
+func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (string, error) {
+	finalNs := ns
+	finalTenantCR := tenantCR
+	splits := strings.Split(tenantCR, "/")
+	if len(splits) == 2 {
+		finalNs = splits[0]
+		finalTenantCR = splits[1]
+	}
 	var restoreSource string
 	var err error
 
 	primary := &v1alpha1.OBTenant{}
 	err = clt.Get(ctx, types.NamespacedName{
-		Namespace: ns,
-		Name:      tenantCR,
+		Namespace: finalNs,
+		Name:      finalTenantCR,
 	}, primary)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {
 			return "", err
 		}
 	} else {
+		obcluster := &v1alpha1.OBCluster{}
+		err := clt.Get(ctx, types.NamespacedName{
+			Namespace: finalNs,
+			Name:      primary.Spec.ClusterName,
+		}, obcluster)
+		if err != nil {
+			return "", errors.Wrap(err, "get obcluster")
+		}
+		con, err := GetSysOperationClient(clt, logger, obcluster)
+		if err != nil {
+			return "", errors.Wrap(err, "get oceanbase operation manager")
+		}
 		// Get ip_list from primary tenant
 		aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
 		if err != nil {
