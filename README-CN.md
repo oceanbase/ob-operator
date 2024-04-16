@@ -154,7 +154,7 @@ ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、�
 
 ![ob-operator 架构设计](./docsite/static/img/ob-operator-arch.png)
 
-有关架构细节可参见[架构设计文档](./docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)。
+有关架构细节可参见[架构设计文档](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)。
 
 ## 特性
 

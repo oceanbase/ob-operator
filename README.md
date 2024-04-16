@@ -153,7 +153,7 @@ ob-operator is built on top of kubebuilder and provides control and management o
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the [Architecture Document](./docsite/docs/developer/arch.md).
+For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
 
 
 ## Features
