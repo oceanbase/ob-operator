@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: 18
           cache: yarn
-          cache-dependency-path: './docsite'
+          cache-dependency-path: './docsite/yarn.lock'
       - name: Install dependencies
         run: cd docsite && yarn install --frozen-lockfile
       - name: Build website
