@@ -243,14 +243,22 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	}
 }
 
+// GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
 func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, con *operation.OceanbaseOperationManager, ns, tenantCR string) (string, error) {
+	finalNs := ns
+	finalTenantCR := tenantCR
+	splits := strings.Split(tenantCR, "/")
+	if len(splits) == 2 {
+		finalNs = splits[0]
+		finalTenantCR = splits[1]
+	}
 	var restoreSource string
 	var err error
 
 	primary := &v1alpha1.OBTenant{}
 	err = clt.Get(ctx, types.NamespacedName{
-		Namespace: ns,
-		Name:      tenantCR,
+		Namespace: finalNs,
+		Name:      finalTenantCR,
 	}, primary)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {

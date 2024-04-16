@@ -1220,7 +1220,9 @@ func (m *OBTenantManager) CreateEmptyStandbyTenant() tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.OBTenant.Namespace, *m.OBTenant.Spec.Source.Tenant)
+	ns := m.OBTenant.GetNamespace()
+	tenantCRName := *m.OBTenant.Spec.Source.Tenant
+	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, ns, tenantCRName)
 	if err != nil {
 		return err
 	}
