@@ -220,7 +220,7 @@ func CreateEmptyStandbyTenant(m *OBTenantManager) tasktypes.TaskError {
 	}
 	ns := m.OBTenant.GetNamespace()
 	tenantCRName := *m.OBTenant.Spec.Source.Tenant
-	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, ns, tenantCRName)
+	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, ns, tenantCRName)
 	if err != nil {
 		return err
 	}
