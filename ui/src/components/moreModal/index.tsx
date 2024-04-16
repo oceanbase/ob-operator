@@ -1,10 +1,10 @@
-import type { OperateTypeLabel } from '../TopoComponent/constants';
 import styles from './index.less';
+import { Topo } from '@/type/topo';
 
 interface MoreModalProps {
   visible: boolean;
   ItemClick: (value: API.ModalType) => void;
-  list: OperateTypeLabel;
+  list: Topo.OperateTypeLabel;
   innerRef: any;
 }
 

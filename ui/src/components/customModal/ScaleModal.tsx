@@ -5,7 +5,7 @@ import CustomModal from '.';
 import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useParams } from '@umijs/max';
 import { useEffect } from 'react';
-import type { CommonModalType } from '.';
+
 
 interface ScaleModalProps {
   params?: {
@@ -19,7 +19,7 @@ export default function ScaleModal({
   setVisible,
   successCallback,
   params,
-}: ScaleModalProps & CommonModalType) {
+}: ScaleModalProps & API.CommonModalType) {
   const zoneName = params?.zoneName;
   const { ns: namespace, name } = useParams();
   const defaultValue = params?.defaultValue;

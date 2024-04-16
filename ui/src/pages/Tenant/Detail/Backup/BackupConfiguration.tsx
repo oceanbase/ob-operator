@@ -123,7 +123,7 @@ export default function BackupConfiguration({
   });
 
   const changeStatus = async () => {
-    let param = {
+    const param = {
       ns,
       name,
       status: backupPolicy.status === 'PAUSED' ? 'RUNNING' : 'PAUSED',

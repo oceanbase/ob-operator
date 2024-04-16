@@ -7,8 +7,8 @@ import type { ParamsType } from './ScheduleSelectComp';
 import ScheduleSelectComp from './ScheduleSelectComp';
 
 interface SchduleSelectFormItemProps {
-  form: FormInstance<any>;
-  scheduleValue: any;
+  form: FormInstance<API.NewBackupForm>;
+  scheduleValue: OBTenant.ScheduleDates;
   disable?: boolean;
 }
 
@@ -23,7 +23,7 @@ export default function SchduleSelectFormItem({
    * can be changed accordingly.
    */
   useUpdateEffect(() => {
-    let newScheduleValue = clone(scheduleValue);
+    const newScheduleValue = clone(scheduleValue);
     scheduleValue.days.forEach((key: number) => {
       if (!scheduleValue[String(key)]) {
         newScheduleValue[key] = 'Full';
@@ -49,7 +49,7 @@ export default function SchduleSelectFormItem({
       <Form.Item
         rules={[
           () => ({
-            validator: (_: any, value: ParamsType) => {
+            validator: (_: unknown, value: ParamsType) => {
               if (!value.days.length) {
                 return Promise.reject(
                   new Error(

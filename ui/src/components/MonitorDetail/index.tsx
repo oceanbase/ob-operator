@@ -6,43 +6,12 @@ import MonitorComp from '@/components/MonitorComp';
 import { REFRESH_FREQUENCY } from '@/constants';
 import DataFilter from './DataFilter';
 
-export type Label =
-  | 'ob_cluster_name'
-  | 'ob_cluster_id'
-  | 'tenant_name'
-  | 'tenant_id'
-  | 'svr_ip'
-  | 'obzone';
-
-export type LabelType = {
-  key: Label;
-  value: string;
-};
-
-export type OptionType = {
-  label: string;
-  value: string | number;
-  zone?: string;
-};
-
-export type FilterDataType = {
-  zoneList?: OptionType[];
-  serverList?: OptionType[];
-  date?: any;
-};
-
-export type QueryRangeType = {
-  endTimestamp: number;
-  startTimestamp: number;
-  step: number;
-};
-
 interface MonitorDetailProps {
-  filterData:FilterDataType;
-  setFilterData:React.Dispatch<React.SetStateAction<FilterDataType>>;
+  filterData: Monitor.FilterDataType;
+  setFilterData:React.Dispatch<React.SetStateAction<Monitor.FilterDataType>>;
   basicInfo:JSX.Element | null | undefined;
-  filterLabel:LabelType[];
-  setFilterLabel:React.Dispatch<React.SetStateAction<LabelType[]>>;
+  filterLabel:Monitor.LabelType[];
+  setFilterLabel:React.Dispatch<React.SetStateAction<Monitor.LabelType[]>>;
   groupLabels:API.LableKeys[];
   queryScope:API.EventObjectType;
 }
@@ -74,8 +43,8 @@ export default function MonitorDetail({
   const timerRef = useRef<NodeJS.Timeout>();
   const updateTimer = useRef<NodeJS.Timer>();
   const [queryRange, setQueryRange] =
-    useState<QueryRangeType>(defaultQueryRange);
-  const newQueryRangeRef = useRef<QueryRangeType>(); //Only used to solve the problem of not getting the latest value in interval
+    useState<Monitor.QueryRangeType>(defaultQueryRange);
+  const newQueryRangeRef = useRef<Monitor.QueryRangeType>(); //Only used to solve the problem of not getting the latest value in interval
 
   useUpdateEffect(() => {
     if (isRefresh && !timerRef.current) {

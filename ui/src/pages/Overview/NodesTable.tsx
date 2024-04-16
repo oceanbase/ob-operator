@@ -167,7 +167,7 @@ export default function NodesTable() {
       >
         <Table
           columns={columns}
-          dataSource={data as any}
+          dataSource={data}
           rowKey="name"
           pagination={{ simple: true }}
           scroll={{ x: 1500 }}

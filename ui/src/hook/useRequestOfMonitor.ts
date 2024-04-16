@@ -6,7 +6,7 @@ import { useRequest } from 'ahooks';
 import { useCallback, useRef } from 'react';
 
 const useLockFn = (fn: (...args: any) => Promise<any>) => {
-  let lockRef = useRef(false);
+  const lockRef = useRef(false);
 
   return [
     useCallback(

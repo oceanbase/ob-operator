@@ -4,14 +4,14 @@ import { message } from 'antd';
 
 import { useParams } from '@umijs/max';
 import { changeTenantRole } from '@/services/tenant';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 export default function ActivateTenantModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const { ns, name } = useParams();
   const { run: activateTenant } = useRequest(changeTenantRole, {
     manual: true,

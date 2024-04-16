@@ -1,4 +1,4 @@
-import { intl } from '@/utils/intl'; //@ts-nocheck
+import { intl } from '@/utils/intl';
 import { Button, Card, Col, Table, Tag, message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 

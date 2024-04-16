@@ -38,7 +38,7 @@ export default function PasswordInput({
     }
   };
   const genaretaPassword = () => {
-    let password = generateRandomPassword();
+    const password = generateRandomPassword();
     onChange(password);
     setFieldValue('rootPassword', password);
     form.validateFields(['rootPassword']);

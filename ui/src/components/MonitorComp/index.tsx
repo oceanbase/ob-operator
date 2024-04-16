@@ -1,12 +1,9 @@
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
-import { Card, Col, Row, Tooltip } from 'antd';
-import { useState } from 'react';
+import { Card, Col, Row } from 'antd';
 
-import type { QueryRangeType } from '@/components/MonitorDetail';
 import { getAllMetrics } from '@/services';
 import IconTip from '../IconTip';
-import LineGraph, { LineGraphProps, MetricType } from './LineGraph';
+import LineGraph from './LineGraph';
 import styles from './index.less';
 
 /**
@@ -21,7 +18,7 @@ import styles from './index.less';
 
 interface MonitorCompProps {
   filterLabel: API.MetricsLabels;
-  queryRange: QueryRangeType;
+  queryRange: Monitor.QueryRangeType;
   isRefresh?: boolean;
   queryScope: API.MetricScope;
   type: API.MonitorUseTarget;
@@ -43,40 +40,40 @@ export default function MonitorComp({
   const { data: allMetrics } = useRequest(getAllMetrics, {
     defaultParams: [queryScope],
   });
-  const [visible, setVisible] = useState(false);
-  const [modalProps, setModalProps] = useState<LineGraphProps>({});
-  const Title = ({
-    metrics,
-    name,
-  }: {
-    metrics: MetricType[];
-    name: string;
-  }) => {
-    return (
-      <div>
-        {name}
-        <Tooltip
-          title={
-            <ul>
-              {metrics.map((metric, idx) => (
-                <li key={idx}>
-                  {metric.name}:{metric.description}
-                </li>
-              ))}
-            </ul>
-          }
-        >
-          <QuestionCircleOutlined
-            style={{
-              color: 'rgba(0, 0, 0, 0.45)',
-              cursor: 'help',
-              marginLeft: '4px',
-            }}
-          />
-        </Tooltip>
-      </div>
-    );
-  };
+  // const [visible, setVisible] = useState(false);
+  // const [modalProps, setModalProps] = useState<LineGraphProps>({});
+  // const Title = ({
+  //   metrics,
+  //   name,
+  // }: {
+  //   metrics: MetricType[];
+  //   name: string;
+  // }) => {
+  //   return (
+  //     <div>
+  //       {name}
+  //       <Tooltip
+  //         title={
+  //           <ul>
+  //             {metrics.map((metric, idx) => (
+  //               <li key={idx}>
+  //                 {metric.name}:{metric.description}
+  //               </li>
+  //             ))}
+  //           </ul>
+  //         }
+  //       >
+  //         <QuestionCircleOutlined
+  //           style={{
+  //             color: 'rgba(0, 0, 0, 0.45)',
+  //             cursor: 'help',
+  //             marginLeft: '4px',
+  //           }}
+  //         />
+  //       </Tooltip>
+  //     </div>
+  //   );
+  // };
   return (
     <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
       {allMetrics &&

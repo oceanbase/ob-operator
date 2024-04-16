@@ -15,19 +15,17 @@ import {
   Tooltip,
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
-import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
 interface TenantSourceProps {
-  form: FormInstance<any>;
   clusterName: string;
 }
 type RoleType = 'PRIMARY' | 'STANDBY';
 const { Password } = Input;
-export default function TenantSource({ form, clusterName }: TenantSourceProps) {
+export default function TenantSource({ clusterName }: TenantSourceProps) {
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [recoverChecked, setRecoverChecked] = useState<boolean>(false);
   const [synchronizeChecked, setSynchronizeChecked] = useState<boolean>(false);
@@ -121,7 +119,7 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
   }, [synchronizeChecked, clusterName]);
 
   useEffect(() => {
-    let [cardBody] = document.querySelectorAll(
+    const [cardBody] = document.querySelectorAll(
       '#tenant-card .ant-card-body',
     ) as NodeListOf<HTMLElement>;
     if (!isChecked && cardBody) {
