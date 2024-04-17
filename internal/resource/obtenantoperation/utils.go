@@ -13,12 +13,13 @@ See the Mulan PSL v2 for more details.
 package obtenantoperation
 
 import (
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
 // get operation manager to exec sql
