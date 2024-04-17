@@ -244,7 +244,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskErr
 		if err != nil {
 			return err
 		}
-		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.Resource.Namespace, m.Resource.Spec.Switchover.StandbyTenant)
+		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, m.Resource.Namespace, m.Resource.Spec.Switchover.StandbyTenant)
 		if err != nil {
 			return err
 		}
