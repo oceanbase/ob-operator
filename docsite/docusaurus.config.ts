@@ -90,7 +90,8 @@ const config: Config = {
         },
         {
           href: 'https://github.com/oceanbase/ob-operator',
-          label: 'GitHub',
+          className: 'header-github-link',
+          'aria-label': 'GitHub repository',
           position: 'right',
         },
       ],
