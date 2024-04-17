@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -273,10 +274,10 @@ func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 	cols := c.Query("cols")
 	rows := c.Query("rows")
 
-	if i, err := strconv.ParseInt(cols, 10, 64); err == nil {
+	if i, err := strconv.ParseInt(cols, 10, 16); err == nil && i >= 0 && i <= math.MaxUint16 {
 		colsNum = uint16(i)
 	}
-	if i, err := strconv.ParseInt(rows, 10, 64); err == nil {
+	if i, err := strconv.ParseInt(rows, 10, 16); err == nil && i >= 0 && i <= math.MaxUint16 {
 		rowsNum = uint16(i)
 	}
 

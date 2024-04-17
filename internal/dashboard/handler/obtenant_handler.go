@@ -127,6 +127,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+
 	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
@@ -149,7 +150,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 			}
 		}
 	}
-	logger.Infof("Create obtenant with param: %+v", tenantParam)
+	loggingCreateOBTenantParam(tenantParam)
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
 		Namespace: tenantParam.Namespace,
 		Name:      tenantParam.Name,
@@ -261,10 +262,14 @@ func ChangeUserPassword(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.Infof("Change obtenant root password")
 	if passwordParam.User != "root" {
 		return nil, httpErr.NewBadRequest("only root user is supported")
 	}
-	logger.Infof("Change obtenant root password with param: %+v", passwordParam)
+	passwordParam.Password, err = crypto.DecryptWithPrivateKey(passwordParam.Password)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
 	tenant, err := oceanbase.ModifyOBTenantRootPassword(c, types.NamespacedName{
 		Namespace: nn.Namespace,
 		Name:      nn.Name,

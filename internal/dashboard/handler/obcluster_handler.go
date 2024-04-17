@@ -118,7 +118,7 @@ func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	logger.Infof("Create obcluster with param: %+v", param)
+	loggingCreateOBClusterParam(param)
 	return oceanbase.CreateOBCluster(c, param)
 }
 
