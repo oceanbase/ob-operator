@@ -113,12 +113,14 @@ func CreateOBPod(m *OBServerManager) tasktypes.TaskError {
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	observerPodSpec := m.createOBPodSpec(obcluster)
 	// create pod
+	originLabels := m.OBServer.Labels
+	originLabels[oceanbaseconst.LabelOBServerUID] = string(m.OBServer.UID)
 	observerPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            m.OBServer.Name,
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
+			Labels:          originLabels,
 			Annotations:     annotations,
 		},
 		Spec: observerPodSpec,
@@ -504,7 +506,9 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 				}},
 			},
 			Spec: corev1.ServiceSpec{
-				Selector: m.OBServer.Labels,
+				Selector: map[string]string{
+					oceanbaseconst.LabelOBServerUID: string(m.OBServer.UID),
+				},
 				Ports: []corev1.ServicePort{{
 					Name:       "sql",
 					Port:       oceanbaseconst.SqlPort,
