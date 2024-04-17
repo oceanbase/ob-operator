@@ -114,13 +114,11 @@ func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	clearPwd, err := crypto.DecryptWithPrivateKey(param.RootPassword)
+	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	param.RootPassword = "<MASKED>"
-	logger.Infof("Create obcluster with param: %+v", param)
-	param.RootPassword = clearPwd
+	loggingCreateOBClusterParam(param)
 	return oceanbase.CreateOBCluster(c, param)
 }
 
