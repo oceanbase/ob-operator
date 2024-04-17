@@ -22,7 +22,7 @@ func genChangeTenantRootPasswordFlow(_ *ObTenantOperationManager) *tasktypes.Tas
 		OperationContext: &tasktypes.OperationContext{
 			Name: fChangeTenantRootPasswordFlow,
 			Tasks: []tasktypes.TaskName{
-				tOpChangeTenantRootPassword,
+				tChangeTenantRootPassword,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: tasktypes.FailureRule{
@@ -37,8 +37,8 @@ func genActivateStandbyTenantOpFlow(_ *ObTenantOperationManager) *tasktypes.Task
 		OperationContext: &tasktypes.OperationContext{
 			Name: fActivateStandbyTenantFlow,
 			Tasks: []tasktypes.TaskName{
-				tOpActivateStandby,
-				tOpCreateUsersForActivatedStandby,
+				tActivateStandbyTenant,
+				tCreateUsersForActivatedStandby,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: tasktypes.FailureRule{
@@ -53,8 +53,8 @@ func genSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: fSwitchoverTenantsFlow,
 			Tasks: []tasktypes.TaskName{
-				tOpSwitchTenantsRole,
-				tOpSetTenantLogRestoreSource,
+				tSwitchTenantsRole,
+				tSetTenantLogRestoreSource,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: tasktypes.FailureRule{
@@ -69,7 +69,7 @@ func genRevertSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.Task
 		OperationContext: &tasktypes.OperationContext{
 			Name: fRevertSwitchoverTenantsFlow,
 			Tasks: []tasktypes.TaskName{
-				tOpSwitchTenantsRole,
+				tSwitchTenantsRole,
 			},
 			TargetStatus: string(constants.TenantOpFailed),
 			OnFailure: tasktypes.FailureRule{
@@ -84,7 +84,7 @@ func genUpgradeTenantFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: fOpUpgradeTenant,
 			Tasks: []tasktypes.TaskName{
-				tOpUpgradeTenant,
+				tUpgradeTenant,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: tasktypes.FailureRule{
@@ -99,7 +99,7 @@ func genReplayLogOfStandbyFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow 
 		OperationContext: &tasktypes.OperationContext{
 			Name: fOpReplayLog,
 			Tasks: []tasktypes.TaskName{
-				tOpReplayLog,
+				tReplayLogOfStandby,
 			},
 			TargetStatus: string(constants.TenantOpSuccessful),
 			OnFailure: tasktypes.FailureRule{

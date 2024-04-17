@@ -32,9 +32,9 @@ func UpdateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.O
 	return TenantClient.Update(ctx, tenant, metav1.UpdateOptions{})
 }
 
-func ListAllOBTenants(ctx context.Context, listOptions metav1.ListOptions) (*v1alpha1.OBTenantList, error) {
+func ListAllOBTenants(ctx context.Context, ns string, listOptions metav1.ListOptions) (*v1alpha1.OBTenantList, error) {
 	list := &v1alpha1.OBTenantList{}
-	err := TenantClient.List(ctx, "", list, listOptions)
+	err := TenantClient.List(ctx, ns, list, listOptions)
 	if err != nil {
 		return nil, errors.Wrap(err, "List all tenants")
 	}

@@ -27,11 +27,11 @@ const (
 )
 
 const (
-	tOpChangeTenantRootPassword       ttypes.TaskName = "change tenant root password"
-	tOpActivateStandby                ttypes.TaskName = "activate standby"
-	tOpCreateUsersForActivatedStandby ttypes.TaskName = "create users for activated standby"
-	tOpSwitchTenantsRole              ttypes.TaskName = "switch tenants role"
-	tOpSetTenantLogRestoreSource      ttypes.TaskName = "set tenant log restore source"
-	tOpUpgradeTenant                  ttypes.TaskName = "upgrade tenant"
-	tOpReplayLog                      ttypes.TaskName = "replay log"
+	tChangeTenantRootPassword       ttypes.TaskName = "change tenant root password"
+	tActivateStandbyTenant          ttypes.TaskName = "activate standby"
+	tCreateUsersForActivatedStandby ttypes.TaskName = "create users for activated standby"
+	tSwitchTenantsRole              ttypes.TaskName = "switch tenants role"
+	tSetTenantLogRestoreSource      ttypes.TaskName = "set tenant log restore source"
+	tUpgradeTenant                  ttypes.TaskName = "upgrade tenant"
+	tReplayLogOfStandby             ttypes.TaskName = "replay log"
 )

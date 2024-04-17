@@ -25,7 +25,6 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	obtenantresource "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -35,7 +34,7 @@ import (
 
 var taskMap = builder.NewTaskHub[*ObTenantOperationManager]()
 
-func (m *ObTenantOperationManager) ChangeTenantRootPassword() tasktypes.TaskError {
+func ChangeTenantRootPassword(m *ObTenantOperationManager) tasktypes.TaskError {
 	con, err := m.getTenantRootClient(m.Resource.Spec.ChangePwd.Tenant)
 	if err != nil {
 		return err
@@ -62,7 +61,7 @@ func (m *ObTenantOperationManager) ChangeTenantRootPassword() tasktypes.TaskErro
 	})
 }
 
-func (m *ObTenantOperationManager) ActivateStandbyTenant() tasktypes.TaskError {
+func ActivateStandbyTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
 	if err != nil {
 		return err
@@ -86,7 +85,7 @@ func (m *ObTenantOperationManager) ActivateStandbyTenant() tasktypes.TaskError {
 	})
 }
 
-func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() tasktypes.TaskError {
+func CreateUsersForActivatedStandby(m *ObTenantOperationManager) tasktypes.TaskError {
 	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
 	if err != nil {
 		m.Recorder.Event(m.Resource, "Warning", "Can not get cluster operation client", err.Error())
@@ -135,7 +134,7 @@ func (m *ObTenantOperationManager) CreateUsersForActivatedStandby() tasktypes.Ta
 	return nil
 }
 
-func (m *ObTenantOperationManager) SwitchTenantsRole() tasktypes.TaskError {
+func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 	// TODO: check whether the two tenants are in the same cluster
 	con, err := m.getClusterSysClient(m.Resource.Status.PrimaryTenant.Spec.ClusterName)
 	if err != nil {
@@ -226,7 +225,7 @@ func (m *ObTenantOperationManager) SwitchTenantsRole() tasktypes.TaskError {
 	return nil
 }
 
-func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskError {
+func SetTenantLogRestoreSource(m *ObTenantOperationManager) tasktypes.TaskError {
 	var err error
 	if m.Resource.Status.Status == constants.TenantOpRunning {
 		originStandby := m.Resource.Status.SecondaryTenant.DeepCopy()
@@ -248,7 +247,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskErr
 		if err != nil {
 			return err
 		}
-		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.Resource.Namespace, m.Resource.Spec.Switchover.StandbyTenant)
+		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, m.Resource.Namespace, m.Resource.Spec.Switchover.StandbyTenant)
 		if err != nil {
 			return err
 		}
@@ -264,65 +263,7 @@ func (m *ObTenantOperationManager) SetTenantLogRestoreSource() tasktypes.TaskErr
 	return nil
 }
 
-// get operation manager to exec sql
-func (m *ObTenantOperationManager) getTenantRootClient(tenantName string) (*operation.OceanbaseOperationManager, error) {
-	tenant := &v1alpha1.OBTenant{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.Resource.Namespace,
-		Name:      tenantName,
-	}, tenant)
-	if err != nil {
-		return nil, errors.Wrap(err, "get tenant")
-	}
-	obcluster := &v1alpha1.OBCluster{}
-	err = m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.Resource.Namespace,
-		Name:      tenant.Spec.ClusterName,
-	}, obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	var con *operation.OceanbaseOperationManager
-	con, err = resourceutils.GetTenantRootOperationClient(m.Client, m.Logger, obcluster, tenant.Spec.TenantName, tenant.Status.Credentials.Root)
-	if err != nil {
-		return nil, errors.Wrap(err, "get oceanbase operation manager")
-	}
-	return con, nil
-}
-
-func (m *ObTenantOperationManager) getClusterSysClient(clusterName string) (*operation.OceanbaseOperationManager, error) {
-	var err error
-	obcluster := &v1alpha1.OBCluster{}
-	err = m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.Resource.Namespace,
-		Name:      clusterName,
-	}, obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	con, err := resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get cluster sys client")
-	}
-	return con, nil
-}
-
-func (m *ObTenantOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) error {
-	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		tenant := &v1alpha1.OBTenant{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.Resource.Namespace,
-			Name:      obj.Name,
-		}, tenant)
-		if err != nil {
-			return errors.Wrap(err, "get tenant")
-		}
-		tenant.Status = obj.Status
-		return m.Client.Status().Update(m.Ctx, tenant)
-	})
-}
-
-func (m *ObTenantOperationManager) UpgradeTenant() tasktypes.TaskError {
+func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	targetTenant := m.Resource.Status.PrimaryTenant
 	con, err := m.getClusterSysClient(targetTenant.Spec.ClusterName)
 	if err != nil {
@@ -371,7 +312,7 @@ func (m *ObTenantOperationManager) UpgradeTenant() tasktypes.TaskError {
 	return nil
 }
 
-func (m *ObTenantOperationManager) ReplayLogOfStandby() tasktypes.TaskError {
+func ReplayLogOfStandby(m *ObTenantOperationManager) tasktypes.TaskError {
 	targetTenant := m.Resource.Status.PrimaryTenant
 	if targetTenant.Status.TenantRole != constants.TenantRoleStandby {
 		return errors.New("The target tenant is not standby")

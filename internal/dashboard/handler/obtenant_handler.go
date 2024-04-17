@@ -41,6 +41,7 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param obcluster query string false "obcluster to filter"
+// @Param ns query string false "namespace to filter"
 // @Success 200 object response.APIResponse{data=[]response.OBTenantOverview}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -49,18 +50,22 @@ import (
 // @Security ApiKeyAuth
 func ListAllTenants(c *gin.Context) ([]*response.OBTenantOverview, error) {
 	selector := ""
-	if c.Query("obcluster") != "" {
-		selector = fmt.Sprintf("ref-obcluster=%s", c.Query("obcluster"))
+	if queryCluster := c.Query("obcluster"); queryCluster != "" {
+		selector = fmt.Sprintf("ref-obcluster=%s", queryCluster)
 	}
 	listOptions := metav1.ListOptions{
 		LabelSelector: selector,
 	}
-	tenants, err := oceanbase.ListAllOBTenants(c, listOptions)
+	ns := ""
+	if queryNs := c.Query("ns"); queryNs != "" {
+		ns = queryNs
+	}
+	tenants, err := oceanbase.ListAllOBTenants(c, ns, listOptions)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
 	if len(tenants) == 0 && c.Query("obcluster") != "" {
-		allTenants, err := oceanbase.ListAllOBTenants(c, metav1.ListOptions{})
+		allTenants, err := oceanbase.ListAllOBTenants(c, ns, metav1.ListOptions{})
 		if err != nil {
 			return nil, httpErr.NewInternal(err.Error())
 		}
