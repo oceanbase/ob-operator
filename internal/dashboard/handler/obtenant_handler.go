@@ -127,11 +127,13 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	logger.Infof("Create obtenant with param: %+v", tenantParam)
-	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
+
+	clearPwd, err := crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	tenantParam.RootPassword = "<MASKED>"
+	logger.Infof("Create obtenant with param: %+v", tenantParam)
 	if tenantParam.Source != nil && tenantParam.Source.Restore != nil {
 		if tenantParam.Source.Restore.Type == "OSS" {
 			tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
@@ -150,6 +152,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 			}
 		}
 	}
+	tenantParam.RootPassword = clearPwd
 	tenant, err := oceanbase.CreateOBTenant(c, types.NamespacedName{
 		Namespace: tenantParam.Namespace,
 		Name:      tenantParam.Name,
