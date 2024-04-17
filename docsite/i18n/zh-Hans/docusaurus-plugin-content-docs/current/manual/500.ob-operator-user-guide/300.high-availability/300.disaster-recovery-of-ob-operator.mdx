@@ -10,26 +10,23 @@ import TabItem from '@theme/TabItem'
 
 本文介绍如何使用 ob-operator 对于 OceanBase 节点故障进行自动恢复。
 
+## 对于 ob-operator 2.2.0 之前的版本
 
-<Tabs>
-  <TabItem value="before-2.2.0" label="2.2.0 以前版本" default>
-  
-## 前提条件
+### 前提条件
 
 * 要成功恢复 OceanBase 集群，需要部署至少三个节点，并且租户也是至少三个副本。
 * 若要使用保留 IP 地址恢复的能力，需要集群使用 calico 作为网络插件。
 
-## 恢复策略
+### 恢复策略
 
 对于少数派故障，OceanBase 凭借多副本机制还能保证集群可用，这时 ob-operator 会发现 pod 异常，然后通过 add server 再 delete server 的方式，新建一个新的 observer 加入到集群，再删除原来的 observer
 , OceanBase 会自动利用新加入的 observer 去补全数据副本。
 
 如果 K8s 集群使用了 calico 网络插件，那么这个过程将更加容易，ob-operator 会通过指定 ip 的形式，指定原 IP 地址来启动一个新的 observer，这样如果数据还存在的话，会直接利用原 server 的数据，并不需要再重新复制一份数据，而且对于多数派故障，这种方式也能在新的 observer 都启动了之后恢复服务。
 
-  </TabItem>
-  <TabItem value="2.2.0" label="2.2.0 及以后版本">
+## 对于 ob-operator 2.2.0 及之后版本
 
-## 前提条件
+### 前提条件
 
 - 仅 OceanBase 数据库内核版本 >= 4.2.3.0 支持该特性。
 - 创建一个 OBCluster 时，需要配置 `service` 模式。配置如下：
@@ -46,19 +43,15 @@ spec:
 # ...
 ```
 
-## 恢复策略
+### 恢复策略
 
 创建一个 OBCluster 时，ob-operator 会为每个 OBServer pod 附加一个 `service`，并将该 `service` 的 ClusterIP 作为网络通信 IP。当 OBServer pod 出故障时，ob-operator 会创建一个新的 OBServer pod，并使用与失败的 OBServer pod 相同的 ClusterIP。新的 OBServer pod 将自动加入 OceanBase 集群并恢复工作。
 
-  </TabItem>
-</Tabs>
-
-
-### 验证
+## 验证
 
 您可以通过以下方式验证 ob-operator 的故障恢复能力
 
-删除 pod
+删除 pod：
 
 ```shell
 kubectl delete pod obcluster-1-zone1-074bda77c272 -n oceanbase
@@ -75,6 +68,6 @@ obcluster-1-zone2-7ecbd89f84de        2/2     Running   0          12d
 obcluster-1-zone1-94ecf05cb290        2/2     Running   0          1m
 ```
 
-### 部署建议
+## 部署建议
 
 基于以上的介绍，如果您要部署生产使用的集群，要得到较好的故障恢复能力的话，推荐使用 calico 网络插件（或者在 ob-operator 2.2.0 及之后的版本中配置集群为 `service` 模式），并且集群至少部署 3 节点，租户副本数量至少 3 个，每个 zone 的节点选择尽量在不同的机器上，以便尽可能的降低整个集群故障无法恢复的可能，另外，ob-operator 还提供了基于[备份恢复](500.data-recovery-of-ob-operator.md)和[主备租户](400.tenant-backup-of-ob-operator.md)的高可用方案，可以参考对应章节。
