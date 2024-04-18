@@ -97,7 +97,6 @@ const TOPO_INFO_CONFIG = [
   'rootPasswordSecret',
 ];
 
-const RESOURCE_NAME_REG = /^[a-z\-]+$/;
 // use for tenant name or zone name
 const TZ_NAME_REG = /^[_a-zA-Z][^-\n]*$/;
 
@@ -170,7 +169,6 @@ export {
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
   REFRESH_TENANT_TIME,
-  RESOURCE_NAME_REG,
   RESULT_STATUS,
   SERVER_IMG_MAP,
   STATISTICS_INTERVAL,

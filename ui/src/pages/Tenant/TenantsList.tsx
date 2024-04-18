@@ -1,7 +1,7 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Tag } from 'antd';
+import { Button, Card, Col, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import styles from './index.less';
@@ -12,6 +12,7 @@ interface TenantsListProps {
   loading?: boolean;
 }
 
+const { Text } = Typography;
 const columns: ColumnsType<API.TenantDetail> = [
   {
     title: intl.formatMessage({
@@ -20,13 +21,16 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'name',
     key: 'name',
+    width: '10%',
     render: (value, record) => (
-      <Link
-        replace
-        to={`/tenant/${record.namespace}/${record.name}/${record.tenantName}`}
-      >
-        {value}
-      </Link>
+      <Text>
+        <Link
+          replace
+          to={`/tenant/${record.namespace}/${record.name}/${record.tenantName}`}
+        >
+          {value}
+        </Link>
+      </Text>
     ),
   },
   {
@@ -35,7 +39,13 @@ const columns: ColumnsType<API.TenantDetail> = [
       defaultMessage: '命名空间',
     }),
     dataIndex: 'namespace',
+    width: '10%',
     key: 'namespace',
+    render: (value) => (
+      <Text ellipsis={{ tooltip: value }}>
+        {value}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -44,6 +54,12 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'clusterResourceName',
     key: 'clusterResourceName',
+    width: '10%',
+    render: (value) => (
+      <Text ellipsis={{ tooltip: `${value}` }}>
+        {value}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -52,6 +68,8 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'tenantName',
     key: 'tenantName',
+    width: '10%',
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -66,8 +84,14 @@ const columns: ColumnsType<API.TenantDetail> = [
       id: 'Dashboard.pages.Tenant.TenantsList.ReplicaDistribution',
       defaultMessage: '副本分布',
     }),
+    width: '20%',
     dataIndex: 'locality',
     key: 'locality',
+    render: (value) => (
+      <Text ellipsis={{ tooltip: value }}>
+        {value}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -91,6 +115,7 @@ const columns: ColumnsType<API.TenantDetail> = [
       id: 'Dashboard.pages.Tenant.TenantsList.CreationTime',
       defaultMessage: '创建时间',
     }),
+    width: 178,
     dataIndex: 'createTime',
     key: 'createTime',
   },
