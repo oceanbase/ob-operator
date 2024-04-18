@@ -36,9 +36,11 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
-        {value}
-      </Link>
+      <Text ellipsis={{ tooltip: value }}>
+        <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
+          {value}
+        </Link>
+      </Text>
     ),
   },
   {
@@ -48,6 +50,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'namespace',
     key: 'namespace',
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -56,6 +59,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'clusterName',
     key: 'clusterName',
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -64,7 +68,11 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'mode',
     key: 'mode',
-    render: (value) => <span>{MODE_MAP.get(value)?.text}</span>,
+    render: (value) => (
+      <Text ellipsis={{ tooltip: MODE_MAP.get(value)?.text }}>
+        {MODE_MAP.get(value)?.text}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -81,12 +89,9 @@ const columns: ColumnsType<DataType> = [
       defaultMessage: '镜像',
     }),
     dataIndex: 'image',
+    width: '20%',
     key: 'image',
-    render: (value) => (
-      <Text style={{ width: 216 }} ellipsis={{ tooltip: value }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -117,6 +122,7 @@ const columns: ColumnsType<DataType> = [
       defaultMessage: '创建时间',
     }),
     dataIndex: 'createTime',
+    width: 178,
     key: 'createTime',
   },
 

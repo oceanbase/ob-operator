@@ -13,19 +13,17 @@ export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse
   };
 }
 
-export async function getAllTenants({
-  obcluster,
-  ns,
-}: {
-  obcluster?: string;
-  ns?: string;
-}): Promise<API.TenantsListResponse> {
+export async function getAllTenants(
+  params:
+    | {
+        obcluster?: string;
+        ns?: string;
+      }
+    | undefined,
+): Promise<API.TenantsListResponse> {
   return request(`${tenantPrefix}`, {
     method: 'GET',
-    params: {
-      obcluster,
-      ns,
-    },
+    params: params,
   });
 }
 
