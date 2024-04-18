@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -31,7 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
@@ -196,35 +194,25 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 		}
 		passwd = string(secret.Data["password"])
 	}
+	conn := &response.OBConnection{}
+	obcluster, err := clients.GetOBCluster(c, nn.Namespace, obtenant.Spec.ClusterName)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
 
-	obzoneList := &v1alpha1.OBZoneList{}
-	err = clients.ZoneClient.List(c, nn.Namespace, obzoneList, metav1.ListOptions{
-		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obtenant.Spec.ClusterName,
-	})
+	// Select unit information from the oceanbase cluster
+	db, err := getSysClient(c, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obtenant.Spec.Credentials.Root)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-
-	if len(obzoneList.Items) == 0 {
-		return nil, httpErr.NewBadRequest("no obzone found in obcluster " + obtenant.Spec.ClusterName)
+	units, err := db.ListUnitsWithTenantId(int64(obtenant.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
 	}
-
-	// get full replica observer
-	fullReplicaMap := make(map[string]struct{})
-	for _, pool := range obtenant.Spec.Pools {
-		if pool.Type != nil && strings.EqualFold(pool.Type.Name, "Full") {
-			fullReplicaMap[pool.Zone] = struct{}{}
-		}
+	if len(units) == 0 {
+		return nil, httpErr.NewInternal("no unit found in obtenant " + obtenant.Name)
 	}
-	conn := &response.OBConnection{}
-	for _, zone := range obzoneList.Items {
-		if _, ok := fullReplicaMap[zone.Spec.Topology.Zone]; ok {
-			if len(zone.Status.OBServerStatus) > 0 {
-				conn.Host = zone.Status.OBServerStatus[0].Server
-				break
-			}
-		}
-	}
+	conn.Host = units[0].SvrIp
 
 	if conn.Host == "" {
 		return nil, httpErr.NewBadRequest("no full replica observer found in obtenant")
