@@ -22,7 +22,7 @@ func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlo
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMigrateOBClusterFromExisting,
-			Tasks:        []tasktypes.TaskName{tCheckMigration, tCheckImageReady, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
+			Tasks:        []tasktypes.TaskName{tCheckMigration, tCheckImageReady, tCheckEnvironment, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
 			TargetStatus: clusterstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,
@@ -35,7 +35,7 @@ func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fBootstrapOBCluster,
-			Tasks:        []tasktypes.TaskName{tCheckImageReady, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneBootstrapReady, tBootstrap},
+			Tasks:        []tasktypes.TaskName{tCheckImageReady, tCheckEnvironment, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneBootstrapReady, tBootstrap},
 			TargetStatus: clusterstatus.Bootstrapped,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,
