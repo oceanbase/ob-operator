@@ -185,7 +185,7 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 
 func GetJob(ctx context.Context, c client.Client, namespace string, jobName string) (*batchv1.Job, error) {
 	job := &batchv1.Job{}
-	err := c.Get(context.Background(), types.NamespacedName{
+	err := c.Get(ctx, types.NamespacedName{
 		Namespace: namespace,
 		Name:      jobName,
 	}, job)
