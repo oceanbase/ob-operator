@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -220,7 +222,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 
 	err = c.Create(ctx, &job)
 	if err != nil {
-		return "", exitCode, errors.Wrapf(err, "failed to create job of image: %s", image)
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to create job of image: %s", image)
 	}
 
 	var jobObject *batchv1.Job
@@ -243,7 +245,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
 	})
 	if err != nil || len(podList.Items) == 0 {
-		return "", 1, errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
 	}
 	var outputBuffer bytes.Buffer
 	podLogOpts := corev1.PodLogOptions{}

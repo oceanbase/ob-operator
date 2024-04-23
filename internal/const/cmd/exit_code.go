@@ -15,8 +15,9 @@ package cmd
 type ExitCode int
 
 const (
-	ExitCodeOK         ExitCode = 0
-	ExitCodeErr        ExitCode = 1
-	ExitCodeBadArgs    ExitCode = 2
-	ExitCodeNotSupport ExitCode = 10
+	ExitCodeOK          ExitCode = 0
+	ExitCodeErr         ExitCode = 1
+	ExitCodeBadArgs     ExitCode = 2
+	ExitCodeNotExecuted ExitCode = 4
+	ExitCodeNotSupport  ExitCode = 10
 )
