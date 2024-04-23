@@ -184,7 +184,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 				Name:         observer.Name,
 				Status:       convertStatus(observer.Status.Status),
 				StatusDetail: observer.Status.Status,
-				Address:      observer.Status.PodIp,
+				Address:      observer.Status.GetConnectAddr(),
 				// TODO: add metrics
 				Metrics: nil,
 			})

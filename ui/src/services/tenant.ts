@@ -1,4 +1,4 @@
-import { formatStatisticData,getInitialObjOfKeys } from '@/utils/helper';
+import { formatStatisticData, getInitialObjOfKeys } from '@/utils/helper';
 import { request } from '@umijs/max';
 
 const tenantPrefix = '/api/v1/obtenants';
@@ -13,19 +13,13 @@ export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse
   };
 }
 
-export async function getAllTenants({
-  obcluster,
-  ns,
-}: {
+export async function getAllTenants(params?: {
   obcluster?: string;
   ns?: string;
 }): Promise<API.TenantsListResponse> {
   return request(`${tenantPrefix}`, {
     method: 'GET',
-    params: {
-      obcluster,
-      ns,
-    },
+    params: params,
   });
 }
 
@@ -46,7 +40,7 @@ export async function getTenant({
     'name',
     'namespace',
     'locality',
-    'primaryZone'
+    'primaryZone',
   ];
   const res: API.TenantBasicInfo = {
     info: {},
@@ -200,10 +194,10 @@ export async function changeTenantRole({
   ns,
   name,
   ...body
-}: API.NamespaceAndName & API.RoleReqParam ): Promise<API.CommonResponse> {
+}: API.NamespaceAndName & API.RoleReqParam): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/role`, {
     method: 'POST',
-    data: body
+    data: body,
   });
 }
 

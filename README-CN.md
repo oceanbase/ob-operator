@@ -141,7 +141,7 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
 ```
-kubectl get svc oceanbase-dashboard-ob-dashboard
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
@@ -154,7 +154,7 @@ ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、�
 
 ![ob-operator 架构设计](./docsite/static/img/ob-operator-arch.png)
 
-有关架构细节可参见[架构设计文档](./docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)。
+有关架构细节可参见[架构设计文档](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)。
 
 ## 特性
 

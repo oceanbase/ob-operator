@@ -91,7 +91,7 @@ func StartLogReplay(m *ObTenantRestoreManager) tasktypes.TaskError {
 		return err
 	}
 	if m.Resource.Spec.PrimaryTenant != nil {
-		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, m.Resource.Namespace, *m.Resource.Spec.PrimaryTenant)
+		restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, m.Resource.Namespace, *m.Resource.Spec.PrimaryTenant)
 		if err != nil {
 			return err
 		}

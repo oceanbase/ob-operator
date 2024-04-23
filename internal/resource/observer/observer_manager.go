@@ -113,12 +113,7 @@ func (m *OBServerManager) UpdateStatus() error {
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
-			observer, err := m.getCurrentOBServerFromOB()
-			if err != nil {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get observer failed, check next time")
-			} else if observer == nil {
-				m.OBServer.Status.Status = serverstatus.AddServer
-			} else if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+			if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
 				if pod.Spec.Containers[0].Resources.Limits.Cpu().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
 					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
 					m.OBServer.Status.Status = serverstatus.ScaleUp
@@ -228,8 +223,6 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genRecoverOBServerFlow(m)
 	case serverstatus.Annotate:
 		taskFlow = genAnnotateOBServerPodFlow(m)
-	case serverstatus.AddServer:
-		taskFlow = genAddServerInOBFlow(m)
 	case serverstatus.ScaleUp:
 		taskFlow = genScaleUpOBServerFlow(m)
 	case serverstatus.ExpandPVC:

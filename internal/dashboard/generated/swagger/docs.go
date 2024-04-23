@@ -1636,6 +1636,12 @@ const docTemplate = `{
                         "description": "obcluster to filter",
                         "name": "obcluster",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace to filter",
+                        "name": "ns",
+                        "in": "query"
                     }
                 ],
                 "responses": {

@@ -365,8 +365,8 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	return buildDetailFromApiType(tenant), nil
 }
 
-func ListAllOBTenants(ctx context.Context, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
-	tenantList, err := clients.ListAllOBTenants(ctx, listOptions)
+func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
+	tenantList, err := clients.ListAllOBTenants(ctx, ns, listOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -580,7 +580,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 // Including the number of tenants in four status: running, deleting, operating, failed
 func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, error) {
 	stats := []response.OBTenantStatistic{}
-	tenantList, err := clients.ListAllOBTenants(ctx, v1.ListOptions{})
+	tenantList, err := clients.ListAllOBTenants(ctx, "", v1.ListOptions{})
 	if err != nil {
 		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
 	}

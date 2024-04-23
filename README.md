@@ -140,7 +140,7 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 A service of type NodePort is created by default, you can check the address and port and open it in browser
 ```
-kubectl get svc oceanbase-dashboard-ob-dashboard
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
@@ -153,7 +153,7 @@ ob-operator is built on top of kubebuilder and provides control and management o
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the [Architecture Document](./docsite/docs/developer/arch.md).
+For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
 
 
 ## Features
