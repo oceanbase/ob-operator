@@ -63,4 +63,5 @@ const (
 	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
 	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
+	tCheckEnvironment           ttypes.TaskName = "check environment"
 )

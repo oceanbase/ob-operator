@@ -21,6 +21,8 @@ import (
 	"strings"
 	"time"
 
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
+
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -110,7 +112,7 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 			return rootClient, nil
 		}
 	}
-	return nil, errors.Errorf("Can not get root operation client of tenant %s in obcluster %s after checked all server", tenantName, obcluster.Name)
+	return nil, errors.Errorf("Can not get root operation client of tenant %s in obcluster %s after checked all servers", tenantName, obcluster.Name)
 }
 
 func getSysClientFromSourceCluster(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, userName, tenantName, secretName string) (*operation.OceanbaseOperationManager, error) {
@@ -180,19 +182,19 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 			return sysClient, nil
 		}
 	}
-	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all server", obcluster.Name)
+	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all servers", obcluster.Name)
 }
 
-func GetJob(c client.Client, namespace string, jobName string) (*batchv1.Job, error) {
+func GetJob(ctx context.Context, c client.Client, namespace string, jobName string) (*batchv1.Job, error) {
 	job := &batchv1.Job{}
-	err := c.Get(context.Background(), types.NamespacedName{
+	err := c.Get(ctx, types.NamespacedName{
 		Namespace: namespace,
 		Name:      jobName,
 	}, job)
 	return job, err
 }
 
-func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName string, image string, cmd string) (string, error) {
+func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string, jobName string, image string, cmd string) (output string, exitCode int32, err error) {
 	fullJobName := fmt.Sprintf("%s-%s", jobName, rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
@@ -218,15 +220,14 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 		},
 	}
 
-	err := c.Create(context.Background(), &job)
+	err = c.Create(ctx, &job)
 	if err != nil {
-		return "", errors.Wrapf(err, "failed to create job of image: %s", image)
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to create job of image: %s", image)
 	}
 
-	output := ""
 	var jobObject *batchv1.Job
 	for i := 0; i < oceanbaseconst.CheckJobMaxRetries; i++ {
-		jobObject, err = GetJob(c, namespace, fullJobName)
+		jobObject, err = GetJob(ctx, c, namespace, fullJobName)
 		if err != nil {
 			logger.Error(err, "Failed to get job")
 			// return errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
@@ -239,20 +240,25 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 		}
 		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
 	}
+	clientSet := k8sclient.GetClient()
+	podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
+	})
+	if err != nil || len(podList.Items) == 0 {
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
+	}
+	var outputBuffer bytes.Buffer
+	podLogOpts := corev1.PodLogOptions{}
+	pod := podList.Items[0]
+	for _, cs := range pod.Status.ContainerStatuses {
+		if cs.Name == "job-runner" {
+			exitCode = cs.State.Terminated.ExitCode
+		}
+	}
 	if jobObject.Status.Succeeded == 1 {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded", "job", fullJobName)
-		clientSet := k8sclient.GetClient()
-		podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
-			LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
-		})
-		if err != nil || len(podList.Items) == 0 {
-			return "", errors.Wrapf(err, "failed to get pods of job %s", jobName)
-		}
-		var outputBuffer bytes.Buffer
-		podLogOpts := corev1.PodLogOptions{}
-		pod := podList.Items[0]
 		res := clientSet.ClientSet.CoreV1().Pods(namespace).GetLogs(pod.Name, &podLogOpts)
-		logs, err := res.Stream(context.TODO())
+		logs, err := res.Stream(ctx)
 		if err != nil {
 			logger.Error(err, "Failed to get job logs")
 		} else {
@@ -265,9 +271,9 @@ func RunJob(c client.Client, logger *logr.Logger, namespace string, jobName stri
 		}
 	} else {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", fullJobName)
-		return "", errors.Wrapf(err, "Failed to run job %s", fullJobName)
+		return "", exitCode, errors.Wrapf(err, "Failed to run job %s", fullJobName)
 	}
-	return output, nil
+	return output, exitCode, nil
 }
 
 func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCluster, filepath string, extraOpt string) error {
@@ -330,7 +336,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 
 	var jobObject *batchv1.Job
 	check := func() (bool, error) {
-		jobObject, err = GetJob(c, obcluster.Namespace, jobName)
+		jobObject, err = GetJob(ctx, c, obcluster.Namespace, jobName)
 		if err != nil {
 			return false, errors.Wrapf(err, "Failed to get run upgrade script job for obcluster %s", obcluster.Name)
 		}

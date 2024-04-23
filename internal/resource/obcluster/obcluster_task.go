@@ -379,7 +379,7 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 
 	var jobObject *batchv1.Job
 	check := func() (bool, error) {
-		jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+		jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
 		if err != nil {
 			return false, errors.Wrap(err, "Failed to get job")
 		}
@@ -873,7 +873,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		var maxCheckTimes = 600
 		for i := 0; i < maxCheckTimes; i++ {
 			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+			jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
 			if err != nil {
 				m.Logger.Error(err, "Failed to get job")
 				return err
@@ -903,7 +903,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	// check version strictly matches
-	targetVersionStr, err := resourceutils.RunJob(m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
+	targetVersionStr, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
 	if err != nil {
 		return errors.Wrap(err, "get target oceanbase version")
 	}
@@ -986,4 +986,13 @@ func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
+	_, exitCode, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, "check-fs", m.OBCluster.Spec.OBServerTemplate.Image, "/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath)
+	// exit code 1 means the image version does not support the env-check command, just ignore it and try
+	if err != nil && exitCode != 1 {
+		return errors.Wrap(err, "Check filesystem")
+	}
+	return nil
 }
