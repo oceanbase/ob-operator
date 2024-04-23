@@ -23,6 +23,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -989,7 +990,59 @@ func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
-	_, exitCode, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, "check-fs", m.OBCluster.Spec.OBServerTemplate.Image, "/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath)
+	// Create PVC
+	volumeName := "check-clog-volume"
+	claimName := "check-clog-claim"
+	storageSpec := m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
+	requestsResources := corev1.ResourceList{}
+	// Try fallocate to check if the filesystem meet the requirement.
+	// The checker requires 4Mi space, we set the request to 64Mi for safety.
+	requestsResources["storage"] = resource.MustParse("64Mi")
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      claimName,
+			Namespace: m.OBCluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: m.OBCluster.APIVersion,
+				Kind:       m.OBCluster.Kind,
+				Name:       m.OBCluster.Name,
+				UID:        m.OBCluster.UID,
+			}},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: requestsResources,
+			},
+			StorageClassName: &storageSpec.StorageClass,
+		},
+	}
+	err := m.Client.Create(m.Ctx, pvc)
+	if err != nil {
+		return errors.Wrap(err, "Create pvc for checking storage")
+	}
+	// Assemble volumeConfigs
+	volumeConfigs := resourceutils.JobContainerVolumes{
+		Volumes: []corev1.Volume{{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: claimName,
+				},
+			},
+		}},
+		VolumeMounts: []corev1.VolumeMount{{
+			Name:      volumeName,
+			MountPath: oceanbaseconst.ClogPath,
+		}},
+	}
+	_, exitCode, err := resourceutils.RunJob(
+		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		"check-fs",
+		m.OBCluster.Spec.OBServerTemplate.Image,
+		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
+		volumeConfigs,
+	)
 	// exit code 1 means the image version does not support the env-check command, just ignore it and try
 	if err != nil && exitCode != 1 {
 		return errors.Wrap(err, "Check filesystem")
