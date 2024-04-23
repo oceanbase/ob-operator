@@ -24,7 +24,6 @@ const (
 	fDeleteOBServerFinalizer        ttypes.FlowName = "delete observer finalizer"
 	fUpgradeOBServer                ttypes.FlowName = "upgrade observer"
 	fRecoverOBServer                ttypes.FlowName = "recover observer"
-	fAddServerInOB                  ttypes.FlowName = "add observer in ob"
 	fAnnotateOBServerPod            ttypes.FlowName = "annotate observer pod"
 	fScaleUpOBServer                ttypes.FlowName = "scale up observer"
 	fExpandPVC                      ttypes.FlowName = "expand pvc for observer"
