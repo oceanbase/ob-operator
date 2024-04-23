@@ -37,7 +37,7 @@ func newConfig() *Config {
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
-	v.BindPFlags(pflag.CommandLine)
+	_ = v.BindPFlags(pflag.CommandLine)
 
 	v.AutomaticEnv()
 	v.SetEnvPrefix("OB_OPERATOR")

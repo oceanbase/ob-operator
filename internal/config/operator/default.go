@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package operator
 
 import (
+	"github.com/spf13/viper"
+
 	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/database"
-	"github.com/spf13/viper"
 )
 
 var defaultConfigMap = map[string]any{
