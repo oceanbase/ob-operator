@@ -75,21 +75,11 @@ func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fRecoverOBServer,
-			Tasks:        []tasktypes.TaskName{tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
+			Tasks:        []tasktypes.TaskName{tCreateOBPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.RetryFromCurrent,
 			},
-		},
-	}
-}
-
-func genAddServerInOBFlow(_ *OBServerManager) *tasktypes.TaskFlow {
-	return &tasktypes.TaskFlow{
-		OperationContext: &tasktypes.OperationContext{
-			Name:         fAddServerInOB,
-			Tasks:        []tasktypes.TaskName{tAddServer, tWaitOBServerActiveInCluster},
-			TargetStatus: serverstatus.Running,
 		},
 	}
 }
