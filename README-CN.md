@@ -141,7 +141,7 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
 ```
-kubectl get svc oceanbase-dashboard-ob-dashboard
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
