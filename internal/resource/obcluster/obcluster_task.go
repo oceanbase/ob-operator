@@ -1021,6 +1021,12 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Create pvc for checking storage")
 	}
+	defer func() {
+		err = m.Client.Delete(m.Ctx, pvc)
+		if err != nil {
+			m.Logger.Info("Failed to delete pvc for checking storage")
+		}
+	}()
 	// Assemble volumeConfigs
 	volumeConfigs := resourceutils.JobContainerVolumes{
 		Volumes: []corev1.Volume{{
