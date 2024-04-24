@@ -23,7 +23,7 @@ var defaultConfigMap = map[string]any{
 	"namespace":                 "",
 	"manager-namespace":         "oceanbase-system",
 	"metric-addr":               ":8080",
-	"leader-elect":              false,
+	"leader-elect":              true,
 	"health-probe-bind-address": ":8081",
 	"log-verbosity":             0,
 	"disable-webhooks":          false,
