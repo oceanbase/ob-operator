@@ -23,7 +23,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -990,14 +989,15 @@ func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
+	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
+	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
+	jobName := m.OBCluster.Name + "-check-fs-" + rand.String(6)
 	// Create PVC
-	volumeName := "check-clog-volume"
-	claimName := "check-clog-claim"
 	storageSpec := m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
 	requestsResources := corev1.ResourceList{}
 	// Try fallocate to check if the filesystem meet the requirement.
 	// The checker requires 4Mi space, we set the request to 64Mi for safety.
-	requestsResources["storage"] = resource.MustParse("64Mi")
+	requestsResources["storage"] = storageSpec.Size
 	pvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      claimName,
@@ -1044,7 +1044,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	}
 	_, exitCode, err := resourceutils.RunJob(
 		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-		"check-fs",
+		jobName,
 		m.OBCluster.Spec.OBServerTemplate.Image,
 		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
 		volumeConfigs,
