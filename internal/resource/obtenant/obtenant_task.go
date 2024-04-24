@@ -27,6 +27,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
@@ -352,7 +353,7 @@ func WatchRestoreJobToFinish(m *OBTenantManager) tasktypes.TaskError {
 		return false, nil
 	}
 	// Tenant restoring is in common quite a slow process, so we need to wait for a longer time
-	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.LocalityChangeTimeoutSeconds)
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*time.Duration(obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds))
 	if err != nil {
 		return errors.Wrap(err, "Failed to wait for restore job to finish")
 	}
@@ -420,7 +421,7 @@ func UpgradeTenantIfNeeded(m *OBTenantManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		maxWait5secTimes := oceanbaseconst.DefaultStateWaitTimeout/5 + 1
+		maxWait5secTimes := obcfg.GetConfig().Time.DefaultStateWaitTimeout/5 + 1
 	outer:
 		for i := 0; i < maxWait5secTimes; i++ {
 			time.Sleep(5 * time.Second)

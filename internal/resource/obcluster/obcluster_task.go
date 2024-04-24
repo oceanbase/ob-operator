@@ -33,6 +33,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
@@ -54,7 +55,7 @@ func WaitOBZoneTopologyMatch(_ *OBClusterManager) tasktypes.TaskError {
 
 func WaitOBZoneDeleted(m *OBClusterManager) tasktypes.TaskError {
 	waitSuccess := false
-	for i := 1; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 1; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		obcluster, err := m.getOBCluster()
 		if err != nil {
 			return errors.Wrap(err, "get obcluster failed")
@@ -212,11 +213,11 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "no obzone belongs to this cluster")
 	}
 	var manager *operation.OceanbaseOperationManager
-	for i := 0; i < oceanbaseconst.GetConnectionMaxRetries; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.GetConnectionMaxRetries; i++ {
 		manager, err = m.getOceanbaseOperationManager()
 		if err != nil || manager == nil {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get oceanbase operation manager failed")
-			time.Sleep(time.Second * oceanbaseconst.CheckConnectionInterval)
+			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckConnectionInterval))
 		} else {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully got oceanbase operation manager")
 			break
@@ -393,7 +394,7 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 			return false, errors.Wrap(err, "Failed to run validate job")
 		}
 	}
-	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*time.Duration(obcfg.GetConfig().Time.WaitForJobTimeoutSeconds))
 	if err != nil {
 		return errors.Wrap(err, "Failed to run validate job")
 	}
@@ -535,7 +536,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 			if err != nil {
 				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
 			}
-			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, oceanbaseconst.LocalityChangeTimeoutSeconds)
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
 			if err != nil {
 				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
 			}
@@ -561,7 +562,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 			if err != nil {
 				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
 			}
-			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, oceanbaseconst.LocalityChangeTimeoutSeconds)
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
 			if err != nil {
 				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
 			}
@@ -791,7 +792,7 @@ outerLoop:
 		}
 		if len(podList.Items) == 0 {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("No pod found for check image pull job")
-			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 			continue
 		}
 		pod := podList.Items[0]
@@ -813,7 +814,7 @@ outerLoop:
 					default:
 						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is waiting", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
 					}
-					time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+					time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 					continue outerLoop
 				} else if containerStatus.State.Running != nil || containerStatus.State.Terminated != nil {
 					m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is running or terminated")
@@ -872,7 +873,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		var jobObject *batchv1.Job
 		var maxCheckTimes = 600
 		for i := 0; i < maxCheckTimes; i++ {
-			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 			jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
 			if err != nil {
 				m.Logger.Error(err, "Failed to get job")
@@ -969,23 +970,23 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func ScaleUpOBZones(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func MountBackupVolume(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
-	return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
-	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
