@@ -1,15 +1,15 @@
 import type { PoolDetailType } from '@/components/customModal/ModifyUnitDetailModal';
-import { getAppInfo, getStatistics } from '@/services';
-import { REPORT_PARAMS_MAP, reportData } from '@/services/reportRequest';
 import { STATISTICS_INTERVAL } from '@/constants';
+import { getAppInfo,getStatistics } from '@/services';
+import { REPORT_PARAMS_MAP,reportData } from '@/services/reportRequest';
 import { intl } from '@/utils/intl';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
 type StatisticDataType = { status: StatisticStatus; count: number }[];
 
-type ObjType = { [key: string]: any };
+type ObjType = { [key: string]: unknown };
 
-export const getInitialObjOfKeys = (targetObj: any, keys: string[]) => {
+export const getInitialObjOfKeys = (targetObj: ObjType, keys: string[]) => {
   return keys.reduce((pre, cur) => {
     pre[cur] = targetObj[cur];
     return pre;
@@ -20,7 +20,7 @@ export const formatStatisticData = (
   type: 'cluster' | 'tenant',
   data: StatisticDataType,
 ) => {
-  let r: API.StatisticData = {
+  const r: API.StatisticData = {
     total: 0,
     name:
       type === 'cluster'
@@ -38,7 +38,7 @@ export const formatStatisticData = (
     running: 0,
     failed: 0,
   };
-  for (let item of data) {
+  for (const item of data) {
     r.total += item.count;
     r[item.status] = item.count;
   }
@@ -49,7 +49,7 @@ export const formatPatchPoolData = (
   originUnitData: PoolDetailType,
   type: 'edit' | 'create',
 ) => {
-  let newOriginUnitData: PoolDetailType = {
+  const newOriginUnitData: PoolDetailType = {
     unitConfig: {},
   };
   newOriginUnitData.unitConfig = {
@@ -93,7 +93,7 @@ export const getAppInfoFromStorage = async (): Promise<API.AppInfo> => {
       appInfo = (await getAppInfo()).data;
     }
     return appInfo;
-  } catch (err) {}
+  } catch {}
 };
 
 export const isReportTimeExpired = (lastTimestamp: number): boolean => {
@@ -104,7 +104,7 @@ export const reportPollData = async () => {
   try {
     const appInfo = await getAppInfoFromStorage();
     if (!appInfo.reportStatistics) return;
-    let { data } = await getStatistics();
+    const { data } = await getStatistics();
     await reportData({
       ...REPORT_PARAMS_MAP['polling'],
       version: appInfo.version,
@@ -113,3 +113,7 @@ export const reportPollData = async () => {
     localStorage.setItem('lastReportTime', Date.now().toString());
   } catch (err) {}
 };
+
+export function floorToTwoDecimalPlaces(num:number) {
+  return Math.floor(num * 100) / 100;
+}

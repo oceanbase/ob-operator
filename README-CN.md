@@ -122,12 +122,15 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
 ### OceanBase Dashboard
-我们很高兴地宣布推出创新的OceanBase Kubernetes Dashboard v0.1.0初始版本，这是一款旨在改善用户在Kubernetes上管理和监控OceanBase集群体验的先进工具。作为我们持续开发与改进承诺的一部分，我们自豪地向用户提供这个首个版本，同时我们也在积极开发新功能和增强未来的更新。
+
+我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。
 
 安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
+
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
+helm repo update ob-operator
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
@@ -138,7 +141,7 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
 ```
-kubectl get svc oceanbase-dashboard-ob-dashboard
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
@@ -151,7 +154,7 @@ ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、�
 
 ![ob-operator 架构设计](./docsite/static/img/ob-operator-arch.png)
 
-有关架构细节可参见[架构设计文档](./docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)。
+有关架构细节可参见[架构设计文档](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)。
 
 ## 特性
 
@@ -171,7 +174,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 
 ## 支持的 OceanBase 版本
 
-支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase 版本，可参考用户手册获取详细信息。
 
 暂不支持 OceanBase v3.x 版本。
 
@@ -185,20 +188,21 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 文档
 
-- [ob-operator 架构设计](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/arch.md)
-- [部署 ob-operator](docsite/i18n/zh-Hans/docusaurus-plugin-content-docs/current/developer/deploy.md)
-- [开发手册](docsite/docs/developer/development.md)（英文）
-- [用户手册](https://www.oceanbase.com/docs/community-ob-operator-doc-1000000000408367)
+- [架构设计](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)
+- [开发手册](https://oceanbase.github.io/ob-operator/docs/developer/contributor-guidance)（英文）
+- [用户手册](https://oceanbase.github.io/ob-operator/zh-Hans/docs/manual/what-is-ob-operator)
 
 ## 获取帮助
 
 如果您在使用 ob-operator 时遇到任何问题，欢迎通过以下方式寻求帮助：
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [官方网站](https://open.oceanbase.com/)
+- [官方论坛](https://ask.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- 钉钉群（[二维码](./docsite/static/img/dingtalk-operator-users.png)）
 - 微信群（请添加小助手微信，微信号: OBCE666）
+- [钉钉群](https://h5.dingtalk.com/ecologicalOrg/index.html?code=v1,k1,8FudApZjHxgVTScBrgtz2mBfmEvOuiPm5J5dTS5tos4=&origin=11#/inviteOutsideJoin)
+
+<img src="./docsite/static/img/dingtalk-operator-users.png" width="200px" alt="钉钉群二维码" />
 
 ## 参与开发
 

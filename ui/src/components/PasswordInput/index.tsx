@@ -38,7 +38,7 @@ export default function PasswordInput({
     }
   };
   const genaretaPassword = () => {
-    let password = generateRandomPassword();
+    const password = generateRandomPassword();
     onChange(password);
     setFieldValue('rootPassword', password);
     form.validateFields(['rootPassword']);
@@ -115,13 +115,14 @@ export default function PasswordInput({
                   id: 'Dashboard.components.PasswordInput.PleaseRememberThePasswordOr',
                   defaultMessage: '请牢记密码，也可',
                 })}
-
+                {' '}
                 <a onClick={passwordCopy}>
                   {intl.formatMessage({
                     id: 'Dashboard.components.PasswordInput.CopyPassword',
                     defaultMessage: '复制密码',
                   })}
                 </a>
+                {' '}
                 {intl.formatMessage({
                   id: 'Dashboard.components.PasswordInput.AndKeepItProperly',
                   defaultMessage: '并妥善保存',

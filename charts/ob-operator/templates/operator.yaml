@@ -2713,6 +2713,7 @@ spec:
                 - root
                 type: object
             required:
+            - clusterId
             - clusterName
             - observer
             - topology
@@ -12028,6 +12029,12 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - pods/log
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
   - secrets
   verbs:
   - create
@@ -12707,7 +12714,7 @@ spec:
       containers:
       - args:
         - --health-probe-bind-address=:8081
-        - --metrics-bind-address=:8080
+        - --metrics-bind-address=127.0.0.1:8080
         - --leader-elect
         - --manager-namespace={{ .Release.Namespace }}
         - --log-verbosity=0

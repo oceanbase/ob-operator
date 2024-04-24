@@ -13,13 +13,13 @@ export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse
   };
 }
 
-export async function getAllTenants(
-  obcluster?: string,
-): Promise<API.TenantsListResponse> {
-  let query = '';
-  if (obcluster) query = `?obcluster=${obcluster}`;
-  return request(`${tenantPrefix}${query}`, {
+export async function getAllTenants(params?: {
+  obcluster?: string;
+  ns?: string;
+}): Promise<API.TenantsListResponse> {
+  return request(`${tenantPrefix}`, {
     method: 'GET',
+    params: params,
   });
 }
 
@@ -27,10 +27,10 @@ export async function getTenant({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.TenantBasicInfoResponse> {
-  let r = await request(`${tenantPrefix}/${ns}/${name}`, {
+  const r = await request(`${tenantPrefix}/${ns}/${name}`, {
     method: 'GET',
   });
-  let infoKeys = [
+  const infoKeys = [
     'charset',
     'clusterResourceName',
     'tenantName',
@@ -40,9 +40,9 @@ export async function getTenant({
     'name',
     'namespace',
     'locality',
-    'primaryZone'
+    'primaryZone',
   ];
-  let res: API.TenantBasicInfo = {
+  const res: API.TenantBasicInfo = {
     info: {},
     source: {},
     replicas: [],
@@ -120,7 +120,7 @@ export async function getBackupPolicy({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.BackupPolicyResponse> {
-  let r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
+  const r = await request(`${tenantPrefix}/${ns}/${name}/backupPolicy`);
   const keys = [
     'destType',
     'archivePath',
@@ -154,18 +154,17 @@ export async function getBackupJobs({
   type: API.JobType;
   limit?: number;
 }): Promise<API.BackupJobsResponse> {
-  let limitQuery = limit ? `?limit=${limit}` : '';
-  let r = await request(
-    `${tenantPrefix}/${ns}/${name}/backup/${type}/jobs${limitQuery}`,
-  );
+  const r = await request(`${tenantPrefix}/${ns}/${name}/backup/${type}/jobs`, {
+    params: { limit },
+  });
   let res: API.BackupJob[] = [];
   if (r.successful) {
     res = r.data?.map((job: API.BackupJob) => ({
       encryptionSecret: job.encryptionSecret,
-      endTime: job.endTime,
+      endTime: job.endTime.split('.')[0], // Intercept time string, accurate to seconds
       name: job.name,
       path: job.path,
-      startTime: job.startTime,
+      startTime: job.startTime.split('.')[0],
       status: job.status,
       statusInDatabase: job.statusInDatabase,
       type: job.type,
@@ -195,10 +194,10 @@ export async function changeTenantRole({
   ns,
   name,
   ...body
-}: API.NamespaceAndName & API.RoleReqParam ): Promise<API.CommonResponse> {
+}: API.NamespaceAndName & API.RoleReqParam): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/role`, {
     method: 'POST',
-    data: body
+    data: body,
   });
 }
 
@@ -231,20 +230,6 @@ export async function upgradeTenantCompatibilityVersion({
 }: API.NamespaceAndName): Promise<API.CommonResponse> {
   return request(`${tenantPrefix}/${ns}/${name}/version`, {
     method: 'POST',
-  });
-}
-
-export async function modifyUnitConfig({
-  ns,
-  name,
-  zone,
-  ...body
-}: API.NamespaceAndName & {
-  zone: string;
-} & API.UnitConfig): Promise<API.CommonResponse> {
-  return request(`${tenantPrefix}/${ns}/${name}/${zone}`, {
-    method: 'PUT',
-    data: body,
   });
 }
 

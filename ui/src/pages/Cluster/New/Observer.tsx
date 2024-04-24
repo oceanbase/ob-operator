@@ -9,12 +9,18 @@ import {
   Row,
   Tooltip,
 } from 'antd';
+import { FormInstance } from 'antd/lib/form';
 
 import SelectWithTooltip from '@/components/SelectWithTooltip';
 import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
 import { clone } from 'lodash';
 import styles from './index.less';
+
+interface ObserverProps {
+  storageClasses: API.TooltipData[] | undefined;
+  form: FormInstance<API.CreateClusterData>;
+}
 
 const observerToolTipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Observer.TheImageShouldBeFully',
@@ -26,7 +32,7 @@ export const TooltipItemContent = ({ item }) => {
   return (
     <ul style={{ margin: 0, padding: '10px' }}>
       {item.toolTipData.map((data: any) => {
-        let key = Object.keys(data)[0];
+        const key = Object.keys(data)[0];
         if (typeof data[key] === 'string') {
           return (
             <li style={{ listStyle: 'none' }} key={key}>
@@ -42,7 +48,7 @@ export const TooltipItemContent = ({ item }) => {
             </li>
           );
         } else {
-          let value = JSON.stringify(data[key]) || String(data[key]);
+          const value = JSON.stringify(data[key]) || String(data[key]);
           return (
             <li style={{ listStyle: 'none' }} key={key}>
               <div
@@ -62,7 +68,7 @@ export const TooltipItemContent = ({ item }) => {
   );
 };
 
-export default function Observer({ storageClasses, form }: any) {
+export default function Observer({ storageClasses, form }: ObserverProps) {
   const CustomItem = (prop: any) => {
     const { label, message } = prop;
     return (
@@ -89,7 +95,7 @@ export default function Observer({ storageClasses, form }: any) {
   };
 
   const setMinimalConfiguration = () => {
-    let originObserver = clone(form.getFieldsValue());
+    const originObserver = clone(form.getFieldsValue());
     form.setFieldsValue({
       ...originObserver,
       observer: {

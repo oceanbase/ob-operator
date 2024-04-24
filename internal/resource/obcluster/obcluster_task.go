@@ -352,6 +352,12 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      jobName,
 			Namespace: m.OBCluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				Kind:       m.OBCluster.Kind,
+				APIVersion: m.OBCluster.APIVersion,
+				Name:       m.OBCluster.Name,
+				UID:        m.OBCluster.UID,
+			}},
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
@@ -372,31 +378,30 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	var jobObject *batchv1.Job
-	for {
-		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-		jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+	check := func() (bool, error) {
+		jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
 		if err != nil {
-			m.Logger.Error(err, "Failed to get job")
+			return false, errors.Wrap(err, "Failed to get job")
 		}
 		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
+			return false, nil
+		} else if jobObject.Status.Succeeded == 1 {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
+			return true, nil
 		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
-			break
+			return false, errors.Wrap(err, "Failed to run validate job")
 		}
 	}
-
-	if jobObject.Status.Succeeded == 1 {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-	} else {
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", jobName)
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	if err != nil {
 		return errors.Wrap(err, "Failed to run validate job")
 	}
 	return nil
 }
 
 func UpgradeCheck(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradeCheckerScriptPath, "")
 }
 
 func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
@@ -436,10 +441,9 @@ func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func BeginUpgrade(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePreScriptPath, "")
 }
 
-// TODO: add timeout
 func RollingUpgradeByZone(m *OBClusterManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		zones, err := m.listOBZones()
@@ -463,7 +467,7 @@ func RollingUpgradeByZone(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func FinishUpgrade(m *OBClusterManager) tasktypes.TaskError {
-	return resourceutils.ExecuteUpgradeScript(m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
+	return resourceutils.ExecuteUpgradeScript(m.Ctx, m.Client, m.Logger, m.OBCluster, oceanbaseconst.UpgradePostScriptPath, "")
 }
 
 func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
@@ -869,7 +873,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		var maxCheckTimes = 600
 		for i := 0; i < maxCheckTimes; i++ {
 			time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
-			jobObject, err = resourceutils.GetJob(m.Client, m.OBCluster.Namespace, jobName)
+			jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
 			if err != nil {
 				m.Logger.Error(err, "Failed to get job")
 				return err
@@ -899,7 +903,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	// check version strictly matches
-	targetVersionStr, err := resourceutils.RunJob(m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
+	targetVersionStr, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
 	if err != nil {
 		return errors.Wrap(err, "get target oceanbase version")
 	}
@@ -982,4 +986,72 @@ func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+}
+
+func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
+	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
+	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
+	jobName := m.OBCluster.Name + "-check-fs-" + rand.String(6)
+	// Create PVC
+	storageSpec := m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
+	requestsResources := corev1.ResourceList{}
+	// Try fallocate to check if the filesystem meet the requirement.
+	// The checker requires 4Mi space, we set the request to 64Mi for safety.
+	requestsResources["storage"] = storageSpec.Size
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      claimName,
+			Namespace: m.OBCluster.Namespace,
+			OwnerReferences: []metav1.OwnerReference{{
+				APIVersion: m.OBCluster.APIVersion,
+				Kind:       m.OBCluster.Kind,
+				Name:       m.OBCluster.Name,
+				UID:        m.OBCluster.UID,
+			}},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			Resources: corev1.ResourceRequirements{
+				Requests: requestsResources,
+			},
+			StorageClassName: &storageSpec.StorageClass,
+		},
+	}
+	err := m.Client.Create(m.Ctx, pvc)
+	if err != nil {
+		return errors.Wrap(err, "Create pvc for checking storage")
+	}
+	defer func() {
+		err = m.Client.Delete(m.Ctx, pvc)
+		if err != nil {
+			m.Logger.Info("Failed to delete pvc for checking storage")
+		}
+	}()
+	// Assemble volumeConfigs
+	volumeConfigs := resourceutils.JobContainerVolumes{
+		Volumes: []corev1.Volume{{
+			Name: volumeName,
+			VolumeSource: corev1.VolumeSource{
+				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+					ClaimName: claimName,
+				},
+			},
+		}},
+		VolumeMounts: []corev1.VolumeMount{{
+			Name:      volumeName,
+			MountPath: oceanbaseconst.ClogPath,
+		}},
+	}
+	_, exitCode, err := resourceutils.RunJob(
+		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		jobName,
+		m.OBCluster.Spec.OBServerTemplate.Image,
+		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
+		volumeConfigs,
+	)
+	// exit code 1 means the image version does not support the env-check command, just ignore it and try
+	if err != nil && exitCode != 1 {
+		return errors.Wrap(err, "Check filesystem")
+	}
+	return nil
 }

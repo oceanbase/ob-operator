@@ -1,8 +1,9 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { formatStatisticData } from '@/utils/helper';
-import { intl } from '@/utils/intl'; //@ts-nocheck
+import { intl } from '@/utils/intl';
 import { request } from '@umijs/max';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -45,7 +46,7 @@ export async function getEventsReq(params: API.EventParams) {
   if (r.successful) {
     let count = 0;
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
-    for (let event of r.data) {
+    for (const event of r.data) {
       event.id = ++count;
       event.firstOccur = moment
         .unix(event.firstOccur)
@@ -60,10 +61,10 @@ export async function getEventsReq(params: API.EventParams) {
 
 export async function getNodeInfoReq() {
   const r = await request(`${clusterPrefix}/nodes`, { method: 'GET' });
-  let res = [];
+  const res = [];
   if (r.successful) {
-    for (let node of r.data) {
-      let obj = {};
+    for (const node of r.data) {
+      const obj = {};
       Object.assign(obj, node.info, node.resource);
       obj.cpu = ((obj.cpuUsed / obj.cpuTotal) * 100).toFixed(1);
       obj.memory = ((obj.memoryUsed / obj.memoryTotal) * 100).toFixed(1);
@@ -76,12 +77,12 @@ export async function getNodeInfoReq() {
 
 export async function getNodeLabelsReq() {
   const r = await request(`${clusterPrefix}/nodes`, { method: 'GET' });
-  let res = { key: [], value: [], originLabels: [] };
+  const res = { key: [], value: [], originLabels: [] };
   if (r.successful) {
-    for (let node of r.data) {
+    for (const node of r.data) {
       res.originLabels = res.originLabels.concat(node.info.labels);
     }
-    for (let label of res.originLabels) {
+    for (const label of res.originLabels) {
       const { key, value } = label;
       res.key.push({ label: key, value: key });
       res.value.push({ label: value, value: value });
@@ -123,13 +124,13 @@ export async function getObclusterListReq() {
     method: 'GET',
   });
   if (r.successful) {
-    let res: API.ClusterList = [];
-    for (let cluster of r.data) {
-      let obj = {};
+    const res: API.ClusterList = [];
+    for (const cluster of r.data) {
+      const obj = {};
       cluster.createTime = moment
         .unix(cluster.createTime)
         .format('YYYY-MM-DD HH:mm:ss');
-      for (let key in cluster) {
+      for (const key in cluster) {
         if (key !== 'metrics') {
           obj[key] = cluster[key];
         } else if (cluster['metrics']) {
@@ -307,8 +308,8 @@ export async function getNameSpaces() {
     method: 'GET',
   });
   if (r.successful) {
-    let res = [];
-    for (let item of r.data) {
+    const res = [];
+    for (const item of r.data) {
       res.push({
         value: item.namespace,
         label: item.namespace,
@@ -336,9 +337,9 @@ export async function getStorageClasses(): Promise<API.StorageClassesResponse> {
     method: 'GET',
   });
   if (r.successful) {
-    let res = [];
-    for (let item of r.data) {
-      let toolTipData = [];
+    const res = [];
+    for (const item of r.data) {
+      const toolTipData = [];
       Object.keys(item).forEach((key) => {
         // if (key !== 'name') toolTipData.push({[key]:item[key]})
         toolTipData.push({ [key]: item[key] });
@@ -366,8 +367,8 @@ export async function getAllMetrics(type: API.MetricScope) {
 }
 
 const setMetricNameFromLabels = (labels:API.MetricsLabels)=>{
-  let tenantName = labels.find((label) => label.key === 'tenant_name')?.value;
-  let clustetName = labels
+  const tenantName = labels.find((label) => label.key === 'tenant_name')?.value;
+  const clustetName = labels
     .filter((label) => label.key === 'ob_cluster_name')
     .map((label) => label.value)
     .join(',');
@@ -381,7 +382,7 @@ const filterMetricsData = (
   filterData: API.ClusterItem[] | API.TenantDetail[],
 ) => {
   return metricsData.filter((item) => {
-    let targetName =
+    const targetName =
       item?.metric?.labels?.find(
         (label) =>
           label.key === (type === 'tenant' ? 'tenant_name' : 'ob_cluster_name'),
@@ -415,7 +416,7 @@ export async function queryMetricsReq({
         item.date = item.timestamp * 1000;
         if (type === 'OVERVIEW') {
           if (useFor === 'tenant') {
-            let metricLabels = metric.metric.labels;
+            const metricLabels = metric.metric.labels;
             if (metricLabels.length > 1) {
               item.name = setMetricNameFromLabels(metricLabels);
             } else {
@@ -432,7 +433,7 @@ export async function queryMetricsReq({
         }
       });
     });
-    let res = _.flatten(r.data.map((metric) => metric.values));
+    const res = _.flatten(r.data.map((metric) => metric.values));
     return res;
   }
   return r.data || [];
@@ -442,25 +443,18 @@ export async function getEssentialParameters({
   ns,
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
-  // return request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
   const r = await request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
   const formatResourceAttr = ['availableDataDisk','availableLogDisk','availableMemory']
   if(r.successful){
     r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
     r.data.obServerResources.forEach((item)=>{
-      for(let attr of formatResourceAttr){
-        item[attr] = item[attr] / (1<<30)
-        // if(attr === 'availableMemory' && item.obZone === 'zone1'){
-        //   item[attr] = 3
-        // }
+      for(const attr of formatResourceAttr){
+        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1<<30)); 
       }
     })
     Object.keys(r.data.obZoneResourceMap).forEach((key)=>{
-      for(let attr of formatResourceAttr){
-        r.data.obZoneResourceMap[key][attr] = r.data.obZoneResourceMap[key][attr] / (1 << 30);
-        // if(attr === 'availableMemory' && key === 'zone1'){
-        //   r.data.obZoneResourceMap[key][attr] = 3
-        // }
+      for(const attr of formatResourceAttr){
+        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(r.data.obZoneResourceMap[key][attr] / (1 << 30));
       }
     }) 
     return r

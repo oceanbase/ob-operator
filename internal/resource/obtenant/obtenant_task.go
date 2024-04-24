@@ -16,7 +16,6 @@ package obtenant
 import (
 	"fmt"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -30,7 +29,6 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -222,12 +220,7 @@ func CreateEmptyStandbyTenant(m *OBTenantManager) tasktypes.TaskError {
 	}
 	ns := m.OBTenant.GetNamespace()
 	tenantCRName := *m.OBTenant.Spec.Source.Tenant
-	splits := strings.Split(*m.OBTenant.Spec.Source.Tenant, "/")
-	if len(splits) == 2 {
-		ns = splits[0]
-		tenantCRName = splits[1]
-	}
-	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, con, ns, tenantCRName)
+	restoreSource, err := resourceutils.GetTenantRestoreSource(m.Ctx, m.Client, m.Logger, ns, tenantCRName)
 	if err != nil {
 		return err
 	}
@@ -341,22 +334,27 @@ func CreateTenantRestoreJobCR(m *OBTenantManager) tasktypes.TaskError {
 
 func WatchRestoreJobToFinish(m *OBTenantManager) tasktypes.TaskError {
 	var err error
-	for {
+	check := func() (bool, error) {
 		runningRestore := &v1alpha1.OBTenantRestore{}
 		err = m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.OBTenant.GetNamespace(),
 			Name:      m.OBTenant.Name + "-restore",
 		}, runningRestore)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if runningRestore.Status.Status == constants.RestoreJobSuccessful {
-			break
+			return true, nil
 		} else if runningRestore.Status.Status == constants.RestoreJobFailed {
 			m.Recorder.Event(m.OBTenant, "RestoreJobFailed", "", "Restore job failed")
-			return errors.New("Restore job failed")
+			return false, errors.New("Restore job failed")
 		}
-		time.Sleep(5 * time.Second)
+		return false, nil
+	}
+	// Tenant restoring is in common quite a slow process, so we need to wait for a longer time
+	err = resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.LocalityChangeTimeoutSeconds)
+	if err != nil {
+		return errors.Wrap(err, "Failed to wait for restore job to finish")
 	}
 	tenantWhiteListMap.Store(m.OBTenant.Spec.TenantName, m.OBTenant.Spec.ConnectWhiteList)
 	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "Restore job finished successfully")
@@ -527,18 +525,19 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 			return err
 		}
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait For Tenant 'ALTER_TENANT' Job for addPool Finished", "tenantName", tenantName)
-	for {
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job of adding pool task", "tenantName", tenantName)
+	check := func() (bool, error) {
 		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+			return false, errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}
-		if !exist {
-			break
-		}
-		time.Sleep(config.PollingJobSleepTime)
+		return !exist, nil
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' Job for addPool successes", "tenantName", tenantName)
+	err = resourceutils.CheckJobWithTimeout(check)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Failed to wait for 'ALTER_TENANT' job of adding pool task to finish %s", tenantName))
+	}
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' job of adding pool task succeeded", "tenantName", tenantName)
 	return nil
 }
 

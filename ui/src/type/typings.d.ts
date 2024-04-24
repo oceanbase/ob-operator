@@ -1,6 +1,3 @@
-/* eslint-disable */
-// 该文件由 OneAPI 自动生成，请勿手动修改！
-
 declare namespace API {
   interface User {
     username: string;
@@ -198,6 +195,65 @@ declare namespace API {
     };
   };
 
+  type CreateClusterData = {
+    backupVolume?: {
+      address: string;
+      path: string;
+    };
+    clusterId?: number;
+    clusterName: string;
+    mode: ClusterMode;
+    monitor?: {
+      image: string;
+      resource: {
+        cpu: number;
+        memory: number;
+      };
+    };
+    name: string;
+    namespace: string;
+    observer: {
+      image: string;
+      resource: {
+        cpu: number;
+        memory: number;
+      };
+      storage: {
+        data: {
+          size: number;
+          storageClass: string;
+        };
+        log: {
+          size: number;
+          storageClass: string;
+        };
+        redoLog: {
+          size: number;
+          storageClass: string;
+        };
+      };
+    };
+    parameters?: [
+      {
+        key: string;
+        value: string;
+      },
+    ];
+    rootPassword: string;
+    topology: [
+      {
+        nodeSelector: [
+          {
+            key: string;
+            value: string;
+          },
+        ];
+        replicas: number;
+        zone: string;
+      },
+    ];
+  };
+
   type Metrics = {
     cpuPercent: number;
     diskPercent: number;
@@ -383,6 +439,9 @@ declare namespace API {
     | 'svr_ip'
     | 'obzone';
 
+  type BackupType = 'Full' | 'Incremental';
+  type ScheduleType = 'Weekly' | 'Monthly';
+
   type MetricsLabels = { key: LableKeys; value: string }[];
   type QueryMetricsType = {
     groupLabels: string[];
@@ -433,7 +492,7 @@ declare namespace API {
   };
 
   type ScheduleDatesType = {
-    backupType: 'Full' | 'Incremental';
+    backupType: BackupType;
     day: number;
   }[];
 
@@ -455,7 +514,7 @@ declare namespace API {
     destType: DestType;
     archivePath: string;
     bakDataPath: string;
-    scheduleType: string;
+    scheduleType: API.ScheduleType;
     scheduleTime: string;
     scheduleDates: ScheduleDatesType;
   }
@@ -528,6 +587,7 @@ declare namespace API {
     unitConfig: UnitConfig;
     unitNum: number;
   };
+
   type TenantPolicy = {
     archivePath: string;
     bakDataPath: string;
@@ -540,7 +600,7 @@ declare namespace API {
     recoveryDays?: number;
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
-    scheduleType: 'Weekly' | 'Monthly';
+    scheduleType: ScheduleType;
   };
 
   type UpdateTenantPolicy = {
@@ -548,7 +608,7 @@ declare namespace API {
     pieceIntervalDays?: number;
     recoveryDays?: number;
     scheduleDates?: ScheduleDatesType;
-    scheduleType?: 'Weekly' | 'Monthly';
+    scheduleType?: ScheduleType;
     status?: string;
   };
 
@@ -583,7 +643,7 @@ declare namespace API {
     minPoolMemory: number;
     obServerResources: ServerResource[];
     obZoneResourceMap: {
-      [T]: ZoneResource;
+      [T: string]: ZoneResource;
     };
   };
 
@@ -653,7 +713,7 @@ declare namespace API {
     recoveryDays: string;
     scheduleDates: ScheduleDatesType;
     scheduleTime: string;
-    scheduleType: string;
+    scheduleType: API.ScheduleType;
     status: string;
     tenantName: string;
   }
@@ -717,18 +777,72 @@ declare namespace API {
     data: TenantBasicInfo;
   }
 
+  type Source = {
+    primaryTenant?: string;
+    archiveSource?: string;
+    bakDataSource?: string;
+    until?: string;
+  };
+
   type TenantBasicInfo = {
     info: InfoType;
-    source?: {
-      primaryTenant?: string;
-      archiveSource?: string;
-      bakDataSource?: string;
-      until?: string;
-    };
+    source?: Source;
     replicas?: ReplicaDetailType[];
   };
 
   interface EssentialParametersTypeResponse extends CommonResponse {
     data: EssentialParametersType;
   }
+
+  // form data
+  interface NewBackupForm {
+    destType: API.DestType;
+    archivePath: string;
+    bakDataPath: string;
+    scheduleDates: OBTenant.ScheduleDates;
+    scheduleTime: Date;
+    ossAccessId?: string;
+    ossAccessKey?: string;
+    bakEncryptionPassword?: string;
+    jobKeepDays?: number;
+    recoveryDays?: number;
+    pieceIntervalDays?: number;
+  }
+
+  interface NewTenantForm {
+    obcluster: string;
+    name: string;
+    tenantName: string;
+    rootPassword: string;
+    unitNum: number;
+    connectWhiteList?: string[];
+    unitConfig: UnitConfig;
+    tenantRole?: API.TenantRole;
+    source?: {
+      restore: {
+        type: API.DestType;
+        archiveSource: string;
+        bakDataSource: string;
+        bakEncryptionPassword?: string;
+        ossAccessId?: string;
+        ossAccessKey?: string;
+        until?: {
+          date: Date;
+          time: Date;
+        };
+      };
+      tenant?: string;
+    };
+    pools: {
+      [T: string]: {
+        checked: boolean;
+        priority: number | undefined;
+      };
+    };
+  }
+  type CommonModalType = {
+    visible: boolean;
+    setVisible: (prop: boolean) => void;
+    successCallback?: (val?: any) => void;
+  };
 }

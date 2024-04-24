@@ -37,15 +37,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
-        },
-        blog: {
-          showReadingTime: true,
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
-          editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+          editUrl: 'https://github.com/oceanbase/ob-operator/tree/master/docsite',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -56,6 +48,9 @@ const config: Config = {
 
   trailingSlash: false,
   themeConfig: {
+    metadata: [
+      { name: 'keywords', content: 'oceanbase, kubernetes, operator, manual, deployment, backup, database, distributed database, mysql, sql, cloud native' },
+    ],
     algolia: {
       appId: '6JQM9QDU5V',
       apiKey: '75f5591a502e47777a08a02b96bc09a1',
@@ -94,8 +89,9 @@ const config: Config = {
           position: 'right',
         },
         {
-          href: 'https://github.com/oceanbase',
-          label: 'GitHub',
+          href: 'https://github.com/oceanbase/ob-operator',
+          className: 'header-github-link',
+          'aria-label': 'GitHub repository',
           position: 'right',
         },
       ],

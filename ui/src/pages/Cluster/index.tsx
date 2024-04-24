@@ -7,25 +7,22 @@ import { useState } from 'react';
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
 import ClusterList from './ClusterList';
-// import Monitor from './Monitor';
 import { getObclusterListReq } from '@/services';
-import type { LabelType,QueryRangeType } from '../../components/MonitorDetail';
 
-const defaultQueryRange:QueryRangeType = {
+const defaultQueryRange:Monitor.QueryRangeType = {
   step: 20,
   endTimestamp: Math.floor(new Date().valueOf() / 1000),
   startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 }
 
-//集群概览页
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
-  const [clusterNames, setClusterNames] = useState<LabelType[]>([]);
+  const [clusterNames, setClusterNames] = useState<Monitor.LabelType[]>([]);
 
   const { data: clusterListRes, loading } = useRequest(getObclusterListReq, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        let clusterNames: LabelType[] = data.map((item) => ({
+        const clusterNames: Monitor.LabelType[] = data.map((item) => ({
           key: 'ob_cluster_name',
           value: item.clusterName,
         }));

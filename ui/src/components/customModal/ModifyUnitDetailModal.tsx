@@ -1,28 +1,24 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT,getMinResource } from '@/constants';
+import { SUFFIX_UNIT, getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
-import type {
-MaxResourceType,
-MinResourceConfig,
-} from '@/pages/Tenant/New/ResourcePools';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
 import {
-findMinParameter,
-modifyZoneCheckedStatus,
+  findMinParameter,
+  modifyZoneCheckedStatus,
 } from '@/pages/Tenant/helper';
 import {
-createObtenantPoolReportWrap,
-patchObtenantPoolReportWrap
+  createObtenantPoolReportWrap,
+  patchObtenantPoolReportWrap,
 } from '@/services/reportRequest/tenantReportReq';
 import { formatPatchPoolData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { useParams } from '@umijs/max';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import SelectWithTooltip from '../SelectWithTooltip';
 
-import { Col,Form,Row,Select,message } from 'antd';
-import type { CommonModalType } from '.';
+import { Col, Form, Row, Select, message } from 'antd';
+
 import CustomModal from '.';
 
 export type PoolDetailType = {
@@ -75,21 +71,21 @@ export default function ModifyUnitDetailModal({
     setClusterList,
     essentialParameter,
     clusterResourceName = '',
-    editZone, 
+    editZone,
     replicaList,
     newResourcePool = false, // This parameter can be used to determine whether to edit or add
     setEditZone,
     zonesOptions,
     zoneName,
   },
-}: CommonModalType & UnitConfigType) {
+}: API.CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
   const { ns, name } = useParams();
-  const [maxResource, setMaxResource] = useState<MaxResourceType>({});
-  const [minResource, setMinResource] = useState<MinResourceConfig>(
+  const [maxResource, setMaxResource] = useState<OBTenant.MaxResourceType>({});
+  const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter?.minPoolMemory }),
   );
-  
+
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
@@ -157,7 +153,7 @@ export default function ModifyUnitDetailModal({
   };
 
   const getInitialValues = (editZone: string) => {
-    let result = {};
+    const result = {};
     const zone = replicaList?.find((replica) => replica.zone === editZone);
     result.unitConfig = {
       cpuCount: zone?.minCPU,
@@ -177,7 +173,7 @@ export default function ModifyUnitDetailModal({
     return result;
   };
 
-  let targetCluster = clusterList.find(
+  const targetCluster = clusterList.find(
     (cluster) => cluster.name === clusterResourceName,
   );
   let targetZoneList =
@@ -339,17 +335,18 @@ export default function ModifyUnitDetailModal({
                   })}
                 </h3>
                 {targetZoneList.map((item, index) => (
-                  <ZoneItem
-                    key={index}
-                    name={item.zone}
-                    isEdit={Boolean(editZone)}
-                    priorityName={[item.zone, 'priority']}
-                    checked={item.checked!}
-                    obZoneResource={
-                      essentialParameter.obZoneResourceMap[item.zone]
-                    }
-                    checkBoxOnChange={checkBoxOnChange}
-                  />
+                  <div key={index}>
+                    <ZoneItem
+                      name={item.zone}
+                      isEdit={Boolean(editZone)}
+                      priorityName={[item.zone, 'priority']}
+                      checked={item.checked!}
+                      obZoneResource={
+                        essentialParameter.obZoneResourceMap[item.zone]
+                      }
+                      checkBoxOnChange={checkBoxOnChange}
+                    />
+                  </div>
                 ))}
               </Row>
             )}
@@ -503,10 +500,7 @@ export default function ModifyUnitDetailModal({
           <Col span={8}>
             <Row gutter={24}>
               <Col>
-                <Form.Item
-                  label="min iops"
-                  name={['unitConfig', 'minIops']}
-                >
+                <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
                   <InputNumber
                     min={minResource.minIops}
                     placeholder={intl.formatMessage({
@@ -517,10 +511,7 @@ export default function ModifyUnitDetailModal({
                 </Form.Item>
               </Col>
               <Col>
-                <Form.Item
-                  label="max iops"
-                  name={['unitConfig', 'maxIops']}
-                >
+                <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
                   <InputNumber
                     min={minResource.maxIops}
                     placeholder={intl.formatMessage({

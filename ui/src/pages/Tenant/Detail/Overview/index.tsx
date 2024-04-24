@@ -2,25 +2,23 @@ import EventsTable from '@/components/EventsTable';
 import showDeleteConfirm from '@/components/customModal/DeleteModal';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
-import { useParams } from '@umijs/max';
 import {
 getEssentialParameters as getEssentialParametersReq,
 getSimpleClusterList,
 } from '@/services';
+import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import {
 getBackupJobs,
 getBackupPolicy,
 getTenant,
 } from '@/services/tenant';
-import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
+import { history,useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button,Row,Tooltip,message } from 'antd';
-import { cloneDeep } from 'lodash';
-import { useEffect,useRef,useState } from 'react';
+import { useEffect,useMemo,useRef,useState } from 'react';
 import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '../../helper';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
@@ -35,16 +33,12 @@ type OperateItemConfigType = {
   danger?: boolean;
 };
 
-export type OperateType = 'edit'|'create';
-
-export type ClusterNSName = { ns?: string; name?: string };
-
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
-  const operateTypeRef = useRef<OperateType>();
+  const operateTypeRef = useRef<OBTenant.OperateType>();
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
   const { ns, name } = useParams();
@@ -67,7 +61,7 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType, operateType?: OperateType) => {
+  const openOperateModal = (type: API.ModalType, operateType?: OBTenant.OperateType) => {
     if (operateType) {
       operateTypeRef.current = operateType;
     }
@@ -76,7 +70,7 @@ export default function TenantOverview() {
   };
 
   const handleDelete = async () => {
-    const res = await deleteTenantReportWrap({ ns, name });
+    const res = await deleteTenantReportWrap({ ns:ns!, name:name! });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -112,10 +106,10 @@ export default function TenantOverview() {
   });
 
   const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
-    defaultParams: [{ name, ns }],
+    defaultParams: [{ name:name!, ns:ns! }],
   });
   const { data: backupJobsResponse } = useRequest(getBackupJobs, {
-    defaultParams: [{ name, ns, type: 'FULL' }],
+    defaultParams: [{ name:name!, ns:ns!, type: 'FULL' }],
   });
 
   const tenantDetail = tenantDetailResponse?.data;
@@ -217,7 +211,7 @@ export default function TenantOverview() {
     }, 1000);
   };
   const header = () => {
-    let container = document.getElementById('tenant-detail-container');
+    const container = document.getElementById('tenant-detail-container');
     return {
       title: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.TenantOverview',
@@ -258,28 +252,8 @@ export default function TenantOverview() {
     };
   };
 
-  /**
-   * @describe Filter the zones that exist in the tenant resource pool in the cluster
-   */
-  const formatClustersTopology = (
-    clusters: API.SimpleClusterList,
-    tenantDetail: API.TenantBasicInfo | undefined,
-  ) => {
-    const newClusters = cloneDeep(clusters);
-    if (!tenantDetail) return newClusters;
-    const { clusterResourceName } = tenantDetail.info;
-    const { replicas } = tenantDetail;
-    const cluster = getClusterFromTenant(newClusters,clusterResourceName)
-    if (cluster && cluster.topology) {
-      cluster.topology = cluster.topology.filter((zone) =>
-        replicas?.find((item) => item.zone === zone.zone),
-      );
-    }
-    return newClusters;
-  };
-
   useEffect(() => {
-    getTenantDetail({ ns, name });
+    getTenantDetail({ name:name!, ns:ns! });
 
     return () => {
       if (timerRef.current) {
@@ -310,7 +284,16 @@ export default function TenantOverview() {
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
         <Row justify="start" gutter={[16, 16]}>
-            <BasicInfo loading={loading} info={tenantDetail?.info} source={tenantDetail?.source} />
+          {useMemo(() => {
+            return (
+              <BasicInfo
+                loading={loading}
+                info={tenantDetail?.info}
+                source={tenantDetail?.source}
+              />
+            );
+          }, [tenantDetail])}
+
           {tenantDetail && tenantDetail.replicas && (
             <Replicas
               refreshTenant={reGetTenantDetail}
@@ -335,7 +318,11 @@ export default function TenantOverview() {
             />
           )}
 
-          <Backups loading={loading} backupJobs={backupJobs} backupPolicy={backupPolicy} />
+          <Backups
+            loading={loading}
+            backupJobs={backupJobs}
+            backupPolicy={backupPolicy}
+          />
         </Row>
 
         <OperateModal

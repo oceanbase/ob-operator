@@ -1,12 +1,10 @@
 import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Pie } from '@antv/g2plot';
 import { Link } from '@umijs/max';
-import { Button,Card,Col,Table,Tag,Typography } from 'antd';
+import { Button, Card, Col, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
-import { useEffect } from 'react';
 import styles from './index.less';
 interface DataType {
   namespace: string;
@@ -21,11 +19,6 @@ interface DataType {
   clusterName: string;
 }
 
-interface CanvasPieProps {
-  percent: number;
-  name: 'cpu' | 'memory' | 'disk';
-}
-
 interface ClusterListProps {
   handleAddCluster: () => void;
   clusterList: any;
@@ -33,67 +26,6 @@ interface ClusterListProps {
 }
 
 const { Text } = Typography;
-
-const CanvasPie = ({ percent, name }: CanvasPieProps) => {
-  const data = [
-    {
-      type: intl.formatMessage({
-        id: 'OBDashboard.pages.Cluster.ClusterList.Used',
-        defaultMessage: '已使用',
-      }),
-      value: percent,
-    },
-    {
-      type: intl.formatMessage({
-        id: 'OBDashboard.pages.Cluster.ClusterList.Unused',
-        defaultMessage: '未使用',
-      }),
-      value: 100 - percent,
-    },
-  ];
-
-  useEffect(() => {
-    let pie = new Pie(`${name}-container`, {
-      data,
-      angleField: 'value',
-      colorField: 'type',
-      width: 100,
-      height: 100,
-      legend: false,
-      label: {
-        type: 'inner',
-        offset: '-60%',
-        content: ({ percent }) => `${(percent * 100).toFixed(0)}%`,
-        style: {
-          fontSize: 10,
-          textAlign: 'center',
-        },
-      },
-      color: ({ type }) => {
-        if (
-          type ===
-          intl.formatMessage({
-            id: 'OBDashboard.pages.Cluster.ClusterList.Used',
-            defaultMessage: '已使用',
-          })
-        ) {
-          if (name === 'cpu') {
-            return 'rgb(111,143,243)';
-          } else if (name === 'memory') {
-            return 'rgb(125,213,169)';
-          } else {
-            return 'rgb(97,111,143)';
-          }
-        } else {
-          return 'rgb(228,231,236)';
-        }
-      },
-    });
-    pie.render();
-  }, []);
-
-  return <div id={`${name}-container`}></div>;
-};
 
 const columns: ColumnsType<DataType> = [
   {
@@ -104,9 +36,11 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'name',
     key: 'name',
     render: (value, record) => (
-      <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
-        {value}
-      </Link>
+      <Text ellipsis={{ tooltip: value }}>
+        <Link to={`${record.namespace}/${record.name}/${record.clusterName}`}>
+          {value}
+        </Link>
+      </Text>
     ),
   },
   {
@@ -116,6 +50,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'namespace',
     key: 'namespace',
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -124,6 +59,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'clusterName',
     key: 'clusterName',
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -132,7 +68,11 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'mode',
     key: 'mode',
-    render: (value) => <span>{MODE_MAP.get(value)?.text}</span>,
+    render: (value) => (
+      <Text ellipsis={{ tooltip: MODE_MAP.get(value)?.text }}>
+        {MODE_MAP.get(value)?.text}
+      </Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -149,12 +89,9 @@ const columns: ColumnsType<DataType> = [
       defaultMessage: '镜像',
     }),
     dataIndex: 'image',
+    width: '20%',
     key: 'image',
-    render: (value) => (
-      <Text style={{ width: 216 }} ellipsis={{ tooltip: value }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -168,7 +105,7 @@ const columns: ColumnsType<DataType> = [
         {' '}
         {value === 'operating' ? (
           <Text
-            style={{ maxWidth: 110, color: '#d48806',fontSize:12 }}
+            style={{ maxWidth: 110, color: '#d48806', fontSize: 12 }}
             ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
           >
             {value}/{record.statusDetail}
@@ -185,6 +122,7 @@ const columns: ColumnsType<DataType> = [
       defaultMessage: '创建时间',
     }),
     dataIndex: 'createTime',
+    width: 178,
     key: 'createTime',
   },
 
@@ -221,21 +159,24 @@ export default function ClusterList({
 }: ClusterListProps) {
   return (
     <Col span={24}>
-      <Card>
-        <div className={styles.clusterHeader}>
-          <h2>
-            {intl.formatMessage({
-              id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
-              defaultMessage: '集群列表',
-            })}
-          </h2>
-          <Button onClick={handleAddCluster} type="primary">
-            {intl.formatMessage({
-              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-              defaultMessage: '创建集群',
-            })}
-          </Button>
-        </div>
+      <Card
+        title={
+          <div className={styles.clusterHeader}>
+            <h2 style={{ marginBottom: 0 }}>
+              {intl.formatMessage({
+                id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
+                defaultMessage: '集群列表',
+              })}
+            </h2>
+            <Button onClick={handleAddCluster} type="primary">
+              {intl.formatMessage({
+                id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+                defaultMessage: '创建集群',
+              })}
+            </Button>
+          </div>
+        }
+      >
         <Table
           loading={loading}
           columns={columns}

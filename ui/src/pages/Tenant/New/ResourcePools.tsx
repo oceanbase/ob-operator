@@ -11,23 +11,10 @@ import styles from './index.less';
 interface ResourcePoolsProps {
   selectClusterId?: number;
   clusterList: API.SimpleClusterList;
-  form: FormInstance<any>;
+  form: FormInstance<API.NewTenantForm>;
   setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
   essentialParameter?: API.EssentialParametersType;
 }
-export type MaxResourceType = {
-  maxCPU?: number;
-  maxLogDisk?: number;
-  maxMemory?: number;
-};
-
-export type MinResourceConfig = {
-  minCPU: number;
-  minMemory: number;
-  minLogDisk: number;
-  minIops: number;
-  maxIops: number;
-};
 
 export default function ResourcePools({
   selectClusterId,
@@ -36,10 +23,10 @@ export default function ResourcePools({
   setClusterList,
   form,
 }: ResourcePoolsProps) {
-  const [minResource, setMinResource] = useState<MinResourceConfig>(
+  const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource(),
   );
-  const [maxResource, setMaxResource] = useState<MaxResourceType>({});
+  const [maxResource, setMaxResource] = useState<OBTenant.MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
 
   const checkBoxOnChange = (checked: boolean, name: string) => {

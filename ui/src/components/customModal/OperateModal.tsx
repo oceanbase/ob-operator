@@ -1,4 +1,4 @@
-import type { CommonModalType } from '.';
+
 import ActivateTenant from './ActivateTenantModal';
 import AddZoneModal from './AddZoneModal';
 import LogReplayModal from './LogReplayModal';
@@ -17,7 +17,7 @@ interface OperateModalProps {
 export default function OperateModal({
   type,
   ...props
-}: OperateModalProps & CommonModalType) {
+}: OperateModalProps & API.CommonModalType) {
   if (type === 'addZone') {
     return <AddZoneModal {...props} />;
   }

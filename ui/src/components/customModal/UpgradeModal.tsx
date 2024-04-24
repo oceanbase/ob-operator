@@ -3,7 +3,7 @@ import { Form, Input, message } from 'antd';
 
 import { upgradeClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useParams } from '@umijs/max';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 type FieldType = {
@@ -13,7 +13,7 @@ export default function UpgradeModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const [form] = Form.useForm();
   const { ns, name } = useParams();
   const handleSubmit = async () => {

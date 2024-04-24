@@ -4,9 +4,13 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - '**/*.go'
   push:
     branches:
       - master
+    paths:
+      - '**/*.go'
 
 env:
   GO_VERSION: "1.20"

@@ -4,7 +4,7 @@ import { Form, Input, message } from 'antd';
 import { RULER_ZONE } from '@/constants/rules';
 import { addObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useParams } from '@umijs/max';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 import InputNumber from '../InputNumber';
 import NodeSelector from '../NodeSelector';
@@ -17,7 +17,7 @@ export default function AddZoneModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const [form] = Form.useForm();
   const { ns: namespace, name } = useParams();
   const handleSubmit = async () => {

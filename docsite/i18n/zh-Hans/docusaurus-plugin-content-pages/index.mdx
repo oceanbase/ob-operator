@@ -1,8 +1,12 @@
+---
+title: 项目介绍
+---
+
 import Link from "@docusaurus/Link";
 
 # ob-operator
 
-ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。
+`ob-operator` 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。
 
 ## 快速上手
 
@@ -15,7 +19,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，如果您无法访问官方制品托管在 `quay.io` 镜像站的镜像，可通过下面的指令安装我们转托在 `docker.io` 中的制品：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
 本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。
@@ -29,7 +33,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_r
 * 稳定版本
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
 ```
 
 * 开发版本
@@ -45,7 +49,7 @@ Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安�
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.1.2
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.0
 ```
 
 #### 使用 terraform
@@ -94,7 +98,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.1.2_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
 ```
 
 一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
@@ -122,12 +126,14 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
 ### OceanBase Dashboard
-我们很高兴地宣布推出创新的OceanBase Kubernetes Dashboard v0.1.0初始版本，这是一款旨在改善用户在Kubernetes上管理和监控OceanBase集群体验的先进工具。作为我们持续开发与改进承诺的一部分，我们自豪地向用户提供这个首个版本，同时我们也在积极开发新功能和增强未来的更新。
+我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。
 
 安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
+
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.1.0
+helm repo update ob-operator
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
 ```
 
 ![oceanbase-dashboard-install](/img/oceanbase-dashboard-install.jpg)
@@ -138,7 +144,7 @@ echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jso
 ```
 一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
 ```
-kubectl get svc oceanbase-dashboard-ob-dashboard
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
 ![oceanbase-dashboard-service](/img/oceanbase-dashboard-service.jpg)
 
@@ -171,7 +177,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 
 ## 支持的 OceanBase 版本
 
-支持 OceanBase v4.x 版本，已经验证过的有 4.1.x 和 4.2.x 版本，后续会不断支持 OceanBase 社区版的新版本。
+ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase 版本，可参考用户手册获取详细信息。
 
 暂不支持 OceanBase v3.x 版本。
 
@@ -195,10 +201,15 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 如果您在使用 ob-operator 时遇到任何问题，欢迎通过以下方式寻求帮助：
 
 - [GitHub Issue](https://github.com/oceanbase/ob-operator/issues)
-- [官方网站](https://open.oceanbase.com/)
+- [官方论坛](https://ask.oceanbase.com/)
 - [Slack](https://oceanbase.slack.com/archives/C053PT371S7)
-- 钉钉群（[二维码](/img/dingtalk-operator-users.png)）
 - 微信群（请添加小助手微信，微信号: OBCE666）
+- 钉钉群（[二维码](/img/dingtalk-operator-users.png)）
+
+
+<div style={{width: "200px"}}>
+![钉钉群二维码](/img/dingtalk-operator-users.png)
+</div>
 
 ## 参与开发
 

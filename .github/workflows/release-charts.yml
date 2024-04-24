@@ -24,9 +24,11 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
+        uses: powerfooI/chart-releaser-action@v1.6.1
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           mark_as_latest: false
           skip_existing: true
+          pages_branch: master
+          pages_index_path: docsite/static/index.yaml

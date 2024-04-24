@@ -4,14 +4,14 @@ import { message } from 'antd';
 
 import { useParams } from '@umijs/max';
 import { upgradeTenantCompatibilityVersion } from '@/services/tenant';
-import type { CommonModalType } from '.';
+
 import CustomModal from '.';
 
 export default function UpgradeTenantModal({
   visible,
   setVisible,
   successCallback,
-}: CommonModalType) {
+}: API.CommonModalType) {
   const { ns, name } = useParams();
   const { run: upgradeTenant } = useRequest(upgradeTenantCompatibilityVersion, {
     manual: true,

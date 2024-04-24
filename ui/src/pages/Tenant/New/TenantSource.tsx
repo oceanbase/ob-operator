@@ -15,19 +15,17 @@ import {
   Tooltip,
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
-import { FormInstance } from 'antd/lib/form';
 import dayjs from 'dayjs';
 import moment from 'moment';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
 interface TenantSourceProps {
-  form: FormInstance<any>;
-  clusterName: string;
+  ns: string;
 }
 type RoleType = 'PRIMARY' | 'STANDBY';
 const { Password } = Input;
-export default function TenantSource({ form, clusterName }: TenantSourceProps) {
+export default function TenantSource({ ns }: TenantSourceProps) {
   const [isChecked, setIsChecked] = useState<boolean>(false);
   const [recoverChecked, setRecoverChecked] = useState<boolean>(false);
   const [synchronizeChecked, setSynchronizeChecked] = useState<boolean>(false);
@@ -71,7 +69,9 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
   const { run: getTenants, data: tenantListRes } = useRequest(getAllTenants);
 
   const tenantList = tenantListRes?.data
-    .filter((item) => item.status === 'running' && item.tenantRole === 'PRIMARY')
+    .filter(
+      (item) => item.status === 'running' && item.tenantRole === 'PRIMARY',
+    )
     .map((tenant) => ({
       label: tenant.name,
       value: tenant.name,
@@ -115,13 +115,13 @@ export default function TenantSource({ form, clusterName }: TenantSourceProps) {
   };
 
   useEffect(() => {
-    if (synchronizeChecked && clusterName) {
-      getTenants(clusterName);
+    if (synchronizeChecked && ns) {
+      getTenants({ ns });
     }
-  }, [synchronizeChecked, clusterName]);
+  }, [synchronizeChecked, ns]);
 
   useEffect(() => {
-    let [cardBody] = document.querySelectorAll(
+    const [cardBody] = document.querySelectorAll(
       '#tenant-card .ant-card-body',
     ) as NodeListOf<HTMLElement>;
     if (!isChecked && cardBody) {

@@ -10,20 +10,17 @@ import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
 
-
-import type { LabelType,QueryRangeType } from '../../components/MonitorDetail';
-
-const defaultQueryRange: QueryRangeType = {
+const defaultQueryRange: Monitor.QueryRangeType = {
   step: 20,
   endTimestamp: Math.floor(new Date().valueOf() / 1000),
   startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 };
 // tenant overview page
 export default function TenantPage() {
-  const [filterLabel, setFilterLabel] = useState<LabelType[]>([]);
+  const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([]);
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout>();
-  const { data: tenantsListResponse, refresh: reGetAllTenants } = useRequest(
+  const { data: tenantsListResponse, refresh: reGetAllTenants, loading } = useRequest(
     getAllTenants,
     {
       onSuccess: ({ data, successful }) => {
@@ -62,13 +59,11 @@ export default function TenantPage() {
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
-        {tenantsList && (
-          <TenantsList
-            tenantsList={tenantsList}
-            turnToCreateTenant={handleAddCluster}
-          />
-        )}
-
+        <TenantsList
+          loading={loading}
+          tenantsList={tenantsList}
+          turnToCreateTenant={handleAddCluster}
+        />
         <EventsTable objectType="OBTENANT" collapsible={false}/>
       </Row>
       <MonitorComp
