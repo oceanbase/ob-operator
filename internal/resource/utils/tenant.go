@@ -18,11 +18,12 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 // GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
