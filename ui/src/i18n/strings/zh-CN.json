@@ -698,6 +698,7 @@
   "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "天",
   "Dashboard.Cluster.Detail.Connection": "集群连接",
   "Dashboard.Cluster.Detail.Connection1": "集群连接",
+  "Dashboard.Tenant.Detail.Connection1": "连接租户",
   "Dashboard.Cluster.Detail.CloseConnection": "连接已关闭",
   "Dashboard.Cluster.Detail.NotRunning": "集群未运行",
   "Dashboard.Cluster.Detail.CreateConnection": "创建连接",

@@ -704,6 +704,6 @@
   "Dashboard.Cluster.Detail.CreateConnection": "Create connection",
   "Dashboard.components.Terminal.Disconnect": "Disconnect",
   "Dashboard.components.Terminal.Disconnect1": "Are you sure you want to disconnect?",
-  "Dashboard.Tenant.Detail.Connection": "Connect tenants",
+  "Dashboard.Tenant.Detail.Connection": "Tenant connection",
   "Dashboard.Cluster.Detail.AbnormalOperation": "Tenant is not functioning properly"
 }
