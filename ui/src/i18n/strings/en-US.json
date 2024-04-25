@@ -695,5 +695,15 @@
   "Dashboard.Detail.Overview.BasicInfo.ClusterInformation": "Cluster Information",
   "Dashboard.Detail.Overview.ServerTable.ServerList": "Server List",
   "Dashboard.Detail.Overview.ZoneTable.ZoneList": "Zone List",
-  "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "Days"
+  "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "Days",
+  "Dashboard.Cluster.Detail.Connection1": "Connection",
+  "Dashboard.Cluster.Detail.Connection": "Cluster connection",
+  "Dashboard.Tenant.Detail.Connection1": "Connection",
+  "Dashboard.Cluster.Detail.CloseConnection": "Connection closed",
+  "Dashboard.Cluster.Detail.NotRunning": "Cluster is not running",
+  "Dashboard.Cluster.Detail.CreateConnection": "Create connection",
+  "Dashboard.components.Terminal.Disconnect": "Disconnect",
+  "Dashboard.components.Terminal.Disconnect1": "Are you sure you want to disconnect?",
+  "Dashboard.Tenant.Detail.Connection": "Connect tenants",
+  "Dashboard.Cluster.Detail.AbnormalOperation": "Tenant is not functioning properly"
 }
