@@ -247,39 +247,10 @@ func CheckPrimaryTenantLSIntegrity(m *OBTenantManager) tasktypes.TaskError {
 	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
 		return errors.New("Primary tenant must have source tenant")
 	}
-	tenantCR := &v1alpha1.OBTenant{}
-	err = m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.OBTenant.Namespace,
-		Name:      *m.OBTenant.Spec.Source.Tenant,
-	}, tenantCR)
+	err = resourceutils.CheckTenantLSIntegrity(m.Ctx, m.Client, m.Logger, m.OBTenant.Namespace, *m.OBTenant.Spec.Source.Tenant)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Check primary tenant LS integrity")
 	}
-
-	con, err := m.getClusterSysClient()
-	if err != nil {
-		return err
-	}
-	lsDeletion, err := con.ListLSDeletion(int64(tenantCR.Status.TenantRecordInfo.TenantID))
-	if err != nil {
-		return err
-	}
-	if len(lsDeletion) > 0 {
-		return errors.New("LS deletion set is not empty, log is of not integrity")
-	}
-	logStats, err := con.ListLogStats(int64(tenantCR.Status.TenantRecordInfo.TenantID))
-	if err != nil {
-		return err
-	}
-	if len(logStats) == 0 {
-		return errors.New("Log stats is empty, out of expectation")
-	}
-	for _, ls := range logStats {
-		if ls.BeginLSN != 0 {
-			return errors.New("Log stats begin SCN is not 0, log is of not integrity")
-		}
-	}
-
 	return nil
 }
 
