@@ -27,6 +27,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	secretconst "github.com/oceanbase/ob-operator/internal/const/secret"
@@ -413,8 +414,8 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	readinessProbeTCP.Port = intstr.FromInt(oceanbaseconst.SqlPort)
 	readinessProbe := corev1.Probe{}
 	readinessProbe.ProbeHandler.TCPSocket = &readinessProbeTCP
-	readinessProbe.PeriodSeconds = oceanbaseconst.ProbeCheckPeriodSeconds
-	readinessProbe.InitialDelaySeconds = oceanbaseconst.ProbeCheckDelaySeconds
+	readinessProbe.PeriodSeconds = int32(obcfg.GetConfig().Time.ProbeCheckPeriodSeconds)
+	readinessProbe.InitialDelaySeconds = int32(obcfg.GetConfig().Time.ProbeCheckDelaySeconds)
 	readinessProbe.FailureThreshold = 32
 
 	startOBServerCmd := "/home/admin/oceanbase/bin/oceanbase-helper start"
@@ -445,7 +446,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	}
 	envDataFile := corev1.EnvVar{
 		Name:  "DATAFILE_SIZE",
-		Value: fmt.Sprintf("%dG", datafileSize*oceanbaseconst.InitialDataDiskUsePercent/oceanbaseconst.GigaConverter/100),
+		Value: fmt.Sprintf("%dG", datafileSize*int64(obcfg.GetConfig().Resource.InitialDataDiskUsePercent)/oceanbaseconst.GigaConverter/100),
 	}
 	clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
 	if !ok {
@@ -453,7 +454,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	}
 	envLogDisk := corev1.EnvVar{
 		Name:  "LOG_DISK_SIZE",
-		Value: fmt.Sprintf("%dG", clogDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100),
+		Value: fmt.Sprintf("%dG", clogDiskSize*int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent)/oceanbaseconst.GigaConverter/100),
 	}
 	envClusterName := corev1.EnvVar{
 		Name:  "CLUSTER_NAME",

@@ -25,6 +25,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -390,7 +391,7 @@ func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {
 		}
 		return false, nil
 	}
-	err := resourceutils.CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	err := resourceutils.CheckJobWithTimeout(check, time.Second*time.Duration(obcfg.GetConfig().Time.WaitForJobTimeoutSeconds))
 	if err != nil {
 		return errors.Wrap(err, "Timeout to wait obzone upgrade finished")
 	}
