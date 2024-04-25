@@ -24,10 +24,66 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
 // GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
 func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (string, error) {
+	primary, con, err := getTenantAndClusterCon(ctx, clt, logger, ns, tenantCR)
+	if err != nil {
+		return "", err
+	}
+	// Get ip_list from primary tenant
+	aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
+	if err != nil {
+		return "", err
+	}
+	ipList := make([]string, 0)
+	for _, ap := range aps {
+		ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
+	}
+	standbyRoPwd, err := ReadPassword(clt, ns, primary.Status.Credentials.StandbyRO)
+	if err != nil {
+		logger.Error(err, "Failed to read standby ro password")
+		return "", err
+	}
+	// Set restore source
+	restoreSource := fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), oceanbaseconst.StandbyROUser, primary.Spec.TenantName, standbyRoPwd)
+
+	return restoreSource, nil
+}
+
+// CheckTenantLSIntegrity checks LS integrity of tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
+func CheckTenantLSIntegrity(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) error {
+	primary, con, err := getTenantAndClusterCon(ctx, clt, logger, ns, tenantCR)
+	if err != nil {
+		return err
+	}
+	// Check LS integrity
+	lsDeletion, err := con.ListLSDeletion(int64(primary.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(lsDeletion) > 0 {
+		return errors.New("LS deletion set is not empty, log is of not integrity")
+	}
+	logStats, err := con.ListLogStats(int64(primary.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(logStats) == 0 {
+		return errors.New("Log stats is empty, out of expectation")
+	}
+	for _, ls := range logStats {
+		if ls.BeginLSN != 0 {
+			return errors.New("Log stats begin SCN is not 0, log is of not integrity")
+		}
+	}
+
+	return nil
+}
+
+func getTenantAndClusterCon(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (*v1alpha1.OBTenant, *operation.OceanbaseOperationManager, error) {
 	finalNs := ns
 	finalTenantCR := tenantCR
 	splits := strings.Split(tenantCR, "/")
@@ -35,9 +91,7 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		finalNs = splits[0]
 		finalTenantCR = splits[1]
 	}
-	var restoreSource string
 	var err error
-
 	primary := &v1alpha1.OBTenant{}
 	err = clt.Get(ctx, types.NamespacedName{
 		Namespace: finalNs,
@@ -45,8 +99,9 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 	}, primary)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {
-			return "", err
+			return nil, nil, err
 		}
+		return nil, nil, errors.New("tenant not found")
 	} else {
 		obcluster := &v1alpha1.OBCluster{}
 		err := clt.Get(ctx, types.NamespacedName{
@@ -54,29 +109,12 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 			Name:      primary.Spec.ClusterName,
 		}, obcluster)
 		if err != nil {
-			return "", errors.Wrap(err, "get obcluster")
+			return primary, nil, errors.Wrap(err, "get obcluster")
 		}
 		con, err := GetSysOperationClient(clt, logger, obcluster)
 		if err != nil {
-			return "", errors.Wrap(err, "get oceanbase operation manager")
+			return primary, nil, errors.Wrap(err, "get oceanbase operation manager")
 		}
-		// Get ip_list from primary tenant
-		aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
-		if err != nil {
-			return "", err
-		}
-		ipList := make([]string, 0)
-		for _, ap := range aps {
-			ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
-		}
-		standbyRoPwd, err := ReadPassword(clt, ns, primary.Status.Credentials.StandbyRO)
-		if err != nil {
-			logger.Error(err, "Failed to read standby ro password")
-			return "", err
-		}
-		// Set restore source
-		restoreSource = fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), oceanbaseconst.StandbyROUser, primary.Spec.TenantName, standbyRoPwd)
+		return primary, con, nil
 	}
-
-	return restoreSource, nil
 }
