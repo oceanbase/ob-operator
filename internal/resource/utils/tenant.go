@@ -29,7 +29,11 @@ import (
 
 // GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
 func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (string, error) {
-	primary, con, err := getTenantAndClusterCon(ctx, clt, logger, ns, tenantCR)
+	primary, err := getOBTenantInK8s(ctx, clt, ns, tenantCR)
+	if err != nil {
+		return "", err
+	}
+	con, err := getClusterSysConOfOBTenant(ctx, clt, logger, primary)
 	if err != nil {
 		return "", err
 	}
@@ -55,7 +59,11 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 
 // CheckTenantLSIntegrity checks LS integrity of tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
 func CheckTenantLSIntegrity(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) error {
-	primary, con, err := getTenantAndClusterCon(ctx, clt, logger, ns, tenantCR)
+	primary, err := getOBTenantInK8s(ctx, clt, ns, tenantCR)
+	if err != nil {
+		return err
+	}
+	con, err := getClusterSysConOfOBTenant(ctx, clt, logger, primary)
 	if err != nil {
 		return err
 	}
@@ -83,7 +91,7 @@ func CheckTenantLSIntegrity(ctx context.Context, clt client.Client, logger *logr
 	return nil
 }
 
-func getTenantAndClusterCon(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (*v1alpha1.OBTenant, *operation.OceanbaseOperationManager, error) {
+func getOBTenantInK8s(ctx context.Context, clt client.Client, ns, tenantCR string) (*v1alpha1.OBTenant, error) {
 	finalNs := ns
 	finalTenantCR := tenantCR
 	splits := strings.Split(tenantCR, "/")
@@ -99,22 +107,25 @@ func getTenantAndClusterCon(ctx context.Context, clt client.Client, logger *logr
 	}, primary)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {
-			return nil, nil, err
+			return nil, err
 		}
-		return nil, nil, errors.New("tenant not found")
-	} else {
-		obcluster := &v1alpha1.OBCluster{}
-		err := clt.Get(ctx, types.NamespacedName{
-			Namespace: finalNs,
-			Name:      primary.Spec.ClusterName,
-		}, obcluster)
-		if err != nil {
-			return primary, nil, errors.Wrap(err, "get obcluster")
-		}
-		con, err := GetSysOperationClient(clt, logger, obcluster)
-		if err != nil {
-			return primary, nil, errors.Wrap(err, "get oceanbase operation manager")
-		}
-		return primary, con, nil
+		return nil, errors.New("tenant not found")
 	}
+	return primary, nil
+}
+
+func getClusterSysConOfOBTenant(ctx context.Context, clt client.Client, logger *logr.Logger, tenant *v1alpha1.OBTenant) (*operation.OceanbaseOperationManager, error) {
+	obcluster := &v1alpha1.OBCluster{}
+	err := clt.Get(ctx, types.NamespacedName{
+		Namespace: tenant.Namespace,
+		Name:      tenant.Spec.ClusterName,
+	}, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "get obcluster")
+	}
+	con, err := GetSysOperationClient(clt, logger, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "get oceanbase operation manager")
+	}
+	return con, nil
 }
