@@ -833,65 +833,25 @@ outerLoop:
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	var err error
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
-	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		var backoffLimit int32
-		var ttl int32 = 300
-		jobName := "standalone-validate-" + rand.String(8)
-		standaloneValidateJob := &batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      jobName,
-				Namespace: m.OBCluster.Namespace,
-				OwnerReferences: []metav1.OwnerReference{{
-					Kind:       m.OBCluster.Kind,
-					APIVersion: m.OBCluster.APIVersion,
-					Name:       m.OBCluster.Name,
-					UID:        m.OBCluster.UID,
-				}},
-			},
-			Spec: batchv1.JobSpec{
-				Template: corev1.PodTemplateSpec{
-					Spec: corev1.PodSpec{
-						Containers: []corev1.Container{{
-							Name:    "helper-validate-standalone",
-							Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-							Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper standalone validate"},
-						}},
-						RestartPolicy: corev1.RestartPolicyNever,
-					},
-				},
-				BackoffLimit:            &backoffLimit,
-				TTLSecondsAfterFinished: &ttl,
-			},
+	if modeAnnoExist {
+		switch modeAnnoVal {
+		case oceanbaseconst.ModeStandalone:
+			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				m.OBCluster.Name+"-standalone-validate",
+				m.OBCluster.Spec.OBServerTemplate.Image,
+				"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
+			)
+		case oceanbaseconst.ModeService:
+			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				m.OBCluster.Name+"-service-validate",
+				m.OBCluster.Spec.OBServerTemplate.Image,
+				"/home/admin/oceanbase/bin/oceanbase-helper service validate",
+			)
 		}
-		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check version job", "job", jobName)
-
-		err = m.Client.Create(m.Ctx, standaloneValidateJob)
-		if err != nil {
-			return errors.Wrap(err, "Create check version job")
-		}
-
-		var jobObject *batchv1.Job
-		var maxCheckTimes = 600
-		for i := 0; i < maxCheckTimes; i++ {
-			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
-			jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
-			if err != nil {
-				m.Logger.Error(err, "Failed to get job")
-				return err
-			}
-			if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer version check job is still running")
-			} else {
-				m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer version check job finished")
-				break
-			}
-		}
-		if jobObject.Status.Failed > 0 {
-			m.Logger.Info("Current image does not support standalone mode")
-			err := errors.New("Current image does not support standalone mode")
-			m.PrintErrEvent(err)
-			return err
-		}
+	}
+	if err != nil {
+		m.Logger.Info("Run cluster mode validate job failed", "error", err, "mode", modeAnnoVal)
+		return err
 	}
 	return nil
 }
