@@ -130,7 +130,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
@@ -147,6 +147,7 @@ kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 
 使用 admin 账号和查看到的密码登录。
 ![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-topology](./docsite/static/img/oceanbase-dashboard-topology.jpg)
 
 ## 项目架构
 
