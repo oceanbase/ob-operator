@@ -24,7 +24,7 @@ export default function BasicInfo({
   const clusterOptions = clusterList
     .filter((cluster) => cluster.status !== 'failed')
     .map((cluster) => ({
-      value: cluster.clusterId,
+      value: cluster.id,
       label: cluster.name,
       status: cluster.status,
     }));
