@@ -157,8 +157,8 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
   if (r.successful) {
     return{
       ...r,
-      data:r.data.map((clusterDetail) => ({
-        clusterId: clusterDetail.clusterId,
+      data:r.data.map((clusterDetail,index) => ({
+        clusterId: clusterDetail.clusterId + index,
         name: clusterDetail.name,
         namespace: clusterDetail.namespace,
         topology: clusterDetail.topology,
