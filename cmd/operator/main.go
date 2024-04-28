@@ -18,11 +18,11 @@ package main
 
 import (
 	"context"
-	"flag"
 	"os"
 
 	//+kubebuilder:scaffold:imports
 
+	"github.com/spf13/pflag"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -33,9 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	"github.com/oceanbase/ob-operator/internal/controller"
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
+	"github.com/oceanbase/ob-operator/pkg/coordinator"
 )
 
 var (
@@ -66,15 +68,15 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var logVerbosity int
-	flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
-	flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	pflag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
+	pflag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
+	pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	pflag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
-	flag.Parse()
+	pflag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
+	pflag.Parse()
 
 	opts := zap.Options{
 		Development: logVerbosity > 0,
@@ -85,6 +87,10 @@ func main() {
 			},
 		},
 	}
+
+	cfg := obcfg.GetConfig()
+	coordinator.SetMaxRetryTimes(cfg.Time.TaskMaxRetryTimes)
+	coordinator.SetRetryBackoffThreshold(cfg.Time.TaskRetryBackoffThreshold)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

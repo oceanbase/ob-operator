@@ -20,8 +20,11 @@ const (
 	InitialDataDiskUsePercent = 20
 	DefaultDiskUsePercent     = 95
 	DefaultMemoryLimitPercent = 90
-	GigaConverter             = 1 << 30
-	MegaConverter             = 1 << 20
+)
+
+const (
+	GigaConverter = 1 << 30
+	MegaConverter = 1 << 20
 )
 
 const (
@@ -30,9 +33,16 @@ const (
 	DefaultDatafileNextSize = "1G"
 )
 
+const (
+	MinMemorySizeS      = "8Gi"
+	MinDataDiskSizeS    = "30Gi"
+	MinRedoLogDiskSizeS = "30Gi"
+	MinLogDiskSizeS     = "10Gi"
+)
+
 var (
-	MinMemorySize      = resource.MustParse("8Gi")
-	MinDataDiskSize    = resource.MustParse("30Gi")
-	MinRedoLogDiskSize = resource.MustParse("30Gi")
-	MinLogDiskSize     = resource.MustParse("10Gi")
+	MinMemorySize      = resource.MustParse(MinMemorySizeS)
+	MinDataDiskSize    = resource.MustParse(MinDataDiskSizeS)
+	MinRedoLogDiskSize = resource.MustParse(MinRedoLogDiskSizeS)
+	MinLogDiskSize     = resource.MustParse(MinLogDiskSizeS)
 )

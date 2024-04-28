@@ -85,7 +85,7 @@ const TenantDetail: React.FC = () => {
     },
     {
       title: intl.formatMessage({
-        id: 'Dashboard.Tenant.Detail.Connection',
+        id: 'Dashboard.Tenant.Detail.Connection1',
         defaultMessage: '连接租户',
       }),
       key: 'connection',

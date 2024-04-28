@@ -129,7 +129,7 @@ Deploy OceanBase Dashboard is pretty simple, just run the following commands
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
@@ -146,6 +146,7 @@ kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 
 Login with admin user and password
 ![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-topology](./docsite/static/img/oceanbase-dashboard-topology.jpg)
 
 ## Project Architecture
 

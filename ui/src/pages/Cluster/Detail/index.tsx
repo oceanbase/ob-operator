@@ -87,7 +87,7 @@ const ClusterDetail: React.FC = () => {
     },
     {
       title: intl.formatMessage({
-        id: 'Dashboard.Cluster.Detail.Connection',
+        id: 'Dashboard.Cluster.Detail.Connection1',
         defaultMessage: '连接集群',
       }),
       key: 'connection',

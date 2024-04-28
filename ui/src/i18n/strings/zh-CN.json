@@ -695,5 +695,15 @@
   "Dashboard.Detail.Overview.BasicInfo.ClusterInformation": "集群信息",
   "Dashboard.Detail.Overview.ServerTable.ServerList": "Server 列表",
   "Dashboard.Detail.Overview.ZoneTable.ZoneList": "Zone 列表",
-  "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "天"
+  "Dashboard.Detail.NewBackup.AdvancedConfiguration.Days": "天",
+  "Dashboard.Cluster.Detail.Connection": "集群连接",
+  "Dashboard.Cluster.Detail.Connection1": "集群连接",
+  "Dashboard.Tenant.Detail.Connection1": "连接租户",
+  "Dashboard.Cluster.Detail.CloseConnection": "连接已关闭",
+  "Dashboard.Cluster.Detail.NotRunning": "集群未运行",
+  "Dashboard.Cluster.Detail.CreateConnection": "创建连接",
+  "Dashboard.components.Terminal.Disconnect": "断开连接",
+  "Dashboard.components.Terminal.Disconnect1": "确定要断开连接吗？",
+  "Dashboard.Tenant.Detail.Connection": "连接租户",
+  "Dashboard.Cluster.Detail.AbnormalOperation": "租户未正常运行"
 }
