@@ -3,22 +3,34 @@ Copyright (c) 2023 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
-         http://license.coscl.org.cn/MulanPSL2
+
+	http://license.coscl.org.cn/MulanPSL2
+
 THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
 EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
+package rule
 
-package constant
+type RuleType string
 
 const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
+	TypeBuiltin    RuleType = "builtin"
+	TypeCustomized RuleType = "customized"
 )
 
+type RuleState string
+
 const (
-	DefaultSessionExpiration = 3600
+	StateActive   RuleState = "active"
+	StateInactive RuleState = "inactive"
+)
+
+type RuleHealth string
+
+const (
+	HealthUnknown RuleHealth = "unknown"
+	HealthOK      RuleHealth = "ok"
+	HealthError   RuleHealth = "error"
 )

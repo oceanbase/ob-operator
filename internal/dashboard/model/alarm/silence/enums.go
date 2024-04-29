@@ -10,15 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package silence
 
-const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
-)
+type State string
 
+// TODO add all states
 const (
-	DefaultSessionExpiration = 3600
+	StateActive State = "active"
 )
