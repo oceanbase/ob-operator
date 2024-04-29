@@ -15,6 +15,8 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -139,13 +141,12 @@ func GetRule(_ *gin.Context) (*rule.RuleResponse, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
 }
 
-// @ID CreateOrUpdateSilencer
+// @ID CreateOrUpdateRule
 // @Tags Alarm
-// @Summary Create or update alarm silencer
-// @Description Create or update alarm silencer.
+// @Summary Create or update alarm rule
+// @Description Create or update alarm rule.
 // @Accept application/json
 // @Produce application/json
-// @Param body body rule.RuleParam true "rule"
 // @Success 200 object response.APIResponse{data=rule.RuleResponse}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -170,5 +171,172 @@ func CreateOrUpdateRule(_ *gin.Context) (*rule.RuleResponse, error) {
 // @Router /api/v1/alarm/rule/rules/{name} [DELETE]
 // @Security ApiKeyAuth
 func DeleteRule(_ *gin.Context) (any, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID ListReceivers
+// @Tags Alarm
+// @Summary List alarm receivers
+// @Description List alarm receivers, do not support filter, list all receivers at once.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]receiver.Receiver}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/receiver/receivers [POST]
+// @Security ApiKeyAuth
+func ListReceiverss(_ *gin.Context) ([]receiver.Receiver, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID GetReceiver
+// @Tags Alarm
+// @Summary Get alarm receiver
+// @Description Get alarm receiver, query by receiver name.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=receiver.Receiver}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param name path string true "rule name"
+// @Router /api/v1/alarm/receiver/receivers/{name} [GET]
+// @Security ApiKeyAuth
+func GetReceiver(_ *gin.Context) (*receiver.Receiver, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID CreateOrUpdateReceiver
+// @Tags Alarm
+// @Summary Create or update alarm receiver
+// @Description Create or update alarm receiver.
+// @Accept application/json
+// @Produce application/json
+// @Param body body receiver.Receiver true "receiver"
+// @Success 200 object response.APIResponse{data=receiver.Receiver}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/receiver/receivers [PUT]
+// @Security ApiKeyAuth
+func CreateOrUpdateReceiver(_ *gin.Context) (*receiver.Receiver, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID DeleteReceiver
+// @Tags Alarm
+// @Summary Delete alarm receiver
+// @Description Delete alarm receiver by receiver name.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param name path string true "receiver name"
+// @Router /api/v1/alarm/receiver/receivers/{name} [DELETE]
+// @Security ApiKeyAuth
+func DeleteReceiver(_ *gin.Context) (any, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID ListReceiverTemplates
+// @Tags Alarm
+// @Summary List alarm receiver templates
+// @Description List alarm receiver templates.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]receiver.Template}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/receiver/templates [GET]
+// @Security ApiKeyAuth
+func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID GetReceiverTemplate
+// @Tags Alarm
+// @Summary Get alarm receiver template
+// @Description Get alarm receiver template.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=receiver.Template}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param type path string true "receiver type"
+// @Router /api/v1/alarm/receiver/templates/{type} [GET]
+// @Security ApiKeyAuth
+func GetReceiverTemplate(_ *gin.Context) (*receiver.Template, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID ListRoutes
+// @Tags Alarm
+// @Summary List alarm routes
+// @Description List alarm routes, do not support filter, list all routes at once.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]route.RouteResponse}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/route/routes [POST]
+// @Security ApiKeyAuth
+func ListRoutes(_ *gin.Context) ([]route.RouteResponse, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID GetRoute
+// @Tags Alarm
+// @Summary Get alarm route
+// @Description Get alarm route, query by route name.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=route.RouteResponse}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param id path string true "route id"
+// @Router /api/v1/alarm/route/routes/{id} [GET]
+// @Security ApiKeyAuth
+func GetRoute(_ *gin.Context) (*route.RouteResponse, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID CreateOrUpdateRoute
+// @Tags Alarm
+// @Summary Create or update alarm route
+// @Description Create or update alarm route.
+// @Accept application/json
+// @Produce application/json
+// @Param body body route.Route true "route"
+// @Success 200 object response.APIResponse{data=route.RouteResponse}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/route/routes [PUT]
+// @Security ApiKeyAuth
+func CreateOrUpdateRoute(_ *gin.Context) (*route.RouteResponse, error) {
+	return nil, httpErr.NewNotImplemented("not implemented")
+}
+
+// @ID DeleteRoute
+// @Tags Alarm
+// @Summary Delete alarm channel
+// @Description Delete alarm channel by channel name.
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param id path string true "route id"
+// @Router /api/v1/alarm/route/routes/{id} [DELETE]
+// @Security ApiKeyAuth
+func DeleteChannel(_ *gin.Context) (any, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
 }
