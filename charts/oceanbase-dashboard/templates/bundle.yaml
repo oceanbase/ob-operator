@@ -53,33 +53,7 @@ spec:
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
-        - name: alertmanager
-          image: prom/alertmanager:v0.27.0
-          args:
-            - "--config.file=/etc/alertmanager/config.yml"
-            - "--storage.path=/alertmanager"
-          ports:
-            - name: alertmanager
-              containerPort: 9093
-          resources:
-            requests:
-              cpu: 500m
-              memory: 500M
-            limits:
-              cpu: 1
-              memory: 1Gi
-          volumeMounts:
-            - name: config-volume
-              mountPath: /etc/alertmanager
-            - name: alertmanager
-              mountPath: /alertmanager
       volumes:
-      # volumes for alertmanager
-        - name: config-volume
-          configMap:
-            name: alertmanager-config
-        - name: alertmanager
-          emptyDir: {}
       # volumes for prometheus
         - name: prometheus-config-volume
           configMap:
