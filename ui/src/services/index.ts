@@ -158,7 +158,7 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
       ...r,
       data: r.data.map((clusterDetail) => ({
         clusterId: clusterDetail.clusterId, // clusterId is not unique
-        id: clusterDetail.name + clusterDetail.namespace,
+        id: `${clusterDetail.namespace}:${clusterDetail.name}`,
         name: clusterDetail.name,
         namespace: clusterDetail.namespace,
         topology: clusterDetail.topology,
