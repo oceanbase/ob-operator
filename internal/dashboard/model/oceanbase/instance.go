@@ -12,14 +12,6 @@ See the Mulan PSL v2 for more details.
 
 package oceanbase
 
-type OBInstanceType string
-
-const (
-	OBCluster OBInstanceType = "obcluster"
-	OBTenant                 = "obtenant"
-	OBServer                 = "observer"
-)
-
 type OBInstance struct {
 	Type      OBInstanceType `json:"type" binding:"required"`
 	OBCluster string         `json:"obcluster,omitempty"`
