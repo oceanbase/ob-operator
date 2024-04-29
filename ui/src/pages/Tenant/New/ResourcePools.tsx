@@ -9,7 +9,7 @@ import { findMinParameter, modifyZoneCheckedStatus } from '../helper';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
-  selectClusterId?: number;
+  selectClusterId?: string;
   clusterList: API.SimpleClusterList;
   form: FormInstance<API.NewTenantForm>;
   setClusterList: React.Dispatch<React.SetStateAction<API.SimpleClusterList>>;
@@ -45,7 +45,7 @@ export default function ResourcePools({
     );
   };
   const targetZoneList = clusterList
-    .filter((cluster) => cluster.clusterId === selectClusterId)[0]
+    .filter((cluster) => cluster.id === selectClusterId)[0]
     ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
   useEffect(() => {
