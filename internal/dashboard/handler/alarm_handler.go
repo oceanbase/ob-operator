@@ -14,11 +14,13 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
+
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 

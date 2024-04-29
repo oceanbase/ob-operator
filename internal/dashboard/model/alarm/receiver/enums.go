@@ -18,5 +18,5 @@ type ReceiverType string
 // TODO add all types
 const (
 	TypeDingTalk ReceiverType = "dingtalk"
-	TypeWeChat                = "wechat"
+	TypeWeChat   ReceiverType = "wechat"
 )
