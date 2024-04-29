@@ -19,7 +19,7 @@ import (
 type State string
 
 const (
-	Active State = "active"
+	StateActive State = "active"
 )
 
 type Status struct {

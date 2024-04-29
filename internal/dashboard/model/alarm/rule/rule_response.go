@@ -14,4 +14,11 @@ See the Mulan PSL v2 for more details.
 package rule
 
 type RuleResponse struct {
+	State          RuleState  `json:"state" binding:"required"`
+	KeepFiringFor  int        `json:"keepFiringFor" binding:"required"`
+	Health         RuleHealth `json:"health" binding:"required"`
+	LastEvaluation int64      `json:"lastEvaluation" binding:"required"`
+	EvaluationTime float64    `json:"evaluationTime" binding:"required"`
+	LastError      string     `json:"lastError,omitempty"`
+	Rule
 }

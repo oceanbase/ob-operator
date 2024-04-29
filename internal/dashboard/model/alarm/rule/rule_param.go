@@ -13,5 +13,17 @@ See the Mulan PSL v2 for more details.
 */
 package rule
 
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
+)
+
+type RuleFilter struct {
+	InstanceType oceanbase.OBInstanceType `json:"instanceType,omitempty"`
+	Serverity    alarm.Serverity          `json:"serverity,omitempty"`
+	Keyword      string                   `json:"keyword,omitempty"`
+}
+
 type RuleParam struct {
+	Rule
 }

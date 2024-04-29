@@ -15,9 +15,9 @@ package alert
 type State string
 
 const (
-	Active      State = "active"
-	Unprocessed       = "unprocessed"
-	Suppressed        = "suppressed"
+	StateActive      State = "active"
+	StateUnprocessed       = "unprocessed"
+	StateSuppressed        = "suppressed"
 )
 
 type Status struct {

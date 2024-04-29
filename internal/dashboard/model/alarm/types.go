@@ -15,10 +15,10 @@ package alarm
 type Serverity string
 
 const (
-	Critical Serverity = "critical"
-	Warning            = "warning"
-	Caution            = "caution"
-	Info               = "info"
+	ServerityCritical Serverity = "critical"
+	ServerityWarning            = "warning"
+	ServerityCaution            = "caution"
+	ServerityInfo               = "info"
 )
 
 type Matcher struct {

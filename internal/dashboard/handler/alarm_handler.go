@@ -116,7 +116,7 @@ func DeleteSilencer(_ *gin.Context) (any, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/alarm/rule/rules [GET]
+// @Router /api/v1/alarm/rule/rules [POST]
 // @Security ApiKeyAuth
 func ListRules(_ *gin.Context) ([]rule.RuleResponse, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
