@@ -19,5 +19,32 @@ import (
 )
 
 func InitAlarmRoutes(g *gin.RouterGroup) {
-	g.GET("/alarm/events", h.Wrap(h.ListAlarmEvents))
+	// alert
+	g.POST("/alarm/alert/alerts", h.Wrap(h.ListAlerts))
+
+	// silence
+	g.POST("/alarm/silence/silencers", h.Wrap(h.ListSilencers))
+	g.GET("/alarm/silence/silencers/:id", h.Wrap(h.GetSilencer))
+	g.PUT("/alarm/silence/silencers", h.Wrap(h.CreateOrUpdateSilencer))
+	g.DELETE("/alarm/silence/silencers/:id", h.Wrap(h.DeleteSilencer))
+
+	// rule
+	g.POST("/alarm/rule/rules", h.Wrap(h.ListRules))
+	g.GET("/alarm/rule/rules/:name", h.Wrap(h.GetRule))
+	g.PUT("/alarm/rule/rules", h.Wrap(h.CreateOrUpdateRule))
+	g.DELETE("/alarm/rule/rules/:name", h.Wrap(h.DeleteRule))
+
+	// receiver
+	g.POST("/alarm/receiver/receivers", h.Wrap(h.ListReceivers))
+	g.GET("/alarm/receiver/receivers/:name", h.Wrap(h.GetReceiver))
+	g.PUT("/alarm/receiver/receivers", h.Wrap(h.CreateOrUpdateReceiver))
+	g.DELETE("/alarm/receiver/receivers/:name", h.Wrap(h.DeleteReceiver))
+	g.POST("/alarm/receiver/templates", h.Wrap(h.ListReceiverTemplates))
+	g.GET("/alarm/receiver/receivers/:type", h.Wrap(h.GetReceiverTemplate))
+
+	// route
+	g.POST("/alarm/route/routes", h.Wrap(h.ListRoutes))
+	g.GET("/alarm/route/routes/:id", h.Wrap(h.GetRoute))
+	g.PUT("/alarm/route/routes", h.Wrap(h.CreateOrUpdateRoute))
+	g.DELETE("/alarm/route/routes/:id", h.Wrap(h.DeleteRoute))
 }

@@ -50,7 +50,7 @@ func ListAlerts(_ *gin.Context) ([]alert.Alert, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/alarm/silence/silencers [GET]
+// @Router /api/v1/alarm/silence/silencers [POST]
 // @Security ApiKeyAuth
 func ListSilencers(_ *gin.Context) ([]silence.SilencerResponse, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
@@ -187,7 +187,7 @@ func DeleteRule(_ *gin.Context) (any, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/receiver/receivers [POST]
 // @Security ApiKeyAuth
-func ListReceiverss(_ *gin.Context) ([]receiver.Receiver, error) {
+func ListReceivers(_ *gin.Context) ([]receiver.Receiver, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
 }
 
@@ -252,7 +252,7 @@ func DeleteReceiver(_ *gin.Context) (any, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/alarm/receiver/templates [GET]
+// @Router /api/v1/alarm/receiver/templates [POST]
 // @Security ApiKeyAuth
 func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
@@ -338,6 +338,6 @@ func CreateOrUpdateRoute(_ *gin.Context) (*route.RouteResponse, error) {
 // @Param id path string true "route id"
 // @Router /api/v1/alarm/route/routes/{id} [DELETE]
 // @Security ApiKeyAuth
-func DeleteChannel(_ *gin.Context) (any, error) {
+func DeleteRoute(_ *gin.Context) (any, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
 }
