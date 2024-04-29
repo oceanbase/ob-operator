@@ -1,3 +1,3 @@
 export default function Rules(){
-    return <h1>aaa</h1>
+    return null
 }
