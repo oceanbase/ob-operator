@@ -15,7 +15,7 @@ package oceanbase
 type OBInstance struct {
 	Type      OBInstanceType `json:"type" binding:"required"`
 	OBCluster string         `json:"obcluster,omitempty"`
-	OBZone    string         `json:"obzone,omitempty"` //obzone may exist in labels
+	OBZone    string         `json:"obzone,omitempty"` // obzone may exist in labels
 	OBServer  string         `json:"observer,omitempty"`
 	OBTenant  string         `json:"obtenant,omitempty"`
 }
