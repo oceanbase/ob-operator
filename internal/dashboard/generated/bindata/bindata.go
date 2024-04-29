@@ -94,7 +94,7 @@ func internalAssetsMetric_en_usYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21511, mode: os.FileMode(420), modTime: time.Unix(1712828438, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21511, mode: os.FileMode(420), modTime: time.Unix(1713948410, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -114,7 +114,7 @@ func internalAssetsMetric_exprYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1709022970, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1710156272, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -134,7 +134,7 @@ func internalAssetsMetric_zh_cnYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25120, mode: os.FileMode(420), modTime: time.Unix(1711525341, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25120, mode: os.FileMode(420), modTime: time.Unix(1713853774, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

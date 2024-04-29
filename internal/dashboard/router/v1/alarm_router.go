@@ -40,7 +40,7 @@ func InitAlarmRoutes(g *gin.RouterGroup) {
 	g.PUT("/alarm/receiver/receivers", h.Wrap(h.CreateOrUpdateReceiver))
 	g.DELETE("/alarm/receiver/receivers/:name", h.Wrap(h.DeleteReceiver))
 	g.POST("/alarm/receiver/templates", h.Wrap(h.ListReceiverTemplates))
-	g.GET("/alarm/receiver/receivers/:type", h.Wrap(h.GetReceiverTemplate))
+	g.GET("/alarm/receiver/templates/:type", h.Wrap(h.GetReceiverTemplate))
 
 	// route
 	g.POST("/alarm/route/routes", h.Wrap(h.ListRoutes))
