@@ -50,11 +50,6 @@ export default function Event() {
       value: 'observer',
     },
   ];
-  const onOk = (
-    value: DatePickerProps['value'] | RangePickerProps['value'],
-  ) => {
-    console.log('onOk: ', value);
-  };
 
   const getOptionsFromType = (
     type: 'cluster' | 'tenant' | 'observer' | undefined,
@@ -182,7 +177,6 @@ export default function Event() {
                     console.log('Selected Time: ', value);
                     console.log('Formatted Selected Time: ', dateString);
                   }}
-                  onOk={onOk}
                 />
               </Form.Item>
             </Col>
@@ -200,7 +194,6 @@ export default function Event() {
                     console.log('Selected Time: ', value);
                     console.log('Formatted Selected Time: ', dateString);
                   }}
-                  onOk={onOk}
                 />
               </Form.Item>
             </Col>
