@@ -11,9 +11,15 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package route
+package rule
 
-type RouteResponse struct {
-	Id string `json:"id" binding:"required"`
-	Route
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
+)
+
+type RuleFilter struct {
+	InstanceType oceanbase.OBInstanceType `json:"instanceType,omitempty"`
+	Serverity    alarm.Serverity          `json:"serverity,omitempty"`
+	Keyword      string                   `json:"keyword,omitempty"`
 }

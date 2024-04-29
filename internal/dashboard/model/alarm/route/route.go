@@ -23,3 +23,8 @@ type Route struct {
 	GroupWaitMinutes      int             `json:"groupWait" binding:"required"`
 	RepeatIntervalMinutes int             `json:"repeatInterval" binding:"required"`
 }
+
+type RouteResponse struct {
+	Id string `json:"id" binding:"required"`
+	Route
+}

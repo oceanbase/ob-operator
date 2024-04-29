@@ -22,20 +22,20 @@ import (
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
-// @ID ListEvents
+// @ID ListAlerts
 // @Tags Alarm
-// @Summary List alarm events
-// @Description List alarm events, filter with alarm objects, serverity, time and keywords.
+// @Summary List alerts
+// @Description List alerts, filter with alarm objects, serverity, time and keywords.
 // @Accept application/json
 // @Produce application/json
-// @Param body body alert.EventFilter false "event filter"
-// @Success 200 object response.APIResponse{data=[]alert.Event}
+// @Param body body alert.AlertFilter false "alert filter"
+// @Success 200 object response.APIResponse{data=[]alert.Alert}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/alarm/alert/events [POST]
+// @Router /api/v1/alarm/alert/alerts [POST]
 // @Security ApiKeyAuth
-func ListEvents(_ *gin.Context) ([]alert.Event, error) {
+func ListAlerts(_ *gin.Context) ([]alert.Alert, error) {
 	return nil, httpErr.NewNotImplemented("not implemented")
 }
 
@@ -147,6 +147,7 @@ func GetRule(_ *gin.Context) (*rule.RuleResponse, error) {
 // @Description Create or update alarm rule.
 // @Accept application/json
 // @Produce application/json
+// @Param body body rule.Rule true "rule"
 // @Success 200 object response.APIResponse{data=rule.RuleResponse}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse

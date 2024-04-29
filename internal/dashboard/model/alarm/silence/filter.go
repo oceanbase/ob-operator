@@ -10,18 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package alert
+package silence
 
-type State string
-
-const (
-	StateActive      State = "active"
-	StateUnprocessed       = "unprocessed"
-	StateSuppressed        = "suppressed"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-type Status struct {
-	InhibitedBy []string `json:"inhibitedBy" binding:"required"`
-	SilencedBy  []string `json:"silencedBy" binding:"required"`
-	State       *State   `json:"state" binding:"required"`
+type SilencerFilter struct {
+	Instances []oceanbase.OBInstance `json:"instances,omitempty"`
+	Keyword   string                 `json:"keyword,omitempty"`
 }

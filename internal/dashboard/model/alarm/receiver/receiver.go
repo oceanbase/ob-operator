@@ -11,14 +11,10 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package rule
+package receiver
 
-type RuleResponse struct {
-	State          RuleState  `json:"state" binding:"required"`
-	KeepFiringFor  int        `json:"keepFiringFor" binding:"required"`
-	Health         RuleHealth `json:"health" binding:"required"`
-	LastEvaluation int64      `json:"lastEvaluation" binding:"required"`
-	EvaluationTime float64    `json:"evaluationTime" binding:"required"`
-	LastError      string     `json:"lastError,omitempty"`
-	Rule
+type Receiver struct {
+	Name   string       `json:"name" binding:"required"`
+	Type   ReceiverType `json:"type" binding:"required"`
+	Config string       `json:"config" binding:"required"`
 }

@@ -20,9 +20,3 @@ const (
 	TypeDingTalk ReceiverType = "dingtalk"
 	TypeWeChat                = "wechat"
 )
-
-type Receiver struct {
-	Name   string       `json:"name" binding:"required"`
-	Type   ReceiverType `json:"type" binding:"required"`
-	Config string       `json:"config" binding:"required"`
-}

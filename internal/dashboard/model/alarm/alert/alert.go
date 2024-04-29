@@ -18,7 +18,13 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-type Event struct {
+type Status struct {
+	InhibitedBy []string `json:"inhibitedBy" binding:"required"`
+	SilencedBy  []string `json:"silencedBy" binding:"required"`
+	State       *State   `json:"state" binding:"required"`
+}
+
+type Alert struct {
 	Fingerprint string               `json:"fingerprint" binding:"required"`
 	Rule        string               `json:"rule" binding:"required"`
 	Serverity   alarm.Serverity      `json:"serverity" binding:"required"`

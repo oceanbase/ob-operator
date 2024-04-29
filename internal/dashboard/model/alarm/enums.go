@@ -10,14 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package silence
+package alarm
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
+type Serverity string
 
-type SilencerResponse struct {
-	Id        string                 `json:"id" binding:"required"`
-	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
-	Status    *Status                `json:"status" binding:"required"`
-	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
-	Silencer
-}
+const (
+	ServerityCritical Serverity = "critical"
+	ServerityWarning            = "warning"
+	ServerityCaution            = "caution"
+	ServerityInfo               = "info"
+)

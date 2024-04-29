@@ -10,26 +10,17 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package silence
+package alert
 
 import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-type State string
-
-const (
-	StateActive State = "active"
-)
-
-type Status struct {
-	State *State `json:"state" binding:"required"`
-}
-
-type Silencer struct {
-	Comment   string          `json:"comment" binding:"required"`
-	CreatedBy string          `json:"createdBy" binding:"required"`
-	StartsAt  int64           `json:"startsAt" binding:"required"`
-	EndsAt    int64           `json:"endsAt" binding:"required"`
-	Matchers  []alarm.Matcher `json:"matchers" binding:"required"`
+type AlertFilter struct {
+	Serverity alarm.Serverity        `json:"serverity,omitempty"`
+	Instances []oceanbase.OBInstance `json:"instances,omitempty"`
+	StartTime int64                  `json:"startTime,omitempty"`
+	EndTime   int64                  `json:"endTime,omitempty"`
+	Keyword   string                 `json:"keyword,omitempty"`
 }

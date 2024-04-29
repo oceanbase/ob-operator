@@ -19,28 +19,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-type RuleType string
-
-const (
-	TypeBuiltin    RuleType = "builtin"
-	TypeCustomized          = "customized"
-)
-
-type RuleState string
-
-const (
-	StateActive   RuleState = "active"
-	StateInactive           = "inactive"
-)
-
-type RuleHealth string
-
-const (
-	HealthUnknown RuleHealth = "unknown"
-	HealthOK                 = "ok"
-	HealthError              = "error"
-)
-
 type Rule struct {
 	Name         string                   `json:"name" binding:"required"`
 	InstanceType oceanbase.OBInstanceType `json:"instanceType" binding:"required"`
@@ -51,4 +29,14 @@ type Rule struct {
 	Serverity    alarm.Serverity          `json:"serverity" binding:"required"`
 	Summary      string                   `json:"summary" binding:"required"`
 	Description  string                   `json:"description" binding:"required"`
+}
+
+type RuleResponse struct {
+	State          RuleState  `json:"state" binding:"required"`
+	KeepFiringFor  int        `json:"keepFiringFor" binding:"required"`
+	Health         RuleHealth `json:"health" binding:"required"`
+	LastEvaluation int64      `json:"lastEvaluation" binding:"required"`
+	EvaluationTime float64    `json:"evaluationTime" binding:"required"`
+	LastError      string     `json:"lastError,omitempty"`
+	Rule
 }
