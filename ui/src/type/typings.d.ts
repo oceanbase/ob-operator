@@ -405,6 +405,7 @@ declare namespace API {
     namespace: string;
     topology: Topology[];
     status: string;
+    id: string;
   };
 
   type SimpleClusterList = SimpleCluster[];

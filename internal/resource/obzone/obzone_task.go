@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -174,7 +175,7 @@ func DeleteAllOBServer(m *OBZoneManager) tasktypes.TaskError {
 
 func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
@@ -196,7 +197,7 @@ func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 
 func WaitOBServerDeleted(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
@@ -265,7 +266,7 @@ func UpgradeOBServer(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
-	for i := 0; i < oceanbaseconst.TimeConsumingStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.TimeConsumingStateWaitTimeout; i++ {
 		observerList, err := m.listOBServers()
 		if err != nil {
 			m.Logger.Error(err, "List observers failed")
@@ -283,7 +284,7 @@ func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
 			m.Logger.Info("All server upgraded")
 			return nil
 		}
-		time.Sleep(oceanbaseconst.CommonCheckInterval * time.Second)
+		time.Sleep(time.Duration(obcfg.GetConfig().Time.CommonCheckInterval) * time.Second)
 	}
 	return errors.New("Wait all server upgraded timeout")
 }
@@ -404,21 +405,21 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerBootstrapReady(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerScalingUp(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }

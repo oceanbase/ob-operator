@@ -1,0 +1,33 @@
+       _                                      _
+  ___ | |__         ___  _ __   ___ _ __ __ _| |_ ___  _ __
+ / _ \| '_ \ _____ / _ \| '_ \ / _ \ '__/ _` | __/ _ \| '__|
+| (_) | |_) |_____| (_) | |_) |  __/ | | (_| | || (_) | |
+ \___/|_.__/       \___/| .__/ \___|_|  \__,_|\__\___/|_|
+                        |_|
+
+Welcome to ob-operator! We are so happy to see you here! Once ob-operator is installed, you can explore OceanBase database on your Kubernetes cluster with ease.
+
+The following steps will guide you through the OceanBase database deployment:
+
+1. Quick Start - Deploy a single-node OceanBase database for testing
+
+  https://oceanbase.github.io/ob-operator/docs/manual/quick-start-of-ob-operator
+
+2. Advanced - Create an OceanBase database with customized configurations
+
+  https://oceanbase.github.io/ob-operator/docs/manual/ob-operator-user-guide/cluster-management-of-ob-operator/create-cluster
+
+3. Tenants - Create and manage tenants in OceanBase database
+
+  https://oceanbase.github.io/ob-operator/docs/manual/ob-operator-user-guide/tenant-management-of-ob-operator/tenant-management-intro
+
+4. High availability - Enable high availability for OceanBase on K8s
+
+  https://oceanbase.github.io/ob-operator/docs/manual/ob-operator-user-guide/high-availability/high-availability-intro
+
+5. Get help from the community
+
+  Feel free to ask questions or report issues on GitHub: https://github.com/oceanbase/ob-operator/issues
+  Other ways to get help: https://oceanbase.github.io/ob-operator/#getting-help
+
+For more information, please visit our website: https://oceanbase.github.io/ob-operator

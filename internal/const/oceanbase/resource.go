@@ -20,8 +20,11 @@ const (
 	InitialDataDiskUsePercent = 20
 	DefaultDiskUsePercent     = 95
 	DefaultMemoryLimitPercent = 90
-	GigaConverter             = 1 << 30
-	MegaConverter             = 1 << 20
+)
+
+const (
+	GigaConverter = 1 << 30
+	MegaConverter = 1 << 20
 )
 
 const (

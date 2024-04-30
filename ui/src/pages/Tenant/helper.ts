@@ -222,13 +222,13 @@ export const modifyZoneCheckedStatus = (
   zone: string,
   checked: boolean,
   target: {
-    id?: number;
+    id?: string;
     name?: string;
   },
 ) => {
   const _clusterList = cloneDeep(clusterList);
   for (const cluster of _clusterList) {
-    if (cluster.clusterId === target.id || cluster.name === target.name) {
+    if (cluster.id === target.id || cluster.name === target.name) {
       cluster.topology.forEach((zoneItem) => {
         if (zoneItem.zone === zone) {
           zoneItem.checked = checked;

@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
@@ -61,7 +62,7 @@ func (r *OBCluster) Default() {
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
 	if ok {
-		memoryLimit := fmt.Sprintf("%dM", memorySize*oceanbaseconst.DefaultMemoryLimitPercent/100/oceanbaseconst.MegaConverter)
+		memoryLimit := fmt.Sprintf("%dM", memorySize*int64(obcfg.GetConfig().Resource.DefaultMemoryLimitPercent)/100/oceanbaseconst.MegaConverter)
 		parameterMap["memory_limit"] = apitypes.Parameter{
 			Name:  "memory_limit",
 			Value: memoryLimit,
@@ -71,12 +72,12 @@ func (r *OBCluster) Default() {
 	}
 	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if ok {
-		datafileMaxSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskUsePercent/oceanbaseconst.GigaConverter/100)
+		datafileMaxSize := fmt.Sprintf("%dG", datafileDiskSize*int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent)/oceanbaseconst.GigaConverter/100)
 		parameterMap["datafile_maxsize"] = apitypes.Parameter{
 			Name:  "datafile_maxsize",
 			Value: datafileMaxSize,
 		}
-		datafileNextSize := fmt.Sprintf("%dG", datafileDiskSize*oceanbaseconst.DefaultDiskExpandPercent/oceanbaseconst.GigaConverter/100)
+		datafileNextSize := fmt.Sprintf("%dG", datafileDiskSize*int64(obcfg.GetConfig().Resource.DefaultDiskExpandPercent)/oceanbaseconst.GigaConverter/100)
 		parameterMap["datafile_next"] = apitypes.Parameter{
 			Name:  "datafile_next",
 			Value: datafileNextSize,
@@ -92,7 +93,7 @@ func (r *OBCluster) Default() {
 	logSize, ok := r.Spec.OBServerTemplate.Storage.LogStorage.Size.AsInt64()
 	if ok {
 		// observer has 4 types of log and one logfile limits at 256M considering about wf, maximum of 2G will be occupied for 1 syslog count
-		maxSysLogFileCount = logSize * oceanbaseconst.DefaultLogPercent / oceanbaseconst.GigaConverter / 100 / 2
+		maxSysLogFileCount = logSize * int64(obcfg.GetConfig().Resource.DefaultLogPercent) / oceanbaseconst.GigaConverter / 100 / 2
 	}
 	parameterMap["max_syslog_file_count"] = apitypes.Parameter{
 		Name:  "max_syslog_file_count",
@@ -275,18 +276,17 @@ func (r *OBCluster) validateMutation() error {
 	}
 
 	// Validate disk size
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinDataDiskSize.AsApproximateFloat64() {
+	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinDataDiskSize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum data storage size of OBCluster is "+oceanbaseconst.MinDataDiskSize.String()))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinRedoLogDiskSize.AsApproximateFloat64() {
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinRedoLogDiskSize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum redo log storage size of OBCluster is "+oceanbaseconst.MinRedoLogDiskSize.String()))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.AsApproximateFloat64() < oceanbaseconst.MinLogDiskSize.AsApproximateFloat64() {
+	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinLogDiskSize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "The minimum log storage size of OBCluster is "+oceanbaseconst.MinLogDiskSize.String()))
 	}
-
 	// Validate memory size
-	if r.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64() < oceanbaseconst.MinMemorySize.AsApproximateFloat64() {
+	if r.Spec.OBServerTemplate.Resource.Memory.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinMemorySize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("resource").Child("memory"), r.Spec.OBServerTemplate.Resource.Memory.String(), "The minimum memory size of OBCluster is "+oceanbaseconst.MinMemorySize.String()))
 	}
 

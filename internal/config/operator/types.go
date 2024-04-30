@@ -15,7 +15,8 @@ package operator
 import "github.com/spf13/viper"
 
 type Config struct {
-	v         *viper.Viper
+	v *viper.Viper
+
 	Manager   Manager   `mapstructure:",squash" yaml:"manager"`
 	Database  Database  `mapstructure:"database" yaml:"database"`
 	Task      Task      `mapstructure:"task" yaml:"task"`

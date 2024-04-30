@@ -22,6 +22,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	obtenantresource "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -93,7 +94,7 @@ func CreateUsersForActivatedStandby(m *ObTenantOperationManager) tasktypes.TaskE
 	}
 
 	// Wait for the tenant to be ready
-	maxRetry := oceanbaseconst.TenantOpRetryTimes
+	maxRetry := obcfg.GetConfig().Time.TenantOpRetryTimes
 	counter := 0
 	for counter < maxRetry {
 		tenants, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
@@ -107,7 +108,7 @@ func CreateUsersForActivatedStandby(m *ObTenantOperationManager) tasktypes.TaskE
 		if t.TenantType == "USER" && t.TenantRole == "PRIMARY" && t.SwitchoverStatus == "NORMAL" {
 			break
 		}
-		time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
+		time.Sleep(time.Duration(obcfg.GetConfig().Time.TenantOpRetryGapSeconds) * time.Second)
 		counter++
 	}
 	if counter >= maxRetry {
@@ -145,7 +146,7 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		maxRetry := oceanbaseconst.TenantOpRetryTimes
+		maxRetry := obcfg.GetConfig().Time.TenantOpRetryTimes
 		counter := 0
 		for counter < maxRetry {
 			primary, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
@@ -157,7 +158,7 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 			}
 			p := primary[0]
 			if p.TenantRole != "STANDBY" || p.SwitchoverStatus != "NORMAL" {
-				time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
+				time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.TenantOpRetryGapSeconds))
 				counter++
 			} else {
 				break
@@ -185,7 +186,7 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 			}
 			s := standby[0]
 			if s.TenantRole != "PRIMARY" || s.SwitchoverStatus != "NORMAL" {
-				time.Sleep(oceanbaseconst.TenantOpRetryGapSeconds * time.Second)
+				time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.TenantOpRetryGapSeconds))
 				counter++
 			} else {
 				break
@@ -290,7 +291,7 @@ func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		maxWait5secTimes := oceanbaseconst.DefaultStateWaitTimeout/5 + 1
+		maxWait5secTimes := obcfg.GetConfig().Time.DefaultStateWaitTimeout/5 + 1
 	outer:
 		for i := 0; i < maxWait5secTimes; i++ {
 			time.Sleep(5 * time.Second)

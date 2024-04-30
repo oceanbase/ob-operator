@@ -1,9 +1,8 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
-import { formatStatisticData } from '@/utils/helper';
+import { floorToTwoDecimalPlaces,formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { request } from '@umijs/max';
-import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import _ from 'lodash';
 import moment from 'moment';
 
@@ -155,18 +154,19 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
     method: 'GET',
   });
   if (r.successful) {
-    return{
+    return {
       ...r,
-      data:r.data.map((clusterDetail) => ({
-        clusterId: clusterDetail.clusterId,
+      data: r.data.map((clusterDetail) => ({
+        clusterId: clusterDetail.clusterId, // clusterId is not unique
+        id: `${clusterDetail.namespace}:${clusterDetail.name}`,
         name: clusterDetail.name,
         namespace: clusterDetail.namespace,
         topology: clusterDetail.topology,
         clusterName: clusterDetail.clusterName,
-        status: clusterDetail.status
-      }))
-    }
-  };
+        status: clusterDetail.status,
+      })),
+    };
+  }
   return r;
 }
 
