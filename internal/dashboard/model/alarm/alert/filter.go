@@ -19,7 +19,7 @@ import (
 
 type AlertFilter struct {
 	Serverity alarm.Serverity      `json:"serverity,omitempty"`
-	Instances oceanbase.OBInstance `json:"instances,omitempty"`
+	Instance  oceanbase.OBInstance `json:"instance,omitempty"`
 	StartTime int64                `json:"startTime,omitempty"`
 	EndTime   int64                `json:"endTime,omitempty"`
 	Keyword   string               `json:"keyword,omitempty"`
