@@ -17,6 +17,6 @@ import (
 )
 
 type SilencerFilter struct {
-	Instances []oceanbase.OBInstance `json:"instances,omitempty"`
-	Keyword   string                 `json:"keyword,omitempty"`
+	Instances oceanbase.OBInstance `json:"instances,omitempty"`
+	Keyword   string               `json:"keyword,omitempty"`
 }
