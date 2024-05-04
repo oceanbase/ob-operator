@@ -10,15 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package silence
 
-const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-const (
-	DefaultSessionExpiration = 3600
-)
+type SilencerFilter struct {
+	Instance oceanbase.OBInstance `json:"instance,omitempty"`
+	Keyword  string               `json:"keyword,omitempty"`
+}

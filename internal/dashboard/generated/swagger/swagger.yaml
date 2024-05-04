@@ -1,5 +1,106 @@
 basePath: /api/v1
 definitions:
+  alarm.Matcher:
+    properties:
+      isEqual:
+        type: boolean
+      isRegex:
+        type: boolean
+      name:
+        type: string
+      value:
+        type: string
+    type: object
+  alarm.Serverity:
+    enum:
+    - critical
+    - warning
+    - caution
+    - info
+    type: string
+    x-enum-varnames:
+    - ServerityCritical
+    - ServerityWarning
+    - ServerityCaution
+    - ServerityInfo
+  alert.Alert:
+    properties:
+      description:
+        type: string
+      endsAt:
+        type: integer
+      fingerprint:
+        type: string
+      instance:
+        $ref: '#/definitions/oceanbase.OBInstance'
+      labels:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      rule:
+        type: string
+      serverity:
+        $ref: '#/definitions/alarm.Serverity'
+      startsAt:
+        type: integer
+      status:
+        $ref: '#/definitions/alert.Status'
+      summary:
+        type: string
+      updatedAt:
+        type: integer
+    required:
+    - endsAt
+    - fingerprint
+    - instance
+    - rule
+    - serverity
+    - startsAt
+    - status
+    - updatedAt
+    type: object
+  alert.AlertFilter:
+    properties:
+      endTime:
+        type: integer
+      instances:
+        items:
+          $ref: '#/definitions/oceanbase.OBInstance'
+        type: array
+      keyword:
+        type: string
+      serverity:
+        $ref: '#/definitions/alarm.Serverity'
+      startTime:
+        type: integer
+    type: object
+  alert.State:
+    enum:
+    - active
+    - unprocessed
+    - suppressed
+    type: string
+    x-enum-varnames:
+    - StateActive
+    - StateUnprocessed
+    - StateSuppressed
+  alert.Status:
+    properties:
+      inhibitedBy:
+        items:
+          type: string
+        type: array
+      silencedBy:
+        items:
+          type: string
+        type: array
+      state:
+        $ref: '#/definitions/alert.State'
+    required:
+    - inhibitedBy
+    - silencedBy
+    - state
+    type: object
   common.AffinitySpec:
     properties:
       key:
@@ -287,6 +388,32 @@ definitions:
       storageSize:
         type: integer
     type: object
+  oceanbase.OBInstance:
+    properties:
+      obcluster:
+        type: string
+      observer:
+        type: string
+      obtenant:
+        type: string
+      obzone:
+        description: obzone may exist in labels
+        type: string
+      type:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
+    required:
+    - type
+    type: object
+  oceanbase.OBInstanceType:
+    enum:
+    - obcluster
+    - obtenant
+    - observer
+    type: string
+    x-enum-varnames:
+    - OBCluster
+    - OBTenant
+    - OBServer
   param.ChangeTenantRole:
     properties:
       failover:
@@ -668,6 +795,37 @@ definitions:
         type: array
       zone:
         type: string
+    type: object
+  receiver.Receiver:
+    properties:
+      config:
+        type: string
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/receiver.ReceiverType'
+    required:
+    - config
+    - name
+    - type
+    type: object
+  receiver.ReceiverType:
+    enum:
+    - dingtalk
+    - wechat
+    type: string
+    x-enum-varnames:
+    - TypeDingTalk
+    - TypeWeChat
+  receiver.Template:
+    properties:
+      template:
+        type: string
+      type:
+        $ref: '#/definitions/receiver.ReceiverType'
+    required:
+    - template
+    - type
     type: object
   response.APIResponse:
     properties:
@@ -1597,12 +1755,1017 @@ definitions:
     - size
     - storageClass
     type: object
+  route.Route:
+    properties:
+      aggregateLabels:
+        items:
+          type: string
+        type: array
+      groupInterval:
+        type: integer
+      groupWait:
+        type: integer
+      matchers:
+        items:
+          $ref: '#/definitions/alarm.Matcher'
+        type: array
+      receiver:
+        type: string
+      repeatInterval:
+        type: integer
+    required:
+    - aggregateLabels
+    - groupInterval
+    - groupWait
+    - matchers
+    - receiver
+    - repeatInterval
+    type: object
+  route.RouteResponse:
+    properties:
+      aggregateLabels:
+        items:
+          type: string
+        type: array
+      groupInterval:
+        type: integer
+      groupWait:
+        type: integer
+      id:
+        type: string
+      matchers:
+        items:
+          $ref: '#/definitions/alarm.Matcher'
+        type: array
+      receiver:
+        type: string
+      repeatInterval:
+        type: integer
+    required:
+    - aggregateLabels
+    - groupInterval
+    - groupWait
+    - id
+    - matchers
+    - receiver
+    - repeatInterval
+    type: object
+  rule.Rule:
+    properties:
+      description:
+        type: string
+      duration:
+        type: integer
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
+      labels:
+        $ref: '#/definitions/common.KVPair'
+      name:
+        type: string
+      query:
+        type: string
+      serverity:
+        $ref: '#/definitions/alarm.Serverity'
+      summary:
+        type: string
+      type:
+        $ref: '#/definitions/rule.RuleType'
+    required:
+    - description
+    - duration
+    - instanceType
+    - labels
+    - name
+    - query
+    - serverity
+    - summary
+    - type
+    type: object
+  rule.RuleFilter:
+    properties:
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
+      keyword:
+        type: string
+      serverity:
+        $ref: '#/definitions/alarm.Serverity'
+    type: object
+  rule.RuleHealth:
+    enum:
+    - unknown
+    - ok
+    - error
+    type: string
+    x-enum-varnames:
+    - HealthUnknown
+    - HealthOK
+    - HealthError
+  rule.RuleResponse:
+    properties:
+      description:
+        type: string
+      duration:
+        type: integer
+      evaluationTime:
+        type: number
+      health:
+        $ref: '#/definitions/rule.RuleHealth'
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
+      keepFiringFor:
+        type: integer
+      labels:
+        $ref: '#/definitions/common.KVPair'
+      lastError:
+        type: string
+      lastEvaluation:
+        type: integer
+      name:
+        type: string
+      query:
+        type: string
+      serverity:
+        $ref: '#/definitions/alarm.Serverity'
+      state:
+        $ref: '#/definitions/rule.RuleState'
+      summary:
+        type: string
+      type:
+        $ref: '#/definitions/rule.RuleType'
+    required:
+    - description
+    - duration
+    - evaluationTime
+    - health
+    - instanceType
+    - keepFiringFor
+    - labels
+    - lastEvaluation
+    - name
+    - query
+    - serverity
+    - state
+    - summary
+    - type
+    type: object
+  rule.RuleState:
+    enum:
+    - active
+    - inactive
+    type: string
+    x-enum-varnames:
+    - StateActive
+    - StateInactive
+  rule.RuleType:
+    enum:
+    - builtin
+    - customized
+    type: string
+    x-enum-varnames:
+    - TypeBuiltin
+    - TypeCustomized
+  silence.SilencerFilter:
+    properties:
+      instances:
+        items:
+          $ref: '#/definitions/oceanbase.OBInstance'
+        type: array
+      keyword:
+        type: string
+    type: object
+  silence.SilencerParam:
+    properties:
+      comment:
+        type: string
+      createdBy:
+        type: string
+      endsAt:
+        type: integer
+      id:
+        type: string
+      instance:
+        items:
+          $ref: '#/definitions/oceanbase.OBInstance'
+        type: array
+      matchers:
+        items:
+          $ref: '#/definitions/alarm.Matcher'
+        type: array
+      startsAt:
+        type: integer
+    required:
+    - comment
+    - createdBy
+    - endsAt
+    - instance
+    - matchers
+    - startsAt
+    type: object
+  silence.SilencerResponse:
+    properties:
+      comment:
+        type: string
+      createdBy:
+        type: string
+      endsAt:
+        type: integer
+      id:
+        type: string
+      instance:
+        items:
+          $ref: '#/definitions/oceanbase.OBInstance'
+        type: array
+      matchers:
+        items:
+          $ref: '#/definitions/alarm.Matcher'
+        type: array
+      startsAt:
+        type: integer
+      status:
+        $ref: '#/definitions/silence.Status'
+      updatedAt:
+        type: integer
+    required:
+    - comment
+    - createdBy
+    - endsAt
+    - id
+    - instance
+    - matchers
+    - startsAt
+    - status
+    - updatedAt
+    type: object
+  silence.State:
+    enum:
+    - active
+    type: string
+    x-enum-varnames:
+    - StateActive
+  silence.Status:
+    properties:
+      state:
+        $ref: '#/definitions/silence.State'
+    required:
+    - state
+    type: object
 info:
   contact: {}
   description: OceanBase Dashboard
   title: OceanBase Dashboard API
   version: "1.0"
 paths:
+  /api/v1/alarm/alert/alerts:
+    post:
+      consumes:
+      - application/json
+      description: List alerts, filter with alarm objects, serverity, time and keywords.
+      operationId: ListAlerts
+      parameters:
+      - description: alert filter
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/alert.AlertFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/alert.Alert'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alerts
+      tags:
+      - Alarm
+  /api/v1/alarm/receiver/receivers:
+    post:
+      consumes:
+      - application/json
+      description: List alarm receivers, do not support filter, list all receivers
+        at once.
+      operationId: ListReceivers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/receiver.Receiver'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alarm receivers
+      tags:
+      - Alarm
+    put:
+      consumes:
+      - application/json
+      description: Create or update alarm receiver.
+      operationId: CreateOrUpdateReceiver
+      parameters:
+      - description: receiver
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/receiver.Receiver'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/receiver.Receiver'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create or update alarm receiver
+      tags:
+      - Alarm
+  /api/v1/alarm/receiver/receivers/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete alarm receiver by receiver name.
+      operationId: DeleteReceiver
+      parameters:
+      - description: receiver name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete alarm receiver
+      tags:
+      - Alarm
+    get:
+      consumes:
+      - application/json
+      description: Get alarm receiver, query by receiver name.
+      operationId: GetReceiver
+      parameters:
+      - description: rule name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/receiver.Receiver'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get alarm receiver
+      tags:
+      - Alarm
+  /api/v1/alarm/receiver/templates:
+    post:
+      consumes:
+      - application/json
+      description: List alarm receiver templates.
+      operationId: ListReceiverTemplates
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/receiver.Template'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alarm receiver templates
+      tags:
+      - Alarm
+  /api/v1/alarm/receiver/templates/{type}:
+    get:
+      consumes:
+      - application/json
+      description: Get alarm receiver template.
+      operationId: GetReceiverTemplate
+      parameters:
+      - description: receiver type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/receiver.Template'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get alarm receiver template
+      tags:
+      - Alarm
+  /api/v1/alarm/route/routes:
+    post:
+      consumes:
+      - application/json
+      description: List alarm routes, do not support filter, list all routes at once.
+      operationId: ListRoutes
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/route.RouteResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alarm routes
+      tags:
+      - Alarm
+    put:
+      consumes:
+      - application/json
+      description: Create or update alarm route.
+      operationId: CreateOrUpdateRoute
+      parameters:
+      - description: route
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/route.Route'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/route.RouteResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create or update alarm route
+      tags:
+      - Alarm
+  /api/v1/alarm/route/routes/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete alarm channel by channel name.
+      operationId: DeleteRoute
+      parameters:
+      - description: route id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete alarm channel
+      tags:
+      - Alarm
+    get:
+      consumes:
+      - application/json
+      description: Get alarm route, query by route name.
+      operationId: GetRoute
+      parameters:
+      - description: route id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/route.RouteResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get alarm route
+      tags:
+      - Alarm
+  /api/v1/alarm/rule/rules:
+    post:
+      consumes:
+      - application/json
+      description: List alarm rules, filter with alarm objects type, serverity and
+        keywords.
+      operationId: ListRules
+      parameters:
+      - description: rule filter
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/rule.RuleFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/rule.RuleResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alarm rules
+      tags:
+      - Alarm
+    put:
+      consumes:
+      - application/json
+      description: Create or update alarm rule.
+      operationId: CreateOrUpdateRule
+      parameters:
+      - description: rule
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/rule.Rule'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/rule.RuleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create or update alarm rule
+      tags:
+      - Alarm
+  /api/v1/alarm/rule/rules/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete alarm rule by rule name.
+      operationId: DeleteRule
+      parameters:
+      - description: rule name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete alarm rule
+      tags:
+      - Alarm
+    get:
+      consumes:
+      - application/json
+      description: Get alarm rule, query by rule name.
+      operationId: GetRule
+      parameters:
+      - description: rule name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/rule.RuleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get alarm rule
+      tags:
+      - Alarm
+  /api/v1/alarm/silence/silencers:
+    post:
+      consumes:
+      - application/json
+      description: List alarm silencers, filter with alarm objects and keywords.
+      operationId: ListSilencers
+      parameters:
+      - description: silencer filter
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/silence.SilencerFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/silence.SilencerResponse'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List alarm silencers
+      tags:
+      - Alarm
+    put:
+      consumes:
+      - application/json
+      description: Create or update alarm silencer.
+      operationId: CreateOrUpdateSilencer
+      parameters:
+      - description: silencer
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/silence.SilencerParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/silence.SilencerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create or update alarm silencer
+      tags:
+      - Alarm
+  /api/v1/alarm/silence/silencers/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete alarm silencer by silencer id.
+      operationId: DeleteSilencer
+      parameters:
+      - description: silencer id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete alarm silencer
+      tags:
+      - Alarm
+    get:
+      consumes:
+      - application/json
+      description: Get alarm silencer, query by silencer id.
+      operationId: GetSilencer
+      parameters:
+      - description: silencer id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/silence.SilencerResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get alarm silencer
+      tags:
+      - Alarm
   /api/v1/cluster/events:
     get:
       consumes:

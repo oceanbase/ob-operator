@@ -10,15 +10,17 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package alert
 
-const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
-const (
-	DefaultSessionExpiration = 3600
-)
+type AlertFilter struct {
+	Serverity alarm.Serverity      `json:"serverity,omitempty"`
+	Instance  oceanbase.OBInstance `json:"instance,omitempty"`
+	StartTime int64                `json:"startTime,omitempty"`
+	EndTime   int64                `json:"endTime,omitempty"`
+	Keyword   string               `json:"keyword,omitempty"`
+}

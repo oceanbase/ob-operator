@@ -10,15 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package alarm
 
-const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
-)
-
-const (
-	DefaultSessionExpiration = 3600
-)
+type Matcher struct {
+	IsEqual bool   `json:"isEqual,omitempty"`
+	IsRegex bool   `json:"isRegex"`
+	Name    string `json:"name"`
+	Value   string `json:"value"`
+}

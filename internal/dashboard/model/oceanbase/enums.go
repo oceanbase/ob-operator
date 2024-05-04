@@ -10,15 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package oceanbase
+
+type OBInstanceType string
 
 const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
-)
-
-const (
-	DefaultSessionExpiration = 3600
+	OBCluster OBInstanceType = "obcluster"
+	OBTenant  OBInstanceType = "obtenant"
+	OBServer  OBInstanceType = "observer"
 )

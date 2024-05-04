@@ -10,15 +10,12 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package oceanbase
 
-const (
-	DefaultProtocol   = "tcp4"
-	DefaultServerHost = "0.0.0.0"
-	DefaultServerPort = 8080
-	DefaultLocalHost  = "127.0.0.1"
-)
-
-const (
-	DefaultSessionExpiration = 3600
-)
+type OBInstance struct {
+	Type      OBInstanceType `json:"type" binding:"required"`
+	OBCluster string         `json:"obcluster,omitempty"`
+	OBZone    string         `json:"obzone,omitempty"` // obzone may exist in labels
+	OBServer  string         `json:"observer,omitempty"`
+	OBTenant  string         `json:"obtenant,omitempty"`
+}

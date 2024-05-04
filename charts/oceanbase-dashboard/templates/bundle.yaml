@@ -35,7 +35,7 @@ spec:
             - name: USER_NAMESPACE
               value: {{ .Values.userNamespace | default .Release.Namespace }}
         - name: prometheus
-          image: prom/prometheus
+          image: prom/prometheus:v2.51.1
           resources:
             requests:
               cpu: 100m
@@ -54,10 +54,10 @@ spec:
             - name: prometheus-storage-volume
               mountPath: /prometheus/
       volumes:
+      # volumes for prometheus
         - name: prometheus-config-volume
           configMap:
             defaultMode: 420
             name: {{ .Release.Name }}-prometheus-server-conf
-
         - name: prometheus-storage-volume
           emptyDir: {}
