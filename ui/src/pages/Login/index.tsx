@@ -6,7 +6,7 @@ import React from 'react';
 
 import logoSrc from '@/assets/oceanbase_logo.svg';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
-import { loginReq } from '@/services';
+import { user } from '@/api';
 import styles from './index.less';
 
 const Login: React.FC = () => {
@@ -15,9 +15,8 @@ const Login: React.FC = () => {
 
   const onFinish = async (values: API.User) => {
     values.password = encryptText(values.password, publicKey) as string;
-    const res = await loginReq(values);
-
-    if (res.successful) {
+    const res = await user.login(values);
+    if (res.data.successful) {
       navigate('/overview');
       localStorage.setItem('user', values.username);
     }
