@@ -14,7 +14,6 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
-	context2 "context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -262,7 +261,7 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 
-	err = manager.Bootstrap(context2.TODO(), bootstrapServers)
+	err = manager.Bootstrap(m.Ctx, bootstrapServers)
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
@@ -870,7 +869,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "get target oceanbase version")
 	}
 
-	sourceVersion, err := manager.GetVersion(context2.TODO())
+	sourceVersion, err := manager.GetVersion(m.Ctx)
 	if err != nil {
 		return errors.Wrap(err, "get source oceanbase version")
 	}

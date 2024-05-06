@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package obtenantoperation
 
 import (
-	context2 "context"
 	"fmt"
 	"time"
 
@@ -68,7 +67,7 @@ func ActivateStandbyTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.ActivateStandby(context2.TODO(), m.Resource.Status.PrimaryTenant.Spec.TenantName)
+	err = con.ActivateStandby(m.Ctx, m.Resource.Status.PrimaryTenant.Spec.TenantName)
 	if err != nil {
 		return err
 	}
@@ -253,7 +252,7 @@ func SetTenantLogRestoreSource(m *ObTenantOperationManager) tasktypes.TaskError 
 		if err != nil {
 			return err
 		}
-		err = con.SetParameter(context2.TODO(), "LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
+		err = con.SetParameter(m.Ctx, "LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
 			Name:  "TENANT",
 			Value: m.Resource.Status.PrimaryTenant.Spec.TenantName,
 		})
@@ -274,7 +273,7 @@ func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	var sysCompatible string
 	var restoredCompatible string
 
-	compatibles, err := con.SelectCompatibleOfTenants(context2.TODO())
+	compatibles, err := con.SelectCompatibleOfTenants(m.Ctx)
 	if err != nil {
 		return err
 	}
@@ -325,11 +324,11 @@ func ReplayLogOfStandby(m *ObTenantOperationManager) tasktypes.TaskError {
 	}
 	replayUntil := m.Resource.Spec.ReplayUntil
 	if replayUntil == nil || replayUntil.Unlimited {
-		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, "UNLIMITED")
+		err = con.ReplayStandbyLog(m.Ctx, targetTenant.Spec.TenantName, "UNLIMITED")
 	} else if replayUntil.Timestamp != nil {
-		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
+		err = con.ReplayStandbyLog(m.Ctx, targetTenant.Spec.TenantName, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
 	} else if replayUntil.Scn != nil {
-		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
+		err = con.ReplayStandbyLog(m.Ctx, targetTenant.Spec.TenantName, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
 	} else {
 		return errors.New("Replay until with limit must have a limit key, scn and timestamp are both nil now")
 	}

@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
-	context2 "context"
 	"fmt"
 	"strings"
 
@@ -115,7 +114,7 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
 	}
-	return operationManager.GetServer(context2.TODO(), observerInfo)
+	return operationManager.GetServer(m.Ctx, observerInfo)
 }
 
 func (m *OBServerManager) retryUpdateStatus() error {

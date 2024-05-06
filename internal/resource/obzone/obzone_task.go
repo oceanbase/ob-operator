@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package obzone
 
 import (
-	context2 "context"
 	"fmt"
 	"time"
 
@@ -373,7 +372,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	allOBServers, err := operationManager.ListServers(context2.TODO())
+	allOBServers, err := operationManager.ListServers(m.Ctx)
 	if err != nil {
 		return errors.Wrap(err, "List observers in oceanbase")
 	}
@@ -393,7 +392,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 			}
 		}
 		if !found {
-			err := operationManager.DeleteServer(context2.TODO(), &model.ServerInfo{
+			err := operationManager.DeleteServer(m.Ctx, &model.ServerInfo{
 				Ip:   observer.Ip,
 				Port: observer.Port,
 			})

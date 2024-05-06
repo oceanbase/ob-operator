@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package obtenantbackuppolicy
 
 import (
-	context2 "context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -48,17 +47,17 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 	}
 	setArchiveDest := func() error {
 		if tenantInfo.LogMode == "NOARCHIVELOG" {
-			err = con.SetLogArchiveDestForTenant(context2.TODO(), m.getArchiveDestSettingValue())
+			err = con.SetLogArchiveDestForTenant(m.Ctx, m.getArchiveDestSettingValue())
 			if err != nil {
 				return err
 			}
 		} else {
-			latestArchiveJob, err := con.GetLatestArchiveLogJob(context2.TODO())
+			latestArchiveJob, err := con.GetLatestArchiveLogJob(m.Ctx)
 			if err != nil {
 				return err
 			}
 			if latestArchiveJob == nil || latestArchiveJob.Status != "DOING" {
-				err = con.SetLogArchiveDestForTenant(context2.TODO(), m.getArchiveDestSettingValue())
+				err = con.SetLogArchiveDestForTenant(m.Ctx, m.getArchiveDestSettingValue())
 				if err != nil {
 					return err
 				}
@@ -69,7 +68,7 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 		return nil
 	}
 	// Maintain log archive parameters
-	configs, err := con.ListArchiveLogParameters(context2.TODO())
+	configs, err := con.ListArchiveLogParameters(m.Ctx)
 	if err != nil {
 		return err
 	}
@@ -97,19 +96,19 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 			}
 		}
 		if archiveSpec.Concurrency != 0 {
-			err = con.SetLogArchiveConcurrency(context2.TODO(), archiveSpec.Concurrency)
+			err = con.SetLogArchiveConcurrency(m.Ctx, archiveSpec.Concurrency)
 			if err != nil {
 				return err
 			}
 		}
 	}
 	setBackupDest := func() error {
-		latestRunning, err := con.GetLatestRunningBackupJob(context2.TODO())
+		latestRunning, err := con.GetLatestRunningBackupJob(m.Ctx)
 		if err != nil {
 			return err
 		}
 		if latestRunning == nil {
-			err = con.SetDataBackupDestForTenant(context2.TODO(), m.getBackupDestPath())
+			err = con.SetDataBackupDestForTenant(m.Ctx, m.getBackupDestPath())
 			if err != nil {
 				return err
 			}
@@ -118,7 +117,7 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 		return nil
 	}
 	// Maintain backup parameters
-	backupConfigs, err := con.ListBackupParameters(context2.TODO())
+	backupConfigs, err := con.ListBackupParameters(m.Ctx)
 	if err != nil {
 		return err
 	}
@@ -156,7 +155,7 @@ func StartBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 		return err
 	}
 	if tenantInfo.LogMode == "NOARCHIVELOG" {
-		err = con.EnableArchiveLogForTenant(context2.TODO())
+		err = con.EnableArchiveLogForTenant(m.Ctx)
 		if err != nil {
 			return err
 		}
@@ -173,7 +172,7 @@ func StartBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	archiveRunning := false
 	for !archiveRunning {
 		time.Sleep(10 * time.Second)
-		latestArchiveJob, err := con.GetLatestArchiveLogJob(context2.TODO())
+		latestArchiveJob, err := con.GetLatestArchiveLogJob(m.Ctx)
 		if err != nil {
 			return err
 		}
@@ -195,22 +194,22 @@ func StopBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 		return err
 	}
 	if tenantInfo.LogMode != "NOARCHIVELOG" {
-		err = con.DisableArchiveLogForTenant(context2.TODO())
+		err = con.DisableArchiveLogForTenant(m.Ctx)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = con.StopBackupJobOfTenant(context2.TODO())
+	err = con.StopBackupJobOfTenant(m.Ctx)
 	if err != nil {
 		return err
 	}
-	err = con.CancelCleanBackup(context2.TODO())
+	err = con.CancelCleanBackup(m.Ctx)
 	if err != nil {
 		return err
 	}
 	cleanPolicyName := "default"
-	err = con.RemoveCleanBackupPolicy(context2.TODO(), cleanPolicyName)
+	err = con.RemoveCleanBackupPolicy(m.Ctx, cleanPolicyName)
 	if err != nil {
 		return err
 	}
@@ -368,21 +367,21 @@ func PauseBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.SetLogArchiveDestState(context2.TODO(), string(constants.LogArchiveDestStateDefer))
+	err = con.SetLogArchiveDestState(m.Ctx, string(constants.LogArchiveDestStateDefer))
 	if err != nil {
 		return err
 	}
 
-	err = con.StopBackupJobOfTenant(context2.TODO())
+	err = con.StopBackupJobOfTenant(m.Ctx)
 	if err != nil {
 		return err
 	}
-	err = con.CancelCleanBackup(context2.TODO())
+	err = con.CancelCleanBackup(m.Ctx)
 	if err != nil {
 		return err
 	}
 	cleanPolicyName := "default"
-	err = con.RemoveCleanBackupPolicy(context2.TODO(), cleanPolicyName)
+	err = con.RemoveCleanBackupPolicy(m.Ctx, cleanPolicyName)
 	if err != nil {
 		return err
 	}
@@ -395,7 +394,7 @@ func ResumeBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.SetLogArchiveDestState(context2.TODO(), string(constants.LogArchiveDestStateEnable))
+	err = con.SetLogArchiveDestState(m.Ctx, string(constants.LogArchiveDestStateEnable))
 	if err != nil {
 		return err
 	}
@@ -406,7 +405,7 @@ func ResumeBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	archiveRunning := false
 	for !archiveRunning {
 		time.Sleep(10 * time.Second)
-		latestArchiveJob, err := con.GetLatestArchiveLogJob(context2.TODO())
+		latestArchiveJob, err := con.GetLatestArchiveLogJob(m.Ctx)
 		if err != nil {
 			return err
 		}

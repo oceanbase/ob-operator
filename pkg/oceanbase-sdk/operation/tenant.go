@@ -151,7 +151,7 @@ func (m *OceanbaseOperationManager) GetRsJob(ctx context.Context, reJobName stri
 // ------------ delete ------------
 
 func (m *OceanbaseOperationManager) DeleteTenant(ctx context.Context, tenantName string, force bool) error {
-	preparedSQL, params := m.preparedSQLForDeleteTenant(ctx, tenantName, force)
+	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
 	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
@@ -160,7 +160,7 @@ func (m *OceanbaseOperationManager) DeleteTenant(ctx context.Context, tenantName
 }
 
 func (m *OceanbaseOperationManager) DeletePool(ctx context.Context, poolName string) error {
-	preparedSQL, params := m.preparedSQLForDeletePool(ctx, poolName)
+	preparedSQL, params := m.preparedSQLForDeletePool(poolName)
 	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete pool by poolName")
@@ -169,7 +169,7 @@ func (m *OceanbaseOperationManager) DeletePool(ctx context.Context, poolName str
 }
 
 func (m *OceanbaseOperationManager) DeleteUnitConfig(ctx context.Context, unitName string) error {
-	preparedSQL, params := m.preparedSQLForDeleteUnitConfig(ctx, unitName)
+	preparedSQL, params := m.preparedSQLForDeleteUnitConfig(unitName)
 	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete unit by unitName")
@@ -247,7 +247,7 @@ func (m *OceanbaseOperationManager) AddUnitConfigV4(ctx context.Context, unitCon
 // ------------ modify ------------
 
 func (m *OceanbaseOperationManager) SetTenantVariable(ctx context.Context, tenantName, variableList string) error {
-	preparedSQL, params := m.preparedSQLForSetTenantVariable(ctx, tenantName, variableList)
+	preparedSQL, params := m.preparedSQLForSetTenantVariable(tenantName, variableList)
 	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set Tenant Variable")
@@ -265,7 +265,7 @@ func (m *OceanbaseOperationManager) SetUnitConfigV4(ctx context.Context, unitCon
 }
 
 func (m *OceanbaseOperationManager) SetTenantUnitNum(ctx context.Context, tenantName string, unitNum int) error {
-	preparedSQL, params := m.preparedSQLForSetTenantUnitNum(ctx, tenantName, unitNum)
+	preparedSQL, params := m.preparedSQLForSetTenantUnitNum(tenantName, unitNum)
 	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set pool UnitNum")
@@ -450,18 +450,18 @@ func (m *OceanbaseOperationManager) AlterPool(ctx context.Context, poolParam *mo
 	return nil
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(ctx context.Context, tenantName, variableList string) (string, []any) {
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantVariable(tenantName, variableList string) (string, []any) {
 	params := make([]any, 0)
 	return fmt.Sprintf(sql.SetTenantVariable, tenantName, variableList), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(ctx context.Context, tenantNum string, unitNum int) (string, []any) {
+func (m *OceanbaseOperationManager) preparedSQLForSetTenantUnitNum(tenantNum string, unitNum int) (string, []any) {
 	params := make([]any, 0)
 	params = append(params, unitNum)
 	return fmt.Sprintf(sql.SetTenantUnitNum, tenantNum), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(ctx context.Context, tenantName string, force bool) (string, []any) {
+func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(tenantName string, force bool) (string, []any) {
 	params := make([]any, 0)
 	if force {
 		return fmt.Sprintf(sql.DeleteTenant, tenantName, "force"), params
@@ -469,12 +469,12 @@ func (m *OceanbaseOperationManager) preparedSQLForDeleteTenant(ctx context.Conte
 	return fmt.Sprintf(sql.DeleteTenant, tenantName, ""), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeletePool(ctx context.Context, poolName string) (string, []any) {
+func (m *OceanbaseOperationManager) preparedSQLForDeletePool(poolName string) (string, []any) {
 	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeletePool, poolName), params
 }
 
-func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(ctx context.Context, unitConfigName string) (string, []any) {
+func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigName string) (string, []any) {
 	params := make([]any, 0)
 	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
 }

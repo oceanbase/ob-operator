@@ -14,7 +14,6 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
-	context2 "context"
 	"fmt"
 	"reflect"
 	"time"
@@ -339,7 +338,7 @@ func CancelTenantRestoreJob(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.CancelRestoreOfTenant(context2.TODO(), m.OBTenant.Spec.TenantName)
+	err = con.CancelRestoreOfTenant(m.Ctx, m.OBTenant.Spec.TenantName)
 	if err != nil {
 		return err
 	}
@@ -376,7 +375,7 @@ func UpgradeTenantIfNeeded(m *OBTenantManager) tasktypes.TaskError {
 	var sysCompatible string
 	var restoredCompatible string
 
-	compatibles, err := con.SelectCompatibleOfTenants(context2.TODO())
+	compatibles, err := con.SelectCompatibleOfTenants(m.Ctx)
 	if err != nil {
 		return err
 	}
