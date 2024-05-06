@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
+	context2 "context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -261,7 +262,7 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 
-	err = manager.Bootstrap(bootstrapServers)
+	err = manager.Bootstrap(context2.TODO(), bootstrapServers)
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
@@ -336,7 +337,7 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to get operation manager of obcluster %s", m.OBCluster.Name)
 	}
 	// version, err := oceanbaseOperationManager.GetVersion()
-	version, err := oceanbaseOperationManager.GetVersion()
+	version, err := oceanbaseOperationManager.GetVersion(m.Ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
 	}
@@ -412,7 +413,7 @@ func BackupEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 	}
 	essentialParameters := make([]model.Parameter, 0)
 	for _, parameter := range oceanbaseconst.UpgradeEssentialParameters {
-		parameterValues, err := oceanbaseOperationManager.GetParameter(parameter, nil)
+		parameterValues, err := oceanbaseOperationManager.GetParameter(m.Ctx, parameter, nil)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get parameter %s", parameter)
 		}
@@ -481,7 +482,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 		desiredZones = append(desiredZones, obzone.Zone)
 	}
 	// add zone to pool zone list
-	sysPool, err := oceanbaseOperationManager.GetPoolByName(oceanbaseconst.SysTenantPool)
+	sysPool, err := oceanbaseOperationManager.GetPoolByName(m.Ctx, oceanbaseconst.SysTenantPool)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get sys pool info")
 	}
@@ -499,7 +500,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 	m.Logger.Info("Modify sys pool's zone list", "zone list", zoneList)
-	err = oceanbaseOperationManager.AlterPool(&model.PoolParam{
+	err = oceanbaseOperationManager.AlterPool(m.Ctx, &model.PoolParam{
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: zoneList,
 	})
@@ -507,7 +508,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to modify sys pool's zone list to  %v", zoneList)
 	}
 	// add locality one by one
-	sysTenant, err := oceanbaseOperationManager.GetTenantByName(oceanbaseconst.SysTenant)
+	sysTenant, err := oceanbaseOperationManager.GetTenantByName(m.Ctx, oceanbaseconst.SysTenant)
 	if err != nil {
 		return errors.Wrap(err, "Failed to get sys tenant info")
 	}
@@ -529,14 +530,14 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 			})
 			locality = obutil.ConvertToLocalityStr(replicas)
 			m.Logger.Info("Modify sys tenant's locality when add zone", "locality", locality)
-			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
+			err = oceanbaseOperationManager.SetTenant(m.Ctx, model.TenantSQLParam{
 				TenantName: oceanbaseconst.SysTenant,
 				Locality:   locality,
 			})
 			if err != nil {
 				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
 			}
-			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(m.Ctx, oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
 			if err != nil {
 				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
 			}
@@ -555,14 +556,14 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 			newReplicas := obutil.OmitZoneFromReplicas(replicas, r.Zone)
 			locality = obutil.ConvertToLocalityStr(newReplicas)
 			m.Logger.Info("Modify sys tenant's locality when deleting zone", "locality", locality)
-			err = oceanbaseOperationManager.SetTenant(model.TenantSQLParam{
+			err = oceanbaseOperationManager.SetTenant(m.Ctx, model.TenantSQLParam{
 				TenantName: oceanbaseconst.SysTenant,
 				Locality:   locality,
 			})
 			if err != nil {
 				return errors.Wrapf(err, "Failed to set sys locality to %s", locality)
 			}
-			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
+			err = oceanbaseOperationManager.WaitTenantLocalityChangeFinished(m.Ctx, oceanbaseconst.SysTenant, obcfg.GetConfig().Time.LocalityChangeTimeoutSeconds)
 			if err != nil {
 				return errors.Wrapf(err, "Locality change to %s not finished after timeout", locality)
 			}
@@ -583,7 +584,7 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 	m.Logger.Info("Modify sys pool's zone list when delete zone", "zone list", newZoneList)
-	return oceanbaseOperationManager.AlterPool(&model.PoolParam{
+	return oceanbaseOperationManager.AlterPool(m.Ctx, &model.PoolParam{
 		PoolName: oceanbaseconst.SysTenantPool,
 		ZoneList: newZoneList,
 	})
@@ -655,7 +656,7 @@ func RestoreEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	for _, parameter := range essentialParameters {
-		err = oceanbaseOperationManager.SetParameter(parameter.Name, parameter.Value, &param.Scope{
+		err = oceanbaseOperationManager.SetParameter(m.Ctx, parameter.Name, parameter.Value, &param.Scope{
 			Name:  "server",
 			Value: fmt.Sprintf("%s:%d", parameter.SvrIp, parameter.SvrPort),
 		})
@@ -869,7 +870,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "get target oceanbase version")
 	}
 
-	sourceVersion, err := manager.GetVersion()
+	sourceVersion, err := manager.GetVersion(context2.TODO())
 	if err != nil {
 		return errors.Wrap(err, "get source oceanbase version")
 	}
@@ -879,7 +880,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	// check obzone matches topology
-	obzoneList, err := manager.ListZones()
+	obzoneList, err := manager.ListZones(m.Ctx)
 	if err != nil {
 		return errors.Wrap(err, "list obzones")
 	}
@@ -910,12 +911,12 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	// check obcluster name and id
-	obclusterNameParamList, err := manager.GetParameter(oceanbaseconst.ClusterNameParam, nil)
+	obclusterNameParamList, err := manager.GetParameter(m.Ctx, oceanbaseconst.ClusterNameParam, nil)
 	if err != nil {
 		return errors.Wrap(err, "get obcluster name failed")
 	}
 	obclusterName := obclusterNameParamList[0].Value
-	obclusterIdParamList, err := manager.GetParameter(oceanbaseconst.ClusterIdParam, nil)
+	obclusterIdParamList, err := manager.GetParameter(m.Ctx, oceanbaseconst.ClusterIdParam, nil)
 	if err != nil {
 		return errors.Wrap(err, "get obcluster id failed")
 	}

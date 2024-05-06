@@ -62,7 +62,7 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	}
 	defer manager.Close()
 
-	parameters, err := manager.GetParameter("__min_full_resource_pool_memory", nil)
+	parameters, err := manager.GetParameter(ctx, "__min_full_resource_pool_memory", nil)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
@@ -77,7 +77,7 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 		}
 		essentials.MinPoolMemory = minPoolMemory.Value()
 	}
-	gvservers, err := manager.ListGVServers()
+	gvservers, err := manager.ListGVServers(ctx)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

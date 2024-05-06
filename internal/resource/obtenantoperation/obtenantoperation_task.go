@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obtenantoperation
 
 import (
+	context2 "context"
 	"fmt"
 	"time"
 
@@ -44,7 +45,7 @@ func ChangeTenantRootPassword(m *ObTenantOperationManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.ChangeTenantUserPassword(oceanbaseconst.RootUser, pwd)
+	err = con.ChangeTenantUserPassword(m.Ctx, oceanbaseconst.RootUser, pwd)
 	if err != nil {
 		return err
 	}
@@ -67,7 +68,7 @@ func ActivateStandbyTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.ActivateStandby(m.Resource.Status.PrimaryTenant.Spec.TenantName)
+	err = con.ActivateStandby(context2.TODO(), m.Resource.Status.PrimaryTenant.Spec.TenantName)
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func CreateUsersForActivatedStandby(m *ObTenantOperationManager) tasktypes.TaskE
 	maxRetry := obcfg.GetConfig().Time.TenantOpRetryTimes
 	counter := 0
 	for counter < maxRetry {
-		tenants, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
+		tenants, err := con.ListTenantWithName(m.Ctx, m.Resource.Status.PrimaryTenant.Spec.TenantName)
 		if err != nil {
 			return err
 		}
@@ -142,14 +143,14 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 		return err
 	}
 	if m.Resource.Status.Status == constants.TenantOpRunning {
-		err = con.SwitchTenantRole(m.Resource.Status.PrimaryTenant.Spec.TenantName, "STANDBY")
+		err = con.SwitchTenantRole(m.Ctx, m.Resource.Status.PrimaryTenant.Spec.TenantName, "STANDBY")
 		if err != nil {
 			return err
 		}
 		maxRetry := obcfg.GetConfig().Time.TenantOpRetryTimes
 		counter := 0
 		for counter < maxRetry {
-			primary, err := con.ListTenantWithName(m.Resource.Status.PrimaryTenant.Spec.TenantName)
+			primary, err := con.ListTenantWithName(m.Ctx, m.Resource.Status.PrimaryTenant.Spec.TenantName)
 			if err != nil {
 				return err
 			}
@@ -171,13 +172,13 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		err = con.SwitchTenantRole(m.Resource.Status.SecondaryTenant.Spec.TenantName, "PRIMARY")
+		err = con.SwitchTenantRole(m.Ctx, m.Resource.Status.SecondaryTenant.Spec.TenantName, "PRIMARY")
 		if err != nil {
 			return err
 		}
 		counter = 0
 		for counter < maxRetry {
-			standby, err := con.ListTenantWithName(m.Resource.Status.SecondaryTenant.Spec.TenantName)
+			standby, err := con.ListTenantWithName(m.Ctx, m.Resource.Status.SecondaryTenant.Spec.TenantName)
 			if err != nil {
 				return err
 			}
@@ -200,7 +201,7 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 			return err
 		}
 	} else if m.Resource.Status.Status == constants.TenantOpReverting {
-		err = con.SwitchTenantRole(m.Resource.Status.PrimaryTenant.Spec.TenantName, "PRIMARY")
+		err = con.SwitchTenantRole(m.Ctx, m.Resource.Status.PrimaryTenant.Spec.TenantName, "PRIMARY")
 		if err != nil {
 			return err
 		}
@@ -211,7 +212,7 @@ func SwitchTenantsRole(m *ObTenantOperationManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		err = con.SwitchTenantRole(m.Resource.Status.SecondaryTenant.Spec.TenantName, "STANDBY")
+		err = con.SwitchTenantRole(m.Ctx, m.Resource.Status.SecondaryTenant.Spec.TenantName, "STANDBY")
 		if err != nil {
 			return err
 		}
@@ -252,7 +253,7 @@ func SetTenantLogRestoreSource(m *ObTenantOperationManager) tasktypes.TaskError 
 		if err != nil {
 			return err
 		}
-		err = con.SetParameter("LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
+		err = con.SetParameter(context2.TODO(), "LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
 			Name:  "TENANT",
 			Value: m.Resource.Status.PrimaryTenant.Spec.TenantName,
 		})
@@ -273,7 +274,7 @@ func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	var sysCompatible string
 	var restoredCompatible string
 
-	compatibles, err := con.SelectCompatibleOfTenants()
+	compatibles, err := con.SelectCompatibleOfTenants(context2.TODO())
 	if err != nil {
 		return err
 	}
@@ -287,7 +288,7 @@ func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	}
 
 	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
-		err := con.UpgradeTenantWithName(targetTenant.Spec.TenantName)
+		err := con.UpgradeTenantWithName(m.Ctx, targetTenant.Spec.TenantName)
 		if err != nil {
 			return err
 		}
@@ -295,7 +296,7 @@ func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
 	outer:
 		for i := 0; i < maxWait5secTimes; i++ {
 			time.Sleep(5 * time.Second)
-			params, err := con.ListParametersWithTenantID(int64(targetTenant.Status.TenantRecordInfo.TenantID))
+			params, err := con.ListParametersWithTenantID(m.Ctx, int64(targetTenant.Status.TenantRecordInfo.TenantID))
 			if err != nil {
 				return err
 			}
@@ -324,11 +325,11 @@ func ReplayLogOfStandby(m *ObTenantOperationManager) tasktypes.TaskError {
 	}
 	replayUntil := m.Resource.Spec.ReplayUntil
 	if replayUntil == nil || replayUntil.Unlimited {
-		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, "UNLIMITED")
+		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, "UNLIMITED")
 	} else if replayUntil.Timestamp != nil {
-		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
+		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
 	} else if replayUntil.Scn != nil {
-		err = con.ReplayStandbyLog(targetTenant.Spec.TenantName, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
+		err = con.ReplayStandbyLog(context2.TODO(), targetTenant.Spec.TenantName, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
 	} else {
 		return errors.New("Replay until with limit must have a limit key, scn and timestamp are both nil now")
 	}

@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -21,9 +22,9 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBServer, error) {
+func (m *OceanbaseOperationManager) GetServer(ctx context.Context, s *model.ServerInfo) (*model.OBServer, error) {
 	observers := make([]model.OBServer, 0)
-	err := m.QueryList(&observers, sql.GetServer, s.Ip, s.Port)
+	err := m.QueryList(ctx, &observers, sql.GetServer, s.Ip, s.Port)
 	if err != nil {
 		return nil, err
 	}
@@ -33,18 +34,18 @@ func (m *OceanbaseOperationManager) GetServer(s *model.ServerInfo) (*model.OBSer
 	return &observers[0], nil
 }
 
-func (m *OceanbaseOperationManager) ListServers() ([]model.OBServer, error) {
+func (m *OceanbaseOperationManager) ListServers(ctx context.Context) ([]model.OBServer, error) {
 	observers := make([]model.OBServer, 0)
-	err := m.QueryList(&observers, sql.ListServer)
+	err := m.QueryList(ctx, &observers, sql.ListServer)
 	if err != nil {
 		return nil, errors.Wrap(err, "List observer failed")
 	}
 	return observers, nil
 }
 
-func (m *OceanbaseOperationManager) AddServer(serverInfo *model.ServerInfo) error {
+func (m *OceanbaseOperationManager) AddServer(ctx context.Context, serverInfo *model.ServerInfo) error {
 	server := fmt.Sprintf("%s:%d", serverInfo.Ip, serverInfo.Port)
-	err := m.ExecWithDefaultTimeout(sql.AddServer, server)
+	err := m.ExecWithDefaultTimeout(ctx, sql.AddServer, server)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when add server")
 		return errors.Wrap(err, "Add server")
@@ -52,9 +53,9 @@ func (m *OceanbaseOperationManager) AddServer(serverInfo *model.ServerInfo) erro
 	return nil
 }
 
-func (m *OceanbaseOperationManager) DeleteServer(serverInfo *model.ServerInfo) error {
+func (m *OceanbaseOperationManager) DeleteServer(ctx context.Context, serverInfo *model.ServerInfo) error {
 	server := fmt.Sprintf("%s:%d", serverInfo.Ip, serverInfo.Port)
-	err := m.ExecWithDefaultTimeout(sql.DeleteServer, server)
+	err := m.ExecWithDefaultTimeout(ctx, sql.DeleteServer, server)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when delete server")
 		return errors.Wrap(err, "Delete server")
@@ -62,9 +63,9 @@ func (m *OceanbaseOperationManager) DeleteServer(serverInfo *model.ServerInfo) e
 	return nil
 }
 
-func (m *OceanbaseOperationManager) ListGVServers() ([]model.GVOBServer, error) {
+func (m *OceanbaseOperationManager) ListGVServers(ctx context.Context) ([]model.GVOBServer, error) {
 	observers := make([]model.GVOBServer, 0)
-	err := m.QueryList(&observers, sql.ListGVServers)
+	err := m.QueryList(ctx, &observers, sql.ListGVServers)
 	if err != nil {
 		return nil, errors.Wrap(err, "List observer failed")
 	}

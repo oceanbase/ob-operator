@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obzone
 
 import (
+	context2 "context"
 	"fmt"
 	"time"
 
@@ -40,7 +41,7 @@ func AddZone(m *OBZoneManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
+	return oceanbaseOperationManager.AddZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 }
 
 func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
@@ -49,7 +50,7 @@ func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	return oceanbaseOperationManager.StartZone(m.OBZone.Spec.Topology.Zone)
+	return oceanbaseOperationManager.StartZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 }
 
 func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
@@ -220,7 +221,7 @@ func StopOBZone(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	err = operationManager.StopZone(m.OBZone.Spec.Topology.Zone)
+	err = operationManager.StopZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {
 		return errors.Wrapf(err, "Stop obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
@@ -294,7 +295,7 @@ func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	err = operationManager.DeleteZone(m.OBZone.Spec.Topology.Zone)
+	err = operationManager.DeleteZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {
 		return errors.Wrapf(err, "Delete obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
@@ -372,7 +373,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	allOBServers, err := operationManager.ListServers()
+	allOBServers, err := operationManager.ListServers(context2.TODO())
 	if err != nil {
 		return errors.Wrap(err, "List observers in oceanbase")
 	}
@@ -392,7 +393,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 			}
 		}
 		if !found {
-			err := operationManager.DeleteServer(&model.ServerInfo{
+			err := operationManager.DeleteServer(context2.TODO(), &model.ServerInfo{
 				Ip:   observer.Ip,
 				Port: observer.Port,
 			})

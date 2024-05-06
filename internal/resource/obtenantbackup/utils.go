@@ -71,7 +71,7 @@ func (m *OBTenantBackupManager) maintainRunningBackupJob() error {
 	if job.Status.BackupJob == nil {
 		// occasionally happen, try to fetch the job from OB view
 		if job.Spec.Type == constants.BackupJobTypeFull || job.Spec.Type == constants.BackupJobTypeIncr {
-			latest, err := con.GetLatestBackupJobOfType(job.Spec.Type)
+			latest, err := con.GetLatestBackupJobOfType(m.Ctx, string(job.Spec.Type))
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func (m *OBTenantBackupManager) maintainRunningBackupJob() error {
 		}
 		// archive log and data clean job should not be here
 	} else {
-		modelJob, err := con.GetBackupJobWithId(job.Status.BackupJob.JobID)
+		modelJob, err := con.GetBackupJobWithId(m.Ctx, job.Status.BackupJob.JobID)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (m *OBTenantBackupManager) maintainRunningBackupCleanJob() error {
 		return err
 	}
 
-	latest, err := con.GetLatestBackupCleanJob()
+	latest, err := con.GetLatestBackupCleanJob(m.Ctx)
 	if err != nil {
 		logger.Error(err, "Failed to query latest backup clean job")
 		return err
@@ -148,7 +148,7 @@ func (m *OBTenantBackupManager) maintainRunningArchiveLogJob() error {
 		return err
 	}
 
-	latest, err := con.GetLatestArchiveLogJob()
+	latest, err := con.GetLatestArchiveLogJob(m.Ctx)
 	if err != nil {
 		logger.Error(err, "Failed to query latest archive log job")
 		return err

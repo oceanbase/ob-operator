@@ -150,7 +150,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 	if err != nil {
 		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
 	}
-	observers, err := oceanbaseOperationManager.ListServers()
+	observers, err := oceanbaseOperationManager.ListServers(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to list all servers for obcluster %s", obcluster.Name)
 	}

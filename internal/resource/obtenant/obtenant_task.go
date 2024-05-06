@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
+	context2 "context"
 	"fmt"
 	"reflect"
 	"time"
@@ -61,7 +62,7 @@ func CheckPoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get sys client when checking and applying tenant '%s' pool and config", tenantName))
 	}
-	params, err := client.GetParameter("__min_full_resource_pool_memory", nil)
+	params, err := client.GetParameter(m.Ctx, "__min_full_resource_pool_memory", nil)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Get parameter __min_full_resource_pool_memory when checking and applying tenant '%s' pool and config", tenantName))
 	}
@@ -203,7 +204,7 @@ func CheckAndApplyCharset(m *OBTenantManager) tasktypes.TaskError {
 			TenantName: tenantName,
 			Charset:    specCharset,
 		}
-		err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+		err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 		if err != nil {
 			return err
 		}
@@ -228,7 +229,7 @@ func CreateEmptyStandbyTenant(m *OBTenantManager) tasktypes.TaskError {
 	poolList := m.generateSpecPoolList(m.OBTenant.Spec.Pools)
 	primaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
 	locality := m.generateLocality(m.OBTenant.Spec.Pools)
-	err = con.CreateEmptyStandbyTenant(&model.CreateEmptyStandbyTenantParam{
+	err = con.CreateEmptyStandbyTenant(m.Ctx, &model.CreateEmptyStandbyTenantParam{
 		TenantName:    m.OBTenant.Spec.TenantName,
 		RestoreSource: restoreSource,
 		PrimaryZone:   primaryZone,
@@ -338,7 +339,7 @@ func CancelTenantRestoreJob(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	err = con.CancelRestoreOfTenant(m.OBTenant.Spec.TenantName)
+	err = con.CancelRestoreOfTenant(context2.TODO(), m.OBTenant.Spec.TenantName)
 	if err != nil {
 		return err
 	}
@@ -375,7 +376,7 @@ func UpgradeTenantIfNeeded(m *OBTenantManager) tasktypes.TaskError {
 	var sysCompatible string
 	var restoredCompatible string
 
-	compatibles, err := con.SelectCompatibleOfTenants()
+	compatibles, err := con.SelectCompatibleOfTenants(context2.TODO())
 	if err != nil {
 		return err
 	}
@@ -388,7 +389,7 @@ func UpgradeTenantIfNeeded(m *OBTenantManager) tasktypes.TaskError {
 		}
 	}
 	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
-		err := con.UpgradeTenantWithName(m.OBTenant.Spec.TenantName)
+		err := con.UpgradeTenantWithName(m.Ctx, m.OBTenant.Spec.TenantName)
 		if err != nil {
 			return err
 		}
@@ -396,7 +397,7 @@ func UpgradeTenantIfNeeded(m *OBTenantManager) tasktypes.TaskError {
 	outer:
 		for i := 0; i < maxWait5secTimes; i++ {
 			time.Sleep(5 * time.Second)
-			params, err := con.ListParametersWithTenantID(int64(m.OBTenant.Status.TenantRecordInfo.TenantID))
+			params, err := con.ListParametersWithTenantID(m.Ctx, int64(m.OBTenant.Status.TenantRecordInfo.TenantID))
 			if err != nil {
 				return err
 			}
@@ -418,7 +419,7 @@ func CheckAndApplyUnitNum(m *OBTenantManager) tasktypes.TaskError {
 	}
 
 	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.TenantRecordInfo.UnitNumber {
-		err = oceanbaseOperationManager.SetTenantUnitNum(tenantName, m.OBTenant.Spec.UnitNumber)
+		err = oceanbaseOperationManager.SetTenantUnitNum(m.Ctx, tenantName, m.OBTenant.Spec.UnitNumber)
 		if err != nil {
 			return err
 		}
@@ -443,7 +444,7 @@ func CheckAndApplyWhiteList(m *OBTenantManager) tasktypes.TaskError {
 		m.Logger.Info("Found specWhiteList didn't match", "tenantName", tenantName,
 			"statusWhiteList", statusWhiteList, "specWhiteList", specWhiteList)
 		variableList := m.generateWhiteListInVariableForm(specWhiteList)
-		err = oceanbaseOperationManager.SetTenantVariable(tenantName, variableList)
+		err = oceanbaseOperationManager.SetTenantVariable(m.Ctx, tenantName, variableList)
 		if err != nil {
 			return err
 		}
@@ -470,7 +471,7 @@ func CheckAndApplyPrimaryZone(m *OBTenantManager) tasktypes.TaskError {
 			TenantName:  tenantName,
 			PrimaryZone: specPrimaryZone,
 		}
-		err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+		err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 		if err != nil {
 			return err
 		}
@@ -492,14 +493,14 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 			TenantName: tenantName,
 			Locality:   locality,
 		}
-		err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+		err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 		if err != nil {
 			return err
 		}
 	}
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job of adding pool task", "tenantName", tenantName)
 	check := func() (bool, error) {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return false, errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}

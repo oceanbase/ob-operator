@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obparameter
 
 import (
+	context2 "context"
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -29,7 +30,7 @@ func SetOBParameter(m *OBParameterManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
 	}
-	err = operationManager.SetParameter(m.OBParameter.Spec.Parameter.Name, m.OBParameter.Spec.Parameter.Value, nil)
+	err = operationManager.SetParameter(context2.TODO(), m.OBParameter.Spec.Parameter.Name, m.OBParameter.Spec.Parameter.Value, nil)
 	if err != nil {
 		m.Logger.Error(err, "Set parameter failed")
 		return errors.Wrapf(err, "Set parameter")

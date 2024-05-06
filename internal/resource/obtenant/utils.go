@@ -59,7 +59,7 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 		tenantSQLParam.Charset = tenant.Charset
 	}
 
-	err = oceanbaseOperationManager.AddTenant(tenantSQLParam)
+	err = oceanbaseOperationManager.AddTenant(m.Ctx, tenantSQLParam)
 	if err != nil {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
@@ -84,7 +84,7 @@ func (m *OBTenantManager) createUnitConfigV4(unitName string, unitConfig *v1alph
 		return errors.Wrap(err, "Get Sql Operator Error When Creating Resource UnitConfigV4")
 	}
 
-	return oceanbaseOperationManager.AddUnitConfigV4(unitModel)
+	return oceanbaseOperationManager.AddUnitConfigV4(m.Ctx, unitModel)
 }
 
 func (m *OBTenantManager) setUnitConfigV4(unitName string, unitConfig *model.UnitConfigV4) error {
@@ -94,7 +94,7 @@ func (m *OBTenantManager) setUnitConfigV4(unitName string, unitConfig *model.Uni
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Setting Unit Config For Tenant ", tenantName))
 	}
-	return oceanbaseOperationManager.SetUnitConfigV4(unitModel)
+	return oceanbaseOperationManager.SetUnitConfigV4(m.Ctx, unitModel)
 }
 
 func (m *OBTenantManager) getPoolsForAdd() []v1alpha1.ResourcePoolSpec {
@@ -161,7 +161,7 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 		PoolList:    poolList,
 		PrimaryZone: specPrimaryZone,
 	}
-	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func (m *OBTenantManager) tenantAddPool(poolAdd v1alpha1.ResourcePoolSpec) error
 	// step 2.2: Wait for task finished
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job for adding pool", "tenantName", tenantName)
 	check := func() (bool, error) {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return false, errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
 		}
@@ -272,7 +272,7 @@ func (m *OBTenantManager) generateStatusUnitNumMap(zones []v1alpha1.ResourcePool
 	if err != nil {
 		return unitNumMap, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList()
+	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
 	if err != nil {
 		return unitNumMap, errors.Wrap(err, "Get sql error when get pool list")
 	}
@@ -445,7 +445,7 @@ func (m *OBTenantManager) getOBVersion() (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Get OB Version")
 	}
-	version, err := oceanbaseOperationManager.GetVersion()
+	version, err := oceanbaseOperationManager.GetVersion(m.Ctx)
 	if err != nil {
 		return "", errors.Wrapf(err, "Tenant '%s' get ob version from db failed", tenantName)
 	}
@@ -459,7 +459,7 @@ func (m *OBTenantManager) getCharset() (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Getting Charset")
 	}
-	charset, err := oceanbaseOperationManager.GetCharset()
+	charset, err := oceanbaseOperationManager.GetCharset(m.Ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "Get sql error when get charset")
 	}
@@ -471,7 +471,7 @@ func (m *OBTenantManager) getVariable(variableName string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Get Sql Operator Error When Getting Variable")
 	}
-	variable, err := oceanbaseOperationManager.GetVariable(variableName)
+	variable, err := oceanbaseOperationManager.GetVariable(m.Ctx, variableName)
 	if err != nil {
 		return "", errors.Wrap(err, "Get sql error when get variable")
 	}
@@ -483,7 +483,7 @@ func (m *OBTenantManager) getTenantByName(tenantName string) (*model.OBTenant, e
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Tenant")
 	}
-	tenant, err := oceanbaseOperationManager.GetTenantByName(tenantName)
+	tenant, err := oceanbaseOperationManager.GetTenantByName(m.Ctx, tenantName)
 	if err != nil {
 		return nil, err
 	}
@@ -495,7 +495,7 @@ func (m *OBTenantManager) getPoolByName(poolName string) (*model.Pool, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting Pool by poolName")
 	}
-	pool, err := oceanbaseOperationManager.GetPoolByName(poolName)
+	pool, err := oceanbaseOperationManager.GetPoolByName(m.Ctx, poolName)
 	if err != nil {
 		return nil, err
 	}
@@ -507,7 +507,7 @@ func (m *OBTenantManager) getUnitConfigV4ByName(unitName string) (*model.UnitCon
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Getting UnitConfigV4 By unitConfig name")
 	}
-	unit, err := oceanbaseOperationManager.GetUnitConfigV4ByName(unitName)
+	unit, err := oceanbaseOperationManager.GetUnitConfigV4ByName(m.Ctx, unitName)
 	if err != nil {
 		return nil, err
 	}
@@ -519,7 +519,7 @@ func (m *OBTenantManager) tenantExist(tenantName string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether tenant exist")
 	}
-	isExist, err := oceanbaseOperationManager.CheckTenantExistByName(tenantName)
+	isExist, err := oceanbaseOperationManager.CheckTenantExistByName(m.Ctx, tenantName)
 	if err != nil {
 		return false, err
 	}
@@ -531,7 +531,7 @@ func (m *OBTenantManager) poolExist(poolName string) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether pool exist")
 	}
-	isExist, err := oceanbaseOperationManager.CheckPoolExistByName(poolName)
+	isExist, err := oceanbaseOperationManager.CheckPoolExistByName(m.Ctx, poolName)
 	if err != nil {
 		return false, err
 	}
@@ -543,7 +543,7 @@ func (m *OBTenantManager) unitConfigV4Exist(unitConfigName string) (bool, error)
 	if err != nil {
 		return false, errors.Wrap(err, "Get Sql Operator Error When Check whether UnitConfigV4 exist")
 	}
-	isExist, err := oceanbaseOperationManager.CheckUnitConfigExistByName(unitConfigName)
+	isExist, err := oceanbaseOperationManager.CheckUnitConfigExistByName(m.Ctx, unitConfigName)
 	if err != nil {
 		return false, err
 	}
@@ -563,7 +563,7 @@ func (m *OBTenantManager) createPool(poolName, unitName string, pool v1alpha1.Re
 		UnitNum:  int64(m.OBTenant.Spec.UnitNumber),
 		ZoneList: pool.Zone,
 	}
-	return oceanbaseOperationManager.AddPool(poolSQLParam)
+	return oceanbaseOperationManager.AddPool(m.Ctx, poolSQLParam)
 }
 
 func (m *OBTenantManager) createUnitAndPoolV4(pool v1alpha1.ResourcePoolSpec) error {
@@ -597,7 +597,7 @@ func (m *OBTenantManager) deleteTenant() tasktypes.TaskError {
 		return err
 	}
 	if tenantExist {
-		return oceanbaseOperationManager.DeleteTenant(tenantName, m.OBTenant.Spec.ForceDelete)
+		return oceanbaseOperationManager.DeleteTenant(m.Ctx, tenantName, m.OBTenant.Spec.ForceDelete)
 	}
 	return nil
 }
@@ -616,7 +616,7 @@ func (m *OBTenantManager) deletePool() tasktypes.TaskError {
 			return err
 		}
 		if poolExist {
-			err = oceanbaseOperationManager.DeletePool(poolName)
+			err = oceanbaseOperationManager.DeletePool(m.Ctx, poolName)
 			if err != nil {
 				return err
 			}
@@ -639,7 +639,7 @@ func (m *OBTenantManager) deleteUnitConfig() tasktypes.TaskError {
 			return err
 		}
 		if unitExist {
-			err = oceanbaseOperationManager.DeleteUnitConfig(unitName)
+			err = oceanbaseOperationManager.DeleteUnitConfig(m.Ctx, unitName)
 			if err != nil {
 				return err
 			}
@@ -706,7 +706,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		TenantName: tenantName,
 		Locality:   strings.Join(localityList, ","),
 	}
-	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 	if err != nil {
 		m.Logger.Error(err, "Modify Tenant, update locality", "tenantName", tenantName)
 		return err
@@ -714,7 +714,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job for deleting pool", "tenantName", tenantName)
 	check := func() (bool, error) {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.OBTenant.Status.TenantRecordInfo.TenantID)
+		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
 			return false, errors.Wrap(err, fmt.Sprintf("Failed to get rs job of tenant %s", tenantName))
 		}
@@ -731,7 +731,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		PoolList:    poolList,
 		PrimaryZone: specPrimaryZone,
 	}
-	err = oceanbaseOperationManager.SetTenant(tenantSQLParam)
+	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
 	if err != nil {
 		m.Logger.Error(err, "Modify Tenant, update poolList", "tenantName", tenantName)
 		return err
@@ -743,7 +743,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		return err
 	}
 	if poolExist {
-		err = oceanbaseOperationManager.DeletePool(poolName)
+		err = oceanbaseOperationManager.DeletePool(m.Ctx, poolName)
 		if err != nil {
 			return err
 		}
@@ -756,7 +756,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 		return err
 	}
 	if unitExist {
-		err = oceanbaseOperationManager.DeleteUnitConfig(unitName)
+		err = oceanbaseOperationManager.DeleteUnitConfig(m.Ctx, unitName)
 		if err != nil {
 			return err
 		}
@@ -847,7 +847,7 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 				return err
 			}
 		} else if rootPwd != "" {
-			err = con.ChangeTenantUserPassword(oceanbaseconst.RootUser, rootPwd)
+			err = con.ChangeTenantUserPassword(m.Ctx, oceanbaseconst.RootUser, rootPwd)
 			if err != nil {
 				m.Logger.Error(err, "Failed to change root password")
 				return err
@@ -899,20 +899,20 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 		}
 
 		if standbyROPwd != "" {
-			err = con.CreateUserWithPwd(oceanbaseconst.StandbyROUser, standbyROPwd)
+			err = con.CreateUserWithPwd(m.Ctx, oceanbaseconst.StandbyROUser, standbyROPwd)
 			if err != nil {
 				m.Logger.Error(err, "Failed to create standbyRO user with password")
 				return err
 			}
 		} else {
-			err = con.CreateUser(oceanbaseconst.StandbyROUser)
+			err = con.CreateUser(m.Ctx, oceanbaseconst.StandbyROUser)
 			if err != nil {
 				m.Logger.Error(err, "Failed to create standbyRO user")
 				return err
 			}
 		}
 
-		err = con.GrantPrivilege(oceanbaseconst.SelectPrivilege, oceanbaseconst.OceanbaseAllScope, oceanbaseconst.StandbyROUser)
+		err = con.GrantPrivilege(m.Ctx, oceanbaseconst.SelectPrivilege, oceanbaseconst.OceanbaseAllScope, oceanbaseconst.StandbyROUser)
 		if err != nil {
 			m.Logger.Error(err, "Failed to grant privilege to standbyRO")
 			return err
