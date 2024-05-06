@@ -11,6 +11,7 @@ import zoneDeleting from '@/assets/zone/deleting.svg';
 import zoneOperating from '@/assets/zone/operating.svg';
 import zoneRunning from '@/assets/zone/running.svg';
 import { intl } from '@/utils/intl';
+import type { DefaultOptionType, SelectProps } from 'antd/es/select';
 
 //Unify status constants and colors
 const STATUS = ['running', 'deleting', 'operating'];
@@ -19,7 +20,7 @@ const COLOR_MAP = new Map([
   ['deleting', 'volcano'],
   ['operating', 'gold'],
   ['creating', 'blue'],
-  ['failed', 'red']
+  ['failed', 'red'],
 ]);
 const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
@@ -155,6 +156,46 @@ const MODE_MAP = new Map([
   ],
 ]);
 
+const LEVER_OPTIONS_ALARM: SelectProps['options'] = [
+  {
+    label: '严重',
+    value: 'critical',
+  },
+  {
+    label: '警告',
+    value: 'warning',
+  },
+  {
+    label: '注意',
+    value: 'caution',
+  },
+  {
+    label: '提醒',
+    value: 'info',
+  },
+];
+const COLOR_MAP_ALARM = {
+  critical: 'red',
+  warning: 'gold',
+  caution: 'blue',
+  info: 'green',
+};
+
+const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
+  {
+    label: '集群',
+    value: 'obcluster',
+  },
+  {
+    label: '租户',
+    value: 'obtenant',
+  },
+  {
+    label: 'OBServer',
+    value: 'observer',
+  },
+];
+
 export {
   BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
@@ -162,9 +203,12 @@ export {
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
+  COLOR_MAP_ALARM,
+  LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
   MODE_MAP,
+  OBJECT_OPTIONS_ALARM,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,

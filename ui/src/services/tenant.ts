@@ -14,7 +14,7 @@ export async function getTenantStatisticReq(): Promise<API.StatisticDataResponse
 }
 
 export async function getAllTenants(params?: {
-  obcluster?: string;
+  obcluster?: string; // resource name
   ns?: string;
 }): Promise<API.TenantsListResponse> {
   return request(`${tenantPrefix}`, {
