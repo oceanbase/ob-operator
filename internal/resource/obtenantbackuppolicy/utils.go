@@ -69,9 +69,6 @@ func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType ap
 
 // get operation manager to exec sql
 func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.OceanbaseOperationManager, error) {
-	if m.con != nil {
-		return m.con, nil
-	}
 	var con *operation.OceanbaseOperationManager
 	var err error
 	obcluster := &v1alpha1.OBCluster{}
@@ -102,7 +99,6 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 			return nil, errors.Wrap(err, "get oceanbase operation manager")
 		}
 	}
-	m.con = con
 	return con, nil
 }
 
