@@ -3302,7 +3302,7 @@ const docTemplate = `{
                     {
                         "enum": [
                             "FULL",
-                            "INCR",
+                            "INC",
                             "CLEAN",
                             "ARCHIVE"
                         ],
@@ -4560,11 +4560,8 @@ const docTemplate = `{
                 "endTime": {
                     "type": "integer"
                 },
-                "instances": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/oceanbase.OBInstance"
-                    }
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
                 },
                 "keyword": {
                     "type": "string"
@@ -7226,11 +7223,8 @@ const docTemplate = `{
         "silence.SilencerFilter": {
             "type": "object",
             "properties": {
-                "instances": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/oceanbase.OBInstance"
-                    }
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
                 },
                 "keyword": {
                     "type": "string"
