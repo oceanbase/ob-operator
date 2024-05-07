@@ -18,7 +18,9 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -240,6 +242,18 @@ func (m *OBClusterManager) UpdateStatus() error {
 		}
 	}
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Update obcluster status", "status", m.OBCluster.Status)
+	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIgnoreDeletion)
+	if ok && ignoreDel == "true" && !controllerutil.ContainsFinalizer(m.OBCluster, oceanbaseconst.FinalizerIgnoreDeletion) {
+		controllerutil.AddFinalizer(m.OBCluster, oceanbaseconst.FinalizerIgnoreDeletion)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return m.Client.Update(m.Ctx, m.OBCluster)
+		})
+	} else if (!ok || ignoreDel != "true") && controllerutil.ContainsFinalizer(m.OBCluster, oceanbaseconst.FinalizerIgnoreDeletion) {
+		controllerutil.RemoveFinalizer(m.OBCluster, oceanbaseconst.FinalizerIgnoreDeletion)
+		err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+			return m.Client.Update(m.Ctx, m.OBCluster)
+		})
+	}
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
