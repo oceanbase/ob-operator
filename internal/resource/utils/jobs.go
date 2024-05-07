@@ -90,6 +90,9 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to create job of image: %s", image)
 	}
 
+	// Wait for the job to be created before fetching it
+	time.Sleep(time.Second)
+
 	var jobObject *batchv1.Job
 	for i := 0; i < obcfg.GetConfig().Time.CheckJobMaxRetries; i++ {
 		jobObject, err = GetJob(ctx, c, namespace, fullJobName)
