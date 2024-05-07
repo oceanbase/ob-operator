@@ -174,11 +174,17 @@ const LEVER_OPTIONS_ALARM: SelectProps['options'] = [
     value: 'info',
   },
 ];
-const COLOR_MAP_ALARM = {
-  critical: 'red',
-  warning: 'gold',
-  caution: 'blue',
-  info: 'green',
+const SERVERITY_MAP = {
+  critical: {
+    color: 'red',
+    label: '严重',
+  },
+  warning: {
+    color: 'gold',
+    label: '警告',
+  },
+  caution: { color: 'blue', label: '注意' },
+  info: { color: 'green', label: '提醒' },
 };
 
 const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
@@ -203,7 +209,7 @@ export {
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
-  COLOR_MAP_ALARM,
+  SERVERITY_MAP,
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,

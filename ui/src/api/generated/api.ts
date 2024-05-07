@@ -5761,7 +5761,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listAlerts(body?: AlertAlertFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListAlerts200Response>> {
+        async listAlerts(body?: AlertAlertFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<ListAlerts200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listAlerts(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AlarmApi.listAlerts']?.[localVarOperationServerIndex]?.url;
@@ -5810,7 +5810,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listRules(body?: RuleRuleFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListRules200Response>> {
+        async listRules(body?: RuleRuleFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<ListRules200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listRules(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AlarmApi.listRules']?.[localVarOperationServerIndex]?.url;
@@ -5976,7 +5976,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listAlerts(body?: AlertAlertFilter, options?: any): AxiosPromise<ListAlerts200Response> {
+        listAlerts(body?: AlertAlertFilter, options?: any): Promise<ListAlerts200Response> {
             return localVarFp.listAlerts(body, options).then((request) => request(axios, basePath));
         },
         /**
@@ -6013,7 +6013,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listRules(body?: RuleRuleFilter, options?: any): AxiosPromise<ListRules200Response> {
+        listRules(body?: RuleRuleFilter, options?: any): Promise<ListRules200Response> {
             return localVarFp.listRules(body, options).then((request) => request(axios, basePath));
         },
         /**
@@ -9971,7 +9971,7 @@ export const UserApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async login(loginInfo: ParamLoginParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+        async login(loginInfo: ParamLoginParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => Promise<ResponseAPIResponse>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.login(loginInfo, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.login']?.[localVarOperationServerIndex]?.url;
@@ -10006,7 +10006,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        login(loginInfo: ParamLoginParam, options?: any): AxiosPromise<ResponseAPIResponse> {
+        login(loginInfo: ParamLoginParam, options?: any): Promise<ResponseAPIResponse> {
             return localVarFp.login(loginInfo, options).then((request) => request(axios, basePath));
         },
         /**

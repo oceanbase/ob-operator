@@ -1,5 +1,5 @@
 import {
-  COLOR_MAP_ALARM,
+  SERVERITY_MAP,
   LEVER_OPTIONS_ALARM,
   OBJECT_OPTIONS_ALARM,
 } from '@/constants';
@@ -186,7 +186,7 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={COLOR_MAP_ALARM[item.value]}>{item.label}</Tag>
+                    <Tag color={SERVERITY_MAP[item.value]?.color}>{item.label}</Tag>
                   ),
                 }))}
               />

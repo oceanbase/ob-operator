@@ -19,6 +19,10 @@ import type { Configuration } from './configuration';
 import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
 
+globalAxios.interceptors.response.use(function(response){
+    return response.data
+})
+
 export const BASE_PATH = "/api/v1".replace(/\/+$/, "");
 
 /**
@@ -52,8 +56,6 @@ export class BaseAPI {
 
     constructor(configuration?: Configuration, protected basePath: string = BASE_PATH, protected axios: AxiosInstance = globalAxios) {
         if (configuration) {
-            console.log('configuration.basePath',configuration.basePath,'basePath',basePath);
-            
             this.configuration = configuration;
             this.basePath = configuration.basePath ?? basePath;
         }
