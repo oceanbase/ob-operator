@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -22,8 +23,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
-	err := m.ExecWithDefaultTimeout(sql.SetRestorePassword, password)
+func (m *OceanbaseOperationManager) SetRestorePassword(ctx context.Context, password string) error {
+	err := m.ExecWithDefaultTimeout(ctx, sql.SetRestorePassword, password)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when set restore password")
 		return errors.Wrap(err, "Set restore password")
@@ -31,9 +32,9 @@ func (m *OceanbaseOperationManager) SetRestorePassword(password string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, restoreOption string, limitKey, limitValue any) error {
+func (m *OceanbaseOperationManager) StartRestoreWithLimit(ctx context.Context, tenantName, uri, restoreOption string, limitKey, limitValue any) error {
 	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, sqlStatement, uri, limitValue, restoreOption)
+	err := m.ExecWithTimeout(ctx, config.TenantRestoreTimeOut, sqlStatement, uri, limitValue, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")
@@ -41,8 +42,8 @@ func (m *OceanbaseOperationManager) StartRestoreWithLimit(tenantName, uri, resto
 	return nil
 }
 
-func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, restoreOption string) error {
-	err := m.ExecWithTimeout(config.TenantRestoreTimeOut, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
+func (m *OceanbaseOperationManager) StartRestoreUnlimited(ctx context.Context, tenantName, uri, restoreOption string) error {
+	err := m.ExecWithTimeout(ctx, config.TenantRestoreTimeOut, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore unlimited")
 		return errors.Wrap(err, "Start restore unlimited")
@@ -50,8 +51,8 @@ func (m *OceanbaseOperationManager) StartRestoreUnlimited(tenantName, uri, resto
 	return nil
 }
 
-func (m *OceanbaseOperationManager) CancelRestoreOfTenant(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.CancelRestore, tenantName))
+func (m *OceanbaseOperationManager) CancelRestoreOfTenant(ctx context.Context, tenantName string) error {
+	err := m.ExecWithDefaultTimeout(ctx, fmt.Sprintf(sql.CancelRestore, tenantName))
 	if err != nil {
 		m.Logger.Error(err, "Got exception when cancel restore of tenant")
 		return errors.Wrap(err, "Cancel restore of tenant")
@@ -59,9 +60,9 @@ func (m *OceanbaseOperationManager) CancelRestoreOfTenant(tenantName string) err
 	return nil
 }
 
-func (m *OceanbaseOperationManager) ReplayStandbyLog(tenantName, untilLimit string) error {
+func (m *OceanbaseOperationManager) ReplayStandbyLog(ctx context.Context, tenantName, untilLimit string) error {
 	sqlStatement := fmt.Sprintf(sql.ReplayStandbyLog, untilLimit)
-	err := m.ExecWithDefaultTimeout(sqlStatement, tenantName)
+	err := m.ExecWithDefaultTimeout(ctx, sqlStatement, tenantName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when replay standby log")
 		return errors.Wrap(err, "Replay standby log")
@@ -69,8 +70,8 @@ func (m *OceanbaseOperationManager) ReplayStandbyLog(tenantName, untilLimit stri
 	return nil
 }
 
-func (m *OceanbaseOperationManager) ActivateStandby(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(sql.ActivateStandby, tenantName)
+func (m *OceanbaseOperationManager) ActivateStandby(ctx context.Context, tenantName string) error {
+	err := m.ExecWithDefaultTimeout(ctx, sql.ActivateStandby, tenantName)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when activate standby")
 		return errors.Wrap(err, "Activate standby")
@@ -78,9 +79,9 @@ func (m *OceanbaseOperationManager) ActivateStandby(tenantName string) error {
 	return nil
 }
 
-func (m *OceanbaseOperationManager) ListRestoreProgress() ([]*model.RestoreProgress, error) {
+func (m *OceanbaseOperationManager) ListRestoreProgress(ctx context.Context) ([]*model.RestoreProgress, error) {
 	progressInfos := make([]*model.RestoreProgress, 0)
-	err := m.QueryList(&progressInfos, sql.QueryRestoreProgress)
+	err := m.QueryList(ctx, &progressInfos, sql.QueryRestoreProgress)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query restore progress")
 		return nil, errors.Wrap(err, "List restore progress")
@@ -88,9 +89,9 @@ func (m *OceanbaseOperationManager) ListRestoreProgress() ([]*model.RestoreProgr
 	return progressInfos, nil
 }
 
-func (m *OceanbaseOperationManager) ListRestoreHistory() ([]*model.RestoreHistory, error) {
+func (m *OceanbaseOperationManager) ListRestoreHistory(ctx context.Context) ([]*model.RestoreHistory, error) {
 	restoreHistory := make([]*model.RestoreHistory, 0)
-	err := m.QueryList(&restoreHistory, sql.QueryRestoreHistory)
+	err := m.QueryList(ctx, &restoreHistory, sql.QueryRestoreHistory)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query restore history")
 		return nil, errors.Wrap(err, "List restore history")
@@ -98,9 +99,9 @@ func (m *OceanbaseOperationManager) ListRestoreHistory() ([]*model.RestoreHistor
 	return restoreHistory, nil
 }
 
-func (m *OceanbaseOperationManager) GetLatestRestoreProgressOfTenant(tenant string) (*model.RestoreProgress, error) {
+func (m *OceanbaseOperationManager) GetLatestRestoreProgressOfTenant(ctx context.Context, tenant string) (*model.RestoreProgress, error) {
 	latest := make([]*model.RestoreProgress, 0)
-	err := m.QueryList(&latest, sql.GetLatestRestoreProgress, tenant)
+	err := m.QueryList(ctx, &latest, sql.GetLatestRestoreProgress, tenant)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query latest restore progress")
 		return nil, errors.Wrap(err, "Get latest restore progress")
@@ -111,9 +112,9 @@ func (m *OceanbaseOperationManager) GetLatestRestoreProgressOfTenant(tenant stri
 	return latest[0], nil
 }
 
-func (m *OceanbaseOperationManager) GetLatestRestoreHistoryOfTenant(tenant string) (*model.RestoreHistory, error) {
+func (m *OceanbaseOperationManager) GetLatestRestoreHistoryOfTenant(ctx context.Context, tenant string) (*model.RestoreHistory, error) {
 	latest := make([]*model.RestoreHistory, 0)
-	err := m.QueryList(&latest, sql.GetLatestRestoreHistory, tenant)
+	err := m.QueryList(ctx, &latest, sql.GetLatestRestoreHistory, tenant)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when query latest restore history")
 		return nil, errors.Wrap(err, "Get latest restore history")

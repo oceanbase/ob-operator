@@ -174,10 +174,10 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt.Locality = t.Status.TenantRecordInfo.Locality
 	rt.PrimaryZone = t.Status.TenantRecordInfo.PrimaryZone
 
-	for i := range t.Spec.Pools {
-		pool := t.Spec.Pools[i]
+	for i := range t.Status.Pools {
+		pool := t.Status.Pools[i]
 		replica := response.OBTenantReplica{
-			Zone:     pool.Zone,
+			Zone:     pool.ZoneList,
 			Priority: pool.Priority,
 			Type:     pool.Type.Name,
 		}

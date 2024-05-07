@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package test
 
 import (
+	"context"
+
 	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -42,13 +44,13 @@ var _ = Describe("Test Backup Operation", Label("system"), func() {
 	})
 
 	It("List units with tenant ID", func() {
-		units, err := con.ListUnitsWithTenantId(1)
+		units, err := con.ListUnitsWithTenantId(context.TODO(), 1)
 		Expect(err).To(BeNil())
 		printSlice(units, "list units with tenant ID")
 	})
 
 	It("List units with server IP", func() {
-		units, err := con.ListUnitsWithServerIP("10.42.0.99")
+		units, err := con.ListUnitsWithServerIP(context.TODO(), "10.42.0.99")
 		Expect(err).To(BeNil())
 		printSlice(units, "list units with server IP")
 	})

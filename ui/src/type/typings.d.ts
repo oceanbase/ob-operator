@@ -405,6 +405,7 @@ declare namespace API {
     namespace: string;
     topology: Topology[];
     status: string;
+    id: string;
   };
 
   type SimpleClusterList = SimpleCluster[];
@@ -499,6 +500,7 @@ declare namespace API {
   interface TenantDetail {
     charset: string;
     clusterName: string;
+    clusterResourceName: string;
     createTime: string;
     locality: string;
     name: string;

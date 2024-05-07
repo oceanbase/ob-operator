@@ -566,7 +566,7 @@ func GetBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 // @Failure 500 object response.APIResponse
 // @Param namespace path string true "obtenant namespace"
 // @Param name path string true "obtenant name"
-// @Param type path string true "backup job type" Enums(FULL,INCR,CLEAN,ARCHIVE)
+// @Param type path string true "backup job type" Enums(FULL,INC,CLEAN,ARCHIVE)
 // @Param limit query int false "limit" default(10)
 // @Router /api/v1/obtenants/{namespace}/{name}/backup/{type}/jobs [GET]
 // @Security ApiKeyAuth

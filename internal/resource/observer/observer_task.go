@@ -70,7 +70,7 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
-	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
+	obs, err := oceanbaseOperationManager.GetServer(m.Ctx, serverInfo)
 	if obs != nil {
 		m.Logger.Info("OBServer already exists in obcluster")
 		return nil
@@ -79,7 +79,7 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get observer failed")
 		return errors.Wrap(err, "Failed to get observer")
 	}
-	return oceanbaseOperationManager.AddServer(serverInfo)
+	return oceanbaseOperationManager.AddServer(m.Ctx, serverInfo)
 }
 
 func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
@@ -230,7 +230,7 @@ func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
-	observer, err := operationManager.GetServer(observerInfo)
+	observer, err := operationManager.GetServer(m.Ctx, observerInfo)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 			m.Logger.Info("OBServer is deleting", "observer", observerInfo.Ip)
 		} else {
 			m.Logger.Info("Need to delete observer")
-			err = operationManager.DeleteServer(observerInfo)
+			err = operationManager.DeleteServer(m.Ctx, observerInfo)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to delete observer %s", observerInfo.Ip)
 			}
@@ -326,7 +326,7 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, _ := operationManager.GetServer(observerInfo)
+		observer, _ := operationManager.GetServer(m.Ctx, observerInfo)
 		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
 				active = true
@@ -361,7 +361,7 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(observerInfo)
+		observer, err := operationManager.GetServer(m.Ctx, observerInfo)
 		if observer == nil && err == nil {
 			m.Logger.Info("OBServer deleted")
 			deleted = true

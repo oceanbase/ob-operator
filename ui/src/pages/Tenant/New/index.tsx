@@ -22,7 +22,7 @@ export default function New() {
   const publicKey = usePublicKey();
   const [form] = Form.useForm<API.NewTenantForm>();
   const [passwordVal, setPasswordVal] = useState('');
-  const [selectClusterId, setSelectClusterId] = useState<number>();
+  const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
@@ -43,7 +43,7 @@ export default function New() {
     });
   //Selected cluster's resource name and namespace
   const { name: clusterName, namespace: ns } =
-    clusterList.filter((cluster) => cluster.clusterId === selectClusterId)[0] ||
+    clusterList.filter((cluster) => cluster.id === selectClusterId)[0] ||
     {};
   const essentialParameter = essentialParameterRes?.data;
 
@@ -64,7 +64,7 @@ export default function New() {
     }
 
     const ns = clusterList.filter(
-      (cluster) => cluster.clusterId === selectClusterId,
+      (cluster) => cluster.id === selectClusterId,
     )[0]?.namespace;
     const res = await createTenantReportWrap({
       namespace: ns,
@@ -89,7 +89,7 @@ export default function New() {
 
   useUpdateEffect(() => {
     const { name, namespace } = clusterList.find(
-      (cluster) => cluster.clusterId === selectClusterId,
+      (cluster) => cluster.id === selectClusterId,
     ) || {};
     if (name && namespace) {
       getEssentialParameters({
@@ -102,7 +102,7 @@ export default function New() {
   useEffect(() => {
     if (clusterList) {
       const cluster = clusterList.find(
-        (cluster) => cluster.clusterId === selectClusterId,
+        (cluster) => cluster.id === selectClusterId,
       );
       cluster?.topology.forEach((zone) => {
         form.setFieldValue(['pools', zone.zone, 'checked'], zone.checked);

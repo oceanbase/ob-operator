@@ -17,6 +17,8 @@ const (
 	DefaultConnMaxIdleCount = 1
 	DefaultConnMaxLifetime  = 0
 	DefaultConnMaxIdleTime  = 0
+
+	DefaultPingTimeoutSeconds = 3
 )
 
 const (

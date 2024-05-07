@@ -114,7 +114,7 @@ func (m *OBServerManager) getCurrentOBServerFromOB() (*model.OBServer, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get oceanbase operation manager failed")
 	}
-	return operationManager.GetServer(observerInfo)
+	return operationManager.GetServer(m.Ctx, observerInfo)
 }
 
 func (m *OBServerManager) retryUpdateStatus() error {

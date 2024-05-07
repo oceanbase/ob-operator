@@ -28,9 +28,6 @@ import (
 )
 
 func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
-	if m.con != nil {
-		return m.con, nil
-	}
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.Resource.Namespace,
@@ -43,7 +40,6 @@ func (m *ObTenantRestoreManager) getClusterSysClient() (*operation.OceanbaseOper
 	if err != nil {
 		return nil, errors.Wrap(err, "get oceanbase operation manager")
 	}
-	m.con = con
 	return con, nil
 }
 
