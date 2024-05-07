@@ -38,11 +38,11 @@ func (m *ObTenantBackupPolicyManager) syncLatestJobs() error {
 	if err != nil {
 		return err
 	}
-	latestArchiveJob, err := con.GetLatestArchiveLogJob()
+	latestArchiveJob, err := con.GetLatestArchiveLogJob(m.Ctx)
 	if err != nil {
 		return err
 	}
-	latestCleanJob, err := con.GetLatestBackupCleanJob()
+	latestCleanJob, err := con.GetLatestBackupCleanJob(m.Ctx)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (m *ObTenantBackupPolicyManager) getLatestBackupJob(jobType apitypes.Backup
 	if err != nil {
 		return nil, err
 	}
-	return con.GetLatestBackupJobOfType(jobType)
+	return con.GetLatestBackupJobOfType(m.Ctx, string(jobType))
 }
 
 func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType apitypes.BackupJobType, path string) (*model.OBBackupJob, error) {
@@ -64,14 +64,11 @@ func (m *ObTenantBackupPolicyManager) getLatestBackupJobOfTypeAndPath(jobType ap
 	if err != nil {
 		return nil, err
 	}
-	return con.GetLatestBackupJobOfTypeAndPath(jobType, path)
+	return con.GetLatestBackupJobOfTypeAndPath(m.Ctx, string(jobType), path)
 }
 
 // get operation manager to exec sql
 func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.OceanbaseOperationManager, error) {
-	if m.con != nil {
-		return m.con, nil
-	}
 	var con *operation.OceanbaseOperationManager
 	var err error
 	obcluster := &v1alpha1.OBCluster{}
@@ -102,7 +99,6 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 			return nil, errors.Wrap(err, "get oceanbase operation manager")
 		}
 	}
-	m.con = con
 	return con, nil
 }
 
@@ -269,7 +265,7 @@ func (m *ObTenantBackupPolicyManager) getTenantRecord(useCache bool) (*model.OBT
 			return nil, err
 		}
 	}
-	tenants, err := con.ListTenantWithName(tenantRecordName)
+	tenants, err := con.ListTenantWithName(m.Ctx, tenantRecordName)
 	if err != nil {
 		return nil, err
 	}
@@ -285,24 +281,24 @@ func (m *ObTenantBackupPolicyManager) configureBackupCleanPolicy() error {
 		return err
 	}
 	cleanConfig := &m.BackupPolicy.Spec.DataClean
-	cleanPolicy, err := con.ListBackupCleanPolicy()
+	cleanPolicy, err := con.ListBackupCleanPolicy(m.Ctx)
 	if err != nil {
 		return err
 	}
 	policyName := "default"
 	if len(cleanPolicy) == 0 {
-		err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
+		err = con.AddCleanBackupPolicy(m.Ctx, policyName, cleanConfig.RecoveryWindow)
 		if err != nil {
 			return err
 		}
 	} else {
 		for _, policy := range cleanPolicy {
 			if policy.RecoveryWindow != cleanConfig.RecoveryWindow {
-				err = con.RemoveCleanBackupPolicy(policy.PolicyName)
+				err = con.RemoveCleanBackupPolicy(m.Ctx, policy.PolicyName)
 				if err != nil {
 					return err
 				}
-				err = con.AddCleanBackupPolicy(policyName, cleanConfig.RecoveryWindow)
+				err = con.AddCleanBackupPolicy(m.Ctx, policyName, cleanConfig.RecoveryWindow)
 				if err != nil {
 					return err
 				}

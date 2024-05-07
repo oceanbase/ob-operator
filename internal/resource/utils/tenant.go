@@ -38,7 +38,7 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		return "", err
 	}
 	// Get ip_list of target tenant
-	aps, err := con.ListTenantAccessPoints(tenant.Spec.TenantName)
+	aps, err := con.ListTenantAccessPoints(ctx, tenant.Spec.TenantName)
 	if err != nil {
 		return "", err
 	}
@@ -68,14 +68,14 @@ func CheckTenantLSIntegrity(ctx context.Context, clt client.Client, logger *logr
 		return err
 	}
 	// Check LS integrity
-	lsDeletion, err := con.ListLSDeletion(int64(tenant.Status.TenantRecordInfo.TenantID))
+	lsDeletion, err := con.ListLSDeletion(ctx, int64(tenant.Status.TenantRecordInfo.TenantID))
 	if err != nil {
 		return err
 	}
 	if len(lsDeletion) > 0 {
 		return errors.New("LS deletion set is not empty, log is of not integrity")
 	}
-	logStats, err := con.ListLogStats(int64(tenant.Status.TenantRecordInfo.TenantID))
+	logStats, err := con.ListLogStats(ctx, int64(tenant.Status.TenantRecordInfo.TenantID))
 	if err != nil {
 		return err
 	}

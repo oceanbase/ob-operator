@@ -140,18 +140,18 @@ func (m *OBClusterManager) createUser(userName, secretName, privilege string) er
 		m.Logger.Error(err, "Get oceanbase operation manager")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	err = oceanbaseOperationManager.CreateUser(userName)
+	err = oceanbaseOperationManager.CreateUser(m.Ctx, userName)
 	if err != nil {
 		m.Logger.Error(err, "Create user")
 		return errors.Wrapf(err, "Create user %s", userName)
 	}
-	err = oceanbaseOperationManager.SetUserPassword(userName, password)
+	err = oceanbaseOperationManager.SetUserPassword(m.Ctx, userName, password)
 	if err != nil {
 		m.Logger.Error(err, "Set user password")
 		return errors.Wrapf(err, "Set password for user %s", userName)
 	}
 	object := "*.*"
-	err = oceanbaseOperationManager.GrantPrivilege(privilege, object, userName)
+	err = oceanbaseOperationManager.GrantPrivilege(m.Ctx, privilege, object, userName)
 	if err != nil {
 		m.Logger.Error(err, "Grant privilege")
 		return errors.Wrapf(err, "Grant privilege for user %s", userName)

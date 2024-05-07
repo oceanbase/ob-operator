@@ -13,15 +13,17 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-func (m *OceanbaseOperationManager) ListUnitsWithServerIP(serverIP string) ([]*model.OBUnit, error) {
+func (m *OceanbaseOperationManager) ListUnitsWithServerIP(ctx context.Context, serverIP string) ([]*model.OBUnit, error) {
 	units := make([]*model.OBUnit, 0)
-	err := m.QueryList(&units, sql.ListUnitsWithServerIP, serverIP)
+	err := m.QueryList(ctx, &units, sql.ListUnitsWithServerIP, serverIP)
 	if err != nil {
 		m.Logger.Error(err, "Failed to list ob units")
 		return nil, errors.Wrap(err, "List OB units")
