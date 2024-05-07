@@ -2788,7 +2788,7 @@ export interface ResponseBackupJob {
      */
     'tenantName': string;
     /**
-     * Enum: FULL, INCR, ARCHIVE, CLEAN
+     * Enum: FULL, INC, ARCHIVE, CLEAN
      * @type {string}
      * @memberof ResponseBackupJob
      */
@@ -9603,7 +9603,7 @@ export class OBTenantApi extends BaseAPI {
  */
 export const ListBackupJobsTypeEnum = {
     FULL: 'FULL',
-    INCR: 'INCR',
+    INC: 'INC',
     CLEAN: 'CLEAN',
     ARCHIVE: 'ARCHIVE'
 } as const;
