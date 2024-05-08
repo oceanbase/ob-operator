@@ -8,7 +8,7 @@ import {
   OBTenantApiFactory,
   TerminalApiFactory,
   UserApiFactory,
-} from './generated/index'
+} from './generated/index';
 
 globalAxios.interceptors.response.use((res) => {
   return res.data
@@ -20,9 +20,8 @@ const config = new Configuration({
   apiKey: () => document.cookie,
   baseOptions: {
     withCredentials: true,
-  },
+  }
 });
-
 
 type factoryFunction<T> = (configuration?: Configuration | undefined, basePath?: string | undefined, axios?: AxiosInstance | undefined) => T
 
@@ -40,3 +39,4 @@ export const obtenant = wrapper(OBTenantApiFactory, config);
 export const terminal = wrapper(TerminalApiFactory, config);
 export const user = wrapper(UserApiFactory, config);
 export const alert = wrapper(AlarmApiFactory, config);
+
