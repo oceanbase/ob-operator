@@ -90,7 +90,9 @@ func (m *OceanbaseOperationManager) QueryList(ctx context.Context, ret any, sql 
 }
 
 func (m *OceanbaseOperationManager) QueryCount(ctx context.Context, count *int, sql string, params ...any) error {
-	err := m.Connector.GetClient().GetContext(ctx, count, sql, params...)
+	c, cancel := context.WithTimeout(ctx, config.DefaultSqlTimeout)
+	defer cancel()
+	err := m.Connector.GetClient().GetContext(c, count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query count failed")

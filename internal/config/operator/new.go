@@ -39,6 +39,10 @@ func newConfig() *Config {
 	pflag.Parse()
 	_ = v.BindPFlags(pflag.CommandLine)
 
+	_ = v.BindEnv("telemetry.disabled", "DISABLE_TELEMETRY", "OB_OPERATOR_TELEMETRY_DISABLED")
+	_ = v.BindEnv("telemetry.debug", "TELEMETRY_DEBUG", "OB_OPERATOR_TELEMETRY_DEBUG")
+	_ = v.BindEnv("telemetry.host", "TELEMETRY_REPORT_HOST", "OB_OPERATOR_TELEMETRY_REPORT_HOST")
+	_ = v.BindEnv("disable-webhooks", "DISABLE_WEBHOOKS", "OB_OPERATOR_DISABLE_WEBHOOKS")
 	v.AutomaticEnv()
 	v.SetEnvPrefix("OB_OPERATOR")
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", ""))
