@@ -76,7 +76,7 @@ func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
-		finalizerName := "finalizers.oceanbase.com.deleteobserver"
+		finalizerName := oceanbaseconst.FinalizerDeleteOBServer
 		finalizers := []string{finalizerName}
 		labels := make(map[string]string)
 		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]

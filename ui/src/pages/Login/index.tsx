@@ -16,7 +16,8 @@ const Login: React.FC = () => {
   const onFinish = async (values: API.User) => {
     values.password = encryptText(values.password, publicKey) as string;
     const res = await user.login(values);
-    if (res.data.successful) {
+    
+    if (res.successful) {
       navigate('/overview');
       localStorage.setItem('user', values.username);
     }

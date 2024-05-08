@@ -12,7 +12,7 @@ export default function BackupJobs() {
   const [curSelect, setCurSelect] = useState<API.JobType>('FULL');
   const { data: backupJobsResponse } = useRequest(
     () => {
-      return getBackupJobs({ ns, name, type: curSelect });
+      return getBackupJobs({ ns:ns!, name:name!, type: curSelect });
     },
     {
       refreshDeps: [curSelect],
@@ -31,7 +31,7 @@ export default function BackupJobs() {
       children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
     },
     {
-      key: 'INCR',
+      key: 'INC',
       label: intl.formatMessage({
         id: 'Dashboard.Detail.Backup.BackupJobs.IncrementalBackup',
         defaultMessage: '增量备份',

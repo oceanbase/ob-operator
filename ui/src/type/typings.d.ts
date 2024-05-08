@@ -470,7 +470,7 @@ declare namespace API {
 
   type TenantRole = 'PRIMARY' | 'STANDBY';
 
-  type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
+  type JobType = 'FULL' | 'INC' | 'CLEAN' | 'ARCHIVE';
 
   type DestType = 'NFS' | 'OSS';
 

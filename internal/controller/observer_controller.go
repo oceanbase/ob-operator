@@ -18,7 +18,7 @@ package controller
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resobserver "github.com/oceanbase/ob-operator/internal/resource/observer"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
@@ -87,7 +88,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	// execute finalizers
-	finalizerName := fmt.Sprintf("observer.oceanbase.com.finalizers.%s", observer.Name)
+	finalizerName := strings.Join([]string{oceanbaseconst.FinalizerOBServer, observer.Name}, ".")
 	if !observer.ObjectMeta.DeletionTimestamp.IsZero() {
 		needExecuteFinalizer := false
 		for _, finalizer := range observer.ObjectMeta.Finalizers {
