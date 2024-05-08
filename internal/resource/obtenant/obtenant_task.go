@@ -169,22 +169,19 @@ func MaintainUnitConfig(m *OBTenantManager) tasktypes.TaskError {
 func DeleteTenant(m *OBTenantManager) tasktypes.TaskError {
 	var err error
 	tenantName := m.OBTenant.Spec.TenantName
-	m.Logger.Info("Delete Tenant", "tenantName", tenantName)
 	err = m.deleteTenant()
 	if err != nil {
 		return err
 	}
-	m.Logger.Info("Delete Pool", "tenantName", tenantName)
 	err = m.deletePool()
 	if err != nil {
 		return err
 	}
-	m.Logger.Info("Delete Unit", "tenantName", tenantName)
 	err = m.deleteUnitConfig()
 	if err != nil {
 		return err
 	}
-	m.Logger.Info("Delete Tenant Success", "tenantName", tenantName)
+	m.Logger.Info("Delete tenant successfully", "tenantName", tenantName)
 	return nil
 }
 
@@ -192,7 +189,7 @@ func CheckAndApplyCharset(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Checking and Applying Tenant '%s' Charset ", tenantName))
+		return errors.Wrapf(err, "Get sql operator when checking and applying tenant '%s' charset ", tenantName)
 	}
 	specCharset := m.OBTenant.Spec.Charset
 	if specCharset == "" {
@@ -414,7 +411,7 @@ func CheckAndApplyUnitNum(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying Tenant UnitNum", tenantName))
+		return errors.Wrap(err, fmt.Sprint("Get sql operator when checking and applying tenant unitnum", tenantName))
 	}
 
 	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.TenantRecordInfo.UnitNumber {
@@ -482,7 +479,7 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Locality ", tenantName))
+		return errors.Wrap(err, fmt.Sprintf("Get sql operator when prcoessing tenant '%s' locality ", tenantName))
 	}
 	specLocalityMap := m.generateSpecLocalityMap(m.OBTenant.Spec.Pools)
 	statusLocalityMap := m.generateStatusLocalityMap(m.OBTenant.Status.Pools)
