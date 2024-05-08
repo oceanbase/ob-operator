@@ -139,7 +139,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		}
 	} else {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", fullJobName)
-		return "", exitCode, errors.Wrapf(err, "Failed to run job %s", fullJobName)
+		return "", exitCode, errors.Errorf("Failed to run job %s", fullJobName)
 	}
 	return output, exitCode, nil
 }
