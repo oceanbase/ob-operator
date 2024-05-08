@@ -254,6 +254,9 @@ func (m *OBClusterManager) UpdateStatus() error {
 			return m.Client.Update(m.Ctx, m.OBCluster)
 		})
 	}
+	if err != nil {
+		m.Logger.Error(err, "Failed to update finalizers of OBCluster")
+	}
 	err = m.retryUpdateStatus()
 	if err != nil {
 		m.Logger.Error(err, "Got error when update obcluster status")
