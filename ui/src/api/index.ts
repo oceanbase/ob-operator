@@ -8,7 +8,6 @@ import {
   OBTenantApiFactory,
   TerminalApiFactory,
   UserApiFactory,
-  AlarmApiFactory
 } from './generated/index';
 
 globalAxios.interceptors.response.use((res) => {

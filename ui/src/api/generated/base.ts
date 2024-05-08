@@ -16,12 +16,8 @@
 import type { Configuration } from './configuration';
 // Some imports not used depending on template conditions
 // @ts-ignore
-import type { AxiosPromise, AxiosInstance, RawAxiosRequestConfig } from 'axios';
+import type { AxiosInstance, RawAxiosRequestConfig } from 'axios';
 import globalAxios from 'axios';
-
-globalAxios.interceptors.response.use(function(response){
-    return response.data
-})
 
 export const BASE_PATH = "/api/v1".replace(/\/+$/, "");
 
