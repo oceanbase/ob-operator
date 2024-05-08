@@ -14,7 +14,6 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
-	"fmt"
 	"reflect"
 	"time"
 
@@ -59,11 +58,11 @@ func CheckPoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	client, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get sys client when checking and applying tenant '%s' pool and config", tenantName))
+		return errors.Wrapf(err, "Get sys client when checking and applying tenant '%s' pool and config", tenantName)
 	}
 	params, err := client.GetParameter(m.Ctx, "__min_full_resource_pool_memory", nil)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get parameter __min_full_resource_pool_memory when checking and applying tenant '%s' pool and config", tenantName))
+		return errors.Wrapf(err, "Get parameter __min_full_resource_pool_memory when checking and applying tenant '%s' pool and config", tenantName)
 	}
 	if len(params) == 0 {
 		return errors.New("Getting parameter __min_full_resource_pool_memory returns empty result")
@@ -71,7 +70,7 @@ func CheckPoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 	minPoolMemory := params[0].Value
 	minPoolMemoryQuant, err := resource.ParseQuantity(minPoolMemory)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Parse quantity when checking and applying tenant '%s' pool and config", tenantName))
+		return errors.Wrapf(err, "Parse quantity when checking and applying tenant '%s' pool and config", tenantName)
 	}
 	for _, pool := range m.OBTenant.Spec.Pools {
 		unitName := m.generateUnitName(pool.Zone)
@@ -411,7 +410,7 @@ func CheckAndApplyUnitNum(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get sql operator when checking and applying tenant unitnum", tenantName))
+		return errors.Wrapf(err, "Get sql operator when checking and applying unitnum of tenant %s", tenantName)
 	}
 
 	if m.OBTenant.Spec.UnitNumber != m.OBTenant.Status.TenantRecordInfo.UnitNumber {
@@ -427,7 +426,7 @@ func CheckAndApplyWhiteList(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprint("Get Sql Operator When Checking And Applying ob_tcp_invited_nodes For Tenant ", tenantName))
+		return errors.Wrapf(err, "Get sql operator when checking and applying ob_tcp_invited_nodes for tenant %s", tenantName)
 	}
 
 	specWhiteList := m.OBTenant.Spec.ConnectWhiteList
@@ -455,7 +454,7 @@ func CheckAndApplyPrimaryZone(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get Sql Operator When Prcoessing Tenant '%s' Priority ", tenantName))
+		return errors.Wrapf(err, "Get sql operator when processing priority of tenant %s", tenantName)
 	}
 
 	specPrimaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
@@ -479,7 +478,7 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 	tenantName := m.OBTenant.Spec.TenantName
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Get sql operator when prcoessing tenant '%s' locality ", tenantName))
+		return errors.Wrapf(err, "Get sql operator when prcoessing tenant '%s' locality ", tenantName)
 	}
 	specLocalityMap := m.generateSpecLocalityMap(m.OBTenant.Spec.Pools)
 	statusLocalityMap := m.generateStatusLocalityMap(m.OBTenant.Status.Pools)
@@ -498,13 +497,13 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 	check := func() (bool, error) {
 		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
 		if err != nil {
-			return false, errors.Wrap(err, fmt.Sprintf("Get RsJob %s", tenantName))
+			return false, errors.Wrapf(err, "Get RsJob %s", tenantName)
 		}
 		return !exist, nil
 	}
 	err = resourceutils.CheckJobWithTimeout(check)
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to wait for 'ALTER_TENANT' job of adding pool task to finish %s", tenantName))
+		return errors.Wrapf(err, "Failed to wait for 'ALTER_TENANT' job of adding pool task to finish %s", tenantName)
 	}
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' job of adding pool task succeeded", "tenantName", tenantName)
 	return nil
