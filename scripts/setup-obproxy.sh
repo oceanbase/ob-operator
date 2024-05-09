@@ -8,23 +8,21 @@ NAMESPACE=default
 DEPLOY_NAME=""
 PROXY_VERSION="4.2.1.0-11"
 DESTROY=false
-NODE_PORT=false
+SVC_TYPE=ClusterIP
 DISPLAY_INFO=false
-CONNECT=false
 
 function print_help {
   echo "setup-obproxy.sh - Set up obproxy for an OBCluster in a Kubernetes cluster"
   echo "Usage: setup-obproxy.sh [options] <OBCluster>"
   echo "Options:"
-  echo "  -h, --help            Display this help message and exit."
-  echo "  -v, --version         Display version information and exit."
-  echo "  -n                    Namespace of the OBCluster. Default is default."
-  echo "  -i, --info            Display the obproxy deployment information."
-  echo "  -d, --deploy-name     Name of the obproxy deployment. Default is obproxy-<OBCluster>."
-  echo "  --connect             Connect to the obproxy deployment."
-  echo "  --destroy             Destroy the obproxy deployment."
-  echo "  --node-port           If set, use NodePort to expose the obproxy service."
-  echo "  --proxy-version       Version of the obproxy image. Default is 4.2.1.0-11."
+  echo "  -h, --help                Display this help message and exit."
+  echo "  -v, --version             Display version information and exit."
+  echo "  -n <Namespace>            Namespace of the OBCluster. Default is default."
+  echo "  -i, --info                Display the obproxy deployment information."
+  echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
+  echo "  --destroy                 Destroy the obproxy deployment."
+  echo "  --svc-type <Type>         Service type of the obproxy deployment. Default is ClusterIP. Valid values are ClusterIP, NodePort, LoadBalancer."
+  echo "  --proxy-version <Version> Version of the obproxy image. Default is 4.2.1.0-11."
 }
 
 function print_version {
@@ -63,14 +61,16 @@ while [[ $# -gt 0 ]]; do
     --destroy)
       DESTROY=true
       ;;
-    --node-port)
-      NODE_PORT=true
+    --svc-type)
+      SVC_TYPE=$2
+      if [[ $SVC_TYPE != "ClusterIP" && $SVC_TYPE != "NodePort" && $SVC_TYPE != "LoadBalancer" ]]; then
+        echo "Error: Invalid service type \"$SVC_TYPE\"."
+        exit 1
+      fi
+      shift
       ;;
     -i|--info)
       DISPLAY_INFO=true
-      ;;
-    --connect)
-      CONNECT=true
       ;;
     *)
       break
@@ -123,15 +123,13 @@ if [[ -z $DEPLOY_NAME ]]; then
 fi
 
 function display_info {
-  echo "OBProxy deployment information:"
+  echo "[OBProxy Deployment]"
   kubectl get deployment $DEPLOY_NAME -n $NAMESPACE
 
-  echo ""
-  echo "OBProxy pods information:"
+  echo -e "\n[OBProxy Pods]"
   kubectl get pods -n $NAMESPACE -l app=app-$DEPLOY_NAME -o wide
 
-  echo ""
-  echo "OBProxy service information:"
+  echo -e "\n[OBProxy Service]"
   kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE
 }
 
@@ -144,7 +142,7 @@ metadata:
   name: svc-$DEPLOY_NAME
   namespace: $NAMESPACE
 spec:
-  type: $(if [[ $NODE_PORT == true ]]; then echo "NodePort"; else echo "ClusterIP"; fi)
+  type: $SVC_TYPE
   selector:
     app: app-$DEPLOY_NAME
   ports:
@@ -215,15 +213,6 @@ if [[ $DISPLAY_INFO == true ]]; then
     exit 1
   fi
   display_info
-elif [[ $CONNECT == true ]]; then
-  if [[ $DEPLOY_EXIST != true ]]; then
-    echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
-    exit 1
-  fi
-
-  echo "Connecting to the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\"..."
-  SVC_CLUSTER_IP=$(kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.spec.clusterIP}')
-  mysql -h$SVC_CLUSTER_IP -P2883 -uroot -p$ROOT_PWD -A oceanbase
 elif [[ $DESTROY == true ]]; then
   if [[ $DEPLOY_EXIST != true ]]; then
     echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
@@ -238,6 +227,19 @@ elif [[ $DESTROY == true ]]; then
   echo "OBProxy has been destroyed successfully."
 else
   if [[ $DEPLOY_EXIST == true ]]; then
+    # Get svc type of the existing service
+    SVC_TYPE_EXIST=$(kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.spec.type}')
+    if [[ $SVC_TYPE_EXIST != $SVC_TYPE ]]; then
+      if [[ $SVC_TYPE_EXIST == "ClusterIP" ]]; then 
+        # Patch the service type
+        kubectl patch service svc-$DEPLOY_NAME -n $NAMESPACE --type='json' -p='[{"op": "replace", "path": "/spec/type", "value": "'$SVC_TYPE'"}]'
+        echo "Update the service type of the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" to \"$SVC_TYPE\"."
+        exit 0
+      else
+        echo "Error: Can not update the service type of the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" from \"$SVC_TYPE_EXIST\" to \"$SVC_TYPE\"."
+        exit 1
+      fi
+    fi
     echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" already exists."
     exit 1
   fi
