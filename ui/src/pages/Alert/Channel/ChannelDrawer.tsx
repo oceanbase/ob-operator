@@ -39,7 +39,6 @@ export default function ChannelDrawer({
   });
   const { data: listReceiversRes } = useRequest(alert.listReceivers, {
     manual: true,
-    onSuccess: () => {},
   });
   const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
 
