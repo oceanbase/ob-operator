@@ -19,12 +19,13 @@ interface LineGraphProps {
   metrics: MetricType[];
   labels: API.MetricsLabels;
   queryRange: Monitor.QueryRangeType;
-  groupLabels:API.LableKeys[];
+  groupLabels: API.LableKeys[];
   height?: number;
   isRefresh?: boolean;
   type?: API.MonitorUseTarget;
   useFor: API.MonitorUseFor;
-  filterData?: API.ClusterItem[] | API.TenantDetail[]
+  filterData?: API.ClusterItem[] | API.TenantDetail[];
+  filterQueryMetric?: API.MetricsLabels;
 }
 
 export default function LineGraph({
@@ -37,33 +38,39 @@ export default function LineGraph({
   isRefresh = false,
   type = 'DETAIL',
   useFor,
-  filterData
+  filterData,
+  filterQueryMetric,
 }: LineGraphProps) {
   const [isEmpty, setIsEmpty] = useState<boolean>(true);
   const [isloading, setIsloading] = useState<boolean>(true);
   const lineGraphRef = useRef(null);
   const lineInstanceRef = useRef<Line | null>(null);
   const [inViewport] = useInViewport(lineGraphRef);
-  // The number of times to enter the visible area, 
-  //only initiate a network request when entering the visible area for the first time
+  // The number of times to enter the visible area,
+  // only initiate a network request when entering the visible area for the first time
   const [inViewportCount, setInViewportCount] = useState<number>(0);
 
+  /**
+   * The overview page only displays the first metrics
+   * and passes empty labels to obtain all clusters/tenants.
+   *
+   * The details page displays all metrics and filters by labels.
+   *
+   * The tenant page in the cluster details needs labels to filter out which cluster the tenant is in.
+   */
   const getQueryParms = () => {
-    let metricsKeys: string[] = [metrics[0].key],
-      realLabels = labels;
-    if (type === 'DETAIL') {
-      metricsKeys = metrics.map((metric: MetricType) => metric.key);
-    }
-    if (type === 'OVERVIEW') realLabels = [];
-
     return {
       groupLabels,
-      labels: realLabels, // If empty, query all clusters
-      metrics: metricsKeys,
+      labels: type === 'OVERVIEW' ? [] : labels, // If empty, query all clusters
+      metrics:
+        type === 'DETAIL'
+          ? metrics.map((metric: MetricType) => metric.key)
+          : [metrics[0].key],
       queryRange,
       type,
       useFor,
-      filterData
+      filterData,
+      filterQueryMetric
     };
   };
 
@@ -72,7 +79,7 @@ export default function LineGraph({
     for (const metric of metricsData) {
       values.push(metric.value);
     }
-      
+
     const config = {
       data: metricsData,
       xField: 'date',
@@ -142,7 +149,7 @@ export default function LineGraph({
       lineInstanceDestroy();
     },
   });
-  
+
   useUpdateEffect(() => {
     if (!isEmpty) {
       lineInstanceRender(metricsData);
