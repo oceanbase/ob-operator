@@ -25,6 +25,7 @@ interface MonitorCompProps {
   groupLabels: API.LableKeys[];
   useFor?: API.MonitorUseFor;
   filterData?: API.ClusterItem[] | API.TenantDetail[];
+  filterQueryMetric?: API.MetricsLabels;
 }
 
 export default function MonitorComp({
@@ -36,6 +37,7 @@ export default function MonitorComp({
   groupLabels,
   useFor = 'cluster',
   filterData,
+  filterQueryMetric
 }: MonitorCompProps) {
   const { data: allMetrics } = useRequest(getAllMetrics, {
     defaultParams: [queryScope],
@@ -148,6 +150,7 @@ export default function MonitorComp({
                           type={type}
                           useFor={useFor}
                           filterData={filterData}
+                          filterQueryMetric={filterQueryMetric}
                         />
                       </Card>
                     ),
