@@ -14,6 +14,7 @@ package database
 
 import (
 	"context"
+	"time"
 
 	// register mysql driver
 	_ "github.com/go-sql-driver/mysql"
@@ -63,7 +64,7 @@ func (c *Connector) Init() error {
 	if err != nil {
 		return errors.Wrapf(err, "Open datasource %s", c.ds.String())
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultPingTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*DefaultPingTimeoutSeconds)
 	defer cancel()
 	err = db.PingContext(ctx)
 	if err != nil {
@@ -79,7 +80,7 @@ func (c *Connector) IsAlive() bool {
 	if c.client == nil {
 		return false
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), DefaultPingTimeoutSeconds)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*DefaultPingTimeoutSeconds)
 	defer cancel()
 	return c.client.PingContext(ctx) == nil
 }

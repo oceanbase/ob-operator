@@ -158,7 +158,7 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 		labels := make(map[string]string)
 		labels[oceanbaseconst.LabelRefUID] = string(m.OBCluster.GetUID())
 		labels[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
-		finalizerName := "finalizers.oceanbase.com.deleteobzone"
+		finalizerName := oceanbaseconst.FinalizerDeleteOBZone
 		finalizers := []string{finalizerName}
 		obzone := &v1alpha1.OBZone{
 			ObjectMeta: metav1.ObjectMeta{

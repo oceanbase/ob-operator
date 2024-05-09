@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resbackuppolicy "github.com/oceanbase/ob-operator/internal/resource/obtenantbackuppolicy"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
@@ -57,7 +58,7 @@ func (r *OBTenantBackupPolicyReconciler) Reconcile(ctx context.Context, req ctrl
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
+	finalizerName := oceanbaseconst.FinalizerBackupPolicy
 	// examine DeletionTimestamp to determine if the policy is under deletion
 	if policy.ObjectMeta.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(policy, finalizerName) {

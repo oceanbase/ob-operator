@@ -64,7 +64,7 @@ func (m *ObTenantBackupPolicyManager) GetStatus() string {
 
 func (m *ObTenantBackupPolicyManager) CheckAndUpdateFinalizers() error {
 	policy := m.BackupPolicy
-	finalizerName := "obtenantbackuppolicy.finalizers.oceanbase.com"
+	finalizerName := oceanbaseconst.FinalizerBackupPolicy
 	finalizerFinished := false
 	if controllerutil.ContainsFinalizer(policy, finalizerName) {
 		obcluster, err := m.getOBCluster()

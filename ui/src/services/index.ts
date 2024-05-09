@@ -1,6 +1,6 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
-import { floorToTwoDecimalPlaces,formatStatisticData } from '@/utils/helper';
+import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { request } from '@umijs/max';
 import _ from 'lodash';
@@ -22,7 +22,7 @@ export async function logoutReq() {
   });
 }
 
-export async function getAppInfo():Promise<API.AppInfoResponse> {
+export async function getAppInfo(): Promise<API.AppInfoResponse> {
   return request('/api/v1/info', {
     method: 'GET',
   });
@@ -142,8 +142,8 @@ export async function getObclusterListReq() {
     }
     return {
       ...r,
-      data:res
-    }
+      data: res,
+    };
   }
 
   return r;
@@ -253,10 +253,7 @@ export async function addObzone({
     message: r.message,
   };
 }
-export async function deleteObcluster({
-  ns,
-  name,
-}: API.NamespaceAndName) {
+export async function deleteObcluster({ ns, name }: API.NamespaceAndName) {
   const r = await request(`${obClusterPrefix}/namespace/${ns}/name/${name}`, {
     method: 'DELETE',
   });
@@ -366,15 +363,15 @@ export async function getAllMetrics(type: API.MetricScope) {
   return r.data;
 }
 
-const setMetricNameFromLabels = (labels:API.MetricsLabels)=>{
+const setMetricNameFromLabels = (labels: API.MetricsLabels) => {
   const tenantName = labels.find((label) => label.key === 'tenant_name')?.value;
   const clustetName = labels
     .filter((label) => label.key === 'ob_cluster_name')
     .map((label) => label.value)
     .join(',');
-  
-  return `${tenantName}(${clustetName})`
-}
+
+  return `${tenantName}(${clustetName})`;
+};
 
 const filterMetricsData = (
   type: 'tenant' | 'cluster',
@@ -399,6 +396,7 @@ export async function queryMetricsReq({
   useFor,
   type,
   filterData,
+  filterQueryMetric,
   ...data
 }: API.QueryMetricsType) {
   const r = await request('/api/v1/metrics/query', {
@@ -406,7 +404,20 @@ export async function queryMetricsReq({
     data,
   });
   if (r.successful) {
-    if(filterData){
+    if (filterQueryMetric && r.data) {
+      r.data = r.data.filter((item) => {
+        const labels: API.MetricsLabels = item.metric?.labels;
+        if (!labels || !labels.length) return false;
+        return filterQueryMetric.some((queryMetric) =>
+          labels.some(
+            (label) =>
+              label.key === queryMetric.key &&
+              label.value === queryMetric.value,
+          ),
+        );
+      });
+    }
+    if (filterData) {
       r.data = filterMetricsData(useFor, r.data, filterData);
     }
     if (!r.data || !r.data.length) return [];
@@ -444,20 +455,26 @@ export async function getEssentialParameters({
   name,
 }: API.NamespaceAndName): Promise<API.EssentialParametersTypeResponse> {
   const r = await request(`${obClusterPrefix}/${ns}/${name}/resource-usages`);
-  const formatResourceAttr = ['availableDataDisk','availableLogDisk','availableMemory']
-  if(r.successful){
+  const formatResourceAttr = [
+    'availableDataDisk',
+    'availableLogDisk',
+    'availableMemory',
+  ];
+  if (r.successful) {
     r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
-    r.data.obServerResources.forEach((item)=>{
-      for(const attr of formatResourceAttr){
-        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1<<30)); 
+    r.data.obServerResources.forEach((item) => {
+      for (const attr of formatResourceAttr) {
+        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1 << 30));
       }
-    })
-    Object.keys(r.data.obZoneResourceMap).forEach((key)=>{
-      for(const attr of formatResourceAttr){
-        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(r.data.obZoneResourceMap[key][attr] / (1 << 30));
+    });
+    Object.keys(r.data.obZoneResourceMap).forEach((key) => {
+      for (const attr of formatResourceAttr) {
+        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(
+          r.data.obZoneResourceMap[key][attr] / (1 << 30),
+        );
       }
-    }) 
-    return r
+    });
+    return r;
   }
   return r;
 }

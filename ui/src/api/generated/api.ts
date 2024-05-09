@@ -159,10 +159,10 @@ export interface AlertAlertFilter {
     'endTime'?: number;
     /**
      * 
-     * @type {Array<OceanbaseOBInstance>}
+     * @type {OceanbaseOBInstance}
      * @memberof AlertAlertFilter
      */
-    'instances'?: Array<OceanbaseOBInstance>;
+    'instance'?: OceanbaseOBInstance;
     /**
      * 
      * @type {string}
@@ -4720,10 +4720,10 @@ export type RuleRuleType = typeof RuleRuleType[keyof typeof RuleRuleType];
 export interface SilenceSilencerFilter {
     /**
      * 
-     * @type {Array<OceanbaseOBInstance>}
+     * @type {OceanbaseOBInstance}
      * @memberof SilenceSilencerFilter
      */
-    'instances'?: Array<OceanbaseOBInstance>;
+    'instance'?: OceanbaseOBInstance;
     /**
      * 
      * @type {string}
@@ -9603,7 +9603,7 @@ export class OBTenantApi extends BaseAPI {
  */
 export const ListBackupJobsTypeEnum = {
     FULL: 'FULL',
-    INCR: 'INCR',
+    INC: 'INC',
     CLEAN: 'CLEAN',
     ARCHIVE: 'ARCHIVE'
 } as const;
@@ -10037,8 +10037,6 @@ export class UserApi extends BaseAPI {
      * @memberof UserApi
      */
     public login(loginInfo: ParamLoginParam, options?: RawAxiosRequestConfig) {
-        console.log('this.configuration',this.configuration,'loginInfo',loginInfo,'options',options);
-        
         return UserApiFp(this.configuration).login(loginInfo, options).then((request) => request(this.axios, this.basePath));
     }
 
