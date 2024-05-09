@@ -1,0 +1,251 @@
+#! /usr/bin/env bash
+
+# This script is used to setup obproxy for an OBCluster handyly for quick testing.
+# It will install obproxy and configure it with a simple configuration file.
+
+VERSION=0.1.0
+NAMESPACE=default
+DEPLOY_NAME=""
+PROXY_VERSION="4.2.1.0-11"
+DESTROY=false
+NODE_PORT=false
+DISPLAY_INFO=false
+CONNECT=false
+
+function print_help {
+  echo "setup-obproxy.sh - Set up obproxy for an OBCluster in a Kubernetes cluster"
+  echo "Usage: setup-obproxy.sh [options] <OBCluster>"
+  echo "Options:"
+  echo "  -h, --help            Display this help message and exit."
+  echo "  -v, --version         Display version information and exit."
+  echo "  -n                    Namespace of the OBCluster. Default is default."
+  echo "  -i, --info            Display the obproxy deployment information."
+  echo "  -d, --deploy-name     Name of the obproxy deployment. Default is obproxy-<OBCluster>."
+  echo "  --connect             Connect to the obproxy deployment."
+  echo "  --destroy             Destroy the obproxy deployment."
+  echo "  --node-port           If set, use NodePort to expose the obproxy service."
+  echo "  --proxy-version       Version of the obproxy image. Default is 4.2.1.0-11."
+}
+
+function print_version {
+  echo "setup-obproxy.sh - Set up obproxy for an OBCluster in a Kubernetes cluster"
+  echo "Version: $VERSION"
+}
+
+if [[ $# -eq 0 ]]; then
+  print_help
+  exit 0
+fi
+
+# Parse options
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -h|--help)
+      print_help
+      exit 0
+      ;;
+    -v|--version)
+      print_version
+      exit 0
+      ;;
+    -n)
+      NAMESPACE=$2
+      shift
+      ;;
+    -d|--deploy-name)
+      DEPLOY_NAME=$2
+      shift
+      ;;
+    --proxy-version)
+      PROXY_VERSION=$2
+      shift
+      ;;
+    --destroy)
+      DESTROY=true
+      ;;
+    --node-port)
+      NODE_PORT=true
+      ;;
+    -i|--info)
+      DISPLAY_INFO=true
+      ;;
+    --connect)
+      CONNECT=true
+      ;;
+    *)
+      break
+      ;;
+  esac
+  shift
+done
+
+# Check if the OBCluster is specified
+if [[ $# -eq 0 ]]; then
+  echo "Error: OBCluster is not specified."
+  exit 1
+fi
+
+# OBCluster name
+OB_CLUSTER=$1
+
+function check_requirements {
+  # Check whether mysql is installed
+  if ! command -v mysql &> /dev/null; then
+    echo "Error: mysqlclient is not installed."
+    exit 1
+  fi
+
+  # Check whether kubectl is installed
+  if ! command -v kubectl &> /dev/null; then
+    echo "Error: kubectl is not installed."
+    exit 1
+  fi
+}
+
+check_requirements
+
+# Check whether the OBCluster exists
+kubectl get obcluster $OB_CLUSTER -n $NAMESPACE &> /dev/null
+if [[ $? -ne 0 ]]; then
+  echo "Error: OBCluster \"$OB_CLUSTER\" does not exist in namespace \"$NAMESPACE\"."
+  exit 1
+fi
+
+CLUSTER_NAME=$(kubectl get obcluster $OB_CLUSTER -n $NAMESPACE -o jsonpath='{.spec.clusterName}')
+PROXYRO_SECRET=$(kubectl get obcluster $OB_CLUSTER -n $NAMESPACE -o jsonpath='{.spec.userSecrets.proxyro}')
+ROOT_SECRET=$(kubectl get obcluster $OB_CLUSTER -n $NAMESPACE -o jsonpath='{.spec.userSecrets.root}')
+ROOT_PWD=$(kubectl get secret $ROOT_SECRET -n $NAMESPACE -o jsonpath='{.data.password}' | base64 -d)
+POD_IP=$(kubectl get pods -n $NAMESPACE -l ref-obcluster=$OB_CLUSTER -o jsonpath='{.items[0].status.podIP}')
+RS_LIST=$(mysql -h$POD_IP -P2881 -uroot -p$ROOT_PWD -BN -e "SELECT GROUP_CONCAT(CONCAT(SVR_IP, ':', SQL_PORT) SEPARATOR ';') AS RS_LIST FROM oceanbase.DBA_OB_SERVERS;")
+
+if [[ -z $DEPLOY_NAME ]]; then
+  DEPLOY_NAME="obproxy-$OB_CLUSTER"
+fi
+
+function display_info {
+  echo "OBProxy deployment information:"
+  kubectl get deployment $DEPLOY_NAME -n $NAMESPACE
+
+  echo ""
+  echo "OBProxy pods information:"
+  kubectl get pods -n $NAMESPACE -l app=app-$DEPLOY_NAME -o wide
+
+  echo ""
+  echo "OBProxy service information:"
+  kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE
+}
+
+function create_deployment {
+
+cat <<EOF | kubectl create -f -
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-$DEPLOY_NAME
+  namespace: $NAMESPACE
+spec:
+  type: $(if [[ $NODE_PORT == true ]]; then echo "NodePort"; else echo "ClusterIP"; fi)
+  selector:
+    app: app-$DEPLOY_NAME
+  ports:
+    - name: "sql"
+      port: 2883
+      targetPort: 2883
+    - name: "prometheus"
+      port: 2884
+      targetPort: 2884
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $DEPLOY_NAME
+  namespace: $NAMESPACE
+spec:
+  selector:
+    matchLabels:
+      app: app-$DEPLOY_NAME
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: app-$DEPLOY_NAME
+    spec:
+      containers:
+        - name: obproxy
+          image: oceanbase/obproxy-ce:$PROXY_VERSION
+          ports:
+            - containerPort: 2883
+              name: "sql"
+            - containerPort: 2884
+              name: "prometheus"
+          env:
+            - name: APP_NAME
+              value: $DEPLOY_NAME
+            - name: OB_CLUSTER
+              value: $CLUSTER_NAME
+            - name: RS_LIST
+              value: $RS_LIST
+            - name: PROXYRO_PASSWORD
+              valueFrom: 
+                secretKeyRef:
+                  name: $PROXYRO_SECRET
+                  key: password
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "1"
+            requests: 
+              memory: 200Mi
+              cpu: 200m
+EOF
+
+  echo "Waiting for the obproxy deployment to be ready..."
+
+  # Wait for the obproxy deployment to be ready
+  kubectl wait --for=condition=available --timeout=5m deployment/$DEPLOY_NAME -n oceanbase
+}
+
+# Check whether the obproxy deployment already exists
+kubectl get deployment $DEPLOY_NAME -n $NAMESPACE &> /dev/null
+DEPLOY_EXIST=$(if [[ $? -eq 0 ]]; then echo true; else echo false; fi)
+
+if [[ $DISPLAY_INFO == true ]]; then
+  if [[ $DEPLOY_EXIST != true ]]; then
+    echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
+    exit 1
+  fi
+  display_info
+elif [[ $CONNECT == true ]]; then
+  if [[ $DEPLOY_EXIST != true ]]; then
+    echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
+    exit 1
+  fi
+
+  echo "Connecting to the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\"..."
+  SVC_CLUSTER_IP=$(kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.spec.clusterIP}')
+  mysql -h$SVC_CLUSTER_IP -P2883 -uroot -p$ROOT_PWD -A oceanbase
+elif [[ $DESTROY == true ]]; then
+  if [[ $DEPLOY_EXIST != true ]]; then
+    echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
+    exit 1
+  else
+    echo "Destroying the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\"..."
+  fi
+
+  kubectl delete deployment $DEPLOY_NAME -n $NAMESPACE
+  kubectl delete service svc-$DEPLOY_NAME -n $NAMESPACE
+
+  echo "OBProxy has been destroyed successfully."
+else
+  if [[ $DEPLOY_EXIST == true ]]; then
+    echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" already exists."
+    exit 1
+  fi
+
+  create_deployment
+
+  display_info
+
+  echo ""
+  echo "OBProxy has been set up successfully."
+fi
