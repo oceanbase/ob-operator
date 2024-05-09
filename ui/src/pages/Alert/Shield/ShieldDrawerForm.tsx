@@ -1,4 +1,5 @@
 import { alert } from '@/api';
+<<<<<<< HEAD
 import type { SilenceSilencerParam } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabel from '@/components/InputLabel';
@@ -16,10 +17,19 @@ import {
   Row,
   message,
 } from 'antd';
+=======
+import AlertDrawer from '@/components/AlertDrawer';
+import InputLabel from '@/components/InputLabel';
+import { QuestionCircleOutlined } from '@ant-design/icons';
+import { useUpdateEffect } from 'ahooks';
+import type { DrawerProps } from 'antd';
+import { Button, Col, DatePicker, Form, Input, Radio, Row } from 'antd';
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import styles from './index.less';
 
+<<<<<<< HEAD
 interface ShieldDrawerProps extends DrawerProps {
   id?: string;
   initialValues?: Alert.ShieldDrawerInitialValues;
@@ -39,6 +49,18 @@ export default function ShieldDrawerForm({
   
   const instanceType = Form.useWatch(['instance', 'type'], form);
   const newInitialValues = {
+=======
+type ShieldDrawerProps = {
+  id?: string;
+} & DrawerProps;
+
+const { TextArea } = Input;
+
+export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
+  const [form] = Form.useForm();
+  const instanceType = Form.useWatch(['instance', 'type'], form);
+  const initialValues = {
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
     matchers: [
       {
         name: '',
@@ -46,7 +68,10 @@ export default function ShieldDrawerForm({
         isRegex: false,
       },
     ],
+<<<<<<< HEAD
     ...initialValues,
+=======
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
   };
 
   const fieldEndTimeChange = (time: number | Date) => {
@@ -57,6 +82,7 @@ export default function ShieldDrawerForm({
     }
   };
 
+<<<<<<< HEAD
   const submit = (values: SilenceSilencerParam) => {
     alert.createOrUpdateSilencer(values).then(({ successful }) => {
       if (successful) {
@@ -75,11 +101,21 @@ export default function ShieldDrawerForm({
       });
     }
   }, [id]);
+=======
+  useEffect(() => {
+    if (id) {
+      alert.getSilencer(id).then(() => {
+        // Something to do
+      });
+    }
+  }, []);
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
 
   useUpdateEffect(() => {
     form.setFieldValue(['instance', instanceType], 'aa');
   }, [instanceType]);
   return (
+<<<<<<< HEAD
     <AlertDrawer onClose={onClose} onSubmit={() => form.submit()} {...props}>
       <Form
         form={form}
@@ -87,6 +123,10 @@ export default function ShieldDrawerForm({
         layout="vertical"
         initialValues={newInitialValues}
       >
+=======
+    <AlertDrawer onSubmit={() => form.submit()} {...props}>
+      <Form form={form} layout="vertical" initialValues={initialValues}>
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
         <Form.Item name={['instance', 'type']} label="屏蔽对象类型">
           <Radio.Group>
             <Radio value="obcluster"> 集群 </Radio>
@@ -110,7 +150,11 @@ export default function ShieldDrawerForm({
             wrapFormName="matchers"
             labelFormName="name"
             valueFormName="value"
+<<<<<<< HEAD
             regBoxFormName="isRegex"
+=======
+            showRegBox={true}
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
           />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>

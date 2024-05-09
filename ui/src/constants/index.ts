@@ -221,6 +221,10 @@ export {
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
+<<<<<<< HEAD
+=======
+  SERVERITY_MAP,
+>>>>>>> b1fb5a2... Prepare for 2.2.1 test (#357)
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
