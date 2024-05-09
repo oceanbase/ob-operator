@@ -184,7 +184,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 | local-path-provisioner | 0.0.23   | ✅       | 建议开发和测试环境使用             |
 | Rook CephFS            | v1.6.7   | ❌       | CephFS 不支持 `fallocate` 系统调用 |
 | Rook RBD (Block)       | v1.6.7   | ✅       |                                    |
-| OpenEBS (cstor)        | v3.6.0   | ✅       |                                    |
+| OpenEBS (cStor)        | v3.6.0   | ✅       |                                    |
 | GlusterFS              | v1.2.0   | ❓       | 要求机器内核版本不低于 5.14        |
 | Longhorn               | v1.6.0   | ✅       |                                    |
 | JuiceFS                | v1.1.2   | ✅       |                                    |
