@@ -452,6 +452,7 @@ declare namespace API {
     type: MonitorUseTarget;
     useFor: MonitorUseFor;
     filterData?: API.ClusterItem[] | API.TenantDetail[];
+    filterQueryMetric?: API.MetricsLabels;
   };
 
   type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE';
@@ -460,7 +461,7 @@ declare namespace API {
 
   type EventType = 'NORMAL' | 'WARNING';
 
-  type MonitorUseTarget = 'OVERVIEW' | 'DETAIL';
+  type MonitorUseTarget = 'OVERVIEW' | 'DETAIL' | 'OVERVIEW_IN_CLUSTER';
 
   type EventObjectType =
     | 'OBCLUSTER'
