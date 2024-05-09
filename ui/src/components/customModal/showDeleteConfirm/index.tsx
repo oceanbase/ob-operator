@@ -1,25 +1,13 @@
 import { intl } from '@/utils/intl';
 import { ExclamationCircleFilled } from '@ant-design/icons';
+import type { ModalFuncProps } from 'antd';
 import { Modal } from 'antd';
-
-interface showDeleteConfirmProps {
-  onOk: () => void;
-  onCancel?: () => void;
-  title: string;
-  content?: string;
-}
+import styles from './index.less';
 
 const { confirm } = Modal;
-export default function showDeleteConfirm({
-  onOk,
-  title,
-  content,
-  onCancel,
-}: showDeleteConfirmProps) {
+export default function showDeleteConfirm(props: ModalFuncProps) {
   confirm({
-    title,
     icon: <ExclamationCircleFilled />,
-    content,
     okText: intl.formatMessage({
       id: 'OBDashboard.components.customModal.DeleteModal.Yes',
       defaultMessage: '是的',
@@ -29,7 +17,7 @@ export default function showDeleteConfirm({
       id: 'OBDashboard.components.customModal.DeleteModal.Cancel',
       defaultMessage: '取消',
     }),
-    onCancel,
-    onOk,
+    className:styles.deleteContainer,
+    ...props,
   });
 }
