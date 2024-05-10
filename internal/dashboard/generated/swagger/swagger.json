@@ -2834,6 +2834,320 @@
                 }
             }
         },
+        "/api/v1/obproxies": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list obproxies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "list obproxies",
+                "operationId": "ListOBProxies",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/obproxy.OBProxyOverview"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create OBProxy with the specified parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "Create OBProxy",
+                "operationId": "CreateOBPROXY",
+                "parameters": [
+                    {
+                        "description": "Request body for creating obproxy",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/obproxy.CreateOBProxyParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obproxies/{namespace}/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get OBProxy by namespace and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "Get OBProxy",
+                "operationId": "GetOBProxy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete OBProxy by namespace and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "Delete OBProxy",
+                "operationId": "DeleteOBProxy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Patch OBProxy with the specified parameters",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "Patch OBProxy",
+                "operationId": "PatchOBProxy",
+                "parameters": [
+                    {
+                        "description": "Request body for patching obproxy",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/obproxy.PatchOBProxyParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants": {
             "get": {
                 "security": [
@@ -5038,6 +5352,208 @@
                 }
             }
         },
+        "obproxy.CreateOBProxyParam": {
+            "type": "object",
+            "required": [
+                "image",
+                "name",
+                "namespace",
+                "obCluster",
+                "proxyClusterName",
+                "proxySysPassword",
+                "replicas",
+                "resource",
+                "serviceType"
+            ],
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obCluster": {
+                    "description": "OBCluster format: {namespace}/{name}",
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "proxyClusterName": {
+                    "type": "string"
+                },
+                "proxySysPassword": {
+                    "description": "Password should be encrypted",
+                    "type": "string"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "resource": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                },
+                "serviceType": {
+                    "type": "string",
+                    "default": "ClusterIP",
+                    "enum": [
+                        "ClusterIP",
+                        "NodePort",
+                        "LoadBalancer",
+                        "ExternalName"
+                    ],
+                    "example": "ClusterIP"
+                }
+            }
+        },
+        "obproxy.OBProxy": {
+            "type": "object",
+            "required": [
+                "creationTime",
+                "image",
+                "name",
+                "namespace",
+                "obCluster",
+                "parameters",
+                "pods",
+                "proxyClusterName",
+                "proxySysSecret",
+                "replicas",
+                "resource",
+                "service",
+                "serviceIp",
+                "status"
+            ],
+            "properties": {
+                "creationTime": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obCluster": {
+                    "description": "OBCluster format: {namespace}/{name}",
+                    "type": "string"
+                },
+                "parameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "pods": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sPodInfo"
+                    }
+                },
+                "proxyClusterName": {
+                    "type": "string"
+                },
+                "proxySysSecret": {
+                    "type": "string"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "resource": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                },
+                "service": {
+                    "$ref": "#/definitions/response.K8sService"
+                },
+                "serviceIp": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "obproxy.OBProxyOverview": {
+            "type": "object",
+            "required": [
+                "creationTime",
+                "image",
+                "name",
+                "namespace",
+                "obCluster",
+                "proxyClusterName",
+                "replicas",
+                "serviceIp",
+                "status"
+            ],
+            "properties": {
+                "creationTime": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obCluster": {
+                    "description": "OBCluster format: {namespace}/{name}",
+                    "type": "string"
+                },
+                "proxyClusterName": {
+                    "type": "string"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "serviceIp": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "obproxy.PatchOBProxyParam": {
+            "type": "object",
+            "properties": {
+                "addedParameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "deletedParameters": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "image": {
+                    "type": "string"
+                },
+                "replicas": {
+                    "type": "integer"
+                },
+                "resource": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                },
+                "serviceType": {
+                    "type": "string"
+                }
+            }
+        },
         "oceanbase.OBInstance": {
             "type": "object",
             "required": [
@@ -5835,6 +6351,52 @@
                 }
             }
         },
+        "response.ContainerInfo": {
+            "type": "object",
+            "required": [
+                "image",
+                "limits",
+                "name",
+                "ports",
+                "ready",
+                "requests",
+                "restartCount",
+                "startedAt",
+                "state"
+            ],
+            "properties": {
+                "image": {
+                    "type": "string"
+                },
+                "limits": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "ready": {
+                    "type": "boolean"
+                },
+                "requests": {
+                    "$ref": "#/definitions/common.ResourceSpec"
+                },
+                "restartCount": {
+                    "type": "integer"
+                },
+                "startedAt": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        },
         "response.DashboardInfo": {
             "type": "object",
             "required": [
@@ -6023,6 +6585,84 @@
                 },
                 "memoryUsed": {
                     "type": "number"
+                }
+            }
+        },
+        "response.K8sPodInfo": {
+            "type": "object",
+            "required": [
+                "containers",
+                "name",
+                "namespace",
+                "nodeName",
+                "phase",
+                "startTime",
+                "status"
+            ],
+            "properties": {
+                "containers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.ContainerInfo"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "nodeName": {
+                    "type": "string"
+                },
+                "phase": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.K8sService": {
+            "type": "object",
+            "properties": {
+                "clusterIP": {
+                    "type": "string"
+                },
+                "externalIP": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "ports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.K8sServicePort"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.K8sServicePort": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "port": {
+                    "type": "integer"
+                },
+                "targetPort": {
+                    "type": "integer"
                 }
             }
         },

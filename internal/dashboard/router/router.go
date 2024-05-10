@@ -78,4 +78,5 @@ func InitRoutes(router *gin.Engine) {
 	v1.InitOBTenantRoutes(v1Group)
 	v1.InitTerminalRoutes(v1Group)
 	v1.InitAlarmRoutes(v1Group)
+	v1.InitOBProxyRoutes(v1Group)
 }
