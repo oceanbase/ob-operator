@@ -55,13 +55,13 @@ export default function ResourcePools({
         return;
       }
       const maxResource = findMinParameter(selectZones, essentialParameter);
-      if (maxResource.maxCPU < minResource.minCPU) {
+      if (maxResource.maxCPU! < minResource.minCPU) {
         maxResource.maxCPU = minResource.minCPU;
       }
-      if (maxResource.maxLogDisk < minResource.minLogDisk) {
+      if (maxResource.maxLogDisk! < minResource.minLogDisk) {
         maxResource.maxLogDisk = minResource.minLogDisk;
       }
-      if (maxResource.maxMemory < minResource.minMemory) {
+      if (maxResource.maxMemory! < minResource.minMemory) {
         maxResource.maxMemory = minResource.minMemory;
       }
       setMaxResource(maxResource);
@@ -118,6 +118,11 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item
                 name={['unitConfig', 'cpuCount']}
+                dependencies={targetZoneList?.map((zone) => [
+                  'pools',
+                  zone.zone,
+                  'checked',
+                ])}
                 rules={[
                   {
                     required: true,
@@ -131,7 +136,7 @@ export default function ResourcePools({
                       if (
                         essentialParameter &&
                         findMinParameter(selectZones, essentialParameter)
-                          .maxCPU < minResource.minCPU
+                          .maxCPU! < minResource.minCPU
                       ) {
                         return Promise.reject(
                           new Error(
@@ -171,6 +176,11 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item
                 name={['unitConfig', 'memorySize']}
+                dependencies={targetZoneList?.map((zone) => [
+                  'pools',
+                  zone.zone,
+                  'checked',
+                ])}
                 rules={[
                   {
                     required: true,
@@ -184,7 +194,7 @@ export default function ResourcePools({
                       if (
                         essentialParameter &&
                         findMinParameter(selectZones, essentialParameter)
-                          .maxMemory < minResource.minMemory
+                          .maxMemory! < minResource.minMemory
                       ) {
                         return Promise.reject(
                           new Error(
@@ -219,6 +229,11 @@ export default function ResourcePools({
             <Col span={8}>
               <Form.Item
                 name={['unitConfig', 'logDiskSize']}
+                dependencies={targetZoneList?.map((zone) => [
+                  'pools',
+                  zone.zone,
+                  'checked',
+                ])}
                 rules={[
                   {
                     required: true,
@@ -232,7 +247,7 @@ export default function ResourcePools({
                       if (
                         essentialParameter &&
                         findMinParameter(selectZones, essentialParameter)
-                          .maxLogDisk < minResource.minLogDisk
+                          .maxLogDisk! < minResource.minLogDisk
                       ) {
                         return Promise.reject(
                           new Error(
