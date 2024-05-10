@@ -20,4 +20,11 @@ const (
 	ExitCodeBadArgs     ExitCode = 2
 	ExitCodeNotExecuted ExitCode = 4
 	ExitCodeNotSupport  ExitCode = 10
+	ExitCannotExecute   ExitCode = 126
+	ExitCodeNotFound    ExitCode = 127
+	ExitCodeSigInt      ExitCode = 130
+	ExitCodeSigKill     ExitCode = 137
+	ExitCodeSegFault    ExitCode = 139
+	ExitCodePipeErr     ExitCode = 141
+	ExitCodeSigTerm     ExitCode = 143
 )
