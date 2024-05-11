@@ -66,7 +66,9 @@ export default function Rules() {
       dataIndex: 'action',
       render: (_, record) => (
         <>
-          <Button type="link">编辑</Button>
+          <Button style={{ paddingLeft: 0 }} type="link">
+            编辑
+          </Button>
           <Button
             type="link"
             style={{ color: '#ff4b4b' }}

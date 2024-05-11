@@ -67,7 +67,7 @@ export default function Event() {
     {
       title: '操作',
       key: 'action',
-      render: () => <Button type="link">屏蔽</Button>,
+      render: () => <Button style={{ paddingLeft: 0 }} type="link">屏蔽</Button>,
     },
   ];
   return (
