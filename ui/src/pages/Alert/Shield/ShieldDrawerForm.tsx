@@ -9,9 +9,9 @@ import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import styles from './index.less';
 
-type ShieldDrawerProps = {
+interface ShieldDrawerProps extends DrawerProps {
   id?: string;
-} & DrawerProps;
+}
 
 const { TextArea } = Input;
 
