@@ -18,7 +18,7 @@ ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager �
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
-本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。如果您计划在生产环境部署，推荐使用其他的存储解决方案，如 [Rook](https://rook.io/) 和 [Longhorn](https://longhorn.io/)。我们在[存储兼容性](#存储兼容性)一节提供了我们测试过的存储兼容性结果。
+本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。如果您计划在生产环境部署，推荐使用其他的存储解决方案。我们在[存储兼容性](#存储兼容性)一节提供了我们测试过的存储兼容性结果。
 
 ### 部署 ob-operator
 
@@ -188,7 +188,7 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 | GlusterFS              | v1.2.0   | ❓       | 要求机器内核版本不低于 5.14        |
 | Longhorn               | v1.6.0   | ✅       |                                    |
 | JuiceFS                | v1.1.2   | ✅       |                                    |
-| NFS                    | v5.5.0   | ✅       | 要求 NFS 版本不低于 4.3            |
+| NFS                    | v5.5.0   | ❌       | NFS 协议 >= 4.2 时能启动集群，但无法回收租户资源            |
 
 ## 支持的 OceanBase 版本
 

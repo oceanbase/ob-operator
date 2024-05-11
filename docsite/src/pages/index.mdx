@@ -23,7 +23,7 @@ If you have trouble accessing `quay.io` image registry, our mirrored cert-manage
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
-Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions like [Rook](https://rook.io/) and [Longhorn](https://longhorn.io/). We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
+Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
 
 ### Deploy ob-operator
 
@@ -184,16 +184,16 @@ It provides various functionalities for managing OceanBase clusters, tenants, ba
 
 We have tested ob-operator with the following storage solutions:
 
-| Storage Solution       | Tested Version | Compatibility | Notes                                        |
-| ---------------------- | -------------- | ------------- | -------------------------------------------- |
-| local-path-provisioner | 0.0.23         | ✅            | Recommended for development and testing      |
-| Rook CephFS            | v1.6.7         | ❌            | CephFS does not support `fallocate` sys call |
-| Rook RBD (Block)       | v1.6.7         | ✅            |                                              |
-| OpenEBS (cStor)        | v3.6.0         | ✅            |                                              |
-| GlusterFS              | v1.2.0         | ❓            | Requires kernel version >= 5.14              |
-| Longhorn               | v1.6.0         | ✅            |                                              |
-| JuiceFS                | v1.1.2         | ✅            |                                              |
-| NFS                    | v5.5.0         | ✅            | Requires NFS version >= 4.3                  |
+| Storage Solution       | Tested Version | Compatibility | Notes                                                                    |
+| ---------------------- | -------------- | ------------- | ------------------------------------------------------------------------ |
+| local-path-provisioner | 0.0.23         | ✅            | Recommended for development and testing                                  |
+| Rook CephFS            | v1.6.7         | ❌            | CephFS does not support `fallocate` sys call                             |
+| Rook RBD (Block)       | v1.6.7         | ✅            |                                                                          |
+| OpenEBS (cStor)        | v3.6.0         | ✅            |                                                                          |
+| GlusterFS              | v1.2.0         | ❓            | Requires kernel version >= 5.14                                          |
+| Longhorn               | v1.6.0         | ✅            |                                                                          |
+| JuiceFS                | v1.1.2         | ✅            |                                                                          |
+| NFS                    | v5.5.0         | ❌            | Bootstrap with NFS protocol >= 4.2, but can not recycle tenant resource. |
 
 ## Supported OceanBase Versions
 

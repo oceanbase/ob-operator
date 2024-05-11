@@ -19,7 +19,7 @@ If you have trouble accessing `quay.io` image registry, our mirrored cert-manage
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
-Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner. If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions like [Rook](https://rook.io/) and [Longhorn](https://longhorn.io/). We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
+Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner. If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
 
 ### Deploy ob-operator
 
@@ -189,7 +189,7 @@ We have tested ob-operator with the following storage solutions:
 | GlusterFS              | v1.2.0         | ❓            | Requires kernel version >= 5.14              |
 | Longhorn               | v1.6.0         | ✅            |                                              |
 | JuiceFS                | v1.1.2         | ✅            |                                              |
-| NFS                    | v5.5.0         | ✅            | Requires NFS version >= 4.3                  |
+| NFS                    | v5.5.0         | ❌            | Bootstrap with NFS protocol >= 4.2, but can not recycle tenant resource. |
 
 ## Supported OceanBase Versions
 
