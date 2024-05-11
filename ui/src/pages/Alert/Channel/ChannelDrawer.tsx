@@ -37,7 +37,7 @@ export default function ChannelDrawer({
       }
     },
   });
-  const { data: listReceiversRes } = useRequest(alert.listReceivers, {
+  const { data: listReceiversRes, run: getListReceivers } = useRequest(alert.listReceivers, {
     manual: true,
   });
   const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
@@ -66,7 +66,10 @@ export default function ChannelDrawer({
     if (status !== 'create' && name) {
       getReceiver(name);
     }
-  }, [status]);
+    if(status === 'create'){
+      getListReceivers();
+    }
+  }, [status,name]);
 
   return (
     <AlertDrawer
