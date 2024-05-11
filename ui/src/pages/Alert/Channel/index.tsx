@@ -1,6 +1,7 @@
 import { alert } from '@/api';
 import type { ReceiverReceiver } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -8,9 +9,16 @@ import { useState } from 'react';
 import ChannelDrawer from './ChannelDrawer';
 
 export default function Channel() {
-  const [drawerStatus, setDrawerStatus] = useState<Alert.DrawerStatus>();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [clickedChannelName, setClickedChannelName] = useState('');
+  const [searchParams] = useSearchParams();
+  const [drawerStatus, setDrawerStatus] = useState<Alert.DrawerStatus>(
+    searchParams.get('receiver') ? 'display' : 'create',
+  );
+  const [drawerOpen, setDrawerOpen] = useState(
+    searchParams.get('openDrawer') === 'true',
+  );
+  const [clickedChannelName, setClickedChannelName] = useState(
+    searchParams.get('receiver') || undefined,
+  );
   const { data: listReceiversRes, refresh } = useRequest(alert.listReceivers);
   const { run: deleteReceiver } = useRequest(alert.deleteReceiver, {
     onSuccess: ({ successful }) => {
@@ -43,7 +51,9 @@ export default function Channel() {
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
-        <Button type='link' onClick={() => openChannel(record.name)}>{record.name}</Button>
+        <Button type="link" onClick={() => openChannel(record.name)}>
+          {record.name}
+        </Button>
       ),
     },
     {
@@ -71,7 +81,7 @@ export default function Channel() {
                 title: '确定要删除“钉钉群”告警通道吗？',
                 content: '删除后使用该通道的消息推送都将失效，请谨慎操作',
                 onOk: () => {
-                    deleteReceiver(record.name);
+                  deleteReceiver(record.name);
                 },
                 okText: '删除',
               });
@@ -104,16 +114,14 @@ export default function Channel() {
         rowKey="fingerprint"
         pagination={{ simple: true }}
       />
-      {drawerStatus && (
-        <ChannelDrawer
-          width={880}
-          status={drawerStatus}
-          setStatus={setDrawerStatus} 
-          name={clickedChannelName}
-          onClose={() => setDrawerOpen(false)}
-          open={drawerOpen}
-        />
-      )}
+      <ChannelDrawer
+        width={880}
+        status={drawerStatus}
+        setStatus={setDrawerStatus}
+        name={clickedChannelName}
+        onClose={() => setDrawerOpen(false)}
+        open={drawerOpen}
+      />
     </Card>
   );
 }
