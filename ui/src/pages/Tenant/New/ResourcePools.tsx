@@ -135,6 +135,7 @@ export default function ResourcePools({
                     validator() {
                       if (
                         essentialParameter &&
+                        selectZones.length &&
                         findMinParameter(selectZones, essentialParameter)
                           .maxCPU! < minResource.minCPU
                       ) {
@@ -193,6 +194,7 @@ export default function ResourcePools({
                     validator() {
                       if (
                         essentialParameter &&
+                        selectZones.length &&
                         findMinParameter(selectZones, essentialParameter)
                           .maxMemory! < minResource.minMemory
                       ) {
@@ -246,6 +248,7 @@ export default function ResourcePools({
                     validator() {
                       if (
                         essentialParameter &&
+                        selectZones.length &&
                         findMinParameter(selectZones, essentialParameter)
                           .maxLogDisk! < minResource.minLogDisk
                       ) {
