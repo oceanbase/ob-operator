@@ -202,14 +202,25 @@ const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
   },
 ];
 
+const CHANNEL_TYPE_OPTIONS = [
+  {
+    value: 'dingtalk',
+    key: 'dingtalk',
+  },
+  {
+    value: 'wechat',
+    key: 'wechat',
+  },
+];
+
 export {
   BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
+  CHANNEL_TYPE_OPTIONS,
   CHECK_STORAGE_INTERVAL,
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
-  SERVERITY_MAP,
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
@@ -220,6 +231,7 @@ export {
   REFRESH_FREQUENCY,
   REFRESH_TENANT_TIME,
   RESULT_STATUS,
+  SERVERITY_MAP,
   SERVER_IMG_MAP,
   STATISTICS_INTERVAL,
   STATUS,

@@ -1,5 +1,5 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { useParams } from '@umijs/max';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';

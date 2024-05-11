@@ -179,6 +179,12 @@ export function checkIsSame(
   return true;
 }
 
+/**
+ * The minimum value of available resources in the currently selected zone 
+ * is the maximum value that can be entered in the input box.
+ * 
+ * The reason is to ensure that the input resource specifications can be created by each zone
+ */
 export function findMinParameter(
   zones: string[],
   essentialParameter: API.EssentialParametersType,

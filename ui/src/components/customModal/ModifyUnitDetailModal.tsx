@@ -115,8 +115,8 @@ export default function ModifyUnitDetailModal({
       newResourcePool ? 'create' : 'edit',
     );
     const res = await obtenantPoolReq({
-      ns,
-      name,
+      ns:ns!,
+      name:name!,
       zoneName,
       ...reqData,
     });
@@ -204,13 +204,13 @@ export default function ModifyUnitDetailModal({
         return;
       }
       const maxResource = findMinParameter(selectZones, essentialParameter);
-      if (maxResource.maxCPU < minResource.minCPU) {
+      if (maxResource.maxCPU! < minResource.minCPU) {
         maxResource.maxCPU = minResource.minCPU;
       }
-      if (maxResource.maxLogDisk < minResource.minLogDisk) {
+      if (maxResource.maxLogDisk! < minResource.minLogDisk) {
         maxResource.maxLogDisk = minResource.minLogDisk;
       }
-      if (maxResource.maxMemory < minResource.minMemory) {
+      if (maxResource.maxMemory! < minResource.minMemory) {
         maxResource.maxMemory = minResource.minMemory;
       }
       setMaxResource(maxResource);
@@ -371,8 +371,9 @@ export default function ModifyUnitDetailModal({
                   validator() {
                     if (
                       essentialParameter &&
-                      findMinParameter(selectZones, essentialParameter).maxCPU <
-                        minResource.minCPU
+                      selectZones.length &&
+                      findMinParameter(selectZones, essentialParameter)
+                        .maxCPU! < minResource.minCPU
                     ) {
                       return Promise.reject(
                         new Error(
@@ -420,8 +421,9 @@ export default function ModifyUnitDetailModal({
                   validator() {
                     if (
                       essentialParameter &&
+                      selectZones.length &&
                       findMinParameter(selectZones, essentialParameter)
-                        .maxMemory < minResource.minMemory
+                        .maxMemory! < minResource.minMemory
                     ) {
                       return Promise.reject(
                         new Error(
@@ -463,9 +465,9 @@ export default function ModifyUnitDetailModal({
                 () => ({
                   validator() {
                     if (
-                      essentialParameter &&
+                      essentialParameter && selectZones.length &&
                       findMinParameter(selectZones, essentialParameter)
-                        .maxLogDisk < minResource.minLogDisk
+                        .maxLogDisk! < minResource.minLogDisk
                     ) {
                       return Promise.reject(
                         new Error(
