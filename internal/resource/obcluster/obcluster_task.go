@@ -849,17 +849,17 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
-			standaloneVersion, _ := helper.ParseOceanBaseVersion("4.2.0")
+			standaloneVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.StandaloneMinVersion)
 			if currentVersion.Cmp(standaloneVersion) < 0 {
-				return errors.New("Current version is lower than 4.2.0, does not support standalone mode")
+				return errors.Errorf("Current version is lower than %s, does not support standalone mode", oceanbaseconst.StandaloneMinVersion)
 			}
 		case oceanbaseconst.ModeService:
-			if strings.HasPrefix(version, "4.2.2") {
-				return errors.New("Current version is 4.2.2, does not support service mode")
+			if strings.HasPrefix(version, oceanbaseconst.ServiceExcludeVersion) {
+				return errors.Errorf("Current version is %s. 4.2.2.x does not support service mode", version)
 			}
-			requiredVersion, _ := helper.ParseOceanBaseVersion("4.2.1.4")
+			requiredVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.ServiceMinVersion)
 			if currentVersion.Cmp(requiredVersion) < 0 {
-				return errors.New("Current version is lower than 4.2.1.4, does not support service mode")
+				return errors.Errorf("Current version is lower than %s, does not support service mode", oceanbaseconst.ServiceMinVersion)
 			}
 		}
 		m.Logger.Info("Run service mode validate job successfully", "version", version, "mode", modeAnnoVal)
