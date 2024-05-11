@@ -4,11 +4,13 @@ on:
   pull_request:
     branches:
       - master
+      - "*_release"
     paths:
       - '**/*.go'
   push:
     branches:
       - master
+      - "*_release"
     paths:
       - '**/*.go'
 
