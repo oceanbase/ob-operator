@@ -8,7 +8,7 @@ import { Spin, message } from 'antd';
 import _ from 'lodash';
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';

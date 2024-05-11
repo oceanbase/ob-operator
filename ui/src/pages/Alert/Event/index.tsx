@@ -13,62 +13,63 @@ import moment from 'moment';
 import AlarmFilter from '../AlarmFilter';
 const { Text } = Typography;
 
-const columns: ColumnsType<AlertAlert> = [
-  {
-    title: '告警事件',
-    dataIndex: 'summary',
-    key: 'summary',
-    render: (val) => <Button type="link">{val}</Button>,
-  },
-  {
-    title: '告警对象',
-    dataIndex: 'instance',
-    key: 'instance',
-    render: (instance: OceanbaseOBInstance) => (
-      <Text>
-        对象：{instance[instance.type]}
-        <br />
-        类型：{instance.type}
-      </Text>
-    ),
-  },
-  {
-    title: '告警等级',
-    dataIndex: 'serverity',
-    key: 'serverity',
-    render: (serverity: AlarmServerity) => (
-      <Tag color={SERVERITY_MAP[serverity]?.color}>
-        {SERVERITY_MAP[serverity]?.label}
-      </Tag>
-    ),
-  },
-  {
-    title: '告警状态',
-    dataIndex: 'status',
-    key: 'status',
-    render: (status: AlertStatus) => <Tag>{status.state}</Tag>,
-  },
-  {
-    title: '产生时间',
-    dataIndex: 'startsAt',
-    key: 'startsAt',
-    defaultSortOrder: 'ascend',
-    sorter: (pre: number, cur: number) => cur - pre,
-    render: (startsAt: number) => (
-      <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
-    ),
-  },
-  {
-    title: '操作',
-    key: 'action',
-    render: () => <Button type="link">屏蔽</Button>,
-  },
-];
+
 
 export default function Event() {
   const [form] = Form.useForm();
   const { data: listAlertsRes } = useRequest(alert.listAlerts);
   const listAlerts = listAlertsRes?.data || [];
+  const columns: ColumnsType<AlertAlert> = [
+    {
+      title: '告警事件',
+      dataIndex: 'summary',
+      key: 'summary',
+      render: (val) => <Button type="link">{val}</Button>,
+    },
+    {
+      title: '告警对象',
+      dataIndex: 'instance',
+      key: 'instance',
+      render: (instance: OceanbaseOBInstance) => (
+        <Text>
+          对象：{instance[instance.type]}
+          <br />
+          类型：{instance.type}
+        </Text>
+      ),
+    },
+    {
+      title: '告警等级',
+      dataIndex: 'serverity',
+      key: 'serverity',
+      render: (serverity: AlarmServerity) => (
+        <Tag color={SERVERITY_MAP[serverity]?.color}>
+          {SERVERITY_MAP[serverity]?.label}
+        </Tag>
+      ),
+    },
+    {
+      title: '告警状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: AlertStatus) => <Tag>{status.state}</Tag>,
+    },
+    {
+      title: '产生时间',
+      dataIndex: 'startsAt',
+      key: 'startsAt',
+      defaultSortOrder: 'ascend',
+      sorter: (pre: number, cur: number) => cur - pre,
+      render: (startsAt: number) => (
+        <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: () => <Button style={{ paddingLeft: 0 }} type="link">屏蔽</Button>,
+    },
+  ];
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>

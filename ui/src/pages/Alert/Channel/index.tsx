@@ -1,6 +1,6 @@
 import { alert } from '@/api';
 import type { ReceiverReceiver } from '@/api/generated';
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -71,8 +71,9 @@ export default function Channel() {
                 title: '确定要删除“钉钉群”告警通道吗？',
                 content: '删除后使用该通道的消息推送都将失效，请谨慎操作',
                 onOk: () => {
-                  deleteReceiver(record.name);
+                    deleteReceiver(record.name);
                 },
+                okText: '删除',
               });
             }}
             type="link"
