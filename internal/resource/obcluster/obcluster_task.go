@@ -38,6 +38,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
@@ -831,27 +832,37 @@ outerLoop:
 }
 
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
-	var err error
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
+		version, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+			m.OBCluster.Name+"-get-version",
+			m.OBCluster.Spec.OBServerTemplate.Image,
+			"/home/admin/oceanbase/bin/oceanbase-helper version",
+		)
+		if err != nil {
+			return errors.Wrap(err, "Run service mode validate job failed")
+		}
+		version = strings.TrimSpace(version)
+		currentVersion, err := helper.ParseOceanBaseVersion(version)
+		if err != nil {
+			return errors.Wrap(err, "Parse current version")
+		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
-			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-				m.OBCluster.Name+"-standalone-validate",
-				m.OBCluster.Spec.OBServerTemplate.Image,
-				"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
-			)
+			standaloneVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.StandaloneMinVersion)
+			if currentVersion.Cmp(standaloneVersion) < 0 {
+				return errors.Errorf("Current version is lower than %s, does not support standalone mode", oceanbaseconst.StandaloneMinVersion)
+			}
 		case oceanbaseconst.ModeService:
-			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-				m.OBCluster.Name+"-service-validate",
-				m.OBCluster.Spec.OBServerTemplate.Image,
-				"/home/admin/oceanbase/bin/oceanbase-helper service validate",
-			)
+			if strings.HasPrefix(version, oceanbaseconst.ServiceExcludeVersion) {
+				return errors.Errorf("Current version is %s. 4.2.2.x does not support service mode", version)
+			}
+			requiredVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.ServiceMinVersion)
+			if currentVersion.Cmp(requiredVersion) < 0 {
+				return errors.Errorf("Current version is lower than %s, does not support service mode", oceanbaseconst.ServiceMinVersion)
+			}
 		}
-	}
-	if err != nil {
-		m.Logger.Info("Run cluster mode validate job failed", "error", err, "mode", modeAnnoVal)
-		return err
+		m.Logger.Info("Run service mode validate job successfully", "version", version, "mode", modeAnnoVal)
 	}
 	return nil
 }
