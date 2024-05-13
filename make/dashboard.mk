@@ -26,7 +26,7 @@ dashboard-doc: dep-install ## Generate swagger docs
 	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
 
 .PHONY: build-dashboard
-build-dashboard: ## Build oceanbase-dashboard
+build-dashboard: gen-bindata dashboard-doc ## Build oceanbase-dashboard
 	$(GOBUILD) -o bin/oceanbase-dashboard ./cmd/dashboard/main.go
 
 .PHONY: gen-bindata
@@ -48,7 +48,7 @@ dev-dashboard: ## Run oceanbase-dashboard in dev mode
 	go run $(BUILD_FLAG) ./cmd/dashboard/main.go
 
 .PHONY: dashboard-docker-build
-dashboard-docker-build: ## build oceanbase-dashboard image
+dashboard-docker-build: gen-bindata dashboard-doc ## build oceanbase-dashboard image
 	docker build -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
 
 .PHONY: dashboard-docker-push

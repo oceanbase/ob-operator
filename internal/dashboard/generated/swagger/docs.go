@@ -4474,9 +4474,6 @@ const docTemplate = `{
         "alarm.Matcher": {
             "type": "object",
             "properties": {
-                "isEqual": {
-                    "type": "boolean"
-                },
                 "isRegex": {
                     "type": "boolean"
                 },

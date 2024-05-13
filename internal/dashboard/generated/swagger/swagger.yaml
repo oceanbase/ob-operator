@@ -2,8 +2,6 @@ basePath: /api/v1
 definitions:
   alarm.Matcher:
     properties:
-      isEqual:
-        type: boolean
       isRegex:
         type: boolean
       name:
