@@ -59,3 +59,20 @@ func GetOBConnection(ctx context.Context, obcluster *v1alpha1.OBCluster, userNam
 	}
 	return nil, errors.Errorf("Can not get oceanbase operation manager of obcluster %s after checked all server", obcluster.Name)
 }
+
+func GetOBConnectionByHost(ctx context.Context, ns, host, userName, tenantName, secretName string, port int64) (*operation.OceanbaseOperationManager, error) {
+	var s *connector.OceanBaseDataSource
+	secret, err := client.GetClient().ClientSet.CoreV1().Secrets(ns).Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get secret %s", secretName)
+	}
+	password := string(secret.Data["password"])
+	s = connector.NewOceanBaseDataSource(host, port, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
+	sysClient, err := operation.GetOceanbaseOperationManager(s)
+	if err == nil && sysClient != nil {
+		dummy := logr.Discard()
+		sysClient.Logger = &dummy
+		return sysClient, nil
+	}
+	return nil, errors.Errorf("Can not get oceanbase operation manager of host %s", host)
+}

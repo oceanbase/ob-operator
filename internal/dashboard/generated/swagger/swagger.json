@@ -6377,8 +6377,7 @@
                 "ready",
                 "requests",
                 "restartCount",
-                "startedAt",
-                "state"
+                "startTime"
             ],
             "properties": {
                 "image": {
@@ -6405,10 +6404,7 @@
                 "restartCount": {
                     "type": "integer"
                 },
-                "startedAt": {
-                    "type": "integer"
-                },
-                "state": {
+                "startTime": {
                     "type": "string"
                 }
             }
@@ -6608,10 +6604,12 @@
             "type": "object",
             "required": [
                 "containers",
+                "message",
                 "name",
                 "namespace",
                 "nodeName",
-                "phase",
+                "podIP",
+                "reason",
                 "startTime",
                 "status"
             ],
@@ -6622,6 +6620,9 @@
                         "$ref": "#/definitions/response.ContainerInfo"
                     }
                 },
+                "message": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -6631,11 +6632,14 @@
                 "nodeName": {
                     "type": "string"
                 },
-                "phase": {
+                "podIP": {
+                    "type": "string"
+                },
+                "reason": {
                     "type": "string"
                 },
                 "startTime": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"

@@ -14,8 +14,12 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // @ID ListOBProxies
@@ -24,14 +28,15 @@ import (
 // @Tags OBProxy
 // @Accept application/json
 // @Produce application/json
+// @Param ns query string false "ns"
 // @Success 200 object response.APIResponse{data=[]obproxy.OBProxyOverview}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obproxies [GET]
 // @Security ApiKeyAuth
-func ListOBProxies(_ *gin.Context) ([]obproxy.OBProxyOverview, error) {
-	return nil, nil
+func ListOBProxies(c *gin.Context) ([]obproxy.OBProxyOverview, error) {
+	return biz.ListOBProxies(c, c.Query("ns"), metav1.ListOptions{})
 }
 
 // @ID CreateOBPROXY
@@ -47,8 +52,13 @@ func ListOBProxies(_ *gin.Context) ([]obproxy.OBProxyOverview, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obproxies [PUT]
 // @Security ApiKeyAuth
-func CreateOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
-	return nil, nil
+func CreateOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
+	param := &obproxy.CreateOBProxyParam{}
+	err := c.BindJSON(param)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("Failed to bind json, err msg: " + err.Error())
+	}
+	return biz.CreateOBProxy(c, param)
 }
 
 // @ID GetOBProxy
@@ -63,8 +73,13 @@ func CreateOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obproxies/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
-func GetOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
-	return nil, nil
+func GetOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return biz.GetOBProxy(c, nn.Namespace, nn.Name)
 }
 
 // @ID PatchOBProxy
@@ -80,8 +95,18 @@ func GetOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obproxies/{namespace}/{name} [PATCH]
 // @Security ApiKeyAuth
-func PatchOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
-	return nil, nil
+func PatchOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	param := &obproxy.PatchOBProxyParam{}
+	err = c.BindJSON(param)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("Failed to bind json, err msg: " + err.Error())
+	}
+	return biz.PatchOBProxy(c, nn.Namespace, nn.Name, param)
 }
 
 // @ID DeleteOBProxy
@@ -96,6 +121,11 @@ func PatchOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obproxies/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteOBProxy(_ *gin.Context) (*obproxy.OBProxy, error) {
-	return nil, nil
+func DeleteOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return biz.DeleteOBProxy(c, nn.Namespace, nn.Name)
 }

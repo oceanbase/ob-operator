@@ -6384,8 +6384,7 @@ const docTemplate = `{
                 "ready",
                 "requests",
                 "restartCount",
-                "startedAt",
-                "state"
+                "startTime"
             ],
             "properties": {
                 "image": {
@@ -6412,10 +6411,7 @@ const docTemplate = `{
                 "restartCount": {
                     "type": "integer"
                 },
-                "startedAt": {
-                    "type": "integer"
-                },
-                "state": {
+                "startTime": {
                     "type": "string"
                 }
             }
@@ -6615,10 +6611,12 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "containers",
+                "message",
                 "name",
                 "namespace",
                 "nodeName",
-                "phase",
+                "podIP",
+                "reason",
                 "startTime",
                 "status"
             ],
@@ -6629,6 +6627,9 @@ const docTemplate = `{
                         "$ref": "#/definitions/response.ContainerInfo"
                     }
                 },
+                "message": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -6638,11 +6639,14 @@ const docTemplate = `{
                 "nodeName": {
                     "type": "string"
                 },
-                "phase": {
+                "podIP": {
+                    "type": "string"
+                },
+                "reason": {
                     "type": "string"
                 },
                 "startTime": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "status": {
                     "type": "string"

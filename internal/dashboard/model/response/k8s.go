@@ -80,8 +80,10 @@ type K8sPodInfo struct {
 	Namespace  string          `json:"namespace" binding:"required"`
 	NodeName   string          `json:"nodeName" binding:"required"`
 	Status     string          `json:"status" binding:"required"`
-	Phase      string          `json:"phase" binding:"required"`
-	StartTime  int64           `json:"startTime" binding:"required"`
+	PodIP      string          `json:"podIP" binding:"required"`
+	Message    string          `json:"message" binding:"required"`
+	Reason     string          `json:"reason" binding:"required"`
+	StartTime  string          `json:"startTime" binding:"required"`
 	Containers []ContainerInfo `json:"containers" binding:"required"`
 }
 
@@ -90,8 +92,7 @@ type ContainerInfo struct {
 	Image        string              `json:"image" binding:"required"`
 	RestartCount int32               `json:"restartCount" binding:"required"`
 	Ready        bool                `json:"ready" binding:"required"`
-	StartedAt    int64               `json:"startedAt" binding:"required"`
-	State        string              `json:"state" binding:"required"`
+	StartTime    string              `json:"startTime" binding:"required"`
 	Ports        []int32             `json:"ports" binding:"required"`
 	Requests     common.ResourceSpec `json:"requests" binding:"required"`
 	Limits       common.ResourceSpec `json:"limits" binding:"required"`

@@ -1115,9 +1115,7 @@ definitions:
         $ref: '#/definitions/common.ResourceSpec'
       restartCount:
         type: integer
-      startedAt:
-        type: integer
-      state:
+      startTime:
         type: string
     required:
     - image
@@ -1127,8 +1125,7 @@ definitions:
     - ready
     - requests
     - restartCount
-    - startedAt
-    - state
+    - startTime
     type: object
   response.DashboardInfo:
     properties:
@@ -1271,24 +1268,30 @@ definitions:
         items:
           $ref: '#/definitions/response.ContainerInfo'
         type: array
+      message:
+        type: string
       name:
         type: string
       namespace:
         type: string
       nodeName:
         type: string
-      phase:
+      podIP:
+        type: string
+      reason:
         type: string
       startTime:
-        type: integer
+        type: string
       status:
         type: string
     required:
     - containers
+    - message
     - name
     - namespace
     - nodeName
-    - phase
+    - podIP
+    - reason
     - startTime
     - status
     type: object
