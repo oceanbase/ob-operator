@@ -13,6 +13,9 @@ See the Mulan PSL v2 for more details.
 package database
 
 import (
+	"context"
+	"time"
+
 	// register mysql driver
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -61,7 +64,9 @@ func (c *Connector) Init() error {
 	if err != nil {
 		return errors.Wrapf(err, "Open datasource %s", c.ds.String())
 	}
-	err = db.Ping()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*DefaultPingTimeoutSeconds)
+	defer cancel()
+	err = db.PingContext(ctx)
 	if err != nil {
 		_ = db.Close()
 		return errors.Wrapf(err, "Ping datasource %s", c.ds.String())
@@ -75,7 +80,9 @@ func (c *Connector) IsAlive() bool {
 	if c.client == nil {
 		return false
 	}
-	return c.client.Ping() == nil
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*DefaultPingTimeoutSeconds)
+	defer cancel()
+	return c.client.PingContext(ctx) == nil
 }
 
 func (c *Connector) GetClient() *Client {

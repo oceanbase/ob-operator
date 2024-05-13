@@ -10,4 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package operation
+package oceanbase
+
+const (
+	FinalizerIgnoreDeletion = "finalizers.oceanbase.com/ignore-deletion"
+	FinalizerDeleteOBZone   = "finalizers.oceanbase.com.deleteobzone"
+	FinalizerDeleteOBServer = "finalizers.oceanbase.com.deleteobserver"
+	FinalizerOBServer       = "observer.oceanbase.com.finalizers"
+	FinalizerDeleteOBTenant = "finalizers.oceanbase.com.deleteobtenant"
+	FinalizerBackupPolicy   = "obtenantbackuppolicy.finalizers.oceanbase.com"
+)

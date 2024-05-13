@@ -18,7 +18,7 @@ ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager �
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
-本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。
+本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。如果您计划在生产环境部署，推荐使用其他的存储解决方案。我们在[存储兼容性](#存储兼容性)一节提供了我们测试过的存储兼容性结果。
 
 ### 部署 ob-operator
 
@@ -26,13 +26,13 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_r
 
 通过以下命令即可在 K8s 集群中部署 ob-operator：
 
-* 稳定版本
+- 稳定版本
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
 ```
 
-* 开发版本
+- 开发版本
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
@@ -53,20 +53,23 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 部署所需要的文件放在项目的 `deploy/terraform` 目录
 
 1. 生成配置变量:
-在开始部署前，需要通过以下命令来生成 `terraform.tfvars` 文件，用来记录当前 Kubernetes 集群的一些配置。
+   在开始部署前，需要通过以下命令来生成 `terraform.tfvars` 文件，用来记录当前 Kubernetes 集群的一些配置。
+
 ```shell
 cd deploy/terraform
 ./generate_k8s_cluster_tfvars.sh
 ```
 
 2. 初始化 Terraform:
-此步骤用来保证 terraform 获取到必要的 plugin 和模块来管理配置的资源，使用如下命令来进行初始化。
+   此步骤用来保证 terraform 获取到必要的 plugin 和模块来管理配置的资源，使用如下命令来进行初始化。
+
 ```
 terraform init
 ```
 
 3. 应用配置:
-执行以下命令开始部署 ob-operator。
+   执行以下命令开始部署 ob-operator。
+
 ```
 terraform apply
 ```
@@ -102,7 +105,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_r
 ```shell
 kubectl get obclusters.oceanbase.oceanbase.com test
 
-# desired output 
+# desired output
 NAME   STATUS    AGE
 test   running   6m2s
 ```
@@ -130,23 +133,28 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
 
 OceanBase Dashboard 成功安装之后, 会自动创建一个 admin 用户和随机密码，可以通过如下命令查看密码。
+
 ```
 echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
 ```
+
 一个 NodePort 类型的 service 会默认创建，可以通过如下命令查看 service 的地址，然后在浏览器中打开。
+
 ```
 kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
+
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
 使用 admin 账号和查看到的密码登录。
 ![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-topology](./docsite/static/img/oceanbase-dashboard-topology.jpg)
 
 ## 项目架构
 
@@ -165,12 +173,22 @@ ob-operator 支持 OceanBase 集群的管理、租户管理、备份恢复、故
 - [x] 备份恢复：向 OSS 或 NFS 目的地周期性备份数据、从 OSS 或 NFS 中恢复数据
 - [x] 物理备库：从备份中恢复出备租户、创建空备租户、备租户升主、主备切换
 - [x] 故障恢复：单节点故障恢复，IP 保持情况下的集群故障恢复
+- [x] Dashboard(GUI)：基于 ob-operator 的图形化 OceanBase 集群管理工具
 
-即将支持的功能有：
+## 存储兼容性
 
-- [ ] Dashboard：基于 ob-operator 的图形化 OceanBase 集群管理工具
-- [ ] 丰富的运维任务资源：包括但不限于针对集群和租户的轻量任务
+我们测试了如下的存储方案，兼容性结果如表格所示：
 
+| 存储方案               | 测试版本 | 是否兼容 | 说明                               |
+| ---------------------- | -------- | -------- | ---------------------------------- |
+| local-path-provisioner | 0.0.23   | ✅       | 建议开发和测试环境使用             |
+| Rook CephFS            | v1.6.7   | ❌       | CephFS 不支持 `fallocate` 系统调用 |
+| Rook RBD (Block)       | v1.6.7   | ✅       |                                    |
+| OpenEBS (cStor)        | v3.6.0   | ✅       |                                    |
+| GlusterFS              | v1.2.0   | ❓       | 要求机器内核版本不低于 5.14        |
+| Longhorn               | v1.6.0   | ✅       |                                    |
+| JuiceFS                | v1.1.2   | ✅       |                                    |
+| NFS                    | v5.5.0   | ❌       | NFS 协议 >= 4.2 时能启动集群，但无法回收租户资源            |
 
 ## 支持的 OceanBase 版本
 
@@ -182,9 +200,9 @@ ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase
 
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
 
-* 构建 ob-operator 需要 Go 1.20 版本及以上；
-* 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.25 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。
-* 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。
+- 构建 ob-operator 需要 Go 1.20 版本及以上；
+- 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.28 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。
+- 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。
 
 ## 文档
 

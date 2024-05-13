@@ -74,12 +74,6 @@ spec:
             - name: alertmanager
               mountPath: /alertmanager
       volumes:
-      # volumes for alertmanager
-        - name: config-volume
-          configMap:
-            name: alertmanager-config
-        - name: alertmanager
-          emptyDir: {}
       # volumes for prometheus
         - name: prometheus-config-volume
           configMap:

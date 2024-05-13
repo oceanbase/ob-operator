@@ -19,7 +19,7 @@ If you have trouble accessing `quay.io` image registry, our mirrored cert-manage
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
 ```
 
-Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.
+Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner. If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
 
 ### Deploy ob-operator
 
@@ -27,13 +27,13 @@ Storage of OceanBase cluster in this example relies on [local-path-provisioner](
 
 You can deploy ob-operator in a Kubernetes cluster by executing the following command:
 
-* Stable
+- Stable
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
 ```
 
-* Development
+- Development
 
 ```shell
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/master/deploy/operator.yaml
@@ -54,20 +54,23 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 The required configuration files are conveniently located within the `deploy/terraform` directory of our repository.
 
 1. Generate Configuration Variables:
-To begin, you'll need to generate a `terraform.tfvars` file, which will hold the configuration specifics of your Kubernetes cluster. Use the following commands to create this file.
+   To begin, you'll need to generate a `terraform.tfvars` file, which will hold the configuration specifics of your Kubernetes cluster. Use the following commands to create this file.
+
 ```shell
 cd deploy/terraform
 ./generate_k8s_cluster_tfvars.sh
 ```
 
 2. Initialize Terraform:
-This step will ensure that Terraform has all the necessary plugins and modules to manage the resources. Use the following command to initialize the terraform environment.
+   This step will ensure that Terraform has all the necessary plugins and modules to manage the resources. Use the following command to initialize the terraform environment.
+
 ```
 terraform init
 ```
 
 3. Apply Configuration:
-The final step is to deploy ob-operator. Execute the following command and Terraform will begin the deployment process
+   The final step is to deploy ob-operator. Execute the following command and Terraform will begin the deployment process
+
 ```
 terraform apply
 ```
@@ -79,7 +82,7 @@ After deployment/installation is complete, you can use the following command to 
 ```shell
 kubectl get pod -n oceanbase-system
 
-# desired output 
+# desired output
 NAME                                            READY   STATUS    RESTARTS   AGE
 oceanbase-controller-manager-86cfc8f7bf-4hfnj   2/2     Running   0          1m
 ```
@@ -103,7 +106,7 @@ It generally takes around 2 minutes to bootstrap a cluster. Execute the followin
 ```shell
 kubectl get obclusters.oceanbase.oceanbase.com test
 
-# desired output 
+# desired output
 NAME   STATUS    AGE
 test   running   6m2s
 ```
@@ -123,38 +126,44 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 ```
 
 ### OceanBase Dashboard
+
 We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates.
 
 Deploy OceanBase Dashboard is pretty simple, just run the following commands
+
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.0
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 ![oceanbase-dashboard-install](./docsite/static/img/oceanbase-dashboard-install.jpg)
 
 After OceanBase Dashboard is successfully installed, a default user admin is created with a random password, you can check the password using the command printed after installation.
+
 ```
 echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
 ```
+
 A service of type NodePort is created by default, you can check the address and port and open it in browser
+
 ```
 kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 ```
+
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
 Login with admin user and password
 ![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
+![oceanbase-dashboard-topology](./docsite/static/img/oceanbase-dashboard-topology.jpg)
 
 ## Project Architecture
 
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows: 
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows:
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
 
 For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
-
 
 ## Features
 
@@ -165,11 +174,22 @@ It provides various functionalities for managing OceanBase clusters, tenants, ba
 - [x] Backup and Recovery: Periodically backup data to OSS or NFS destinations, restore data from OSS or NFS.
 - [x] Physical Standby: Restore standby tenant from backup, create empty standby tenant, activate standby tenant to primary, primary-standby switchover.
 - [x] Fault Recovery: Single node fault recovery, cluster-wide fault recovery with IP preservation.
+- [x] Dashboard(GUI): A web-based graphical management tool for OceanBase clusters based on ob-operator.
 
-The upcoming features include:
+## Storage Compatibility
 
-- [ ] Dashboard: A web-based graphical management tool for OceanBase clusters based on ob-operator.
-- [ ] Enhanced operational task resources: This includes lightweight tasks focused on cluster and tenant management, among other features.
+We have tested ob-operator with the following storage solutions:
+
+| Storage Solution       | Tested Version | Compatibility | Notes                                        |
+| ---------------------- | -------------- | ------------- | -------------------------------------------- |
+| local-path-provisioner | 0.0.23         | ✅            | Recommended for development and testing      |
+| Rook CephFS            | v1.6.7         | ❌            | CephFS does not support `fallocate` sys call |
+| Rook RBD (Block)       | v1.6.7         | ✅            |                                              |
+| OpenEBS (cStor)        | v3.6.0         | ✅            |                                              |
+| GlusterFS              | v1.2.0         | ❓            | Requires kernel version >= 5.14              |
+| Longhorn               | v1.6.0         | ✅            |                                              |
+| JuiceFS                | v1.1.2         | ✅            |                                              |
+| NFS                    | v5.5.0         | ❌            | Bootstrap with NFS protocol >= 4.2, but can not recycle tenant resource. |
 
 ## Supported OceanBase Versions
 
@@ -181,9 +201,9 @@ OceanBase v3.x versions are currently not supported by ob-operator.
 
 ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introduction) project, so the development and runtime environment are similar to it.
 
-* To build ob-operator: Go version 1.20 or higher is required.
-* To run ob-operator: Kubernetes cluster and kubectl version 1.18 or higher are required. We examined the functionalities on k8s cluster of version from 1.23 ~ 1.25 and ob-operator performs well.
-* If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required. We tested building and running ob-operator with Docker 18.
+- To build ob-operator: Go version 1.20 or higher is required.
+- To run ob-operator: Kubernetes cluster and kubectl version 1.18 or higher are required. We examined the functionalities on k8s cluster of version from 1.23 ~ 1.28 and ob-operator performs well.
+- If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required. We tested building and running ob-operator with Docker 18.
 
 ## Documents
 

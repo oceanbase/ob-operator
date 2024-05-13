@@ -33,9 +33,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	"github.com/oceanbase/ob-operator/internal/controller"
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
+	"github.com/oceanbase/ob-operator/pkg/coordinator"
 )
 
 var (
@@ -85,6 +87,10 @@ func main() {
 			},
 		},
 	}
+
+	cfg := obcfg.GetConfig()
+	coordinator.SetMaxRetryTimes(cfg.Time.TaskMaxRetryTimes)
+	coordinator.SetRetryBackoffThreshold(cfg.Time.TaskRetryBackoffThreshold)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
@@ -227,12 +233,7 @@ func main() {
 	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
 
 	setupLog.WithValues(
-		"namespace", namespace,
-		"manager-namespace", managerNamespace,
-		"metrics-bind-address", metricsAddr,
-		"health-probe-bind-address", probeAddr,
-		"leader-elect", enableLeaderElection,
-		"log-verbosity", logVerbosity,
+		"configs", cfg,
 	).Info("starting manager")
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

@@ -35,14 +35,14 @@ func CreateBackupJobInOB(m *OBTenantBackupManager) tasktypes.TaskError {
 			m.Logger.Error(err, "failed to read backup encryption secret")
 			m.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
 		} else if password != "" {
-			err = con.SetBackupPassword(password)
+			err = con.SetBackupPassword(m.Ctx, password)
 			if err != nil {
 				m.Logger.Error(err, "failed to set backup password")
 				m.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
 			}
 		}
 	}
-	_, err = con.CreateAndReturnBackupJob(job.Spec.Type)
+	_, err = con.CreateAndReturnBackupJob(m.Ctx, string(job.Spec.Type))
 	if err != nil {
 		m.Logger.Error(err, "failed to create and return backup job")
 		m.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())

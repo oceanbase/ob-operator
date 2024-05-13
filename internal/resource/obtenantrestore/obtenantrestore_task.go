@@ -55,7 +55,7 @@ func StartRestoreJobInOB(m *ObTenantRestoreManager) tasktypes.TaskError {
 			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "ReadRestorePasswordFailed", err.Error())
 			return err
 		}
-		err = con.SetRestorePassword(password)
+		err = con.SetRestorePassword(m.Ctx, password)
 		if err != nil {
 			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "SetRestorePasswordFailed", err.Error())
 			return err
@@ -63,18 +63,18 @@ func StartRestoreJobInOB(m *ObTenantRestoreManager) tasktypes.TaskError {
 	}
 
 	if restoreSpec.Until.Unlimited {
-		err = con.StartRestoreUnlimited(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option)
+		err = con.StartRestoreUnlimited(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option)
 		if err != nil {
 			return err
 		}
 	} else {
 		if restoreSpec.Until.Timestamp != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "TIME", *restoreSpec.Until.Timestamp)
+			err = con.StartRestoreWithLimit(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "TIME", *restoreSpec.Until.Timestamp)
 			if err != nil {
 				return err
 			}
 		} else if restoreSpec.Until.Scn != nil {
-			err = con.StartRestoreWithLimit(m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "SCN", *restoreSpec.Until.Scn)
+			err = con.StartRestoreWithLimit(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "SCN", *restoreSpec.Until.Scn)
 			if err != nil {
 				return err
 			}
@@ -95,7 +95,7 @@ func StartLogReplay(m *ObTenantRestoreManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		err = con.SetParameter("LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
+		err = con.SetParameter(m.Ctx, "LOG_RESTORE_SOURCE", restoreSource, &param.Scope{
 			Name:  "TENANT",
 			Value: m.Resource.Spec.TargetTenant,
 		})
@@ -106,11 +106,11 @@ func StartLogReplay(m *ObTenantRestoreManager) tasktypes.TaskError {
 	}
 	replayUntil := m.Resource.Spec.Source.ReplayLogUntil
 	if replayUntil == nil || replayUntil.Unlimited {
-		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, "UNLIMITED")
+		err = con.ReplayStandbyLog(m.Ctx, m.Resource.Spec.TargetTenant, "UNLIMITED")
 	} else if replayUntil.Timestamp != nil {
-		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
+		err = con.ReplayStandbyLog(m.Ctx, m.Resource.Spec.TargetTenant, fmt.Sprintf("TIME='%s'", *replayUntil.Timestamp))
 	} else if replayUntil.Scn != nil {
-		err = con.ReplayStandbyLog(m.Resource.Spec.TargetTenant, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
+		err = con.ReplayStandbyLog(m.Ctx, m.Resource.Spec.TargetTenant, fmt.Sprintf("SCN=%s", *replayUntil.Scn))
 	} else {
 		return errors.New("Replay until with limit must have a limit key, scn and timestamp are both nil now")
 	}
@@ -122,5 +122,5 @@ func ActivateStandby(m *ObTenantRestoreManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
-	return con.ActivateStandby(m.Resource.Spec.TargetTenant)
+	return con.ActivateStandby(m.Ctx, m.Resource.Spec.TargetTenant)
 }

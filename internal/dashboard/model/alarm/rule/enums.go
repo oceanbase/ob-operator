@@ -17,20 +17,20 @@ type RuleType string
 
 const (
 	TypeBuiltin    RuleType = "builtin"
-	TypeCustomized          = "customized"
+	TypeCustomized RuleType = "customized"
 )
 
 type RuleState string
 
 const (
 	StateActive   RuleState = "active"
-	StateInactive           = "inactive"
+	StateInactive RuleState = "inactive"
 )
 
 type RuleHealth string
 
 const (
 	HealthUnknown RuleHealth = "unknown"
-	HealthOK                 = "ok"
-	HealthError              = "error"
+	HealthOK      RuleHealth = "ok"
+	HealthError   RuleHealth = "error"
 )

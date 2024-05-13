@@ -21,6 +21,7 @@ import (
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -39,7 +40,7 @@ func AddZone(m *OBZoneManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	return oceanbaseOperationManager.AddZone(m.OBZone.Spec.Topology.Zone)
+	return oceanbaseOperationManager.AddZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 }
 
 func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
@@ -48,7 +49,7 @@ func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get oceanbase operation manager failed")
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
-	return oceanbaseOperationManager.StartZone(m.OBZone.Spec.Topology.Zone)
+	return oceanbaseOperationManager.StartZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 }
 
 func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
@@ -75,7 +76,7 @@ func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
-		finalizerName := "finalizers.oceanbase.com.deleteobserver"
+		finalizerName := oceanbaseconst.FinalizerDeleteOBServer
 		finalizers := []string{finalizerName}
 		labels := make(map[string]string)
 		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
@@ -174,7 +175,7 @@ func DeleteAllOBServer(m *OBZoneManager) tasktypes.TaskError {
 
 func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
@@ -196,7 +197,7 @@ func WaitReplicaMatch(m *OBZoneManager) tasktypes.TaskError {
 
 func WaitOBServerDeleted(m *OBZoneManager) tasktypes.TaskError {
 	matched := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		obzone, err := m.getOBZone()
 		if err != nil {
 			m.Logger.Error(err, "Get obzone from K8s failed")
@@ -219,7 +220,7 @@ func StopOBZone(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	err = operationManager.StopZone(m.OBZone.Spec.Topology.Zone)
+	err = operationManager.StopZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {
 		return errors.Wrapf(err, "Stop obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
@@ -265,7 +266,7 @@ func UpgradeOBServer(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
-	for i := 0; i < oceanbaseconst.TimeConsumingStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.TimeConsumingStateWaitTimeout; i++ {
 		observerList, err := m.listOBServers()
 		if err != nil {
 			m.Logger.Error(err, "List observers failed")
@@ -283,7 +284,7 @@ func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
 			m.Logger.Info("All server upgraded")
 			return nil
 		}
-		time.Sleep(oceanbaseconst.CommonCheckInterval * time.Second)
+		time.Sleep(time.Duration(obcfg.GetConfig().Time.CommonCheckInterval) * time.Second)
 	}
 	return errors.New("Wait all server upgraded timeout")
 }
@@ -293,7 +294,7 @@ func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	err = operationManager.DeleteZone(m.OBZone.Spec.Topology.Zone)
+	err = operationManager.DeleteZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {
 		return errors.Wrapf(err, "Delete obzone %s failed", m.OBZone.Spec.Topology.Zone)
 	}
@@ -371,7 +372,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
 	}
-	allOBServers, err := operationManager.ListServers()
+	allOBServers, err := operationManager.ListServers(m.Ctx)
 	if err != nil {
 		return errors.Wrap(err, "List observers in oceanbase")
 	}
@@ -391,7 +392,7 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 			}
 		}
 		if !found {
-			err := operationManager.DeleteServer(&model.ServerInfo{
+			err := operationManager.DeleteServer(m.Ctx, &model.ServerInfo{
 				Ip:   observer.Ip,
 				Port: observer.Port,
 			})
@@ -404,21 +405,21 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerBootstrapReady(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.Running, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerScalingUp(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, oceanbaseconst.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }

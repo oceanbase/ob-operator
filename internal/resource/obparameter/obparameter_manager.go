@@ -118,7 +118,7 @@ func (m *OBParameterManager) UpdateStatus() error {
 		m.OBParameter.Status.Status = parameterstatus.PendingOB
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("OBCluster not in running status, skip compare parameters")
 	} else {
-		parameterInfoList, err := operationManager.GetParameter(m.OBParameter.Spec.Parameter.Name, nil)
+		parameterInfoList, err := operationManager.GetParameter(m.Ctx, m.OBParameter.Spec.Parameter.Name, nil)
 		if err != nil {
 			m.Logger.Error(err, "Get parameter info failed")
 			return errors.Wrapf(err, "Get parameter info")

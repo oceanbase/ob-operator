@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { Button, Card, Col, Table, Tag, message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { COLOR_MAP } from '@/constants';
 import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useParams } from '@umijs/max';

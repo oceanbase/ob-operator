@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resobtenant "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
@@ -71,7 +72,7 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if obtenant.ObjectMeta.DeletionTimestamp.IsZero() {
-		finalizerName := "finalizers.oceanbase.com.deleteobtenant"
+		finalizerName := oceanbaseconst.FinalizerDeleteOBTenant
 		if !controllerutil.ContainsFinalizer(obtenant, finalizerName) {
 			controllerutil.AddFinalizer(obtenant, finalizerName)
 			err := r.Client.Update(ctx, obtenant)

@@ -16,6 +16,6 @@ type State string
 
 const (
 	StateActive      State = "active"
-	StateUnprocessed       = "unprocessed"
-	StateSuppressed        = "suppressed"
+	StateUnprocessed State = "unprocessed"
+	StateSuppressed  State = "suppressed"
 )

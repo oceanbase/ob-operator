@@ -201,11 +201,11 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 	}
 
 	// Select unit information from the oceanbase cluster
-	db, err := getSysClient(c, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obtenant.Spec.Credentials.Root)
+	db, err := getSysClient(c, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-	units, err := db.ListUnitsWithTenantId(int64(obtenant.Status.TenantRecordInfo.TenantID))
+	units, err := db.ListUnitsWithTenantId(c, int64(obtenant.Status.TenantRecordInfo.TenantID))
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

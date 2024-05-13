@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -89,8 +90,11 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to create job of image: %s", image)
 	}
 
+	// Wait for the job to be created before fetching it
+	time.Sleep(time.Second)
+
 	var jobObject *batchv1.Job
-	for i := 0; i < oceanbaseconst.CheckJobMaxRetries; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.CheckJobMaxRetries; i++ {
 		jobObject, err = GetJob(ctx, c, namespace, fullJobName)
 		if err != nil {
 			logger.Error(err, "Failed to get job")
@@ -102,7 +106,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 			logger.V(oceanbaseconst.LogLevelDebug).Info("Job finished")
 			break
 		}
-		time.Sleep(time.Second * oceanbaseconst.CheckJobInterval)
+		time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 	}
 	clientSet := k8sclient.GetClient()
 	podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
@@ -135,7 +139,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		}
 	} else {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", fullJobName)
-		return "", exitCode, errors.Wrapf(err, "Failed to run job %s", fullJobName)
+		return "", exitCode, errors.Errorf("Failed to run job %s", fullJobName)
 	}
 	return output, exitCode, nil
 }
@@ -149,7 +153,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 	if err != nil {
 		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
 	}
-	observers, err := oceanbaseOperationManager.ListServers()
+	observers, err := oceanbaseOperationManager.ListServers(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to list all servers for obcluster %s", obcluster.Name)
 	}
@@ -215,7 +219,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 			return false, errors.Wrap(err, "Failed to run upgrade script job")
 		}
 	}
-	err = CheckJobWithTimeout(check, time.Second*oceanbaseconst.WaitForJobTimeoutSeconds)
+	err = CheckJobWithTimeout(check, time.Second*time.Duration(obcfg.GetConfig().Time.WaitForJobTimeoutSeconds))
 	if err != nil {
 		return errors.Wrap(err, "Failed to wait for job to finish")
 	}
@@ -229,8 +233,8 @@ type CheckJobFunc func() (bool, error)
 // Second parameter is the timeout duration, default to 1800s.
 // Third parameter is the interval to check job status, default to 3s.
 func CheckJobWithTimeout(f CheckJobFunc, ds ...time.Duration) error {
-	timeout := time.Second * oceanbaseconst.DefaultStateWaitTimeout
-	interval := time.Second * oceanbaseconst.CheckJobInterval
+	timeout := time.Second * time.Duration(obcfg.GetConfig().Time.DefaultStateWaitTimeout)
+	interval := time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval)
 	if len(ds) > 0 {
 		timeout = ds[0]
 	}

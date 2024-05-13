@@ -29,7 +29,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -43,8 +42,6 @@ type ObTenantRestoreManager struct {
 	Client   client.Client
 	Recorder telemetry.Recorder
 	Logger   *logr.Logger
-
-	con *operation.OceanbaseOperationManager
 }
 
 func (m *ObTenantRestoreManager) IsNewResource() bool {
@@ -120,7 +117,7 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 	if err != nil {
 		return err
 	}
-	restoreJob, err := con.GetLatestRestoreProgressOfTenant(m.Resource.Spec.TargetTenant)
+	restoreJob, err := con.GetLatestRestoreProgressOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
 	if err != nil {
 		return err
 	}
@@ -143,7 +140,7 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 			m.Resource.Status.Status = constants.RestoreJobFailed
 		}
 	} else {
-		restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(m.Resource.Spec.TargetTenant)
+		restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
 		if err != nil {
 			return err
 		}

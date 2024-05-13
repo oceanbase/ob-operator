@@ -2,14 +2,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "max dev",
     "build": "max build",
+    "dev": "max dev",
     "format": "prettier --cache --write .",
+    "gen:api": "openapi-generator-cli generate -i ../internal/dashboard/generated/swagger/swagger.yaml -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
     "postinstall": "max setup",
-    "setup": "max setup",
-    "start": "npm run dev",
     "lint": "eslint src",
-    "prepare": "cd .. && husky ui/.husky"
+    "prepare": "cd .. && husky ui/.husky",
+    "setup": "max setup",
+    "start": "npm run dev"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",

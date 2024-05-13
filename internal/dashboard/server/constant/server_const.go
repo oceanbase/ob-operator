@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	DefaultProtocol   = "tcp"
+	DefaultProtocol   = "tcp4"
 	DefaultServerHost = "0.0.0.0"
 	DefaultServerPort = 8080
 	DefaultLocalHost  = "127.0.0.1"

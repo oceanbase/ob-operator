@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -29,6 +30,7 @@ import (
 var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	var con *operation.OceanbaseOperationManager
+	var ctx context.Context
 
 	var _ = BeforeEach(func() {
 		Expect(tenant).NotTo(BeEmpty())
@@ -48,80 +50,80 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 	})
 
 	It("Query Log Archive Parameters", Label("check-params"), func() {
-		configs, err := con.ListArchiveLogParameters()
+		configs, err := con.ListArchiveLogParameters(ctx)
 		Expect(err).To(BeNil())
 		printSlice(configs, "Log Archive Parameters")
 	})
 
 	It("Query Clean Policies", func() {
-		cleanPolicies, err := con.ListBackupCleanPolicy()
+		cleanPolicies, err := con.ListBackupCleanPolicy(ctx)
 		Expect(err).To(BeNil())
 		printSlice(cleanPolicies, "clean policies")
 	})
 
 	It("Query ArchiveLogSummary", func() {
-		summaries, err := con.ListArchiveLogSummary()
+		summaries, err := con.ListArchiveLogSummary(ctx)
 		Expect(err).To(BeNil())
 		printSlice(summaries, "archive log summary")
 	})
 
 	It("Query ArchiveLog", func() {
-		logs, err := con.ListArchiveLog()
+		logs, err := con.ListArchiveLog(ctx)
 		Expect(err).To(BeNil())
 		printSlice(logs, "archive log")
 	})
 
 	It("Query ArchiveLogParameters", func() {
-		parameters, err := con.ListArchiveLogParameters()
+		parameters, err := con.ListArchiveLogParameters(ctx)
 		Expect(err).To(BeNil())
 		printSlice(parameters, "archive log parameters")
 	})
 
 	It("Query BackupJobs", func() {
-		jobs, err := con.ListBackupJobs()
+		jobs, err := con.ListBackupJobs(ctx)
 		Expect(err).To(BeNil())
 		printSlice(jobs, "backup jobs")
 	})
 
 	It("Query BackupJobHistory", func() {
-		histories, err := con.ListBackupJobHistory()
+		histories, err := con.ListBackupJobHistory(ctx)
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup job history")
 	})
 
 	It("Query BackupCleanJobs", func() {
-		histories, err := con.ListBackupCleanJobs()
+		histories, err := con.ListBackupCleanJobs(ctx)
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup clean jobs")
 	})
 
 	It("Query BackupCleanJobHistory", func() {
-		histories, err := con.ListBackupCleanHistory()
+		histories, err := con.ListBackupCleanHistory(ctx)
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup clean jobs")
 	})
 
 	It("Query BackupTasks", func() {
-		tasks, err := con.ListBackupTasks()
+		tasks, err := con.ListBackupTasks(ctx)
 		Expect(err).To(BeNil())
 		printSlice(tasks, "backup tasks")
 	})
 
 	It("Query BackupTaskHistory", func() {
-		histories, err := con.ListBackupTaskHistory()
+		histories, err := con.ListBackupTaskHistory(ctx)
 		Expect(err).To(BeNil())
 		printSlice(histories, "backup task history")
 	})
 
 	It("Query BackupJob with correct ID", func() {
-		job, err := con.GetBackupJobWithId(3)
+		job, err := con.GetBackupJobWithId(ctx, 3)
 		Expect(err).To(BeNil())
 		Expect(job).NotTo(BeNil())
 		printObject(job, "BackupJob")
 	})
 
 	It("Query BackupJob with incorrect ID", func() {
-		job, err := con.GetBackupJobWithId(time.Now().Unix())
+		job, err := con.GetBackupJobWithId(ctx, time.Now().Unix())
 		Expect(err).To(BeNil())
 		Expect(job).To(BeNil())
 	})
@@ -137,43 +139,43 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		}
 
 		By("Create BackupJob of type " + string(t))
-		job, err := con.CreateAndReturnBackupJob(t)
+		job, err := con.CreateAndReturnBackupJob(ctx, string(t))
 		Expect(err).To(BeNil())
 		printObject(job, "BackupJob of type "+string(t))
 
 		// Query tasks at once will get empty result
 		time.Sleep(time.Second)
 		By(fmt.Sprintf("Query BackupJob with ID %d", job.JobID))
-		tasks, err := con.ListBackupTaskWithJobId(job.JobID)
+		tasks, err := con.ListBackupTaskWithJobId(ctx, job.JobID)
 		Expect(err).To(BeNil())
 		printSlice(tasks, fmt.Sprintf("BackupTasks of Job %d", job.JobID))
 	})
 
 	It("Get Log Archive dest info", func() {
-		dest, err := con.ListArchiveLogParameters()
+		dest, err := con.ListArchiveLogParameters(ctx)
 		Expect(err).To(BeNil())
 		printSlice(dest, "Log Archive dest info")
 	})
 
 	It("Set Log Archive parameter when LogMode == ARCHIVELOG", func() {
 		By("Get tenant info")
-		tenants, err := con.ListTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(ctx, tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
 
 		if tenantInfo.LogMode != "ARCHIVELOG" {
-			err = con.EnableArchiveLogForTenant()
+			err = con.EnableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 		}
-		err = con.SetLogArchiveConcurrency(2)
+		err = con.SetLogArchiveConcurrency(ctx, 2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.GetLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob(ctx)
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
-				err = con.SetLogArchiveDestForTenant("location=file://ob-backup/" + tenant + "/log_archive")
+				err = con.SetLogArchiveDestForTenant(ctx, "location=file://ob-backup/"+tenant+"/log_archive")
 				Expect(err).To(BeNil())
 			}
 		}
@@ -181,35 +183,35 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	It("Set Log Archive parameter when LogMode == NOARCHIVELOG", func() {
 		By("Get tenant info")
-		tenants, err := con.ListTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(ctx, tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
 		if tenantInfo.LogMode != "NOARCHIVELOG" {
-			err = con.DisableArchiveLogForTenant()
+			err = con.DisableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 		}
-		err = con.SetLogArchiveConcurrency(2)
+		err = con.SetLogArchiveConcurrency(ctx, 2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.GetLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob(ctx)
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
-				err = con.SetLogArchiveDestForTenant("location=file://ob-backup/" + tenant + "/log_archive")
+				err = con.SetLogArchiveDestForTenant(ctx, "location=file://ob-backup/"+tenant+"/log_archive")
 				Expect(err).To(BeNil())
 			}
 		}
 	})
 
 	It("Set Log Archive concurrency to 0", func() {
-		err := con.SetLogArchiveConcurrency(0)
+		err := con.SetLogArchiveConcurrency(ctx, 0)
 		Expect(err).NotTo(BeNil())
 	})
 
 	It("Configure server for backup", func() {
 		By("Get tenant info")
-		tenants, err := con.ListTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(ctx, tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
@@ -217,26 +219,26 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		By("Set Log Archive Destination")
 		if tenantInfo.LogMode == "NOARCHIVELOG" {
 
-			latest, err := con.GetLatestArchiveLogJob()
+			latest, err := con.GetLatestArchiveLogJob(ctx)
 			Expect(err).To(BeNil())
 			if latest != nil {
 				if latest.Status != "DOING" {
-					err = con.SetLogArchiveDestForTenant("location=file:///ob-backup/" + tenant + "/log_archive")
+					err = con.SetLogArchiveDestForTenant(ctx, "location=file:///ob-backup/"+tenant+"/log_archive")
 					Expect(err).To(BeNil())
 				}
 			}
 		}
 
 		By("Set Log Archive Concurrency")
-		err = con.SetLogArchiveConcurrency(2)
+		err = con.SetLogArchiveConcurrency(ctx, 2)
 		Expect(err).To(BeNil())
 
-		latest, err := con.GetLatestArchiveLogJob()
+		latest, err := con.GetLatestArchiveLogJob(ctx)
 		Expect(err).To(BeNil())
 		if latest != nil {
 			if latest.Status != "DOING" {
 				By("Set Data Backup Destination")
-				err = con.SetDataBackupDestForTenant("file:///ob-backup/" + tenant + "/data_backup")
+				err = con.SetDataBackupDestForTenant(ctx, "file:///ob-backup/"+tenant+"/data_backup")
 				Expect(err).To(BeNil())
 			}
 		}
@@ -244,81 +246,81 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	It("Stop and restart archive log", func() {
 		By("Get tenant info")
-		tenants, err := con.ListTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(ctx, tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
 
 		if tenantInfo.LogMode != "ARCHIVELOG" {
-			err = con.EnableArchiveLogForTenant()
+			err = con.EnableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 		}
 		By("Disable Archive Log")
-		err = con.DisableArchiveLogForTenant()
+		err = con.DisableArchiveLogForTenant(ctx)
 		Expect(err).To(BeNil())
 		time.Sleep(time.Millisecond * 500)
 
 		By("Enable Archive Log")
-		err = con.EnableArchiveLogForTenant()
+		err = con.EnableArchiveLogForTenant(ctx)
 		Expect(err).To(BeNil())
 	})
 
 	It("Stop Backup Job", func() {
 		By("Stop full job")
-		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeFull)
+		_, _ = con.CreateAndReturnBackupJob(ctx, string(constants.BackupJobTypeFull))
 		// ignore error
 		time.Sleep(time.Second)
-		err := con.StopBackupJobOfTenant()
+		err := con.StopBackupJobOfTenant(ctx)
 		Expect(err).To(BeNil())
 
 		By("Stop incremental job")
-		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeIncr)
+		_, _ = con.CreateAndReturnBackupJob(ctx, string(constants.BackupJobTypeIncr))
 		// ignore error
 		time.Sleep(time.Second)
-		err = con.StopBackupJobOfTenant()
+		err = con.StopBackupJobOfTenant(ctx)
 		Expect(err).To(BeNil())
 	})
 
 	It("Create two backup jobs at the same time", Label("slow"), func() {
-		_, _ = con.CreateAndReturnBackupJob(constants.BackupJobTypeIncr)
+		_, _ = con.CreateAndReturnBackupJob(ctx, string(constants.BackupJobTypeIncr))
 		time.Sleep(time.Second)
 
-		_, err := con.CreateAndReturnBackupJob(constants.BackupJobTypeFull)
+		_, err := con.CreateAndReturnBackupJob(ctx, string(constants.BackupJobTypeFull))
 		Expect(err).NotTo(BeNil())
 		time.Sleep(time.Second)
 
-		err = con.StopBackupJobOfTenant()
+		err = con.StopBackupJobOfTenant(ctx)
 		Expect(err).To(BeNil())
 	})
 
 	It("Set ARCHIVELOG and check", func() {
 		By("Get tenant info")
-		tenants, err := con.ListTenantWithName(tenant)
+		tenants, err := con.ListTenantWithName(ctx, tenant)
 		Expect(err).To(BeNil())
 		Expect(len(tenants)).To(BeEquivalentTo(1))
 		tenantInfo := tenants[0]
 
 		if tenantInfo.LogMode != "ARCHIVELOG" {
-			err = con.EnableArchiveLogForTenant()
+			err = con.EnableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 			By("Check ARCHIVELOG")
-			tenants, err = con.ListTenantWithName(tenant)
+			tenants, err = con.ListTenantWithName(ctx, tenant)
 			Expect(err).To(BeNil())
 			Expect(len(tenants)).To(BeEquivalentTo(1))
 			tenantInfo = tenants[0]
 			Expect(tenantInfo.LogMode).To(BeEquivalentTo("ARCHIVELOG"))
-			err = con.DisableArchiveLogForTenant()
+			err = con.DisableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 		} else {
-			err = con.DisableArchiveLogForTenant()
+			err = con.DisableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 			By("Check NOARCHIVELOG")
-			tenants, err = con.ListTenantWithName(tenant)
+			tenants, err = con.ListTenantWithName(ctx, tenant)
 			Expect(err).To(BeNil())
 			Expect(len(tenants)).To(BeEquivalentTo(1))
 			tenantInfo = tenants[0]
 			Expect(tenantInfo.LogMode).To(BeEquivalentTo("NOARCHIVELOG"))
-			err = con.EnableArchiveLogForTenant()
+			err = con.EnableArchiveLogForTenant(ctx)
 			Expect(err).To(BeNil())
 		}
 	})

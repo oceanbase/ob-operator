@@ -24,10 +24,74 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
 // GetTenantRestoreSource gets restore source from tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
 func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) (string, error) {
+	tenant, err := getOBTenantInK8s(ctx, clt, ns, tenantCR)
+	if err != nil {
+		return "", err
+	}
+	con, err := getClusterSysConOfOBTenant(ctx, clt, logger, tenant)
+	if err != nil {
+		return "", err
+	}
+	// Get ip_list of target tenant
+	aps, err := con.ListTenantAccessPoints(ctx, tenant.Spec.TenantName)
+	if err != nil {
+		return "", err
+	}
+	ipList := make([]string, 0)
+	for _, ap := range aps {
+		ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
+	}
+	standbyRoPwd, err := ReadPassword(clt, ns, tenant.Status.Credentials.StandbyRO)
+	if err != nil {
+		logger.Error(err, "Failed to read standby ro password")
+		return "", err
+	}
+	// Set restore source
+	restoreSource := fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), oceanbaseconst.StandbyROUser, tenant.Spec.TenantName, standbyRoPwd)
+
+	return restoreSource, nil
+}
+
+// CheckTenantLSIntegrity checks LS integrity of tenant CR. If tenantCR is in form of ns/name, the parameter ns is ignored.
+func CheckTenantLSIntegrity(ctx context.Context, clt client.Client, logger *logr.Logger, ns, tenantCR string) error {
+	tenant, err := getOBTenantInK8s(ctx, clt, ns, tenantCR)
+	if err != nil {
+		return err
+	}
+	con, err := getClusterSysConOfOBTenant(ctx, clt, logger, tenant)
+	if err != nil {
+		return err
+	}
+	// Check LS integrity
+	lsDeletion, err := con.ListLSDeletion(ctx, int64(tenant.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(lsDeletion) > 0 {
+		return errors.New("LS deletion set is not empty, log is of not integrity")
+	}
+	logStats, err := con.ListLogStats(ctx, int64(tenant.Status.TenantRecordInfo.TenantID))
+	if err != nil {
+		return err
+	}
+	if len(logStats) == 0 {
+		return errors.New("Log stats is empty, out of expectation")
+	}
+	for _, ls := range logStats {
+		if ls.BeginLSN != 0 {
+			return errors.New("Log stats begin SCN is not 0, log is of not integrity")
+		}
+	}
+
+	return nil
+}
+
+func getOBTenantInK8s(ctx context.Context, clt client.Client, ns, tenantCR string) (*v1alpha1.OBTenant, error) {
 	finalNs := ns
 	finalTenantCR := tenantCR
 	splits := strings.Split(tenantCR, "/")
@@ -35,48 +99,33 @@ func GetTenantRestoreSource(ctx context.Context, clt client.Client, logger *logr
 		finalNs = splits[0]
 		finalTenantCR = splits[1]
 	}
-	var restoreSource string
 	var err error
-
-	primary := &v1alpha1.OBTenant{}
+	tenant := &v1alpha1.OBTenant{}
 	err = clt.Get(ctx, types.NamespacedName{
 		Namespace: finalNs,
 		Name:      finalTenantCR,
-	}, primary)
+	}, tenant)
 	if err != nil {
 		if client.IgnoreNotFound(err) != nil {
-			return "", err
+			return nil, err
 		}
-	} else {
-		obcluster := &v1alpha1.OBCluster{}
-		err := clt.Get(ctx, types.NamespacedName{
-			Namespace: finalNs,
-			Name:      primary.Spec.ClusterName,
-		}, obcluster)
-		if err != nil {
-			return "", errors.Wrap(err, "get obcluster")
-		}
-		con, err := GetSysOperationClient(clt, logger, obcluster)
-		if err != nil {
-			return "", errors.Wrap(err, "get oceanbase operation manager")
-		}
-		// Get ip_list from primary tenant
-		aps, err := con.ListTenantAccessPoints(primary.Spec.TenantName)
-		if err != nil {
-			return "", err
-		}
-		ipList := make([]string, 0)
-		for _, ap := range aps {
-			ipList = append(ipList, fmt.Sprintf("%s:%d", ap.SvrIP, ap.SqlPort))
-		}
-		standbyRoPwd, err := ReadPassword(clt, ns, primary.Status.Credentials.StandbyRO)
-		if err != nil {
-			logger.Error(err, "Failed to read standby ro password")
-			return "", err
-		}
-		// Set restore source
-		restoreSource = fmt.Sprintf("SERVICE=%s USER=%s@%s PASSWORD=%s", strings.Join(ipList, ";"), oceanbaseconst.StandbyROUser, primary.Spec.TenantName, standbyRoPwd)
+		return nil, errors.New("tenant not found")
 	}
+	return tenant, nil
+}
 
-	return restoreSource, nil
+func getClusterSysConOfOBTenant(ctx context.Context, clt client.Client, logger *logr.Logger, tenant *v1alpha1.OBTenant) (*operation.OceanbaseOperationManager, error) {
+	obcluster := &v1alpha1.OBCluster{}
+	err := clt.Get(ctx, types.NamespacedName{
+		Namespace: tenant.Namespace,
+		Name:      tenant.Spec.ClusterName,
+	}, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "get obcluster")
+	}
+	con, err := GetSysOperationClient(clt, logger, obcluster)
+	if err != nil {
+		return nil, errors.Wrap(err, "get oceanbase operation manager")
+	}
+	return con, nil
 }

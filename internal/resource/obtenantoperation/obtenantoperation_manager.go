@@ -30,7 +30,6 @@ import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -44,8 +43,6 @@ type ObTenantOperationManager struct {
 	Client   client.Client
 	Recorder telemetry.Recorder
 	Logger   *logr.Logger
-
-	con *operation.OceanbaseOperationManager
 }
 
 func (m *ObTenantOperationManager) IsNewResource() bool {

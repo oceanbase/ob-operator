@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
@@ -69,7 +70,7 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
-	obs, err := oceanbaseOperationManager.GetServer(serverInfo)
+	obs, err := oceanbaseOperationManager.GetServer(m.Ctx, serverInfo)
 	if obs != nil {
 		m.Logger.Info("OBServer already exists in obcluster")
 		return nil
@@ -78,11 +79,11 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get observer failed")
 		return errors.Wrap(err, "Failed to get observer")
 	}
-	return oceanbaseOperationManager.AddServer(serverInfo)
+	return oceanbaseOperationManager.AddServer(m.Ctx, serverInfo)
 }
 
 func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
-	for i := 0; i < oceanbaseconst.BootstrapTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.BootstrapTimeoutSeconds; i++ {
 		obcluster, err := m.getOBCluster()
 		if err != nil {
 			return errors.Wrap(err, "Get obcluster from K8s")
@@ -229,7 +230,7 @@ func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
-	observer, err := operationManager.GetServer(observerInfo)
+	observer, err := operationManager.GetServer(m.Ctx, observerInfo)
 	if err != nil {
 		return err
 	}
@@ -238,7 +239,7 @@ func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
 			m.Logger.Info("OBServer is deleting", "observer", observerInfo.Ip)
 		} else {
 			m.Logger.Info("Need to delete observer")
-			err = operationManager.DeleteServer(observerInfo)
+			err = operationManager.DeleteServer(m.Ctx, observerInfo)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to delete observer %s", observerInfo.Ip)
 			}
@@ -285,7 +286,7 @@ func UpgradeOBServerImage(m *OBServerManager) tasktypes.TaskError {
 
 func WaitOBServerPodReady(m *OBServerManager) tasktypes.TaskError {
 	observerPodRestarted := false
-	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		observerPod, err := m.getPod()
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
@@ -320,12 +321,12 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 		Port: oceanbaseconst.RpcPort,
 	}
 	active := false
-	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, _ := operationManager.GetServer(observerInfo)
+		observer, _ := operationManager.GetServer(m.Ctx, observerInfo)
 		if observer != nil {
 			if observer.StartServiceTime > 0 && observer.Status == observerstatus.Active {
 				active = true
@@ -355,12 +356,12 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 		Port: oceanbaseconst.RpcPort,
 	}
 	deleted := false
-	for i := 0; i < oceanbaseconst.ServerDeleteTimeoutSeconds; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(observerInfo)
+		observer, err := operationManager.GetServer(m.Ctx, observerInfo)
 		if observer == nil && err == nil {
 			m.Logger.Info("OBServer deleted")
 			deleted = true
@@ -395,7 +396,7 @@ func DeletePod(m *OBServerManager) tasktypes.TaskError {
 
 func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.Info("Wait for observer pod being deleted")
-	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
 		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
 		if err != nil && kubeerrors.IsNotFound(err) {
@@ -448,7 +449,7 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 
 func WaitForPVCResized(m *OBServerManager) tasktypes.TaskError {
 outer:
-	for i := 0; i < oceanbaseconst.DefaultStateWaitTimeout; i++ {
+	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
 
 		observerPVC, err := m.getPVCs()

@@ -16,7 +16,7 @@ type Serverity string
 
 const (
 	ServerityCritical Serverity = "critical"
-	ServerityWarning            = "warning"
-	ServerityCaution            = "caution"
-	ServerityInfo               = "info"
+	ServerityWarning  Serverity = "warning"
+	ServerityCaution  Serverity = "caution"
+	ServerityInfo     Serverity = "info"
 )

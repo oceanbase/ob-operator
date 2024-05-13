@@ -179,6 +179,12 @@ export function checkIsSame(
   return true;
 }
 
+/**
+ * The minimum value of available resources in the currently selected zone 
+ * is the maximum value that can be entered in the input box.
+ * 
+ * The reason is to ensure that the input resource specifications can be created by each zone
+ */
 export function findMinParameter(
   zones: string[],
   essentialParameter: API.EssentialParametersType,
@@ -222,13 +228,13 @@ export const modifyZoneCheckedStatus = (
   zone: string,
   checked: boolean,
   target: {
-    id?: number;
+    id?: string;
     name?: string;
   },
 ) => {
   const _clusterList = cloneDeep(clusterList);
   for (const cluster of _clusterList) {
-    if (cluster.clusterId === target.id || cluster.name === target.name) {
+    if (cluster.id === target.id || cluster.name === target.name) {
       cluster.topology.forEach((zoneItem) => {
         if (zoneItem.zone === zone) {
           zoneItem.checked = checked;

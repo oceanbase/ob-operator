@@ -8,6 +8,1236 @@
     },
     "basePath": "/api/v1",
     "paths": {
+        "/api/v1/alarm/alert/alerts": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alerts, filter with alarm objects, serverity, time and keywords.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alerts",
+                "operationId": "ListAlerts",
+                "parameters": [
+                    {
+                        "description": "alert filter",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/alert.AlertFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/alert.Alert"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/receiver/receivers": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create or update alarm receiver.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Create or update alarm receiver",
+                "operationId": "CreateOrUpdateReceiver",
+                "parameters": [
+                    {
+                        "description": "receiver",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/receiver.Receiver"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/receiver.Receiver"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alarm receivers, do not support filter, list all receivers at once.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alarm receivers",
+                "operationId": "ListReceivers",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/receiver.Receiver"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/receiver/receivers/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get alarm receiver, query by receiver name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Get alarm receiver",
+                "operationId": "GetReceiver",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/receiver.Receiver"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete alarm receiver by receiver name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Delete alarm receiver",
+                "operationId": "DeleteReceiver",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "receiver name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/receiver/templates": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alarm receiver templates.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alarm receiver templates",
+                "operationId": "ListReceiverTemplates",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/receiver.Template"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/receiver/templates/{type}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get alarm receiver template.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Get alarm receiver template",
+                "operationId": "GetReceiverTemplate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "receiver type",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/receiver.Template"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/route/routes": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create or update alarm route.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Create or update alarm route",
+                "operationId": "CreateOrUpdateRoute",
+                "parameters": [
+                    {
+                        "description": "route",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/route.Route"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/route.RouteResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alarm routes, do not support filter, list all routes at once.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alarm routes",
+                "operationId": "ListRoutes",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/route.RouteResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/route/routes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get alarm route, query by route name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Get alarm route",
+                "operationId": "GetRoute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "route id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/route.RouteResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete alarm channel by channel name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Delete alarm channel",
+                "operationId": "DeleteRoute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "route id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/rule/rules": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create or update alarm rule.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Create or update alarm rule",
+                "operationId": "CreateOrUpdateRule",
+                "parameters": [
+                    {
+                        "description": "rule",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/rule.Rule"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/rule.RuleResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alarm rules, filter with alarm objects type, serverity and keywords.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alarm rules",
+                "operationId": "ListRules",
+                "parameters": [
+                    {
+                        "description": "rule filter",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/rule.RuleFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/rule.RuleResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/rule/rules/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get alarm rule, query by rule name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Get alarm rule",
+                "operationId": "GetRule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/rule.RuleResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete alarm rule by rule name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Delete alarm rule",
+                "operationId": "DeleteRule",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "rule name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/silence/silencers": {
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Create or update alarm silencer.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Create or update alarm silencer",
+                "operationId": "CreateOrUpdateSilencer",
+                "parameters": [
+                    {
+                        "description": "silencer",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/silence.SilencerParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/silence.SilencerResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List alarm silencers, filter with alarm objects and keywords.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "List alarm silencers",
+                "operationId": "ListSilencers",
+                "parameters": [
+                    {
+                        "description": "silencer filter",
+                        "name": "body",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/silence.SilencerFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/silence.SilencerResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/alarm/silence/silencers/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get alarm silencer, query by silencer id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Get alarm silencer",
+                "operationId": "GetSilencer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "silencer id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/silence.SilencerResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete alarm silencer by silencer id.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Delete alarm silencer",
+                "operationId": "DeleteSilencer",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "silencer id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/cluster/events": {
             "get": {
                 "security": [
@@ -2065,7 +3295,7 @@
                     {
                         "enum": [
                             "FULL",
-                            "INCR",
+                            "INC",
                             "CLEAN",
                             "ARCHIVE"
                         ],
@@ -3234,6 +4464,147 @@
         }
     },
     "definitions": {
+        "alarm.Matcher": {
+            "type": "object",
+            "properties": {
+                "isEqual": {
+                    "type": "boolean"
+                },
+                "isRegex": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "string"
+                }
+            }
+        },
+        "alarm.Serverity": {
+            "type": "string",
+            "enum": [
+                "critical",
+                "warning",
+                "caution",
+                "info"
+            ],
+            "x-enum-varnames": [
+                "ServerityCritical",
+                "ServerityWarning",
+                "ServerityCaution",
+                "ServerityInfo"
+            ]
+        },
+        "alert.Alert": {
+            "type": "object",
+            "required": [
+                "endsAt",
+                "fingerprint",
+                "instance",
+                "rule",
+                "serverity",
+                "startsAt",
+                "status",
+                "updatedAt"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "endsAt": {
+                    "type": "integer"
+                },
+                "fingerprint": {
+                    "type": "string"
+                },
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "labels": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
+                },
+                "rule": {
+                    "type": "string"
+                },
+                "serverity": {
+                    "$ref": "#/definitions/alarm.Serverity"
+                },
+                "startsAt": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/alert.Status"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "alert.AlertFilter": {
+            "type": "object",
+            "properties": {
+                "endTime": {
+                    "type": "integer"
+                },
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "serverity": {
+                    "$ref": "#/definitions/alarm.Serverity"
+                },
+                "startTime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "alert.State": {
+            "type": "string",
+            "enum": [
+                "active",
+                "unprocessed",
+                "suppressed"
+            ],
+            "x-enum-varnames": [
+                "StateActive",
+                "StateUnprocessed",
+                "StateSuppressed"
+            ]
+        },
+        "alert.Status": {
+            "type": "object",
+            "required": [
+                "inhibitedBy",
+                "silencedBy",
+                "state"
+            ],
+            "properties": {
+                "inhibitedBy": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "silencedBy": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "state": {
+                    "$ref": "#/definitions/alert.State"
+                }
+            }
+        },
         "common.AffinitySpec": {
             "type": "object",
             "properties": {
@@ -3666,6 +5037,43 @@
                     "type": "integer"
                 }
             }
+        },
+        "oceanbase.OBInstance": {
+            "type": "object",
+            "required": [
+                "type"
+            ],
+            "properties": {
+                "obcluster": {
+                    "type": "string"
+                },
+                "observer": {
+                    "type": "string"
+                },
+                "obtenant": {
+                    "type": "string"
+                },
+                "obzone": {
+                    "description": "obzone may exist in labels",
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                }
+            }
+        },
+        "oceanbase.OBInstanceType": {
+            "type": "string",
+            "enum": [
+                "obcluster",
+                "obtenant",
+                "observer"
+            ],
+            "x-enum-varnames": [
+                "OBCluster",
+                "OBTenant",
+                "OBServer"
+            ]
         },
         "param.ChangeTenantRole": {
             "type": "object",
@@ -4219,6 +5627,51 @@
                 },
                 "zone": {
                     "type": "string"
+                }
+            }
+        },
+        "receiver.Receiver": {
+            "type": "object",
+            "required": [
+                "config",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "config": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/receiver.ReceiverType"
+                }
+            }
+        },
+        "receiver.ReceiverType": {
+            "type": "string",
+            "enum": [
+                "dingtalk",
+                "wechat"
+            ],
+            "x-enum-varnames": [
+                "TypeDingTalk",
+                "TypeWeChat"
+            ]
+        },
+        "receiver.Template": {
+            "type": "object",
+            "required": [
+                "template",
+                "type"
+            ],
+            "properties": {
+                "template": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/receiver.ReceiverType"
                 }
             }
         },
@@ -5521,6 +6974,362 @@
                 },
                 "storageClass": {
                     "type": "string"
+                }
+            }
+        },
+        "route.Route": {
+            "type": "object",
+            "required": [
+                "aggregateLabels",
+                "groupInterval",
+                "groupWait",
+                "matchers",
+                "receiver",
+                "repeatInterval"
+            ],
+            "properties": {
+                "aggregateLabels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "groupInterval": {
+                    "type": "integer"
+                },
+                "groupWait": {
+                    "type": "integer"
+                },
+                "matchers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "receiver": {
+                    "type": "string"
+                },
+                "repeatInterval": {
+                    "type": "integer"
+                }
+            }
+        },
+        "route.RouteResponse": {
+            "type": "object",
+            "required": [
+                "aggregateLabels",
+                "groupInterval",
+                "groupWait",
+                "id",
+                "matchers",
+                "receiver",
+                "repeatInterval"
+            ],
+            "properties": {
+                "aggregateLabels": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "groupInterval": {
+                    "type": "integer"
+                },
+                "groupWait": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "matchers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "receiver": {
+                    "type": "string"
+                },
+                "repeatInterval": {
+                    "type": "integer"
+                }
+            }
+        },
+        "rule.Rule": {
+            "type": "object",
+            "required": [
+                "description",
+                "duration",
+                "instanceType",
+                "labels",
+                "name",
+                "query",
+                "serverity",
+                "summary",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
+                "labels": {
+                    "$ref": "#/definitions/common.KVPair"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "serverity": {
+                    "$ref": "#/definitions/alarm.Serverity"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/rule.RuleType"
+                }
+            }
+        },
+        "rule.RuleFilter": {
+            "type": "object",
+            "properties": {
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "serverity": {
+                    "$ref": "#/definitions/alarm.Serverity"
+                }
+            }
+        },
+        "rule.RuleHealth": {
+            "type": "string",
+            "enum": [
+                "unknown",
+                "ok",
+                "error"
+            ],
+            "x-enum-varnames": [
+                "HealthUnknown",
+                "HealthOK",
+                "HealthError"
+            ]
+        },
+        "rule.RuleResponse": {
+            "type": "object",
+            "required": [
+                "description",
+                "duration",
+                "evaluationTime",
+                "health",
+                "instanceType",
+                "keepFiringFor",
+                "labels",
+                "lastEvaluation",
+                "name",
+                "query",
+                "serverity",
+                "state",
+                "summary",
+                "type"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "duration": {
+                    "type": "integer"
+                },
+                "evaluationTime": {
+                    "type": "number"
+                },
+                "health": {
+                    "$ref": "#/definitions/rule.RuleHealth"
+                },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
+                "keepFiringFor": {
+                    "type": "integer"
+                },
+                "labels": {
+                    "$ref": "#/definitions/common.KVPair"
+                },
+                "lastError": {
+                    "type": "string"
+                },
+                "lastEvaluation": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "query": {
+                    "type": "string"
+                },
+                "serverity": {
+                    "$ref": "#/definitions/alarm.Serverity"
+                },
+                "state": {
+                    "$ref": "#/definitions/rule.RuleState"
+                },
+                "summary": {
+                    "type": "string"
+                },
+                "type": {
+                    "$ref": "#/definitions/rule.RuleType"
+                }
+            }
+        },
+        "rule.RuleState": {
+            "type": "string",
+            "enum": [
+                "active",
+                "inactive"
+            ],
+            "x-enum-varnames": [
+                "StateActive",
+                "StateInactive"
+            ]
+        },
+        "rule.RuleType": {
+            "type": "string",
+            "enum": [
+                "builtin",
+                "customized"
+            ],
+            "x-enum-varnames": [
+                "TypeBuiltin",
+                "TypeCustomized"
+            ]
+        },
+        "silence.SilencerFilter": {
+            "type": "object",
+            "properties": {
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "keyword": {
+                    "type": "string"
+                }
+            }
+        },
+        "silence.SilencerParam": {
+            "type": "object",
+            "required": [
+                "comment",
+                "createdBy",
+                "endsAt",
+                "instance",
+                "matchers",
+                "startsAt"
+            ],
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "endsAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "instance": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/oceanbase.OBInstance"
+                    }
+                },
+                "matchers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "startsAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "silence.SilencerResponse": {
+            "type": "object",
+            "required": [
+                "comment",
+                "createdBy",
+                "endsAt",
+                "id",
+                "instance",
+                "matchers",
+                "startsAt",
+                "status",
+                "updatedAt"
+            ],
+            "properties": {
+                "comment": {
+                    "type": "string"
+                },
+                "createdBy": {
+                    "type": "string"
+                },
+                "endsAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "instance": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/oceanbase.OBInstance"
+                    }
+                },
+                "matchers": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "startsAt": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/silence.Status"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "silence.State": {
+            "type": "string",
+            "enum": [
+                "active"
+            ],
+            "x-enum-varnames": [
+                "StateActive"
+            ]
+        },
+        "silence.Status": {
+            "type": "object",
+            "required": [
+                "state"
+            ],
+            "properties": {
+                "state": {
+                    "$ref": "#/definitions/silence.State"
                 }
             }
         }
