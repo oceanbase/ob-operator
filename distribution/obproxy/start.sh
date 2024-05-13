@@ -6,16 +6,22 @@ if [ -z $APP_NAME ]; then
 fi
 
 if [ -z $PROXYRO_PASSWORD_HASH ]; then
+    if [ -z $PROXYRO_PASSWORD ]; then
+        echo "env variable PROXYRO_PASSWORD_HASH or PROXYRO_PASSWORD should be set"
+        exit 1
+    fi
     PROXYRO_PASSWORD_HASH=`echo -n "$PROXYRO_PASSWORD" | sha1sum | awk '{print $1}'`
 fi
 
 opts=""
 
 function concat_opts {
-    if [ -n "$1" ]; then
-        echo $1,$2
-    else
+    if [ -z "$1" ]; then
         echo $2
+    elif [ -z "$2" ]; then
+        echo $1
+    else
+        echo "$1,$2"
     fi
 }
 
