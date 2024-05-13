@@ -834,15 +834,38 @@ outerLoop:
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
-		version, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
-			return errors.Wrap(err, "Run service mode validate job failed")
+			// Make compatible with legacy version in which there is no `version` command
+			var code int32
+			switch modeAnnoVal {
+			case oceanbaseconst.ModeStandalone:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-standalone-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
+				)
+			case oceanbaseconst.ModeService:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-service-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
+				)
+			}
+			if err != nil && code != 1 {
+				return errors.Wrap(err, "Failed to run service mode validate job")
+			}
+			return nil
 		}
-		version = strings.TrimSpace(version)
+		lines := strings.Split(versionOutput, "\n")
+		if len(lines) == 0 {
+			return errors.New("Get version failed")
+		}
+		version := strings.TrimSpace(lines[len(lines)-1])
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
 			return errors.Wrap(err, "Parse current version")
