@@ -20,8 +20,8 @@ import (
 
 func InitOBProxyRoutes(g *gin.RouterGroup) {
 	g.GET("/obproxies", h.Wrap(h.ListOBProxies))
-	g.POST("/obproxies", h.Wrap(h.CreateOBProxy))
+	g.PUT("/obproxies", h.Wrap(h.CreateOBProxy))
 	g.GET("/obproxies/:namespace/:name", h.Wrap(h.GetOBProxy))
-	g.PUT("/obproxies/:namespace/:name", h.Wrap(h.PatchOBProxy))
+	g.PATCH("/obproxies/:namespace/:name", h.Wrap(h.PatchOBProxy))
 	g.DELETE("/obproxies/:namespace/:name", h.Wrap(h.DeleteOBProxy))
 }

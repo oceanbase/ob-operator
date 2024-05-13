@@ -521,7 +521,7 @@ definitions:
         type: array
       deletedParameters:
         items:
-          $ref: '#/definitions/common.KVPair'
+          type: string
         type: array
       image:
         type: string
@@ -530,6 +530,13 @@ definitions:
       resource:
         $ref: '#/definitions/common.ResourceSpec'
       serviceType:
+        default: ClusterIP
+        enum:
+        - ClusterIP
+        - NodePort
+        - LoadBalancer
+        - ExternalName
+        example: ClusterIP
         type: string
     type: object
   oceanbase.OBInstance:
@@ -3986,6 +3993,11 @@ paths:
       - application/json
       description: list obproxies
       operationId: ListOBProxies
+      parameters:
+      - description: ns
+        in: query
+        name: ns
+        type: string
       produces:
       - application/json
       responses:

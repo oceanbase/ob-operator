@@ -2860,6 +2860,14 @@ const docTemplate = `{
                 ],
                 "summary": "list obproxies",
                 "operationId": "ListOBProxies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ns",
+                        "name": "ns",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -5544,7 +5552,7 @@ const docTemplate = `{
                 "deletedParameters": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/common.KVPair"
+                        "type": "string"
                     }
                 },
                 "image": {
@@ -5557,7 +5565,15 @@ const docTemplate = `{
                     "$ref": "#/definitions/common.ResourceSpec"
                 },
                 "serviceType": {
-                    "type": "string"
+                    "type": "string",
+                    "default": "ClusterIP",
+                    "enum": [
+                        "ClusterIP",
+                        "NodePort",
+                        "LoadBalancer",
+                        "ExternalName"
+                    ],
+                    "example": "ClusterIP"
                 }
             }
         },

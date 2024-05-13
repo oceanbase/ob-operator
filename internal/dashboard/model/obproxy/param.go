@@ -36,5 +36,5 @@ type PatchOBProxyParam struct {
 	Replicas          *int32               `json:"replicas,omitempty"`
 	Resource          *common.ResourceSpec `json:"resource,omitempty"`
 	AddedParameters   []common.KVPair      `json:"addedParameters,omitempty"`
-	DeletedParameters []common.KVPair      `json:"deletedParameters,omitempty"`
+	DeletedParameters []string             `json:"deletedParameters,omitempty"`
 }
