@@ -18,7 +18,14 @@ const (
 
 const (
 	AlertManagerAddress = "http://127.0.0.1:9093"
-	AlertQueryUrl       = "http://127.0.0.1:9093"
+	AlertQueryUrl       = "/api/v2/alerts"
+)
+
+const (
+	LabelOBCluster = "ob_cluster_name"
+	LabelOBZone    = "obzone"
+	LabelOBServer  = "svr_ip"
+	LabelOBTenant  = "tenant_name"
 )
 
 const (

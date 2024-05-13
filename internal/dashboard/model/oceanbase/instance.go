@@ -19,3 +19,19 @@ type OBInstance struct {
 	OBServer  string         `json:"observer,omitempty"`
 	OBTenant  string         `json:"obtenant,omitempty"`
 }
+
+func (o *OBInstance) Equals(other *OBInstance) bool {
+	if o.Type != other.Type {
+		return false
+	}
+	switch o.Type {
+	case OBCluster:
+		return o.OBCluster == other.OBCluster
+	case OBServer:
+		return o.OBServer == other.OBServer
+	case OBTenant:
+		return (o.OBServer == other.OBServer) && (o.OBTenant == other.OBTenant)
+	default:
+		return false
+	}
+}

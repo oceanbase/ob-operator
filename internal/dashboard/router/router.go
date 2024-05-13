@@ -63,11 +63,14 @@ func InitRoutes(router *gin.Engine) {
 		router.Use(static.Serve("/api-gen", static.LocalFile("internal/dashboard/generated/swagger", false)))
 	}
 
+	v1Group := router.Group("/api/v1")
 	// login api does not require login
-	v1Group := router.Group("/api/v1",
-		middleware.LoginRequired(),
-		middleware.RefreshExpiration(),
-	)
+	if os.Getenv("ENABLE_DEV_MODE") != "true" {
+		v1Group = router.Group("/api/v1",
+			middleware.LoginRequired(),
+			middleware.RefreshExpiration(),
+		)
+	}
 
 	// init all routes under /api/v1
 	v1.InitInfoRoutes(v1Group)

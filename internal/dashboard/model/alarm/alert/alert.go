@@ -16,13 +16,13 @@ import (
 	"errors"
 	"time"
 
+	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
-	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
-
 	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	logger "github.com/sirupsen/logrus"
 )
 
 type Status struct {
@@ -32,27 +32,30 @@ type Status struct {
 }
 
 type Alert struct {
-	Fingerprint string               `json:"fingerprint" binding:"required"`
-	Rule        string               `json:"rule" binding:"required"`
-	Serverity   alarm.Serverity      `json:"serverity" binding:"required"`
-	Instance    oceanbase.OBInstance `json:"instance" binding:"required"`
-	StartsAt    int64                `json:"startsAt" binding:"required"`
-	UpdatedAt   int64                `json:"updatedAt" binding:"required"`
-	EndsAt      int64                `json:"endsAt" binding:"required"`
-	Status      *Status              `json:"status" binding:"required"`
-	Labels      []common.KVPair      `json:"labels,omitempty"`
-	Summary     string               `json:"summary,omitempty"`
-	Description string               `json:"description,omitempty"`
+	Fingerprint string                `json:"fingerprint" binding:"required"`
+	Rule        string                `json:"rule" binding:"required"`
+	Serverity   alarm.Serverity       `json:"serverity" binding:"required"`
+	Instance    *oceanbase.OBInstance `json:"instance" binding:"required"`
+	StartsAt    int64                 `json:"startsAt" binding:"required"`
+	UpdatedAt   int64                 `json:"updatedAt" binding:"required"`
+	EndsAt      int64                 `json:"endsAt" binding:"required"`
+	Status      *Status               `json:"status" binding:"required"`
+	Labels      []common.KVPair       `json:"labels,omitempty"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
 }
 
 func NewAlert(alert *apimodels.GettableAlert) (*Alert, error) {
+	rule := "default-rule"
 	rule, ok := alert.Labels[alarmconstant.LabelRuleName]
 	if !ok {
-		return nil, errors.New("Convert alert failed")
+		// TODO: return error
+		// return nil, errors.New("Convert alert failed, no rule")
+		logger.Error("Convert alert failed, no rule label")
 	}
 	serverity, ok := alert.Labels[alarmconstant.LabelServerity]
 	if !ok {
-		return nil, errors.New("Convert alert failed")
+		return nil, errors.New("Convert alert failed, no serverity")
 	}
 	labels := make([]common.KVPair, 0, len(alert.Labels))
 	for k, v := range alert.Labels {
@@ -61,6 +64,23 @@ func NewAlert(alert *apimodels.GettableAlert) (*Alert, error) {
 			Value: v,
 		})
 	}
+	instance := &oceanbase.OBInstance{}
+	obcluster, exists := alert.Labels[alarmconstant.LabelOBCluster]
+	if exists {
+		instance.OBCluster = obcluster
+		instance.Type = oceanbase.OBCluster
+	}
+	observer, exists := alert.Labels[alarmconstant.LabelOBServer]
+	if exists {
+		instance.OBServer = observer
+		instance.Type = oceanbase.OBServer
+	}
+	obtenant, exists := alert.Labels[alarmconstant.LabelOBTenant]
+	if exists {
+		instance.OBTenant = obtenant
+		instance.Type = oceanbase.OBTenant
+	}
+
 	summary, ok := alert.Annotations[alarmconstant.AnnoSummary]
 	if !ok {
 		return nil, errors.New("No summary info")
@@ -73,6 +93,7 @@ func NewAlert(alert *apimodels.GettableAlert) (*Alert, error) {
 		Fingerprint: *alert.Fingerprint,
 		Rule:        rule,
 		Serverity:   alarm.Serverity(serverity),
+		Instance:    instance,
 		StartsAt:    time.Time(*alert.StartsAt).Unix(),
 		UpdatedAt:   time.Time(*alert.UpdatedAt).Unix(),
 		EndsAt:      time.Time(*alert.EndsAt).Unix(),

@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 type Matcher struct {
-	IsEqual bool   `json:"isEqual,omitempty"`
 	IsRegex bool   `json:"isRegex"`
 	Name    string `json:"name"`
 	Value   string `json:"value"`

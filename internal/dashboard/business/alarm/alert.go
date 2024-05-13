@@ -15,6 +15,7 @@ package alarm
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/go-resty/resty/v2"
@@ -23,6 +24,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/errors"
 
 	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	logger "github.com/sirupsen/logrus"
 )
 
 func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
@@ -34,67 +36,44 @@ func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
 		"inhibited":   "true",
 		"unprocessed": "true",
 		"receiver":    "",
-	}).SetHeader("content-type", "application/json").SetResult(gettableAlerts).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.AlertQueryUrl))
-
+	}).SetHeader("content-type", "application/json").SetResult(&gettableAlerts).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.AlertQueryUrl))
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query alerts from alertmanager")
 	}
-
 	filteredAlerts := filterAlerts(gettableAlerts, filter)
-
 	return filteredAlerts, nil
 }
 
-func filterAlerts(alerts apimodels.GettableAlerts, filter *alert.AlertFilter) []alert.Alert {
+func filterAlerts(gettableAlerts apimodels.GettableAlerts, filter *alert.AlertFilter) []alert.Alert {
 	filteredAlerts := make([]alert.Alert, 0)
-	for _, alert := range alerts {
+	for _, gettableAlert := range gettableAlerts {
+		alert, err := alert.NewAlert(gettableAlert)
+		if err != nil {
+			logger.WithError(err).Error("Parse alert got error, just skip")
+		}
 		if matchAlert(alert, filter) {
-			filteredAlerts = append(filteredAlerts, alert.NewAlert(alert))
+			filteredAlerts = append(filteredAlerts, *alert)
 		}
 	}
 	return filteredAlerts
 }
 
-func matchAlert(alert apimodels.GettableAlert, filter *alert.AlertFilter) bool {
-
+func matchAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
+	match := true
+	if filter.Serverity != "" {
+		match = match && (filter.Serverity == alert.Serverity)
+	}
+	if filter.StartTime != 0 {
+		match = match && (filter.StartTime <= alert.StartsAt)
+	}
+	if filter.EndTime != 0 {
+		match = match && (filter.EndTime >= alert.StartsAt)
+	}
+	if filter.Keyword != "" {
+		match = match && strings.Contains(alert.Description, filter.Keyword)
+	}
+	if filter.Instance != nil {
+		match = match && filter.Instance.Equals(alert.Instance)
+	}
+	return match
 }
-
-// func QueryMetricData(queryParam *param.MetricQuery) []response.MetricData {
-// 	client := resty.New().SetTimeout(time.Duration(metricconst.DefaultMetricQueryTimeout * time.Second))
-// 	metricDatas := make([]response.MetricData, 0, len(queryParam.Metrics))
-// 	wg := sync.WaitGroup{}
-// 	metricDataCh := make(chan []response.MetricData, len(queryParam.Metrics))
-// 	for _, metric := range queryParam.Metrics {
-// 		exprTemplate, found := metricExprConfig[metric]
-// 		if found {
-// 			wg.Add(1)
-// 			go func(metric string, ch chan []response.MetricData) {
-// 				defer wg.Done()
-// 				expr := replaceQueryVariables(exprTemplate, queryParam.Labels, queryParam.GroupLabels, queryParam.QueryRange.Step)
-// 				logger.Infof("Query with expr: %s, range: %v", expr, queryParam.QueryRange)
-// 				queryRangeResp := &external.PrometheusQueryRangeResponse{}
-// 				resp, err := client.R().SetQueryParams(map[string]string{
-// 					"start": strconv.FormatFloat(queryParam.QueryRange.StartTimestamp, 'f', 3, 64),
-// 					"end":   strconv.FormatFloat(queryParam.QueryRange.EndTimestamp, 'f', 3, 64),
-// 					"step":  strconv.FormatInt(queryParam.QueryRange.Step, 10),
-// 					"query": expr,
-// 				}).SetHeader("content-type", "application/json").
-// 					SetResult(queryRangeResp).
-// 					Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, metricconst.MetricRangeQueryUrl))
-// 				if err != nil {
-// 					logger.Errorf("Query expression expr got error: %v", err)
-// 				} else if resp.StatusCode() == http.StatusOK {
-// 					ch <- extractMetricData(metric, queryRangeResp)
-// 				}
-// 			}(metric, metricDataCh)
-// 		} else {
-// 			logger.Warnf("Metric %s expression not found", metric)
-// 		}
-// 	}
-// 	wg.Wait()
-// 	close(metricDataCh)
-// 	for metricDataArray := range metricDataCh {
-// 		metricDatas = append(metricDatas, metricDataArray...)
-// 	}
-// 	return metricDatas
-// }
