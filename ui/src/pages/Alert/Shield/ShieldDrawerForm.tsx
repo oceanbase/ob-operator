@@ -17,6 +17,7 @@ const { TextArea } = Input;
 
 export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
   const [form] = Form.useForm();
+  const isEdit = !!id;
   const instanceType = Form.useWatch(['instance', 'type'], form);
   const initialValues = {
     matchers: [
@@ -37,12 +38,12 @@ export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
   };
 
   useEffect(() => {
-    if (id) {
+    if (isEdit) {
       alert.getSilencer(id).then(() => {
         // Something to do
       });
     }
-  }, []);
+  }, [id]);
 
   useUpdateEffect(() => {
     form.setFieldValue(['instance', instanceType], 'aa');
@@ -73,7 +74,7 @@ export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
             wrapFormName="matchers"
             labelFormName="name"
             valueFormName="value"
-            showRegBox={true}
+            regBoxFormName='isRegex'
           />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>

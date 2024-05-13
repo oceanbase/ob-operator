@@ -1,20 +1,21 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Col, Form, Input, Popconfirm, Row } from 'antd';
+import styles from './index.less'
 
 interface InputLabelProps {
   wrapFormName: string;
   labelFormName: string;
   valueFormName: string;
-  showRegBox?: boolean;
-  showDelIcon?: boolean;
+  regBoxFormName?: string;
+  showDelete?: boolean;
 }
 
 export default function InputLabel({
   wrapFormName,
   labelFormName,
   valueFormName,
-  showRegBox = false,
-  showDelIcon = true,
+  regBoxFormName,
+  showDelete = true,
 }: InputLabelProps) {
   return (
     <Form.List name={wrapFormName}>
@@ -33,36 +34,36 @@ export default function InputLabel({
                     <Input placeholder="请输入标签值" />
                   </Form.Item>
                 </Col>
-                {showRegBox && (
-                  <Col span={4}>
-                    <Form.Item name={[name, 'isRegex']} noStyle>
-                      <Checkbox />
+                {regBoxFormName && (
+                  <Col span={2}>
+                    <Form.Item name={[name, regBoxFormName]} noStyle>
+                      <Checkbox style={{ marginRight: 4 }} />
                       正则
                     </Form.Item>
                   </Col>
                 )}
-                {showDelIcon && fields.length > 1 && (
-                  <Form.Item
-                    label={index === 0 && ' '}
-                    style={{ marginBottom: 8 }}
-                    name={[name, ' ']}
-                  >
-                    <Popconfirm
-                      placement="left"
-                      title="确定要删除该配置项吗？"
-                      onConfirm={() => {
-                        remove(index);
-                      }}
-                      okText="删除"
-                      cancelText="取消"
-                      okButtonProps={{
-                        danger: true,
-                        ghost: true,
-                      }}
-                    >
-                      <DeleteOutlined style={{ color: 'rgba(0, 0, 0, .45)' }} />
-                    </Popconfirm>
-                  </Form.Item>
+                {showDelete && fields.length > 1 && (
+                  <Col span={2}>
+                    <Form.Item className={styles.delContent} name={[name, ' ']}>
+                      <Popconfirm
+                        placement="left"
+                        title="确定要删除该配置项吗？"
+                        onConfirm={() => {
+                          remove(index);
+                        }}
+                        okText="删除"
+                        cancelText="取消"
+                        okButtonProps={{
+                          danger: true,
+                          ghost: true,
+                        }}
+                      >
+                        <DeleteOutlined
+                          style={{ color: 'rgba(0, 0, 0, .45)' }}
+                        />
+                      </Popconfirm>
+                    </Form.Item>
+                  </Col>
                 )}
               </Row>
             ))}
@@ -74,7 +75,7 @@ export default function InputLabel({
                     block
                     onClick={() => {
                       const temp = { labelFormName: '', valueFormName: '' };
-                      if (showRegBox) temp.isRegex = false;
+                      if (regBoxFormName) temp[regBoxFormName] = false;
                       add(temp);
                     }}
                     style={{ color: 'rgba(0,0,0,0.65)' }}
