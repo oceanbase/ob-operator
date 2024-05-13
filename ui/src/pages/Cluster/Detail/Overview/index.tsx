@@ -6,7 +6,7 @@ import { Button, Row, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
 import { getClusterDetailReq } from '@/services';

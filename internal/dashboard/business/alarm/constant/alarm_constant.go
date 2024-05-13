@@ -10,4 +10,23 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package operation
+package constant
+
+const (
+	DefaultAlarmQueryTimeout = 5
+)
+
+const (
+	AlertManagerAddress = "http://127.0.0.1:9093"
+	AlertQueryUrl       = "http://127.0.0.1:9093"
+)
+
+const (
+	LabelRuleName  = "rule_name"
+	LabelServerity = "serverity"
+)
+
+const (
+	AnnoSummary     = "summary"
+	AnnoDescription = "description"
+)

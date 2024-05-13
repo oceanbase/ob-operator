@@ -1,4 +1,4 @@
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { BACKUP_RESULT_STATUS } from '@/constants';
 import { usePublicKey } from '@/hook/usePublicKey';
 import {

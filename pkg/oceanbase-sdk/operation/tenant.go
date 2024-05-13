@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -25,9 +26,9 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*model.OBTenant, error) {
+func (m *OceanbaseOperationManager) ListTenantWithName(ctx context.Context, tenantName string) ([]*model.OBTenant, error) {
 	tenants := make([]*model.OBTenant, 0)
-	err := m.QueryList(&tenants, sql.QueryTenantWithName, tenantName)
+	err := m.QueryList(ctx, &tenants, sql.QueryTenantWithName, tenantName)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query tenants")
 		return nil, errors.Wrap(err, "Query tenants")
@@ -35,9 +36,9 @@ func (m *OceanbaseOperationManager) ListTenantWithName(tenantName string) ([]*mo
 	return tenants, nil
 }
 
-func (m *OceanbaseOperationManager) SelectSysTenant() (*model.OBTenant, error) {
+func (m *OceanbaseOperationManager) SelectSysTenant(ctx context.Context) (*model.OBTenant, error) {
 	tenants := make([]*model.OBTenant, 0)
-	err := m.QueryList(&tenants, sql.SelectSysTenant)
+	err := m.QueryList(ctx, &tenants, sql.SelectSysTenant)
 	if err != nil {
 		return nil, errors.Wrap(err, "Select sys tenant")
 	}
@@ -47,9 +48,9 @@ func (m *OceanbaseOperationManager) SelectSysTenant() (*model.OBTenant, error) {
 	return tenants[0], nil
 }
 
-func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*model.OBUnit, error) {
+func (m *OceanbaseOperationManager) ListUnitsWithTenantId(ctx context.Context, tenantID int64) ([]*model.OBUnit, error) {
 	units := make([]*model.OBUnit, 0)
-	err := m.QueryList(&units, sql.QueryUnitsWithTenantId, tenantID)
+	err := m.QueryList(ctx, &units, sql.QueryUnitsWithTenantId, tenantID)
 	if err != nil {
 		m.Logger.Error(err, "Failed to query units")
 		return nil, errors.Wrap(err, "Query units")
@@ -57,90 +58,90 @@ func (m *OceanbaseOperationManager) ListUnitsWithTenantId(tenantID int64) ([]*mo
 	return units, nil
 }
 
-func (m *OceanbaseOperationManager) GetTenantByName(tenantName string) (*model.OBTenant, error) {
+func (m *OceanbaseOperationManager) GetTenantByName(ctx context.Context, tenantName string) (*model.OBTenant, error) {
 	tenant := &model.OBTenant{}
-	err := m.QueryRow(tenant, sql.GetTenantByName, tenantName)
+	err := m.QueryRow(ctx, tenant, sql.GetTenantByName, tenantName)
 	if err != nil {
 		return tenant, errors.Wrap(err, "Get tenantconst by tenantName")
 	}
 	return tenant, nil
 }
 
-func (m *OceanbaseOperationManager) GetPoolByName(poolName string) (*model.Pool, error) {
+func (m *OceanbaseOperationManager) GetPoolByName(ctx context.Context, poolName string) (*model.Pool, error) {
 	pool := &model.Pool{}
-	err := m.QueryRow(pool, sql.GetPoolByName, poolName)
+	err := m.QueryRow(ctx, pool, sql.GetPoolByName, poolName)
 	if err != nil {
 		return pool, errors.Wrap(err, "Get pool by poolName")
 	}
 	return pool, nil
 }
 
-func (m *OceanbaseOperationManager) GetPoolList() ([]model.Pool, error) {
+func (m *OceanbaseOperationManager) GetPoolList(ctx context.Context) ([]model.Pool, error) {
 	var poolList []model.Pool
-	err := m.QueryList(&poolList, sql.GetPoolList)
+	err := m.QueryList(ctx, &poolList, sql.GetPoolList)
 	if err != nil {
 		return poolList, errors.Wrap(err, "Get get pool list")
 	}
 	return poolList, nil
 }
 
-func (m *OceanbaseOperationManager) GetResourceTotal(zoneName string) (*model.ResourceTotal, error) {
+func (m *OceanbaseOperationManager) GetResourceTotal(ctx context.Context, zoneName string) (*model.ResourceTotal, error) {
 	resource := &model.ResourceTotal{}
-	err := m.QueryRow(resource, sql.GetResourceTotal, zoneName)
+	err := m.QueryRow(ctx, resource, sql.GetResourceTotal, zoneName)
 	if err != nil {
 		return resource, errors.Wrap(err, "Get resource by zoneName")
 	}
 	return resource, nil
 }
 
-func (m *OceanbaseOperationManager) GetUnitList() ([]model.Unit, error) {
+func (m *OceanbaseOperationManager) GetUnitList(ctx context.Context) ([]model.Unit, error) {
 	var unitList []model.Unit
-	err := m.QueryList(&unitList, sql.GetUnitList)
+	err := m.QueryList(ctx, &unitList, sql.GetUnitList)
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get all unit list")
 	}
 	return unitList, nil
 }
 
-func (m *OceanbaseOperationManager) GetUnitConfigV4List() ([]model.UnitConfigV4, error) {
+func (m *OceanbaseOperationManager) GetUnitConfigV4List(ctx context.Context) ([]model.UnitConfigV4, error) {
 	var unitConfigV4List []model.UnitConfigV4
-	err := m.QueryList(&unitConfigV4List, sql.GetUnitConfigV4List)
+	err := m.QueryList(ctx, &unitConfigV4List, sql.GetUnitConfigV4List)
 	if err != nil {
 		return unitConfigV4List, errors.Wrap(err, "Get all unitConfigV4 list")
 	}
 	return unitConfigV4List, nil
 }
 
-func (m *OceanbaseOperationManager) GetUnitConfigV4ByName(name string) (*model.UnitConfigV4, error) {
+func (m *OceanbaseOperationManager) GetUnitConfigV4ByName(ctx context.Context, name string) (*model.UnitConfigV4, error) {
 	pool := &model.UnitConfigV4{}
-	err := m.QueryRow(pool, sql.GetUnitConfigV4ByName, name)
+	err := m.QueryRow(ctx, pool, sql.GetUnitConfigV4ByName, name)
 	if err != nil {
 		return pool, errors.Wrap(err, "Get unitConfigV4 By Name")
 	}
 	return pool, nil
 }
 
-func (m *OceanbaseOperationManager) GetCharset() (*model.Charset, error) {
+func (m *OceanbaseOperationManager) GetCharset(ctx context.Context) (*model.Charset, error) {
 	charset := &model.Charset{}
-	err := m.QueryRow(charset, sql.GetCharset)
+	err := m.QueryRow(ctx, charset, sql.GetCharset)
 	if err != nil {
 		return charset, errors.Wrap(err, "Get charset")
 	}
 	return charset, nil
 }
 
-func (m *OceanbaseOperationManager) GetVariable(name string) (*model.Variable, error) {
+func (m *OceanbaseOperationManager) GetVariable(ctx context.Context, name string) (*model.Variable, error) {
 	variable := &model.Variable{}
-	err := m.QueryRow(variable, sql.GetVariableLike, name)
+	err := m.QueryRow(ctx, variable, sql.GetVariableLike, name)
 	if err != nil {
 		return variable, errors.Wrap(err, "Get variable")
 	}
 	return variable, nil
 }
 
-func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, error) {
+func (m *OceanbaseOperationManager) GetRsJob(ctx context.Context, reJobName string) (*model.RsJob, error) {
 	rsJob := &model.RsJob{}
-	err := m.QueryRow(rsJob, sql.GetRsJob, reJobName)
+	err := m.QueryRow(ctx, rsJob, sql.GetRsJob, reJobName)
 	if err != nil {
 		return rsJob, errors.Wrap(err, "Get rsJob by reJobName")
 	}
@@ -149,27 +150,27 @@ func (m *OceanbaseOperationManager) GetRsJob(reJobName string) (*model.RsJob, er
 
 // ------------ delete ------------
 
-func (m *OceanbaseOperationManager) DeleteTenant(tenantName string, force bool) error {
+func (m *OceanbaseOperationManager) DeleteTenant(ctx context.Context, tenantName string, force bool) error {
 	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
-	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) DeletePool(poolName string) error {
+func (m *OceanbaseOperationManager) DeletePool(ctx context.Context, poolName string) error {
 	preparedSQL, params := m.preparedSQLForDeletePool(poolName)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete pool by poolName")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) DeleteUnitConfig(unitName string) error {
+func (m *OceanbaseOperationManager) DeleteUnitConfig(ctx context.Context, unitName string) error {
 	preparedSQL, params := m.preparedSQLForDeleteUnitConfig(unitName)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete unit by unitName")
 	}
@@ -178,36 +179,36 @@ func (m *OceanbaseOperationManager) DeleteUnitConfig(unitName string) error {
 
 // ------------ check function ------------
 
-func (m *OceanbaseOperationManager) CheckTenantExistByName(tenantName string) (bool, error) {
+func (m *OceanbaseOperationManager) CheckTenantExistByName(ctx context.Context, tenantName string) (bool, error) {
 	var count int
-	err := m.QueryCount(&count, sql.GetTenantCountByName, tenantName)
+	err := m.QueryCount(ctx, &count, sql.GetTenantCountByName, tenantName)
 	if err != nil {
 		return false, errors.Wrap(err, "Get tenantconst by tenantName")
 	}
 	return count != 0, nil
 }
 
-func (m *OceanbaseOperationManager) CheckPoolExistByName(poolName string) (bool, error) {
+func (m *OceanbaseOperationManager) CheckPoolExistByName(ctx context.Context, poolName string) (bool, error) {
 	var count int
-	err := m.QueryCount(&count, sql.GetPoolCountByName, poolName)
+	err := m.QueryCount(ctx, &count, sql.GetPoolCountByName, poolName)
 	if err != nil {
 		return false, errors.Wrap(err, "Check whether pool exist by poolName")
 	}
 	return count != 0, nil
 }
 
-func (m *OceanbaseOperationManager) CheckUnitConfigExistByName(unitConfigName string) (bool, error) {
+func (m *OceanbaseOperationManager) CheckUnitConfigExistByName(ctx context.Context, unitConfigName string) (bool, error) {
 	var count int
-	err := m.QueryCount(&count, sql.GetUnitConfigV4CountByName, unitConfigName)
+	err := m.QueryCount(ctx, &count, sql.GetUnitConfigV4CountByName, unitConfigName)
 	if err != nil {
 		return false, errors.Wrap(err, "Check whether unitconfigV4 exist by poolName")
 	}
 	return count != 0, nil
 }
 
-func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(tenantName int) (bool, error) {
+func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(ctx context.Context, tenantName int) (bool, error) {
 	var count int
-	err := m.QueryCount(&count, sql.GetRsJobCount, tenantName)
+	err := m.QueryCount(ctx, &count, sql.GetRsJobCount, tenantName)
 	if err != nil {
 		return false, errors.Wrap(err, "Check whether rsJob exist by poolName")
 	}
@@ -216,27 +217,27 @@ func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(tenantName int) (b
 
 // ------------ add ------------
 
-func (m *OceanbaseOperationManager) AddTenant(tenantSQLParam model.TenantSQLParam) error {
+func (m *OceanbaseOperationManager) AddTenant(ctx context.Context, tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam)
-	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Add Tenant")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) AddPool(pool model.PoolSQLParam) error {
+func (m *OceanbaseOperationManager) AddPool(ctx context.Context, pool model.PoolSQLParam) error {
 	preparedSQL, params := preparedSQLForAddPool(pool)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Add pool")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) error {
+func (m *OceanbaseOperationManager) AddUnitConfigV4(ctx context.Context, unitConfigV4 *model.UnitConfigV4SQLParam) error {
 	preparedSQL, params := preparedSQLForAddUnitConfigV4(unitConfigV4)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Add UnitConfigV4")
 	}
@@ -245,37 +246,37 @@ func (m *OceanbaseOperationManager) AddUnitConfigV4(unitConfigV4 *model.UnitConf
 
 // ------------ modify ------------
 
-func (m *OceanbaseOperationManager) SetTenantVariable(tenantName, variableList string) error {
+func (m *OceanbaseOperationManager) SetTenantVariable(ctx context.Context, tenantName, variableList string) error {
 	preparedSQL, params := m.preparedSQLForSetTenantVariable(tenantName, variableList)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set Tenant Variable")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetUnitConfigV4(unitConfigV4 *model.UnitConfigV4SQLParam) error {
+func (m *OceanbaseOperationManager) SetUnitConfigV4(ctx context.Context, unitConfigV4 *model.UnitConfigV4SQLParam) error {
 	preparedSQL, params := preparedSQLForSetUnitConfigV4(unitConfigV4)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set UnitConfig")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetTenantUnitNum(tenantName string, unitNum int) error {
+func (m *OceanbaseOperationManager) SetTenantUnitNum(ctx context.Context, tenantName string, unitNum int) error {
 	preparedSQL, params := m.preparedSQLForSetTenantUnitNum(tenantName, unitNum)
-	err := m.ExecWithDefaultTimeout(preparedSQL, params...)
+	err := m.ExecWithDefaultTimeout(ctx, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set pool UnitNum")
 	}
 	return nil
 }
 
-func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string, timeoutSeconds int) error {
+func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(ctx context.Context, name string, timeoutSeconds int) error {
 	finished := false
 	for i := 0; i < timeoutSeconds; i++ {
-		tenant, err := m.GetTenantByName(name)
+		tenant, err := m.GetTenantByName(ctx, name)
 		if err != nil {
 			m.Logger.Error(err, "Failed to get tenant info")
 		}
@@ -292,10 +293,10 @@ func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(name string
 	return nil
 }
 
-func (m *OceanbaseOperationManager) SetTenant(tenantSQLParam model.TenantSQLParam) error {
+func (m *OceanbaseOperationManager) SetTenant(ctx context.Context, tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForSetTenant(tenantSQLParam)
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
-	err := m.ExecWithTimeout(config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set tenant")
 	}
@@ -441,10 +442,10 @@ func prepareSQLForAlterPool(param *model.PoolParam) (string, []any) {
 	return "", args
 }
 
-func (m *OceanbaseOperationManager) AlterPool(poolParam *model.PoolParam) error {
+func (m *OceanbaseOperationManager) AlterPool(ctx context.Context, poolParam *model.PoolParam) error {
 	sql, args := prepareSQLForAlterPool(poolParam)
 	if sql != "" {
-		return m.ExecWithDefaultTimeout(sql, args...)
+		return m.ExecWithDefaultTimeout(ctx, sql, args...)
 	}
 	return nil
 }
@@ -478,17 +479,17 @@ func (m *OceanbaseOperationManager) preparedSQLForDeleteUnitConfig(unitConfigNam
 	return fmt.Sprintf(sql.DeleteUnitConfig, unitConfigName), params
 }
 
-func (m *OceanbaseOperationManager) ChangeTenantUserPassword(username, password string) error {
-	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.ChangeTenantUserPassword, username), password)
+func (m *OceanbaseOperationManager) ChangeTenantUserPassword(ctx context.Context, username, password string) error {
+	err := m.ExecWithDefaultTimeout(ctx, fmt.Sprintf(sql.ChangeTenantUserPassword, username), password)
 	if err != nil {
 		return errors.Wrap(err, "Change tenant user password")
 	}
 	return nil
 }
 
-func (m OceanbaseOperationManager) ListTenantAccessPoints(tenantName string) ([]*model.TenantAccessPoint, error) {
+func (m *OceanbaseOperationManager) ListTenantAccessPoints(ctx context.Context, tenantName string) ([]*model.TenantAccessPoint, error) {
 	aps := make([]*model.TenantAccessPoint, 0)
-	err := m.QueryList(&aps, sql.QueryTenantAccessPointByName, tenantName)
+	err := m.QueryList(ctx, &aps, sql.QueryTenantAccessPointByName, tenantName)
 	if err != nil {
 		m.Logger.Error(err, "Failed to list tenant access points")
 		return nil, errors.Wrap(err, "List tenant access points")
@@ -496,9 +497,9 @@ func (m OceanbaseOperationManager) ListTenantAccessPoints(tenantName string) ([]
 	return aps, nil
 }
 
-func (m OceanbaseOperationManager) CreateEmptyStandbyTenant(params *model.CreateEmptyStandbyTenantParam) error {
+func (m *OceanbaseOperationManager) CreateEmptyStandbyTenant(ctx context.Context, params *model.CreateEmptyStandbyTenantParam) error {
 	sqlStatement := fmt.Sprintf(sql.CreateEmptyStandbyTenant, params.TenantName, "'"+strings.Join(params.PoolList, "','")+"'")
-	err := m.ExecWithTimeout(config.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
+	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
 	if err != nil {
 		m.Logger.Error(err, "Failed to create empty standby tenant")
 		return errors.Wrap(err, "Create empty standby tenant")
@@ -506,11 +507,11 @@ func (m OceanbaseOperationManager) CreateEmptyStandbyTenant(params *model.Create
 	return nil
 }
 
-func (m OceanbaseOperationManager) SwitchTenantRole(tenant, role string) error {
+func (m *OceanbaseOperationManager) SwitchTenantRole(ctx context.Context, tenant, role string) error {
 	if role != "PRIMARY" && role != "STANDBY" {
 		return errors.New("invalid tenant role")
 	}
-	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.SwitchTenantRole, role, tenant))
+	err := m.ExecWithDefaultTimeout(ctx, fmt.Sprintf(sql.SwitchTenantRole, role, tenant))
 	if err != nil {
 		m.Logger.Error(err, "Failed to switch tenant's role")
 		return err
@@ -518,9 +519,9 @@ func (m OceanbaseOperationManager) SwitchTenantRole(tenant, role string) error {
 	return nil
 }
 
-func (m OceanbaseOperationManager) ListLSDeletion(tenantId int64) ([]*model.LSInfo, error) {
+func (m *OceanbaseOperationManager) ListLSDeletion(ctx context.Context, tenantId int64) ([]*model.LSInfo, error) {
 	lsDeletions := make([]*model.LSInfo, 0)
-	err := m.QueryList(&lsDeletions, sql.QueryLSDeletion, tenantId, tenantId)
+	err := m.QueryList(ctx, &lsDeletions, sql.QueryLSDeletion, tenantId, tenantId)
 	if err != nil {
 		m.Logger.Error(err, "Failed to list ls deletion")
 		return nil, errors.Wrap(err, "List ls deletion")
@@ -528,9 +529,9 @@ func (m OceanbaseOperationManager) ListLSDeletion(tenantId int64) ([]*model.LSIn
 	return lsDeletions, nil
 }
 
-func (m OceanbaseOperationManager) ListLogStats(tenantId int64) ([]*model.LogStat, error) {
+func (m *OceanbaseOperationManager) ListLogStats(ctx context.Context, tenantId int64) ([]*model.LogStat, error) {
 	logStats := make([]*model.LogStat, 0)
-	err := m.QueryList(&logStats, sql.QueryLogStats, tenantId)
+	err := m.QueryList(ctx, &logStats, sql.QueryLogStats, tenantId)
 	if err != nil {
 		m.Logger.Error(err, "Failed to list log stats")
 		return nil, errors.Wrap(err, "List log stats")
@@ -538,17 +539,17 @@ func (m OceanbaseOperationManager) ListLogStats(tenantId int64) ([]*model.LogSta
 	return logStats, nil
 }
 
-func (m OceanbaseOperationManager) UpgradeTenantWithName(tenantName string) error {
-	err := m.ExecWithDefaultTimeout(fmt.Sprintf(sql.UpgradeTenantWithName, tenantName))
+func (m *OceanbaseOperationManager) UpgradeTenantWithName(ctx context.Context, tenantName string) error {
+	err := m.ExecWithDefaultTimeout(ctx, fmt.Sprintf(sql.UpgradeTenantWithName, tenantName))
 	if err != nil {
 		return errors.Wrap(err, "Upgrade tenant")
 	}
 	return nil
 }
 
-func (m OceanbaseOperationManager) ListParametersWithTenantID(tenantID int64) ([]*model.Parameter, error) {
+func (m *OceanbaseOperationManager) ListParametersWithTenantID(ctx context.Context, tenantID int64) ([]*model.Parameter, error) {
 	params := make([]*model.Parameter, 0)
-	err := m.QueryList(&params, sql.ListParametersWithTenantID, tenantID)
+	err := m.QueryList(ctx, &params, sql.ListParametersWithTenantID, tenantID)
 	if err != nil {
 		return nil, errors.Wrap(err, "List parameters")
 	}

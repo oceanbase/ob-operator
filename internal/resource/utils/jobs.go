@@ -90,6 +90,9 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to create job of image: %s", image)
 	}
 
+	// Wait for the job to be created before fetching it
+	time.Sleep(time.Second)
+
 	var jobObject *batchv1.Job
 	for i := 0; i < obcfg.GetConfig().Time.CheckJobMaxRetries; i++ {
 		jobObject, err = GetJob(ctx, c, namespace, fullJobName)
@@ -136,7 +139,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		}
 	} else {
 		logger.V(oceanbaseconst.LogLevelDebug).Info("Job failed", "job", fullJobName)
-		return "", exitCode, errors.Wrapf(err, "Failed to run job %s", fullJobName)
+		return "", exitCode, errors.Errorf("Failed to run job %s", fullJobName)
 	}
 	return output, exitCode, nil
 }
@@ -150,7 +153,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 	if err != nil {
 		return errors.Wrapf(err, "Get operation manager failed for obcluster %s", obcluster.Name)
 	}
-	observers, err := oceanbaseOperationManager.ListServers()
+	observers, err := oceanbaseOperationManager.ListServers(ctx)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to list all servers for obcluster %s", obcluster.Name)
 	}

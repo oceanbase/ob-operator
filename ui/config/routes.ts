@@ -34,6 +34,42 @@ export default [
                 name: '创建租户',
               },
               {
+                path: 'alert',
+                component: 'Alert',
+                name: '告警',
+                routes: [
+                  {
+                    path: 'event',
+                    component: 'Alert/Event',
+                    name: '告警事件',
+                  },
+                  {
+                    path: 'shield',
+                    component: 'Alert/Shield',
+                    name: '告警屏蔽',
+                  },
+                  {
+                    path: 'rules',
+                    component: 'Alert/Rules',
+                    name: '告警规则',
+                  },
+                  {
+                    path: 'channel',
+                    component: 'Alert/Channel',
+                    name: '告警通道',
+                  },
+                  {
+                    path: 'subscriptions',
+                    component: 'Alert/Subscriptions',
+                    name: '告警推送',
+                  },
+                  {
+                    path: '/alert',
+                    redirect: 'event',
+                  },
+                ],
+              },
+              {
                 path: 'overview',
                 component: 'Overview',
                 name: '系统概览页',

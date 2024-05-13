@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package operation
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -23,8 +24,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-// TODO
-func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.BootstrapServerInfo) error {
+func (m *OceanbaseOperationManager) Bootstrap(ctx context.Context, bootstrapServerList []model.BootstrapServerInfo) error {
 	serverInfoList := make([]string, 0, len(bootstrapServerList))
 	for _, bootstrapServer := range bootstrapServerList {
 		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
@@ -32,7 +32,7 @@ func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.Bootst
 	bootstrapInfo := strings.Join(serverInfoList, ", ")
 	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapInfo)
 	m.Logger.Info("Execute bootstrap sql", "sql", bootstrapSql, "datasource", m.Connector.DataSource().String())
-	err := m.ExecWithTimeout(config.BootstrapTimeout, bootstrapSql)
+	err := m.ExecWithTimeout(ctx, config.BootstrapTimeout, bootstrapSql)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when bootstrap")
 		return errors.Wrap(err, "Bootstrap")
@@ -40,9 +40,9 @@ func (m *OceanbaseOperationManager) Bootstrap(bootstrapServerList []model.Bootst
 	return nil
 }
 
-// get oceanbase version by every observer with build number
-func (m *OceanbaseOperationManager) GetVersion() (*model.OBVersion, error) {
-	observers, err := m.ListServers()
+// GetVersion gets oceanbase version from every observer with build number
+func (m *OceanbaseOperationManager) GetVersion(ctx context.Context) (*model.OBVersion, error) {
+	observers, err := m.ListServers(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to List observers of cluster")
 	}

@@ -63,10 +63,8 @@ definitions:
     properties:
       endTime:
         type: integer
-      instances:
-        items:
-          $ref: '#/definitions/oceanbase.OBInstance'
-        type: array
+      instance:
+        $ref: '#/definitions/oceanbase.OBInstance'
       keyword:
         type: string
       serverity:
@@ -1926,10 +1924,8 @@ definitions:
     - TypeCustomized
   silence.SilencerFilter:
     properties:
-      instances:
-        items:
-          $ref: '#/definitions/oceanbase.OBInstance'
-        type: array
+      instance:
+        $ref: '#/definitions/oceanbase.OBInstance'
       keyword:
         type: string
     type: object
@@ -3998,7 +3994,7 @@ paths:
       - description: backup job type
         enum:
         - FULL
-        - INCR
+        - INC
         - CLEAN
         - ARCHIVE
         in: path

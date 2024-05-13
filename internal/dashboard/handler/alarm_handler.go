@@ -14,14 +14,14 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
-
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 )
 
 // @ID ListAlerts
@@ -37,8 +37,14 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/alert/alerts [POST]
 // @Security ApiKeyAuth
-func ListAlerts(_ *gin.Context) ([]alert.Alert, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func ListAlerts(c *gin.Context) ([]alert.Alert, error) {
+	filter := &alert.AlertFilter{}
+	err := c.Bind(filter)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	logger.Infof("Query alerts with filter: %+v", filter)
+	return alarm.ListAlerts(filter)
 }
 
 // @ID ListSilencers

@@ -610,7 +610,7 @@ func (m *OBTenantManager) generateStatusZone(tenantID int64) ([]string, error) {
 	if err != nil {
 		return zoneList, errors.Wrap(err, "Get Sql Operator Error When Generating Zone For Tenant CR Status")
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList()
+	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "Get sql error when get pool list")
 	}
@@ -622,7 +622,7 @@ func (m *OBTenantManager) generateStatusZone(tenantID int64) ([]string, error) {
 		}
 	}
 	zoneMap := make(map[string]string, 0)
-	unitList, err := oceanbaseOperationManager.GetUnitList()
+	unitList, err := oceanbaseOperationManager.GetUnitList(m.Ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "Get sql error when get unit list")
 	}
@@ -643,15 +643,15 @@ func (m *OBTenantManager) buildUnitConfigV4FromDB(zone string, tenantID int64) (
 	if err != nil {
 		return nil, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
-	unitList, err := oceanbaseOperationManager.GetUnitList()
+	unitList, err := oceanbaseOperationManager.GetUnitList(m.Ctx)
 	if err != nil {
 		return unitConfig, errors.Wrap(err, "Get sql error when get unit list")
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList()
+	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
 	if err != nil {
 		return unitConfig, errors.Wrap(err, "Get sql error when get pool list")
 	}
-	unitConfigList, err := oceanbaseOperationManager.GetUnitConfigV4List()
+	unitConfigList, err := oceanbaseOperationManager.GetUnitConfigV4List(m.Ctx)
 	if err != nil {
 		return unitConfig, errors.Wrap(err, "Get sql error when get unit config list")
 	}
@@ -693,7 +693,7 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList()
+	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get sql error when get pool list")
 	}
@@ -703,7 +703,7 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 			resourcePoolIDList = append(resourcePoolIDList, pool.ResourcePoolID)
 		}
 	}
-	units, err := oceanbaseOperationManager.GetUnitList()
+	units, err := oceanbaseOperationManager.GetUnitList(m.Ctx)
 	if err != nil {
 		return unitList, errors.Wrap(err, "Get Sql Operator Error When Building Resource Unit From DB")
 	}

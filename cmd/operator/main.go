@@ -233,12 +233,7 @@ func main() {
 	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
 
 	setupLog.WithValues(
-		"namespace", namespace,
-		"manager-namespace", managerNamespace,
-		"metrics-bind-address", metricsAddr,
-		"health-probe-bind-address", probeAddr,
-		"leader-elect", enableLeaderElection,
-		"log-verbosity", logVerbosity,
+		"configs", cfg,
 	).Info("starting manager")
 
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {

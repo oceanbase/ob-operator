@@ -205,7 +205,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
-	units, err := db.ListUnitsWithTenantId(int64(obtenant.Status.TenantRecordInfo.TenantID))
+	units, err := db.ListUnitsWithTenantId(c, int64(obtenant.Status.TenantRecordInfo.TenantID))
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

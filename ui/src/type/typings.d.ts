@@ -452,6 +452,7 @@ declare namespace API {
     type: MonitorUseTarget;
     useFor: MonitorUseFor;
     filterData?: API.ClusterItem[] | API.TenantDetail[];
+    filterQueryMetric?: API.MetricsLabels;
   };
 
   type ClusterMode = 'NORMAL' | 'STANDALONE' | 'SERVICE';
@@ -460,7 +461,7 @@ declare namespace API {
 
   type EventType = 'NORMAL' | 'WARNING';
 
-  type MonitorUseTarget = 'OVERVIEW' | 'DETAIL';
+  type MonitorUseTarget = 'OVERVIEW' | 'DETAIL' | 'OVERVIEW_IN_CLUSTER';
 
   type EventObjectType =
     | 'OBCLUSTER'
@@ -470,7 +471,7 @@ declare namespace API {
 
   type TenantRole = 'PRIMARY' | 'STANDBY';
 
-  type JobType = 'FULL' | 'INCR' | 'CLEAN' | 'ARCHIVE';
+  type JobType = 'FULL' | 'INC' | 'CLEAN' | 'ARCHIVE';
 
   type DestType = 'NFS' | 'OSS';
 
@@ -500,6 +501,7 @@ declare namespace API {
   interface TenantDetail {
     charset: string;
     clusterName: string;
+    clusterResourceName: string;
     createTime: string;
     locality: string;
     name: string;

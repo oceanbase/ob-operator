@@ -1,5 +1,5 @@
 import EventsTable from '@/components/EventsTable';
-import showDeleteConfirm from '@/components/customModal/DeleteModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
 import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
 import {
