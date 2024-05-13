@@ -31,4 +31,5 @@ var (
 	ErrServiceUnavailable ErrorType = "ServiceUnavailable"
 
 	ErrInsufficientResource ErrorType = "InsufficientResource"
+	ErrExternal             ErrorType = "External"
 )
