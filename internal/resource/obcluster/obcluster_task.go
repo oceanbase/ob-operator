@@ -877,7 +877,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		}
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
-			m.Logger.WithValues("version", version).Info("Failed to parse current version")
+			m.Logger.WithValues("version", version, "err", err.Error()).Info("Failed to parse current version")
 			return nil
 		}
 		switch modeAnnoVal {
