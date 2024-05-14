@@ -18,8 +18,8 @@ const (
 
 const (
 	AlertManagerAddress = "http://127.0.0.1:9093"
-	AlertQueryUrl       = "/api/v2/alerts"
-	SilencerQueryUrl    = "/api/v2/silences"
+	AlertUrl            = "/api/v2/alerts"
+	SilencerUrl         = "/api/v2/silences"
 )
 
 const (

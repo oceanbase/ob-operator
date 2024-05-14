@@ -80,8 +80,13 @@ func ListSilencers(c *gin.Context) ([]silence.SilencerResponse, error) {
 // @Param id path string true "silencer id"
 // @Router /api/v1/alarm/silence/silencers/{id} [GET]
 // @Security ApiKeyAuth
-func GetSilencer(_ *gin.Context) (*silence.SilencerResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func GetSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
+	silencerIdentity := &silence.SilencerIdentity{}
+	err := c.BindUri(silencerIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.GetSilencer(silencerIdentity.Id)
 }
 
 // @ID CreateOrUpdateSilencer
@@ -97,8 +102,13 @@ func GetSilencer(_ *gin.Context) (*silence.SilencerResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/silence/silencers [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateSilencer(_ *gin.Context) (*silence.SilencerResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func CreateOrUpdateSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
+	param := &silence.SilencerParam{}
+	err := c.Bind(param)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.CreateOrUpdateSilencer(param)
 }
 
 // @ID DeleteSilencer
@@ -114,8 +124,13 @@ func CreateOrUpdateSilencer(_ *gin.Context) (*silence.SilencerResponse, error) {
 // @Param id path string true "silencer id"
 // @Router /api/v1/alarm/silence/silencers/{id} [DELETE]
 // @Security ApiKeyAuth
-func DeleteSilencer(_ *gin.Context) (any, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func DeleteSilencer(c *gin.Context) (any, error) {
+	silencerIdentity := &silence.SilencerIdentity{}
+	err := c.BindUri(silencerIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.DeleteSilencer(silencerIdentity.Id)
 }
 
 // @ID ListRules

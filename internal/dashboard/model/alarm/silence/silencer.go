@@ -23,6 +23,10 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+type SilencerApiResponse struct {
+	Id string `json:"id" binding:"required"`
+}
+
 type Status struct {
 	State State `json:"state" binding:"required"`
 }
@@ -41,6 +45,10 @@ type SilencerResponse struct {
 	Status    *Status                `json:"status" binding:"required"`
 	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
 	Silencer  `json:",inline"`
+}
+
+type SilencerIdentity struct {
+	Id string `json:"id" binding:"required"`
 }
 
 type SilencerParam struct {
