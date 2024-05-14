@@ -18,6 +18,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -27,6 +28,9 @@ func createPasswordSecret(ctx context.Context, ns, name, password string) (*core
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: ns,
+			Labels: map[string]string{
+				constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
+			},
 		},
 		StringData: map[string]string{
 			"password": password,
@@ -49,6 +53,9 @@ func copyPasswordSecret(ctx context.Context, srcNs, srcName, tgtNs, tgtName stri
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      tgtName,
 			Namespace: tgtNs,
+			Labels: map[string]string{
+				constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
+			},
 		},
 		Data: secret.Data,
 	}

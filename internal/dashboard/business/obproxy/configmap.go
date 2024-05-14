@@ -20,6 +20,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -43,7 +44,8 @@ func createConfigMap(ctx context.Context, ns, name string, param *obproxy.Create
 			Name:      cmName,
 			Namespace: ns,
 			Labels: map[string]string{
-				LabelOBProxy: name,
+				LabelOBProxy:            name,
+				constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
 			},
 		},
 		Data: map[string]string{},

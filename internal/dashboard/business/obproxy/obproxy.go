@@ -185,7 +185,6 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 				if err != nil {
 					return nil, httpErr.NewInternal("Failed to update obproxy config, err msg: " + err.Error())
 				}
-				// TODO: How to delete the parameter?
 			}
 		}
 	}

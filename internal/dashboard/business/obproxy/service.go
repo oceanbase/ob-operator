@@ -19,6 +19,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -41,7 +42,8 @@ func createOBProxyService(ctx context.Context, ns, name string, svcType corev1.S
 			Name:      svcName,
 			Namespace: ns,
 			Labels: map[string]string{
-				LabelOBProxy: name,
+				LabelOBProxy:            name,
+				constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
 			},
 		},
 		Spec: corev1.ServiceSpec{

@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -154,11 +155,12 @@ func buildOBProxyDeployment(ctx context.Context, param *obproxy.CreateOBProxyPar
 	deploy.Name = param.Name
 	deploy.Namespace = param.Namespace
 	deploy.Labels = map[string]string{
-		LabelOBProxy:          param.Name,
-		LabelForOBCluster:     b.cluster.Name,
-		LabelForNamespace:     b.cluster.Namespace,
-		LabelWithConfigMap:    b.cm.Name,
-		LabelProxyClusterName: param.ProxyClusterName,
+		constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
+		LabelOBProxy:            param.Name,
+		LabelForOBCluster:       b.cluster.Name,
+		LabelForNamespace:       b.cluster.Namespace,
+		LabelWithConfigMap:      b.cm.Name,
+		LabelProxyClusterName:   param.ProxyClusterName,
 	}
 	deploy.Annotations = map[string]string{
 		AnnotationServiceType:    param.ServiceType,
@@ -195,12 +197,13 @@ func buildOBProxyDeployment(ctx context.Context, param *obproxy.CreateOBProxyPar
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: map[string]string{
-					LabelOBProxy: param.Name,
+					LabelOBProxy:            param.Name,
+					constant.LabelManagedBy: constant.DASHBOARD_APP_NAME,
 				},
 			},
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{{
-					Name:  param.Name,
+					Name:  "obproxy",
 					Image: param.Image,
 					Ports: []corev1.ContainerPort{{
 						Name:          "sql",

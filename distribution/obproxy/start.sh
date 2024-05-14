@@ -32,7 +32,7 @@ function concat_opts {
     fi
 }
 
-[ -z "$ODP_PROMETHEUS_SYNC_INTERVAL" ] && opts=$(concat_opts $opts "prometheus_sync_interval=1")
+[ -z "$ODP_PROMETHEUS_SYNC_INTERVAL" ] && opts=$(concat_opts $opts "prometheus_sync_interval=1s")
 [ -z "$ODP_ENABLE_METADB_USED" ] && opts=$(concat_opts $opts "enable_metadb_used=false")
 [ -z "$ODP_SKIP_PROXY_SYS_PRIVATE_CHECK" ] && opts=$(concat_opts $opts "skip_proxy_sys_private_check=true")
 [ -z "$ODP_LOG_DIR_SIZE_THRESHOLD" ] && opts=$(concat_opts $opts "log_dir_size_threshold=10G")
@@ -44,7 +44,7 @@ while IFS='=' read -r key value; do
     if [[ $key == ODP_* ]]; then
         # Remove the prefix "ODP_" from the key and transform to lower case
         key=$(echo $key | sed 's/^ODP_//g' | tr '[:upper:]' '[:lower:]')
-        opts=$(concat_opts $opts $(printf "%s=%s" "$key" "$value"))
+        opts=$(concat_opts $opts "$(printf "%s=%s" "$key" "$value")")
     fi
 done < <(env)
 
