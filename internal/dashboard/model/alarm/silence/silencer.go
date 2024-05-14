@@ -13,26 +13,18 @@ See the Mulan PSL v2 for more details.
 package silence
 
 import (
+	"time"
+
+	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
+
+	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	logger "github.com/sirupsen/logrus"
 )
 
-type SilencerResponse struct {
-	Id        string                 `json:"id" binding:"required"`
-	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
-	Status    *Status                `json:"status" binding:"required"`
-	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
-	Silencer
-}
-
-type SilencerParam struct {
-	Id        string                 `json:"id,omitempty"`
-	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
-	Silencer
-}
-
 type Status struct {
-	State *State `json:"state" binding:"required"`
+	State State `json:"state" binding:"required"`
 }
 
 type Silencer struct {
@@ -41,4 +33,131 @@ type Silencer struct {
 	StartsAt  int64           `json:"startsAt" binding:"required"`
 	EndsAt    int64           `json:"endsAt" binding:"required"`
 	Matchers  []alarm.Matcher `json:"matchers" binding:"required"`
+}
+
+type SilencerResponse struct {
+	Id        string                 `json:"id" binding:"required"`
+	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
+	Status    *Status                `json:"status" binding:"required"`
+	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
+	Silencer  `json:",inline"`
+}
+
+type SilencerParam struct {
+	Id        string                 `json:"id,omitempty"`
+	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
+	Silencer
+}
+
+func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstance {
+	instances := make([]oceanbase.OBInstance, 0)
+	var matchedInstanceType oceanbase.OBInstanceType
+	clusterMatcher, matchCluster := matcherMap[alarmconstant.LabelOBCluster]
+	zoneMatcher, matchZone := matcherMap[alarmconstant.LabelOBCluster]
+	serverMatcher, matchServer := matcherMap[alarmconstant.LabelOBCluster]
+	tenantMatcher, matchTenant := matcherMap[alarmconstant.LabelOBCluster]
+	if matchCluster {
+		matchedInstanceType = oceanbase.OBCluster
+	}
+	if matchZone {
+		matchedInstanceType = oceanbase.OBZone
+	}
+	if matchServer {
+		matchedInstanceType = oceanbase.OBServer
+	}
+	if matchTenant {
+		matchedInstanceType = oceanbase.OBTenant
+	}
+	switch matchedInstanceType {
+	case oceanbase.OBCluster:
+		clusterNames := clusterMatcher.ExtractMatchedValues()
+		for _, clusterName := range clusterNames {
+			instances = append(instances, oceanbase.OBInstance{
+				Type:      oceanbase.OBCluster,
+				OBCluster: clusterName,
+			})
+		}
+	case oceanbase.OBZone:
+		if !matchCluster {
+			logger.Error("Cluster matcher not exists")
+			break
+		} else if clusterMatcher.IsRegex {
+			logger.Error("Multiple cluster matches for zone matcher")
+			break
+		}
+		zoneNames := zoneMatcher.ExtractMatchedValues()
+		for _, zone := range zoneNames {
+			instances = append(instances, oceanbase.OBInstance{
+				Type:      oceanbase.OBCluster,
+				OBCluster: clusterMatcher.Value,
+				OBZone:    zone,
+			})
+		}
+	case oceanbase.OBServer:
+		if !matchCluster {
+			logger.Error("Cluster matcher not exists")
+			break
+		} else if clusterMatcher.IsRegex {
+			logger.Error("Multiple cluster matches for zone matcher")
+			break
+		}
+		serverIps := serverMatcher.ExtractMatchedValues()
+		for _, serverIp := range serverIps {
+			instances = append(instances, oceanbase.OBInstance{
+				Type:      oceanbase.OBCluster,
+				OBCluster: clusterMatcher.Value,
+				OBServer:  serverIp,
+			})
+		}
+	case oceanbase.OBTenant:
+		if !matchCluster {
+			logger.Error("Cluster matcher not exists")
+			break
+		} else if clusterMatcher.IsRegex {
+			logger.Error("Multiple cluster matches for zone matcher")
+			break
+		}
+		tenantNames := tenantMatcher.ExtractMatchedValues()
+		for _, tenant := range tenantNames {
+			instances = append(instances, oceanbase.OBInstance{
+				Type:      oceanbase.OBCluster,
+				OBCluster: clusterMatcher.Value,
+				OBTenant:  tenant,
+			})
+		}
+	}
+	return instances
+}
+
+func NewSilencerResponse(gettableSilencer *apimodels.GettableSilence) *SilencerResponse {
+	matchers := make([]alarm.Matcher, 0)
+	matcherMap := make(map[string]alarm.Matcher)
+	for _, silenceMatcher := range gettableSilencer.Matchers {
+		matcher := alarm.Matcher{
+			IsRegex: *silenceMatcher.IsRegex,
+			Name:    *silenceMatcher.Name,
+			Value:   *silenceMatcher.Value,
+		}
+		matchers = append(matchers, matcher)
+		matcherMap[matcher.Name] = matcher
+	}
+
+	instances := extractInstances(matcherMap)
+	silencer := &Silencer{
+		Comment:   *gettableSilencer.Comment,
+		CreatedBy: *gettableSilencer.CreatedBy,
+		StartsAt:  time.Time(*gettableSilencer.StartsAt).Unix(),
+		EndsAt:    time.Time(*gettableSilencer.EndsAt).Unix(),
+		Matchers:  matchers,
+	}
+	silencerResponse := &SilencerResponse{
+		Silencer:  *silencer,
+		Id:        *gettableSilencer.ID,
+		UpdatedAt: time.Time(*gettableSilencer.UpdatedAt).Unix(),
+		Status: &Status{
+			State: State(*gettableSilencer.Status.State),
+		},
+		Instances: instances,
+	}
+	return silencerResponse
 }

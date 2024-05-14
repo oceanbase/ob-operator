@@ -19,6 +19,7 @@ const (
 const (
 	AlertManagerAddress = "http://127.0.0.1:9093"
 	AlertQueryUrl       = "/api/v2/alerts"
+	SilencerQueryUrl    = "/api/v2/silences"
 )
 
 const (
@@ -36,4 +37,8 @@ const (
 const (
 	AnnoSummary     = "summary"
 	AnnoDescription = "description"
+)
+
+const (
+	RegexOR = "|"
 )

@@ -29,7 +29,7 @@ import (
 
 func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
-	gettableAlerts := make([]*apimodels.GettableAlert, 0)
+	gettableAlerts := make(apimodels.GettableAlerts, 0)
 	resp, err := client.R().SetQueryParams(map[string]string{
 		"active":      "true",
 		"silenced":    "true",
@@ -40,40 +40,35 @@ func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query alerts from alertmanager")
 	}
-	filteredAlerts := filterAlerts(gettableAlerts, filter)
-	return filteredAlerts, nil
-}
-
-func filterAlerts(gettableAlerts apimodels.GettableAlerts, filter *alert.AlertFilter) []alert.Alert {
 	filteredAlerts := make([]alert.Alert, 0)
 	for _, gettableAlert := range gettableAlerts {
 		alert, err := alert.NewAlert(gettableAlert)
 		if err != nil {
 			logger.WithError(err).Error("Parse alert got error, just skip")
 		}
-		if matchAlert(alert, filter) {
+		if filterAlert(alert, filter) {
 			filteredAlerts = append(filteredAlerts, *alert)
 		}
 	}
-	return filteredAlerts
+	return filteredAlerts, nil
 }
 
-func matchAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
-	match := true
+func filterAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
+	matched := true
 	if filter.Serverity != "" {
-		match = match && (filter.Serverity == alert.Serverity)
+		matched = matched && (filter.Serverity == alert.Serverity)
 	}
 	if filter.StartTime != 0 {
-		match = match && (filter.StartTime <= alert.StartsAt)
+		matched = matched && (filter.StartTime <= alert.StartsAt)
 	}
 	if filter.EndTime != 0 {
-		match = match && (filter.EndTime >= alert.StartsAt)
+		matched = matched && (filter.EndTime >= alert.StartsAt)
 	}
 	if filter.Keyword != "" {
-		match = match && strings.Contains(alert.Description, filter.Keyword)
+		matched = matched && strings.Contains(alert.Description, filter.Keyword)
 	}
 	if filter.Instance != nil {
-		match = match && filter.Instance.Equals(alert.Instance)
+		matched = matched && filter.Instance.Equals(alert.Instance)
 	}
-	return match
+	return matched
 }

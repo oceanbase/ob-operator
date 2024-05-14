@@ -12,8 +12,22 @@ See the Mulan PSL v2 for more details.
 
 package alarm
 
+import (
+	"strings"
+
+	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
+)
+
 type Matcher struct {
 	IsRegex bool   `json:"isRegex"`
 	Name    string `json:"name"`
 	Value   string `json:"value"`
+}
+
+func (m *Matcher) ExtractMatchedValues() []string {
+	matchedValues := []string{m.Value}
+	if m.IsRegex {
+		matchedValues = strings.Split(m.Value, alarmconstant.RegexOR)
+	}
+	return matchedValues
 }

@@ -16,6 +16,7 @@ type OBInstanceType string
 
 const (
 	OBCluster OBInstanceType = "obcluster"
+	OBZone    OBInstanceType = "obzone"
 	OBTenant  OBInstanceType = "obtenant"
 	OBServer  OBInstanceType = "observer"
 )

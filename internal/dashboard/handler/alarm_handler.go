@@ -21,7 +21,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
-	logger "github.com/sirupsen/logrus"
 )
 
 // @ID ListAlerts
@@ -43,7 +42,6 @@ func ListAlerts(c *gin.Context) ([]alert.Alert, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	logger.Infof("Query alerts with filter: %+v", filter)
 	return alarm.ListAlerts(filter)
 }
 
@@ -60,8 +58,13 @@ func ListAlerts(c *gin.Context) ([]alert.Alert, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/silence/silencers [POST]
 // @Security ApiKeyAuth
-func ListSilencers(_ *gin.Context) ([]silence.SilencerResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func ListSilencers(c *gin.Context) ([]silence.SilencerResponse, error) {
+	filter := &silence.SilencerFilter{}
+	err := c.Bind(filter)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.ListSilencers(filter)
 }
 
 // @ID GetSilencer
