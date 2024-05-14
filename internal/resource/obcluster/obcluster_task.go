@@ -834,18 +834,51 @@ outerLoop:
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
-		version, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
-			return errors.Wrap(err, "Run service mode validate job failed")
+			// Make compatible with legacy version in which there is no `version` command
+			var code int32
+			switch modeAnnoVal {
+			case oceanbaseconst.ModeStandalone:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-standalone-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
+				)
+			case oceanbaseconst.ModeService:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-service-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
+				)
+			}
+			if err != nil && code > 1 {
+				return errors.Wrap(err, "Failed to run service mode validate job")
+			}
+			return nil
 		}
-		version = strings.TrimSpace(version)
+		var version string
+		lines := strings.Split(versionOutput, "\n")
+		if len(lines) == 0 {
+			m.Logger.Info("Get version failed")
+			return nil
+		}
+		if len(lines) > 3 {
+			versionStr := strings.Split(lines[1], " ")
+			semVer := versionStr[len(versionStr)-1]
+			releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
+			version = fmt.Sprintf("%s-%s", semVer[0:len(semVer)-1], releaseStr)
+		} else {
+			version = strings.TrimSpace(lines[0])
+		}
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
-			return errors.Wrap(err, "Parse current version")
+			m.Logger.WithValues("version", version, "err", err.Error()).Info("Failed to parse current version")
+			return nil
 		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
