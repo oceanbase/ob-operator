@@ -861,14 +861,24 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			}
 			return nil
 		}
+		var version string
 		lines := strings.Split(versionOutput, "\n")
 		if len(lines) == 0 {
-			return errors.New("Get version failed")
+			m.Logger.Info("Get version failed")
+			return nil
 		}
-		version := strings.TrimSpace(lines[len(lines)-1])
+		if len(lines) > 3 {
+			versionStr := strings.Split(lines[1], " ")
+			semVer := versionStr[len(versionStr)-1]
+			releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
+			version = fmt.Sprintf("%s-%s", semVer[0:len(semVer)-1], releaseStr)
+		} else {
+			version = strings.TrimSpace(lines[0])
+		}
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
-			return errors.Wrap(err, "Parse current version")
+			m.Logger.WithValues("version", version).Info("Failed to parse current version")
+			return nil
 		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
