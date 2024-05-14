@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
@@ -18,7 +17,6 @@ func main() {
 	if err != nil {
 		panic("Failed to create a DSN: " + err.Error())
 	}
-	log.Println("DSN: ", dsn.String())
 	db, err := gorm.Open(mysql.Open(dsn.String()), &gorm.Config{})
 	if err != nil {
 		panic("Failed to open a database connection: " + err.Error())
