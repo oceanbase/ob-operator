@@ -856,7 +856,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
 				)
 			}
-			if err != nil && code != 1 {
+			if err != nil && code > 1 {
 				return errors.Wrap(err, "Failed to run service mode validate job")
 			}
 			return nil
