@@ -1,6 +1,7 @@
 import { alert } from '@/api';
 import AlertDrawer from '@/components/AlertDrawer';
 import { CHANNEL_TYPE_OPTIONS } from '@/constants';
+import { Alert } from '@/type/alert';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';

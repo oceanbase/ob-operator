@@ -6,14 +6,13 @@ import type {
   OceanbaseOBInstance,
 } from '@/api/generated';
 import { SERVERITY_MAP } from '@/constants';
+import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import AlarmFilter from '../AlarmFilter';
 const { Text } = Typography;
-
-
 
 export default function Event() {
   const [form] = Form.useForm();
@@ -67,7 +66,27 @@ export default function Event() {
     {
       title: '操作',
       key: 'action',
-      render: () => <Button style={{ paddingLeft: 0 }} type="link">屏蔽</Button>,
+      render: (_, record) => (
+        <Button
+          disabled={record.status.state !== 'active'}
+          style={{ paddingLeft: 0 }}
+          type="link"
+          onClick={() =>
+            history.push(
+              `/alert/shield?instance=${JSON.stringify(
+                record.instance,
+              )}&label=${JSON.stringify(
+                record.labels?.map((label) => ({
+                  name: label.key,
+                  value: label.value,
+                })),
+              )}`,
+            )
+          }
+        >
+          屏蔽
+        </Button>
+      ),
     },
   ];
   return (
@@ -75,9 +94,7 @@ export default function Event() {
       <Card>
         <AlarmFilter form={form} type="event" />
       </Card>
-      <Card
-        title={<h2 style={{ marginBottom: 0 }}>事件列表</h2>}
-      >
+      <Card title={<h2 style={{ marginBottom: 0 }}>事件列表</h2>}>
         <Table
           columns={columns}
           dataSource={listAlerts}
