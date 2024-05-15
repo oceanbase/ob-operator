@@ -37,7 +37,7 @@ while IFS='=' read -r key value; do
     if [[ $key == ODP_* ]]; then
         # Remove the prefix "ODP_" from the key and transform to lower case
         key=$(echo $key | sed 's/^ODP_//g' | tr '[:upper:]' '[:lower:]')
-        opts=$(concat_opts $opts "$(printf "%s=%s" "$key" "$value")")
+        opts=$(concat_opts $opts "$(printf "%s=\"%s\"" "$key" "$value")")
     fi
 done < <(env)
 
