@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
@@ -119,6 +120,9 @@ func main() {
 			"todo": todo,
 		})
 	})
-
-	r.Run(":20031")
+	listenPort := "20031"
+	if envPort := os.Getenv("LISTEN_PORT"); envPort != "" {
+		listenPort = envPort
+	}
+	r.Run(":" + listenPort)
 }
