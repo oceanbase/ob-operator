@@ -9,12 +9,9 @@ if [ -z $PROXYRO_PASSWORD_HASH ]; then
     PROXYRO_PASSWORD_HASH=$(echo -n "$PROXYRO_PASSWORD" | sha1sum | awk '{print $1}')
 fi
 
-if [ -z $PROXYSYS_PASSWORD ]; then
-    echo "env variable PROXYSYS_PASSWORD is required"
-    exit 1
+if [ -z $PROSYSYS_PASSWORD_HASH ]; then
+    PROXYSYS_PASSWORD_HASH=$(echo -n "$PROXYSYS_PASSWORD" | sha1sum | awk '{print $1}')
 fi
-
-PROXYSYS_PASSWORD_HASH=$(echo -n "$PROXYSYS_PASSWORD" | sha1sum | awk '{print $1}')
 
 opts="obproxy_sys_password=$PROXYSYS_PASSWORD_HASH"
 
