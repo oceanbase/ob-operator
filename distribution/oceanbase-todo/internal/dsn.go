@@ -30,11 +30,9 @@ func NewDSN(prefixes ...string) (*DSN, error) {
 		Password: os.Getenv(prefix + "DB_PASSWORD"),
 		Database: os.Getenv(prefix + "DB_DATABASE"),
 	}
-	if dsn.Port == "" {
-		dsn.Port = "2881"
-	}
-	if dsn.Host == "" || dsn.User == "" || dsn.Database == "" {
-		return nil, errors.New("missing required environment variables")
+
+	if dsn.Host == "" || dsn.User == "" || dsn.Database == "" || dsn.Port == "" {
+		return nil, errors.New("missing required environment variables. Check DB_HOST, DB_PORT, DB_USER and DB_DATABASE please.")
 	}
 	return &dsn, nil
 }

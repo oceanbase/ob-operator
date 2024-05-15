@@ -1,6 +1,6 @@
 # OceanBase Todo List
 
-OceanBase Todo List, an extremely simple todo list web application that shows how to use ob-operator.
+OceanBase Todo List, an extremely simple web application that shows how to use OceanBase as backend database. Initially, it was created for learning about ob-operator referenced in [a real-world example](https://oceanbase.github.io/ob-operator/docs/manual/appendix/example).
 
 ## Features
 
@@ -25,5 +25,6 @@ yarn build # or npm run build
 # Run backend app
 cd ..
 go mod tidy
-DB_HOST=xxx DB_PORT=xxx DB_USER=xxx DB_PASSWORD=xxx DB_DATABASE=xxx go run main.go
+go build -o oceanbase-todo main.go
+DB_HOST=xxx DB_PORT=xxx DB_USER=xxx DB_PASSWORD=xxx DB_DATABASE=xxx ./oceanbase-todo
 ```
