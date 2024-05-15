@@ -12733,7 +12733,7 @@ spec:
         - --log-verbosity=0
         command:
         - /manager
-        image: oceanbase/ob-operator:2.2.0
+        image: oceanbase/ob-operator:2.2.1
         livenessProbe:
           httpGet:
             path: /healthz
