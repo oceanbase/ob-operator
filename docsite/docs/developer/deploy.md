@@ -25,7 +25,7 @@ Parameters:
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/operator.yaml
 ```
 * Development
 ```shell
