@@ -15,7 +15,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，如果您无法访问官方制品托管在 `quay.io` 镜像站的镜像，可通过下面的指令安装我们转托在 `docker.io` 中的制品：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/cert-manager.yaml
 ```
 
 本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。
@@ -29,7 +29,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_r
 * 稳定版本
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/operator.yaml
 ```
 
 * 开发版本
@@ -94,7 +94,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/example/quickstart/obcluster.yaml
 ```
 
 一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
