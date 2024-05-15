@@ -15,8 +15,8 @@ package oceanbase
 type OBInstanceType string
 
 const (
-	OBCluster OBInstanceType = "obcluster"
-	OBZone    OBInstanceType = "obzone"
-	OBTenant  OBInstanceType = "obtenant"
-	OBServer  OBInstanceType = "observer"
+	TypeOBCluster OBInstanceType = "obcluster"
+	TypeOBZone    OBInstanceType = "obzone"
+	TypeOBTenant  OBInstanceType = "obtenant"
+	TypeOBServer  OBInstanceType = "observer"
 )

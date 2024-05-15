@@ -68,17 +68,17 @@ func NewAlert(alert *apimodels.GettableAlert) (*Alert, error) {
 	obcluster, exists := alert.Labels[alarmconstant.LabelOBCluster]
 	if exists {
 		instance.OBCluster = obcluster
-		instance.Type = oceanbase.OBCluster
+		instance.Type = oceanbase.TypeOBCluster
 	}
 	observer, exists := alert.Labels[alarmconstant.LabelOBServer]
 	if exists {
 		instance.OBServer = observer
-		instance.Type = oceanbase.OBServer
+		instance.Type = oceanbase.TypeOBServer
 	}
 	obtenant, exists := alert.Labels[alarmconstant.LabelOBTenant]
 	if exists {
 		instance.OBTenant = obtenant
-		instance.Type = oceanbase.OBTenant
+		instance.Type = oceanbase.TypeOBTenant
 	}
 
 	summary, ok := alert.Annotations[alarmconstant.AnnoSummary]

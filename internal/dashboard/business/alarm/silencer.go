@@ -98,13 +98,13 @@ func ListSilencers(filter *silence.SilencerFilter) ([]silence.SilencerResponse, 
 	if filter.Instance != nil {
 		queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBCluster, filter.Instance.OBCluster))
 		switch filter.Instance.Type {
-		case oceanbase.OBCluster:
+		case oceanbase.TypeOBCluster:
 			// already added
-		case oceanbase.OBZone:
+		case oceanbase.TypeOBZone:
 			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBZone, filter.Instance.OBZone))
-		case oceanbase.OBServer:
+		case oceanbase.TypeOBServer:
 			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBServer, filter.Instance.OBServer))
-		case oceanbase.OBTenant:
+		case oceanbase.TypeOBTenant:
 			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBTenant, filter.Instance.OBTenant))
 		default:
 			return nil, errors.NewBadRequest("Unknown instance type")

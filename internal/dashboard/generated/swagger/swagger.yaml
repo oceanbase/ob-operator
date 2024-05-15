@@ -403,13 +403,15 @@ definitions:
   oceanbase.OBInstanceType:
     enum:
     - obcluster
+    - obzone
     - obtenant
     - observer
     type: string
     x-enum-varnames:
-    - OBCluster
-    - OBTenant
-    - OBServer
+    - TypeOBCluster
+    - TypeOBZone
+    - TypeOBTenant
+    - TypeOBServer
   param.ChangeTenantRole:
     properties:
       failover:
@@ -1815,7 +1817,9 @@ definitions:
       instanceType:
         $ref: '#/definitions/oceanbase.OBInstanceType'
       labels:
-        $ref: '#/definitions/common.KVPair'
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       name:
         type: string
       query:
@@ -1871,7 +1875,9 @@ definitions:
       keepFiringFor:
         type: integer
       labels:
-        $ref: '#/definitions/common.KVPair'
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       lastError:
         type: string
       lastEvaluation:

@@ -5070,13 +5070,15 @@ const docTemplate = `{
             "type": "string",
             "enum": [
                 "obcluster",
+                "obzone",
                 "obtenant",
                 "observer"
             ],
             "x-enum-varnames": [
-                "OBCluster",
-                "OBTenant",
-                "OBServer"
+                "TypeOBCluster",
+                "TypeOBZone",
+                "TypeOBTenant",
+                "TypeOBServer"
             ]
         },
         "param.ChangeTenantRole": {
@@ -7083,7 +7085,10 @@ const docTemplate = `{
                     "$ref": "#/definitions/oceanbase.OBInstanceType"
                 },
                 "labels": {
-                    "$ref": "#/definitions/common.KVPair"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -7167,7 +7172,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "labels": {
-                    "$ref": "#/definitions/common.KVPair"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "lastError": {
                     "type": "string"

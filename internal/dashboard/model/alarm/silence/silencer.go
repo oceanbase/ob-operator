@@ -65,27 +65,27 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 	serverMatcher, matchServer := matcherMap[alarmconstant.LabelOBCluster]
 	tenantMatcher, matchTenant := matcherMap[alarmconstant.LabelOBCluster]
 	if matchCluster {
-		matchedInstanceType = oceanbase.OBCluster
+		matchedInstanceType = oceanbase.TypeOBCluster
 	}
 	if matchZone {
-		matchedInstanceType = oceanbase.OBZone
+		matchedInstanceType = oceanbase.TypeOBZone
 	}
 	if matchServer {
-		matchedInstanceType = oceanbase.OBServer
+		matchedInstanceType = oceanbase.TypeOBServer
 	}
 	if matchTenant {
-		matchedInstanceType = oceanbase.OBTenant
+		matchedInstanceType = oceanbase.TypeOBTenant
 	}
 	switch matchedInstanceType {
-	case oceanbase.OBCluster:
+	case oceanbase.TypeOBCluster:
 		clusterNames := clusterMatcher.ExtractMatchedValues()
 		for _, clusterName := range clusterNames {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.OBCluster,
+				Type:      oceanbase.TypeOBCluster,
 				OBCluster: clusterName,
 			})
 		}
-	case oceanbase.OBZone:
+	case oceanbase.TypeOBZone:
 		if !matchCluster {
 			logger.Error("Cluster matcher not exists")
 			break
@@ -96,12 +96,12 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 		zoneNames := zoneMatcher.ExtractMatchedValues()
 		for _, zone := range zoneNames {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.OBCluster,
+				Type:      oceanbase.TypeOBCluster,
 				OBCluster: clusterMatcher.Value,
 				OBZone:    zone,
 			})
 		}
-	case oceanbase.OBServer:
+	case oceanbase.TypeOBServer:
 		if !matchCluster {
 			logger.Error("Cluster matcher not exists")
 			break
@@ -112,12 +112,12 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 		serverIps := serverMatcher.ExtractMatchedValues()
 		for _, serverIp := range serverIps {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.OBCluster,
+				Type:      oceanbase.TypeOBCluster,
 				OBCluster: clusterMatcher.Value,
 				OBServer:  serverIp,
 			})
 		}
-	case oceanbase.OBTenant:
+	case oceanbase.TypeOBTenant:
 		if !matchCluster {
 			logger.Error("Cluster matcher not exists")
 			break
@@ -128,7 +128,7 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 		tenantNames := tenantMatcher.ExtractMatchedValues()
 		for _, tenant := range tenantNames {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.OBCluster,
+				Type:      oceanbase.TypeOBCluster,
 				OBCluster: clusterMatcher.Value,
 				OBTenant:  tenant,
 			})

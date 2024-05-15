@@ -20,6 +20,7 @@ const (
 	AlertManagerAddress = "http://127.0.0.1:9093"
 	AlertUrl            = "/api/v2/alerts"
 	SilencerUrl         = "/api/v2/silences"
+	RuleUrl             = "/api/v1/rules"
 )
 
 const (
@@ -30,8 +31,9 @@ const (
 )
 
 const (
-	LabelRuleName  = "rule_name"
-	LabelServerity = "serverity"
+	LabelRuleName     = "rule_name"
+	LabelServerity    = "serverity"
+	LabelInstanceType = "instance_type"
 )
 
 const (
