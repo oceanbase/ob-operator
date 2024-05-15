@@ -395,8 +395,7 @@ definitions:
       namespace:
         type: string
       obCluster:
-        description: 'OBCluster format: {namespace}/{name}'
-        type: string
+        $ref: '#/definitions/obproxy.K8sObject'
       parameters:
         items:
           $ref: '#/definitions/common.KVPair'
@@ -430,6 +429,16 @@ definitions:
     - resource
     - serviceType
     type: object
+  obproxy.K8sObject:
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+    required:
+    - name
+    - namespace
+    type: object
   obproxy.OBProxy:
     properties:
       creationTime:
@@ -441,8 +450,7 @@ definitions:
       namespace:
         type: string
       obCluster:
-        description: 'OBCluster format: {namespace}/{name}'
-        type: string
+        $ref: '#/definitions/obproxy.K8sObject'
       parameters:
         items:
           $ref: '#/definitions/common.KVPair'
@@ -492,8 +500,7 @@ definitions:
       namespace:
         type: string
       obCluster:
-        description: 'OBCluster format: {namespace}/{name}'
-        type: string
+        $ref: '#/definitions/obproxy.K8sObject'
       proxyClusterName:
         type: string
       replicas:

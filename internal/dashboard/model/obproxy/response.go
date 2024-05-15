@@ -28,14 +28,13 @@ type OBProxy struct {
 }
 
 type OBProxyOverview struct {
-	Name      string `json:"name" binding:"required"`
-	Namespace string `json:"namespace" binding:"required"`
-	// OBCluster format: {namespace}/{name}
-	OBCluster        string `json:"obCluster" binding:"required"`
-	ProxyClusterName string `json:"proxyClusterName" binding:"required"`
-	Image            string `json:"image" binding:"required"`
-	Replicas         int32  `json:"replicas" binding:"required"`
-	ServiceIP        string `json:"serviceIp" binding:"required"`
-	CreationTime     string `json:"creationTime" binding:"required"`
-	Status           string `json:"status" binding:"required"`
+	Name             string    `json:"name" binding:"required"`
+	Namespace        string    `json:"namespace" binding:"required"`
+	OBCluster        K8sObject `json:"obCluster" binding:"required"`
+	ProxyClusterName string    `json:"proxyClusterName" binding:"required"`
+	Image            string    `json:"image" binding:"required"`
+	Replicas         int32     `json:"replicas" binding:"required"`
+	ServiceIP        string    `json:"serviceIp" binding:"required"`
+	CreationTime     string    `json:"creationTime" binding:"required"`
+	Status           string    `json:"status" binding:"required"`
 }

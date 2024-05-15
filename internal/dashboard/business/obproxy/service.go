@@ -25,7 +25,7 @@ import (
 )
 
 func getOBProxyService(ctx context.Context, ns, name string) (*corev1.Service, error) {
-	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, name+svcSuffix, metav1.GetOptions{})
+	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, svcPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("Service not found")
@@ -36,7 +36,7 @@ func getOBProxyService(ctx context.Context, ns, name string) (*corev1.Service, e
 }
 
 func createOBProxyService(ctx context.Context, ns, name string, svcType corev1.ServiceType) (*corev1.Service, error) {
-	svcName := name + svcSuffix
+	svcName := svcPrefix + name
 	svcParam := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svcName,
@@ -71,7 +71,7 @@ func createOBProxyService(ctx context.Context, ns, name string, svcType corev1.S
 }
 
 func updateOBProxyService(ctx context.Context, ns, name string, svcType corev1.ServiceType) (*corev1.Service, error) {
-	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, name+svcSuffix, metav1.GetOptions{})
+	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, svcPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("Service not found")
@@ -87,14 +87,14 @@ func updateOBProxyService(ctx context.Context, ns, name string, svcType corev1.S
 }
 
 func deleteOBProxyService(ctx context.Context, ns, name string) (*corev1.Service, error) {
-	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, name+svcSuffix, metav1.GetOptions{})
+	svc, err := client.GetClient().ClientSet.CoreV1().Services(ns).Get(ctx, svcPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("Service not found")
 		}
 		return nil, httpErr.NewInternal("Failed to get obproxy service, err msg: " + err.Error())
 	}
-	err = client.GetClient().ClientSet.CoreV1().Services(ns).Delete(ctx, name+svcSuffix, metav1.DeleteOptions{})
+	err = client.GetClient().ClientSet.CoreV1().Services(ns).Delete(ctx, svcPrefix+name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("Failed to delete obproxy service, err msg: " + err.Error())
 	}

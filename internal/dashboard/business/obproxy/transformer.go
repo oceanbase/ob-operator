@@ -42,9 +42,12 @@ func getDeploymentStatus(deploy *appsv1.Deployment) string {
 
 func buildOBProxyOverview(deploy *appsv1.Deployment) *obproxy.OBProxyOverview {
 	overview := &obproxy.OBProxyOverview{
-		Name:             deploy.Name,
-		Namespace:        deploy.Namespace,
-		OBCluster:        deploy.Labels[LabelForNamespace] + "/" + deploy.Labels[LabelForOBCluster],
+		Name:      deploy.Name,
+		Namespace: deploy.Namespace,
+		OBCluster: obproxy.K8sObject{
+			Namespace: deploy.Labels[LabelForNamespace],
+			Name:      deploy.Labels[LabelForOBCluster],
+		},
 		ProxyClusterName: deploy.Labels[LabelProxyClusterName],
 		Image:            deploy.Spec.Template.Spec.Containers[0].Image,
 		Replicas:         *deploy.Spec.Replicas,

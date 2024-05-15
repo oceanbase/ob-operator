@@ -5391,8 +5391,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "obCluster": {
-                    "description": "OBCluster format: {namespace}/{name}",
-                    "type": "string"
+                    "$ref": "#/definitions/obproxy.K8sObject"
                 },
                 "parameters": {
                     "type": "array",
@@ -5423,6 +5422,21 @@ const docTemplate = `{
                         "ExternalName"
                     ],
                     "example": "ClusterIP"
+                }
+            }
+        },
+        "obproxy.K8sObject": {
+            "type": "object",
+            "required": [
+                "name",
+                "namespace"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
                 }
             }
         },
@@ -5458,8 +5472,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "obCluster": {
-                    "description": "OBCluster format: {namespace}/{name}",
-                    "type": "string"
+                    "$ref": "#/definitions/obproxy.K8sObject"
                 },
                 "parameters": {
                     "type": "array",
@@ -5523,8 +5536,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "obCluster": {
-                    "description": "OBCluster format: {namespace}/{name}",
-                    "type": "string"
+                    "$ref": "#/definitions/obproxy.K8sObject"
                 },
                 "proxyClusterName": {
                     "type": "string"

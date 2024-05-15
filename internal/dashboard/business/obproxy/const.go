@@ -17,10 +17,10 @@ const (
 )
 
 const (
-	cmSuffix             = "-odp-config"
-	svcSuffix            = "-odp-svc"
-	proxyRoSecretSuffix  = "-proxyro-secret"
-	proxySysSecretSuffix = "-proxysys-secret"
+	cmPrefix             = "cm-"
+	svcPrefix            = "svc-"
+	proxyRoSecretPrefix  = "sec-ro-"
+	proxySysSecretPrefix = "sec-sys-"
 )
 
 const (

@@ -27,7 +27,7 @@ import (
 )
 
 func getConfigMap(ctx context.Context, ns, name string) (*corev1.ConfigMap, error) {
-	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, name+cmSuffix, metav1.GetOptions{})
+	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, cmPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("ConfigMap not found")
@@ -38,7 +38,7 @@ func getConfigMap(ctx context.Context, ns, name string) (*corev1.ConfigMap, erro
 }
 
 func createConfigMap(ctx context.Context, ns, name string, param *obproxy.CreateOBProxyParam) (*corev1.ConfigMap, error) {
-	cmName := name + cmSuffix
+	cmName := cmPrefix + name
 	cmParam := &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      cmName,
@@ -64,7 +64,7 @@ func createConfigMap(ctx context.Context, ns, name string, param *obproxy.Create
 }
 
 func updateConfigMap(ctx context.Context, ns, name string, param *obproxy.PatchOBProxyParam) (*corev1.ConfigMap, error) {
-	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, name+cmSuffix, metav1.GetOptions{})
+	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, cmPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("ConfigMap not found")
@@ -88,14 +88,14 @@ func updateConfigMap(ctx context.Context, ns, name string, param *obproxy.PatchO
 }
 
 func deleteConfigMap(ctx context.Context, ns, name string) (*corev1.ConfigMap, error) {
-	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, name+cmSuffix, metav1.GetOptions{})
+	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, cmPrefix+name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
 			return nil, httpErr.NewNotFound("ConfigMap not found")
 		}
 		return nil, httpErr.NewInternal("Failed to get obproxy config map, err msg: " + err.Error())
 	}
-	err = client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Delete(ctx, name+cmSuffix, metav1.DeleteOptions{})
+	err = client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Delete(ctx, cmPrefix+name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("Failed to delete obproxy config map, err msg: " + err.Error())
 	}

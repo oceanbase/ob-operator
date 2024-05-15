@@ -14,12 +14,16 @@ package obproxy
 
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
+type K8sObject struct {
+	Namespace string `json:"namespace" uri:"namespace" binding:"required"`
+	Name      string `json:"name" uri:"name" binding:"required"`
+}
+
 type CreateOBProxyParam struct {
-	Name             string `json:"name" binding:"required"`
-	Namespace        string `json:"namespace" binding:"required"`
-	ProxyClusterName string `json:"proxyClusterName" binding:"required"`
-	// OBCluster format: {namespace}/{name}
-	OBCluster string `json:"obCluster" binding:"required"`
+	Name             string    `json:"name" binding:"required"`
+	Namespace        string    `json:"namespace" binding:"required"`
+	ProxyClusterName string    `json:"proxyClusterName" binding:"required"`
+	OBCluster        K8sObject `json:"obCluster" binding:"required"`
 
 	// Password should be encrypted
 	ProxySysPassword string              `json:"proxySysPassword" binding:"required"`

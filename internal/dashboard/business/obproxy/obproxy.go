@@ -15,7 +15,6 @@ package obproxy
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -55,12 +54,8 @@ func GetOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, error) 
 }
 
 func CreateOBProxy(ctx context.Context, param *obproxy.CreateOBProxyParam) (*obproxy.OBProxy, error) {
-	clusterNames := strings.Split(param.OBCluster, "/")
-	if len(clusterNames) != 2 {
-		return nil, httpErr.NewBadRequest("Invalid obcluster name, it should be in the format of <namespace>/<name>")
-	}
-	clusterNs := clusterNames[0]
-	clusterName := clusterNames[1]
+	clusterNs := param.OBCluster.Namespace
+	clusterName := param.OBCluster.Name
 	obcluster, err := clients.ClusterClient.Get(ctx, clusterNs, clusterName, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -69,21 +64,14 @@ func CreateOBProxy(ctx context.Context, param *obproxy.CreateOBProxyParam) (*obp
 		return nil, httpErr.NewInternal("Failed to get obcluster, err msg: " + err.Error())
 	}
 	// TODO: Decrypted the password
-	proxySysSecret, err := createPasswordSecret(ctx, param.Namespace, param.Name+proxySysSecretSuffix, param.ProxySysPassword)
+	proxySysSecret, err := createPasswordSecret(ctx, param.Namespace, proxySysSecretPrefix+param.Name, param.ProxySysPassword)
 	if err != nil {
 		return nil, err
 	}
 	var proxyRoSecret *corev1.Secret
-	if param.Namespace != clusterNs {
-		proxyRoSecret, err = copyPasswordSecret(ctx, clusterNs, obcluster.Spec.UserSecrets.ProxyRO, param.Namespace, param.Name+proxyRoSecretSuffix)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		proxyRoSecret, err = client.GetClient().ClientSet.CoreV1().Secrets(param.Namespace).Get(ctx, obcluster.Spec.UserSecrets.ProxyRO, metav1.GetOptions{})
-		if err != nil {
-			return nil, httpErr.NewInternal("Failed to get secret, err msg: " + err.Error())
-		}
+	proxyRoSecret, err = copyPasswordSecret(ctx, clusterNs, obcluster.Spec.UserSecrets.ProxyRO, param.Namespace, proxyRoSecretPrefix+param.Name)
+	if err != nil {
+		return nil, err
 	}
 	cm, err := createConfigMap(ctx, param.Namespace, param.Name, param)
 	if err != nil {
@@ -211,15 +199,13 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 	if err != nil {
 		return nil, err
 	}
-	err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, name+proxySysSecretSuffix, metav1.DeleteOptions{})
+	err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, proxySysSecretPrefix+name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
 	}
-	if ns != deploy.Labels[LabelForNamespace] {
-		err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, name+proxyRoSecretSuffix, metav1.DeleteOptions{})
-		if err != nil {
-			return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
-		}
+	err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, proxyRoSecretPrefix+name, metav1.DeleteOptions{})
+	if err != nil {
+		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
 	}
 	return deleted, nil
 }
