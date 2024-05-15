@@ -1,0 +1,38 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.button.column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 2.5rem;
+  margin-bottom: 10px;
+  margin-right: 10px;
+}
+
+.button.column:last-child {
+  margin-right: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .button.column {
+    margin-right: 0;
+  }
+}
+
+.box.new-item {
+  margin-inline-end: calc(var(--bulma-column-gap)* -1);
+  margin-inline-start: calc(var(--bulma-column-gap)* -1);
+  margin-top: calc(var(--bulma-column-gap)* -1);
+  margin: calc(var(--bulma-column-gap)* -1) auto 0;
+}
+
+.columns {
+  margin-inline-start: 0 !important;
+  margin-inline-end: 0 !important;
+}
