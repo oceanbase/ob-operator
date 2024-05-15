@@ -27,7 +27,6 @@ export default function SubscripDrawerForm({
   const initialValues = {
     matchers: [
       {
-        isEqual: false,
         isRegex: false,
         name: '',
         value: '',

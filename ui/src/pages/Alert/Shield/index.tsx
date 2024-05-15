@@ -1,10 +1,12 @@
 import { alert } from '@/api';
 import type {
+  AlarmMatcher,
   OceanbaseOBInstance,
   SilenceSilencerResponse,
   SilenceStatus,
 } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -12,11 +14,16 @@ import moment from 'moment';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import ShieldDrawerForm from './ShieldDrawerForm';
+import { Alert } from '@/type/alert';
 const { Text } = Typography;
 
 export default function Shield() {
   const [form] = Form.useForm();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  const [drawerOpen, setDrawerOpen] = useState(
+    Boolean(searchParams.get('instance')),
+  );
   const { data: listSilencersRes, refresh } = useRequest(alert.listSilencers);
   const { run: deleteSilencer } = useRequest(alert.deleteSilencer, {
     onSuccess: ({ successful }) => {
@@ -48,6 +55,13 @@ export default function Shield() {
       title: '屏蔽告警规则',
       dataIndex: 'matchers',
       key: 'matchers',
+      render: (rules) => (
+        <p>
+          {rules
+            .map((rule: AlarmMatcher) => rule.name! + rule.value!)
+            .join(',')}
+        </p>
+      ),
     },
     {
       title: '屏蔽结束时间',
@@ -86,7 +100,9 @@ export default function Shield() {
       key: 'action',
       render: (_, record) => (
         <>
-          <Button style={{ paddingLeft: 0 }} type="link">编辑</Button>
+          <Button style={{ paddingLeft: 0 }} type="link">
+            编辑
+          </Button>
           <Button
             type="link"
             style={{ color: '#ff4b4b' }}
@@ -107,6 +123,13 @@ export default function Shield() {
       ),
     },
   ];
+  const initialValues: Alert.ShieldDrawerInitialValues = {};
+  if (searchParams.get('instance')) {
+    initialValues.instance = JSON.parse(searchParams.get('instance')!);
+  }
+  if (searchParams.get('label')) {
+    initialValues.matchers = JSON.parse(searchParams.get('label')!);
+  }
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
@@ -128,7 +151,12 @@ export default function Shield() {
           // scroll={{ x: 1500 }}
         />
       </Card>
-      <ShieldDrawerForm width={880} onClose={drawerClose} open={drawerOpen} />
+      <ShieldDrawerForm
+        width={880}
+        initialValues={initialValues}
+        onClose={drawerClose}
+        open={drawerOpen}
+      />
     </Space>
   );
 }
