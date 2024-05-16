@@ -126,7 +126,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。
+我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。[快速上手](https://oceanbase.github.io/ob-operator/zh-Hans/docs/dashboard/quickstart)文档能帮助您快速了解 OceanBase 的功能和使用方法。
 
 安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
 

@@ -1,0 +1,135 @@
+---
+title: OceanBase Dashboard 快速上手
+---
+
+import Tabs from '@theme/Tabs'
+import TabItem from '@theme/TabItem'
+
+# OceanBase Dashboard 快速上手
+
+OceanBase Dashboard 是与 ob-operator 配套的白屏运维工具，截止目前最新的 0.2.1 版本具有集群管理、租户管理、备份管理、性能监控和终端直连等功能，是在 K8s 环境中配合 ob-operator 监控 OceanBase 集群性能指标的首选工具。
+
+## 部署 OceanBase Dashboard
+
+推荐使用 Kubernetes 包管理器 Helm 安装 OceanBase Dashboard，确认已经安装了 Helm 之后，执行下面三条命令即可在默认命名空间安装 OceanBase Dashboard。
+
+```bash
+helm repo add ob-operator https://oceanbase.github.io/ob-operator/
+helm repo update ob-operator
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1
+```
+
+如果要在其他命名空间安装，可将最后一条安装命令替换成为下面的命令（`<namespace>`部分为您需要安装的目标命名空间），如果该命名空间原本不存在，可添加`--create-namespace`进行创建。
+
+```bash
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 -n <namespace> --create-namespace
+```
+
+若安装命令执行完后在终端内打印类似下面内容的提示则说明部署成功。
+
+```bash
+NAME: oceanbase-dashboard
+LAST DEPLOYED: Wed May  8 11:04:49 2024
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+NOTES:
+Welcome to OceanBase dashboard
+
+1. After installing the dashboard chart, you can use `port-forward` to expose the dashboard outside like:
+
+  > kubectl port-forward -n default services/oceanbase-dashboard-oceanbase-dashboard 18081:80 --address 0.0.0.0
+
+then you can visit the dashboard on http://$YOUR_SERVER_IP:18081
+
+2. Use the following command to get password for default admin user
+
+  > echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+
+Log in as default account:
+Username: admin
+Password: <Get from the above command>
+```
+
+部署后 K8s 集群可能需要一段时间用于拉取所需镜像，可通过下面的命令查询 OceanBase Dashboard 是否完成安装。如果 `READY` 列显示 `1/1` 表示已经安装完成，可以进行后续步骤。
+
+```shell
+kubectl get deployment oceanbase-dashboard-oceanbase-dashboard
+# 预期输出
+NAME                                      READY   UP-TO-DATE   AVAILABLE   AGE
+oceanbase-dashboard-oceanbase-dashboard   1/1     1            1           2m10s
+```
+
+## 访问 OceanBase Dashboard
+
+Dashboard 默认创建的登录账号为 `admin`，通过上述提示的第二条指令 `echo $(kubectl get ...` 可获取到默认创建的账号密码。
+
+<Tabs>
+  <TabItem value="node-port" label="通过 Service NodePort 访问" default>
+
+OceanBase Dashboard 默认创建 NodePort 类型的 Service，可通过下面的指令获取 Service 在节点上暴露的端口。需要注意的是 Service 的名称会根据您指定的 Helm Chart 名称变化而变化，具体可参考第一条指令中的 service 名称。
+
+```bash
+kubectl get svc oceanbase-dashboard-oceanbase-dashboard
+# Desired output:
+Name																			TYPE				CLUSTER-IP			EXTERNAL-IP		PORT(S)					AGE
+oceanbase-dashboard-oceanbase-dashboard		NodePort		10.43.20.203		<none>				80:30176/TCP		13m
+```
+
+通过浏览器访问该 K8s 节点的 `30176` 端口即可打开 Dashboard 登录界面。需要注意的是，服务的端口号由 Kubernetes 动态分配，安装之后访问的端口需要以您的实际情况为准。
+
+  </TabItem>
+
+  <TabItem value="load-balancer" label="通过 LoadBalancer 访问" default>
+
+如果您的集群支持 LoadBalancer 服务，可以通过下面的命令在安装过程中就指定创建 LoadBalancer 类型的服务。
+
+```bash
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 --set service.type=LoadBalancer
+```
+
+如果已经安装了 OceanBase Dashboard，可以通过下面的命令将默认的服务类型修改为`LoadBalancer`，修改完成后集群将为 OceanBase Dashboard 服务分配外部 IP，通过该外部 IP 即可访问 OceanBase Dashboard 的页面。
+
+```bash
+kubectl patch svc oceanbase-dashboard-oceanbase-dashboard --type=merge --patch='{"spec": {"type": "LoadBalancer"}}'
+```
+
+成功修改后等待一段时间再次查看 Service 信息会看到`External IP`字段已被赋值。
+
+```bash
+$ kubectl get svc
+NAME                                      TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+oceanbase-dashboard-oceanbase-dashboard   LoadBalancer   192.168.xx.xx   xxx.xx.xxx.xx   80:xxxxx/TCP   1d5h
+```
+
+  </TabItem>
+
+  <TabItem value="port-forward" label="通过 Port Forward 临时访问" default>
+
+如果您的集群节点端口不可访问，无法使用`NodePort`类型的服务暴露 OceanBase Dashboard，也不支持`LoadBalancer`的服务，可以使用`kubectl port-forward`指令将 OceanBase Dashboard 暴露到当前机器指定端口进行临时访问，例如执行下面的命令可将 OceanBase Dashboard 暴露在您当前机器（执行这条命令的机器）的 18081 端口。
+
+```bash
+kubectl port-forward -n default services/oceanbase-dashboard-oceanbase-dashboard 18081:80 --address 0.0.0.0
+```
+
+通过其他电脑的浏览器访问该机器的 18081 端口，可以打开登录界面。特别地，如果执行上述命令的机器是您的个人电脑，打开浏览器访问`http://127.0.0.1:18081`即可访问到服务。
+
+  </TabItem>
+</Tabs>
+
+![Login Page](/img/dashboard/login.png)
+
+## 查看监控指标
+
+### 集群监控指标
+
+![Cluster Monitoring Metrics](/img/dashboard/cluster-metrics.png)
+
+### 租户监控指标
+
+![Tenant Monitoring Metrics](/img/dashboard/tenant-metrics.png)
+
+## 其他运维功能
+
+除了针对集群和租户的性能指标监控功能外，OceanBase Dashboard 提供了集群管理、租户管理、备份管理和终端连接等方便用户运维 OceanBase 集群的功能，并且 OBProxy 管理、监控告警、SQL 监控、集群诊断等功能也在紧密的开发过程中，会在 Dashboard 后续的版本中发布。

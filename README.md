@@ -127,9 +127,9 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates.
+We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates. [Quick Start](https://oceanbase.github.io/ob-operator/docs/dashboard/quickstart) guide is available to help you get started with OceanBase Dashboard.
 
-Deploy OceanBase Dashboard is pretty simple, just run the following commands
+Deploy OceanBase Dashboard is pretty simple, just run the following commands:
 
 ```
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
@@ -145,7 +145,7 @@ After OceanBase Dashboard is successfully installed, a default user admin is cre
 echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
 ```
 
-A service of type NodePort is created by default, you can check the address and port and open it in browser
+A service of type NodePort is created by default, you can check the address and port and open it in browser:
 
 ```
 kubectl get svc oceanbase-dashboard-oceanbase-dashboard
@@ -153,7 +153,8 @@ kubectl get svc oceanbase-dashboard-oceanbase-dashboard
 
 ![oceanbase-dashboard-service](./docsite/static/img/oceanbase-dashboard-service.jpg)
 
-Login with admin user and password
+Login with admin user and password.
+
 ![oceanbase-dashboard-overview](./docsite/static/img/oceanbase-dashboard-overview.jpg)
 ![oceanbase-dashboard-topology](./docsite/static/img/oceanbase-dashboard-topology.jpg)
 
