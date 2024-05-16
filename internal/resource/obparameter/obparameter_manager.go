@@ -20,6 +20,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -45,8 +46,8 @@ type OBParameterManager struct {
 	Logger      *logr.Logger
 }
 
-func (m *OBParameterManager) IsNewResource() bool {
-	return m.OBParameter.Status.Status == ""
+func (m *OBParameterManager) GetMeta() metav1.Object {
+	return m.OBParameter.GetObjectMeta()
 }
 
 func (m *OBParameterManager) GetStatus() string {
@@ -93,11 +94,6 @@ func (m *OBParameterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		}
 	}
 	return taskFlow, nil
-}
-
-func (m *OBParameterManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBParameter, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBParameter.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBParameterManager) CheckAndUpdateFinalizers() error {

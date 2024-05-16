@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -45,8 +46,8 @@ type OBZoneManager struct {
 	Logger   *logr.Logger
 }
 
-func (m *OBZoneManager) IsNewResource() bool {
-	return m.OBZone.Status.Status == ""
+func (m *OBZoneManager) GetMeta() metav1.Object {
+	return m.OBZone.GetObjectMeta()
 }
 
 func (m *OBZoneManager) GetStatus() string {
@@ -139,11 +140,6 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	return taskFlow, nil
 }
 
-func (m *OBZoneManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
-}
-
 func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
 	finalizerFinished := false
 	obcluster, err := m.getOBCluster()
@@ -205,7 +201,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 		}
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
-	if m.IsDeleting() {
+	if m.OBZone.DeletionTimestamp != nil {
 		m.OBZone.Status.Status = zonestatus.Deleting
 	}
 	if m.OBZone.Status.Status != zonestatus.Running {
@@ -265,7 +261,7 @@ func (m *OBZoneManager) ClearTaskInfo() {
 }
 
 func (m *OBZoneManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.OBZone.DeletionTimestamp != nil {
 		m.OBZone.Status.Status = zonestatus.Deleting
 		m.OBZone.Status.OperationContext = nil
 	} else {

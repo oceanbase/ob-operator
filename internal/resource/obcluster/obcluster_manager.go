@@ -18,6 +18,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -44,8 +45,8 @@ type OBClusterManager struct {
 	Logger    *logr.Logger
 }
 
-func (m *OBClusterManager) IsNewResource() bool {
-	return m.OBCluster.Status.Status == ""
+func (m *OBClusterManager) GetMeta() metav1.Object {
+	return m.OBCluster.GetObjectMeta()
 }
 
 func (m *OBClusterManager) GetStatus() string {
@@ -121,11 +122,6 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	}
 
 	return taskFlow, nil
-}
-
-func (m *OBClusterManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
