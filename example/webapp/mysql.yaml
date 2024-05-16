@@ -35,6 +35,13 @@ spec:
         image: mysql:5.7
         imagePullPolicy: IfNotPresent
         name: mysql
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 500Mi
         ports:
         - containerPort: 3306
           protocol: TCP
