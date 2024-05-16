@@ -18,9 +18,12 @@ function print_help {
   echo "  -h, --help                Display this help message and exit."
   echo "  -v, --version             Display version information and exit."
   echo "  -n <Namespace>            Namespace of the OBCluster. Default is default."
+  echo "  -l, --list                List OBClusters in all namespaces."
   echo "  -i, --info                Display the obproxy deployment information."
   echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
   echo "  --destroy                 Destroy the obproxy deployment."
+  echo "  --cpu <CPU>               CPU limit of the obproxy deployment. Default is 1."
+  echo "  --memory <Memory>         Memory limit of the obproxy deployment. Default is 2Gi."
   echo "  --svc-type <Type>         Service type of the obproxy deployment. Default is ClusterIP. Valid values are ClusterIP, NodePort, LoadBalancer."
   echo "  --proxy-version <Version> Version of the obproxy image. Default is 4.2.1.0-11."
 }
@@ -71,6 +74,19 @@ while [[ $# -gt 0 ]]; do
       ;;
     -i|--info)
       DISPLAY_INFO=true
+      ;;
+    --cpu)
+      CPU_LIMIT=$2
+      shift
+      ;;
+    --memory)
+      MEMORY_LIMIT=$2
+      shift
+      ;;
+    -l|--list)
+      echo -e "\nOBProxy Deployments: \n"
+      kubectl get deployment -A -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+      exit 0
       ;;
     *)
       break
@@ -158,6 +174,10 @@ kind: Deployment
 metadata:
   name: $DEPLOY_NAME
   namespace: $NAMESPACE
+  labels:
+    obproxy.oceanbase.com/obpxory: "$DEPLOY_NAME"
+    obproxy.oceanbase.com/for-obcluster: "$OB_CLUSTER"
+    obproxy.oceanbase.com/for-namespace: "$NAMESPACE"
 spec:
   selector:
     matchLabels:
@@ -190,8 +210,8 @@ spec:
                   key: password
           resources:
             limits:
-              memory: 2Gi
-              cpu: "1"
+              memory: ${MEMORY_LIMIT:-2Gi}
+              cpu: "${CPU_LIMIT:-1}"
             requests: 
               memory: 200Mi
               cpu: 200m
@@ -229,7 +249,7 @@ else
   if [[ $DEPLOY_EXIST == true ]]; then
     # Get svc type of the existing service
     SVC_TYPE_EXIST=$(kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.spec.type}')
-    if [[ $SVC_TYPE_EXIST != $SVC_TYPE ]]; then
+    if [[ $SVC_TYPE_EXIST != "$SVC_TYPE" ]]; then
       if [[ $SVC_TYPE_EXIST == "ClusterIP" ]]; then 
         # Patch the service type
         kubectl patch service svc-$DEPLOY_NAME -n $NAMESPACE --type='json' -p='[{"op": "replace", "path": "/spec/type", "value": "'$SVC_TYPE'"}]'
