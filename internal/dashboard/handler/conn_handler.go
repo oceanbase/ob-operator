@@ -35,6 +35,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -201,7 +202,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 	}
 
 	// Select unit information from the oceanbase cluster
-	db, err := getSysClient(c, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
+	db, err := utils.GetOBConnection(c, obcluster, oceanbaseconst.RootUser, oceanbaseconst.SysTenant, obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}

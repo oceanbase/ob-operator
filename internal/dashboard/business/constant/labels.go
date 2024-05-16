@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -13,14 +13,5 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	GB = 1024 * 1024 * 1024
-)
-
-const (
-	LANGUAGE_ZH_CN = "zh-CN"
-	LANGUAGE_EN_US = "en-US"
-)
-
-const (
-	DASHBOARD_APP_NAME = "oceanbase-dashboard"
+	LabelManagedBy = "app.kubernetes.io/managed-by"
 )

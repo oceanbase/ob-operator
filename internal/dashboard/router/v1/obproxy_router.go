@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -10,17 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package constant
+package v1
 
-const (
-	GB = 1024 * 1024 * 1024
+import (
+	"github.com/gin-gonic/gin"
+
+	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
-const (
-	LANGUAGE_ZH_CN = "zh-CN"
-	LANGUAGE_EN_US = "en-US"
-)
-
-const (
-	DASHBOARD_APP_NAME = "oceanbase-dashboard"
-)
+func InitOBProxyRoutes(g *gin.RouterGroup) {
+	g.GET("/obproxies", h.Wrap(h.ListOBProxies))
+	g.PUT("/obproxies", h.Wrap(h.CreateOBProxy))
+	g.GET("/obproxies/:namespace/:name", h.Wrap(h.GetOBProxy))
+	g.PATCH("/obproxies/:namespace/:name", h.Wrap(h.PatchOBProxy))
+	g.DELETE("/obproxies/:namespace/:name", h.Wrap(h.DeleteOBProxy))
+}

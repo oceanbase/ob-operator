@@ -38,4 +38,12 @@ data:
         - source_labels: [__meta_kubernetes_pod_container_name, __meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_container_port_number, __meta_kubernetes_pod_container_port_protocol]
           regex: obagent;http;8088;TCP
           action: keep
+      - job_name: 'obproxy'
+        kubernetes_sd_configs:
+          - role: endpoints
+        metrics_path: '/metrics'
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_container_name, __meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_container_port_number, __meta_kubernetes_pod_container_port_protocol]
+          regex: obproxy;prometheus;2884;TCP
+          action: keep
 

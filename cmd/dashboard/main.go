@@ -26,10 +26,14 @@ func init() {
 	if logLevel == "" {
 		logLevel = "info"
 	}
+	logFile := os.Getenv("LOG_FILE")
+	if logFile == "" {
+		logFile = "log/oceanbase-dashboard.log"
+	}
 	log.InitLogger(
 		log.LoggerConfig{
 			Level:      logLevel,
-			Filename:   "log/oceanbase-dashboard.log",
+			Filename:   logFile,
 			MaxSize:    256,
 			MaxAge:     7,
 			MaxBackups: 5,

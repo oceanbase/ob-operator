@@ -74,3 +74,41 @@ type StorageClass struct {
 	MountOptions         []string        `json:"mountOptions,omitempty"`
 	Parameters           []common.KVPair `json:"parameters,omitempty"`
 }
+
+type K8sPodInfo struct {
+	Name       string          `json:"name" binding:"required"`
+	Namespace  string          `json:"namespace" binding:"required"`
+	NodeName   string          `json:"nodeName" binding:"required"`
+	Status     string          `json:"status" binding:"required"`
+	PodIP      string          `json:"podIP" binding:"required"`
+	Message    string          `json:"message" binding:"required"`
+	Reason     string          `json:"reason" binding:"required"`
+	StartTime  string          `json:"startTime" binding:"required"`
+	Containers []ContainerInfo `json:"containers" binding:"required"`
+}
+
+type ContainerInfo struct {
+	Name         string              `json:"name" binding:"required"`
+	Image        string              `json:"image" binding:"required"`
+	RestartCount int32               `json:"restartCount" binding:"required"`
+	Ready        bool                `json:"ready" binding:"required"`
+	StartTime    string              `json:"startTime" binding:"required"`
+	Ports        []int32             `json:"ports" binding:"required"`
+	Requests     common.ResourceSpec `json:"requests" binding:"required"`
+	Limits       common.ResourceSpec `json:"limits" binding:"required"`
+}
+
+type K8sService struct {
+	Name       string           `json:"name"`
+	Namespace  string           `json:"namespace"`
+	Type       string           `json:"type"`
+	ClusterIP  string           `json:"clusterIP"`
+	ExternalIP string           `json:"externalIP"`
+	Ports      []K8sServicePort `json:"ports"`
+}
+
+type K8sServicePort struct {
+	Name       string `json:"name,omitempty"`
+	Port       int32  `json:"port"`
+	TargetPort int32  `json:"targetPort"`
+}
