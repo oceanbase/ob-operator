@@ -13,22 +13,31 @@ See the Mulan PSL v2 for more details.
 package coordinator
 
 import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 type ResourceManager interface {
-	IsNewResource() bool
-	IsDeleting() bool
-	CheckAndUpdateFinalizers() error
-	InitStatus()
+	ResourceUpdater
+	TaskHandler
+}
+
+type TaskHandler interface {
 	SetOperationContext(*tasktypes.OperationContext)
 	ClearTaskInfo()
 	HandleFailure()
 	FinishTask()
-	UpdateStatus() error
-	GetStatus() string
 	GetTaskFunc(tasktypes.TaskName) (tasktypes.TaskFunc, error)
 	GetTaskFlow() (*tasktypes.TaskFlow, error)
 	PrintErrEvent(error)
+}
+
+type ResourceUpdater interface {
+	CheckAndUpdateFinalizers() error
+	InitStatus()
+	UpdateStatus() error
+	GetStatus() string
 	ArchiveResource()
+	GetMeta() metav1.Object
 }

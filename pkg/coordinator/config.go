@@ -17,14 +17,19 @@ import "time"
 type config struct {
 	NormalRequeueDuration    time.Duration
 	ExecutionRequeueDuration time.Duration
+	PausedRequeueDuration    time.Duration
 
 	TaskMaxRetryTimes         int
 	TaskRetryBackoffThreshold int
+
+	PauseAnnotation          string
+	IgnoreDeletionAnnotation string
 }
 
 var cfg = &config{
 	NormalRequeueDuration:    30 * time.Second,
 	ExecutionRequeueDuration: 1 * time.Second,
+	PausedRequeueDuration:    5 * time.Second,
 
 	TaskMaxRetryTimes:         99,
 	TaskRetryBackoffThreshold: 16,
@@ -36,4 +41,12 @@ func SetMaxRetryTimes(maxRetryTimes int) {
 
 func SetRetryBackoffThreshold(retryBackoffThreshold int) {
 	cfg.TaskRetryBackoffThreshold = retryBackoffThreshold
+}
+
+func SetPausedAnnotation(pausedAnnotation string) {
+	cfg.PauseAnnotation = pausedAnnotation
+}
+
+func SetIgnoreDeletionAnnotation(ignoreDeletionAnnotation string) {
+	cfg.IgnoreDeletionAnnotation = ignoreDeletionAnnotation
 }

@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	kuberesource "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -52,6 +53,10 @@ type OBTenantManager struct {
 	Logger   *logr.Logger
 }
 
+func (m *OBTenantManager) GetMeta() metav1.Object {
+	return m.OBTenant.GetObjectMeta()
+}
+
 func (m *OBTenantManager) getClusterSysClient() (*operation.OceanbaseOperationManager, error) {
 	obcluster, err := m.getOBCluster()
 	if err != nil {
@@ -68,15 +73,6 @@ func (m *OBTenantManager) getTenantClient() (*operation.OceanbaseOperationManage
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
 	return resourceutils.GetTenantRootOperationClient(m.Client, m.Logger, obcluster, m.OBTenant.Spec.TenantName, m.OBTenant.Status.Credentials.Root)
-}
-
-func (m *OBTenantManager) IsNewResource() bool {
-	return m.OBTenant.Status.Status == ""
-}
-
-func (m *OBTenantManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBTenant, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBTenant.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBTenantManager) GetStatus() string {
@@ -112,7 +108,7 @@ func (m *OBTenantManager) ClearTaskInfo() {
 }
 
 func (m *OBTenantManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.OBTenant.DeletionTimestamp != nil {
 		m.OBTenant.Status.Status = tenantstatus.DeletingTenant
 		m.OBTenant.Status.OperationContext = nil
 	} else {
@@ -162,7 +158,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 	if m.OBTenant.Status.Status == tenantstatus.FinalizerFinished {
 		m.Logger.Info("OBTenant has remove Finalizer", "tenantName", obtenantName)
 		return nil
-	} else if m.IsDeleting() {
+	} else if m.OBTenant.DeletionTimestamp != nil {
 		m.OBTenant.Status.Status = tenantstatus.DeletingTenant
 	} else if m.OBTenant.Status.Status == tenantstatus.Restoring &&
 		m.OBTenant.Spec.Source != nil &&
@@ -210,7 +206,7 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 	} else if !obcluster.ObjectMeta.DeletionTimestamp.IsZero() {
 		m.Logger.Info("OBCluster is deleting, no need to wait finalizer")
 		finalizerFinished = true
-	} else if m.IsDeleting() {
+	} else if m.OBTenant.DeletionTimestamp != nil {
 		finalizerFinished = m.OBTenant.Status.Status == tenantstatus.FinalizerFinished
 	}
 	if finalizerFinished {
