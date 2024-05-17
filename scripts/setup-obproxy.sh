@@ -18,7 +18,8 @@ function print_help {
   echo "  -h, --help                Display this help message and exit."
   echo "  -v, --version             Display version information and exit."
   echo "  -n <Namespace>            Namespace of the OBCluster. Default is default."
-  echo "  -l, --list                List OBClusters in all namespaces."
+  echo "  -l, --list                List OBProxy deployments in current namespace."
+  echo "  -A, --list-all            List OBProxy deployments in all namespaces."
   echo "  -i, --info                Display the obproxy deployment information."
   echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
   echo "  --destroy                 Destroy the obproxy deployment."
@@ -84,6 +85,11 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -l|--list)
+      echo -e "\nOBProxy Deployments: \n"
+      kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+      exit 0
+      ;;
+    -A|--list-all)
       echo -e "\nOBProxy Deployments: \n"
       kubectl get deployment -A -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
       exit 0
