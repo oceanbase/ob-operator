@@ -10,6 +10,8 @@ PROXY_VERSION="4.2.1.0-11"
 DESTROY=false
 SVC_TYPE=ClusterIP
 DISPLAY_INFO=false
+LIST=false
+LIST_ALL=false
 
 function print_help {
   echo "setup-obproxy.sh - Set up obproxy for an OBCluster in a Kubernetes cluster"
@@ -18,8 +20,8 @@ function print_help {
   echo "  -h, --help                Display this help message and exit."
   echo "  -v, --version             Display version information and exit."
   echo "  -n <Namespace>            Namespace of the OBCluster. Default is default."
-  echo "  -l, --list                List OBProxy deployments in current namespace."
-  echo "  -A, --list-all            List OBProxy deployments in all namespaces."
+  echo "  -l, --list                List OBProxy deployments in current namespace by default, add -A for all namespace."
+  echo "  -A, --all                 List OBProxy deployments in all namespaces, paired with -l."
   echo "  -i, --info                Display the obproxy deployment information."
   echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
   echo "  --destroy                 Destroy the obproxy deployment."
@@ -85,14 +87,10 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     -l|--list)
-      echo -e "\nOBProxy Deployments: \n"
-      kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
-      exit 0
+      LIST=true
       ;;
-    -A|--list-all)
-      echo -e "\nOBProxy Deployments: \n"
-      kubectl get deployment -A -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
-      exit 0
+    -A|--all)
+      LIST_ALL=true
       ;;
     *)
       break
@@ -100,6 +98,21 @@ while [[ $# -gt 0 ]]; do
   esac
   shift
 done
+
+if [[ $LIST == true ]]; then
+  echo -e "\nOBProxy Deployments: \n"
+  if [[ $LIST_ALL == true ]]; then
+    kubectl get deployment -A -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+  else
+    kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+  fi
+  exit 0
+fi
+
+if [[ $LIST_ALL == true ]]; then
+  echo "Error: -A|--all must be paired with -l|--list."
+  exit 1
+fi
 
 # Check if the OBCluster is specified
 if [[ $# -eq 0 ]]; then
