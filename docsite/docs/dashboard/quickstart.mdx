@@ -11,7 +11,7 @@ OceanBase Dashboard is a white-screen operation and maintenance tool that is com
 
 ## Deploy OceanBase Dashboard
 
-It's recommended to install OceanBase Dashboard using the Kubernetes package manager Helm. After confirming that Helm has been installed, execute the following three commands to install OceanBase Dashboard in the default namespace.
+It's recommended to install OceanBase Dashboard using [Helm](https://github.com/helm/helm). After confirming that Helm has been installed, execute the following three commands to install OceanBase Dashboard in the default namespace.
 
 ```bash
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
@@ -25,7 +25,7 @@ If you want to install it in another namespace, you can replace the last install
 helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 -n <namespace> --create-namespace
 ```
 
-If the installation command is executed successfully, the following notes will be displayed in the terminal.
+If the installation command is executed successfully, the following notes will be displayed.
 
 ```bash
 NAME: oceanbase-dashboard
@@ -89,11 +89,7 @@ You can visit the Dashboard login page by accessing the `30176` port of the K8s 
 
   <TabItem value="load-balancer" label="By LoadBalancer" default>
 
-If your cluster supports LoadBalancer services, you can specify the creation of a LoadBalancer type service during the installation process with the following command.
-
-```bash
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 --set service.type=LoadBalancer
-```
+If your cluster supports LoadBalancer services, you can specify the service type of OceanBase Dashboard to service during the installation process with the flag: `--set service.type=LoadBalancer`.
 
 If you have already installed OceanBase Dashboard, you can use the following command to modify the default service type to `LoadBalancer`. After the modification is successful, the cluster will assign an external IP to the OceanBase Dashboard service, and you can access the OceanBase Dashboard page through this external IP.
 
@@ -138,4 +134,4 @@ Visit `18081` port on your machine with a browser to open the login page. Specia
 
 ## Upcoming Features
 
-Besides the performance monitoring features for clusters and tenants, OceanBase Dashboard provides functions for cluster management, tenant management, backup management, and terminal connections to facilitate the operation and maintenance of OceanBase clusters. OBProxy management, monitoring alarms, SQL monitoring, and cluster diagnostics are also under active development and will be released in subsequent versions of the Dashboard.
+OBProxy management, monitoring alarms, SQL monitoring, and cluster diagnostics are also under active development and will be released in subsequent versions of the Dashboard.

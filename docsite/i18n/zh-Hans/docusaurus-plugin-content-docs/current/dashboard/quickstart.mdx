@@ -11,7 +11,7 @@ OceanBase Dashboard 是与 ob-operator 配套的白屏运维工具，截止目�
 
 ## 部署 OceanBase Dashboard
 
-推荐使用 Kubernetes 包管理器 Helm 安装 OceanBase Dashboard，确认已经安装了 Helm 之后，执行下面三条命令即可在默认命名空间安装 OceanBase Dashboard。
+推荐使用 [Helm](https://github.com/helm/helm) 安装 OceanBase Dashboard，确认已经安装了 Helm 之后，执行下面三条命令即可在默认命名空间安装 OceanBase Dashboard。
 
 ```bash
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
@@ -83,11 +83,7 @@ oceanbase-dashboard-oceanbase-dashboard		NodePort		10.43.20.203		<none>				80:30
 
   <TabItem value="load-balancer" label="通过 LoadBalancer 访问" default>
 
-如果您的集群支持 LoadBalancer 服务，可以通过下面的命令在安装过程中就指定创建 LoadBalancer 类型的服务。
-
-```bash
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 --set service.type=LoadBalancer
-```
+如果您的集群支持 LoadBalancer 服务，可以通过 `--set service.type=LoadBalancer` 参数在安装过程中就指定创建 LoadBalancer 类型的服务。
 
 如果已经安装了 OceanBase Dashboard，可以通过下面的命令将默认的服务类型修改为`LoadBalancer`，修改完成后集群将为 OceanBase Dashboard 服务分配外部 IP，通过该外部 IP 即可访问 OceanBase Dashboard 的页面。
 
@@ -132,4 +128,4 @@ kubectl port-forward -n default services/oceanbase-dashboard-oceanbase-dashboard
 
 ## 其他运维功能
 
-除了针对集群和租户的性能指标监控功能外，OceanBase Dashboard 提供了集群管理、租户管理、备份管理和终端连接等方便用户运维 OceanBase 集群的功能，并且 OBProxy 管理、监控告警、SQL 监控、集群诊断等功能也在紧密的开发过程中，会在 Dashboard 后续的版本中发布。
+OBProxy 管理、监控告警、SQL 监控、集群诊断等功能也在紧密的开发过程中，会在 Dashboard 后续的版本中发布。
