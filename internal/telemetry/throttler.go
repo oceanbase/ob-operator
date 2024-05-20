@@ -17,7 +17,10 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
+
+	"github.com/hashicorp/golang-lru/v2/expirable"
 
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 )
@@ -27,6 +30,7 @@ type throttler struct {
 	ctx        context.Context
 	cancel     context.CancelFunc
 	recordChan chan *models.TelemetryRecord
+	filter     *expirable.LRU[string, struct{}]
 }
 
 var throttlerSingleton *throttler
@@ -35,16 +39,17 @@ var throttlerOnce sync.Once
 func getThrottler() *throttler {
 	throttlerOnce.Do(func() {
 		throttlerSingleton = &throttler{
-			recordChan: make(chan *models.TelemetryRecord, DefaultThrottlerBufferSize),
+			recordChan: make(chan *models.TelemetryRecord, ThrottlerBufferSize),
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		throttlerSingleton.ctx = ctx
 		throttlerSingleton.cancel = cancel
 		throttlerSingleton.client = *http.DefaultClient
+		throttlerSingleton.filter = expirable.NewLRU[string, struct{}](FilterSize, nil, FilterExpireTimeout)
 
 		throttlerSingleton.startWorkers()
-		getLogger().Println("Telemetry throttler started", "#worker:", DefaultThrottlerWorkerCount)
+		getLogger().Println("Telemetry throttler started", "#worker:", ThrottlerWorkerCount)
 	})
 	return throttlerSingleton
 }
@@ -82,7 +87,7 @@ func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.R
 }
 
 func (t *throttler) startWorkers() {
-	for i := 0; i < DefaultThrottlerWorkerCount; i++ {
+	for i := 0; i < ThrottlerWorkerCount; i++ {
 		go func(ctx context.Context, ch <-chan *models.TelemetryRecord) {
 			for {
 				select {
@@ -90,6 +95,17 @@ func (t *throttler) startWorkers() {
 					if !ok {
 						// channel closed
 						return
+					}
+					if uid, err := extractUID(record.Resource); err == nil {
+						key := strings.Join([]string{record.ResourceType, uid, record.EventType, record.Reason, record.Message}, "-")
+						if _, ok := t.filter.Get(key); ok {
+							getLogger().Printf("Get the same key in filter: %s\n", key)
+							continue
+						}
+						getLogger().Println("Add key to filter: ", key)
+						getLogger().Println("Filter size: ", len(t.filter.Keys()))
+
+						t.filter.Add(key, struct{}{})
 					}
 					res, err := t.sendTelemetryRecord(record)
 					if err == nil && res != nil && res.Body != nil {
