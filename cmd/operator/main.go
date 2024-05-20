@@ -39,6 +39,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
+	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
@@ -97,6 +98,7 @@ func main() {
 	coordinator.SetPausedAnnotation(oceanbaseconst.AnnotationsPauseReconciling)
 	task.SetDebugTask(cfg.Task.Debug)
 	task.SetTaskPoolSize(cfg.Task.PoolSize)
+	database.SetLRUCacheSize(cfg.Database.ConnectionLRUCacheSize)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
