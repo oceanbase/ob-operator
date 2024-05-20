@@ -30,7 +30,6 @@ import (
 type throttler struct {
 	client     http.Client
 	ctx        context.Context
-	cancel     context.CancelFunc
 	recordChan chan *models.TelemetryRecord
 	filter     *expirable.LRU[string, struct{}]
 }
@@ -38,16 +37,14 @@ type throttler struct {
 var throttlerSingleton *throttler
 var throttlerOnce sync.Once
 
-func getThrottler() *throttler {
+func getThrottler(ctx context.Context) *throttler {
 	throttlerOnce.Do(func() {
 		cfg := obcfg.GetConfig().Telemetry
 		throttlerSingleton = &throttler{
 			recordChan: make(chan *models.TelemetryRecord, cfg.ThrottlerBufferSize),
 		}
 
-		ctx, cancel := context.WithCancel(context.Background())
 		throttlerSingleton.ctx = ctx
-		throttlerSingleton.cancel = cancel
 		throttlerSingleton.client = *http.DefaultClient
 		throttlerSingleton.filter = expirable.NewLRU[string, struct{}](cfg.FilterSize, nil, cfg.FilterExpireTimeout)
 
@@ -74,10 +71,6 @@ func (t *throttler) chanOut() <-chan *models.TelemetryRecord {
 
 func (t *throttler) chanIn() chan<- *models.TelemetryRecord {
 	return t.recordChan
-}
-
-func (t *throttler) close() {
-	t.cancel()
 }
 
 func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.Response, error) {

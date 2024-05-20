@@ -52,7 +52,7 @@ func NewRecorder(ctx context.Context, er record.EventRecorder) Recorder {
 		return clt
 	}
 	clt.hostMetrics = getHostMetrics()
-	clt.throttler = getThrottler()
+	clt.throttler = getThrottler(ctx)
 	return clt
 }
 
@@ -98,7 +98,6 @@ func (t *recorder) Done() {
 	if t.telemetryDisabled {
 		return
 	}
-	t.throttler.close()
 }
 
 func (t *recorder) GetHostMetrics() *hostMetrics {

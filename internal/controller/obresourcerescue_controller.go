@@ -34,7 +34,6 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	ctlconfig "github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 )
@@ -225,12 +224,4 @@ func (r *OBResourceRescueReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(preds).
 		For(&v1alpha1.OBResourceRescue{}).
 		Complete(r)
-}
-
-func NewOBResourceRescueReconciler(mgr ctrl.Manager) *OBResourceRescueReconciler {
-	return &OBResourceRescueReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor(ctlconfig.OBResourceRescueControllerName)),
-	}
 }
