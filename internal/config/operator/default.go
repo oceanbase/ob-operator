@@ -19,6 +19,7 @@ import (
 
 	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/database"
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
 var defaultConfigMap = map[string]any{
@@ -32,7 +33,7 @@ var defaultConfigMap = map[string]any{
 	"debug":                     false,
 
 	"task.debug":    false,
-	"task.poolSize": 10000,
+	"task.poolSize": task.DefaultTaskPoolSize,
 
 	"telemetry.disabled":             false,
 	"telemetry.debug":                false,

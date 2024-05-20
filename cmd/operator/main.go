@@ -39,6 +39,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
 var (
@@ -94,6 +95,8 @@ func main() {
 	coordinator.SetRetryBackoffThreshold(cfg.Time.TaskRetryBackoffThreshold)
 	coordinator.SetIgnoreDeletionAnnotation(oceanbaseconst.AnnotationsIgnoreDeletion)
 	coordinator.SetPausedAnnotation(oceanbaseconst.AnnotationsPauseReconciling)
+	task.SetDebugTask(cfg.Task.Debug)
+	task.SetTaskPoolSize(cfg.Task.PoolSize)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

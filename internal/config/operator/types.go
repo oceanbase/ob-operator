@@ -41,8 +41,8 @@ type Manager struct {
 }
 
 type Task struct {
-	Debug    bool `mapstructure:"debug" yaml:"debug"`
-	PoolSize int  `mapstructure:"poolSize" yaml:"poolSize"`
+	Debug    bool   `mapstructure:"debug" yaml:"debug"`
+	PoolSize uint32 `mapstructure:"poolSize" yaml:"poolSize"`
 }
 
 type Telemetry struct {
