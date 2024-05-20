@@ -7,6 +7,9 @@ on:
       - 'chart-2.[0-9]+.[0-9]+'
       - 'oceanbase-[0-9]+.[0-9]+.[0-9]+.[0-9]+'
       - "dashboard-[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - master
+      - "*_release"
 
 jobs:
   release-chart:

@@ -7,6 +7,7 @@ import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import ChannelDrawer from './ChannelDrawer';
+import { Alert } from '@/type/alert';
 
 export default function Channel() {
   const [searchParams] = useSearchParams();
@@ -27,14 +28,7 @@ export default function Channel() {
       }
     },
   });
-  let listReceivers = listReceiversRes?.data;
-  listReceivers = [
-    {
-      config: 'string',
-      name: 'string',
-      type: 'dingtalk',
-    },
-  ];
+  const listReceivers = listReceiversRes?.data;
   const editChannel = (name: string) => {
     setClickedChannelName(name);
     setDrawerStatus('edit');

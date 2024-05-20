@@ -34,6 +34,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/controller"
 	"github.com/oceanbase/ob-operator/internal/controller/config"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -91,6 +92,8 @@ func main() {
 	cfg := obcfg.GetConfig()
 	coordinator.SetMaxRetryTimes(cfg.Time.TaskMaxRetryTimes)
 	coordinator.SetRetryBackoffThreshold(cfg.Time.TaskRetryBackoffThreshold)
+	coordinator.SetIgnoreDeletionAnnotation(oceanbaseconst.AnnotationsIgnoreDeletion)
+	coordinator.SetPausedAnnotation(oceanbaseconst.AnnotationsPauseReconciling)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

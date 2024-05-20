@@ -20,3 +20,7 @@ const (
 	LANGUAGE_ZH_CN = "zh-CN"
 	LANGUAGE_EN_US = "en-US"
 )
+
+const (
+	DASHBOARD_APP_NAME = "oceanbase-dashboard"
+)

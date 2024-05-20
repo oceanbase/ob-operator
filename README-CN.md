@@ -15,7 +15,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，如果您无法访问官方制品托管在 `quay.io` 镜像站的镜像，可通过下面的指令安装我们转托在 `docker.io` 中的制品：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/cert-manager.yaml
 ```
 
 本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。如果您计划在生产环境部署，推荐使用其他的存储解决方案。我们在[存储兼容性](#存储兼容性)一节提供了我们测试过的存储兼容性结果。
@@ -29,7 +29,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_r
 - 稳定版本
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/operator.yaml
 ```
 
 - 开发版本
@@ -45,7 +45,7 @@ Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安�
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.1
 ```
 
 #### 使用 terraform
@@ -97,7 +97,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/example/quickstart/obcluster.yaml
 ```
 
 一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
@@ -126,7 +126,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。
+我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。[快速上手](https://oceanbase.github.io/ob-operator/zh-Hans/docs/dashboard/quickstart)文档能帮助您快速了解 OceanBase 的功能和使用方法。
 
 安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
 

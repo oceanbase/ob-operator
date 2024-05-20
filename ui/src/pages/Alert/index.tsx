@@ -2,7 +2,8 @@ import { PageContainer } from '@ant-design/pro-components';
 import { Outlet, history } from '@umijs/max';
 import type { TabsProps } from 'antd';
 import { Divider, Tabs } from 'antd';
-import styles from './index.less'
+import { useEffect, useState } from 'react';
+import styles from './index.less';
 
 const items: TabsProps['items'] = [
   {
@@ -34,15 +35,33 @@ const items: TabsProps['items'] = [
     label: '告警推送',
   },
 ];
-
-const onChange = (key: string) => {
-  history.push(`/alert/${key}`);
-};
-
 export default function Alert() {
+  const [activeKey, setActiveKey] = useState<string>('event');
+  const onChange = (key: string) => {
+    setActiveKey(key);
+    history.push(`/alert/${key}`);
+  };
+
+  useEffect(() => {
+    const unlisten = history.listen(({ location }) => {
+      const curKey =
+        location.pathname.split('/')[location.pathname.split('/').length - 1];
+      if (curKey !== activeKey) {
+        setActiveKey(curKey);
+      }
+    });
+    return () => {
+      unlisten();
+    };
+  }, []);
   return (
     <PageContainer>
-      <Tabs className={styles.tabContent} defaultActiveKey="1" items={items} onChange={onChange} />
+      <Tabs
+        activeKey={activeKey}
+        className={styles.tabContent}
+        items={items}
+        onChange={onChange}
+      />
       <Outlet />
     </PageContainer>
   );

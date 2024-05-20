@@ -13,8 +13,6 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"errors"
-
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 
@@ -42,9 +40,14 @@ func ListMetricMetas(c *gin.Context) ([]response.MetricClass, error) {
 	// return mock data
 	language := c.GetHeader("Accept-Language")
 	scope := c.Query("scope")
-	if scope != metricconst.ScopeCluster && scope != metricconst.ScopeTenant && scope != metricconst.ScopeClusterOverview {
-		err := errors.New("invalid scope")
-		return nil, httpErr.NewBadRequest(err.Error())
+	switch scope {
+	case
+		metricconst.ScopeCluster,
+		metricconst.ScopeTenant,
+		metricconst.ScopeClusterOverview,
+		metricconst.ScopeOBProxy:
+	default:
+		return nil, httpErr.NewBadRequest("invalid scope")
 	}
 	metricClasses, err := metric.ListMetricClasses(scope, language)
 	if err != nil {

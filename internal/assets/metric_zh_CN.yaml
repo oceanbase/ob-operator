@@ -693,3 +693,195 @@ OBCLUSTER_OVERVIEW:
       name: wait_time
       unit: "\u03BCs"
     name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"
+OBPROXY:
+- name: OBProxy service monitoring
+  description: Obproxy service monitoring
+  metricGroups:
+  - name: TPS
+    description: TPS
+    metrics:
+    - name: "total"
+      description: "每秒事务数"
+      key: transaction_total
+      unit: ""
+  - name: QPS
+    description: QPS
+    metrics:
+    - name: "commit"
+      description: "每秒 commit 请求数"
+      key: request_total_commit
+      unit: ""
+    - name: "delete"
+      description: "每秒 delete 请求数"
+      key: request_total_delete
+      unit: ""
+    - name: "insert"
+      description: "每秒 insert 请求数"
+      key: request_total_insert
+      unit: ""
+    - name: "large"
+      description: "每秒大请求数"
+      key: request_total_large
+      unit: ""
+    - name: "select"
+      description: "每秒 select 请求数"
+      key: request_total_select
+      unit: ""
+    - name: "sequence"
+      description: "每秒 sequence 请求数"
+      key: request_total_sequence
+      unit: ""
+    - name: "slow"
+      description: "每秒慢请求数"
+      key: request_total_slow
+      unit: ""
+    - name: "update"
+      description: "每秒 update 请求数"
+      key: request_total_update
+      unit: ""
+    - name: "others"
+      description: "每秒其他请求数"
+      key: request_total_others
+      unit: ""
+  - name: 客户端连接
+    description: 客户端连接
+    metrics:
+    - name: "client"
+      description: "客户端连接数"
+      key: current_session_client
+      unit: ""
+    - name: "client_connections_usage"
+      description: "OBProxy 客户端连接数 / client_max_connections"
+      key: client_connection_used_percent
+      unit: "%"
+  - name: 服务端连接
+    description: 服务端连接
+    metrics:
+    - name: "server"
+      description: "服务端连接数"
+      key: current_session_server
+      unit: ""
+    - name: "server_connection_usage"
+      description: "OBProxy 服务端连接数 / max_connections"
+      key: server_connection_used_percent
+      unit: "%"
+  - name: SQL 响应时间
+    description: 平均每条 SQL 响应时间
+    metrics:
+    - name: "commit"
+      description: "平均每次 commit 请求耗时"
+      key: request_cost_commit
+      unit: "μs"
+    - name: "delete"
+      description: "平均每次 delete 请求耗时"
+      key: request_cost_delete
+      unit: "μs"
+    - name: "insert"
+      description: "平均每次 insert 请求耗时"
+      key: request_cost_insert
+      unit: "μs"
+    - name: "prepare_send_request"
+      description: "平均每次请求发送准备耗时"
+      key: request_cost_prepare_send_request_time
+      unit: "μs"
+    - name: "server_process_request"
+      description: "平均每次服务端处理请求耗时"
+      key: request_cost_server_process_request_time
+      unit: "μs"
+    - name: "select"
+      description: "平均每次 select 请求耗时"
+      key: request_cost_select
+      unit: "μs"
+    - name: "sequence"
+      description: "平均每次 sequence 请求耗时"
+      key: request_cost_sequence
+      unit: "μs"
+    - name: "update"
+      description: "平均每次 update 请求耗时"
+      key: request_cost_update
+      unit: "μs"
+    - name: "others"
+      description: "平均每次其他请求耗时"
+      key: request_cost_others
+      unit: "μs"
+  - name: OBProxy 内存
+    description: OBProxy 内存
+    metrics:
+    - name: "obproxy_rss"
+      description: "OBProxy 进程常驻内存大小"
+      key: obproxy_rss_memory
+      unit: "byte"
+    - name: "obproxy_rss_usage"
+      description: "OBProxy 进程常驻内存 / proxy_mem_limited"
+      key: obproxy_rss_mem_used_percent
+      unit: "%"
+  - name: OBProxy CPU 使用率
+    description: OBProxy 进程 CPU 使用率
+    metrics:
+    - name: "obproxy_cpu_usage"
+      description: "OBProxy 进程 CPU 使用率"
+      key: obproxy_process_cpu_percent
+      unit: "%"
+  - name: OBProxy 文件句柄数
+    description: OBProxy 文件句柄数
+    metrics:
+    - name: "obproxy_fd"
+      description: "OBProxy 文件句柄数"
+      key: obproxy_fd_count
+      unit: ""
+  - name: OBProxy 线程数
+    description: OBProxy 线程数
+    metrics:
+    - name: "obproxy_threads"
+      description: "OBProxy 进程线程数"
+      key: obproxy_thread_count
+      unit: ""
+  - name: 错误日志
+    description: 错误日志个数
+    metrics:
+    - name: "obproxy"
+      description: "OBProxy ERROR 日志个数"
+      key: obproxy_log_error_count
+      unit: ""
+  - name: 路由表
+    description: 平均每秒路由表查询次数 (默认不开启，如果需要开启，需要设置obproxy参数enable_extra_prometheus_metric=true)
+    metrics:
+    - name: "hit"
+      description: "平均每秒路由表命中次数"
+      key: entry_total_hit
+      unit: ""
+    - name: "partition"
+      description: "平均每秒查询 partition entry 的次数"
+      key: entry_total_partition
+      unit: ""
+    - name: "route"
+      description: "平均每秒查询 route entry 的次数"
+      key: entry_total_route
+      unit: ""
+    - name: "success"
+      description: "平均每秒路由表查询成功次数"
+      key: entry_total_success
+      unit: ""
+    - name: "table"
+      description: "平均每秒查询 table entry 的次数"
+      key: entry_total_table
+      unit: ""
+  - name: 字节数
+    description: 平均每次网络请求或响应字节数 (默认不开启, 如果需要开启，需要设置obproxy参数enable_extra_prometheus_metric=true)
+    metrics:
+    - name: "client_request"
+      description: "客户端 request 字节数"
+      key: request_byte_client_request
+      unit: "byte"
+    - name: "client_response"
+      description: "客户端 response 字节数"
+      key: request_byte_client_response
+      unit: "byte"
+    - name: "server_request"
+      description: "服务端 request 字节数"
+      key: request_byte_server_request
+      unit: "byte"
+    - name: "server_response"
+      description: "服务端 response 字节数"
+      key: request_byte_server_response
+      unit: "byte"

@@ -51,8 +51,12 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	var f *tasktypes.TaskFlow
 	var err error
 	beforeStatus := c.Manager.GetStatus()
-	if c.Manager.IsNewResource() {
+	meta := c.Manager.GetMeta()
+	if c.Manager.GetStatus() == "" {
 		c.Manager.InitStatus()
+	} else if meta.GetAnnotations()[cfg.PauseAnnotation] == "true" {
+		c.Logger.V(2).Info("Pause annotation found, skip execution")
+		result.RequeueAfter = cfg.PausedRequeueDuration
 	} else {
 		f, err = c.Manager.GetTaskFlow()
 		if err != nil {
@@ -73,12 +77,16 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 		}
 	}
 	// handle instance deletion
-	if c.Manager.IsDeleting() {
-		err := c.Manager.CheckAndUpdateFinalizers()
-		if err != nil {
-			return result, errors.Wrapf(err, "Check and update finalizer failed")
+	if meta.GetDeletionTimestamp() != nil {
+		if meta.GetAnnotations()[cfg.IgnoreDeletionAnnotation] == "true" {
+			c.Logger.V(2).Info("Ignore deletion annotation found, skip deletion")
+		} else {
+			err := c.Manager.CheckAndUpdateFinalizers()
+			if err != nil {
+				return result, errors.Wrapf(err, "Check and update finalizer failed")
+			}
+			result.RequeueAfter = cfg.ExecutionRequeueDuration
 		}
-		result.RequeueAfter = cfg.ExecutionRequeueDuration
 	}
 	err = c.cleanTaskResultMap(f)
 	if err != nil {
