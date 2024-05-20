@@ -15,12 +15,12 @@ package telemetry
 import (
 	"context"
 	"fmt"
-	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	record "k8s.io/client-go/tools/record"
 
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 )
 
@@ -47,7 +47,7 @@ func NewRecorder(ctx context.Context, er record.EventRecorder) Recorder {
 	}
 
 	// if telemetry is disabled, return a dummy recorder as original event recorder
-	if os.Getenv(DisableTelemetryEnvName) == "true" {
+	if obcfg.GetConfig().Telemetry.Disabled {
 		clt.telemetryDisabled = true
 		return clt
 	}

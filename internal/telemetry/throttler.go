@@ -19,9 +19,11 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
 
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 )
 
@@ -38,18 +40,30 @@ var throttlerOnce sync.Once
 
 func getThrottler() *throttler {
 	throttlerOnce.Do(func() {
+		cfg := obcfg.GetConfig().Telemetry
 		throttlerSingleton = &throttler{
-			recordChan: make(chan *models.TelemetryRecord, ThrottlerBufferSize),
+			recordChan: make(chan *models.TelemetryRecord, cfg.ThrottlerBufferSize),
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		throttlerSingleton.ctx = ctx
 		throttlerSingleton.cancel = cancel
 		throttlerSingleton.client = *http.DefaultClient
-		throttlerSingleton.filter = expirable.NewLRU[string, struct{}](FilterSize, nil, FilterExpireTimeout)
+		throttlerSingleton.filter = expirable.NewLRU[string, struct{}](cfg.FilterSize, nil, cfg.FilterExpireTimeout)
+
+		if u, err := url.Parse(cfg.Host); err == nil {
+			clt := http.Client{
+				Timeout: time.Second,
+			}
+			_, err := clt.Head(u.String())
+			if err == nil {
+				TelemetryReportScheme = u.Scheme
+				TelemetryReportHost = u.Host
+			}
+		}
 
 		throttlerSingleton.startWorkers()
-		getLogger().Println("Telemetry throttler started", "#worker:", ThrottlerWorkerCount)
+		getLogger().Println("Telemetry throttler started", "#worker:", cfg.ThrottlerWorkerCount)
 	})
 	return throttlerSingleton
 }
@@ -87,7 +101,7 @@ func (t *throttler) sendTelemetryRecord(record *models.TelemetryRecord) (*http.R
 }
 
 func (t *throttler) startWorkers() {
-	for i := 0; i < ThrottlerWorkerCount; i++ {
+	for i := 0; i < obcfg.GetConfig().Telemetry.ThrottlerWorkerCount; i++ {
 		go func(ctx context.Context, ch <-chan *models.TelemetryRecord) {
 			for {
 				select {
