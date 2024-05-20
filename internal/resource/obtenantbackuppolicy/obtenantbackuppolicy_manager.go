@@ -128,7 +128,7 @@ func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
 		if err != nil {
 			return err
 		}
-		m.BackupPolicy.Status.TenantCR = tenant
+		m.BackupPolicy.Status.TenantName = tenant.Spec.TenantName
 	}
 
 	tenantRecord, err := m.getTenantRecord(false)
