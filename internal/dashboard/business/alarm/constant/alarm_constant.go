@@ -17,10 +17,15 @@ const (
 )
 
 const (
+	ReceiverConfigTemplateFile = "internal/assets/receiver_templates.yaml"
+)
+
+const (
 	AlertManagerAddress = "http://127.0.0.1:9093"
 	AlertUrl            = "/api/v2/alerts"
 	SilencerUrl         = "/api/v2/silences"
 	RuleUrl             = "/api/v1/rules"
+	StatusUrl           = "/api/v2/status"
 )
 
 const (

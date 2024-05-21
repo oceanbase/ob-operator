@@ -809,12 +809,34 @@ definitions:
     type: object
   receiver.ReceiverType:
     enum:
-    - dingtalk
+    - discord
+    - email
+    - pagerduty
+    - slack
+    - webhook
+    - opsgenie
     - wechat
+    - pushover
+    - victorops
+    - sns
+    - telegram
+    - webex
+    - msteams
     type: string
     x-enum-varnames:
-    - TypeDingTalk
-    - TypeWeChat
+    - TypeDiscord
+    - TypeEmail
+    - TypePagerduty
+    - TypeSlack
+    - TypeWebhook
+    - TypeOpsGenie
+    - TypeWechat
+    - TypePushover
+    - TypeVictorOps
+    - TypeSNS
+    - TypeTelegram
+    - TypeWebex
+    - TypeMSTeams
   receiver.Template:
     properties:
       template:

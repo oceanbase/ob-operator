@@ -3,6 +3,7 @@
 // internal/assets/metric_en_US.yaml
 // internal/assets/metric_expr.yaml
 // internal/assets/metric_zh_CN.yaml
+// internal/assets/receiver_templates.yaml
 package bindata
 
 import (
@@ -139,6 +140,26 @@ func internalAssetsMetric_zh_cnYaml() (*asset, error) {
 	return a, nil
 }
 
+var _internalAssetsReceiver_templatesYaml = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x74\x90\x4d\x6e\x83\x40\x0c\x85\xf7\x39\x85\x95\x2e\x58\x25\xbb\xaa\xd5\xac\x7a\x93\x91\x05\x8f\x30\xca\xfc\x50\xdb\xa4\xe1\xf6\x55\x86\x26\x82\xb4\x5d\x61\xbf\xef\x1b\xd9\xe6\x40\x36\x8f\x70\xd4\x05\x6d\x8b\x74\x3b\x22\x43\x1a\x23\x1b\xdc\xee\xce\x90\x38\xc4\x0d\x21\x22\xb2\xe2\xa8\x99\xcb\x24\x87\xca\x3f\x70\xe5\x34\x46\x1c\xdb\x92\x9a\x2a\xf4\x52\x92\xa3\x86\x23\xc4\x12\x67\x3e\x41\x7e\x4b\x2f\x34\x20\xc6\xe2\x68\x5f\xbf\xfb\x1a\x6a\x62\xb1\xa1\xa8\x39\x6a\x34\xd9\x78\x5c\x3d\x73\xaf\xef\x6f\xcb\x53\x9e\x6c\xf0\x93\x42\x32\x27\x3c\x0d\x5a\x19\xa1\x43\xb6\x60\xf3\xff\xc6\xc8\xaa\x5f\x45\x3a\x47\xcd\xbd\xfc\x83\xfa\x3e\xc4\xdb\x98\x15\x52\xb4\x82\xba\x64\x2d\x16\x32\x80\x3b\x88\xd6\x8b\x6a\xb5\xdc\x34\x58\x8a\x8e\xf6\x4b\x63\xb8\xda\xa3\x11\x7c\x4e\x41\xe0\x2d\xaa\xa3\x9e\xa3\x62\x71\xa2\xfa\xb6\xe4\x3e\x9c\x1e\x26\x51\xcb\xeb\x06\x62\x1b\xf6\xb3\xe2\x46\x78\xce\xce\x98\x9f\x23\x85\x5c\x20\x7e\xf9\x8d\x8f\x34\x64\x45\x3b\x09\xbc\x9e\xc3\xe8\x2f\x90\xd0\xcf\x2b\x9c\x42\xbe\x85\x1a\x4a\x5e\xa7\x7c\xdd\xa4\xdf\x01\x00\x00\xff\xff\x4b\xf8\x9d\x56\x5f\x02\x00\x00")
+
+func internalAssetsReceiver_templatesYamlBytes() ([]byte, error) {
+	return bindataRead(
+		_internalAssetsReceiver_templatesYaml,
+		"internal/assets/receiver_templates.yaml",
+	)
+}
+
+func internalAssetsReceiver_templatesYaml() (*asset, error) {
+	bytes, err := internalAssetsReceiver_templatesYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "internal/assets/receiver_templates.yaml", size: 607, mode: os.FileMode(420), modTime: time.Unix(1716276559, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -191,9 +212,10 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"internal/assets/metric_en_US.yaml": internalAssetsMetric_en_usYaml,
-	"internal/assets/metric_expr.yaml":  internalAssetsMetric_exprYaml,
-	"internal/assets/metric_zh_CN.yaml": internalAssetsMetric_zh_cnYaml,
+	"internal/assets/metric_en_US.yaml":       internalAssetsMetric_en_usYaml,
+	"internal/assets/metric_expr.yaml":        internalAssetsMetric_exprYaml,
+	"internal/assets/metric_zh_CN.yaml":       internalAssetsMetric_zh_cnYaml,
+	"internal/assets/receiver_templates.yaml": internalAssetsReceiver_templatesYaml,
 }
 
 // AssetDir returns the file names below a certain
@@ -239,9 +261,10 @@ type bintree struct {
 var _bintree = &bintree{nil, map[string]*bintree{
 	"internal": &bintree{nil, map[string]*bintree{
 		"assets": &bintree{nil, map[string]*bintree{
-			"metric_en_US.yaml": &bintree{internalAssetsMetric_en_usYaml, map[string]*bintree{}},
-			"metric_expr.yaml":  &bintree{internalAssetsMetric_exprYaml, map[string]*bintree{}},
-			"metric_zh_CN.yaml": &bintree{internalAssetsMetric_zh_cnYaml, map[string]*bintree{}},
+			"metric_en_US.yaml":       &bintree{internalAssetsMetric_en_usYaml, map[string]*bintree{}},
+			"metric_expr.yaml":        &bintree{internalAssetsMetric_exprYaml, map[string]*bintree{}},
+			"metric_zh_CN.yaml":       &bintree{internalAssetsMetric_zh_cnYaml, map[string]*bintree{}},
+			"receiver_templates.yaml": &bintree{internalAssetsReceiver_templatesYaml, map[string]*bintree{}},
 		}},
 	}},
 }}

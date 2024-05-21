@@ -5658,12 +5658,34 @@ const docTemplate = `{
         "receiver.ReceiverType": {
             "type": "string",
             "enum": [
-                "dingtalk",
-                "wechat"
+                "discord",
+                "email",
+                "pagerduty",
+                "slack",
+                "webhook",
+                "opsgenie",
+                "wechat",
+                "pushover",
+                "victorops",
+                "sns",
+                "telegram",
+                "webex",
+                "msteams"
             ],
             "x-enum-varnames": [
-                "TypeDingTalk",
-                "TypeWeChat"
+                "TypeDiscord",
+                "TypeEmail",
+                "TypePagerduty",
+                "TypeSlack",
+                "TypeWebhook",
+                "TypeOpsGenie",
+                "TypeWechat",
+                "TypePushover",
+                "TypeVictorOps",
+                "TypeSNS",
+                "TypeTelegram",
+                "TypeWebex",
+                "TypeMSTeams"
             ]
         },
         "receiver.Template": {

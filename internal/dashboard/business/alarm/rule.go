@@ -27,6 +27,19 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
+func GetRule(name string) (*rule.RuleResponse, error) {
+	rules, err := ListRules(nil)
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrExternal, "Query rules from prometheus")
+	}
+	for _, rule := range rules {
+		if rule.Name == name {
+			return &rule, nil
+		}
+	}
+	return nil, errors.New(errors.ErrNotFound, "Rule not found")
+}
+
 func ListRules(filter *rule.RuleFilter) ([]rule.RuleResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
 	ruleDiscovery := &promv1.RuleDiscovery{}
@@ -54,14 +67,16 @@ func ListRules(filter *rule.RuleFilter) ([]rule.RuleResponse, error) {
 
 func filterRule(rule *rule.RuleResponse, filter *rule.RuleFilter) bool {
 	matched := true
-	if filter.Keyword != "" {
-		matched = matched && strings.Contains(rule.Name, filter.Keyword)
-	}
-	if filter.InstanceType != "" {
-		matched = matched && (rule.InstanceType == filter.InstanceType)
-	}
-	if filter.Serverity != "" {
-		matched = matched && (rule.Serverity == filter.Serverity)
+	if filter != nil {
+		if filter.Keyword != "" {
+			matched = matched && strings.Contains(rule.Name, filter.Keyword)
+		}
+		if filter.InstanceType != "" {
+			matched = matched && (rule.InstanceType == filter.InstanceType)
+		}
+		if filter.Serverity != "" {
+			matched = matched && (rule.Serverity == filter.Serverity)
+		}
 	}
 	return matched
 }

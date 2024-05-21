@@ -44,6 +44,10 @@ type RuleResponse struct {
 	Rule
 }
 
+type RuleIdentity struct {
+	Name string `json:"name" binding:"required"`
+}
+
 func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 	var instanceType oceanbase.OBInstanceType
 	serverity := alarm.ServerityInfo

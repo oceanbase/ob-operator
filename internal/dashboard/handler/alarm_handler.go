@@ -168,8 +168,13 @@ func ListRules(c *gin.Context) ([]rule.RuleResponse, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/rule/rules/{name} [GET]
 // @Security ApiKeyAuth
-func GetRule(_ *gin.Context) (*rule.RuleResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func GetRule(c *gin.Context) (*rule.RuleResponse, error) {
+	ruleIdentity := &rule.RuleIdentity{}
+	err := c.BindUri(ruleIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.GetRule(ruleIdentity.Name)
 }
 
 // @ID CreateOrUpdateRule
@@ -218,8 +223,8 @@ func DeleteRule(_ *gin.Context) (any, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/receiver/receivers [POST]
 // @Security ApiKeyAuth
-func ListReceivers(_ *gin.Context) ([]receiver.Receiver, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func ListReceivers(c *gin.Context) ([]receiver.Receiver, error) {
+	return alarm.ListReceivers()
 }
 
 // @ID GetReceiver
@@ -235,8 +240,13 @@ func ListReceivers(_ *gin.Context) ([]receiver.Receiver, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/receiver/receivers/{name} [GET]
 // @Security ApiKeyAuth
-func GetReceiver(_ *gin.Context) (*receiver.Receiver, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func GetReceiver(c *gin.Context) (*receiver.Receiver, error) {
+	receiverIdentity := &receiver.ReceiverIdentity{}
+	err := c.BindUri(receiverIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.GetReceiver(receiverIdentity.Name)
 }
 
 // @ID CreateOrUpdateReceiver
@@ -318,8 +328,8 @@ func GetReceiverTemplate(_ *gin.Context) (*receiver.Template, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/route/routes [POST]
 // @Security ApiKeyAuth
-func ListRoutes(_ *gin.Context) ([]route.RouteResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func ListRoutes(c *gin.Context) ([]route.RouteResponse, error) {
+	return alarm.ListRoutes()
 }
 
 // @ID GetRoute
@@ -335,8 +345,13 @@ func ListRoutes(_ *gin.Context) ([]route.RouteResponse, error) {
 // @Param id path string true "route id"
 // @Router /api/v1/alarm/route/routes/{id} [GET]
 // @Security ApiKeyAuth
-func GetRoute(_ *gin.Context) (*route.RouteResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func GetRoute(c *gin.Context) (*route.RouteResponse, error) {
+	routeIdentity := &route.RouteIdentity{}
+	err := c.BindUri(routeIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.GetRoute(routeIdentity.Id)
 }
 
 // @ID CreateOrUpdateRoute

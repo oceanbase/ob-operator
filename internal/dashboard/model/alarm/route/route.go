@@ -13,7 +13,17 @@ See the Mulan PSL v2 for more details.
 */
 package route
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"encoding/json"
+	"time"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
+	amconfig "github.com/prometheus/alertmanager/config"
+	amlabels "github.com/prometheus/alertmanager/pkg/labels"
+	logger "github.com/sirupsen/logrus"
+)
 
 type Route struct {
 	Receiver              string          `json:"receiver" binding:"required"`
@@ -24,7 +34,51 @@ type Route struct {
 	RepeatIntervalMinutes int             `json:"repeatInterval" binding:"required"`
 }
 
+type RouteIdentity struct {
+	Id string `json:"id" binding:"required"`
+}
+
 type RouteResponse struct {
 	Id string `json:"id" binding:"required"`
 	Route
+}
+
+func (r *Route) Hash() string {
+	routeBytes, err := json.Marshal(r)
+	if err != nil {
+		logger.WithError(err).Errorf("Encode route object failed")
+		return ""
+	}
+	hash := md5.Sum(routeBytes)
+	return hex.EncodeToString(hash[:])
+}
+
+func NewRouteResponse(route *Route) *RouteResponse {
+	id := route.Hash()
+	routeResponse := &RouteResponse{
+		Id:    id,
+		Route: *route,
+	}
+	return routeResponse
+}
+
+func NewRoute(amroute *amconfig.Route) *Route {
+	matchers := make([]alarm.Matcher, 0, len(amroute.Matchers))
+	for _, ammatcher := range amroute.Matchers {
+		matcher := alarm.Matcher{
+			IsRegex: ammatcher.Type == amlabels.MatchRegexp,
+			Name:    ammatcher.Name,
+			Value:   ammatcher.Value,
+		}
+		matchers = append(matchers, matcher)
+	}
+	route := &Route{
+		Receiver:              amroute.Receiver,
+		Matchers:              matchers,
+		AggregateLabels:       amroute.GroupByStr,
+		GroupIntervalMinutes:  int(time.Duration(*amroute.GroupInterval).Minutes()),
+		GroupWaitMinutes:      int(time.Duration(*amroute.GroupWait).Minutes()),
+		RepeatIntervalMinutes: int(time.Duration(*amroute.RepeatInterval).Minutes()),
+	}
+	return route
 }
