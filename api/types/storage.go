@@ -17,6 +17,6 @@ import (
 )
 
 type StorageSpec struct {
-	StorageClass string            `json:"storageClass"`
+	StorageClass string            `json:"storageClass,omitempty"`
 	Size         resource.Quantity `json:"size"`
 }

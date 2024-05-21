@@ -128,14 +128,14 @@ func (r *OBCluster) Default() {
 		r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" ||
 		r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
 		scList := &storagev1.StorageClassList{}
-		sort.SliceStable(scList.Items, func(i, j int) bool {
-			return scList.Items[i].Name < scList.Items[j].Name
-		})
 		err := clt.List(context.TODO(), scList)
 		var defaults []string
 		if err != nil {
 			logger.Error(err, "Failed to list storage class")
 		} else {
+			sort.SliceStable(scList.Items, func(i, j int) bool {
+				return scList.Items[i].Name < scList.Items[j].Name
+			})
 			for _, sc := range scList.Items {
 				if sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
 					defaults = append(defaults, sc.Name)
@@ -146,15 +146,15 @@ func (r *OBCluster) Default() {
 			} else {
 				if len(defaults) > 1 {
 					logger.Info("Multiple default storage class found", "storageClasses", defaults, "selected", defaults[0])
-					if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
-						r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = defaults[0]
-					}
-					if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
-						r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
-					}
-					if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
-						r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
-					}
+				}
+				if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = defaults[0]
+				}
+				if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
+				}
+				if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
 				}
 			}
 		}
@@ -206,18 +206,6 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
 			}
 		}
-	}
-	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
-	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
-	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
-	}
-	if err != nil {
-		return nil, err
 	}
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
@@ -295,6 +283,19 @@ func (r *OBCluster) validateMutation() error {
 	// Validate Topology
 	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
+	}
+
+	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if len(allErrs) != 0 {
+		return allErrs.ToAggregate()
 	}
 
 	// Validate storageClasses
