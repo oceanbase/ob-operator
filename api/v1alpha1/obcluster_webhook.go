@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -58,6 +59,7 @@ var _ webhook.Defaulter = &OBCluster{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBCluster) Default() {
 	// fill default essential parameters, memory_limit, datafile_maxsize and datafile_next
+	logger := obclusterlog.WithValues("namespace", r.Namespace, "name", r.Name)
 
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
@@ -68,7 +70,7 @@ func (r *OBCluster) Default() {
 			Value: memoryLimit,
 		}
 	} else {
-		obclusterlog.Error(errors.New("Failed to parse memory size"), "parse observer's memory size failed")
+		logger.Error(errors.New("Failed to parse memory size"), "parse observer's memory size failed")
 	}
 	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if ok {
@@ -83,7 +85,7 @@ func (r *OBCluster) Default() {
 			Value: datafileNextSize,
 		}
 	} else {
-		obclusterlog.Error(errors.New("Failed to parse datafile size"), "parse observer's datafile size failed")
+		logger.Error(errors.New("Failed to parse datafile size"), "parse observer's datafile size failed")
 	}
 	parameterMap["enable_syslog_recycle"] = apitypes.Parameter{
 		Name:  "enable_syslog_recycle",
@@ -121,6 +123,41 @@ func (r *OBCluster) Default() {
 
 	if r.Spec.ServiceAccount == "" {
 		r.Spec.ServiceAccount = "default"
+	}
+	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" ||
+		r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" ||
+		r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+		scList := &storagev1.StorageClassList{}
+		sort.SliceStable(scList.Items, func(i, j int) bool {
+			return scList.Items[i].Name < scList.Items[j].Name
+		})
+		err := clt.List(context.TODO(), scList)
+		var defaults []string
+		if err != nil {
+			logger.Error(err, "Failed to list storage class")
+		} else {
+			for _, sc := range scList.Items {
+				if sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
+					defaults = append(defaults, sc.Name)
+				}
+			}
+			if len(defaults) == 0 {
+				logger.Error(nil, "No default storage class found")
+			} else {
+				if len(defaults) > 1 {
+					logger.Info("Multiple default storage class found", "storageClasses", defaults, "selected", defaults[0])
+					if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+						r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = defaults[0]
+					}
+					if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+						r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
+					}
+					if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+						r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -169,6 +206,18 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
 			}
 		}
+	}
+	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if err != nil {
+		return nil, err
 	}
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
 		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
