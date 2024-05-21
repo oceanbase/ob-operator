@@ -58,6 +58,27 @@ func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResp
 	startTime := strfmt.DateTime(time.Now())
 	endTime := strfmt.DateTime(time.Unix(param.EndsAt, 0))
 	matchers := make(apimodels.Matchers, 0)
+	for _, rule := range param.Rules {
+		isEqual := true
+		isRegex := false
+		ruleName := alarmconstant.LabelRuleName
+		matchers = append(matchers, &apimodels.Matcher{
+			IsEqual: &isEqual,
+			IsRegex: &isRegex,
+			Name:    &ruleName,
+			Value:   &rule,
+		})
+	}
+	for _, m := range param.Matchers {
+		isEqual := !m.IsRegex
+		matchers = append(matchers, &apimodels.Matcher{
+			IsEqual: &isEqual,
+			IsRegex: &m.IsRegex,
+			Name:    &m.Name,
+			Value:   &m.Value,
+		})
+	}
+
 	silencer := apimodels.Silence{
 		Comment:   &param.Comment,
 		CreatedBy: &param.CreatedBy,
