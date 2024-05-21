@@ -38,9 +38,12 @@ export default function ChannelDrawer({
       }
     },
   });
-  const { data: listReceiversRes, run: getListReceivers } = useRequest(alert.listReceivers, {
-    manual: true,
-  });
+  const { data: listReceiversRes, run: getListReceivers } = useRequest(
+    alert.listReceivers,
+    {
+      manual: true,
+    },
+  );
   const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
 
   const Footer = () => {
@@ -67,20 +70,21 @@ export default function ChannelDrawer({
     if (status !== 'create' && name) {
       getReceiver(name);
     }
-    if(status === 'create'){
+    if (status === 'create') {
       getListReceivers();
     }
-  }, [status,name]);
+  }, [status, name]);
 
   return (
     <AlertDrawer
       title="告警通道配置"
       footer={<Footer />}
+      destroyOnClose={true}
       onSubmit={() => form.submit()}
       onClose={onClose}
       {...props}
     >
-      <Form form={form} layout="vertical">
+      <Form form={form} preserve={false} layout="vertical">
         <Form.Item
           wrapperCol={{ span: 12 }}
           label="通道名称"

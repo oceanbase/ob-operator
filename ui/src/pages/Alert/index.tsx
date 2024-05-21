@@ -35,8 +35,18 @@ const items: TabsProps['items'] = [
     label: '告警推送',
   },
 ];
+
+const getInitialActiveKey = () => {
+  const tailKey = location.hash.split('/')[location.hash.split('/').length - 1];
+  if (
+    ['event', 'shield', 'rules', 'channel', 'subscriptions'].includes(tailKey)
+  )
+    return tailKey;
+  return 'event';
+};
+
 export default function Alert() {
-  const [activeKey, setActiveKey] = useState<string>('event');
+  const [activeKey, setActiveKey] = useState<string>(getInitialActiveKey());
   const onChange = (key: string) => {
     setActiveKey(key);
     history.push(`/alert/${key}`);
