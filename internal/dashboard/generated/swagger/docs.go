@@ -7264,8 +7264,9 @@ const docTemplate = `{
                 "comment",
                 "createdBy",
                 "endsAt",
-                "instance",
+                "instances",
                 "matchers",
+                "rules",
                 "startsAt"
             ],
             "properties": {
@@ -7281,7 +7282,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"
@@ -7291,6 +7292,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "startsAt": {

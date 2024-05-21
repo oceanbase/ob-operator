@@ -1965,7 +1965,7 @@ definitions:
         type: integer
       id:
         type: string
-      instance:
+      instances:
         items:
           $ref: '#/definitions/oceanbase.OBInstance'
         type: array
@@ -1973,14 +1973,19 @@ definitions:
         items:
           $ref: '#/definitions/alarm.Matcher'
         type: array
+      rules:
+        items:
+          type: string
+        type: array
       startsAt:
         type: integer
     required:
     - comment
     - createdBy
     - endsAt
-    - instance
+    - instances
     - matchers
+    - rules
     - startsAt
     type: object
   silence.SilencerResponse:

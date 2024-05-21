@@ -7257,8 +7257,9 @@
                 "comment",
                 "createdBy",
                 "endsAt",
-                "instance",
+                "instances",
                 "matchers",
+                "rules",
                 "startsAt"
             ],
             "properties": {
@@ -7274,7 +7275,7 @@
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"
@@ -7284,6 +7285,12 @@
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "startsAt": {

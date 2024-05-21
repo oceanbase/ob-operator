@@ -53,7 +53,8 @@ type SilencerIdentity struct {
 
 type SilencerParam struct {
 	Id        string                 `json:"id,omitempty"`
-	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
+	Instances []oceanbase.OBInstance `json:"instances" binding:"required"`
+	Rules     []string               `json:"rules" binding:"required"`
 	Silencer
 }
 
