@@ -47,10 +47,12 @@ type OBTenantBackupPolicyStatus struct {
 	Status           apitypes.BackupPolicyStatusType `json:"status"`
 	OperationContext *tasktypes.OperationContext     `json:"operationContext,omitempty"`
 
-	ObservedGeneration   int64                   `json:"observedGeneration,omitempty"`
-	NextFull             string                  `json:"nextFull,omitempty"`
-	NextIncremental      string                  `json:"nextIncremental,omitempty"`
+	ObservedGeneration int64  `json:"observedGeneration,omitempty"`
+	NextFull           string `json:"nextFull,omitempty"`
+	NextIncremental    string `json:"nextIncremental,omitempty"`
+	// Deprecated
 	TenantCR             *OBTenant               `json:"tenantCR,omitempty"`
+	TenantName           string                  `json:"tenantName,omitempty"`
 	TenantInfo           *model.OBTenant         `json:"tenantInfo,omitempty"`
 	LatestFullBackupJob  *model.OBBackupJob      `json:"latestFullBackupJob,omitempty"`
 	LatestIncrementalJob *model.OBBackupJob      `json:"latestIncrementalJob,omitempty"`

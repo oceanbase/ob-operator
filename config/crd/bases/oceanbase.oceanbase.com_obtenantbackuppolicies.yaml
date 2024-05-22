@@ -429,7 +429,7 @@ spec:
               status:
                 type: string
               tenantCR:
-                description: OBTenant is the Schema for the obtenants API
+                description: Deprecated
                 properties:
                   apiVersion:
                     description: 'APIVersion defines the versioned schema of this
@@ -1027,6 +1027,8 @@ spec:
                 - tenant_role
                 - tenant_type
                 type: object
+              tenantName:
+                type: string
             required:
             - status
             type: object

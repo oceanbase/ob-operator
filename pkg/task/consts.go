@@ -13,10 +13,18 @@ See the Mulan PSL v2 for more details.
 package task
 
 const (
-	debugTaskEnv    = "DEBUG_TASK"
-	taskPoolSizeEnv = "TASK_POOL_SIZE"
+	DefaultTaskPoolSize = 10000
 )
 
-const (
-	defaultTaskPoolSize = 10000
+var (
+	debugTask           = false
+	taskPoolSize uint32 = DefaultTaskPoolSize
 )
+
+func SetDebugTask(debug bool) {
+	debugTask = debug
+}
+
+func SetTaskPoolSize(size uint32) {
+	taskPoolSize = size
+}
