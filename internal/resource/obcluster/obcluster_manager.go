@@ -183,7 +183,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 		outer:
 			for _, obzone := range obzoneList.Items {
-				if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.checkIfCalcResourceChange(&obzone) {
+				if modeAnnoExist && (modeAnnoVal == oceanbaseconst.ModeStandalone || modeAnnoVal == oceanbaseconst.ModeService) && m.checkIfCalcResourceChange(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ScaleUp
 					break outer
 				}

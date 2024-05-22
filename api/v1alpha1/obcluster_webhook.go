@@ -179,10 +179,12 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 	oldMode, existOld := oldCluster.GetAnnotations()[oceanbaseconst.AnnotationsMode]
 	mode, exist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	oldResource := oldCluster.Spec.OBServerTemplate.Resource
+	newResource := r.Spec.OBServerTemplate.Resource
 	if existOld && exist && oldMode != mode {
 		return nil, errors.New("mode cannot be changed")
-	} else if oldMode != oceanbaseconst.ModeStandalone && (oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu || oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory) {
-		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
+	} else if oldMode != oceanbaseconst.ModeStandalone && oldMode != oceanbaseconst.ModeService && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
+		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
 	}
 	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
 		return nil, errors.New("forbid to remove backup volume")

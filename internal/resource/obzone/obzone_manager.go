@@ -218,7 +218,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need delete observer")
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
-		} else if mode, exist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+		} else if mode := m.OBZone.Annotations[oceanbaseconst.AnnotationsMode]; mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService {
 			for _, observer := range observerList.Items {
 				if m.checkIfCalcResourceChange(&observer) {
 					m.OBZone.Status.Status = zonestatus.ScaleUp
