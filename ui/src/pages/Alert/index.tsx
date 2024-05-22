@@ -5,7 +5,9 @@ import { Divider, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
-const items: TabsProps['items'] = [
+const TAB_KEYS = ['event', 'shield', 'rules', 'channel', 'subscriptions'];
+
+const TAB_ITEMS: TabsProps['items'] = [
   {
     key: 'event',
     label: '告警事件',
@@ -35,8 +37,16 @@ const items: TabsProps['items'] = [
     label: '告警推送',
   },
 ];
+
+const getInitialActiveKey = () => {
+  const hashFrags = location.hash.split('/');
+  const tailKey = hashFrags[hashFrags.length - 1];
+  if (TAB_KEYS.includes(tailKey)) return tailKey;
+  return 'event';
+};
+
 export default function Alert() {
-  const [activeKey, setActiveKey] = useState<string>('event');
+  const [activeKey, setActiveKey] = useState<string>(getInitialActiveKey());
   const onChange = (key: string) => {
     setActiveKey(key);
     history.push(`/alert/${key}`);
@@ -59,7 +69,7 @@ export default function Alert() {
       <Tabs
         activeKey={activeKey}
         className={styles.tabContent}
-        items={items}
+        items={TAB_ITEMS}
         onChange={onChange}
       />
       <Outlet />

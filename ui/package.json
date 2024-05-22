@@ -22,7 +22,7 @@
     "@umijs/max": "^4.0.72",
     "@xterm/xterm": "^5.4.0",
     "ahooks": "^3.7.8",
-    "antd": "^5.4.0",
+    "antd": "5.13.0",
     "copy-to-clipboard": "^3.3.3",
     "i18next": "^23.11.1",
     "jsencrypt": "^3.3.2",

@@ -14,7 +14,6 @@ package telemetry
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -84,16 +83,19 @@ func processOBZone(zone *v1alpha1.OBZone) {
 }
 
 func processOBTenantRestore(restore *v1alpha1.OBTenantRestore) {
+	restore.SetAnnotations(nil)
 	restore.Status.RestoreProgress = nil
 }
 
 func processOBTenantBackup(backup *v1alpha1.OBTenantBackup) {
+	backup.SetAnnotations(nil)
 	backup.Status.ArchiveLogJob = nil
 	backup.Status.BackupJob = nil
 	backup.Status.DataCleanJob = nil
 }
 
 func processOBTenantBackupPolicy(policy *v1alpha1.OBTenantBackupPolicy) {
+	policy.SetAnnotations(nil)
 	policy.Status.LatestArchiveLogJob = nil
 	policy.Status.LatestBackupCleanJob = nil
 	policy.Status.LatestFullBackupJob = nil

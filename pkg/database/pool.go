@@ -13,8 +13,6 @@ See the Mulan PSL v2 for more details.
 package database
 
 import (
-	"os"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/golang-lru/v2/expirable"
@@ -28,12 +26,7 @@ func onCacheEvicted(_ string, value *Connector) {
 }
 
 func init() {
-	cacheSize := DefaultLRUCacheSize
-	if sizeEnv := os.Getenv(dbConLRUCacheSizeEnv); sizeEnv != "" {
-		if sizeParsed, err := strconv.Atoi(sizeEnv); err == nil {
-			cacheSize = sizeParsed
-		}
-	}
+	cacheSize := lruCacheSize
 	p.Cache = expirable.NewLRU[string, *Connector](cacheSize, onCacheEvicted, time.Hour)
 }
 

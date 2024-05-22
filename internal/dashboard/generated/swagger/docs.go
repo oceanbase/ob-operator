@@ -2998,6 +2998,22 @@ const docTemplate = `{
                 ],
                 "summary": "Get OBProxy",
                 "operationId": "GetOBProxy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3055,6 +3071,22 @@ const docTemplate = `{
                 ],
                 "summary": "Delete OBProxy",
                 "operationId": "DeleteOBProxy",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -3121,6 +3153,20 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/obproxy.PatchOBProxyParam"
                         }
+                    },
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
                     }
                 ],
                 "responses": {

@@ -13,10 +13,13 @@ See the Mulan PSL v2 for more details.
 package operator
 
 import (
+	"time"
+
 	"github.com/spf13/viper"
 
 	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/database"
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
 var defaultConfigMap = map[string]any{
@@ -27,13 +30,18 @@ var defaultConfigMap = map[string]any{
 	"health-probe-bind-address": ":8081",
 	"log-verbosity":             0,
 	"disable-webhooks":          false,
+	"debug":                     false,
 
 	"task.debug":    false,
-	"task.poolSize": 10000,
+	"task.poolSize": task.DefaultTaskPoolSize,
 
-	"telemetry.disabled": false,
-	"telemetry.debug":    false,
-	"telemetry.host":     "https://openwebapi.oceanbase.com",
+	"telemetry.disabled":             false,
+	"telemetry.debug":                false,
+	"telemetry.host":                 "https://openwebapi.oceanbase.com",
+	"telemetry.throttlerBufferSize":  30,
+	"telemetry.throttlerWorkerCount": 30,
+	"telemetry.filterSize":           1000,
+	"telemetry.filterExpireTimeout":  60 * time.Minute,
 
 	"database.connectionLRUCacheSize": database.DefaultLRUCacheSize,
 

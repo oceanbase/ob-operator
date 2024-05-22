@@ -12,12 +12,5 @@ See the Mulan PSL v2 for more details.
 
 package telemetry
 
-const (
-	DefaultThrottlerBufferSize  = 30
-	DefaultThrottlerWorkerCount = 30
-	DefaultWaitThrottlerSeconds = 60
-)
-
 var TelemetryReportHost = TelemetryReportProdHost
 var TelemetryReportScheme = SchemeHttps
-var TelemetryDisabled = false

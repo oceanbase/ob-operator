@@ -25,6 +25,10 @@ const (
 	DefaultLRUCacheSize = 1000
 )
 
-const (
-	dbConLRUCacheSizeEnv = "DB_CON_LRU_CACHE_SIZE"
+var (
+	lruCacheSize = DefaultLRUCacheSize
 )
+
+func SetLRUCacheSize(size int) {
+	lruCacheSize = size
+}

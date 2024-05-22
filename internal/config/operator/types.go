@@ -12,7 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package operator
 
-import "github.com/spf13/viper"
+import (
+	"time"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
 	v *viper.Viper
@@ -33,17 +37,22 @@ type Manager struct {
 	ProbeAddr        string `mapstructure:"health-probe-bind-address" yaml:"probeAddr"`
 	LogVerbosity     int    `mapstructure:"log-verbosity" yaml:"logVerbosity"`
 	DisableWebhooks  bool   `mapstructure:"disable-webhooks" yaml:"disableWebhooks"`
+	Debug            bool   `mapstructure:"debug" yaml:"debug"`
 }
 
 type Task struct {
-	Debug    bool `mapstructure:"debug" yaml:"debug"`
-	PoolSize int  `mapstructure:"poolSize" yaml:"poolSize"`
+	Debug    bool   `mapstructure:"debug" yaml:"debug"`
+	PoolSize uint32 `mapstructure:"poolSize" yaml:"poolSize"`
 }
 
 type Telemetry struct {
-	Disabled bool   `mapstructure:"disabled" yaml:"disabled"`
-	Debug    bool   `mapstructure:"debug" yaml:"debug"`
-	Host     string `mapstructure:"host" yaml:"host"`
+	Disabled             bool          `mapstructure:"disabled" yaml:"disabled"`
+	Debug                bool          `mapstructure:"debug" yaml:"debug"`
+	Host                 string        `mapstructure:"host" yaml:"host"`
+	ThrottlerBufferSize  int           `mapstructure:"throttlerBufferSize" yaml:"throttlerBufferSize"`
+	ThrottlerWorkerCount int           `mapstructure:"throttlerWorkerCount" yaml:"throttlerWorkerCount"`
+	FilterSize           int           `mapstructure:"filterSize" yaml:"filterSize"`
+	FilterExpireTimeout  time.Duration `mapstructure:"filterExpireTimeout" yaml:"filterExpireTimeout"`
 }
 
 type Database struct {

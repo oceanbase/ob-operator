@@ -4,7 +4,6 @@ import AlertDrawer from '@/components/AlertDrawer';
 import InputLabel from '@/components/InputLabel';
 import { Alert } from '@/type/alert';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import { useUpdateEffect } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import {
   Button,
@@ -18,6 +17,7 @@ import {
 } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
+import ShieldObjInput from './ShieldObjInput';
 import styles from './index.less';
 
 interface ShieldDrawerProps extends DrawerProps {
@@ -35,9 +35,8 @@ export default function ShieldDrawerForm({
   ...props
 }: ShieldDrawerProps) {
   const [form] = Form.useForm<SilenceSilencerParam>();
+  const shieldObjType = Form.useWatch(['instance', 'type'], form);
   const isEdit = !!id;
-  
-  const instanceType = Form.useWatch(['instance', 'type'], form);
   const newInitialValues = {
     matchers: [
       {
@@ -46,6 +45,9 @@ export default function ShieldDrawerForm({
         isRegex: false,
       },
     ],
+    instance:{
+      type:'obcluster'
+    },
     ...initialValues,
   };
 
@@ -76,13 +78,19 @@ export default function ShieldDrawerForm({
     }
   }, [id]);
 
-  useUpdateEffect(() => {
-    form.setFieldValue(['instance', instanceType], 'aa');
-  }, [instanceType]);
   return (
-    <AlertDrawer onClose={onClose} onSubmit={() => form.submit()} {...props}>
+    <AlertDrawer
+      onClose={() => {
+        onClose();
+      }}
+      destroyOnClose={true}
+      onSubmit={() => form.submit()}
+      title="屏蔽条件"
+      {...props}
+    >
       <Form
         form={form}
+        preserve={false}
         onFinish={submit}
         layout="vertical"
         initialValues={newInitialValues}
@@ -93,6 +101,9 @@ export default function ShieldDrawerForm({
             <Radio value="obtenant"> 租户 </Radio>
             <Radio value="observer"> OBServer </Radio>
           </Radio.Group>
+        </Form.Item>
+        <Form.Item label='屏蔽对象'>
+          <ShieldObjInput shieldObjType={shieldObjType} form={form} />
         </Form.Item>
         {/* <Form.Item label='屏蔽告警规则'>
             
