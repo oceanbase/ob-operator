@@ -19,7 +19,7 @@ const { Text } = Typography;
 
 export default function Shield() {
   const [form] = Form.useForm();
-  const [searchParams,setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [drawerOpen, setDrawerOpen] = useState(
     Boolean(searchParams.get('instance')),
