@@ -67,6 +67,8 @@ func CreateOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
 // @Tags OBProxy
 // @Accept application/json
 // @Produce application/json
+// @Param namespace path string true "namespace of obproxy deployment"
+// @Param name path string true "name of obproxy deployment"
 // @Success 200 object response.APIResponse{data=obproxy.OBProxy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -89,6 +91,8 @@ func GetOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body obproxy.PatchOBProxyParam true "Request body for patching obproxy"
+// @Param namespace path string true "namespace of obproxy deployment"
+// @Param name path string true "name of obproxy deployment"
 // @Success 200 object response.APIResponse{data=obproxy.OBProxy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -115,6 +119,8 @@ func PatchOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
 // @Tags OBProxy
 // @Accept application/json
 // @Produce application/json
+// @Param namespace path string true "namespace of obproxy deployment"
+// @Param name path string true "name of obproxy deployment"
 // @Success 200 object response.APIResponse{data=obproxy.OBProxy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
