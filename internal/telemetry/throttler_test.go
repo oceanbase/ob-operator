@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -28,12 +29,8 @@ var _ = Describe("Telemetry throttler", Ordered, Label("throttler"), func() {
 	var throttler *throttler
 
 	BeforeAll(func() {
-		throttler = getThrottler()
+		throttler = getThrottler(context.Background())
 		Expect(throttler).ShouldNot(BeNil())
-	})
-
-	AfterAll(func() {
-		throttler.close()
 	})
 
 	It("Send telemetry record", func() {

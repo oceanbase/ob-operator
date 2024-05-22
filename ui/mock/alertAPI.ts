@@ -103,4 +103,30 @@ export default {
     message: 'string',
     successful: true,
   },
+  'POST /api/v1/alarm/rule/rules': {
+    data: [
+      {
+        description: 'string',
+        duration: 0,
+        evaluationTime: 0,
+        health: 'unknown',
+        instanceType: 'obcluster',
+        keepFiringFor: 0,
+        labels: {
+          key: 'string',
+          value: 'string',
+        },
+        lastError: 'string',
+        lastEvaluation: 0,
+        name: 'string',
+        query: 'string',
+        serverity: 'critical',
+        state: 'active',
+        summary: 'string',
+        type: 'builtin',
+      },
+    ],
+    message: 'string',
+    successful: true,
+  },
 };

@@ -2541,7 +2541,6 @@ spec:
                             type: string
                         required:
                         - size
-                        - storageClass
                         type: object
                       logStorage:
                         properties:
@@ -2555,7 +2554,6 @@ spec:
                             type: string
                         required:
                         - size
-                        - storageClass
                         type: object
                       redoLogStorage:
                         properties:
@@ -2569,7 +2567,6 @@ spec:
                             type: string
                         required:
                         - size
-                        - storageClass
                         type: object
                     required:
                     - dataStorage

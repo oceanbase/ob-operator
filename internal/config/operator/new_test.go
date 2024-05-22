@@ -13,12 +13,12 @@ See the Mulan PSL v2 for more details.
 package operator
 
 import (
-	"flag"
 	"os"
 
 	"github.com/mitchellh/mapstructure"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/spf13/pflag"
 )
 
 var _ = Describe("Config", func() {
@@ -63,10 +63,14 @@ var _ = Describe("Config", func() {
 			Expect(got.Telemetry.Disabled).To(BeEquivalentTo(defaultConfigMap["telemetry.disabled"]))
 			Expect(got.Telemetry.Debug).To(BeEquivalentTo(defaultConfigMap["telemetry.debug"]))
 			Expect(got.Telemetry.Host).To(BeEquivalentTo(defaultConfigMap["telemetry.host"]))
+			Expect(got.Telemetry.ThrottlerBufferSize).To(BeEquivalentTo(defaultConfigMap["telemetry.throttlerBufferSize"]))
+			Expect(got.Telemetry.ThrottlerWorkerCount).To(BeEquivalentTo(defaultConfigMap["telemetry.throttlerWorkerCount"]))
+			Expect(got.Telemetry.FilterSize).To(BeEquivalentTo(defaultConfigMap["telemetry.filterSize"]))
+			Expect(got.Telemetry.FilterExpireTimeout).To(BeEquivalentTo(defaultConfigMap["telemetry.filterExpireTimeout"]))
 			Expect(got.Task.Debug).To(BeEquivalentTo(defaultConfigMap["task.debug"]))
 			Expect(got.Task.PoolSize).To(BeEquivalentTo(defaultConfigMap["task.poolSize"]))
-			// Expect(got.Manager.DisableWebhooks).To(BeEquivalentTo(defaultConfigMap["manager.disableWebhooks"]))
-			// Expect(got.Manager.LogVerbosity).To(BeEquivalentTo(defaultConfigMap["manager.logVerbosity"]))
+			Expect(got.Manager.DisableWebhooks).To(BeEquivalentTo(defaultConfigMap["disable-webhooks"]))
+			Expect(got.Manager.LogVerbosity).To(BeEquivalentTo(defaultConfigMap["log-verbosity"]))
 		})
 	})
 
@@ -74,6 +78,8 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 			os.Setenv("OB_OPERATOR_TASK_POOLSIZE", "9876")
 			os.Setenv("OB_OPERATOR_TIME_TASKMAXRETRYTIMES", "1234")
+			os.Setenv("OB_OPERATOR_TELEMETRY_DISABLED", "true")
+			os.Setenv("OB_OPERATOR_DATABASE_CONNECTIONLRUCACHESIZE", "999")
 		})
 		AfterEach(func() {
 			os.Unsetenv("OB_OPERATOR_TASK_POOLSIZE")
@@ -82,8 +88,10 @@ var _ = Describe("Config", func() {
 		It("should return config with envVars", func() {
 			Expect(os.Getenv("OB_OPERATOR_TASK_POOLSIZE")).To(Equal("9876"))
 			got := newConfig()
-			Expect(got.Task.PoolSize).To(Equal(9876))
+			Expect(got.Task.PoolSize).To(BeEquivalentTo(9876))
 			Expect(got.Time.TaskMaxRetryTimes).To(Equal(1234))
+			Expect(got.Telemetry.Disabled).To(BeTrue())
+			Expect(got.Database.ConnectionLRUCacheSize).To(Equal(999))
 		})
 	})
 
@@ -95,15 +103,15 @@ var _ = Describe("Config", func() {
 			var enableLeaderElection bool
 			var probeAddr string
 			var logVerbosity int
-			flag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
-			flag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
-			flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-			flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-			flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+			pflag.StringVar(&namespace, "namespace", "", "The namespace to run oceanbase, default value is empty means all.")
+			pflag.StringVar(&managerNamespace, "manager-namespace", "oceanbase-system", "The namespace to run manager tools.")
+			pflag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+			pflag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+			pflag.BoolVar(&enableLeaderElection, "leader-elect", false,
 				"Enable leader election for controller manager. "+
 					"Enabling this will ensure there is only one active controller manager.")
-			flag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
-			Expect(flag.CommandLine.Parse([]string{
+			pflag.IntVar(&logVerbosity, "log-verbosity", 0, "Log verbosity level, 0 is info, 1 is debug, 2 is trace")
+			Expect(pflag.CommandLine.Parse([]string{
 				"--log-verbosity", "1",
 			})).To(Succeed())
 			GinkgoLogr.Info("logVerbosity", "logVerbosity", logVerbosity)

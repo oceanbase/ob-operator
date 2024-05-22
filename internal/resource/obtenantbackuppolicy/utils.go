@@ -313,6 +313,9 @@ func (m *ObTenantBackupPolicyManager) getTenantRecordName() (string, error) {
 	if m.BackupPolicy.Status.TenantCR != nil {
 		return m.BackupPolicy.Status.TenantCR.Spec.TenantName, nil
 	}
+	if m.BackupPolicy.Status.TenantName != "" {
+		return m.BackupPolicy.Status.TenantName, nil
+	}
 	tenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.BackupPolicy.Namespace,

@@ -18,7 +18,6 @@ import (
 	"os"
 	"runtime"
 	"runtime/debug"
-	"strconv"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -34,12 +33,6 @@ var taskManager *TaskManager
 var taskManagerOnce sync.Once
 
 func taskManagerInit() {
-	taskPoolSize := defaultTaskPoolSize
-	if psEnv := os.Getenv(taskPoolSizeEnv); psEnv != "" {
-		if ps, err := strconv.Atoi(psEnv); err == nil {
-			taskPoolSize = ps
-		}
-	}
 	logger := log.FromContext(context.TODO())
 	taskManager = &TaskManager{
 		Logger: &logger,
@@ -98,7 +91,7 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 
 	go runTask(f, retCh, m.tokens)
 
-	if os.Getenv(debugTaskEnv) == "true" {
+	if debugTask {
 		mu.Lock()
 		m.workerCount++
 		mu.Unlock()
@@ -120,7 +113,7 @@ func (m *TaskManager) Submit(f tasktypes.TaskFunc) tasktypes.TaskID {
 }
 
 func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskResult, error) {
-	if os.Getenv(debugTaskEnv) == "true" {
+	if debugTask {
 		var ms runtime.MemStats
 		runtime.ReadMemStats(&ms)
 
