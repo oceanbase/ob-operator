@@ -1029,7 +1029,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	defer func() {
 		err = m.Client.Delete(m.Ctx, pvc)
 		if err != nil {
-			m.Logger.Info("Failed to delete pvc for checking storage")
+			m.Logger.Info("Failed to delete pvc for checking storage", "err", err)
 		}
 	}()
 	// Assemble volumeConfigs
