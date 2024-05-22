@@ -1,15 +1,17 @@
+import type { OceanbaseOBInstanceType } from '@/api/generated';
 import {
-  SERVERITY_MAP,
   LEVER_OPTIONS_ALARM,
   OBJECT_OPTIONS_ALARM,
+  SERVERITY_MAP,
 } from '@/constants';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import { useUpdateEffect } from 'ahooks';
 import type { FormInstance } from 'antd';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Tag } from 'antd';
-import { flatten } from 'lodash';
 import { useEffect, useState } from 'react';
+import type { ServersList, TenantsList } from '../helper';
+import { getSelectList } from '../helper';
 
 interface AlarmFilterProps {
   form: FormInstance<unknown>;
@@ -29,46 +31,36 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
   const { clusterList, tenantList } = useModel('alarm');
   const [isExpand, setIsExpand] = useState(true);
   const [visibleConfig, setVisibleConfig] = useState(DEFAULT_VISIBLE_CONFIG);
-  const getOptionsFromType = (
-    type: 'obcluster' | 'obtenant' | 'observer' | 'obzone' | undefined,
-  ) => {
+  const getOptionsFromType = (type: OceanbaseOBInstanceType) => {
+    if (!type || !clusterList || (type === 'obtenant' && !tenantList))
+      return [];
+    const list = getSelectList(clusterList, type, tenantList);
     if (type === 'obcluster') {
-      return clusterList?.map((cluster) => ({
-        value: cluster.clusterName,
-        label: cluster.clusterName,
+      return list?.map((clusterName) => ({
+        value: clusterName,
+        label: clusterName,
       }));
     }
     if (type === 'obtenant') {
-      return clusterList?.map((cluster) => ({
+      return (list as TenantsList[]).map((cluster) => ({
         label: <span>{cluster.clusterName}</span>,
         title: cluster.clusterName,
-        options: tenantList
-          ?.filter(
-            (tenant) =>
-              tenant.namespace === cluster.namespace &&
-              tenant.clusterResourceName === cluster.name,
-          )
-          .map((tenant) => ({
-            label: tenant.tenantName,
-            value: tenant.tenantName,
-          })),
+        options: cluster.tenants?.map((item) => ({
+          value: item,
+          label: item,
+        })),
       }));
     }
     if (type === 'observer') {
-      return clusterList?.map((cluster) => ({
+      return (list as ServersList[]).map((cluster) => ({
         label: <span>{cluster.clusterName}</span>,
         title: cluster.clusterName,
-        options: flatten(
-          cluster.topology.map((zone) =>
-            zone.observers.map((server) => ({
-              label: server.address,
-              value: server.address,
-            })),
-          ),
-        ),
+        options: cluster.servers?.map((item) => ({
+          value: item,
+          label: item,
+        })),
       }));
     }
-    return [];
   };
 
   useEffect(() => {
@@ -186,7 +178,9 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SERVERITY_MAP[item.value]?.color}>{item.label}</Tag>
+                    <Tag color={SERVERITY_MAP[item.value]?.color}>
+                      {item.label}
+                    </Tag>
                   ),
                 }))}
               />

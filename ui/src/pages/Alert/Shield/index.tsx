@@ -19,7 +19,7 @@ const { Text } = Typography;
 
 export default function Shield() {
   const [form] = Form.useForm();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [drawerOpen, setDrawerOpen] = useState(
     Boolean(searchParams.get('instance')),
@@ -34,6 +34,7 @@ export default function Shield() {
   });
   const listSilencers = listSilencersRes?.data || [];
   const drawerClose = () => {
+    setSearchParams('');
     setDrawerOpen(false);
   };
   const columns: ColumnsType<SilenceSilencerResponse> = [

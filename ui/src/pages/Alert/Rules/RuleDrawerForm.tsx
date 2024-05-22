@@ -30,9 +30,14 @@ export default function RuleDrawerForm({
   }, []);
 
   return (
-    <AlertDrawer onSubmit={() => form.submit()} {...props}>
+    <AlertDrawer
+      destroyOnClose={true}
+      onSubmit={() => form.submit()}
+      {...props}
+    >
       <Form
         initialValues={initialValues}
+        preserve={false}
         style={{ marginBottom: 64 }}
         layout="vertical"
         form={form}
