@@ -164,9 +164,8 @@ func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: fScaleUpOBZones,
 			Tasks: []tasktypes.TaskName{
-				tScaleUpOBZones,
-				tWaitOBZoneRunning,
 				tAdjustParameters,
+				tScaleUpOBZones,
 			},
 			TargetStatus: clusterstatus.Running,
 		},

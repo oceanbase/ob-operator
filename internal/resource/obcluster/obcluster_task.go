@@ -1133,18 +1133,40 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "List gv servers")
 	}
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "List obzones")
+	}
+	if len(zones.Items) == 0 {
+		return errors.New("No obzone found")
+	}
+
+	oldResource := zones.Items[0].Spec.OBServerTemplate.Resource
+
 	var maxAssignedMem int64
 	var memoryLimitPercent float64
 	for _, gvserver := range gvservers {
 		if gvserver.MemAssigned > maxAssignedMem {
+			if gvserver.MemoryLimit > oldResource.Memory.Value() {
+				memoryLimitPercent = 0.9
+			} else {
+				memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
+			}
 			maxAssignedMem = gvserver.MemAssigned
 		}
 	}
-	specMem := m.OBCluster.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64()
-	spec90percent := int64(specMem * memoryLimitPercent)
+	newResource := m.OBCluster.Spec.OBServerTemplate.Resource
+	specMem := newResource.Memory.AsApproximateFloat64()
+	specWithPercent := int64(specMem * memoryLimitPercent)
 
-	targetMemoryLimit := max(spec90percent, maxAssignedMem)
-	m.Logger.Info("Adjust memory limit", "maxAssignedMem", maxAssignedMem, "specMem", specMem, "targetMemoryLimit", targetMemoryLimit)
+	targetMemoryLimit := max(specWithPercent, maxAssignedMem)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).
+		Info("Adjust memory limit",
+			"maxAssignedMem", maxAssignedMem,
+			"specMem", specMem,
+			"targetMemoryLimit", targetMemoryLimit,
+			"percent", memoryLimitPercent,
+		)
 
 	copiedCluster := m.OBCluster.DeepCopy()
 	if param == nil {
