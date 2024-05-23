@@ -1070,18 +1070,19 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 	if withMode {
 		supportStaticIP = true
 	} else {
-		podList := &corev1.PodList{}
-		err := m.Client.List(m.Ctx, podList, client.MatchingLabels{oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name}, client.InNamespace(m.OBCluster.Namespace))
+		serverList := &v1alpha1.OBServerList{}
+		err := m.Client.List(m.Ctx, serverList, client.MatchingLabels{oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name}, client.InNamespace(m.OBCluster.Namespace))
 		if err != nil {
-			return errors.Wrap(err, "List pods of obcluster")
+			return errors.Wrap(err, "List servers of obcluster")
 		}
-		if len(podList.Items) == 0 {
-			return errors.New("No pod found for obcluster")
+		if len(serverList.Items) == 0 {
+			return errors.New("No server found for obcluster")
 		}
-		pod := podList.Items[0]
-		calicoAnnotation := pod.GetAnnotations()[oceanbaseconst.AnnotationCalicoValidate]
-		if calicoAnnotation != "" {
-			supportStaticIP = true
+		for _, server := range serverList.Items {
+			if server.Status.CNI != oceanbaseconst.CNIUnknown {
+				supportStaticIP = true
+				break
+			}
 		}
 	}
 
