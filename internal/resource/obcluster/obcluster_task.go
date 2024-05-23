@@ -1134,13 +1134,14 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "List gv servers")
 	}
 	var maxAssignedMem int64
+	var memoryLimitPercent float64
 	for _, gvserver := range gvservers {
 		if gvserver.MemAssigned > maxAssignedMem {
 			maxAssignedMem = gvserver.MemAssigned
 		}
 	}
-	specMem := m.OBCluster.Spec.OBServerTemplate.Resource.Memory.Value()
-	spec90percent := int64(float64(specMem) * 0.9)
+	specMem := m.OBCluster.Spec.OBServerTemplate.Resource.Memory.AsApproximateFloat64()
+	spec90percent := int64(specMem * memoryLimitPercent)
 
 	targetMemoryLimit := max(spec90percent, maxAssignedMem)
 	m.Logger.Info("Adjust memory limit", "maxAssignedMem", maxAssignedMem, "specMem", specMem, "targetMemoryLimit", targetMemoryLimit)

@@ -199,12 +199,18 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			return nil, err
 		}
 		var maxAssignedMemory int64
+		var memoryLimitPercent float64
 		for _, gvserver := range gvservers {
 			if gvserver.MemAssigned > maxAssignedMemory {
+				if oldResource.Memory.Value() < gvserver.MemoryLimit {
+					memoryLimitPercent = 0.9
+				} else {
+					memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
+				}
 				maxAssignedMemory = gvserver.MemAssigned
 			}
 		}
-		if newResource.Memory.Value() < maxAssignedMemory {
+		if newResource.Memory.AsApproximateFloat64()*memoryLimitPercent < float64(maxAssignedMemory) {
 			return nil, errors.New("Assigned memory is larger than new memory size")
 		}
 	}
