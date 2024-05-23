@@ -14,6 +14,7 @@ const { Text } = Typography;
 export default function Rules() {
   const [form] = Form.useForm();
   const { data: listRulesRes, refresh } = useRequest(alert.listRules);
+  const [editRuleName,setEditRuleName] = useState<string>()
   const { run: deleteRule } = useRequest(alert.deleteRule, {
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -23,6 +24,11 @@ export default function Rules() {
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
   const listRules = listRulesRes?.data || [];
+
+  const editRule = (ruleName:string)=>{
+    setEditRuleName(ruleName);
+    setDrawerOpen(true);
+  }
 
   const columns: ColumnsType<RuleRuleResponse> = [
     {
@@ -66,7 +72,7 @@ export default function Rules() {
       dataIndex: 'action',
       render: (_, record) => (
         <>
-          <Button style={{ paddingLeft: 0 }} type="link">
+          <Button onClick={()=>editRule(record.name)} style={{ paddingLeft: 0 }} type="link">
             编辑
           </Button>
           <Button
@@ -114,6 +120,7 @@ export default function Rules() {
       <RuleDrawerForm
         width={880}
         open={drawerOpen}
+        ruleName={editRuleName}
         onClose={() => setDrawerOpen(false)}
       />
     </Space>

@@ -129,4 +129,90 @@ export default {
     message: 'string',
     successful: true,
   },
+  'GET /api/v1/alarm/silence/silencers/string': {
+    data: {
+      comment: 'string',
+      createdBy: 'string',
+      endsAt: 1716282320833,
+      id: 'string',
+      instances: [
+        {
+          obcluster: 'string',
+          observer: 'string',
+          obtenant: 'string',
+          obzone: 'string',
+          type: 'obcluster',
+        },
+      ],
+      rules: ['string'],
+      matchers: [
+        {
+          isRegex: true,
+          name: 'string',
+          value: 'string',
+        },
+      ],
+      startsAt: 0,
+      status: {
+        state: 'active',
+      },
+      updatedAt: 0,
+    },
+    message: 'string',
+    successful: true,
+  },
+  'GET /api/v1/alarm/rule/rules/string': {
+    data: {
+      description: 'string',
+      duration: 0,
+      evaluationTime: 0,
+      health: 'unknown',
+      instanceType: 'obcluster',
+      keepFiringFor: 0,
+      labels: [
+        {
+          key: 'string',
+          value: 'string',
+        },
+      ],
+      lastError: 'string',
+      lastEvaluation: 0,
+      name: 'string',
+      query: 'string',
+      serverity: 'critical',
+      state: 'active',
+      summary: 'string',
+      type: 'builtin',
+    },
+    message: 'string',
+    successful: true,
+  },
+  'GET /api/v1/alarm/receiver/receivers/string': {
+    data: {
+      config: 'string',
+      name: 'string',
+      type: 'discord',
+    },
+    message: 'string',
+    successful: true,
+  },
+  'GET /api/v1/alarm/route/routes/string': {
+    data: {
+      aggregateLabels: ['string'],
+      groupInterval: 0,
+      groupWait: 0,
+      id: 'string',
+      matchers: [
+        {
+          isRegex: true,
+          name: 'string',
+          value: 'string',
+        },
+      ],
+      receiver: 'string',
+      repeatInterval: 0,
+    },
+    message: 'string',
+    successful: true,
+  },
 };

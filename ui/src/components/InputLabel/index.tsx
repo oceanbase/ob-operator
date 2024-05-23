@@ -1,6 +1,6 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Col, Form, Input, Popconfirm, Row } from 'antd';
-import styles from './index.less'
+import styles from './index.less';
 
 interface InputLabelProps {
   wrapFormName: string;
@@ -8,6 +8,7 @@ interface InputLabelProps {
   valueFormName: string;
   regBoxFormName?: string;
   showDelete?: boolean;
+  maxCount?: number;
 }
 
 export default function InputLabel({
@@ -16,6 +17,7 @@ export default function InputLabel({
   valueFormName,
   regBoxFormName,
   showDelete = true,
+  maxCount,
 }: InputLabelProps) {
   return (
     <Form.List name={wrapFormName}>
@@ -24,12 +26,12 @@ export default function InputLabel({
           <div>
             {fields.map(({ key, name }, index) => (
               <Row gutter={8} style={{ marginBottom: 8 }} key={key}>
-                <Col span={12}>
+                <Col span={11}>
                   <Form.Item name={[name, labelFormName]} noStyle>
                     <Input placeholder="请输入标签名" />
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col span={10}>
                   <Form.Item name={[name, valueFormName]} noStyle>
                     <Input placeholder="请输入标签值" />
                   </Form.Item>
@@ -43,7 +45,7 @@ export default function InputLabel({
                   </Col>
                 )}
                 {showDelete && fields.length > 1 && (
-                  <Col span={2}>
+                  <Col span={1}>
                     <Form.Item className={styles.delContent} name={[name, ' ']}>
                       <Popconfirm
                         placement="left"
@@ -67,25 +69,27 @@ export default function InputLabel({
                 )}
               </Row>
             ))}
-            <Row>
-              <Col span={20}>
-                <Form.Item>
-                  <Button
-                    type="dashed"
-                    block
-                    onClick={() => {
-                      const temp = { labelFormName: '', valueFormName: '' };
-                      if (regBoxFormName) temp[regBoxFormName] = false;
-                      add(temp);
-                    }}
-                    style={{ color: 'rgba(0,0,0,0.65)' }}
-                  >
-                    <PlusOutlined />
-                    添加
-                  </Button>
-                </Form.Item>
-              </Col>
-            </Row>
+            {!maxCount || fields.length < maxCount ? (
+              <Row>
+                <Col span={24}>
+                  <Form.Item>
+                    <Button
+                      type="dashed"
+                      block
+                      onClick={() => {
+                        const temp = { labelFormName: '', valueFormName: '' };
+                        if (regBoxFormName) temp[regBoxFormName] = false;
+                        add(temp);
+                      }}
+                      style={{ color: 'rgba(0,0,0,0.65)' }}
+                    >
+                      <PlusOutlined />
+                      添加
+                    </Button>
+                  </Form.Item>
+                </Col>
+              </Row>
+            ) : null}
           </div>
         );
       }}
