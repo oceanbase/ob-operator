@@ -112,9 +112,11 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case zonestatus.ScaleUp:
 		taskFlow = genScaleUpOBServersFlow(m)
 	case zonestatus.ExpandPVC:
-		taskFlow = FlowExpandPVC(m)
+		taskFlow = genFlowExpandPVC(m)
 	case zonestatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
+	case zonestatus.RollingUpdateServers:
+		taskFlow = genRollingUpdateServersFlow(m)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -235,7 +237,6 @@ func (m *OBZoneManager) UpdateStatus() error {
 			}
 		}
 
-		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
 		if m.OBZone.Status.Status == zonestatus.Running {
 			if m.OBZone.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
 				m.Logger.Info("Found image changed, need upgrade")

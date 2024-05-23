@@ -121,7 +121,7 @@ func genScaleUpOBServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	}
 }
 
-func FlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
+func genFlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fExpandPVC,
@@ -136,6 +136,16 @@ func genMountBackupVolumeFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fMountBackupVolume,
 			Tasks:        []tasktypes.TaskName{tMountBackupVolume, tWaitForOBServerMounting, tWaitOBServerRunning},
+			TargetStatus: zonestatus.Running,
+		},
+	}
+}
+
+func genRollingUpdateServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         fRollingUpdateOBServers,
+			Tasks:        []tasktypes.TaskName{tRollingUpdateOBServers},
 			TargetStatus: zonestatus.Running,
 		},
 	}
