@@ -24,7 +24,7 @@ export default function Shield() {
   const [drawerOpen, setDrawerOpen] = useState(
     Boolean(searchParams.get('instance')),
   );
-  const { data: listSilencersRes, refresh } = useRequest(alert.listSilencers);
+  const { data: listSilencersRes, refresh, run: getListSilencers } = useRequest(alert.listSilencers);
   const { run: deleteSilencer } = useRequest(alert.deleteSilencer, {
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -143,7 +143,7 @@ export default function Shield() {
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
-        <AlarmFilter form={form} type="shield" />
+        <AlarmFilter depend={getListSilencers} form={form} type="shield" />
       </Card>
       <Card
         title={<h2 style={{ marginBottom: 0 }}>屏蔽列表</h2>}
