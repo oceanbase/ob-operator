@@ -6,6 +6,7 @@ import type {
   SilenceStatus,
 } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Typography } from 'antd';
@@ -14,13 +15,12 @@ import moment from 'moment';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import ShieldDrawerForm from './ShieldDrawerForm';
-import { Alert } from '@/type/alert';
 const { Text } = Typography;
 
 export default function Shield() {
   const [form] = Form.useForm();
   const [searchParams, setSearchParams] = useSearchParams();
-
+  const [editShieldId, setEditShieldId] = useState<string>();
   const [drawerOpen, setDrawerOpen] = useState(
     Boolean(searchParams.get('instance')),
   );
@@ -35,7 +35,12 @@ export default function Shield() {
   const listSilencers = listSilencersRes?.data || [];
   const drawerClose = () => {
     setSearchParams('');
+    setEditShieldId(undefined);
     setDrawerOpen(false);
+  };
+  const editShield = (id: string) => {
+    setEditShieldId(id);
+    setDrawerOpen(true);
   };
   const columns: ColumnsType<SilenceSilencerResponse> = [
     {
@@ -101,7 +106,11 @@ export default function Shield() {
       key: 'action',
       render: (_, record) => (
         <>
-          <Button style={{ paddingLeft: 0 }} type="link">
+          <Button
+            onClick={() => editShield(record.id)}
+            style={{ paddingLeft: 0 }}
+            type="link"
+          >
             编辑
           </Button>
           <Button
@@ -157,6 +166,7 @@ export default function Shield() {
         initialValues={initialValues}
         onClose={drawerClose}
         open={drawerOpen}
+        id={editShieldId}
       />
     </Space>
   );

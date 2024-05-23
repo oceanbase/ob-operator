@@ -9,7 +9,6 @@ export default defineConfig({
   request: {},
   favicons: ['/logo.png'],
   title: 'OceanBase Dashboard',
-  mock: false,
   layout: false,
   locale: {
     default: 'zh-CN',
