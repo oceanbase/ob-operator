@@ -3,6 +3,7 @@
 // internal/assets/metric_en_US.yaml
 // internal/assets/metric_expr.yaml
 // internal/assets/metric_zh_CN.yaml
+// internal/assets/receiver_templates.yaml
 package bindata
 
 import (
@@ -94,7 +95,7 @@ func internalAssetsMetric_en_usYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21511, mode: os.FileMode(420), modTime: time.Unix(1715570952, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 21511, mode: os.FileMode(420), modTime: time.Unix(1713948410, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -114,7 +115,7 @@ func internalAssetsMetric_exprYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1710312355, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 31556, mode: os.FileMode(420), modTime: time.Unix(1710156272, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -134,7 +135,27 @@ func internalAssetsMetric_zh_cnYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25120, mode: os.FileMode(420), modTime: time.Unix(1714447919, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 25120, mode: os.FileMode(420), modTime: time.Unix(1713853774, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var _internalAssetsReceiver_templatesYaml = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x74\x90\xcd\x6e\xea\x40\x0c\x85\xf7\x3c\x85\xc5\x5d\x64\x05\xbb\xab\x56\xb3\xea\x9b\x8c\xac\x70\x42\x46\xcc\x4f\x6a\x3b\x94\xbc\x7d\xc5\xa4\xa0\x09\x55\x57\xb1\xbf\xf3\x59\x63\xe7\x40\xb6\x4c\x70\x84\xc4\x21\xee\x88\x0c\x69\x8a\x6c\x70\x3b\x22\x22\x2b\x8e\xba\xa5\xcc\x72\xa8\xf9\x07\x6e\x9c\xa6\x88\x63\x5f\x52\x57\x85\x41\x4a\x72\xd4\x71\x84\x58\xe2\xcc\x67\xc8\x6f\xe9\x1f\x8d\x88\xb1\x38\xda\xd7\xef\xbe\x42\x4d\x2c\x36\x16\x35\x47\x9d\x26\x9b\x8e\xcd\x98\xfb\xff\xfe\xb6\x8e\xf2\x6c\xa3\x9f\x15\x92\x39\xe1\xe5\xa1\xc6\x08\x27\x64\x0b\xb6\xfc\x6d\x4c\xac\xfa\x55\xe4\xe4\xa8\x7b\x94\x8f\xe5\x36\xb9\x1f\x42\xbc\x3f\xd4\x8c\x2a\x7a\x41\x5d\xb3\x16\x6b\x32\x82\x4f\x10\xad\x37\xd5\x6a\xbd\x6a\xb4\x14\x1d\xed\xd7\xc6\x70\xb3\x67\x23\xf8\x9c\x83\xc0\x5b\x54\x47\x03\x47\xc5\xea\x44\xf5\x7d\xc9\x43\x38\x3f\x4d\xa2\x9e\xdb\x06\x62\x9b\xec\x67\xc5\x8d\xf0\xca\x2e\x58\x5e\x91\x42\xae\x10\xbf\xfe\xc8\x27\x0d\x59\xd1\xcf\x02\xaf\x97\x30\xf9\x2b\x24\x0c\x4b\x13\xa7\x90\xef\x50\x43\xc9\x2d\xe5\xdb\x86\x7e\x07\x00\x00\xff\xff\x44\xe7\xdb\x54\x45\x02\x00\x00")
+
+func internalAssetsReceiver_templatesYamlBytes() ([]byte, error) {
+	return bindataRead(
+		_internalAssetsReceiver_templatesYaml,
+		"internal/assets/receiver_templates.yaml",
+	)
+}
+
+func internalAssetsReceiver_templatesYaml() (*asset, error) {
+	bytes, err := internalAssetsReceiver_templatesYamlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "internal/assets/receiver_templates.yaml", size: 581, mode: os.FileMode(420), modTime: time.Unix(1716281805, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -191,9 +212,10 @@ func AssetNames() []string {
 
 // _bindata is a table, holding each asset generator, mapped to its name.
 var _bindata = map[string]func() (*asset, error){
-	"internal/assets/metric_en_US.yaml": internalAssetsMetric_en_usYaml,
-	"internal/assets/metric_expr.yaml":  internalAssetsMetric_exprYaml,
-	"internal/assets/metric_zh_CN.yaml": internalAssetsMetric_zh_cnYaml,
+	"internal/assets/metric_en_US.yaml":       internalAssetsMetric_en_usYaml,
+	"internal/assets/metric_expr.yaml":        internalAssetsMetric_exprYaml,
+	"internal/assets/metric_zh_CN.yaml":       internalAssetsMetric_zh_cnYaml,
+	"internal/assets/receiver_templates.yaml": internalAssetsReceiver_templatesYaml,
 }
 
 // AssetDir returns the file names below a certain
@@ -239,9 +261,10 @@ type bintree struct {
 var _bintree = &bintree{nil, map[string]*bintree{
 	"internal": &bintree{nil, map[string]*bintree{
 		"assets": &bintree{nil, map[string]*bintree{
-			"metric_en_US.yaml": &bintree{internalAssetsMetric_en_usYaml, map[string]*bintree{}},
-			"metric_expr.yaml":  &bintree{internalAssetsMetric_exprYaml, map[string]*bintree{}},
-			"metric_zh_CN.yaml": &bintree{internalAssetsMetric_zh_cnYaml, map[string]*bintree{}},
+			"metric_en_US.yaml":       &bintree{internalAssetsMetric_en_usYaml, map[string]*bintree{}},
+			"metric_expr.yaml":        &bintree{internalAssetsMetric_exprYaml, map[string]*bintree{}},
+			"metric_zh_CN.yaml":       &bintree{internalAssetsMetric_zh_cnYaml, map[string]*bintree{}},
+			"receiver_templates.yaml": &bintree{internalAssetsReceiver_templatesYaml, map[string]*bintree{}},
 		}},
 	}},
 }}

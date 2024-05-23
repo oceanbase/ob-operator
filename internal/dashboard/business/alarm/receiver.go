@@ -13,8 +13,12 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+
+	"gopkg.in/yaml.v2"
 )
 
 func GetReceiver(name string) (*receiver.Receiver, error) {
@@ -43,4 +47,31 @@ func ListReceivers() ([]receiver.Receiver, error) {
 		}
 	}
 	return receivers, nil
+}
+
+func ListReceiverTemplates() ([]receiver.Template, error) {
+	receiverTemplates := make([]receiver.Template, 0)
+	configFile := alarmconstant.ReceiverConfigTemplateFile
+	receiverTemplatesConfigContent, err := bindata.Asset(configFile)
+	if err != nil {
+		return receiverTemplates, errors.Wrap(err, errors.ErrInternal, "Read receiver templates failed")
+	}
+	err = yaml.Unmarshal(receiverTemplatesConfigContent, &receiverTemplates)
+	if err != nil {
+		return receiverTemplates, errors.Wrap(err, errors.ErrInternal, "Decode receiver templates failed")
+	}
+	return receiverTemplates, err
+}
+
+func GetReceiverTemplates(receiverType string) (*receiver.Template, error) {
+	receiverTemplates, err := ListReceiverTemplates()
+	if err != nil {
+		return nil, errors.Wrap(err, errors.ErrInternal, "Get receiver templates failed")
+	}
+	for _, receiverTemplate := range receiverTemplates {
+		if receiverTemplate.Type == receiver.ReceiverType(receiverType) {
+			return &receiverTemplate, nil
+		}
+	}
+	return nil, errors.NewNotFound("Template for receiver not found")
 }

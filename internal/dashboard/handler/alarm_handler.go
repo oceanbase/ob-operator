@@ -296,7 +296,7 @@ func DeleteReceiver(_ *gin.Context) (any, error) {
 // @Router /api/v1/alarm/receiver/templates [POST]
 // @Security ApiKeyAuth
 func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+	return alarm.ListReceiverTemplates()
 }
 
 // @ID GetReceiverTemplate
