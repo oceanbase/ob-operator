@@ -1112,6 +1112,59 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 			}
 		}
 	}
+	return nil
+}
 
+func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
+	// Adjust memory limit
+	var param *apitypes.Parameter
+	for i, p := range m.OBCluster.Spec.Parameters {
+		if p.Name == "memory_limit" {
+			param = &m.OBCluster.Spec.Parameters[i]
+			break
+		}
+	}
+	// conn, err := resourceutils.GetSysOperationClient()
+	conn, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "Get operation manager")
+	}
+	gvservers, err := conn.ListGVServers(m.Ctx)
+	if err != nil {
+		return errors.Wrap(err, "List gv servers")
+	}
+	var maxAssignedMem int64
+	for _, gvserver := range gvservers {
+		if gvserver.MemAssigned > maxAssignedMem {
+			maxAssignedMem = gvserver.MemAssigned
+		}
+	}
+	specMem := m.OBCluster.Spec.OBServerTemplate.Resource.Memory.Value()
+	spec90percent := int64(float64(specMem) * 0.9)
+
+	targetMemoryLimit := max(spec90percent, maxAssignedMem)
+	m.Logger.Info("Adjust memory limit", "maxAssignedMem", maxAssignedMem, "specMem", specMem, "targetMemoryLimit", targetMemoryLimit)
+
+	copiedCluster := m.OBCluster.DeepCopy()
+	if param == nil {
+		param = &apitypes.Parameter{
+			Name:  "memory_limit",
+			Value: fmt.Sprintf("%dM", targetMemoryLimit>>20),
+		}
+		copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, *param)
+	} else {
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "memory_limit" {
+				copiedCluster.Spec.Parameters[i].Value = fmt.Sprintf("%dM", targetMemoryLimit>>20)
+				break
+			}
+		}
+	}
+
+	err = m.Client.Patch(m.Ctx, copiedCluster, client.MergeFrom(m.OBCluster))
+	if err != nil {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Patch obcluster", "obcluster", m.OBCluster.Name)
+		return errors.Wrap(err, "Patch obcluster")
+	}
 	return nil
 }

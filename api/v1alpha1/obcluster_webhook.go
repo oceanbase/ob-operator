@@ -39,6 +39,7 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 )
 
 // log is for logging in this package.
@@ -49,8 +50,6 @@ func (r *OBCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		For(r).
 		Complete()
 }
-
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
 //+kubebuilder:webhook:path=/mutate-oceanbase-oceanbase-com-v1alpha1-obcluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obclusters,verbs=create;update,versions=v1alpha1,name=mobcluster.kb.io,admissionReviewVersions=v1
 
@@ -186,6 +185,29 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	} else if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
 		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
 	}
+	if newResource.Memory.Cmp(oldResource.Memory) < 0 {
+		if r.Status.Status != clusterstatus.Running {
+			return nil, errors.New("forbid to shrink memory size of non-running cluster")
+		}
+		conn, err := getSysClient(clt, &obclusterlog, r, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, r.Spec.UserSecrets.Operator)
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()
+		gvservers, err := conn.ListGVServers(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		var maxAssignedMemory int64
+		for _, gvserver := range gvservers {
+			if gvserver.MemAssigned > maxAssignedMemory {
+				maxAssignedMemory = gvserver.MemAssigned
+			}
+		}
+		if newResource.Memory.Value() < maxAssignedMemory {
+			return nil, errors.New("Assigned memory is larger than new memory size")
+		}
+	}
 	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
 		return nil, errors.New("forbid to remove backup volume")
 	}
@@ -195,27 +217,30 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			err = errors.New("forbid to add backup volume to non-static-ip cluster")
 		}
 	}
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
+
+	newStorage := r.Spec.OBServerTemplate.Storage
+	oldStorage := oldCluster.Spec.OBServerTemplate.Storage
+	if newStorage.DataStorage.Size.Cmp(oldStorage.DataStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.DataStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass))
+	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.LogStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass))
+	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.RedoLogStorage.StorageClass))
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "forbid to shrink data storage size"))
+	if newStorage.DataStorage.Size.Cmp(oldStorage.DataStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), newStorage.DataStorage.Size.String(), "forbid to shrink data storage size"))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "forbid to shrink log storage size"))
+	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), newStorage.LogStorage.Size.String(), "forbid to shrink log storage size"))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
+	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), newStorage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
 	}
 	if err != nil {
 		return nil, err

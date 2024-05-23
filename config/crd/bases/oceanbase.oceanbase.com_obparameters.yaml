@@ -24,6 +24,12 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
+    - jsonPath: .spec.parameter.name
+      name: Key
+      type: string
+    - jsonPath: .spec.parameter.value
+      name: WantedValue
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
