@@ -4,8 +4,8 @@ import type { FormInstance } from 'antd';
 import { Col, Form, Row, Select } from 'antd';
 import { flatten } from 'lodash';
 import { useEffect, useState } from 'react';
-import type { ServersList, TenantsList } from '../helper';
 import { getSelectList } from '../helper';
+import { Alert } from '@/type/alert';
 
 interface ShieldObjInputProps {
   shieldObjType: OceanbaseOBInstanceType;
@@ -43,7 +43,7 @@ export default function ShieldObjInput({
     if (type === 'obtenant') {
       if (selectedCluster?.length) {
         const res = flatten(
-          (list as TenantsList[])?.map((item) =>
+          (list as Alert.TenantsList[])?.map((item) =>
             selectedCluster.includes(item.clusterName) ? item.tenants : [],
           ),
         ).map((tenantName) => ({
@@ -55,7 +55,7 @@ export default function ShieldObjInput({
         }
         return res;
       } else {
-        return (list as TenantsList[])?.map((cluster) => ({
+        return (list as Alert.TenantsList[])?.map((cluster) => ({
           label: <span>{cluster.clusterName}</span>,
           title: cluster.clusterName,
           options: cluster.tenants?.map((item) => ({
@@ -68,7 +68,7 @@ export default function ShieldObjInput({
     if (type === 'observer') {
       if (selectedCluster?.length) {
         const res = flatten(
-          (list as ServersList[])?.map((item) =>
+          (list as Alert.ServersList[])?.map((item) =>
             selectedCluster.includes(item.clusterName) ? item.servers : [],
           ),
         ).map((server) => ({
@@ -80,7 +80,7 @@ export default function ShieldObjInput({
         }
         return res;
       } else {
-        return (list as ServersList[]).map((cluster) => ({
+        return (list as Alert.ServersList[]).map((cluster) => ({
           label: <span>{cluster.clusterName}</span>,
           title: cluster.clusterName,
           options: cluster.servers?.map((item) => ({
@@ -172,7 +172,7 @@ export default function ShieldObjInput({
     }, [selectedCluster]);
     return (
       <Row>
-        <Col span={16}>
+        <Col span={24}>
           <Form.Item name={['instances', 'obcluster']}>
             <Select
               mode="multiple"

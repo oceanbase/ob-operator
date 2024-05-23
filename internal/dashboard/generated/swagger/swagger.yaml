@@ -4086,6 +4086,17 @@ paths:
       - application/json
       description: Delete OBProxy by namespace and name
       operationId: DeleteOBProxy
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -4120,6 +4131,17 @@ paths:
       - application/json
       description: Get OBProxy by namespace and name
       operationId: GetOBProxy
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -4161,6 +4183,16 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/obproxy.PatchOBProxyParam'
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
       produces:
       - application/json
       responses:
