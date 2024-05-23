@@ -456,29 +456,31 @@ outer:
 		if err != nil {
 			return errors.Wrapf(err, "Failed to get pvc of observer %s", m.OBServer.Name)
 		}
+		serverStorage := m.OBServer.Spec.OBServerTemplate.Storage
 		for _, pvc := range observerPVC.Items {
+			pvcSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
 			switch pvc.Name {
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
-				if m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+				if serverStorage.DataStorage.Size.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-				if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+				if serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-				if m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+				if serverStorage.LogStorage.Size.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
 			case m.OBServer.Name:
 				sum := resource.Quantity{}
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-				if sum.Cmp(pvc.Spec.Resources.Requests[corev1.ResourceStorage]) != 0 {
+				sum.Add(serverStorage.DataStorage.Size)
+				sum.Add(serverStorage.RedoLogStorage.Size)
+				sum.Add(serverStorage.LogStorage.Size)
+				if sum.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}

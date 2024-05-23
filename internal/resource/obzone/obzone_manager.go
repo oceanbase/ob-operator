@@ -218,15 +218,12 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need delete observer")
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
-		} else if mode, exist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+		} else {
 			for _, observer := range observerList.Items {
-				if m.checkIfCalcResourceChange(&observer) {
+				if m.OBZone.SupportStaticIP() && m.checkIfCalcResourceChange(&observer) {
 					m.OBZone.Status.Status = zonestatus.ScaleUp
 					break
 				}
-			}
-		} else {
-			for _, observer := range observerList.Items {
 				if m.checkIfStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break
@@ -237,7 +234,6 @@ func (m *OBZoneManager) UpdateStatus() error {
 				}
 			}
 		}
-		// do nothing when observer match topology replica
 
 		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
 		if m.OBZone.Status.Status == zonestatus.Running {
