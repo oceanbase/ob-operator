@@ -64,4 +64,5 @@ const (
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
 	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
 	tCheckEnvironment           ttypes.TaskName = "check environment"
+	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"
 )

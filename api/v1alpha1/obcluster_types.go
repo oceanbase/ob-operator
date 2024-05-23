@@ -17,10 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -79,4 +80,8 @@ type OBClusterList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBCluster{}, &OBClusterList{})
+}
+
+func (c *OBCluster) SupportStaticIP() bool {
+	return c.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true"
 }

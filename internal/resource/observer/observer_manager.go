@@ -114,7 +114,7 @@ func (m *OBServerManager) UpdateStatus() error {
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
-			if mode := m.OBServer.Annotations[oceanbaseconst.AnnotationsMode]; mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService {
+			if m.OBServer.SupportStaticIP() {
 				if len(pod.Spec.Containers) > 0 {
 					tmplRes := m.OBServer.Spec.OBServerTemplate.Resource
 					containerRes := pod.Spec.Containers[0].Resources.Limits

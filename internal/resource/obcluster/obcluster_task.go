@@ -1029,7 +1029,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	defer func() {
 		err = m.Client.Delete(m.Ctx, pvc)
 		if err != nil {
-			m.Logger.Info("Failed to delete pvc for checking storage", "err", err)
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Failed to delete pvc for checking storage", "err", err)
 		}
 	}()
 	// Assemble volumeConfigs
@@ -1058,5 +1058,59 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil && exitCode != 1 {
 		return errors.Wrap(err, "Check filesystem")
 	}
+	return nil
+}
+
+func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
+	// Annotate obcluster with mode
+	supportStaticIP := false
+	mode := m.OBCluster.Annotations[oceanbaseconst.AnnotationsMode]
+	withMode := mode == oceanbaseconst.ModeService || mode == oceanbaseconst.ModeStandalone
+
+	if withMode {
+		supportStaticIP = true
+	} else {
+		podList := &corev1.PodList{}
+		err := m.Client.List(m.Ctx, podList, client.MatchingLabels{oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name}, client.InNamespace(m.OBCluster.Namespace))
+		if err != nil {
+			return errors.Wrap(err, "List pods of obcluster")
+		}
+		if len(podList.Items) == 0 {
+			return errors.New("No pod found for obcluster")
+		}
+		pod := podList.Items[0]
+		calicoAnnotation := pod.GetAnnotations()[oceanbaseconst.AnnotationCalicoValidate]
+		if calicoAnnotation != "" {
+			supportStaticIP = true
+		}
+	}
+
+	if supportStaticIP {
+		copied := m.OBCluster.DeepCopy()
+		if copied.Annotations == nil {
+			copied.Annotations = make(map[string]string)
+		}
+		copied.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] = "true"
+		err := m.Client.Patch(m.Ctx, copied, client.MergeFrom(m.OBCluster))
+		if err != nil {
+			return errors.Wrap(err, "Patch obcluster")
+		}
+		zones, err := m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "List obzones")
+		}
+		for _, zone := range zones.Items {
+			copiedZone := zone.DeepCopy()
+			if copiedZone.Annotations == nil {
+				copiedZone.Annotations = make(map[string]string)
+			}
+			copiedZone.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] = "true"
+			err = m.Client.Patch(m.Ctx, copiedZone, client.MergeFrom(&zone))
+			if err != nil {
+				return errors.Wrap(err, "Patch obzone")
+			}
+		}
+	}
+
 	return nil
 }

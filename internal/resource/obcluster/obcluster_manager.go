@@ -180,10 +180,9 @@ func (m *OBClusterManager) UpdateStatus() error {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
-			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 		outer:
 			for _, obzone := range obzoneList.Items {
-				if modeAnnoExist && (modeAnnoVal == oceanbaseconst.ModeStandalone || modeAnnoVal == oceanbaseconst.ModeService) && m.checkIfCalcResourceChange(&obzone) {
+				if m.OBCluster.SupportStaticIP() && m.checkIfCalcResourceChange(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ScaleUp
 					break outer
 				}
