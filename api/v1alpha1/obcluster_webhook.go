@@ -183,7 +183,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	newResource := r.Spec.OBServerTemplate.Resource
 	if existOld && exist && oldMode != mode {
 		return nil, errors.New("mode cannot be changed")
-	} else if oldMode != oceanbaseconst.ModeStandalone && oldMode != oceanbaseconst.ModeService && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
+	} else if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
 		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
 	}
 	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
@@ -191,22 +191,8 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 	var err error
 	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil {
-		if mode != oceanbaseconst.ModeStandalone && mode != oceanbaseconst.ModeService {
-			observerList := &OBServerList{}
-			err = clt.List(context.TODO(), observerList)
-			if err != nil {
-				return nil, err
-			}
-			keepIpWithCNI := false
-			for _, observer := range observerList.Items {
-				if observer.SupportStaticIP() {
-					keepIpWithCNI = true
-					break
-				}
-			}
-			if !keepIpWithCNI {
-				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
-			}
+		if !oldCluster.SupportStaticIP() {
+			err = errors.New("forbid to add backup volume to non-static-ip cluster")
 		}
 	}
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
