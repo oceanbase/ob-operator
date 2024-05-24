@@ -30,6 +30,7 @@ const (
 	fScaleUpOBServers             ttypes.FlowName = "scale up observers"
 	fExpandPVC                    ttypes.FlowName = "expand pvc for obzone"
 	fMountBackupVolume            ttypes.FlowName = "mount backup volume for obzone"
+	fRollingUpdateOBServers       ttypes.FlowName = "rolling update observers"
 )
 
 // obzone tasks
@@ -56,4 +57,5 @@ const (
 	tWaitForOBServerExpandingPVC ttypes.TaskName = "wait for observer to expand pvc"
 	tMountBackupVolume           ttypes.TaskName = "mount backup volume"
 	tWaitForOBServerMounting     ttypes.TaskName = "wait for observer to mount backup volume"
+	tRollingReplaceOBServers     ttypes.TaskName = "rolling replace observers"
 )

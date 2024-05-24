@@ -993,6 +993,10 @@ func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
+func RollingUpdateOBZones(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenUpdatingOBServers, zonestatus.RollingUpdateServers, zonestatus.Running, obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds)()
+}
+
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
 	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
