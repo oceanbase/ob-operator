@@ -306,13 +306,14 @@ func ScaleUpOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
+	zoneRes := m.OBZone.Spec.OBServerTemplate.Resource
 	for _, observer := range observerList.Items {
-		if observer.Spec.OBServerTemplate.Resource.Cpu != m.OBZone.Spec.OBServerTemplate.Resource.Cpu ||
-			observer.Spec.OBServerTemplate.Resource.Memory != m.OBZone.Spec.OBServerTemplate.Resource.Memory {
+		serverRes := observer.Spec.OBServerTemplate.Resource
+		if serverRes.Cpu != zoneRes.Cpu || serverRes.Memory != zoneRes.Memory {
 			m.Logger.Info("Scale up observer", "observer", observer.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-				observer.Spec.OBServerTemplate.Resource.Cpu = m.OBZone.Spec.OBServerTemplate.Resource.Cpu
-				observer.Spec.OBServerTemplate.Resource.Memory = m.OBZone.Spec.OBServerTemplate.Resource.Memory
+				serverRes.Cpu = zoneRes.Cpu
+				serverRes.Memory = zoneRes.Memory
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {
@@ -328,15 +329,17 @@ func ExpandPVC(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
+	zoneStorage := m.OBZone.Spec.OBServerTemplate.Storage
 	for _, observer := range observerList.Items {
-		if observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
-			observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
-			observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+		serverStorage := observer.Spec.OBServerTemplate.Storage
+		if serverStorage.DataStorage.Size.Cmp(zoneStorage.DataStorage.Size) < 0 ||
+			serverStorage.LogStorage.Size.Cmp(zoneStorage.LogStorage.Size) < 0 ||
+			serverStorage.RedoLogStorage.Size.Cmp(zoneStorage.RedoLogStorage.Size) < 0 {
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				m.Logger.Info("Expand pvc of observer", "observer", observer.Name)
-				observer.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size
-				observer.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size
-				observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+				serverStorage.DataStorage.Size = zoneStorage.DataStorage.Size
+				serverStorage.LogStorage.Size = zoneStorage.LogStorage.Size
+				serverStorage.RedoLogStorage.Size = zoneStorage.RedoLogStorage.Size
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {

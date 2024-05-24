@@ -4,17 +4,18 @@ import {
   OBJECT_OPTIONS_ALARM,
   SERVERITY_MAP,
 } from '@/constants';
+import { Alert } from '@/type/alert';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
-import { useUpdateEffect } from 'ahooks';
+import { useDebounceFn, useUpdateEffect } from 'ahooks';
 import type { FormInstance } from 'antd';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 import { getSelectList } from '../helper';
-import { Alert } from '@/type/alert';
 
 interface AlarmFilterProps {
   form: FormInstance<unknown>;
+  depend: (body: unknown) => void;
   type: 'event' | 'shield' | 'rules';
 }
 
@@ -27,7 +28,7 @@ const DEFAULT_VISIBLE_CONFIG = {
   endTime: true,
 };
 
-export default function AlarmFilter({ form, type }: AlarmFilterProps) {
+export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
   const { clusterList, tenantList } = useModel('alarm');
   const [isExpand, setIsExpand] = useState(true);
   const [visibleConfig, setVisibleConfig] = useState(DEFAULT_VISIBLE_CONFIG);
@@ -62,7 +63,8 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
       }));
     }
   };
-
+  const { run: debounceDepend } = useDebounceFn(depend, { wait: 500 });
+  const formData = Form.useWatch([], form) as { [T: string]: string | object };
   useEffect(() => {
     if (type === 'event') {
       setVisibleConfig({
@@ -118,6 +120,28 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
     }
   }, [isExpand]);
 
+  useUpdateEffect(() => {
+    const filter: { [T: string]: unknown } = {};
+    Object.keys(formData).forEach((key) => {
+      if (formData[key]) {
+        if (typeof formData[key] === 'string') {
+          filter[key] = formData[key];
+        } else if (key === 'startTime' || key === 'endTime') {
+          filter[key] = Math.ceil(formData[key].valueOf() / 1000);
+        } else if (key === 'instance' && formData[key]?.type) {
+          const temp = {};
+          Object.keys(formData[key]).forEach((innerKey) => {
+            if (formData[key][innerKey]) {
+              temp[innerKey] = formData[key][innerKey];
+            }
+          });
+          filter[key] = temp;
+        }
+      }
+    });
+    debounceDepend(filter);
+  }, [formData]);
+
   return (
     <Form form={form}>
       <Row>
@@ -172,7 +196,6 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
               name={'serverity'}
             >
               <Select
-                mode="multiple"
                 allowClear
                 placeholder="请选择"
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({

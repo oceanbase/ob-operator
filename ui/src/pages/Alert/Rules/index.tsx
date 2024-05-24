@@ -13,7 +13,7 @@ const { Text } = Typography;
 
 export default function Rules() {
   const [form] = Form.useForm();
-  const { data: listRulesRes, refresh } = useRequest(alert.listRules);
+  const { data: listRulesRes, refresh, run: getListRules } = useRequest(alert.listRules);
   const [editRuleName,setEditRuleName] = useState<string>()
   const { run: deleteRule } = useRequest(alert.deleteRule, {
     onSuccess: ({ successful }) => {
@@ -99,7 +99,7 @@ export default function Rules() {
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
-        <AlarmFilter form={form} type="rules" />
+        <AlarmFilter depend={getListRules} form={form} type="rules" />
       </Card>
       <Card
         extra={

@@ -16,7 +16,7 @@ const { Text } = Typography;
 
 export default function Event() {
   const [form] = Form.useForm();
-  const { data: listAlertsRes } = useRequest(alert.listAlerts);
+  const { data: listAlertsRes, run: getListAlerts } = useRequest(alert.listAlerts);
   const listAlerts = listAlertsRes?.data || [];
   const columns: ColumnsType<AlertAlert> = [
     {
@@ -92,7 +92,7 @@ export default function Event() {
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
-        <AlarmFilter form={form} type="event" />
+        <AlarmFilter depend={getListAlerts} form={form} type="event" />
       </Card>
       <Card title={<h2 style={{ marginBottom: 0 }}>事件列表</h2>}>
         <Table

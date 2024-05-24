@@ -30,4 +30,5 @@ func init() {
 	taskMap.Register(tWaitOBZoneBootstrapReady, WaitOBZoneBootstrapReady)
 	taskMap.Register(tWaitOBZoneRunning, WaitOBZoneRunning)
 	taskMap.Register(tCheckEnvironment, CheckEnvironment)
+	taskMap.Register(tAnnotateOBCluster, AnnotateOBCluster)
 }
