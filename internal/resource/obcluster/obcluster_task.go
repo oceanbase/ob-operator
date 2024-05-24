@@ -1182,11 +1182,15 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 
-	if oldResource.Cpu.Value() > 16 && oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+	if oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+		targetCpuCount := "16"
+		if newResource.Cpu.Value() > 16 {
+			targetCpuCount = newResource.Cpu.String()
+		}
 		foundCpuCount := false
 		for i, p := range copiedCluster.Spec.Parameters {
 			if p.Name == "cpu_count" {
-				copiedCluster.Spec.Parameters[i].Value = newResource.Cpu.String()
+				copiedCluster.Spec.Parameters[i].Value = targetCpuCount
 				foundCpuCount = true
 				break
 			}
@@ -1194,7 +1198,7 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 		if !foundCpuCount {
 			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
 				Name:  "cpu_count",
-				Value: newResource.Cpu.String(),
+				Value: targetCpuCount,
 			})
 		}
 	}
