@@ -993,6 +993,10 @@ func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
+func RollingUpdateOBZones(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenUpdatingOBServers, zonestatus.RollingUpdateServers, zonestatus.Running, obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds)()
+}
+
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
 	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
@@ -1112,6 +1116,101 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 			}
 		}
 	}
+	return nil
+}
 
+func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
+	conn, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "Get operation manager")
+	}
+	gvservers, err := conn.ListGVServers(m.Ctx)
+	if err != nil {
+		return errors.Wrap(err, "List gv servers")
+	}
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "List obzones")
+	}
+	if len(zones.Items) == 0 {
+		return errors.New("No obzone found")
+	}
+
+	oldResource := zones.Items[0].Spec.OBServerTemplate.Resource
+
+	var maxAssignedCpu int64
+	var maxAssignedMem int64
+	var memoryLimitPercent float64
+	for _, gvserver := range gvservers {
+		if gvserver.MemAssigned > maxAssignedMem {
+			if gvserver.MemoryLimit > oldResource.Memory.Value() {
+				memoryLimitPercent = 0.9
+			} else {
+				memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
+			}
+			maxAssignedMem = gvserver.MemAssigned
+		}
+		if gvserver.CPUAssigned > maxAssignedCpu {
+			maxAssignedCpu = gvserver.CPUAssigned
+		}
+	}
+	newResource := m.OBCluster.Spec.OBServerTemplate.Resource
+	specMem := newResource.Memory.AsApproximateFloat64()
+	specMemoryLimit := int64(specMem * memoryLimitPercent)
+
+	targetMemoryLimit := max(specMemoryLimit, maxAssignedMem)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).
+		Info("Adjust memory limit",
+			"maxAssignedMem", maxAssignedMem,
+			"specMem", specMem,
+			"targetMemoryLimit", targetMemoryLimit,
+			"percent", memoryLimitPercent,
+		)
+
+	copiedCluster := m.OBCluster.DeepCopy()
+
+	foundMemoryLimit := false
+	if newResource.Memory.Cmp(oldResource.Memory) != 0 {
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "memory_limit" {
+				copiedCluster.Spec.Parameters[i].Value = fmt.Sprintf("%dM", targetMemoryLimit>>20)
+				foundMemoryLimit = true
+				break
+			}
+		}
+		if !foundMemoryLimit {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "memory_limit",
+				Value: fmt.Sprintf("%dM", targetMemoryLimit>>20),
+			})
+		}
+	}
+
+	if oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+		targetCpuCount := "16"
+		if newResource.Cpu.Value() > 16 {
+			targetCpuCount = newResource.Cpu.String()
+		}
+		foundCpuCount := false
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "cpu_count" {
+				copiedCluster.Spec.Parameters[i].Value = targetCpuCount
+				foundCpuCount = true
+				break
+			}
+		}
+		if !foundCpuCount {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "cpu_count",
+				Value: targetCpuCount,
+			})
+		}
+	}
+
+	err = m.Client.Patch(m.Ctx, copiedCluster, client.MergeFrom(m.OBCluster))
+	if err != nil {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Patch obcluster", "obcluster", m.OBCluster.Name)
+		return errors.Wrap(err, "Patch obcluster")
+	}
 	return nil
 }
