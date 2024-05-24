@@ -116,7 +116,7 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case zonestatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
 	case zonestatus.RollingUpdateServers:
-		taskFlow = genRollingUpdateServersFlow(m)
+		taskFlow = genRollingReplaceServersFlow(m)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {

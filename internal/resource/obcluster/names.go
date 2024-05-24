@@ -66,5 +66,5 @@ const (
 	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
 	tCheckEnvironment           ttypes.TaskName = "check environment"
 	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"
-	tRollingUpdateOBServers     ttypes.TaskName = "rolling update observers"
+	tRollingUpdateOBZones       ttypes.TaskName = "rolling update observers"
 )

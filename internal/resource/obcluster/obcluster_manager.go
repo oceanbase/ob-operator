@@ -110,7 +110,7 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case clusterstatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
 	case clusterstatus.RollingUpdateOBServers:
-		taskFlow = genRollingUpdateOBServersFlow(m)
+		taskFlow = genRollingUpdateOBZonesFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil

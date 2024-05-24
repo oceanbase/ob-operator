@@ -993,7 +993,7 @@ func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
-func RollingUpdateOBServers(m *OBClusterManager) tasktypes.TaskError {
+func RollingUpdateOBZones(m *OBClusterManager) tasktypes.TaskError {
 	return m.rollingUpdateZones(m.changeZonesWhenUpdatingOBServers, zonestatus.RollingUpdateServers, zonestatus.Running, obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds)()
 }
 

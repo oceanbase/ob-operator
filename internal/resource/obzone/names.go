@@ -57,5 +57,5 @@ const (
 	tWaitForOBServerExpandingPVC ttypes.TaskName = "wait for observer to expand pvc"
 	tMountBackupVolume           ttypes.TaskName = "mount backup volume"
 	tWaitForOBServerMounting     ttypes.TaskName = "wait for observer to mount backup volume"
-	tRollingUpdateOBServers      ttypes.TaskName = "rolling update observers"
+	tRollingReplaceOBServers     ttypes.TaskName = "rolling replace observers"
 )

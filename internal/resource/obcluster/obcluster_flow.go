@@ -196,12 +196,12 @@ func genMountBackupVolumeFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genRollingUpdateOBServersFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
+func genRollingUpdateOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name: fRollingUpdateOBServers,
 			Tasks: []tasktypes.TaskName{
-				tRollingUpdateOBServers,
+				tRollingUpdateOBZones,
 			},
 			TargetStatus: clusterstatus.Running,
 		},

@@ -370,7 +370,7 @@ func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
 	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
-func RollingUpdateOBServers(m *OBZoneManager) tasktypes.TaskError {
+func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 	servers, err := m.listOBServers()
 	if err != nil {
 		return errors.Wrap(err, "List observers")

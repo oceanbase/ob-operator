@@ -24,5 +24,5 @@ func init() {
 	taskMap.Register(tWaitForOBServerScalingUp, WaitForOBServerScalingUp)
 	taskMap.Register(tWaitForOBServerExpandingPVC, WaitForOBServerExpandingPVC)
 	taskMap.Register(tWaitForOBServerMounting, WaitForOBServerMounting)
-	taskMap.Register(tRollingUpdateOBServers, RollingUpdateOBServers)
+	taskMap.Register(tRollingReplaceOBServers, RollingReplaceOBServers)
 }

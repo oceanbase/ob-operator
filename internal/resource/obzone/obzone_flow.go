@@ -141,11 +141,11 @@ func genMountBackupVolumeFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genRollingUpdateServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
+func genRollingReplaceServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         fRollingUpdateOBServers,
-			Tasks:        []tasktypes.TaskName{tRollingUpdateOBServers},
+			Tasks:        []tasktypes.TaskName{tRollingReplaceOBServers},
 			TargetStatus: zonestatus.Running,
 		},
 	}
