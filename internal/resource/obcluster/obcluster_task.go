@@ -1116,15 +1116,6 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
-	// Adjust memory limit
-	var param *apitypes.Parameter
-	for i, p := range m.OBCluster.Spec.Parameters {
-		if p.Name == "memory_limit" {
-			param = &m.OBCluster.Spec.Parameters[i]
-			break
-		}
-	}
-	// conn, err := resourceutils.GetSysOperationClient()
 	conn, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "Get operation manager")
@@ -1143,6 +1134,7 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 
 	oldResource := zones.Items[0].Spec.OBServerTemplate.Resource
 
+	var maxAssignedCpu int64
 	var maxAssignedMem int64
 	var memoryLimitPercent float64
 	for _, gvserver := range gvservers {
@@ -1153,6 +1145,9 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 				memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
 			}
 			maxAssignedMem = gvserver.MemAssigned
+		}
+		if gvserver.CPUAssigned > maxAssignedCpu {
+			maxAssignedCpu = gvserver.CPUAssigned
 		}
 	}
 	newResource := m.OBCluster.Spec.OBServerTemplate.Resource
@@ -1169,18 +1164,38 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 		)
 
 	copiedCluster := m.OBCluster.DeepCopy()
-	if param == nil {
-		param = &apitypes.Parameter{
-			Name:  "memory_limit",
-			Value: fmt.Sprintf("%dM", targetMemoryLimit>>20),
-		}
-		copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, *param)
-	} else {
+
+	foundMemoryLimit := false
+	if newResource.Memory.Cmp(oldResource.Memory) != 0 {
 		for i, p := range copiedCluster.Spec.Parameters {
 			if p.Name == "memory_limit" {
 				copiedCluster.Spec.Parameters[i].Value = fmt.Sprintf("%dM", targetMemoryLimit>>20)
+				foundMemoryLimit = true
 				break
 			}
+		}
+		if !foundMemoryLimit {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "memory_limit",
+				Value: fmt.Sprintf("%dM", targetMemoryLimit>>20),
+			})
+		}
+	}
+
+	if newResource.Cpu.Value() > 16 && oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+		foundCpuCount := false
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "cpu_count" {
+				copiedCluster.Spec.Parameters[i].Value = newResource.Cpu.String()
+				foundCpuCount = true
+				break
+			}
+		}
+		if !foundCpuCount {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "cpu_count",
+				Value: newResource.Cpu.String(),
+			})
 		}
 	}
 
