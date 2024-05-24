@@ -1152,9 +1152,9 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 	}
 	newResource := m.OBCluster.Spec.OBServerTemplate.Resource
 	specMem := newResource.Memory.AsApproximateFloat64()
-	specWithPercent := int64(specMem * memoryLimitPercent)
+	specMemoryLimit := int64(specMem * memoryLimitPercent)
 
-	targetMemoryLimit := max(specWithPercent, maxAssignedMem)
+	targetMemoryLimit := max(specMemoryLimit, maxAssignedMem)
 	m.Logger.V(oceanbaseconst.LogLevelDebug).
 		Info("Adjust memory limit",
 			"maxAssignedMem", maxAssignedMem,
@@ -1182,7 +1182,7 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 
-	if newResource.Cpu.Value() > 16 && oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+	if oldResource.Cpu.Value() > 16 && oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
 		foundCpuCount := false
 		for i, p := range copiedCluster.Spec.Parameters {
 			if p.Name == "cpu_count" {

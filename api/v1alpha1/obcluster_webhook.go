@@ -217,7 +217,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 		if newResource.Memory.AsApproximateFloat64()*memoryLimitPercent < float64(maxAssignedMemory) {
 			return nil, errors.New("Assigned memory is larger than new memory size")
 		}
-		if newResource.Cpu.Value() > 16 && newResource.Cpu.AsApproximateFloat64() < float64(maxAssignedCPU) {
+		if oldResource.Cpu.Value() > 16 && newResource.Cpu.AsApproximateFloat64() < float64(maxAssignedCPU) {
 			return nil, errors.New("Assigned CPU is larger than new CPU size")
 		}
 	}
