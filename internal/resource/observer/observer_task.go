@@ -312,9 +312,6 @@ func WaitOBServerPodReady(m *OBServerManager) tasktypes.TaskError {
 }
 
 func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
-	if m.OBServer.SupportStaticIP() {
-		return nil
-	}
 	m.Logger.Info("Wait for observer to be active in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
