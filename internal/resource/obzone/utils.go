@@ -49,6 +49,12 @@ func (m *OBZoneManager) checkIfStorageSizeExpand(observer *v1alpha1.OBServer) bo
 		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0
 }
 
+func (m *OBZoneManager) checkIfStorageClassChanged(observer *v1alpha1.OBServer) bool {
+	return observer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.StorageClass ||
+		observer.Spec.OBServerTemplate.Storage.LogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.StorageClass ||
+		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass
+}
+
 func (m *OBZoneManager) checkIfCalcResourceChange(observer *v1alpha1.OBServer) bool {
 	return observer.Spec.OBServerTemplate.Resource.Cpu.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
 		observer.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Memory) != 0

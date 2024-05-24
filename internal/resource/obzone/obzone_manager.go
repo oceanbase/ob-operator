@@ -226,6 +226,10 @@ func (m *OBZoneManager) UpdateStatus() error {
 					m.OBZone.Status.Status = zonestatus.ScaleUp
 					break
 				}
+				if m.checkIfStorageClassChanged(&observer) {
+					m.OBZone.Status.Status = zonestatus.RollingUpdateServers
+					break
+				}
 				if m.checkIfStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break

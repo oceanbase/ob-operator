@@ -109,6 +109,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genExpandPVCFlow(m)
 	case clusterstatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
+	case clusterstatus.RollingUpdateOBServers:
+		taskFlow = genRollingUpdateOBServersFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -184,6 +186,10 @@ func (m *OBClusterManager) UpdateStatus() error {
 			for _, obzone := range obzoneList.Items {
 				if m.OBCluster.SupportStaticIP() && m.checkIfCalcResourceChange(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ScaleUp
+					break outer
+				}
+				if m.checkIfStorageClassChange(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.RollingUpdateOBServers
 					break outer
 				}
 				if m.checkIfStorageSizeExpand(&obzone) {

@@ -347,9 +347,6 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 }
 
 func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
-	if m.OBServer.SupportStaticIP() {
-		return nil
-	}
 	m.Logger.Info("Wait for observer to be deleted in cluster")
 	observerInfo := &model.ServerInfo{
 		Ip:   m.OBServer.Status.GetConnectAddr(),
