@@ -185,7 +185,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	} else if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
 		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
 	}
-	if newResource.Memory.Cmp(oldResource.Memory) < 0 {
+	if newResource.Memory.Cmp(oldResource.Memory) < 0 || newResource.Cpu.Cmp(oldResource.Cpu) < 0 {
 		if r.Status.Status != clusterstatus.Running {
 			return nil, errors.New("forbid to shrink memory size of non-running cluster")
 		}
