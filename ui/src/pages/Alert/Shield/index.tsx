@@ -6,10 +6,11 @@ import type {
   SilenceStatus,
 } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Card, Form, Space, Table, Typography } from 'antd';
+import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import { useState } from 'react';
@@ -24,7 +25,11 @@ export default function Shield() {
   const [drawerOpen, setDrawerOpen] = useState(
     Boolean(searchParams.get('instance')),
   );
-  const { data: listSilencersRes, refresh, run: getListSilencers } = useRequest(alert.listSilencers);
+  const {
+    data: listSilencersRes,
+    refresh,
+    run: getListSilencers,
+  } = useRequest(alert.listSilencers);
   const { run: deleteSilencer } = useRequest(alert.deleteSilencer, {
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -73,6 +78,7 @@ export default function Shield() {
       title: '屏蔽结束时间',
       dataIndex: 'endsAt',
       key: 'endsAt',
+      sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
         <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
@@ -86,12 +92,21 @@ export default function Shield() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status: SilenceStatus) => <Text>{status.state}</Text>,
+      defaultSortOrder: 'ascend',
+      sorter: (preRecord, curRecord) =>
+        SHILED_STATUS_MAP[curRecord.status.state].weight -
+        SHILED_STATUS_MAP[preRecord.status.state].weight,
+      render: (status: SilenceStatus) => (
+        <Tag color={SHILED_STATUS_MAP[status.state].color}>
+          {SHILED_STATUS_MAP[status.state]?.text || '-'}
+        </Tag>
+      ),
     },
     {
       title: '创建时间',
       dataIndex: 'startsAt',
       key: 'startsAt',
+      sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt) => (
         <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
