@@ -5,10 +5,19 @@ import type {
   AlertStatus,
   OceanbaseOBInstance,
 } from '@/api/generated';
-import { SERVERITY_MAP } from '@/constants';
+import { ALERT_STATE_MAP, SERVERITY_MAP } from '@/constants';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Form,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import AlarmFilter from '../AlarmFilter';
@@ -16,14 +25,25 @@ const { Text } = Typography;
 
 export default function Event() {
   const [form] = Form.useForm();
-  const { data: listAlertsRes, run: getListAlerts } = useRequest(alert.listAlerts);
+  const { data: listAlertsRes, run: getListAlerts } = useRequest(
+    alert.listAlerts,
+  );
   const listAlerts = listAlertsRes?.data || [];
   const columns: ColumnsType<AlertAlert> = [
     {
       title: '告警事件',
       dataIndex: 'summary',
       key: 'summary',
-      render: (val) => <Button type="link">{val}</Button>,
+      render: (val, record) => {
+        return (
+          <Button
+            onClick={() => history.push(`/alert/rules?rule=${record.rule}`)}
+            type="link"
+          >
+            <Tooltip title={record.description}>{val}</Tooltip>
+          </Button>
+        );
+      },
     },
     {
       title: '告警对象',
@@ -41,6 +61,12 @@ export default function Event() {
       title: '告警等级',
       dataIndex: 'serverity',
       key: 'serverity',
+      sorter: (preRecord, curRecord) => {
+        return (
+          SERVERITY_MAP[preRecord.serverity].weight -
+          SERVERITY_MAP[curRecord.serverity].weight
+        );
+      },
       render: (serverity: AlarmServerity) => (
         <Tag color={SERVERITY_MAP[serverity]?.color}>
           {SERVERITY_MAP[serverity]?.label}
@@ -51,14 +77,24 @@ export default function Event() {
       title: '告警状态',
       dataIndex: 'status',
       key: 'status',
-      render: (status: AlertStatus) => <Tag>{status.state}</Tag>,
+      sorter: (preRecord, curRecord) => {
+        return (
+          ALERT_STATE_MAP[preRecord.status.state].weight -
+          ALERT_STATE_MAP[curRecord.status.state].weight
+        );
+      },
+      render: (status: AlertStatus) => (
+        <Tag color={ALERT_STATE_MAP[status.state].color}>
+          {ALERT_STATE_MAP[status.state].text || '-'}
+        </Tag>
+      ),
     },
     {
       title: '产生时间',
       dataIndex: 'startsAt',
       key: 'startsAt',
       defaultSortOrder: 'ascend',
-      sorter: (pre: number, cur: number) => cur - pre,
+      sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
         <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
@@ -71,7 +107,7 @@ export default function Event() {
           disabled={record.status.state !== 'active'}
           style={{ paddingLeft: 0 }}
           type="link"
-          onClick={() =>
+          onClick={() => {
             history.push(
               `/alert/shield?instance=${JSON.stringify(
                 record.instance,
@@ -81,8 +117,8 @@ export default function Event() {
                   value: label.value,
                 })),
               )}`,
-            )
-          }
+            );
+          }}
         >
           屏蔽
         </Button>
