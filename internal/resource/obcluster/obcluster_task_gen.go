@@ -29,6 +29,8 @@ func init() {
 	taskMap.Register(tMountBackupVolume, MountBackupVolume)
 	taskMap.Register(tWaitOBZoneBootstrapReady, WaitOBZoneBootstrapReady)
 	taskMap.Register(tWaitOBZoneRunning, WaitOBZoneRunning)
+	taskMap.Register(tRollingUpdateOBZones, RollingUpdateOBZones)
 	taskMap.Register(tCheckEnvironment, CheckEnvironment)
 	taskMap.Register(tAnnotateOBCluster, AnnotateOBCluster)
+	taskMap.Register(tAdjustParameters, AdjustParameters)
 }

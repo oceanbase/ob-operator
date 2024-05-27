@@ -34,9 +34,19 @@ import (
 )
 
 func (m *OBClusterManager) checkIfStorageSizeExpand(obzone *v1alpha1.OBZone) bool {
-	return obzone.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
-		obzone.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
-		obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0
+	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
+	oldStorage := obzone.Spec.OBServerTemplate.Storage
+	return oldStorage.DataStorage.Size.Cmp(newStorage.DataStorage.Size) < 0 ||
+		oldStorage.LogStorage.Size.Cmp(newStorage.LogStorage.Size) < 0 ||
+		oldStorage.RedoLogStorage.Size.Cmp(newStorage.RedoLogStorage.Size) < 0
+}
+
+func (m *OBClusterManager) checkIfStorageClassChange(obzone *v1alpha1.OBZone) bool {
+	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
+	oldStorage := obzone.Spec.OBServerTemplate.Storage
+	return oldStorage.DataStorage.StorageClass != newStorage.DataStorage.StorageClass ||
+		oldStorage.LogStorage.StorageClass != newStorage.LogStorage.StorageClass ||
+		oldStorage.RedoLogStorage.StorageClass != newStorage.RedoLogStorage.StorageClass
 }
 
 func (m *OBClusterManager) checkIfCalcResourceChange(obzone *v1alpha1.OBZone) bool {
@@ -170,6 +180,10 @@ func (m *OBClusterManager) changeZonesWhenExpandingPVC(obzone *v1alpha1.OBZone) 
 	obzone.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size
 	obzone.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size
 	obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+}
+
+func (m *OBClusterManager) changeZonesWhenUpdatingOBServers(obzone *v1alpha1.OBZone) {
+	obzone.Spec.OBServerTemplate = m.OBCluster.Spec.OBServerTemplate
 }
 
 func (m *OBClusterManager) changeZonesWhenMountingBackupVolume(obzone *v1alpha1.OBZone) {

@@ -16,8 +16,9 @@ import (
 	"fmt"
 	"time"
 
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+
 	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -54,76 +55,18 @@ func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
 
 func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	m.Logger.Info("Create observers")
-	blockOwnerDeletion := true
-	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	ownerReference := metav1.OwnerReference{
-		APIVersion:         m.OBZone.APIVersion,
-		Kind:               m.OBZone.Kind,
-		Name:               m.OBZone.Name,
-		UID:                m.OBZone.GetUID(),
-		BlockOwnerDeletion: &blockOwnerDeletion,
-	}
-	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	currentReplica := 0
 	for _, observerStatus := range m.OBZone.Status.OBServerStatus {
 		if observerStatus.Status != serverstatus.Unrecoverable {
 			currentReplica++
 		}
 	}
-	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
-	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
-	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
-		finalizerName := oceanbaseconst.FinalizerDeleteOBServer
-		finalizers := []string{finalizerName}
-		labels := make(map[string]string)
-		cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
-		labels[oceanbaseconst.LabelRefUID] = string(m.OBZone.GetUID())
-		labels[oceanbaseconst.LabelRefOBZone] = m.OBZone.Name
-		labels[oceanbaseconst.LabelRefOBCluster] = cluster
-		observer := &v1alpha1.OBServer{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            serverName,
-				Namespace:       m.OBZone.Namespace,
-				OwnerReferences: ownerReferenceList,
-				Finalizers:      finalizers,
-				Labels:          labels,
-			},
-			Spec: v1alpha1.OBServerSpec{
-				ClusterName:      m.OBZone.Spec.ClusterName,
-				ClusterId:        m.OBZone.Spec.ClusterId,
-				Zone:             m.OBZone.Spec.Topology.Zone,
-				NodeSelector:     m.OBZone.Spec.Topology.NodeSelector,
-				Affinity:         m.OBZone.Spec.Topology.Affinity,
-				Tolerations:      m.OBZone.Spec.Topology.Tolerations,
-				OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
-				MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
-				BackupVolume:     m.OBZone.Spec.BackupVolume,
-				ServiceAccount:   m.OBZone.Spec.ServiceAccount,
-			},
-		}
-		observer.ObjectMeta.Annotations = make(map[string]string)
-		if independentVolumeAnnoExist {
-			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
-		}
-		if singlePVCAnnoExist {
-			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
-		}
-		if modeAnnoExist {
-			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
-		}
-		if migrateAnnoExist {
-			observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
-		}
-		m.Logger.Info("Create observer", "server", serverName)
-		err := m.Client.Create(m.Ctx, observer)
+		_, err := m.createOneOBServer(serverName)
 		if err != nil {
-			m.Logger.Error(err, "Create observer failed", "server", serverName)
-			return errors.Wrap(err, "create observer")
+			return errors.Wrapf(err, "Create observer %s", serverName)
 		}
-		m.Recorder.Event(m.OBZone, "CreateObServer", "CreateObserver", fmt.Sprintf("Create observer %s", serverName))
 	}
 	return nil
 }
@@ -425,4 +368,47 @@ func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
 
 func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
 	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+}
+
+func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
+	servers, err := m.listOBServers()
+	if err != nil {
+		return errors.Wrap(err, "List observers")
+	}
+	for _, server := range servers.Items {
+		newServerName := m.generateServerName()
+		newServer, err := m.createOneOBServer(newServerName)
+		if err != nil {
+			return errors.Wrap(err, "Create new observer to replace old one")
+		}
+		for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
+			time.Sleep(time.Second)
+			err = m.Client.Get(m.Ctx, m.generateNamespacedName(newServerName), newServer)
+			if err != nil {
+				return errors.Wrap(err, "Get new observer")
+			}
+			if newServer.Status.Status == serverstatus.Running {
+				break
+			}
+		}
+		if newServer.Status.Status != serverstatus.Running {
+			return errors.New("Wait for new observer get running status, timeout")
+		}
+		err = m.Client.Delete(m.Ctx, &server)
+		if err != nil {
+			return errors.Wrap(err, "Delete old observer")
+		}
+		for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
+			time.Sleep(time.Second)
+			oldServer := &v1alpha1.OBServer{}
+			err = m.Client.Get(m.Ctx, m.generateNamespacedName(server.Name), oldServer)
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					break
+				}
+				return errors.Wrap(err, "Get old observer")
+			}
+		}
+	}
+	return nil
 }

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/client-go/util/retry"
@@ -46,6 +47,12 @@ func (m *OBZoneManager) checkIfStorageSizeExpand(observer *v1alpha1.OBServer) bo
 	return observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
 		observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
 		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0
+}
+
+func (m *OBZoneManager) checkIfStorageClassChanged(observer *v1alpha1.OBServer) bool {
+	return observer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.StorageClass ||
+		observer.Spec.OBServerTemplate.Storage.LogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.StorageClass ||
+		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass
 }
 
 func (m *OBZoneManager) checkIfCalcResourceChange(observer *v1alpha1.OBServer) bool {
@@ -131,4 +138,70 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 		return errors.New("all server still not bootstrap ready when timeout")
 	}
 	return f
+}
+
+func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer, error) {
+	blockOwnerDeletion := true
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion:         m.OBZone.APIVersion,
+		Kind:               m.OBZone.Kind,
+		Name:               m.OBZone.Name,
+		UID:                m.OBZone.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	independentVolumeAnnoVal, independentVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
+	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
+	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
+	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
+	finalizerName := oceanbaseconst.FinalizerDeleteOBServer
+	finalizers := []string{finalizerName}
+	labels := make(map[string]string)
+	cluster, _ := m.OBZone.Labels[oceanbaseconst.LabelRefOBCluster]
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBZone.GetUID())
+	labels[oceanbaseconst.LabelRefOBZone] = m.OBZone.Name
+	labels[oceanbaseconst.LabelRefOBCluster] = cluster
+	observer := &v1alpha1.OBServer{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            serverName,
+			Namespace:       m.OBZone.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Finalizers:      finalizers,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBServerSpec{
+			ClusterName:      m.OBZone.Spec.ClusterName,
+			ClusterId:        m.OBZone.Spec.ClusterId,
+			Zone:             m.OBZone.Spec.Topology.Zone,
+			NodeSelector:     m.OBZone.Spec.Topology.NodeSelector,
+			Affinity:         m.OBZone.Spec.Topology.Affinity,
+			Tolerations:      m.OBZone.Spec.Topology.Tolerations,
+			OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
+			MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
+			BackupVolume:     m.OBZone.Spec.BackupVolume,
+			ServiceAccount:   m.OBZone.Spec.ServiceAccount,
+		},
+	}
+	observer.ObjectMeta.Annotations = make(map[string]string)
+	if independentVolumeAnnoExist {
+		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+	}
+	if singlePVCAnnoExist {
+		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+	}
+	if modeAnnoExist {
+		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+	}
+	if migrateAnnoExist {
+		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
+	}
+	m.Logger.Info("Create observer", "server", serverName)
+	err := m.Client.Create(m.Ctx, observer)
+	if err != nil {
+		m.Logger.Error(err, "Create observer failed", "server", serverName)
+		return nil, errors.Wrap(err, "create observer")
+	}
+	m.Recorder.Event(m.OBZone, "CreateObServer", "CreateObserver", fmt.Sprintf("Create observer %s", serverName))
+	return observer, nil
 }
