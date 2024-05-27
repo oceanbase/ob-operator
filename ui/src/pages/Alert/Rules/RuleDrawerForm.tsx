@@ -46,6 +46,7 @@ export default function RuleDrawerForm({
         preserve={false}
         style={{ marginBottom: 64 }}
         layout="vertical"
+        validateTrigger='onBlur'
         form={form}
       >
         <Row gutter={[24, 24]}>
@@ -56,6 +57,21 @@ export default function RuleDrawerForm({
                 {
                   required: true,
                   message: '请输入',
+                },
+                {
+                  validator: async (_, value) => {
+                    const res = await alert.listRules();
+                    if (res.successful) {
+                      for (const rule of res.data) {
+                        if (rule.name === value) {
+                          return Promise.reject(
+                            new Error('告警规则已存在，请重新输入'),
+                          );
+                        }
+                      }
+                    }
+                    return Promise.resolve();
+                  },
                 },
               ]}
               label="告警规则名"
