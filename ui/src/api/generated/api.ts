@@ -393,6 +393,31 @@ export interface CreateOBCluster200Response {
 /**
  * 
  * @export
+ * @interface CreateOBPROXY200Response
+ */
+export interface CreateOBPROXY200Response {
+    /**
+     * 
+     * @type {ObproxyOBProxy}
+     * @memberof CreateOBPROXY200Response
+     */
+    'data': ObproxyOBProxy;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateOBPROXY200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateOBPROXY200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface CreateOrUpdateReceiver200Response
  */
 export interface CreateOrUpdateReceiver200Response {
@@ -937,6 +962,31 @@ export interface ListOBClusters200Response {
      * 
      * @type {boolean}
      * @memberof ListOBClusters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListOBProxies200Response
+ */
+export interface ListOBProxies200Response {
+    /**
+     * 
+     * @type {Array<ObproxyOBProxyOverview>}
+     * @memberof ListOBProxies200Response
+     */
+    'data': Array<ObproxyOBProxyOverview>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBProxies200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBProxies200Response
      */
     'successful': boolean;
 }
@@ -1746,6 +1796,307 @@ export interface ModelsStorageSpec {
      */
     'storageSize'?: number;
 }
+/**
+ * 
+ * @export
+ * @interface ObproxyCreateOBProxyParam
+ */
+export interface ObproxyCreateOBProxyParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'image': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {ObproxyK8sObject}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'obCluster': ObproxyK8sObject;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'parameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'proxyClusterName': string;
+    /**
+     * Password should be encrypted
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'proxySysPassword': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'replicas': number;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'resource': CommonResourceSpec;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyCreateOBProxyParam
+     */
+    'serviceType': ObproxyCreateOBProxyParamServiceTypeEnum;
+}
+
+export const ObproxyCreateOBProxyParamServiceTypeEnum = {
+    ClusterIP: 'ClusterIP',
+    NodePort: 'NodePort',
+    LoadBalancer: 'LoadBalancer',
+    ExternalName: 'ExternalName'
+} as const;
+
+export type ObproxyCreateOBProxyParamServiceTypeEnum = typeof ObproxyCreateOBProxyParamServiceTypeEnum[keyof typeof ObproxyCreateOBProxyParamServiceTypeEnum];
+
+/**
+ * 
+ * @export
+ * @interface ObproxyK8sObject
+ */
+export interface ObproxyK8sObject {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyK8sObject
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyK8sObject
+     */
+    'namespace': string;
+}
+/**
+ * 
+ * @export
+ * @interface ObproxyOBProxy
+ */
+export interface ObproxyOBProxy {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'creationTime': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'image': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {ObproxyK8sObject}
+     * @memberof ObproxyOBProxy
+     */
+    'obCluster': ObproxyK8sObject;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ObproxyOBProxy
+     */
+    'parameters': Array<CommonKVPair>;
+    /**
+     * 
+     * @type {Array<ResponseK8sPodInfo>}
+     * @memberof ObproxyOBProxy
+     */
+    'pods': Array<ResponseK8sPodInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'proxyClusterName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'proxySysSecret': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ObproxyOBProxy
+     */
+    'replicas': number;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ObproxyOBProxy
+     */
+    'resource': CommonResourceSpec;
+    /**
+     * 
+     * @type {ResponseK8sService}
+     * @memberof ObproxyOBProxy
+     */
+    'service': ResponseK8sService;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'serviceIp': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
+    'status': string;
+}
+/**
+ * 
+ * @export
+ * @interface ObproxyOBProxyOverview
+ */
+export interface ObproxyOBProxyOverview {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'creationTime': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'image': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {ObproxyK8sObject}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'obCluster': ObproxyK8sObject;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'proxyClusterName': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'replicas': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'serviceIp': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'status': string;
+}
+/**
+ * 
+ * @export
+ * @interface ObproxyPatchOBProxyParam
+ */
+export interface ObproxyPatchOBProxyParam {
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'addedParameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'deletedParameters'?: Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'image'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'replicas'?: number;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'resource'?: CommonResourceSpec;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'serviceType'?: ObproxyPatchOBProxyParamServiceTypeEnum;
+}
+
+export const ObproxyPatchOBProxyParamServiceTypeEnum = {
+    ClusterIP: 'ClusterIP',
+    NodePort: 'NodePort',
+    LoadBalancer: 'LoadBalancer',
+    ExternalName: 'ExternalName'
+} as const;
+
+export type ObproxyPatchOBProxyParamServiceTypeEnum = typeof ObproxyPatchOBProxyParamServiceTypeEnum[keyof typeof ObproxyPatchOBProxyParamServiceTypeEnum];
+
 /**
  * 
  * @export
@@ -2918,6 +3269,61 @@ export interface ResponseBackupPolicy {
 /**
  * 
  * @export
+ * @interface ResponseContainerInfo
+ */
+export interface ResponseContainerInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseContainerInfo
+     */
+    'image': string;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ResponseContainerInfo
+     */
+    'limits': CommonResourceSpec;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseContainerInfo
+     */
+    'name': string;
+    /**
+     * 
+     * @type {Array<number>}
+     * @memberof ResponseContainerInfo
+     */
+    'ports': Array<number>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseContainerInfo
+     */
+    'ready': boolean;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ResponseContainerInfo
+     */
+    'requests': CommonResourceSpec;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseContainerInfo
+     */
+    'restartCount': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseContainerInfo
+     */
+    'startTime': string;
+}
+/**
+ * 
+ * @export
  * @interface ResponseDashboardInfo
  */
 export interface ResponseDashboardInfo {
@@ -3172,6 +3578,135 @@ export interface ResponseK8sNodeResource {
      * @memberof ResponseK8sNodeResource
      */
     'memoryUsed': number;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseK8sPodInfo
+ */
+export interface ResponseK8sPodInfo {
+    /**
+     * 
+     * @type {Array<ResponseContainerInfo>}
+     * @memberof ResponseK8sPodInfo
+     */
+    'containers': Array<ResponseContainerInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'message': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'nodeName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'podIP': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'reason': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'startTime': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sPodInfo
+     */
+    'status': string;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseK8sService
+ */
+export interface ResponseK8sService {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sService
+     */
+    'clusterIP'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sService
+     */
+    'externalIP'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sService
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sService
+     */
+    'namespace'?: string;
+    /**
+     * 
+     * @type {Array<ResponseK8sServicePort>}
+     * @memberof ResponseK8sService
+     */
+    'ports'?: Array<ResponseK8sServicePort>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sService
+     */
+    'type'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseK8sServicePort
+ */
+export interface ResponseK8sServicePort {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseK8sServicePort
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseK8sServicePort
+     */
+    'port'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseK8sServicePort
+     */
+    'targetPort'?: number;
 }
 /**
  * 
@@ -4766,7 +5301,7 @@ export interface SilenceSilencerParam {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerParam
      */
-    'instance': Array<OceanbaseOBInstance>;
+    'instances': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}
@@ -7956,6 +8491,438 @@ export class OBClusterApi extends BaseAPI {
      */
     public upgradeOBCluster(namespace: string, name: string, body: ParamUpgradeOBClusterParam, options?: RawAxiosRequestConfig) {
         return OBClusterApiFp(this.configuration).upgradeOBCluster(namespace, name, body, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * OBProxyApi - axios parameter creator
+ * @export
+ */
+export const OBProxyApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Create OBProxy with the specified parameters
+         * @summary Create OBProxy
+         * @param {ObproxyCreateOBProxyParam} body Request body for creating obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOBPROXY: async (body: ObproxyCreateOBProxyParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('createOBPROXY', 'body', body)
+            const localVarPath = `/api/v1/obproxies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Delete OBProxy by namespace and name
+         * @summary Delete OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteOBProxy: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('deleteOBProxy', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteOBProxy', 'name', name)
+            const localVarPath = `/api/v1/obproxies/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Get OBProxy by namespace and name
+         * @summary Get OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getOBProxy: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('getOBProxy', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('getOBProxy', 'name', name)
+            const localVarPath = `/api/v1/obproxies/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list obproxies
+         * @summary list obproxies
+         * @param {string} [ns] ns
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxies: async (ns?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/obproxies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+            if (ns !== undefined) {
+                localVarQueryParameter['ns'] = ns;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Patch OBProxy with the specified parameters
+         * @summary Patch OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {ObproxyPatchOBProxyParam} body Request body for patching obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchOBProxy: async (namespace: string, name: string, body: ObproxyPatchOBProxyParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('patchOBProxy', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('patchOBProxy', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('patchOBProxy', 'body', body)
+            const localVarPath = `/api/v1/obproxies/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * OBProxyApi - functional programming interface
+ * @export
+ */
+export const OBProxyApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = OBProxyApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Create OBProxy with the specified parameters
+         * @summary Create OBProxy
+         * @param {ObproxyCreateOBProxyParam} body Request body for creating obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createOBPROXY(body: ObproxyCreateOBProxyParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBPROXY200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBPROXY(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.createOBPROXY']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Delete OBProxy by namespace and name
+         * @summary Delete OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteOBProxy(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBPROXY200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteOBProxy(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.deleteOBProxy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Get OBProxy by namespace and name
+         * @summary Get OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getOBProxy(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBPROXY200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getOBProxy(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.getOBProxy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list obproxies
+         * @summary list obproxies
+         * @param {string} [ns] ns
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBProxies(ns?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBProxies200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBProxies(ns, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.listOBProxies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Patch OBProxy with the specified parameters
+         * @summary Patch OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {ObproxyPatchOBProxyParam} body Request body for patching obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async patchOBProxy(namespace: string, name: string, body: ObproxyPatchOBProxyParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBPROXY200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.patchOBProxy(namespace, name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.patchOBProxy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * OBProxyApi - factory interface
+ * @export
+ */
+export const OBProxyApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = OBProxyApiFp(configuration)
+    return {
+        /**
+         * Create OBProxy with the specified parameters
+         * @summary Create OBProxy
+         * @param {ObproxyCreateOBProxyParam} body Request body for creating obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOBPROXY(body: ObproxyCreateOBProxyParam, options?: any): AxiosPromise<CreateOBPROXY200Response> {
+            return localVarFp.createOBPROXY(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Delete OBProxy by namespace and name
+         * @summary Delete OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteOBProxy(namespace: string, name: string, options?: any): AxiosPromise<CreateOBPROXY200Response> {
+            return localVarFp.deleteOBProxy(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Get OBProxy by namespace and name
+         * @summary Get OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getOBProxy(namespace: string, name: string, options?: any): AxiosPromise<CreateOBPROXY200Response> {
+            return localVarFp.getOBProxy(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list obproxies
+         * @summary list obproxies
+         * @param {string} [ns] ns
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxies(ns?: string, options?: any): AxiosPromise<ListOBProxies200Response> {
+            return localVarFp.listOBProxies(ns, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Patch OBProxy with the specified parameters
+         * @summary Patch OBProxy
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {ObproxyPatchOBProxyParam} body Request body for patching obproxy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchOBProxy(namespace: string, name: string, body: ObproxyPatchOBProxyParam, options?: any): AxiosPromise<CreateOBPROXY200Response> {
+            return localVarFp.patchOBProxy(namespace, name, body, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * OBProxyApi - object-oriented interface
+ * @export
+ * @class OBProxyApi
+ * @extends {BaseAPI}
+ */
+export class OBProxyApi extends BaseAPI {
+    /**
+     * Create OBProxy with the specified parameters
+     * @summary Create OBProxy
+     * @param {ObproxyCreateOBProxyParam} body Request body for creating obproxy
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public createOBPROXY(body: ObproxyCreateOBProxyParam, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).createOBPROXY(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Delete OBProxy by namespace and name
+     * @summary Delete OBProxy
+     * @param {string} namespace namespace of obproxy deployment
+     * @param {string} name name of obproxy deployment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public deleteOBProxy(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).deleteOBProxy(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Get OBProxy by namespace and name
+     * @summary Get OBProxy
+     * @param {string} namespace namespace of obproxy deployment
+     * @param {string} name name of obproxy deployment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public getOBProxy(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).getOBProxy(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list obproxies
+     * @summary list obproxies
+     * @param {string} [ns] ns
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public listOBProxies(ns?: string, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).listOBProxies(ns, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Patch OBProxy with the specified parameters
+     * @summary Patch OBProxy
+     * @param {string} namespace namespace of obproxy deployment
+     * @param {string} name name of obproxy deployment
+     * @param {ObproxyPatchOBProxyParam} body Request body for patching obproxy
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public patchOBProxy(namespace: string, name: string, body: ObproxyPatchOBProxyParam, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).patchOBProxy(namespace, name, body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

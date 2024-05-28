@@ -18,6 +18,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -44,8 +45,8 @@ type OBClusterManager struct {
 	Logger    *logr.Logger
 }
 
-func (m *OBClusterManager) IsNewResource() bool {
-	return m.OBCluster.Status.Status == ""
+func (m *OBClusterManager) GetMeta() metav1.Object {
+	return m.OBCluster.GetObjectMeta()
 }
 
 func (m *OBClusterManager) GetStatus() string {
@@ -108,6 +109,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genExpandPVCFlow(m)
 	case clusterstatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
+	case clusterstatus.RollingUpdateOBServers:
+		taskFlow = genRollingUpdateOBZonesFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obcluster", "obcluster", m.OBCluster.Name)
 		return nil, nil
@@ -121,11 +124,6 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	}
 
 	return taskFlow, nil
-}
-
-func (m *OBClusterManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBCluster.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBClusterManager) CheckAndUpdateFinalizers() error {
@@ -184,11 +182,14 @@ func (m *OBClusterManager) UpdateStatus() error {
 			m.Logger.Info("Compare topology need delete zone")
 			m.OBCluster.Status.Status = clusterstatus.DeleteOBZone
 		} else {
-			modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 		outer:
 			for _, obzone := range obzoneList.Items {
-				if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone && m.checkIfCalcResourceChange(&obzone) {
+				if m.OBCluster.SupportStaticIP() && m.checkIfCalcResourceChange(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ScaleUp
+					break outer
+				}
+				if m.checkIfStorageClassChange(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.RollingUpdateOBServers
 					break outer
 				}
 				if m.checkIfStorageSizeExpand(&obzone) {

@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 )
 
 type fakeEventRecorder struct{}
@@ -63,7 +64,7 @@ var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
 
 	It("GetHostMetrics", func() {
 		metrics := telemetry.GetHostMetrics()
-		if TelemetryDisabled {
+		if obcfg.GetConfig().Telemetry.Disabled {
 			Expect(metrics).Should(BeNil())
 		} else {
 			Expect(metrics).ShouldNot(BeNil())

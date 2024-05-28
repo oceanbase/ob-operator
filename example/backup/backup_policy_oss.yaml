@@ -5,8 +5,7 @@ metadata:
   namespace: oceanbase
 spec:
   obClusterName: "test"
-  tenantName: "t1"
-  tenantSecret: "t1-credential"
+  tenantCRName: "t1"
   jobKeepWindow: "1d"
   dataClean:
     recoveryWindow: "8d"

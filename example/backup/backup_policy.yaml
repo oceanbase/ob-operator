@@ -5,8 +5,7 @@ metadata:
   namespace: oceanbase
 spec:
   obClusterName: "test"
-  tenantName: "t1"
-  tenantSecret: "t1-credential"
+  tenantCRName: "t1"
   jobKeepWindow: "1d"
   dataClean:
     recoveryWindow: "8d"
@@ -21,4 +20,3 @@ spec:
       path: "t1/data_backup_custom_enc"
     fullCrontab: "30 0 * * 6"
     incrementalCrontab: "30 1 * * *"
-    encryptionSecret: t1-ro

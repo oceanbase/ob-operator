@@ -23,6 +23,8 @@ const (
 	AnnotationsMode                    = "oceanbase.oceanbase.com/mode"
 	AnnotationsSourceClusterAddress    = "oceanbase.oceanbase.com/source-cluster-address"
 	AnnotationsIgnoreDeletion          = "oceanbase.oceanbase.com/ignore-deletion"
+	AnnotationsPauseReconciling        = "oceanbase.oceanbase.com/pause-reconciling"
+	AnnotationsSupportStaticIP         = "oceanbase.oceanbase.com/support-static-ip"
 )
 
 const (

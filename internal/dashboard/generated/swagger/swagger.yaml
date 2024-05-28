@@ -384,6 +384,166 @@ definitions:
       storageSize:
         type: integer
     type: object
+  obproxy.CreateOBProxyParam:
+    properties:
+      image:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      obCluster:
+        $ref: '#/definitions/obproxy.K8sObject'
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      proxyClusterName:
+        type: string
+      proxySysPassword:
+        description: Password should be encrypted
+        type: string
+      replicas:
+        type: integer
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+      serviceType:
+        default: ClusterIP
+        enum:
+        - ClusterIP
+        - NodePort
+        - LoadBalancer
+        - ExternalName
+        example: ClusterIP
+        type: string
+    required:
+    - image
+    - name
+    - namespace
+    - obCluster
+    - proxyClusterName
+    - proxySysPassword
+    - replicas
+    - resource
+    - serviceType
+    type: object
+  obproxy.K8sObject:
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+    required:
+    - name
+    - namespace
+    type: object
+  obproxy.OBProxy:
+    properties:
+      creationTime:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      obCluster:
+        $ref: '#/definitions/obproxy.K8sObject'
+      parameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      pods:
+        items:
+          $ref: '#/definitions/response.K8sPodInfo'
+        type: array
+      proxyClusterName:
+        type: string
+      proxySysSecret:
+        type: string
+      replicas:
+        type: integer
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+      service:
+        $ref: '#/definitions/response.K8sService'
+      serviceIp:
+        type: string
+      status:
+        type: string
+    required:
+    - creationTime
+    - image
+    - name
+    - namespace
+    - obCluster
+    - parameters
+    - pods
+    - proxyClusterName
+    - proxySysSecret
+    - replicas
+    - resource
+    - service
+    - serviceIp
+    - status
+    type: object
+  obproxy.OBProxyOverview:
+    properties:
+      creationTime:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      obCluster:
+        $ref: '#/definitions/obproxy.K8sObject'
+      proxyClusterName:
+        type: string
+      replicas:
+        type: integer
+      serviceIp:
+        type: string
+      status:
+        type: string
+    required:
+    - creationTime
+    - image
+    - name
+    - namespace
+    - obCluster
+    - proxyClusterName
+    - replicas
+    - serviceIp
+    - status
+    type: object
+  obproxy.PatchOBProxyParam:
+    properties:
+      addedParameters:
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
+      deletedParameters:
+        items:
+          type: string
+        type: array
+      image:
+        type: string
+      replicas:
+        type: integer
+      resource:
+        $ref: '#/definitions/common.ResourceSpec'
+      serviceType:
+        default: ClusterIP
+        enum:
+        - ClusterIP
+        - NodePort
+        - LoadBalancer
+        - ExternalName
+        example: ClusterIP
+        type: string
+    type: object
   oceanbase.OBInstance:
     properties:
       obcluster:
@@ -966,6 +1126,36 @@ definitions:
     - tenantName
     - uid
     type: object
+  response.ContainerInfo:
+    properties:
+      image:
+        type: string
+      limits:
+        $ref: '#/definitions/common.ResourceSpec'
+      name:
+        type: string
+      ports:
+        items:
+          type: integer
+        type: array
+      ready:
+        type: boolean
+      requests:
+        $ref: '#/definitions/common.ResourceSpec'
+      restartCount:
+        type: integer
+      startTime:
+        type: string
+    required:
+    - image
+    - limits
+    - name
+    - ports
+    - ready
+    - requests
+    - restartCount
+    - startTime
+    type: object
   response.DashboardInfo:
     properties:
       appName:
@@ -1100,6 +1290,65 @@ definitions:
     - memoryFree
     - memoryTotal
     - memoryUsed
+    type: object
+  response.K8sPodInfo:
+    properties:
+      containers:
+        items:
+          $ref: '#/definitions/response.ContainerInfo'
+        type: array
+      message:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      nodeName:
+        type: string
+      podIP:
+        type: string
+      reason:
+        type: string
+      startTime:
+        type: string
+      status:
+        type: string
+    required:
+    - containers
+    - message
+    - name
+    - namespace
+    - nodeName
+    - podIP
+    - reason
+    - startTime
+    - status
+    type: object
+  response.K8sService:
+    properties:
+      clusterIP:
+        type: string
+      externalIP:
+        type: string
+      name:
+        type: string
+      namespace:
+        type: string
+      ports:
+        items:
+          $ref: '#/definitions/response.K8sServicePort'
+        type: array
+      type:
+        type: string
+    type: object
+  response.K8sServicePort:
+    properties:
+      name:
+        type: string
+      port:
+        type: integer
+      targetPort:
+        type: integer
     type: object
   response.Metric:
     properties:
@@ -3783,6 +4032,231 @@ paths:
       summary: get obcluster statistic
       tags:
       - OBCluster
+  /api/v1/obproxies:
+    get:
+      consumes:
+      - application/json
+      description: list obproxies
+      operationId: ListOBProxies
+      parameters:
+      - description: ns
+        in: query
+        name: ns
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/obproxy.OBProxyOverview'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list obproxies
+      tags:
+      - OBProxy
+    put:
+      consumes:
+      - application/json
+      description: Create OBProxy with the specified parameters
+      operationId: CreateOBPROXY
+      parameters:
+      - description: Request body for creating obproxy
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/obproxy.CreateOBProxyParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/obproxy.OBProxy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create OBProxy
+      tags:
+      - OBProxy
+  /api/v1/obproxies/{namespace}/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete OBProxy by namespace and name
+      operationId: DeleteOBProxy
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/obproxy.OBProxy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete OBProxy
+      tags:
+      - OBProxy
+    get:
+      consumes:
+      - application/json
+      description: Get OBProxy by namespace and name
+      operationId: GetOBProxy
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/obproxy.OBProxy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get OBProxy
+      tags:
+      - OBProxy
+    patch:
+      consumes:
+      - application/json
+      description: Patch OBProxy with the specified parameters
+      operationId: PatchOBProxy
+      parameters:
+      - description: Request body for patching obproxy
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/obproxy.PatchOBProxyParam'
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/obproxy.OBProxy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Patch OBProxy
+      tags:
+      - OBProxy
   /api/v1/obtenants:
     get:
       consumes:

@@ -676,3 +676,195 @@ OBCLUSTER_OVERVIEW:
       name: wait_time
       unit: us
     name: Waiting for event time
+OBPROXY:
+- name: OBProxy service monitoring
+  description: Obproxy service monitoring
+  metricGroups:
+  - name: TPS
+    description: transaction count per second
+    metrics:
+    - name: total
+      description: transaction count per second
+      key: transaction_total
+      unit: 
+  - name: QPS
+    description: request count per second
+    metrics:
+    - name: commit
+      description: commit request count per second
+      key: request_total_commit
+      unit: 
+    - name: delete
+      description: delete request count per second
+      key: request_total_delete
+      unit: 
+    - name: insert
+      description: insert request count per second
+      key: request_total_insert
+      unit: 
+    - name: large
+      description: large request count per second
+      key: request_total_large
+      unit: 
+    - name: select
+      description: select request count per second
+      key: request_total_select
+      unit: 
+    - name: sequence
+      description: sequence request count per second
+      key: request_total_sequence
+      unit: 
+    - name: slow
+      description: slow request count per second
+      key: request_total_slow
+      unit: 
+    - name: update
+      description: update request count per second
+      key: request_total_update
+      unit: 
+    - name: others
+      description: other request count per second
+      key: request_total_others
+      unit: 
+  - name: Client connections
+    description: connections from client
+    metrics:
+    - name: client
+      description: connections from client
+      key: current_session_client
+      unit: 
+    - name: client_connections_usage
+      description: OBProxy client connections / client_max_connections
+      key: client_connection_used_percent
+      unit: "%"
+  - name: Server connections
+    description: Server connections
+    metrics:
+    - name: server
+      description: connections to server
+      key: current_session_server
+      unit: 
+    - name: server_connection_usage
+      description: OBProxy server connections / max_connections
+      key: server_connection_used_percent
+      unit: "%"
+  - name: SQL response time
+    description: average response time per SQL query
+    metrics:
+    - name: commit
+      description: average elapsed time for commit request
+      key: request_cost_commit
+      unit: "μs"
+    - name: delete
+      description: average elapsed time for delete request
+      key: request_cost_delete
+      unit: "μs"
+    - name: insert
+      description: average elapsed time for insert request
+      key: request_cost_insert
+      unit: "μs"
+    - name: prepare_send_request
+      description: average elapsed time for request to prepare for send
+      key: request_cost_prepare_send_request_time
+      unit: "μs"
+    - name: server_process_request
+      description: average elapsed time for server to precess request
+      key: request_cost_server_process_request_time
+      unit: "μs"
+    - name: select
+      description: average elapsed time for select request
+      key: request_cost_select
+      unit: "μs"
+    - name: sequence
+      description: average elapsed time for sequence request
+      key: request_cost_sequence
+      unit: "μs"
+    - name: update
+      description: average elapsed time for update request
+      key: request_cost_update
+      unit: "μs"
+    - name: others
+      description: average elapsed time for other request
+      key: request_cost_others
+      unit: "μs"
+  - name: OBProxy memory
+    description: OBProxy memory
+    metrics:
+    - name: obproxy_rss
+      description: Resident Memory Size for OBProxy Process
+      key: obproxy_rss_memory
+      unit: "byte"
+    - name: obproxy_rss_usage
+      description: OBProxy process resident memory / proxy_mem_limited
+      key: obproxy_rss_mem_used_percent
+      unit: "%"
+  - name: OBProxy CPU usage
+    description: OBProxy CPU usage
+    metrics:
+    - name: obproxy_cpu_usage
+      description: CPU Utilization of OBProxy Process
+      key: obproxy_process_cpu_percent
+      unit: "%"
+  - name: OBProxy fd
+    description: OBProxy fd
+    metrics:
+    - name: obproxy_fd
+      description: The open fd count of OBProxy
+      key: obproxy_fd_count
+      unit: 
+  - name: OBProxy Threads
+    description: OBProxy Threads
+    metrics:
+    - name: obproxy_threads
+      description: OBProxy Threads
+      key: obproxy_thread_count
+      unit: 
+  - name: Log error
+    description: Log error count
+    metrics:
+    - name: obproxy
+      description: Count of the OBProxy ERROR log
+      key: obproxy_log_error_count
+      unit: 
+  - name: Route table queries
+    description: route table queries per second (disabled by default, set obproxy parameter enable_extra_prometheus_metric=true to enable)
+    metrics:
+    - name: hit
+      description: hit count per second
+      key: entry_total_hit
+      unit: 
+    - name: partition
+      description: partition entry query count per second
+      key: entry_total_partition
+      unit: 
+    - name: route
+      description: route entry query count per second
+      key: entry_total_route
+      unit: 
+    - name: success
+      description: success query count per second
+      key: entry_total_success
+      unit: 
+    - name: table
+      description: table entry query count per second
+      key: entry_total_table
+      unit: 
+  - name: Net bytes
+    description: average bytes per request or response (disabled by default, set obproxy parameter enable_extra_prometheus_metric=true to enable)
+    metrics:
+    - name: client_request
+      description: average bytes per client request
+      key: request_byte_client_request
+      unit: "byte"
+    - name: client_response
+      description: Client Response Volume in Bytes
+      key: request_byte_client_response
+      unit: "byte"
+    - name: server_request
+      description: average bytes per server request
+      key: request_byte_server_request
+      unit: "byte"
+    - name: server_response
+      description: average bytes per server response
+      key: request_byte_server_response
+      unit: "byte"

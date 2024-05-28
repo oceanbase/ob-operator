@@ -27,7 +27,6 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
@@ -45,17 +44,12 @@ type ObTenantOperationManager struct {
 	Logger   *logr.Logger
 }
 
-func (m *ObTenantOperationManager) IsNewResource() bool {
-	return m.Resource.Status.Status == ""
+func (m *ObTenantOperationManager) GetMeta() metav1.Object {
+	return m.Resource.GetObjectMeta()
 }
 
 func (m *ObTenantOperationManager) GetStatus() string {
 	return string(m.Resource.Status.Status)
-}
-
-func (m *ObTenantOperationManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.Resource.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantOperationManager) CheckAndUpdateFinalizers() error {
@@ -126,7 +120,7 @@ func (m *ObTenantOperationManager) ClearTaskInfo() {
 }
 
 func (m *ObTenantOperationManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.Resource.DeletionTimestamp != nil {
 		m.Resource.Status.OperationContext = nil
 	} else {
 		operationContext := m.Resource.Status.OperationContext

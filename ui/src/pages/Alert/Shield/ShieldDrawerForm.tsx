@@ -1,25 +1,50 @@
 import { alert } from '@/api';
 import AlertDrawer from '@/components/AlertDrawer';
+import IconTip from '@/components/IconTip';
 import InputLabel from '@/components/InputLabel';
-import { QuestionCircleOutlined } from '@ant-design/icons';
-import { useUpdateEffect } from 'ahooks';
+import { Alert } from '@/type/alert';
+import { useModel } from '@umijs/max';
+import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import { Button, Col, DatePicker, Form, Input, Radio, Row } from 'antd';
+import {
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Radio,
+  Row,
+  Select,
+  message,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
-import styles from './index.less';
+import {
+  formatShieldSubmitData,
+  getInstancesFromRes,
+  getSelectList,
+} from '../helper';
+import ShieldObjInput from './ShieldObjInput';
 
 interface ShieldDrawerProps extends DrawerProps {
   id?: string;
+  initialValues?: Alert.ShieldDrawerInitialValues;
+  onClose: () => void;
 }
 
 const { TextArea } = Input;
 
-export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
-  const [form] = Form.useForm();
+export default function ShieldDrawerForm({
+  id,
+  onClose,
+  initialValues,
+  ...props
+}: ShieldDrawerProps) {
+  const [form] = Form.useForm<Alert.ShieldDrawerForm>();
+  const { clusterList, tenantList } = useModel('alarm');
+  const shieldObjType = Form.useWatch(['instances', 'type'], form);
   const isEdit = !!id;
-  const instanceType = Form.useWatch(['instance', 'type'], form);
-  const initialValues = {
+  const newInitialValues = {
     matchers: [
       {
         name: '',
@@ -27,8 +52,16 @@ export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
         isRegex: false,
       },
     ],
+    instances: {
+      type: 'obcluster',
+    },
+    ...initialValues,
   };
-
+  const { data: listRulesRes } = useRequest(alert.listRules);
+  const listRules = listRulesRes?.data?.map((rule) => ({
+    label: rule.name,
+    value: rule.name,
+  }));
   const fieldEndTimeChange = (time: number | Date) => {
     if (typeof time === 'number') {
       form.setFieldValue('endsAt', dayjs(new Date().valueOf() + time));
@@ -37,44 +70,88 @@ export default function ShieldDrawerForm({ id, ...props }: ShieldDrawerProps) {
     }
   };
 
+  const submit = (values: Alert.ShieldDrawerForm) => {
+    const _clusterList = getSelectList(
+      clusterList!,
+      values.instances.type,
+      tenantList,
+    );
+    alert
+      .createOrUpdateSilencer(formatShieldSubmitData(values, _clusterList))
+      .then(({ successful }) => {
+        if (successful) {
+          message.success('操作成功!');
+          onClose();
+        }
+      });
+  };
+
   useEffect(() => {
     if (isEdit) {
-      alert.getSilencer(id).then(() => {
-        // Something to do
+      alert.getSilencer(id).then(({ successful, data }) => {
+        if (successful) {
+          form.setFieldsValue({
+            comment: data.comment,
+            matchers: data.matchers,
+            endsAt: dayjs(data.endsAt),
+            instances: getInstancesFromRes(data.instances),
+            rules: data.rules,
+          });
+        }
       });
     }
   }, [id]);
 
-  useUpdateEffect(() => {
-    form.setFieldValue(['instance', instanceType], 'aa');
-  }, [instanceType]);
   return (
-    <AlertDrawer onSubmit={() => form.submit()} {...props}>
-      <Form form={form} layout="vertical" initialValues={initialValues}>
-        <Form.Item name={['instance', 'type']} label="屏蔽对象类型">
+    <AlertDrawer
+      onClose={() => {
+        onClose();
+      }}
+      destroyOnClose={true}
+      onSubmit={() => form.submit()}
+      title="屏蔽条件"
+      {...props}
+    >
+      <Form
+        form={form}
+        preserve={false}
+        onFinish={submit}
+        layout="vertical"
+        initialValues={newInitialValues}
+      >
+        <Form.Item name={['instances', 'type']} label="屏蔽对象类型">
           <Radio.Group>
             <Radio value="obcluster"> 集群 </Radio>
             <Radio value="obtenant"> 租户 </Radio>
             <Radio value="observer"> OBServer </Radio>
           </Radio.Group>
         </Form.Item>
-        {/* <Form.Item label='屏蔽告警规则'>
-            
-        </Form.Item> */}
+        <Form.Item style={{ marginBottom: 0 }} label="屏蔽对象">
+          <ShieldObjInput shieldObjType={shieldObjType} form={form} />
+        </Form.Item>
+        <Form.Item name={'rules'} label="屏蔽告警规则">
+          <Select
+            mode="multiple"
+            allowClear
+            style={{ width: '100%' }}
+            placeholder="请选择"
+            options={listRules}
+          />
+        </Form.Item>
         <Form.Item
           label={
-            <div>
-              <span>标签</span>
-              <QuestionCircleOutlined className={styles.questionIcon} />
-              <span style={{ color: 'rgba(0,0,0,0.45)' }}>(可选)</span>
-            </div>
+            <IconTip
+              tip="支持对指定的指标进行屏蔽，如慢 SQL告警，支持对 SQLID 进行过滤，支持正则表达式"
+              content={'标签'}
+            />
           }
         >
           <InputLabel
             wrapFormName="matchers"
             labelFormName="name"
             valueFormName="value"
-            regBoxFormName='isRegex'
+            regBoxFormName="isRegex"
+            maxCount={8}
           />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>

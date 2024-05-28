@@ -19,6 +19,8 @@ package main
 import (
 	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	//+kubebuilder:scaffold:imports
 
@@ -34,10 +36,14 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/controller"
 	"github.com/oceanbase/ob-operator/internal/controller/config"
+	"github.com/oceanbase/ob-operator/internal/debug"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
+	"github.com/oceanbase/ob-operator/pkg/database"
+	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
 var (
@@ -91,6 +97,11 @@ func main() {
 	cfg := obcfg.GetConfig()
 	coordinator.SetMaxRetryTimes(cfg.Time.TaskMaxRetryTimes)
 	coordinator.SetRetryBackoffThreshold(cfg.Time.TaskRetryBackoffThreshold)
+	coordinator.SetIgnoreDeletionAnnotation(oceanbaseconst.AnnotationsIgnoreDeletion)
+	coordinator.SetPausedAnnotation(oceanbaseconst.AnnotationsPauseReconciling)
+	task.SetDebugTask(cfg.Task.Debug)
+	task.SetTaskPoolSize(cfg.Task.PoolSize)
+	database.SetLRUCacheSize(cfg.Database.ConnectionLRUCacheSize)
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
@@ -120,10 +131,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	ctx, cancel := context.WithCancel(context.TODO())
+
 	if err = (&controller.OBClusterReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBClusterControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBClusterControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBCluster")
 		os.Exit(1)
@@ -131,7 +144,7 @@ func main() {
 	if err = (&controller.OBZoneReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBZoneControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBZoneControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBZone")
 		os.Exit(1)
@@ -139,7 +152,7 @@ func main() {
 	if err = (&controller.OBServerReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBServerControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBServerControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBServer")
 		os.Exit(1)
@@ -147,7 +160,7 @@ func main() {
 	if err = (&controller.OBParameterReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBParameterControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBParameterControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBParameter")
 		os.Exit(1)
@@ -155,7 +168,7 @@ func main() {
 	if err = (&controller.OBTenantReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBTenant")
 		os.Exit(1)
@@ -163,7 +176,7 @@ func main() {
 	if err = (&controller.OBTenantBackupReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor(config.OBTenantBackupControllerName)),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantBackupControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantBackup")
 		os.Exit(1)
@@ -171,7 +184,7 @@ func main() {
 	if err = (&controller.OBTenantRestoreReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantRestoreControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantRestoreControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantRestore")
 		os.Exit(1)
@@ -179,7 +192,7 @@ func main() {
 	if err = (&controller.OBTenantBackupPolicyReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantBackupPolicyControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantBackupPolicyControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantBackupPolicy")
 		os.Exit(1)
@@ -187,12 +200,16 @@ func main() {
 	if err = (&controller.OBTenantOperationReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorderFor(config.OBTenantOperationControllerName),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantOperationControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantOperation")
 		os.Exit(1)
 	}
-	if err = (controller.NewOBResourceRescueReconciler(mgr)).SetupWithManager(mgr); err != nil {
+	if err = (&controller.OBResourceRescueReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBResourceRescueControllerName)),
+	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBResourceRescue")
 		os.Exit(1)
 	}
@@ -229,7 +246,19 @@ func main() {
 		os.Exit(1)
 	}
 
-	rcd := telemetry.NewRecorder(context.Background(), mgr.GetEventRecorderFor("ob-operator"))
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		<-signalCh
+		cancel()
+	}()
+
+	if obcfg.GetConfig().Manager.Debug {
+		go debug.PollingRuntimeStats(ctx.Done())
+	}
+
+	rcd := telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor("ob-operator"))
 	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
 
 	setupLog.WithValues(

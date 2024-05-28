@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 
 	v1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
@@ -38,6 +39,7 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 )
 
 // log is for logging in this package.
@@ -49,8 +51,6 @@ func (r *OBCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
 //+kubebuilder:webhook:path=/mutate-oceanbase-oceanbase-com-v1alpha1-obcluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obclusters,verbs=create;update,versions=v1alpha1,name=mobcluster.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &OBCluster{}
@@ -58,6 +58,7 @@ var _ webhook.Defaulter = &OBCluster{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *OBCluster) Default() {
 	// fill default essential parameters, memory_limit, datafile_maxsize and datafile_next
+	logger := obclusterlog.WithValues("namespace", r.Namespace, "name", r.Name)
 
 	parameterMap := make(map[string]apitypes.Parameter, 0)
 	memorySize, ok := r.Spec.OBServerTemplate.Resource.Memory.AsInt64()
@@ -68,7 +69,7 @@ func (r *OBCluster) Default() {
 			Value: memoryLimit,
 		}
 	} else {
-		obclusterlog.Error(errors.New("Failed to parse memory size"), "parse observer's memory size failed")
+		logger.Error(errors.New("Failed to parse memory size"), "parse observer's memory size failed")
 	}
 	datafileDiskSize, ok := r.Spec.OBServerTemplate.Storage.DataStorage.Size.AsInt64()
 	if ok {
@@ -83,7 +84,7 @@ func (r *OBCluster) Default() {
 			Value: datafileNextSize,
 		}
 	} else {
-		obclusterlog.Error(errors.New("Failed to parse datafile size"), "parse observer's datafile size failed")
+		logger.Error(errors.New("Failed to parse datafile size"), "parse observer's datafile size failed")
 	}
 	parameterMap["enable_syslog_recycle"] = apitypes.Parameter{
 		Name:  "enable_syslog_recycle",
@@ -122,6 +123,41 @@ func (r *OBCluster) Default() {
 	if r.Spec.ServiceAccount == "" {
 		r.Spec.ServiceAccount = "default"
 	}
+	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" ||
+		r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" ||
+		r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+		scList := &storagev1.StorageClassList{}
+		err := clt.List(context.TODO(), scList)
+		var defaults []string
+		if err != nil {
+			logger.Error(err, "Failed to list storage class")
+		} else {
+			sort.SliceStable(scList.Items, func(i, j int) bool {
+				return scList.Items[i].Name < scList.Items[j].Name
+			})
+			for _, sc := range scList.Items {
+				if sc.Annotations["storageclass.kubernetes.io/is-default-class"] == "true" {
+					defaults = append(defaults, sc.Name)
+				}
+			}
+			if len(defaults) == 0 {
+				logger.Error(nil, "No default storage class found")
+			} else {
+				if len(defaults) > 1 {
+					logger.Info("Multiple default storage class found", "storageClasses", defaults, "selected", defaults[0])
+				}
+				if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = defaults[0]
+				}
+				if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
+				}
+				if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
+				}
+			}
+		}
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -142,55 +178,82 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 	oldMode, existOld := oldCluster.GetAnnotations()[oceanbaseconst.AnnotationsMode]
 	mode, exist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
+	oldResource := oldCluster.Spec.OBServerTemplate.Resource
+	newResource := r.Spec.OBServerTemplate.Resource
 	if existOld && exist && oldMode != mode {
 		return nil, errors.New("mode cannot be changed")
-	} else if oldMode != oceanbaseconst.ModeStandalone && (oldCluster.Spec.OBServerTemplate.Resource.Cpu != r.Spec.OBServerTemplate.Resource.Cpu || oldCluster.Spec.OBServerTemplate.Resource.Memory != r.Spec.OBServerTemplate.Resource.Memory) {
-		return nil, errors.New("forbid to modify cpu or memory quota of non-standalone cluster")
+	} else if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
+		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
+	}
+	if newResource.Memory.Cmp(oldResource.Memory) < 0 || newResource.Cpu.Cmp(oldResource.Cpu) < 0 {
+		if r.Status.Status != clusterstatus.Running {
+			return nil, errors.New("forbid to shrink memory size of non-running cluster")
+		}
+		conn, err := getSysClient(clt, &obclusterlog, r, oceanbaseconst.OperatorUser, oceanbaseconst.SysTenant, r.Spec.UserSecrets.Operator)
+		if err != nil {
+			return nil, err
+		}
+		defer conn.Close()
+		gvservers, err := conn.ListGVServers(context.Background())
+		if err != nil {
+			return nil, err
+		}
+		var maxAssignedCPU int64
+		var maxAssignedMemory int64
+		var memoryLimitPercent float64
+		for _, gvserver := range gvservers {
+			if gvserver.MemAssigned > maxAssignedMemory {
+				if oldResource.Memory.Value() < gvserver.MemoryLimit {
+					memoryLimitPercent = 0.9
+				} else {
+					memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
+				}
+				maxAssignedMemory = gvserver.MemAssigned
+			}
+			if gvserver.CPUAssigned > maxAssignedCPU {
+				maxAssignedCPU = gvserver.CPUAssigned
+			}
+		}
+		if newResource.Memory.AsApproximateFloat64()*memoryLimitPercent < float64(maxAssignedMemory) {
+			return nil, errors.New("Assigned memory is larger than new memory size")
+		}
+		if oldResource.Cpu.Value() > 16 && newResource.Cpu.AsApproximateFloat64() < float64(maxAssignedCPU) {
+			return nil, errors.New("Assigned CPU is larger than new CPU size")
+		}
 	}
 	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
 		return nil, errors.New("forbid to remove backup volume")
 	}
 	var err error
 	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil {
-		if mode != oceanbaseconst.ModeStandalone && mode != oceanbaseconst.ModeService {
-			observerList := &OBServerList{}
-			err = clt.List(context.TODO(), observerList)
-			if err != nil {
-				return nil, err
-			}
-			keepIpWithCNI := false
-			for _, observer := range observerList.Items {
-				if observer.SupportStaticIP() {
-					keepIpWithCNI = true
-					break
-				}
-			}
-			if !keepIpWithCNI {
-				return nil, errors.New("forbid to add backup volume on dynamical-ip cluster")
-			}
+		if !oldCluster.SupportStaticIP() {
+			err = errors.New("forbid to add backup volume to non-static-ip cluster")
 		}
 	}
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass))
+
+	newStorage := r.Spec.OBServerTemplate.Storage
+	oldStorage := oldCluster.Spec.OBServerTemplate.Storage
+	if newStorage.DataStorage.Size.Cmp(oldStorage.DataStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.DataStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass))
+	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.LogStorage.StorageClass))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass))
+	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) > 0 {
+		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.RedoLogStorage.StorageClass))
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "forbid to shrink data storage size"))
+	if newStorage.DataStorage.Size.Cmp(oldStorage.DataStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), newStorage.DataStorage.Size.String(), "forbid to shrink data storage size"))
 	}
-	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), r.Spec.OBServerTemplate.Storage.LogStorage.Size.String(), "forbid to shrink log storage size"))
+	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), newStorage.LogStorage.Size.String(), "forbid to shrink log storage size"))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(oldCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
+	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) < 0 {
+		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), newStorage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
 	}
 	if err != nil {
 		return nil, err
@@ -246,6 +309,19 @@ func (r *OBCluster) validateMutation() error {
 	// Validate Topology
 	if r.Spec.Topology == nil || len(r.Spec.Topology) == 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
+	}
+
+	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	}
+	if len(allErrs) != 0 {
+		return allErrs.ToAggregate()
 	}
 
 	// Validate storageClasses

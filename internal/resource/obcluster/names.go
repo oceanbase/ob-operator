@@ -30,6 +30,7 @@ const (
 	fScaleUpOBZones                  ttypes.FlowName = "scale up obzones"
 	fExpandPVC                       ttypes.FlowName = "expand pvc for obcluster"
 	fMountBackupVolume               ttypes.FlowName = "mount backup volume for obcluster"
+	fRollingUpdateOBServers          ttypes.FlowName = "rolling update observers"
 )
 
 // obcluster tasks
@@ -64,4 +65,7 @@ const (
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
 	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
 	tCheckEnvironment           ttypes.TaskName = "check environment"
+	tAdjustParameters           ttypes.TaskName = "adjust parameters"
+	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"
+	tRollingUpdateOBZones       ttypes.TaskName = "rolling update observers"
 )

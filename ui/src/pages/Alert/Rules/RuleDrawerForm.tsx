@@ -1,8 +1,10 @@
+import { alert } from '@/api';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabel from '@/components/InputLabel';
+import { LEVER_OPTIONS_ALARM, SERVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
-import { Col, Form, Input, InputNumber, Row, Select } from 'antd';
+import { Col, Form, Input, InputNumber, Row, Select, Tag } from 'antd';
 import { useEffect } from 'react';
 
 type AlertRuleDrawerProps = {
@@ -25,16 +27,26 @@ export default function RuleDrawerForm({
 
   useEffect(() => {
     if (ruleName) {
-      // Something to do
+      alert.getRule(ruleName).then(({ data, successful }) => {
+        if (successful) {
+          form.setFieldsValue({ ...data });
+        }
+      });
     }
-  }, []);
+  }, [ruleName]);
 
   return (
-    <AlertDrawer onSubmit={() => form.submit()} {...props}>
+    <AlertDrawer
+      destroyOnClose={true}
+      onSubmit={() => form.submit()}
+      {...props}
+    >
       <Form
         initialValues={initialValues}
+        preserve={false}
         style={{ marginBottom: 64 }}
         layout="vertical"
+        validateTrigger='onBlur'
         form={form}
       >
         <Row gutter={[24, 24]}>
@@ -46,6 +58,21 @@ export default function RuleDrawerForm({
                   required: true,
                   message: '请输入',
                 },
+                {
+                  validator: async (_, value) => {
+                    const res = await alert.listRules();
+                    if (res.successful) {
+                      for (const rule of res.data) {
+                        if (rule.name === value) {
+                          return Promise.reject(
+                            new Error('告警规则已存在，请重新输入'),
+                          );
+                        }
+                      }
+                    }
+                    return Promise.resolve();
+                  },
+                },
               ]}
               label="告警规则名"
             >
@@ -53,8 +80,27 @@ export default function RuleDrawerForm({
             </Form.Item>
           </Col>
           <Col span={7}>
-            <Form.Item name={'serverity'} label="告警级别">
-              <Select placeholder="请选择" />
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
+              name={'serverity'}
+              label="告警级别"
+            >
+              <Select
+                options={LEVER_OPTIONS_ALARM?.map((item) => ({
+                  value: item.value,
+                  label: (
+                    <Tag color={SERVERITY_MAP[item?.value]?.color}>
+                      {item.label}
+                    </Tag>
+                  ),
+                }))}
+                placeholder="请选择"
+              />
             </Form.Item>
           </Col>
           <Col span={16}>
@@ -85,7 +131,7 @@ export default function RuleDrawerForm({
                 },
               ]}
               label="持续时间"
-              name={'description'}
+              name={'duration'}
             >
               <InputNumber placeholder="请输入" addonAfter="分钟" min={1} />
             </Form.Item>

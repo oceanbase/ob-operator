@@ -1,6 +1,25 @@
 # Changelog
 
-## 2.2.0 
+## 2.2.1 
+
+### New features
+
+1. Support for customizing configuration of ob-operator by setting environment variables.
+2. Support for attaching backup volume after OceanBase cluster started if static ip is supported.
+3. Support for deleting protection of important resources by adding annotation.
+4. Support for migrating OceanBase cluster to be managed by ob-operator.
+
+### Bug fixes
+
+1. Fixed issue when creating backup tenant across namespace.
+2. Fixed issue when recover observer if OceanBase cluster is not accessible.
+
+### Optimization
+
+1. Checked log storage volume fit OceanBase's requirement before actually create the cluster.
+2. Optimized version check when creating OceanBase cluster in service mode.
+
+## 2.2.0 (Released on 2024.03.28)
 
 ### New features
 

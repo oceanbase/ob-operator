@@ -4,8 +4,10 @@ ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
          http://license.coscl.org.cn/MulanPSL2
-THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS,
+WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
@@ -21,8 +23,21 @@ import (
 func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMigrateOBClusterFromExisting,
-			Tasks:        []tasktypes.TaskName{tCheckMigration, tCheckImageReady, tCheckEnvironment, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
+			Name: fMigrateOBClusterFromExisting,
+			Tasks: []tasktypes.TaskName{
+				tCheckMigration,
+				tCheckImageReady,
+				tCheckEnvironment,
+				tCheckClusterMode,
+				tCheckAndCreateUserSecrets,
+				tCreateOBZone,
+				tWaitOBZoneRunning,
+				tCreateUsers,
+				tMaintainOBParameter,
+				tCreateServiceForMonitor,
+				tCreateOBClusterService,
+				tAnnotateOBCluster,
+			},
 			TargetStatus: clusterstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,
@@ -34,8 +49,16 @@ func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlo
 func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fBootstrapOBCluster,
-			Tasks:        []tasktypes.TaskName{tCheckImageReady, tCheckEnvironment, tCheckClusterMode, tCheckAndCreateUserSecrets, tCreateOBZone, tWaitOBZoneBootstrapReady, tBootstrap},
+			Name: fBootstrapOBCluster,
+			Tasks: []tasktypes.TaskName{
+				tCheckImageReady,
+				tCheckEnvironment,
+				tCheckClusterMode,
+				tCheckAndCreateUserSecrets,
+				tCreateOBZone,
+				tWaitOBZoneBootstrapReady,
+				tBootstrap,
+			},
 			TargetStatus: clusterstatus.Bootstrapped,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,
@@ -47,8 +70,15 @@ func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMaintainOBClusterAfterBootstrap,
-			Tasks:        []tasktypes.TaskName{tWaitOBZoneRunning, tCreateUsers, tMaintainOBParameter, tCreateServiceForMonitor, tCreateOBClusterService},
+			Name: fMaintainOBClusterAfterBootstrap,
+			Tasks: []tasktypes.TaskName{
+				tWaitOBZoneRunning,
+				tCreateUsers,
+				tMaintainOBParameter,
+				tCreateServiceForMonitor,
+				tCreateOBClusterService,
+				tAnnotateOBCluster,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -57,8 +87,12 @@ func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.Task
 func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fAddOBZone,
-			Tasks:        []tasktypes.TaskName{tCreateOBZone, tWaitOBZoneRunning, tModifySysTenantReplica},
+			Name: fAddOBZone,
+			Tasks: []tasktypes.TaskName{
+				tCreateOBZone,
+				tWaitOBZoneRunning,
+				tModifySysTenantReplica,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -67,8 +101,12 @@ func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genDeleteOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fDeleteOBZone,
-			Tasks:        []tasktypes.TaskName{tModifySysTenantReplica, tDeleteOBZone, tWaitOBZoneDeleted},
+			Name: fDeleteOBZone,
+			Tasks: []tasktypes.TaskName{
+				tModifySysTenantReplica,
+				tDeleteOBZone,
+				tWaitOBZoneDeleted,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -77,8 +115,12 @@ func genDeleteOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genModifyOBZoneReplicaFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fModifyOBZoneReplica,
-			Tasks:        []tasktypes.TaskName{tModifyOBZoneReplica, tWaitOBZoneTopologyMatch, tWaitOBZoneRunning},
+			Name: fModifyOBZoneReplica,
+			Tasks: []tasktypes.TaskName{
+				tModifyOBZoneReplica,
+				tWaitOBZoneTopologyMatch,
+				tWaitOBZoneRunning,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -87,8 +129,10 @@ func genModifyOBZoneReplicaFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genMaintainOBParameterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMaintainOBParameter,
-			Tasks:        []tasktypes.TaskName{tMaintainOBParameter},
+			Name: fMaintainOBParameter,
+			Tasks: []tasktypes.TaskName{
+				tMaintainOBParameter,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -97,8 +141,16 @@ func genMaintainOBParameterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genUpgradeOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fUpgradeOBCluster,
-			Tasks:        []tasktypes.TaskName{tValidateUpgradeInfo, tBackupEssentialParameters, tUpgradeCheck, tBeginUpgrade, tRollingUpgradeByZone, tFinishUpgrade, tRestoreEssentialParameters},
+			Name: fUpgradeOBCluster,
+			Tasks: []tasktypes.TaskName{
+				tValidateUpgradeInfo,
+				tBackupEssentialParameters,
+				tUpgradeCheck,
+				tBeginUpgrade,
+				tRollingUpgradeByZone,
+				tFinishUpgrade,
+				tRestoreEssentialParameters,
+			},
 			TargetStatus: clusterstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.Pause,
@@ -110,8 +162,11 @@ func genUpgradeOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fScaleUpOBZones,
-			Tasks:        []tasktypes.TaskName{tScaleUpOBZones, tWaitOBZoneRunning},
+			Name: fScaleUpOBZones,
+			Tasks: []tasktypes.TaskName{
+				tAdjustParameters,
+				tScaleUpOBZones,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -120,8 +175,11 @@ func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fExpandPVC,
-			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitOBZoneRunning},
+			Name: fExpandPVC,
+			Tasks: []tasktypes.TaskName{
+				tExpandPVC,
+				tWaitOBZoneRunning,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}
@@ -130,8 +188,23 @@ func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genMountBackupVolumeFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMountBackupVolume,
-			Tasks:        []tasktypes.TaskName{tMountBackupVolume, tWaitOBZoneRunning},
+			Name: fMountBackupVolume,
+			Tasks: []tasktypes.TaskName{
+				tMountBackupVolume,
+				tWaitOBZoneRunning,
+			},
+			TargetStatus: clusterstatus.Running,
+		},
+	}
+}
+
+func genRollingUpdateOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name: fRollingUpdateOBServers,
+			Tasks: []tasktypes.TaskName{
+				tRollingUpdateOBZones,
+			},
 			TargetStatus: clusterstatus.Running,
 		},
 	}

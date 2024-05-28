@@ -1,18 +1,21 @@
+import type { OceanbaseOBInstanceType } from '@/api/generated';
 import {
-  SERVERITY_MAP,
   LEVER_OPTIONS_ALARM,
   OBJECT_OPTIONS_ALARM,
+  SERVERITY_MAP,
 } from '@/constants';
+import { Alert } from '@/type/alert';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
-import { useUpdateEffect } from 'ahooks';
+import { useDebounceFn, useUpdateEffect } from 'ahooks';
 import type { FormInstance } from 'antd';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Tag } from 'antd';
-import { flatten } from 'lodash';
 import { useEffect, useState } from 'react';
+import { getSelectList } from '../helper';
 
 interface AlarmFilterProps {
   form: FormInstance<unknown>;
+  depend: (body: unknown) => void;
   type: 'event' | 'shield' | 'rules';
 }
 
@@ -25,52 +28,43 @@ const DEFAULT_VISIBLE_CONFIG = {
   endTime: true,
 };
 
-export default function AlarmFilter({ form, type }: AlarmFilterProps) {
+export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
   const { clusterList, tenantList } = useModel('alarm');
   const [isExpand, setIsExpand] = useState(true);
   const [visibleConfig, setVisibleConfig] = useState(DEFAULT_VISIBLE_CONFIG);
-  const getOptionsFromType = (
-    type: 'obcluster' | 'obtenant' | 'observer' | 'obzone' | undefined,
-  ) => {
+  const getOptionsFromType = (type: OceanbaseOBInstanceType) => {
+    if (!type || !clusterList || (type === 'obtenant' && !tenantList))
+      return [];
+    const list = getSelectList(clusterList, type, tenantList);
     if (type === 'obcluster') {
-      return clusterList?.map((cluster) => ({
-        value: cluster.clusterName,
-        label: cluster.clusterName,
+      return list?.map((clusterName) => ({
+        value: clusterName,
+        label: clusterName,
       }));
     }
     if (type === 'obtenant') {
-      return clusterList?.map((cluster) => ({
+      return (list as Alert.TenantsList[]).map((cluster) => ({
         label: <span>{cluster.clusterName}</span>,
         title: cluster.clusterName,
-        options: tenantList
-          ?.filter(
-            (tenant) =>
-              tenant.namespace === cluster.namespace &&
-              tenant.clusterResourceName === cluster.name,
-          )
-          .map((tenant) => ({
-            label: tenant.tenantName,
-            value: tenant.tenantName,
-          })),
+        options: cluster.tenants?.map((item) => ({
+          value: item,
+          label: item,
+        })),
       }));
     }
     if (type === 'observer') {
-      return clusterList?.map((cluster) => ({
+      return (list as Alert.ServersList[]).map((cluster) => ({
         label: <span>{cluster.clusterName}</span>,
         title: cluster.clusterName,
-        options: flatten(
-          cluster.topology.map((zone) =>
-            zone.observers.map((server) => ({
-              label: server.address,
-              value: server.address,
-            })),
-          ),
-        ),
+        options: cluster.servers?.map((item) => ({
+          value: item,
+          label: item,
+        })),
       }));
     }
-    return [];
   };
-
+  const { run: debounceDepend } = useDebounceFn(depend, { wait: 500 });
+  const formData = Form.useWatch([], form) as { [T: string]: string | object };
   useEffect(() => {
     if (type === 'event') {
       setVisibleConfig({
@@ -126,6 +120,28 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
     }
   }, [isExpand]);
 
+  useUpdateEffect(() => {
+    const filter: { [T: string]: unknown } = {};
+    Object.keys(formData).forEach((key) => {
+      if (formData[key]) {
+        if (typeof formData[key] === 'string') {
+          filter[key] = formData[key];
+        } else if (key === 'startTime' || key === 'endTime') {
+          filter[key] = Math.ceil(formData[key].valueOf() / 1000);
+        } else if (key === 'instance' && formData[key]?.type) {
+          const temp = {};
+          Object.keys(formData[key]).forEach((innerKey) => {
+            if (formData[key][innerKey]) {
+              temp[innerKey] = formData[key][innerKey];
+            }
+          });
+          filter[key] = temp;
+        }
+      }
+    });
+    debounceDepend(filter);
+  }, [formData]);
+
   return (
     <Form form={form}>
       <Row>
@@ -180,13 +196,14 @@ export default function AlarmFilter({ form, type }: AlarmFilterProps) {
               name={'serverity'}
             >
               <Select
-                mode="multiple"
                 allowClear
                 placeholder="请选择"
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SERVERITY_MAP[item.value]?.color}>{item.label}</Tag>
+                    <Tag color={SERVERITY_MAP[item.value]?.color}>
+                      {item.label}
+                    </Tag>
                   ),
                 }))}
               />

@@ -46,6 +46,9 @@ spec:
               value: metadb
             - name: CONFIG_URL
               value: 'http://svc-ob-configserver.oceanbase.svc:8080/services?Action=GetObProxyConfig'
+            # - name: RS_LIST   # CONFIG_URL and RS_LIST are mutually exclusive. 
+            #   value: '******' # If you decide to use RS_LIST, the value should be get from SQL statement "SELECT GROUP_CONCAT(CONCAT(SVR_IP, ':', SQL_PORT) SEPARATOR ';') AS RS_LIST FROM oceanbase.DBA_OB_SERVERS;" by connecting the cluster through pods.
+            #                   # The value should be like 'IP1:2881;IP2:2881;IP3:2881'
             - name: PROXYRO_PASSWORD
               valueFrom: 
                 secretKeyRef:

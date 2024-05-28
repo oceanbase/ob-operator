@@ -17,10 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -58,6 +59,9 @@ type OBClusterStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Tasks",type="string",JSONPath=".status.operationContext.tasks",priority=1
+//+kubebuilder:printcolumn:name="Task",type="string",JSONPath=".status.operationContext.task",priority=1
+//+kubebuilder:printcolumn:name="TaskIdx",type="string",JSONPath=".status.operationContext.idx",priority=1
 
 // OBCluster is the Schema for the obclusters API
 type OBCluster struct {
@@ -79,4 +83,8 @@ type OBClusterList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBCluster{}, &OBClusterList{})
+}
+
+func (c *OBCluster) SupportStaticIP() bool {
+	return c.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true"
 }

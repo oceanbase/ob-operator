@@ -27,7 +27,6 @@ export default function SubscripDrawerForm({
   const initialValues = {
     matchers: [
       {
-        isEqual: false,
         isRegex: false,
         name: '',
         value: '',
@@ -50,9 +49,14 @@ export default function SubscripDrawerForm({
     }
   }, [id]);
   return (
-    <AlertDrawer onSubmit={() => form.submit()} {...props}>
+    <AlertDrawer
+      destroyOnClose={true}
+      onSubmit={() => form.submit()}
+      {...props}
+    >
       <Form
         form={form}
+        preserve={false}
         onFinish={submit}
         initialValues={initialValues}
         layout="vertical"

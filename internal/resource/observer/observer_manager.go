@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -48,8 +49,8 @@ func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFu
 	return taskMap.GetTask(name, m)
 }
 
-func (m *OBServerManager) IsNewResource() bool {
-	return m.OBServer.Status.Status == ""
+func (m *OBServerManager) GetMeta() metav1.Object {
+	return m.OBServer.GetObjectMeta()
 }
 
 func (m *OBServerManager) GetStatus() string {
@@ -71,7 +72,7 @@ func (m *OBServerManager) SetOperationContext(c *tasktypes.OperationContext) {
 
 func (m *OBServerManager) UpdateStatus() error {
 	// update deleting status when object is deleting
-	if m.IsDeleting() {
+	if m.OBServer.DeletionTimestamp != nil {
 		m.OBServer.Status.Status = serverstatus.Deleting
 	} else {
 		pod, err := m.getPod()
@@ -113,10 +114,13 @@ func (m *OBServerManager) UpdateStatus() error {
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
-			if mode, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
-				if pod.Spec.Containers[0].Resources.Limits.Cpu().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Cpu) != 0 ||
-					pod.Spec.Containers[0].Resources.Limits.Memory().Cmp(m.OBServer.Spec.OBServerTemplate.Resource.Memory) != 0 {
-					m.OBServer.Status.Status = serverstatus.ScaleUp
+			if m.OBServer.SupportStaticIP() {
+				if len(pod.Spec.Containers) > 0 {
+					tmplRes := m.OBServer.Spec.OBServerTemplate.Resource
+					containerRes := pod.Spec.Containers[0].Resources.Limits
+					if containerRes.Cpu().Cmp(tmplRes.Cpu) != 0 || containerRes.Memory().Cmp(tmplRes.Memory) != 0 {
+						m.OBServer.Status.Status = serverstatus.ScaleUp
+					}
 				}
 			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
@@ -151,11 +155,6 @@ func (m *OBServerManager) UpdateStatus() error {
 		m.Logger.Error(err, "Got error when update observer status")
 	}
 	return err
-}
-
-func (m *OBServerManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBServer.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBServerManager) CheckAndUpdateFinalizers() error {
@@ -255,7 +254,7 @@ func (m *OBServerManager) FinishTask() {
 }
 
 func (m *OBServerManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.OBServer.DeletionTimestamp != nil {
 		m.OBServer.Status.Status = serverstatus.Deleting
 		m.OBServer.Status.OperationContext = nil
 	} else {

@@ -38,6 +38,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/helper"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
@@ -831,27 +832,70 @@ outerLoop:
 }
 
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
-	var err error
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
+		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+			m.OBCluster.Name+"-get-version",
+			m.OBCluster.Spec.OBServerTemplate.Image,
+			"/home/admin/oceanbase/bin/oceanbase-helper version",
+		)
+		if err != nil {
+			// Make compatible with legacy version in which there is no `version` command
+			var code int32
+			switch modeAnnoVal {
+			case oceanbaseconst.ModeStandalone:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-standalone-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
+				)
+			case oceanbaseconst.ModeService:
+				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+					m.OBCluster.Name+"-service-validate",
+					m.OBCluster.Spec.OBServerTemplate.Image,
+					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
+				)
+			}
+			if err != nil && code > 1 {
+				return errors.Wrap(err, "Failed to run service mode validate job")
+			}
+			return nil
+		}
+		var version string
+		lines := strings.Split(versionOutput, "\n")
+		if len(lines) == 0 {
+			m.Logger.Info("Get version failed")
+			return nil
+		}
+		if len(lines) > 3 {
+			versionStr := strings.Split(lines[1], " ")
+			semVer := versionStr[len(versionStr)-1]
+			releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
+			version = fmt.Sprintf("%s-%s", semVer[0:len(semVer)-1], releaseStr)
+		} else {
+			version = strings.TrimSpace(lines[0])
+		}
+		currentVersion, err := helper.ParseOceanBaseVersion(version)
+		if err != nil {
+			m.Logger.WithValues("version", version, "err", err.Error()).Info("Failed to parse current version")
+			return nil
+		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
-			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-				m.OBCluster.Name+"-standalone-validate",
-				m.OBCluster.Spec.OBServerTemplate.Image,
-				"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
-			)
+			standaloneVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.StandaloneMinVersion)
+			if currentVersion.Cmp(standaloneVersion) < 0 {
+				return errors.Errorf("Current version is lower than %s, does not support standalone mode", oceanbaseconst.StandaloneMinVersion)
+			}
 		case oceanbaseconst.ModeService:
-			_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-				m.OBCluster.Name+"-service-validate",
-				m.OBCluster.Spec.OBServerTemplate.Image,
-				"/home/admin/oceanbase/bin/oceanbase-helper service validate",
-			)
+			if strings.HasPrefix(version, oceanbaseconst.ServiceExcludeVersion) {
+				return errors.Errorf("Current version is %s. 4.2.2.x does not support service mode", version)
+			}
+			requiredVersion, _ := helper.ParseOceanBaseVersion(oceanbaseconst.ServiceMinVersion)
+			if currentVersion.Cmp(requiredVersion) < 0 {
+				return errors.Errorf("Current version is lower than %s, does not support service mode", oceanbaseconst.ServiceMinVersion)
+			}
 		}
-	}
-	if err != nil {
-		m.Logger.Info("Run cluster mode validate job failed", "error", err, "mode", modeAnnoVal)
-		return err
+		m.Logger.Info("Run service mode validate job successfully", "version", version, "mode", modeAnnoVal)
 	}
 	return nil
 }
@@ -930,7 +974,7 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func ScaleUpOBZones(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenScaling, zonestatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.rollingUpdateZones(m.changeZonesWhenScaling, zonestatus.ScaleUp, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {
@@ -947,6 +991,10 @@ func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+}
+
+func RollingUpdateOBZones(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenUpdatingOBServers, zonestatus.RollingUpdateServers, zonestatus.Running, obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds)()
 }
 
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
@@ -985,7 +1033,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	defer func() {
 		err = m.Client.Delete(m.Ctx, pvc)
 		if err != nil {
-			m.Logger.Info("Failed to delete pvc for checking storage")
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Failed to delete pvc for checking storage", "err", err)
 		}
 	}()
 	// Assemble volumeConfigs
@@ -1013,6 +1061,156 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	// exit code 1 means the image version does not support the env-check command, just ignore it and try
 	if err != nil && exitCode != 1 {
 		return errors.Wrap(err, "Check filesystem")
+	}
+	return nil
+}
+
+func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
+	// Annotate obcluster with mode
+	supportStaticIP := false
+	mode := m.OBCluster.Annotations[oceanbaseconst.AnnotationsMode]
+	withMode := mode == oceanbaseconst.ModeService || mode == oceanbaseconst.ModeStandalone
+
+	if withMode {
+		supportStaticIP = true
+	} else {
+		serverList := &v1alpha1.OBServerList{}
+		err := m.Client.List(m.Ctx, serverList, client.MatchingLabels{oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name}, client.InNamespace(m.OBCluster.Namespace))
+		if err != nil {
+			return errors.Wrap(err, "List servers of obcluster")
+		}
+		if len(serverList.Items) == 0 {
+			return errors.New("No server found for obcluster")
+		}
+		for _, server := range serverList.Items {
+			if server.Status.CNI != oceanbaseconst.CNIUnknown {
+				supportStaticIP = true
+				break
+			}
+		}
+	}
+
+	if supportStaticIP {
+		copied := m.OBCluster.DeepCopy()
+		if copied.Annotations == nil {
+			copied.Annotations = make(map[string]string)
+		}
+		copied.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] = "true"
+		err := m.Client.Patch(m.Ctx, copied, client.MergeFrom(m.OBCluster))
+		if err != nil {
+			return errors.Wrap(err, "Patch obcluster")
+		}
+		zones, err := m.listOBZones()
+		if err != nil {
+			return errors.Wrap(err, "List obzones")
+		}
+		for _, zone := range zones.Items {
+			copiedZone := zone.DeepCopy()
+			if copiedZone.Annotations == nil {
+				copiedZone.Annotations = make(map[string]string)
+			}
+			copiedZone.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] = "true"
+			err = m.Client.Patch(m.Ctx, copiedZone, client.MergeFrom(&zone))
+			if err != nil {
+				return errors.Wrap(err, "Patch obzone")
+			}
+		}
+	}
+	return nil
+}
+
+func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
+	conn, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "Get operation manager")
+	}
+	gvservers, err := conn.ListGVServers(m.Ctx)
+	if err != nil {
+		return errors.Wrap(err, "List gv servers")
+	}
+	zones, err := m.listOBZones()
+	if err != nil {
+		return errors.Wrap(err, "List obzones")
+	}
+	if len(zones.Items) == 0 {
+		return errors.New("No obzone found")
+	}
+
+	oldResource := zones.Items[0].Spec.OBServerTemplate.Resource
+
+	var maxAssignedCpu int64
+	var maxAssignedMem int64
+	var memoryLimitPercent float64
+	for _, gvserver := range gvservers {
+		if gvserver.MemAssigned > maxAssignedMem {
+			if gvserver.MemoryLimit > oldResource.Memory.Value() {
+				memoryLimitPercent = 0.9
+			} else {
+				memoryLimitPercent = float64(gvserver.MemoryLimit) / oldResource.Memory.AsApproximateFloat64()
+			}
+			maxAssignedMem = gvserver.MemAssigned
+		}
+		if gvserver.CPUAssigned > maxAssignedCpu {
+			maxAssignedCpu = gvserver.CPUAssigned
+		}
+	}
+	newResource := m.OBCluster.Spec.OBServerTemplate.Resource
+	specMem := newResource.Memory.AsApproximateFloat64()
+	specMemoryLimit := int64(specMem * memoryLimitPercent)
+
+	targetMemoryLimit := max(specMemoryLimit, maxAssignedMem)
+	m.Logger.V(oceanbaseconst.LogLevelDebug).
+		Info("Adjust memory limit",
+			"maxAssignedMem", maxAssignedMem,
+			"specMem", specMem,
+			"targetMemoryLimit", targetMemoryLimit,
+			"percent", memoryLimitPercent,
+		)
+
+	copiedCluster := m.OBCluster.DeepCopy()
+
+	foundMemoryLimit := false
+	if newResource.Memory.Cmp(oldResource.Memory) != 0 {
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "memory_limit" {
+				copiedCluster.Spec.Parameters[i].Value = fmt.Sprintf("%dM", targetMemoryLimit>>20)
+				foundMemoryLimit = true
+				break
+			}
+		}
+		if !foundMemoryLimit {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "memory_limit",
+				Value: fmt.Sprintf("%dM", targetMemoryLimit>>20),
+			})
+		}
+	}
+
+	if oldResource.Cpu.Cmp(newResource.Cpu) != 0 {
+		targetCpuCount := "16"
+		if newResource.Cpu.Value() > 16 {
+			targetCpuCount = newResource.Cpu.String()
+		}
+		foundCpuCount := false
+		for i, p := range copiedCluster.Spec.Parameters {
+			if p.Name == "cpu_count" {
+				copiedCluster.Spec.Parameters[i].Value = targetCpuCount
+				foundCpuCount = true
+				break
+			}
+		}
+		if !foundCpuCount {
+			copiedCluster.Spec.Parameters = append(copiedCluster.Spec.Parameters, apitypes.Parameter{
+				Name:  "cpu_count",
+				Value: targetCpuCount,
+			})
+		}
+	}
+
+	err = m.Client.Patch(m.Ctx, copiedCluster, client.MergeFrom(m.OBCluster))
+	if err != nil {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Patch obcluster", "obcluster", m.OBCluster.Name)
+		return errors.Wrap(err, "Patch obcluster")
 	}
 	return nil
 }

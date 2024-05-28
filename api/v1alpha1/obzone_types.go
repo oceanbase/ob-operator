@@ -20,6 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -78,4 +79,8 @@ type OBZoneList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBZone{}, &OBZoneList{})
+}
+
+func (z *OBZone) SupportStaticIP() bool {
+	return z.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true"
 }

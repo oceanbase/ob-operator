@@ -19,6 +19,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -45,8 +46,8 @@ type OBZoneManager struct {
 	Logger   *logr.Logger
 }
 
-func (m *OBZoneManager) IsNewResource() bool {
-	return m.OBZone.Status.Status == ""
+func (m *OBZoneManager) GetMeta() metav1.Object {
+	return m.OBZone.GetObjectMeta()
 }
 
 func (m *OBZoneManager) GetStatus() string {
@@ -111,9 +112,11 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	case zonestatus.ScaleUp:
 		taskFlow = genScaleUpOBServersFlow(m)
 	case zonestatus.ExpandPVC:
-		taskFlow = FlowExpandPVC(m)
+		taskFlow = genFlowExpandPVC(m)
 	case zonestatus.MountBackupVolume:
 		taskFlow = genMountBackupVolumeFlow(m)
+	case zonestatus.RollingUpdateServers:
+		taskFlow = genRollingReplaceServersFlow(m)
 	case zonestatus.Upgrade:
 		obcluster, err = m.getOBCluster()
 		if err != nil {
@@ -137,11 +140,6 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		}
 	}
 	return taskFlow, nil
-}
-
-func (m *OBZoneManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.OBZone.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *OBZoneManager) CheckAndUpdateFinalizers() error {
@@ -205,7 +203,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 		}
 	}
 	m.OBZone.Status.OBServerStatus = observerReplicaStatusList
-	if m.IsDeleting() {
+	if m.OBZone.DeletionTimestamp != nil {
 		m.OBZone.Status.Status = zonestatus.Deleting
 	}
 	if m.OBZone.Status.Status != zonestatus.Running {
@@ -222,15 +220,16 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else if m.OBZone.Spec.Topology.Replica < len(m.OBZone.Status.OBServerStatus) {
 			m.Logger.Info("Compare topology need delete observer")
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
-		} else if mode, exist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode); exist && mode == oceanbaseconst.ModeStandalone {
+		} else {
 			for _, observer := range observerList.Items {
-				if m.checkIfCalcResourceChange(&observer) {
+				if m.OBZone.SupportStaticIP() && m.checkIfCalcResourceChange(&observer) {
 					m.OBZone.Status.Status = zonestatus.ScaleUp
 					break
 				}
-			}
-		} else {
-			for _, observer := range observerList.Items {
+				if m.checkIfStorageClassChanged(&observer) {
+					m.OBZone.Status.Status = zonestatus.RollingUpdateServers
+					break
+				}
 				if m.checkIfStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break
@@ -241,9 +240,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 				}
 			}
 		}
-		// do nothing when observer match topology replica
 
-		// TODO resource change require pod restart, and since oceanbase is a distributed system, resource can be scaled by add more servers
 		if m.OBZone.Status.Status == zonestatus.Running {
 			if m.OBZone.Status.Image != m.OBZone.Spec.OBServerTemplate.Image {
 				m.Logger.Info("Found image changed, need upgrade")
@@ -265,7 +262,7 @@ func (m *OBZoneManager) ClearTaskInfo() {
 }
 
 func (m *OBZoneManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.OBZone.DeletionTimestamp != nil {
 		m.OBZone.Status.Status = zonestatus.Deleting
 		m.OBZone.Status.OperationContext = nil
 	} else {

@@ -21,6 +21,7 @@ import (
 	"github.com/robfig/cron/v3"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -49,13 +50,8 @@ type ObTenantBackupPolicyManager struct {
 	Logger       *logr.Logger
 }
 
-func (m *ObTenantBackupPolicyManager) IsNewResource() bool {
-	return m.BackupPolicy.Status.Status == ""
-}
-
-func (m *ObTenantBackupPolicyManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.BackupPolicy, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.BackupPolicy.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
+func (m *ObTenantBackupPolicyManager) GetMeta() metav1.Object {
+	return m.BackupPolicy.GetObjectMeta()
 }
 
 func (m *ObTenantBackupPolicyManager) GetStatus() string {
@@ -132,7 +128,7 @@ func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
 		if err != nil {
 			return err
 		}
-		m.BackupPolicy.Status.TenantCR = tenant
+		m.BackupPolicy.Status.TenantName = tenant.Spec.TenantName
 	}
 
 	tenantRecord, err := m.getTenantRecord(false)
@@ -163,7 +159,7 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else if !m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusPaused {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusResuming
-	} else if m.IsDeleting() {
+	} else if m.BackupPolicy.DeletionTimestamp != nil {
 		switch m.BackupPolicy.Status.Status {
 		case constants.BackupPolicyStatusPaused,
 			constants.BackupPolicyStatusRunning,
@@ -328,7 +324,7 @@ func (m *ObTenantBackupPolicyManager) retryUpdateStatus() error {
 }
 
 func (m *ObTenantBackupPolicyManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.BackupPolicy.DeletionTimestamp != nil {
 		m.BackupPolicy.Status.OperationContext = nil
 	} else {
 		operationContext := m.BackupPolicy.Status.OperationContext

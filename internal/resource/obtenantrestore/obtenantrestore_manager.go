@@ -17,6 +17,7 @@ import (
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -24,8 +25,6 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -44,17 +43,12 @@ type ObTenantRestoreManager struct {
 	Logger   *logr.Logger
 }
 
-func (m *ObTenantRestoreManager) IsNewResource() bool {
-	return m.Resource.Status.Status == ""
+func (m *ObTenantRestoreManager) GetMeta() metav1.Object {
+	return m.Resource.GetObjectMeta()
 }
 
 func (m *ObTenantRestoreManager) GetStatus() string {
 	return string(m.Resource.Status.Status)
-}
-
-func (m *ObTenantRestoreManager) IsDeleting() bool {
-	ignoreDel, ok := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsIgnoreDeletion)
-	return !m.Resource.ObjectMeta.DeletionTimestamp.IsZero() && (!ok || ignoreDel != "true")
 }
 
 func (m *ObTenantRestoreManager) CheckAndUpdateFinalizers() error {
@@ -80,7 +74,7 @@ func (m *ObTenantRestoreManager) FinishTask() {
 }
 
 func (m *ObTenantRestoreManager) HandleFailure() {
-	if m.IsDeleting() {
+	if m.Resource.DeletionTimestamp != nil {
 		m.Resource.Status.OperationContext = nil
 	} else {
 		operationContext := m.Resource.Status.OperationContext

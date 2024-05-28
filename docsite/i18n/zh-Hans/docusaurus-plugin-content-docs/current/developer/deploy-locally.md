@@ -40,14 +40,14 @@ Tips: Perform `minikube dashboard` to open kubernetes dashboard, everything in t
 ob-operator depends on `cert-manager` to enable TLS functionalities, so we should install it first.
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/cert-manager.yaml
 ```
 
 ### 4. Install ob-operator
 
 For robustness, default memory limit of ob-operator container is set to `1Gi` which is too large for us developing locally. We recommend fetching the manifests to local and configure it. wget tool could be useful here, while opening the URL and copying the contents to local file is more straight.
 
-https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.0_release/deploy/operator.yaml
+https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/operator.yaml
 
 Search the pattern `/manager`, find the target container, configure the memory limit to `400Mi` and cpu limit to `400m`.
 
