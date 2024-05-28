@@ -22,7 +22,7 @@ export default {
   '/api/v1/obproxies/testns/testname': {
     data: {
       creationTime: 'string',
-      image: 'string',
+      image: 'oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319',
       name: 'testname',
       namespace: 'testns',
       obCluster: {
@@ -67,10 +67,10 @@ export default {
       ],
       proxyClusterName: 'string',
       proxySysSecret: 'string',
-      replicas: 0,
+      replicas: 10,
       resource: {
-        cpu: 0,
-        memory: 0,
+        cpu: 10,
+        memory: 20,
       },
       service: {
         clusterIP: 'string',

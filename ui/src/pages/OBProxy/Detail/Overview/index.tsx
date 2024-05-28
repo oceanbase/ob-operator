@@ -5,6 +5,9 @@ import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useEffect } from 'react';
 import BasicInfo from './BasicInfo';
+import DetailConfig from './DetailConfig';
+import NodeInfo from './NodeInfo';
+import EventsTable from '@/components/EventsTable';
 
 export default function Overview() {
   const { ns, name } = useParams();
@@ -28,6 +31,23 @@ export default function Overview() {
             proxySysSecret={obproxyDetail?.proxySysSecret}
             proxyClusterName={obproxyDetail?.proxyClusterName}
           />
+        </Col>
+        <Col span={24}>
+          <DetailConfig
+            name={obproxyDetail?.name}
+            namespace={obproxyDetail?.namespace}
+            image={obproxyDetail?.image}
+            parameters={obproxyDetail?.parameters}
+            resource={obproxyDetail?.resource}
+            replicas={obproxyDetail?.replicas}
+            serviceType={obproxyDetail?.service.type}
+          />
+        </Col>
+        <Col span={24}>
+          <NodeInfo pods={obproxyDetail?.pods} />
+        </Col>
+        <Col span={24}>
+          <EventsTable />
         </Col>
       </Row>
     </PageContainer>
