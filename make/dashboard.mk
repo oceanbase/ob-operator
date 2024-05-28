@@ -21,34 +21,34 @@ GOFILES ?= $(shell git ls-files '*.go')
 GOTEST_PACKAGES = $(shell go list ./... | grep -v -f tests/excludes.txt)
 UNFMT_FILES ?= $(shell gofmt -l -s $(filter-out , $(GOFILES)))
 
-.PHONY: dashboard-doc
-dashboard-doc: dep-install ## Generate swagger docs
+.PHONY: dashboard-doc-gen
+dashboard-doc: dashboard-dep-install ## Generate swagger docs
 	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
 
-.PHONY: build-dashboard
-build-dashboard: gen-bindata dashboard-doc ## Build oceanbase-dashboard
+.PHONY: dashboard-build
+dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dashboard
 	$(GOBUILD) -o bin/oceanbase-dashboard ./cmd/dashboard/main.go
 
-.PHONY: gen-bindata
-gen-bindata: ## Generate bindata
+.PHONY: dashboard-bindata-gen
+dashboard-bindata-gen: ## Generate bindata
 	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
 
-.PHONY: clean
-clean: ## Clean build
+.PHONY: dashboard-clean
+dashboard-clean: ## Clean build
 	rm -rf bin/oceanbase-dashboard
 	go clean -i ./...
 
-.PHONY: dep-install
-dep-install: ## Install dependencies for oceanbase-dashboard
+.PHONY: dashboard-dep-install
+dashboard-dep-install: ## Install dependencies for oceanbase-dashboard
 	go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible
 	go install github.com/swaggo/swag/cmd/swag@latest
 
-.PHONY: dev-dashboard
-dev-dashboard: ## Run oceanbase-dashboard in dev mode
+.PHONY: dashboard-run
+dashboard-run: ## Run oceanbase-dashboard in dev mode
 	go run $(BUILD_FLAG) ./cmd/dashboard/main.go
 
 .PHONY: dashboard-docker-build
-dashboard-docker-build: gen-bindata dashboard-doc ## build oceanbase-dashboard image
+dashboard-docker-build: dashboard-bindata-gen dashboard-doc-gen ## build oceanbase-dashboard image
 	docker build -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
 
 .PHONY: dashboard-docker-push
