@@ -8,6 +8,7 @@ import {
   OBTenantApiFactory,
   TerminalApiFactory,
   UserApiFactory,
+  OBProxyApiFactory
 } from './generated/index';
 
 globalAxios.interceptors.response.use((res) => {
@@ -47,3 +48,4 @@ export const obtenant = wrapper(OBTenantApiFactory, config);
 export const terminal = wrapper(TerminalApiFactory, config);
 export const user = wrapper(UserApiFactory, config);
 export const alert = wrapper(AlarmApiFactory, config);
+export const obproxy = wrapper(OBProxyApiFactory, config);

@@ -467,6 +467,7 @@ declare namespace API {
     | 'OBCLUSTER'
     | 'OBTENANT'
     | 'OBBACKUPPOLICY'
+    | 'OBPROXY'
     | EventObjectType[];
 
   type TenantRole = 'PRIMARY' | 'STANDBY';

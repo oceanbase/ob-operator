@@ -34,6 +34,16 @@ export default [
                 name: '创建租户',
               },
               {
+                path: 'obproxy',
+                component: 'OBProxy',
+                name: 'obproxy',
+              },
+              {
+                path: 'obproxy/new',
+                component: 'OBProxy/New',
+                name: '创建obproxy',
+              },
+              {
                 path: 'alert',
                 component: 'Alert',
                 name: '告警',
@@ -155,6 +165,28 @@ export default [
               },
               {
                 path: '/tenant/:ns/:name/:tenantName',
+                redirect: 'overview',
+                name: '概览页',
+              },
+            ],
+          },
+          {
+            path: 'obproxy/:ns/:name',
+            component: 'OBProxy/Detail',
+            name: 'obproxy详情',
+            routes: [
+              {
+                path: 'overview',
+                component: 'OBProxy/Detail/Overview',
+                name: '概览页',
+              },
+              {
+                path: 'monitor',
+                component: 'OBProxy/Detail/Monitor',
+                name: 'obproxy详情监控',
+              },
+              {
+                path: '/obproxy/:ns/:name',
                 redirect: 'overview',
                 name: '概览页',
               },
