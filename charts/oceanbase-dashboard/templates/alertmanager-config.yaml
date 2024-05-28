@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-alertmanager-conf
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oceanbase-dashboard.labels" . | nindent 4}}
+    name: {{ .Release.Name }}-alertmanager-conf
+data:
+  alertmanager.yml: |-
+    route:
+      group_by: ['alertname']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 1h
+      receiver: 'dummy'
+    receivers:
+      - name: 'dummy'
+        webhook_configs:
+          - url: 'http://127.0.0.1:5001/'

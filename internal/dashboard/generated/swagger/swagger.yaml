@@ -2026,9 +2026,13 @@ definitions:
   silence.State:
     enum:
     - active
+    - expired
+    - pending
     type: string
     x-enum-varnames:
     - StateActive
+    - StateExpired
+    - StatePending
   silence.Status:
     properties:
       state:

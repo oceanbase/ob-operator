@@ -29,11 +29,22 @@ spec:
               memory: 4Gi
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: alertmanager-config-volume
+              mountPath: /etc/alertmanager
+            - name: prometheus-rules-volume
+              mountPath: /etc/prometheus/rules/
           env:
             - name: USER_CREDENTIALS_SECRET
               value: {{ .Values.userCredentials | default (nospace (cat .Release.Name "-user-credentials")) }}
             - name: USER_NAMESPACE
               value: {{ .Values.userNamespace | default .Release.Namespace }}
+            - name: PROMETHEUS_CONFIG
+              value: {{ .Release.Name }}-prometheus-server-conf
+            - name: PROMETHEUS_RULE_CONFIG
+              value: {{ .Release.Name }}-prometheus-rules-conf
+            - name: ALERTMANAGER_CONFIG
+              value: {{ .Release.Name }}-alertmanager-conf
         - name: prometheus
           image: prom/prometheus:v2.51.1
           resources:
@@ -43,21 +54,54 @@ spec:
             limits:
               cpu: 2
               memory: 4Gi
-          args:
-            - "--config.file=/etc/prometheus/prometheus.yml"
-            - "--storage.tsdb.path=/prometheus/"
+          command: ["sh", "-c", "cp /etc/cfg/prometheus/rules/prometheus.rules /etc/prometheus/rules/prometheus.rules && /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.enable-lifecycle"]
           ports:
             - containerPort: 9090
           volumeMounts:
+            - name: prometheus-rules-readonly-volume
+              mountPath: /etc/cfg/prometheus/rules
             - name: prometheus-config-volume
               mountPath: /etc/prometheus/
             - name: prometheus-storage-volume
               mountPath: /prometheus/
+            - name: prometheus-rules-volume
+              mountPath: /etc/prometheus/rules/
+        - name: alertmanager
+          image: prom/alertmanager:v0.27.0
+          command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
+          ports:
+            - name: alertmanager
+              containerPort: 9093
+          resources:
+            requests:
+              cpu: 500m
+              memory: 500M
+            limits:
+              cpu: 1
+              memory: 1Gi
+          volumeMounts:
+            - name: alertmanager-storage-volume
+              mountPath: /alertmanager
+            - name: alertmanager-config-volume
+              mountPath: /etc/alertmanager
+            - name: alertmanager-config-readonly-volume
+              mountPath: /etc/cfg/alertmanager
       volumes:
-      # volumes for prometheus
         - name: prometheus-config-volume
           configMap:
-            defaultMode: 420
             name: {{ .Release.Name }}-prometheus-server-conf
+        - name: prometheus-rules-readonly-volume
+          configMap:
+            name: {{ .Release.Name }}-prometheus-rules-conf
         - name: prometheus-storage-volume
+          emptyDir: {}
+        - name: prometheus-rules-volume
+          emptyDir: {}
+
+        - name: alertmanager-config-readonly-volume
+          configMap:
+            name: {{ .Release.Name }}-alertmanager-conf
+        - name: alertmanager-storage-volume
+          emptyDir: {}
+        - name: alertmanager-config-volume
           emptyDir: {}

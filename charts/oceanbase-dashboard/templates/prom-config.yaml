@@ -7,19 +7,18 @@ metadata:
     {{- include "oceanbase-dashboard.labels" . | nindent 4}}
     name: {{ .Release.Name }}-prometheus-server-conf
 data:
-  prometheus.rules: ""
   prometheus.yml: |-
     global:
       scrape_interval: 5s
       evaluation_interval: 5s
     rule_files:
-      - /etc/prometheus/prometheus.rules
+      - /etc/prometheus/rules/prometheus.rules
     alerting:
       alertmanagers:
       - scheme: http
         static_configs:
         - targets:
-          - "alertmanager.{{ .Release.Namespace }}.svc:9093"
+          - "127.0.0.1:9093"
 
     scrape_configs:
       - job_name: 'obagent-monitor-basic'

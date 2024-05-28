@@ -22,6 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	amconfig "github.com/prometheus/alertmanager/config"
 	amlabels "github.com/prometheus/alertmanager/pkg/labels"
+	promcommonmodel "github.com/prometheus/common/model"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -29,9 +30,9 @@ type Route struct {
 	Receiver              string          `json:"receiver" binding:"required"`
 	Matchers              []alarm.Matcher `json:"matchers" binding:"required"`
 	AggregateLabels       []string        `json:"aggregateLabels" binding:"required"`
-	GroupIntervalMinutes  int             `json:"groupInterval" binding:"required"`
-	GroupWaitMinutes      int             `json:"groupWait" binding:"required"`
-	RepeatIntervalMinutes int             `json:"repeatInterval" binding:"required"`
+	GroupIntervalMinutes  int64           `json:"groupInterval" binding:"required"`
+	GroupWaitMinutes      int64           `json:"groupWait" binding:"required"`
+	RepeatIntervalMinutes int64           `json:"repeatInterval" binding:"required"`
 }
 
 type RouteIdentity struct {
@@ -76,9 +77,33 @@ func NewRoute(amroute *amconfig.Route) *Route {
 		Receiver:              amroute.Receiver,
 		Matchers:              matchers,
 		AggregateLabels:       amroute.GroupByStr,
-		GroupIntervalMinutes:  int(time.Duration(*amroute.GroupInterval).Minutes()),
-		GroupWaitMinutes:      int(time.Duration(*amroute.GroupWait).Minutes()),
-		RepeatIntervalMinutes: int(time.Duration(*amroute.RepeatInterval).Minutes()),
+		GroupIntervalMinutes:  int64(time.Duration(*amroute.GroupInterval).Minutes()),
+		GroupWaitMinutes:      int64(time.Duration(*amroute.GroupWait).Minutes()),
+		RepeatIntervalMinutes: int64(time.Duration(*amroute.RepeatInterval).Minutes()),
 	}
 	return route
+}
+
+func (r *Route) ToAmRoute() (*amconfig.Route, error) {
+	matchers := make([]*amlabels.Matcher, 0)
+	for _, matcher := range r.Matchers {
+		ammatcher, err := matcher.ToAmMatcher()
+		if err != nil {
+			return nil, err
+		}
+		matchers = append(matchers, ammatcher)
+	}
+	groupIntervalDuration := promcommonmodel.Duration(r.GroupIntervalMinutes * int64(time.Minute))
+	groupWaitDuration := promcommonmodel.Duration(r.GroupWaitMinutes * int64(time.Minute))
+	RepeatIntervalDuration := promcommonmodel.Duration(r.RepeatIntervalMinutes * int64(time.Minute))
+	amroute := &amconfig.Route{
+		Receiver:       r.Receiver,
+		GroupByStr:     r.AggregateLabels,
+		Matchers:       matchers,
+		Continue:       true,
+		GroupInterval:  &groupIntervalDuration,
+		GroupWait:      &groupWaitDuration,
+		RepeatInterval: &RepeatIntervalDuration,
+	}
+	return amroute, nil
 }

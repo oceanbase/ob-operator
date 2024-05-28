@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-prometheus-rules-conf
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oceanbase-dashboard.labels" . | nindent 4}}
+    name: {{ .Release.Name }}-prometheus-rules-conf
+data:
+  prometheus.rules: |-
+    groups:
+      - name: ob-alert
+        rules:
+          - alert: ob_host_connection_percent_over_threshold
+            expr: 100 * ob_active_session_num / 1 > 80
+            for: 1m
+            labels:
+              serverity: page
+            annotations:
+              summary: "{{ `{{ $labels.ob_cluster_name }}` }} {{ `{{ $labels.obzone }}` }} {{ `{{ $labels.svr_ip }}` }} connection used percent over threshold "
+              description: "{{ `{{ $labels.ob_cluster_name }}` }} {{ `{{ $labels.obzone }}` }} {{ `{{ $labels.svr_ip }}` }} connection used percent {{ `{{ $value }}` }} over threshold "
+    

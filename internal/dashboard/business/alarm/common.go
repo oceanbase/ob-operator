@@ -14,16 +14,20 @@ package alarm
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/go-resty/resty/v2"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
+	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
+	rulemodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 	"gopkg.in/yaml.v2"
 
 	apimodels "github.com/prometheus/alertmanager/api/v2/models"
 	amconfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/prometheus/model/rulefmt"
 )
 
 func GetAlertmanagerConfig() (*amconfig.Config, error) {
@@ -42,4 +46,57 @@ func GetAlertmanagerConfig() (*amconfig.Config, error) {
 		return nil, errors.Wrap(err, errors.ErrInvalid, "Invalid config, parse failed")
 	}
 	return config, nil
+}
+
+func updateAlertManagerConfig(config *amconfig.Config) error {
+	content, err := yaml.Marshal(config)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Encode config content failed")
+	}
+	err = ioutil.WriteFile(alarmconstant.AlertmanagerConfigFile, content, 0644)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Write alertmanager config content failed")
+	}
+	return reloadAlertmanager()
+}
+
+func reloadAlertmanager() error {
+	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+	resp, err := client.R().SetHeader("content-type", "application/json").Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.AlertmanagerReloadUrl))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Reload alertmanager failed")
+	} else if resp.StatusCode() != http.StatusOK {
+		return errors.Newf(errors.ErrExternal, "Reload alertmanager got unexpected status: %d", resp.StatusCode())
+	}
+	return nil
+}
+
+func updatePrometheusRules(configRules []rulefmt.Rule) error {
+	ruleGroup := rulemodel.ConfigRuleGroup{
+		Name:  alarmconstant.OBRuleGroupName,
+		Rules: configRules,
+	}
+	ruleGroups := rulemodel.ConfigRuleGroups{
+		Groups: []rulemodel.ConfigRuleGroup{ruleGroup},
+	}
+	content, err := yaml.Marshal(ruleGroups)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Encode rule content failed")
+	}
+	err = ioutil.WriteFile(alarmconstant.RuleConfigFile, content, 0644)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Write rule content failed")
+	}
+	return reloadPrometheus()
+}
+
+func reloadPrometheus() error {
+	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+	resp, err := client.R().SetHeader("content-type", "application/json").Post(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.PrometheusReloadUrl))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Reload prometheus failed")
+	} else if resp.StatusCode() != http.StatusOK {
+		return errors.Newf(errors.ErrExternal, "Reload prometheus got unexpected status: %d", resp.StatusCode())
+	}
+	return nil
 }

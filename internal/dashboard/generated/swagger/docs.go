@@ -7357,10 +7357,14 @@ const docTemplate = `{
         "silence.State": {
             "type": "string",
             "enum": [
-                "active"
+                "active",
+                "expired",
+                "pending"
             ],
             "x-enum-varnames": [
-                "StateActive"
+                "StateActive",
+                "StateExpired",
+                "StatePending"
             ]
         },
         "silence.Status": {

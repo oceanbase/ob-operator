@@ -14,11 +14,16 @@ See the Mulan PSL v2 for more details.
 package rule
 
 import (
+	"time"
+
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
+	bizcommon "github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
+	promcommonmodel "github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/model/rulefmt"
 	promv1 "github.com/prometheus/prometheus/web/api/v1"
 )
 
@@ -46,6 +51,29 @@ type RuleResponse struct {
 
 type RuleIdentity struct {
 	Name string `json:"name" binding:"required"`
+}
+
+type ConfigRuleGroups struct {
+	Groups []ConfigRuleGroup `json:"groups"`
+}
+
+type ConfigRuleGroup struct {
+	Name  string         `json:"name"`
+	Rules []rulefmt.Rule `json:"rules"`
+}
+
+func (r *Rule) ToPromRule() *rulefmt.Rule {
+	annotations := make(map[string]string)
+	annotations[alarmconstant.AnnoSummary] = r.Summary
+	annotations[alarmconstant.AnnoDescription] = r.Description
+	promRule := &rulefmt.Rule{
+		Alert:       r.Name,
+		Expr:        r.Query,
+		For:         promcommonmodel.Duration(r.Duration * int(time.Second)),
+		Labels:      bizcommon.KVsToMap(r.Labels),
+		Annotations: annotations,
+	}
+	return promRule
 }
 
 func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {

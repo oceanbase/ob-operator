@@ -14,6 +14,9 @@ See the Mulan PSL v2 for more details.
 package receiver
 
 import (
+	"fmt"
+
+	"github.com/oceanbase/ob-operator/pkg/errors"
 	amconfig "github.com/prometheus/alertmanager/config"
 	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -23,10 +26,130 @@ type ReceiverIdentity struct {
 	Name string `json:"name" binding:"required"`
 }
 
+type ReceiverTemplateIdentity struct {
+	Type string `json:"type" binding:"required"`
+}
+
 type Receiver struct {
 	Name   string       `json:"name" binding:"required"`
 	Type   ReceiverType `json:"type" binding:"required"`
 	Config string       `json:"config" binding:"required"`
+}
+
+func (r *Receiver) ToAmReceiver() (*amconfig.Receiver, error) {
+	amreceiver := &amconfig.Receiver{
+		Name: r.Name,
+	}
+	var err error
+	switch r.Type {
+	case TypeDiscord:
+		Config := &amconfig.DiscordConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), Config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.DiscordConfigs = []*amconfig.DiscordConfig{Config}
+		}
+	case TypeEmail:
+		config := &amconfig.EmailConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.EmailConfigs = []*amconfig.EmailConfig{config}
+		}
+	case TypePagerduty:
+		config := &amconfig.PagerdutyConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.PagerdutyConfigs = []*amconfig.PagerdutyConfig{config}
+		}
+	case TypeSlack:
+		config := &amconfig.SlackConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.SlackConfigs = []*amconfig.SlackConfig{config}
+		}
+	case TypeWebhook:
+		config := &amconfig.WebhookConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.WebhookConfigs = []*amconfig.WebhookConfig{config}
+		}
+	case TypeOpsGenie:
+		config := &amconfig.OpsGenieConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.OpsGenieConfigs = []*amconfig.OpsGenieConfig{config}
+		}
+	case TypeWechat:
+		config := &amconfig.WechatConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.WechatConfigs = []*amconfig.WechatConfig{config}
+		}
+	case TypePushover:
+		config := &amconfig.PushoverConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.PushoverConfigs = []*amconfig.PushoverConfig{config}
+		}
+	case TypeVictorOps:
+		config := &amconfig.VictorOpsConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.VictorOpsConfigs = []*amconfig.VictorOpsConfig{config}
+		}
+	case TypeSNS:
+		config := &amconfig.SNSConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.SNSConfigs = []*amconfig.SNSConfig{config}
+		}
+	case TypeTelegram:
+		config := &amconfig.TelegramConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.TelegramConfigs = []*amconfig.TelegramConfig{config}
+		}
+	case TypeWebex:
+		config := &amconfig.WebexConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.WebexConfigs = []*amconfig.WebexConfig{config}
+		}
+	case TypeMSTeams:
+		config := &amconfig.MSTeamsConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
+		if err != nil {
+			return nil, err
+		} else {
+			amreceiver.MSTeamsConfigs = []*amconfig.MSTeamsConfig{config}
+		}
+	default:
+		return nil, errors.NewBadRequest(fmt.Sprintf("Type %s not found", r.Type))
+	}
+	return amreceiver, nil
 }
 
 func NewReceiver(amreceiver *amconfig.Receiver) *Receiver {

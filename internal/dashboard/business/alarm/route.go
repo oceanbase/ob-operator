@@ -13,8 +13,11 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"fmt"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+	amconfig "github.com/prometheus/alertmanager/config"
 )
 
 func GetRoute(id string) (*route.RouteResponse, error) {
@@ -44,4 +47,47 @@ func ListRoutes() ([]route.RouteResponse, error) {
 		}
 	}
 	return routes, nil
+}
+
+func DeleteRoute(id string) error {
+	config, err := GetAlertmanagerConfig()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
+	}
+	configRoutes := make([]*amconfig.Route, 0)
+	foundRoute := false
+	for _, amroute := range config.Route.Routes {
+		r := route.NewRoute(amroute)
+		if r.Hash() == id {
+			foundRoute = true
+			continue
+		}
+		configRoutes = append(configRoutes, amroute)
+	}
+	if !foundRoute {
+		return errors.NewBadRequest(fmt.Sprintf("Route %s not exists", id))
+	}
+	config.Route.Routes = configRoutes
+	return updateAlertManagerConfig(config)
+}
+
+func CreateOrUpdateRoute(r *route.Route) error {
+	config, err := GetAlertmanagerConfig()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
+	}
+	configRoutes := make([]*amconfig.Route, 0)
+	for _, amroute := range config.Route.Routes {
+		if route.NewRoute(amroute).Hash() == r.Hash() {
+			continue
+		}
+		configRoutes = append(configRoutes, amroute)
+	}
+	amRoute, err := r.ToAmRoute()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Contert route to alertmanager model failed")
+	}
+	configRoutes = append(configRoutes, amRoute)
+	config.Route.Routes = configRoutes
+	return updateAlertManagerConfig(config)
 }

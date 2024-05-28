@@ -190,8 +190,13 @@ func GetRule(c *gin.Context) (*rule.RuleResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/rule/rules [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateRule(_ *gin.Context) (*rule.RuleResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func CreateOrUpdateRule(c *gin.Context) (*rule.RuleResponse, error) {
+	rule := &rule.Rule{}
+	err := c.Bind(rule)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.CreateOrUpdateRule(rule)
 }
 
 // @ID DeleteRule
@@ -207,8 +212,13 @@ func CreateOrUpdateRule(_ *gin.Context) (*rule.RuleResponse, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/rule/rules/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteRule(_ *gin.Context) (any, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func DeleteRule(c *gin.Context) (any, error) {
+	ruleIdentity := &rule.RuleIdentity{}
+	err := c.BindUri(ruleIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.DeleteRule(ruleIdentity.Name)
 }
 
 // @ID ListReceivers
@@ -262,8 +272,13 @@ func GetReceiver(c *gin.Context) (*receiver.Receiver, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/receiver/receivers [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateReceiver(_ *gin.Context) (*receiver.Receiver, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func CreateOrUpdateReceiver(c *gin.Context) (*receiver.Receiver, error) {
+	receiver := &receiver.Receiver{}
+	err := c.Bind(receiver)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.CreateOrUpdateReceiver(receiver)
 }
 
 // @ID DeleteReceiver
@@ -279,8 +294,13 @@ func CreateOrUpdateReceiver(_ *gin.Context) (*receiver.Receiver, error) {
 // @Param name path string true "receiver name"
 // @Router /api/v1/alarm/receiver/receivers/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteReceiver(_ *gin.Context) (any, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func DeleteReceiver(c *gin.Context) (any, error) {
+	receiverIdentity := &receiver.ReceiverIdentity{}
+	err := c.BindUri(receiverIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.DeleteReceiver(receiverIdentity.Name)
 }
 
 // @ID ListReceiverTemplates
@@ -312,8 +332,13 @@ func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
 // @Param type path string true "receiver type"
 // @Router /api/v1/alarm/receiver/templates/{type} [GET]
 // @Security ApiKeyAuth
-func GetReceiverTemplate(_ *gin.Context) (*receiver.Template, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func GetReceiverTemplate(c *gin.Context) (*receiver.Template, error) {
+	receiverTemplateIdentity := &receiver.ReceiverTemplateIdentity{}
+	err := c.BindUri(receiverTemplateIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.GetReceiverTemplate(receiverTemplateIdentity.Type)
 }
 
 // @ID ListRoutes
@@ -367,8 +392,13 @@ func GetRoute(c *gin.Context) (*route.RouteResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/route/routes [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateRoute(_ *gin.Context) (*route.RouteResponse, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func CreateOrUpdateRoute(c *gin.Context) (*route.RouteResponse, error) {
+	route := &route.Route{}
+	err := c.Bind(route)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.CreateOrUpdateRoute(route)
 }
 
 // @ID DeleteRoute
@@ -384,6 +414,11 @@ func CreateOrUpdateRoute(_ *gin.Context) (*route.RouteResponse, error) {
 // @Param id path string true "route id"
 // @Router /api/v1/alarm/route/routes/{id} [DELETE]
 // @Security ApiKeyAuth
-func DeleteRoute(_ *gin.Context) (any, error) {
-	return nil, httpErr.NewNotImplemented("not implemented")
+func DeleteRoute(c *gin.Context) (any, error) {
+	routeIdentity := &route.RouteIdentity{}
+	err := c.BindUri(routeIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return nil, alarm.DeleteRoute(routeIdentity.Id)
 }

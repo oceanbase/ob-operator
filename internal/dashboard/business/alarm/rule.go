@@ -21,13 +21,52 @@ import (
 	"github.com/go-resty/resty/v2"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
+	rulemodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/prometheus/prometheus/model/rulefmt"
 	promv1 "github.com/prometheus/prometheus/web/api/v1"
 	logger "github.com/sirupsen/logrus"
 )
 
-func GetRule(name string) (*rule.RuleResponse, error) {
+func CreateOrUpdateRule(rule *rulemodel.Rule) error {
+	currentRules, err := ListRules(nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "List rules failed")
+	}
+	configRules := make([]rulefmt.Rule, 0)
+	for _, currentRule := range currentRules {
+		if rule.Name == currentRule.Name {
+			continue
+		} else {
+			configRules = append(configRules, *currentRule.ToPromRule())
+		}
+	}
+	configRules = append(configRules, *rule.ToPromRule())
+	return updatePrometheusRules(configRules)
+}
+
+func DeleteRule(name string) error {
+	currentRules, err := ListRules(nil)
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "List rules failed")
+	}
+	configRules := make([]rulefmt.Rule, 0)
+	ruleExists := false
+	for _, currentRule := range currentRules {
+		if name == currentRule.Name {
+			ruleExists = true
+			continue
+		} else {
+			configRules = append(configRules, *currentRule.ToPromRule())
+		}
+	}
+	if !ruleExists {
+		return errors.NewBadRequest(fmt.Sprintf("Rule %s not exists", name))
+	}
+	return updatePrometheusRules(configRules)
+}
+
+func GetRule(name string) (*rulemodel.RuleResponse, error) {
 	rules, err := ListRules(nil)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query rules from prometheus")
@@ -40,7 +79,7 @@ func GetRule(name string) (*rule.RuleResponse, error) {
 	return nil, errors.New(errors.ErrNotFound, "Rule not found")
 }
 
-func ListRules(filter *rule.RuleFilter) ([]rule.RuleResponse, error) {
+func ListRules(filter *rulemodel.RuleFilter) ([]rulemodel.RuleResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
 	ruleDiscovery := &promv1.RuleDiscovery{}
 	resp, err := client.R().SetQueryParam("type", "alert").SetHeader("content-type", "application/json").SetResult(ruleDiscovery).Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.RuleUrl))
@@ -49,14 +88,14 @@ func ListRules(filter *rule.RuleFilter) ([]rule.RuleResponse, error) {
 	} else if resp.StatusCode() != http.StatusOK {
 		return nil, errors.Newf(errors.ErrExternal, "Query rules from prometheus got unexpected status: %d", resp.StatusCode())
 	}
-	filteredRules := make([]rule.RuleResponse, 0)
+	filteredRules := make([]rulemodel.RuleResponse, 0)
 	for _, ruleGroup := range ruleDiscovery.RuleGroups {
 		for _, promRule := range ruleGroup.Rules {
 			alertingRule, ok := promRule.(promv1.AlertingRule)
 			if !ok {
 				logger.Errorf("Got an unexpected rule %v", promRule)
 			}
-			ruleResp := rule.NewRuleResponse(&alertingRule)
+			ruleResp := rulemodel.NewRuleResponse(&alertingRule)
 			if filterRule(ruleResp, filter) {
 				filteredRules = append(filteredRules, *ruleResp)
 			}
@@ -65,7 +104,7 @@ func ListRules(filter *rule.RuleFilter) ([]rule.RuleResponse, error) {
 	return filteredRules, nil
 }
 
-func filterRule(rule *rule.RuleResponse, filter *rule.RuleFilter) bool {
+func filterRule(rule *rulemodel.RuleResponse, filter *rulemodel.RuleFilter) bool {
 	matched := true
 	if filter != nil {
 		if filter.Keyword != "" {

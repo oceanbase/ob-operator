@@ -10,8 +10,9 @@ ARG TARGETPLATFORM
 WORKDIR /home/admin/oceanbase
 RUN mkdir -p /home/admin/oceanbase/bin
 COPY --from=builder /workspace/oceanbase-helper /home/admin/oceanbase/bin
-RUN yum -y install python27
-RUN pip2 install mysql-connector -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+RUN yum -y install python3
+RUN pip3 install mysql-connector-python==8.0.28 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+RUN ln -sf /usr/bin/python3 /usr/bin/python
 # support docker platform linux/amd64 and linux/arm64, mapping platform to x86_64 or aarch64
 RUN if [[ ${TARGETPLATFORM} == 'linux/amd64' ]] ; then yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-libs-${VERSION}.el8.x86_64.rpm ; else yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/aarch64/oceanbase-ce-libs-${VERSION}.el8.aarch64.rpm ; fi
 RUN if [[ ${TARGETPLATFORM} == 'linux/amd64' ]] ; then yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-ce-${VERSION}.el8.x86_64.rpm ; else yum install -y http://mirrors.aliyun.com/oceanbase/community/stable/el/8/aarch64/oceanbase-ce-${VERSION}.el8.aarch64.rpm ; fi

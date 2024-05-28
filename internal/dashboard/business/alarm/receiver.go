@@ -13,11 +13,14 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"fmt"
+
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 
+	amconfig "github.com/prometheus/alertmanager/config"
 	"gopkg.in/yaml.v2"
 )
 
@@ -49,6 +52,52 @@ func ListReceivers() ([]receiver.Receiver, error) {
 	return receivers, nil
 }
 
+func CreateOrUpdateReceiver(r *receiver.Receiver) error {
+	config, err := GetAlertmanagerConfig()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
+	}
+
+	configReceivers := make([]amconfig.Receiver, 0, len(config.Receivers))
+	for _, amreceiver := range config.Receivers {
+		if amreceiver.Name == r.Name {
+			continue
+		} else {
+			configReceivers = append(configReceivers, amreceiver)
+		}
+	}
+	amreceiver, err := r.ToAmReceiver()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrBadRequest, "Failed to convert receiver to alertmanager's model")
+	}
+	configReceivers = append(configReceivers, *amreceiver)
+	config.Receivers = configReceivers
+	return updateAlertManagerConfig(config)
+}
+
+func DeleteReceiver(name string) error {
+	config, err := GetAlertmanagerConfig()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
+	}
+
+	configReceivers := make([]amconfig.Receiver, 0, len(config.Receivers))
+	foundReceiver := false
+	for _, amreceiver := range config.Receivers {
+		if amreceiver.Name == name {
+			foundReceiver = true
+			continue
+		} else {
+			configReceivers = append(configReceivers, amreceiver)
+		}
+	}
+	if !foundReceiver {
+		return errors.NewBadRequest(fmt.Sprintf("Receiver %s not exists", name))
+	}
+	config.Receivers = configReceivers
+	return updateAlertManagerConfig(config)
+}
+
 func ListReceiverTemplates() ([]receiver.Template, error) {
 	receiverTemplates := make([]receiver.Template, 0)
 	configFile := alarmconstant.ReceiverConfigTemplateFile
@@ -63,7 +112,7 @@ func ListReceiverTemplates() ([]receiver.Template, error) {
 	return receiverTemplates, err
 }
 
-func GetReceiverTemplates(receiverType string) (*receiver.Template, error) {
+func GetReceiverTemplate(receiverType string) (*receiver.Template, error) {
 	receiverTemplates, err := ListReceiverTemplates()
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrInternal, "Get receiver templates failed")

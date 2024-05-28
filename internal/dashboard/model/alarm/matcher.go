@@ -16,12 +16,22 @@ import (
 	"strings"
 
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
+
+	amlabels "github.com/prometheus/alertmanager/pkg/labels"
 )
 
 type Matcher struct {
 	IsRegex bool   `json:"isRegex"`
 	Name    string `json:"name"`
 	Value   string `json:"value"`
+}
+
+func (m *Matcher) ToAmMatcher() (*amlabels.Matcher, error) {
+	matchType := amlabels.MatchEqual
+	if m.IsRegex {
+		matchType = amlabels.MatchRegexp
+	}
+	return amlabels.NewMatcher(matchType, m.Name, m.Value)
 }
 
 func (m *Matcher) ExtractMatchedValues() []string {

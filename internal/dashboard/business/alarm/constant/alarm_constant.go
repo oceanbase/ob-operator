@@ -21,11 +21,13 @@ const (
 )
 
 const (
-	AlertManagerAddress = "http://127.0.0.1:9093"
-	AlertUrl            = "/api/v2/alerts"
-	SilencerUrl         = "/api/v2/silences"
-	RuleUrl             = "/api/v1/rules"
-	StatusUrl           = "/api/v2/status"
+	AlertManagerAddress   = "http://127.0.0.1:9093"
+	AlertUrl              = "/api/v2/alerts"
+	SilencerUrl           = "/api/v2/silences"
+	RuleUrl               = "/api/v1/rules"
+	PrometheusReloadUrl   = "/-/reload"
+	AlertmanagerReloadUrl = "/-/reload"
+	StatusUrl             = "/api/v2/status"
 )
 
 const (
@@ -44,6 +46,18 @@ const (
 const (
 	AnnoSummary     = "summary"
 	AnnoDescription = "description"
+)
+
+const (
+	OBRuleGroupName = "ob-rule"
+)
+
+const (
+	RuleConfigFile = "/etc/prometheus/rules/prometheus.rules"
+)
+
+const (
+	AlertmanagerConfigFile = "/etc/alertmanager/alertmanager.yaml"
 )
 
 const (
