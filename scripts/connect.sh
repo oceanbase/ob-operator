@@ -23,6 +23,7 @@ function print_help {
   echo "  -t <OBTenant>         OBTenant of the OBCluster. If not specified, the script will connect to the sys tenant."
   echo "  -u, --user <User>     User of the tenant. Default is root."
   echo "  -p, --password <Pwd>  Password of the user. If the user is not root, the password is required."
+  echo "  --show-password       Show the password in the output."
   echo "  --proxy               Connect to the obproxy deployment with default name."
   echo "  --proxy-name <Name>   Connect to the obproxy deployment with the specified name. (--deploy-name in setup-obproxy.sh)"
 }
@@ -109,6 +110,9 @@ while [[ $# -gt 0 ]]; do
       PROXY_DEPLOY_NAME=$2
       shift
       ;;
+    --show-password)
+      SHOW_PASSWORD=true
+      ;;
     *)
       break
       ;;
@@ -163,6 +167,11 @@ fi
 
 ROOT_SECRET=$(kubectl get obcluster $OB_CLUSTER -n $NAMESPACE -o jsonpath='{.spec.userSecrets.root}')
 export ROOT_PWD=$(kubectl get secret $ROOT_SECRET -n $NAMESPACE -o jsonpath='{.data.password}' | base64 -d)
+
+if [[ $SHOW_PASSWORD == true ]]; then
+  echo "Root Password: $ROOT_PWD"
+  exit 0
+fi
 
 echo "Connecting to OBCluster \"$OB_CLUSTER\" in namespace \"$NAMESPACE\"..."
 echo "Host IP: $CONNECTING_HOST"
