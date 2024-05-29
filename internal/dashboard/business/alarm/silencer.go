@@ -32,7 +32,7 @@ import (
 
 func DeleteSilencer(id string) error {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
-	resp, err := client.R().SetHeader("content-type", "application/json").Delete(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SilencerUrl, id))
+	resp, err := client.R().SetHeader("content-type", "application/json").Delete(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Delete silencer from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -44,7 +44,7 @@ func DeleteSilencer(id string) error {
 func GetSilencer(id string) (*silence.SilencerResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
 	gettableSilencer := apimodels.GettableSilence{}
-	resp, err := client.R().SetHeader("content-type", "application/json").SetResult(&gettableSilencer).Get(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SilencerUrl, id))
+	resp, err := client.R().SetHeader("content-type", "application/json").SetResult(&gettableSilencer).Get(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Get silencer from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -53,26 +53,72 @@ func GetSilencer(id string) (*silence.SilencerResponse, error) {
 	return silence.NewSilencerResponse(&gettableSilencer), nil
 }
 
+// TODO: fill in instances and rules to matchers
 func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
 	startTime := strfmt.DateTime(time.Now())
 	endTime := strfmt.DateTime(time.Unix(param.EndsAt, 0))
 	matchers := make(apimodels.Matchers, 0)
-	for _, rule := range param.Rules {
-		isEqual := true
-		isRegex := false
-		ruleName := alarmconstant.LabelRuleName
+	rules := strings.Join(param.Rules, alarmconstant.RegexOR)
+	falseValue := false
+	trueValue := true
+	ruleName := alarmconstant.LabelRuleName
+	matchers = append(matchers, &apimodels.Matcher{
+		IsEqual: &trueValue,
+		IsRegex: &trueValue,
+		Name:    &ruleName,
+		Value:   &rules,
+	})
+	instanceType := oceanbase.TypeUnknown
+	labelOBCluster := alarmconstant.LabelOBCluster
+	labelInstance := alarmconstant.LabelOBCluster
+	obcluster := ""
+	instances := make([]string, 0, len(param.Instances))
+	for _, instance := range param.Instances {
+		if instanceType == oceanbase.TypeUnknown {
+			instanceType = instance.Type
+		}
+		if instance.Type != instanceType {
+			return nil, errors.New(errors.ErrBadRequest, "All instances should belong to one type")
+		}
+		if instanceType != oceanbase.TypeOBCluster && obcluster != "" && obcluster != instance.OBCluster {
+			return nil, errors.New(errors.ErrBadRequest, "All instances should belong to one obcluster")
+		}
+		obcluster = instance.OBCluster
+		switch instance.Type {
+		case oceanbase.TypeOBCluster:
+			instances = append(instances, instance.OBCluster)
+		case oceanbase.TypeOBServer:
+			instances = append(instances, instance.OBServer)
+			labelInstance = alarmconstant.LabelOBServer
+		case oceanbase.TypeOBZone:
+			instances = append(instances, instance.OBZone)
+			labelInstance = alarmconstant.LabelOBZone
+		case oceanbase.TypeOBTenant:
+			instances = append(instances, instance.OBTenant)
+			labelInstance = alarmconstant.LabelOBTenant
+		default:
+			return nil, errors.New(errors.ErrBadRequest, "Unknown instance type")
+		}
+	}
+	instanceValues := strings.Join(instances, alarmconstant.RegexOR)
+	if instanceType != oceanbase.TypeOBCluster {
 		matchers = append(matchers, &apimodels.Matcher{
-			IsEqual: &isEqual,
-			IsRegex: &isRegex,
-			Name:    &ruleName,
-			Value:   &rule,
+			IsEqual: &trueValue,
+			IsRegex: &falseValue,
+			Name:    &labelOBCluster,
+			Value:   &obcluster,
 		})
 	}
+	matchers = append(matchers, &apimodels.Matcher{
+		IsEqual: &trueValue,
+		IsRegex: &trueValue,
+		Name:    &labelInstance,
+		Value:   &instanceValues,
+	})
 	for _, m := range param.Matchers {
-		isEqual := !m.IsRegex
 		matchers = append(matchers, &apimodels.Matcher{
-			IsEqual: &isEqual,
+			IsEqual: &trueValue,
 			IsRegex: &m.IsRegex,
 			Name:    &m.Name,
 			Value:   &m.Value,
@@ -90,7 +136,7 @@ func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResp
 		Silence: silencer,
 	}
 	okBody := opssilence.PostSilencesOKBody{}
-	resp, err := client.R().SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.SilencerUrl))
+	resp, err := client.R().SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
 	}
@@ -137,7 +183,7 @@ func ListSilencers(filter *silence.SilencerFilter) ([]silence.SilencerResponse, 
 			"filter": queryFilter,
 		})
 	}
-	resp, err := req.SetResult(&gettableSilencers).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.SilencerUrl))
+	resp, err := req.SetResult(&gettableSilencers).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {

@@ -81,12 +81,8 @@ func ListSilencers(c *gin.Context) ([]silence.SilencerResponse, error) {
 // @Router /api/v1/alarm/silence/silencers/{id} [GET]
 // @Security ApiKeyAuth
 func GetSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
-	silencerIdentity := &silence.SilencerIdentity{}
-	err := c.BindUri(silencerIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return alarm.GetSilencer(silencerIdentity.Id)
+	id := c.Param("id")
+	return alarm.GetSilencer(id)
 }
 
 // @ID CreateOrUpdateSilencer
@@ -125,12 +121,8 @@ func CreateOrUpdateSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
 // @Router /api/v1/alarm/silence/silencers/{id} [DELETE]
 // @Security ApiKeyAuth
 func DeleteSilencer(c *gin.Context) (any, error) {
-	silencerIdentity := &silence.SilencerIdentity{}
-	err := c.BindUri(silencerIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return nil, alarm.DeleteSilencer(silencerIdentity.Id)
+	id := c.Param("id")
+	return nil, alarm.DeleteSilencer(id)
 }
 
 // @ID ListRules

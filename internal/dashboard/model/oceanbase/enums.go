@@ -15,6 +15,7 @@ package oceanbase
 type OBInstanceType string
 
 const (
+	TypeUnknown   OBInstanceType = "unknown"
 	TypeOBCluster OBInstanceType = "obcluster"
 	TypeOBZone    OBInstanceType = "obzone"
 	TypeOBTenant  OBInstanceType = "obtenant"

@@ -23,7 +23,8 @@ const (
 const (
 	AlertManagerAddress   = "http://127.0.0.1:9093"
 	AlertUrl              = "/api/v2/alerts"
-	SilencerUrl           = "/api/v2/silences"
+	SingleSilencerUrl     = "/api/v2/silence"
+	MultiSilencerUrl      = "/api/v2/silences"
 	RuleUrl               = "/api/v1/rules"
 	PrometheusReloadUrl   = "/-/reload"
 	AlertmanagerReloadUrl = "/-/reload"

@@ -41,7 +41,7 @@ type Silencer struct {
 
 type SilencerResponse struct {
 	Id        string                 `json:"id" binding:"required"`
-	Instances []oceanbase.OBInstance `json:"instance" binding:"required"`
+	Instances []oceanbase.OBInstance `json:"instances" binding:"required"`
 	Status    *Status                `json:"status" binding:"required"`
 	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
 	Silencer  `json:",inline"`
@@ -62,9 +62,9 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 	instances := make([]oceanbase.OBInstance, 0)
 	var matchedInstanceType oceanbase.OBInstanceType
 	clusterMatcher, matchCluster := matcherMap[alarmconstant.LabelOBCluster]
-	zoneMatcher, matchZone := matcherMap[alarmconstant.LabelOBCluster]
-	serverMatcher, matchServer := matcherMap[alarmconstant.LabelOBCluster]
-	tenantMatcher, matchTenant := matcherMap[alarmconstant.LabelOBCluster]
+	zoneMatcher, matchZone := matcherMap[alarmconstant.LabelOBZone]
+	serverMatcher, matchServer := matcherMap[alarmconstant.LabelOBServer]
+	tenantMatcher, matchTenant := matcherMap[alarmconstant.LabelOBTenant]
 	if matchCluster {
 		matchedInstanceType = oceanbase.TypeOBCluster
 	}
@@ -79,6 +79,7 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 	}
 	switch matchedInstanceType {
 	case oceanbase.TypeOBCluster:
+		logger.Debugf("Cluster matcher is: %v", clusterMatcher)
 		clusterNames := clusterMatcher.ExtractMatchedValues()
 		for _, clusterName := range clusterNames {
 			instances = append(instances, oceanbase.OBInstance{
@@ -94,10 +95,12 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 			logger.Error("Multiple cluster matches for zone matcher")
 			break
 		}
+		logger.Debugf("Cluster matcher is: %v", clusterMatcher)
+		logger.Debugf("Zone matcher is: %v", zoneMatcher)
 		zoneNames := zoneMatcher.ExtractMatchedValues()
 		for _, zone := range zoneNames {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.TypeOBCluster,
+				Type:      oceanbase.TypeOBZone,
 				OBCluster: clusterMatcher.Value,
 				OBZone:    zone,
 			})
@@ -107,13 +110,15 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 			logger.Error("Cluster matcher not exists")
 			break
 		} else if clusterMatcher.IsRegex {
-			logger.Error("Multiple cluster matches for zone matcher")
+			logger.Error("Multiple cluster matches for observer matcher")
 			break
 		}
+		logger.Debugf("Cluster matcher is: %v", clusterMatcher)
+		logger.Debugf("Server matcher is: %v", serverMatcher)
 		serverIps := serverMatcher.ExtractMatchedValues()
 		for _, serverIp := range serverIps {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.TypeOBCluster,
+				Type:      oceanbase.TypeOBServer,
 				OBCluster: clusterMatcher.Value,
 				OBServer:  serverIp,
 			})
@@ -123,13 +128,15 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 			logger.Error("Cluster matcher not exists")
 			break
 		} else if clusterMatcher.IsRegex {
-			logger.Error("Multiple cluster matches for zone matcher")
+			logger.Error("Multiple cluster matches for obtenant matcher")
 			break
 		}
+		logger.Debugf("Cluster matcher is: %v", clusterMatcher)
+		logger.Debugf("Tenant matcher is: %v", tenantMatcher)
 		tenantNames := tenantMatcher.ExtractMatchedValues()
 		for _, tenant := range tenantNames {
 			instances = append(instances, oceanbase.OBInstance{
-				Type:      oceanbase.TypeOBCluster,
+				Type:      oceanbase.TypeOBTenant,
 				OBCluster: clusterMatcher.Value,
 				OBTenant:  tenant,
 			})
