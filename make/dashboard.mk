@@ -4,14 +4,14 @@ PROJECT=oceanbase-dashboard
 PROCESSOR=4
 PWD ?= $(shell pwd)
 
-DASHBOARD_VERSION ?= 0.2.0
+DASHBOARD_VERSION ?= 0.3.0
 DASHBOARD_IMG ?= oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
 INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/dashboard/handler
 
 BUILD_FLAG      := -p $(PROCESSOR) -ldflags="-X '$(INJECT_PACKAGE).Version=$(DASHBOARD_VERSION)' -X '$(INJECT_PACKAGE).CommitHash=$(COMMIT_HASH)' -X '$(INJECT_PACKAGE).BuildTime=$(BUILD_TIMESTAMP)'"
-GOBUILD         := go build $(BUILD_FLAG)
+GOBUILD         := GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build $(BUILD_FLAG)
 GOBUILDCOVERAGE := go test -covermode=count -coverpkg="../..." -c .
 GOCOVERAGE_FILE := tests/coverage.out
 GOCOVERAGE_REPORT := tests/coverage-report

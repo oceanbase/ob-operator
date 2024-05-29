@@ -27,6 +27,11 @@ import (
 	promv1 "github.com/prometheus/prometheus/web/api/v1"
 )
 
+type PromRuleResponse struct {
+	Status string                `json:"status" binding:"required"`
+	Data   *promv1.RuleDiscovery `json:"data" binding:"required"`
+}
+
 type Rule struct {
 	Name         string                   `json:"name" binding:"required"`
 	InstanceType oceanbase.OBInstanceType `json:"instanceType" binding:"required"`
@@ -66,11 +71,24 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 	annotations := make(map[string]string)
 	annotations[alarmconstant.AnnoSummary] = r.Summary
 	annotations[alarmconstant.AnnoDescription] = r.Description
+	labels := r.Labels
+	labels = append(labels, common.KVPair{
+		Key:   alarmconstant.LabelServerity,
+		Value: string(r.Serverity),
+	})
+	labels = append(labels, common.KVPair{
+		Key:   alarmconstant.LabelRuleName,
+		Value: r.Name,
+	})
+	labels = append(labels, common.KVPair{
+		Key:   alarmconstant.LabelInstanceType,
+		Value: string(r.InstanceType),
+	})
 	promRule := &rulefmt.Rule{
 		Alert:       r.Name,
 		Expr:        r.Query,
 		For:         promcommonmodel.Duration(r.Duration * int(time.Second)),
-		Labels:      bizcommon.KVsToMap(r.Labels),
+		Labels:      bizcommon.KVsToMap(labels),
 		Annotations: annotations,
 	}
 	return promRule

@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -37,9 +38,8 @@ func CreateOrUpdateRule(rule *rulemodel.Rule) error {
 	for _, currentRule := range currentRules {
 		if rule.Name == currentRule.Name {
 			continue
-		} else {
-			configRules = append(configRules, *currentRule.ToPromRule())
 		}
+		configRules = append(configRules, *currentRule.ToPromRule())
 	}
 	configRules = append(configRules, *rule.ToPromRule())
 	return updatePrometheusRules(configRules)
@@ -81,21 +81,31 @@ func GetRule(name string) (*rulemodel.RuleResponse, error) {
 
 func ListRules(filter *rulemodel.RuleFilter) ([]rulemodel.RuleResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
-	ruleDiscovery := &promv1.RuleDiscovery{}
-	resp, err := client.R().SetQueryParam("type", "alert").SetHeader("content-type", "application/json").SetResult(ruleDiscovery).Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.RuleUrl))
+	promRuleResponse := &rulemodel.PromRuleResponse{}
+	resp, err := client.R().SetQueryParam("type", "alert").SetHeader("content-type", "application/json").SetResult(promRuleResponse).Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.RuleUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query rules from prometheus")
 	} else if resp.StatusCode() != http.StatusOK {
 		return nil, errors.Newf(errors.ErrExternal, "Query rules from prometheus got unexpected status: %d", resp.StatusCode())
 	}
+	logger.Debugf("Response from prometheus: %v", resp)
 	filteredRules := make([]rulemodel.RuleResponse, 0)
-	for _, ruleGroup := range ruleDiscovery.RuleGroups {
+	for _, ruleGroup := range promRuleResponse.Data.RuleGroups {
 		for _, promRule := range ruleGroup.Rules {
-			alertingRule, ok := promRule.(promv1.AlertingRule)
-			if !ok {
-				logger.Errorf("Got an unexpected rule %v", promRule)
+			encodedPromRule, err := json.Marshal(promRule)
+			if err != nil {
+				logger.Errorf("Got an error when encoding rule %v", promRule)
+				continue
 			}
-			ruleResp := rulemodel.NewRuleResponse(&alertingRule)
+			logger.Debugf("Process prometheus rule: %s", string(encodedPromRule))
+			alertingRule := &promv1.AlertingRule{}
+			err = json.Unmarshal(encodedPromRule, alertingRule)
+			if err != nil {
+				logger.Errorf("Got an error when decoding rule %v", promRule)
+				continue
+			}
+			ruleResp := rulemodel.NewRuleResponse(alertingRule)
+			logger.Debugf("Parsed prometheus rule: %v", ruleResp)
 			if filterRule(ruleResp, filter) {
 				filteredRules = append(filteredRules, *ruleResp)
 			}

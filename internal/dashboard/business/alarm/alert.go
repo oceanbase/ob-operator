@@ -47,6 +47,7 @@ func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
 		alert, err := alert.NewAlert(gettableAlert)
 		if err != nil {
 			logger.WithError(err).Error("Parse alert got error, just skip")
+			continue
 		}
 		if filterAlert(alert, filter) {
 			filteredAlerts = append(filteredAlerts, *alert)

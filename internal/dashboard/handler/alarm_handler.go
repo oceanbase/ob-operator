@@ -213,12 +213,8 @@ func CreateOrUpdateRule(c *gin.Context) (*rule.RuleResponse, error) {
 // @Router /api/v1/alarm/rule/rules/{name} [DELETE]
 // @Security ApiKeyAuth
 func DeleteRule(c *gin.Context) (any, error) {
-	ruleIdentity := &rule.RuleIdentity{}
-	err := c.BindUri(ruleIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return nil, alarm.DeleteRule(ruleIdentity.Name)
+	name := c.Param("name")
+	return nil, alarm.DeleteRule(name)
 }
 
 // @ID ListReceivers
