@@ -39,22 +39,22 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     key: 'image',
   },
   {
-    title: 'Replicas',
+    title: '副本数',
     dataIndex: 'Replicas',
     key: 'Replicas',
   },
   {
-    title: 'serviceIp',
+    title: '服务 IP',
     dataIndex: 'serviceIp',
     key: 'serviceIp',
   },
   {
-    title: 'creationTime',
+    title: '创建时间',
     dataIndex: 'creationTime',
     key: 'creationTime',
   },
   {
-    title: 'status',
+    title: '状态',
     dataIndex: 'status',
     key: 'status',
   },

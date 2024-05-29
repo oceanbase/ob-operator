@@ -26,22 +26,24 @@ export default function BasicInfo({
   return (
     <Card style={style} title={<h2 style={{ marginBottom: 0 }}>基本设置</h2>}>
       <Descriptions column={3}>
-        <Descriptions.Item label="Name">{name || '-'}</Descriptions.Item>
-        <Descriptions.Item label="OBProxy Cluster Name">
+        <Descriptions.Item label="资源名称">{name || '-'}</Descriptions.Item>
+        <Descriptions.Item label="OBProxy 集群名">
           {proxyClusterName || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="OBCluster">
+        <Descriptions.Item label="OB 集群">
           {JSON.stringify(obCluster) || '-'}
         </Descriptions.Item>
         <Descriptions.Item
-          label={<IconTip content="OBProxy root secret" tip={''} />}
+          label={
+            <IconTip content="OBProxy root 密码" tip={'root@proxysys 密码'} />
+          }
         >
           {proxySysSecret || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="Namespace">
+        <Descriptions.Item label="命名空间">
           {namespace || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="Status">{status || '-'}</Descriptions.Item>
+        <Descriptions.Item label="状态">{status || '-'}</Descriptions.Item>
       </Descriptions>
     </Card>
   );
