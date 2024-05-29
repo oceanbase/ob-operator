@@ -15,7 +15,6 @@ package alarm
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -161,28 +160,7 @@ func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResp
 func ListSilencers(filter *silence.SilencerFilter) ([]silence.SilencerResponse, error) {
 	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
 	gettableSilencers := make(apimodels.GettableSilences, 0)
-	queryFilter := make([]string, 0)
-	if filter.Instance != nil {
-		queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBCluster, filter.Instance.OBCluster))
-		switch filter.Instance.Type {
-		case oceanbase.TypeOBCluster:
-			// already added
-		case oceanbase.TypeOBZone:
-			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBZone, filter.Instance.OBZone))
-		case oceanbase.TypeOBServer:
-			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBServer, filter.Instance.OBServer))
-		case oceanbase.TypeOBTenant:
-			queryFilter = append(queryFilter, fmt.Sprintf("%s=\"%s\"", alarmconstant.LabelOBTenant, filter.Instance.OBTenant))
-		default:
-			return nil, errors.NewBadRequest("Unknown instance type")
-		}
-	}
 	req := client.R().SetHeader("content-type", "application/json")
-	if len(queryFilter) > 0 {
-		req = req.SetQueryParamsFromValues(url.Values{
-			"filter": queryFilter,
-		})
-	}
 	resp, err := req.SetResult(&gettableSilencers).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
