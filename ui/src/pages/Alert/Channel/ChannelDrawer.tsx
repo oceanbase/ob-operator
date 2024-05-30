@@ -1,6 +1,5 @@
 import { alert } from '@/api';
 import AlertDrawer from '@/components/AlertDrawer';
-import { CHANNEL_TYPE_OPTIONS } from '@/constants';
 import { Alert } from '@/type/alert';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -38,6 +37,9 @@ export default function ChannelDrawer({
       }
     },
   });
+  const { data: listReceiverTemplatesRes } = useRequest(
+    alert.listReceiverTemplates,
+  );
   const { data: listReceiversRes, run: getListReceivers } = useRequest(
     alert.listReceivers,
     {
@@ -45,7 +47,7 @@ export default function ChannelDrawer({
     },
   );
   const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
-
+  const listReceiverTemplates = listReceiverTemplatesRes?.data;
   const Footer = () => {
     return (
       <div>
@@ -127,20 +129,22 @@ export default function ChannelDrawer({
           {status === 'display' ? (
             <p>{form.getFieldValue('type') || '-'} </p>
           ) : (
-            <Select placeholder="请选择" options={CHANNEL_TYPE_OPTIONS} />
+            <Select
+              placeholder="请选择"
+              options={listReceiverTemplates?.map((template) => ({
+                value: template.type,
+                label: template.type,
+              }))}
+            />
           )}
         </Form.Item>
         <Form.Item noStyle dependencies={['type']}>
           {({ setFieldValue, getFieldValue }) => {
             const type = getFieldValue('type');
-            if (type) {
-              alert.getReceiverTemplate(type).then(({ successful, data }) => {
-                if (successful) {
-                  setFieldValue('config', data.template);
-                }
-              });
-            }
-
+            const template = listReceiverTemplates?.find(
+              (item) => item.type === type,
+            );
+            if (template) setFieldValue('config', template.template);
             return (
               <Form.Item
                 name={'config'}
@@ -158,9 +162,9 @@ export default function ChannelDrawer({
                 }
               >
                 {status === 'display' ? (
-                  <p>{form.getFieldValue('config') || '-'}</p>
+                  <pre>{form.getFieldValue('config') || '-'}</pre>
                 ) : (
-                  <TextArea rows={4} placeholder="请输入" />
+                  <TextArea rows={18} placeholder="请输入" />
                 )}
               </Form.Item>
             );

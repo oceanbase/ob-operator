@@ -1,10 +1,10 @@
 import { alert } from '@/api';
 import type {
-  AlarmMatcher,
   OceanbaseOBInstance,
   SilenceSilencerResponse,
   SilenceStatus,
 } from '@/api/generated';
+import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
@@ -50,29 +50,26 @@ export default function Shield() {
   const columns: ColumnsType<SilenceSilencerResponse> = [
     {
       title: '屏蔽应用/对象类型',
-      dataIndex: 'instance',
+      dataIndex: 'instances',
       key: 'type',
-      render: (instance: OceanbaseOBInstance) => <Text>{instance.type}</Text>,
+      render: (instances: OceanbaseOBInstance) => (
+        <Text>{instances.type || '-'}</Text>
+      ),
     },
     {
       title: '屏蔽对象',
-      dataIndex: 'instance',
+      dataIndex: 'instances',
       key: 'targetObj',
-      render: (instance: OceanbaseOBInstance) => (
-        <Text>{instance[instance.type]}</Text>
+      render: (instances: OceanbaseOBInstance) => (
+        <Text>{instances[instances.type] || '-'}</Text>
       ),
     },
     {
       title: '屏蔽告警规则',
       dataIndex: 'matchers',
       key: 'matchers',
-      render: (rules) => (
-        <p>
-          {rules
-            .map((rule: AlarmMatcher) => rule.name! + rule.value!)
-            .join(',')}
-        </p>
-      ),
+      width: 400,
+      render: (rules) => <PreText value={rules} cols={7} />,
     },
     {
       title: '屏蔽结束时间',
@@ -149,8 +146,8 @@ export default function Shield() {
     },
   ];
   const initialValues: Alert.ShieldDrawerInitialValues = {};
-  if (searchParams.get('instance')) {
-    initialValues.instance = JSON.parse(searchParams.get('instance')!);
+  if (searchParams.get('instances')) {
+    initialValues.instances = JSON.parse(searchParams.get('instances')!);
   }
   if (searchParams.get('label')) {
     initialValues.matchers = JSON.parse(searchParams.get('label')!);
