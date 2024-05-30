@@ -52,6 +52,7 @@ export default function Rules() {
     {
       title: '触发规则',
       dataIndex: 'description',
+      width:'30%',
       key: 'description',
     },
     {
