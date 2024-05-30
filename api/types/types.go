@@ -30,3 +30,6 @@ type RestoreJobStatus string
 type TenantRole string
 type TenantOperationStatus string
 type TenantOperationType string
+
+type ClusterOperationType string
+type ClusterOperationStatus string

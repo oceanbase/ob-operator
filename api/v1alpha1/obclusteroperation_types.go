@@ -17,7 +17,11 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -28,14 +32,60 @@ type OBClusterOperationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of OBClusterOperation. Edit obclusteroperation_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	OBCluster          string                        `json:"obcluster"`
+	Type               apitypes.ClusterOperationType `json:"type"`
+	Force              bool                          `json:"force,omitempty"`
+	AddZones           []apitypes.OBZoneTopology     `json:"addZones,omitempty"`
+	DeleteZones        []string                      `json:"deleteZones,omitempty"`
+	AdjustReplicas     []AlterZoneReplicas           `json:"adjustReplicas,omitempty"`
+	RestartOBServers   *RestartOBServersConfig       `json:"restartOBServers,omitempty"`
+	Upgrade            *UpgradeConfig                `json:"upgrade,omitempty"`
+	ModifyStorageClass *ModifyStorageClassConfig     `json:"modifyStorageClass,omitempty"`
+	ExpandStorageSize  *ExpandStorageSizeConfig      `json:"expandStorageSize,omitempty"`
+	SetParameters      []apitypes.Parameter          `json:"setParameters,omitempty"`
+}
+
+type RestartOBServersConfig struct {
+	Resource           *apitypes.ResourceSpec     `json:"resource,omitempty"`
+	AddingMonitor      *apitypes.MonitorTemplate  `json:"addingMonitor,omitempty"`
+	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
+	RestartOnly        bool                       `json:"restartOnly,omitempty"`
+}
+
+type ExpandStorageSizeConfig struct {
+	DataStorage    *resource.Quantity `json:"dataStorage,omitempty"`
+	LogStorage     *resource.Quantity `json:"logStorage,omitempty"`
+	RedoLogStorage *resource.Quantity `json:"redoLogStorage,omitempty"`
+}
+
+type ModifyStorageClassConfig struct {
+	DataStorage    string `json:"dataStorage,omitempty"`
+	LogStorage     string `json:"logStorage,omitempty"`
+	RedoLogStorage string `json:"redoLogStorage,omitempty"`
+}
+
+type UpgradeConfig struct {
+	Image string `json:"image"`
+}
+
+type AlterZoneReplicas struct {
+	Zones []string `json:"zones"`
+	To    int      `json:"to,omitempty"`
+	By    int      `json:"by,omitempty"`
 }
 
 // OBClusterOperationStatus defines the observed state of OBClusterOperation
 type OBClusterOperationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Status           apitypes.ClusterOperationStatus `json:"status"`
+	OperationContext *tasktypes.OperationContext     `json:"operationContext,omitempty"`
+	ClusterSnapshot  *OBClusterSnapshot              `json:"clusterSnapshot,omitempty"`
+}
+
+type OBClusterSnapshot struct {
+	Spec   *OBClusterSpec   `json:"spec,omitempty"`
+	Status *OBClusterStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true

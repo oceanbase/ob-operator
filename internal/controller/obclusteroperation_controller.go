@@ -19,18 +19,25 @@ package controller
 import (
 	"context"
 
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	res "github.com/oceanbase/ob-operator/internal/resource/obclusteroperation"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
+	"github.com/oceanbase/ob-operator/pkg/coordinator"
 )
 
 // OBClusterOperationReconciler reconciles a OBClusterOperation object
 type OBClusterOperationReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
 
 //+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obclusteroperations,verbs=get;list;watch;create;update;patch;delete
@@ -39,19 +46,32 @@ type OBClusterOperationReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the OBClusterOperation object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
+
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *OBClusterOperationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	op := &v1alpha1.OBClusterOperation{}
+	err := r.Client.Get(ctx, req.NamespacedName, op)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		logger.Error(err, "Failed to get cluster operation")
+		return ctrl.Result{}, err
+	}
 
-	// TODO(user): your logic here
+	// create cluster operation manager
+	clusterOpManager := &res.OBClusterOperationManager{
+		Ctx:      ctx,
+		Resource: op,
+		Client:   r.Client,
+		Logger:   &logger,
+		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+	}
 
-	return ctrl.Result{}, nil
+	cood := coordinator.NewCoordinator(clusterOpManager, &logger)
+	return cood.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.
