@@ -23,6 +23,7 @@ import (
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
 	rulemodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 
 	apimodels "github.com/prometheus/alertmanager/api/v2/models"
@@ -50,6 +51,7 @@ func GetAlertmanagerConfig() (*amconfig.Config, error) {
 
 func updateAlertManagerConfig(config *amconfig.Config) error {
 	content, err := yaml.Marshal(config)
+	logger.Debugf("Alertmanager config to persist: %s", string(content))
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Encode config content failed")
 	}

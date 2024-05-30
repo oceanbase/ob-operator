@@ -19,10 +19,26 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 
 	amconfig "github.com/prometheus/alertmanager/config"
-	"gopkg.in/yaml.v2"
 )
+
+var receiverConfigFiles = map[receiver.ReceiverType]string{
+	receiver.TypeDiscord:   "discord_config.yaml",
+	receiver.TypeEmail:     "email_config.yaml",
+	receiver.TypePagerduty: "pagerduty_config.yaml",
+	receiver.TypeSlack:     "slack_config.yaml",
+	receiver.TypeWebhook:   "webhook_config.yaml",
+	receiver.TypeOpsGenie:  "opsgenie_config.yaml",
+	receiver.TypeWechat:    "wechat_config.yaml",
+	receiver.TypePushover:  "pushover_config.yaml",
+	receiver.TypeVictorOps: "victorops_config.yaml",
+	receiver.TypeSNS:       "sns_config.yaml",
+	receiver.TypeTelegram:  "telegram_config.yaml",
+	receiver.TypeWebex:     "webex_config.yaml",
+	receiver.TypeMSTeams:   "msteams_config.yaml",
+}
 
 func GetReceiver(name string) (*receiver.Receiver, error) {
 	receivers, err := ListReceivers()
@@ -70,6 +86,7 @@ func CreateOrUpdateReceiver(r *receiver.Receiver) error {
 	if err != nil {
 		return errors.Wrap(err, errors.ErrBadRequest, "Failed to convert receiver to alertmanager's model")
 	}
+	logger.Debugf("Add receiver %s: %v", amreceiver.Name, amreceiver)
 	configReceivers = append(configReceivers, *amreceiver)
 	config.Receivers = configReceivers
 	return updateAlertManagerConfig(config)
@@ -100,27 +117,32 @@ func DeleteReceiver(name string) error {
 
 func ListReceiverTemplates() ([]receiver.Template, error) {
 	receiverTemplates := make([]receiver.Template, 0)
-	configFile := alarmconstant.ReceiverConfigTemplateFile
-	receiverTemplatesConfigContent, err := bindata.Asset(configFile)
-	if err != nil {
-		return receiverTemplates, errors.Wrap(err, errors.ErrInternal, "Read receiver templates failed")
+	for receiverType, configFile := range receiverConfigFiles {
+		receiverConfigContent, err := bindata.Asset(fmt.Sprintf("%s/%s", alarmconstant.ReceiverTemplateDir, configFile))
+		if err != nil {
+			logger.WithError(err).Errorf("Read receiver config of %s failed", receiverType)
+			continue
+		}
+		receiverTemplates = append(receiverTemplates, receiver.Template{
+			Type:     receiverType,
+			Template: string(receiverConfigContent),
+		})
 	}
-	err = yaml.Unmarshal(receiverTemplatesConfigContent, &receiverTemplates)
-	if err != nil {
-		return receiverTemplates, errors.Wrap(err, errors.ErrInternal, "Decode receiver templates failed")
-	}
-	return receiverTemplates, err
+	return receiverTemplates, nil
 }
 
 func GetReceiverTemplate(receiverType string) (*receiver.Template, error) {
-	receiverTemplates, err := ListReceiverTemplates()
+	configFile, found := receiverConfigFiles[receiver.ReceiverType(receiverType)]
+	if !found {
+		return nil, errors.NewBadRequest("Receiver type is invalid")
+	}
+	receiverConfigContent, err := bindata.Asset(fmt.Sprintf("%s/%s", alarmconstant.ReceiverTemplateDir, configFile))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrInternal, "Get receiver templates failed")
 	}
-	for _, receiverTemplate := range receiverTemplates {
-		if receiverTemplate.Type == receiver.ReceiverType(receiverType) {
-			return &receiverTemplate, nil
-		}
+	receiverTemplate := &receiver.Template{
+		Type:     receiver.ReceiverType(receiverType),
+		Template: string(receiverConfigContent),
 	}
-	return nil, errors.NewNotFound("Template for receiver not found")
+	return receiverTemplate, nil
 }

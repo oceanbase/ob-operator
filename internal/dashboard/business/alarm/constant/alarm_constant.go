@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	ReceiverConfigTemplateFile = "internal/assets/receiver_templates.yaml"
+	ReceiverTemplateDir = "internal/assets/receiver_templates"
 )
 
 const (
@@ -58,7 +58,7 @@ const (
 )
 
 const (
-	AlertmanagerConfigFile = "/etc/alertmanager/alertmanager.yaml"
+	AlertmanagerConfigFile = "/etc/alertmanager/alertmanager.yml"
 )
 
 const (

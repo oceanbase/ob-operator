@@ -239,12 +239,8 @@ func ListReceivers(c *gin.Context) ([]receiver.Receiver, error) {
 // @Router /api/v1/alarm/receiver/receivers/{name} [GET]
 // @Security ApiKeyAuth
 func GetReceiver(c *gin.Context) (*receiver.Receiver, error) {
-	receiverIdentity := &receiver.ReceiverIdentity{}
-	err := c.BindUri(receiverIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return alarm.GetReceiver(receiverIdentity.Name)
+	name := c.Param("name")
+	return alarm.GetReceiver(name)
 }
 
 // @ID CreateOrUpdateReceiver
@@ -283,12 +279,8 @@ func CreateOrUpdateReceiver(c *gin.Context) (*receiver.Receiver, error) {
 // @Router /api/v1/alarm/receiver/receivers/{name} [DELETE]
 // @Security ApiKeyAuth
 func DeleteReceiver(c *gin.Context) (any, error) {
-	receiverIdentity := &receiver.ReceiverIdentity{}
-	err := c.BindUri(receiverIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return nil, alarm.DeleteReceiver(receiverIdentity.Name)
+	name := c.Param("name")
+	return nil, alarm.DeleteReceiver(name)
 }
 
 // @ID ListReceiverTemplates
@@ -321,12 +313,8 @@ func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
 // @Router /api/v1/alarm/receiver/templates/{type} [GET]
 // @Security ApiKeyAuth
 func GetReceiverTemplate(c *gin.Context) (*receiver.Template, error) {
-	receiverTemplateIdentity := &receiver.ReceiverTemplateIdentity{}
-	err := c.BindUri(receiverTemplateIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return alarm.GetReceiverTemplate(receiverTemplateIdentity.Type)
+	receiverType := c.Param("type")
+	return alarm.GetReceiverTemplate(receiverType)
 }
 
 // @ID ListRoutes
@@ -359,12 +347,8 @@ func ListRoutes(c *gin.Context) ([]route.RouteResponse, error) {
 // @Router /api/v1/alarm/route/routes/{id} [GET]
 // @Security ApiKeyAuth
 func GetRoute(c *gin.Context) (*route.RouteResponse, error) {
-	routeIdentity := &route.RouteIdentity{}
-	err := c.BindUri(routeIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return alarm.GetRoute(routeIdentity.Id)
+	id := c.Param("id")
+	return alarm.GetRoute(id)
 }
 
 // @ID CreateOrUpdateRoute
@@ -403,10 +387,6 @@ func CreateOrUpdateRoute(c *gin.Context) (*route.RouteResponse, error) {
 // @Router /api/v1/alarm/route/routes/{id} [DELETE]
 // @Security ApiKeyAuth
 func DeleteRoute(c *gin.Context) (any, error) {
-	routeIdentity := &route.RouteIdentity{}
-	err := c.BindUri(routeIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return nil, alarm.DeleteRoute(routeIdentity.Id)
+	id := c.Param("id")
+	return nil, alarm.DeleteRoute(id)
 }
