@@ -44,12 +44,12 @@ func (r *Receiver) ToAmReceiver() (*amconfig.Receiver, error) {
 	var err error
 	switch r.Type {
 	case TypeDiscord:
-		Config := &amconfig.DiscordConfig{}
-		err = yaml.Unmarshal([]byte(r.Config), Config)
+		config := &amconfig.DiscordConfig{}
+		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.DiscordConfigs = []*amconfig.DiscordConfig{Config}
+		amreceiver.DiscordConfigs = []*amconfig.DiscordConfig{config}
 	case TypeEmail:
 		config := &amconfig.EmailConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)

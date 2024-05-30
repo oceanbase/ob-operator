@@ -79,9 +79,8 @@ func CreateOrUpdateReceiver(ctx context.Context, r *receiver.Receiver) error {
 	for _, amreceiver := range config.Receivers {
 		if amreceiver.Name == r.Name {
 			continue
-		} else {
-			configReceivers = append(configReceivers, amreceiver)
 		}
+		configReceivers = append(configReceivers, amreceiver)
 	}
 	amreceiver, err := r.ToAmReceiver()
 	if err != nil {
@@ -105,9 +104,8 @@ func DeleteReceiver(ctx context.Context, name string) error {
 		if amreceiver.Name == name {
 			foundReceiver = true
 			continue
-		} else {
-			configReceivers = append(configReceivers, amreceiver)
 		}
+		configReceivers = append(configReceivers, amreceiver)
 	}
 	if !foundReceiver {
 		return errors.NewBadRequest(fmt.Sprintf("Receiver %s not exists", name))

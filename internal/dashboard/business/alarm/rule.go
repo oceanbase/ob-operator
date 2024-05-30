@@ -56,9 +56,8 @@ func DeleteRule(ctx context.Context, name string) error {
 		if name == currentRule.Name {
 			ruleExists = true
 			continue
-		} else {
-			configRules = append(configRules, *currentRule.ToPromRule())
 		}
+		configRules = append(configRules, *currentRule.ToPromRule())
 	}
 	if !ruleExists {
 		return errors.NewBadRequest(fmt.Sprintf("Rule %s not exists", name))
