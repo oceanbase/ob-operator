@@ -13,13 +13,13 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-resty/resty/v2"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
@@ -29,9 +29,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func DeleteSilencer(id string) error {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
-	resp, err := client.R().SetHeader("content-type", "application/json").Delete(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
+func DeleteSilencer(ctx context.Context, id string) error {
+	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").Delete(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Delete silencer from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -40,10 +39,9 @@ func DeleteSilencer(id string) error {
 	return nil
 }
 
-func GetSilencer(id string) (*silence.SilencerResponse, error) {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+func GetSilencer(ctx context.Context, id string) (*silence.SilencerResponse, error) {
 	gettableSilencer := apimodels.GettableSilence{}
-	resp, err := client.R().SetHeader("content-type", "application/json").SetResult(&gettableSilencer).Get(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
+	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetResult(&gettableSilencer).Get(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Get silencer from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -53,8 +51,7 @@ func GetSilencer(id string) (*silence.SilencerResponse, error) {
 }
 
 // TODO: fill in instances and rules to matchers
-func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResponse, error) {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (*silence.SilencerResponse, error) {
 	startTime := strfmt.DateTime(time.Now())
 	endTime := strfmt.DateTime(time.Unix(param.EndsAt, 0))
 	matchers := make(apimodels.Matchers, 0)
@@ -135,7 +132,7 @@ func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResp
 		Silence: silencer,
 	}
 	okBody := opssilence.PostSilencesOKBody{}
-	resp, err := client.R().SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
+	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
 	}
@@ -157,10 +154,9 @@ func CreateOrUpdateSilencer(param *silence.SilencerParam) (*silence.SilencerResp
 	return silencerResponse, nil
 }
 
-func ListSilencers(filter *silence.SilencerFilter) ([]silence.SilencerResponse, error) {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+func ListSilencers(ctx context.Context, filter *silence.SilencerFilter) ([]silence.SilencerResponse, error) {
 	gettableSilencers := make(apimodels.GettableSilences, 0)
-	req := client.R().SetHeader("content-type", "application/json")
+	req := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json")
 	resp, err := req.SetResult(&gettableSilencers).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")

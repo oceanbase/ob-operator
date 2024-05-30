@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
@@ -20,8 +21,8 @@ import (
 	amconfig "github.com/prometheus/alertmanager/config"
 )
 
-func GetRoute(id string) (*route.RouteResponse, error) {
-	routes, err := ListRoutes()
+func GetRoute(ctx context.Context, id string) (*route.RouteResponse, error) {
+	routes, err := ListRoutes(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Failed to get routes")
 	}
@@ -33,8 +34,8 @@ func GetRoute(id string) (*route.RouteResponse, error) {
 	return nil, errors.NewNotFound("Route not found")
 }
 
-func ListRoutes() ([]route.RouteResponse, error) {
-	config, err := GetAlertmanagerConfig()
+func ListRoutes(ctx context.Context) ([]route.RouteResponse, error) {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -49,8 +50,8 @@ func ListRoutes() ([]route.RouteResponse, error) {
 	return routes, nil
 }
 
-func DeleteRoute(id string) error {
-	config, err := GetAlertmanagerConfig()
+func DeleteRoute(ctx context.Context, id string) error {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -68,11 +69,11 @@ func DeleteRoute(id string) error {
 		return errors.NewBadRequest(fmt.Sprintf("Route %s not exists", id))
 	}
 	config.Route.Routes = configRoutes
-	return updateAlertManagerConfig(config)
+	return updateAlertManagerConfig(ctx, config)
 }
 
-func CreateOrUpdateRoute(r *route.Route) error {
-	config, err := GetAlertmanagerConfig()
+func CreateOrUpdateRoute(ctx context.Context, r *route.Route) error {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -89,5 +90,5 @@ func CreateOrUpdateRoute(r *route.Route) error {
 	}
 	configRoutes = append(configRoutes, amRoute)
 	config.Route.Routes = configRoutes
-	return updateAlertManagerConfig(config)
+	return updateAlertManagerConfig(ctx, config)
 }

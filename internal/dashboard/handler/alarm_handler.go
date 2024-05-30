@@ -36,13 +36,13 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/alert/alerts [POST]
 // @Security ApiKeyAuth
-func ListAlerts(c *gin.Context) ([]alert.Alert, error) {
+func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 	filter := &alert.AlertFilter{}
-	err := c.Bind(filter)
+	err := ctx.Bind(filter)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return alarm.ListAlerts(filter)
+	return alarm.ListAlerts(ctx, filter)
 }
 
 // @ID ListSilencers
@@ -58,13 +58,13 @@ func ListAlerts(c *gin.Context) ([]alert.Alert, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/silence/silencers [POST]
 // @Security ApiKeyAuth
-func ListSilencers(c *gin.Context) ([]silence.SilencerResponse, error) {
+func ListSilencers(ctx *gin.Context) ([]silence.SilencerResponse, error) {
 	filter := &silence.SilencerFilter{}
-	err := c.Bind(filter)
+	err := ctx.Bind(filter)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return alarm.ListSilencers(filter)
+	return alarm.ListSilencers(ctx, filter)
 }
 
 // @ID GetSilencer
@@ -80,9 +80,9 @@ func ListSilencers(c *gin.Context) ([]silence.SilencerResponse, error) {
 // @Param id path string true "silencer id"
 // @Router /api/v1/alarm/silence/silencers/{id} [GET]
 // @Security ApiKeyAuth
-func GetSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
-	id := c.Param("id")
-	return alarm.GetSilencer(id)
+func GetSilencer(ctx *gin.Context) (*silence.SilencerResponse, error) {
+	id := ctx.Param("id")
+	return alarm.GetSilencer(ctx, id)
 }
 
 // @ID CreateOrUpdateSilencer
@@ -98,13 +98,13 @@ func GetSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/silence/silencers [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
+func CreateOrUpdateSilencer(ctx *gin.Context) (*silence.SilencerResponse, error) {
 	param := &silence.SilencerParam{}
-	err := c.Bind(param)
+	err := ctx.Bind(param)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return alarm.CreateOrUpdateSilencer(param)
+	return alarm.CreateOrUpdateSilencer(ctx, param)
 }
 
 // @ID DeleteSilencer
@@ -120,9 +120,9 @@ func CreateOrUpdateSilencer(c *gin.Context) (*silence.SilencerResponse, error) {
 // @Param id path string true "silencer id"
 // @Router /api/v1/alarm/silence/silencers/{id} [DELETE]
 // @Security ApiKeyAuth
-func DeleteSilencer(c *gin.Context) (any, error) {
-	id := c.Param("id")
-	return nil, alarm.DeleteSilencer(id)
+func DeleteSilencer(ctx *gin.Context) (any, error) {
+	id := ctx.Param("id")
+	return nil, alarm.DeleteSilencer(ctx, id)
 }
 
 // @ID ListRules
@@ -138,13 +138,13 @@ func DeleteSilencer(c *gin.Context) (any, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/rule/rules [POST]
 // @Security ApiKeyAuth
-func ListRules(c *gin.Context) ([]rule.RuleResponse, error) {
+func ListRules(ctx *gin.Context) ([]rule.RuleResponse, error) {
 	filter := &rule.RuleFilter{}
-	err := c.Bind(filter)
+	err := ctx.Bind(filter)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return alarm.ListRules(filter)
+	return alarm.ListRules(ctx, filter)
 }
 
 // @ID GetRule
@@ -160,13 +160,9 @@ func ListRules(c *gin.Context) ([]rule.RuleResponse, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/rule/rules/{name} [GET]
 // @Security ApiKeyAuth
-func GetRule(c *gin.Context) (*rule.RuleResponse, error) {
-	ruleIdentity := &rule.RuleIdentity{}
-	err := c.BindUri(ruleIdentity)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
-	}
-	return alarm.GetRule(ruleIdentity.Name)
+func GetRule(ctx *gin.Context) (*rule.RuleResponse, error) {
+	name := ctx.Param("name")
+	return alarm.GetRule(ctx, name)
 }
 
 // @ID CreateOrUpdateRule
@@ -182,13 +178,13 @@ func GetRule(c *gin.Context) (*rule.RuleResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/rule/rules [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateRule(c *gin.Context) (*rule.RuleResponse, error) {
+func CreateOrUpdateRule(ctx *gin.Context) (*rule.RuleResponse, error) {
 	rule := &rule.Rule{}
-	err := c.Bind(rule)
+	err := ctx.Bind(rule)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return nil, alarm.CreateOrUpdateRule(rule)
+	return nil, alarm.CreateOrUpdateRule(ctx, rule)
 }
 
 // @ID DeleteRule
@@ -204,9 +200,9 @@ func CreateOrUpdateRule(c *gin.Context) (*rule.RuleResponse, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/rule/rules/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteRule(c *gin.Context) (any, error) {
-	name := c.Param("name")
-	return nil, alarm.DeleteRule(name)
+func DeleteRule(ctx *gin.Context) (any, error) {
+	name := ctx.Param("name")
+	return nil, alarm.DeleteRule(ctx, name)
 }
 
 // @ID ListReceivers
@@ -221,8 +217,8 @@ func DeleteRule(c *gin.Context) (any, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/receiver/receivers [POST]
 // @Security ApiKeyAuth
-func ListReceivers(c *gin.Context) ([]receiver.Receiver, error) {
-	return alarm.ListReceivers()
+func ListReceivers(ctx *gin.Context) ([]receiver.Receiver, error) {
+	return alarm.ListReceivers(ctx)
 }
 
 // @ID GetReceiver
@@ -238,9 +234,9 @@ func ListReceivers(c *gin.Context) ([]receiver.Receiver, error) {
 // @Param name path string true "rule name"
 // @Router /api/v1/alarm/receiver/receivers/{name} [GET]
 // @Security ApiKeyAuth
-func GetReceiver(c *gin.Context) (*receiver.Receiver, error) {
-	name := c.Param("name")
-	return alarm.GetReceiver(name)
+func GetReceiver(ctx *gin.Context) (*receiver.Receiver, error) {
+	name := ctx.Param("name")
+	return alarm.GetReceiver(ctx, name)
 }
 
 // @ID CreateOrUpdateReceiver
@@ -256,13 +252,13 @@ func GetReceiver(c *gin.Context) (*receiver.Receiver, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/receiver/receivers [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateReceiver(c *gin.Context) (*receiver.Receiver, error) {
+func CreateOrUpdateReceiver(ctx *gin.Context) (*receiver.Receiver, error) {
 	receiver := &receiver.Receiver{}
-	err := c.Bind(receiver)
+	err := ctx.Bind(receiver)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return nil, alarm.CreateOrUpdateReceiver(receiver)
+	return nil, alarm.CreateOrUpdateReceiver(ctx, receiver)
 }
 
 // @ID DeleteReceiver
@@ -278,9 +274,9 @@ func CreateOrUpdateReceiver(c *gin.Context) (*receiver.Receiver, error) {
 // @Param name path string true "receiver name"
 // @Router /api/v1/alarm/receiver/receivers/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteReceiver(c *gin.Context) (any, error) {
-	name := c.Param("name")
-	return nil, alarm.DeleteReceiver(name)
+func DeleteReceiver(ctx *gin.Context) (any, error) {
+	name := ctx.Param("name")
+	return nil, alarm.DeleteReceiver(ctx, name)
 }
 
 // @ID ListReceiverTemplates
@@ -312,8 +308,8 @@ func ListReceiverTemplates(_ *gin.Context) ([]receiver.Template, error) {
 // @Param type path string true "receiver type"
 // @Router /api/v1/alarm/receiver/templates/{type} [GET]
 // @Security ApiKeyAuth
-func GetReceiverTemplate(c *gin.Context) (*receiver.Template, error) {
-	receiverType := c.Param("type")
+func GetReceiverTemplate(ctx *gin.Context) (*receiver.Template, error) {
+	receiverType := ctx.Param("type")
 	return alarm.GetReceiverTemplate(receiverType)
 }
 
@@ -329,8 +325,8 @@ func GetReceiverTemplate(c *gin.Context) (*receiver.Template, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/route/routes [POST]
 // @Security ApiKeyAuth
-func ListRoutes(c *gin.Context) ([]route.RouteResponse, error) {
-	return alarm.ListRoutes()
+func ListRoutes(ctx *gin.Context) ([]route.RouteResponse, error) {
+	return alarm.ListRoutes(ctx)
 }
 
 // @ID GetRoute
@@ -346,9 +342,9 @@ func ListRoutes(c *gin.Context) ([]route.RouteResponse, error) {
 // @Param id path string true "route id"
 // @Router /api/v1/alarm/route/routes/{id} [GET]
 // @Security ApiKeyAuth
-func GetRoute(c *gin.Context) (*route.RouteResponse, error) {
-	id := c.Param("id")
-	return alarm.GetRoute(id)
+func GetRoute(ctx *gin.Context) (*route.RouteResponse, error) {
+	id := ctx.Param("id")
+	return alarm.GetRoute(ctx, id)
 }
 
 // @ID CreateOrUpdateRoute
@@ -364,13 +360,13 @@ func GetRoute(c *gin.Context) (*route.RouteResponse, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/route/routes [PUT]
 // @Security ApiKeyAuth
-func CreateOrUpdateRoute(c *gin.Context) (*route.RouteResponse, error) {
+func CreateOrUpdateRoute(ctx *gin.Context) (*route.RouteResponse, error) {
 	route := &route.Route{}
-	err := c.Bind(route)
+	err := ctx.Bind(route)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return nil, alarm.CreateOrUpdateRoute(route)
+	return nil, alarm.CreateOrUpdateRoute(ctx, route)
 }
 
 // @ID DeleteRoute
@@ -386,7 +382,7 @@ func CreateOrUpdateRoute(c *gin.Context) (*route.RouteResponse, error) {
 // @Param id path string true "route id"
 // @Router /api/v1/alarm/route/routes/{id} [DELETE]
 // @Security ApiKeyAuth
-func DeleteRoute(c *gin.Context) (any, error) {
-	id := c.Param("id")
-	return nil, alarm.DeleteRoute(id)
+func DeleteRoute(ctx *gin.Context) (any, error) {
+	id := ctx.Param("id")
+	return nil, alarm.DeleteRoute(ctx, id)
 }

@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"context"
 	"fmt"
 
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
@@ -40,8 +41,8 @@ var receiverConfigFiles = map[receiver.ReceiverType]string{
 	receiver.TypeMSTeams:   "msteams_config.yaml",
 }
 
-func GetReceiver(name string) (*receiver.Receiver, error) {
-	receivers, err := ListReceivers()
+func GetReceiver(ctx context.Context, name string) (*receiver.Receiver, error) {
+	receivers, err := ListReceivers(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Failed to get receivers")
 	}
@@ -53,8 +54,8 @@ func GetReceiver(name string) (*receiver.Receiver, error) {
 	return nil, errors.NewNotFound("Receiver not found")
 }
 
-func ListReceivers() ([]receiver.Receiver, error) {
-	config, err := GetAlertmanagerConfig()
+func ListReceivers(ctx context.Context) ([]receiver.Receiver, error) {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -68,8 +69,8 @@ func ListReceivers() ([]receiver.Receiver, error) {
 	return receivers, nil
 }
 
-func CreateOrUpdateReceiver(r *receiver.Receiver) error {
-	config, err := GetAlertmanagerConfig()
+func CreateOrUpdateReceiver(ctx context.Context, r *receiver.Receiver) error {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -89,11 +90,11 @@ func CreateOrUpdateReceiver(r *receiver.Receiver) error {
 	logger.Debugf("Add receiver %s: %v", amreceiver.Name, amreceiver)
 	configReceivers = append(configReceivers, *amreceiver)
 	config.Receivers = configReceivers
-	return updateAlertManagerConfig(config)
+	return updateAlertManagerConfig(ctx, config)
 }
 
-func DeleteReceiver(name string) error {
-	config, err := GetAlertmanagerConfig()
+func DeleteReceiver(ctx context.Context, name string) error {
+	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
@@ -112,7 +113,7 @@ func DeleteReceiver(name string) error {
 		return errors.NewBadRequest(fmt.Sprintf("Receiver %s not exists", name))
 	}
 	config.Receivers = configReceivers
-	return updateAlertManagerConfig(config)
+	return updateAlertManagerConfig(ctx, config)
 }
 
 func ListReceiverTemplates() ([]receiver.Template, error) {

@@ -13,13 +13,12 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/go-resty/resty/v2"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
 	rulemodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
@@ -29,8 +28,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func CreateOrUpdateRule(rule *rulemodel.Rule) error {
-	currentRules, err := ListRules(nil)
+func CreateOrUpdateRule(ctx context.Context, rule *rulemodel.Rule) error {
+	currentRules, err := ListRules(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "List rules failed")
 	}
@@ -42,11 +41,11 @@ func CreateOrUpdateRule(rule *rulemodel.Rule) error {
 		configRules = append(configRules, *currentRule.ToPromRule())
 	}
 	configRules = append(configRules, *rule.ToPromRule())
-	return updatePrometheusRules(configRules)
+	return updatePrometheusRules(ctx, configRules)
 }
 
-func DeleteRule(name string) error {
-	currentRules, err := ListRules(nil)
+func DeleteRule(ctx context.Context, name string) error {
+	currentRules, err := ListRules(ctx, nil)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "List rules failed")
 	}
@@ -63,11 +62,11 @@ func DeleteRule(name string) error {
 	if !ruleExists {
 		return errors.NewBadRequest(fmt.Sprintf("Rule %s not exists", name))
 	}
-	return updatePrometheusRules(configRules)
+	return updatePrometheusRules(ctx, configRules)
 }
 
-func GetRule(name string) (*rulemodel.RuleResponse, error) {
-	rules, err := ListRules(nil)
+func GetRule(ctx context.Context, name string) (*rulemodel.RuleResponse, error) {
+	rules, err := ListRules(ctx, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query rules from prometheus")
 	}
@@ -79,10 +78,9 @@ func GetRule(name string) (*rulemodel.RuleResponse, error) {
 	return nil, errors.New(errors.ErrNotFound, "Rule not found")
 }
 
-func ListRules(filter *rulemodel.RuleFilter) ([]rulemodel.RuleResponse, error) {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+func ListRules(ctx context.Context, filter *rulemodel.RuleFilter) ([]rulemodel.RuleResponse, error) {
 	promRuleResponse := &rulemodel.PromRuleResponse{}
-	resp, err := client.R().SetQueryParam("type", "alert").SetHeader("content-type", "application/json").SetResult(promRuleResponse).Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.RuleUrl))
+	resp, err := getClient().R().SetContext(ctx).SetQueryParam("type", "alert").SetHeader("content-type", "application/json").SetResult(promRuleResponse).Get(fmt.Sprintf("%s%s", metricconst.PrometheusAddress, alarmconstant.RuleUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query rules from prometheus")
 	} else if resp.StatusCode() != http.StatusOK {

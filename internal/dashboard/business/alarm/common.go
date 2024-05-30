@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"sync"
 	"time"
 
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
@@ -35,10 +37,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func GetAlertmanagerConfig() (*amconfig.Config, error) {
+var restyClient *resty.Client
+var restyOnce sync.Once
+
+func getClient() *resty.Client {
+	restyOnce.Do(func() {
+		restyClient = resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+	})
+	return restyClient
+}
+
+func getAlertmanagerConfig(ctx context.Context) (*amconfig.Config, error) {
 	statusResp := &apimodels.AlertmanagerStatus{}
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
-	resp, err := client.R().SetHeader("content-type", "application/json").SetResult(statusResp).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.StatusUrl))
+	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetResult(statusResp).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.StatusUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query status from alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -53,15 +64,21 @@ func GetAlertmanagerConfig() (*amconfig.Config, error) {
 	return config, nil
 }
 
-func updateAlertManagerConfig(config *amconfig.Config) error {
+func updateAlertManagerConfig(ctx context.Context, config *amconfig.Config) error {
 	content, err := yaml.Marshal(config)
 	logger.Debugf("Alertmanager config to persist: %s", string(content))
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Encode config content failed")
 	}
-	err = ioutil.WriteFile(alarmconstant.AlertmanagerConfigFile, content, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.AlertmanagerConfigDir, alarmconstant.AlertmanagerConfigFile), content, 0644)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Write alertmanager config content failed")
+	}
+
+	// Write to configmap
+	err = persistToConfigMap(ctx, os.Getenv(alarmconstant.EnvConfigNamespace), os.Getenv(alarmconstant.EnvAlertmanagerConfig), alarmconstant.AlertmanagerConfigFile, string(content))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Persist alertmanager config to configmap failed")
 	}
 	return reloadAlertmanager()
 }
@@ -77,7 +94,7 @@ func reloadAlertmanager() error {
 	return nil
 }
 
-func updatePrometheusRules(configRules []rulefmt.Rule) error {
+func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) error {
 	ruleGroup := rulemodel.ConfigRuleGroup{
 		Name:  alarmconstant.OBRuleGroupName,
 		Rules: configRules,
@@ -89,12 +106,15 @@ func updatePrometheusRules(configRules []rulefmt.Rule) error {
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Encode rule content failed")
 	}
-	err = ioutil.WriteFile(alarmconstant.RuleConfigFile, content, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.RuleConfigDir, alarmconstant.RuleConfigFile), content, 0644)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Write rule content failed")
 	}
 	// Write to configmap
-
+	err = persistToConfigMap(ctx, os.Getenv(alarmconstant.EnvConfigNamespace), os.Getenv(alarmconstant.EnvPrometheusRuleConfig), alarmconstant.RuleConfigFile, string(content))
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Persist rule to configmap failed")
+	}
 	return reloadPrometheus()
 }
 

@@ -13,12 +13,11 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
-	"github.com/go-resty/resty/v2"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	"github.com/oceanbase/ob-operator/pkg/errors"
@@ -27,10 +26,9 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func ListAlerts(filter *alert.AlertFilter) ([]alert.Alert, error) {
-	client := resty.New().SetTimeout(time.Duration(alarmconstant.DefaultAlarmQueryTimeout * time.Second))
+func ListAlerts(ctx context.Context, filter *alert.AlertFilter) ([]alert.Alert, error) {
 	gettableAlerts := make(apimodels.GettableAlerts, 0)
-	resp, err := client.R().SetQueryParams(map[string]string{
+	resp, err := getClient().R().SetContext(ctx).SetQueryParams(map[string]string{
 		"active":      "true",
 		"silenced":    "true",
 		"inhibited":   "true",
@@ -72,6 +70,9 @@ func filterAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
 	}
 	if filter.Instance != nil {
 		matched = matched && filter.Instance.Equals(alert.Instance)
+	}
+	if filter.InstanceType != "" {
+		matched = matched && (filter.InstanceType == alert.Instance.Type)
 	}
 	return matched
 }

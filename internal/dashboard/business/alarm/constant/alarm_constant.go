@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	DefaultAlarmQueryTimeout = 5
+	DefaultAlarmQueryTimeout = 20
 )
 
 const (
@@ -54,13 +54,22 @@ const (
 )
 
 const (
-	RuleConfigFile = "/etc/prometheus/rules/prometheus.rules"
+	RuleConfigDir  = "/etc/prometheus/rules"
+	RuleConfigFile = "prometheus.rules"
 )
 
 const (
-	AlertmanagerConfigFile = "/etc/alertmanager/alertmanager.yml"
+	AlertmanagerConfigDir  = "/etc/alertmanager"
+	AlertmanagerConfigFile = "alertmanager.yml"
 )
 
 const (
 	RegexOR = "|"
+)
+
+const (
+	EnvConfigNamespace      = "CONFIG_NAMESPACE"
+	EnvPrometheusConfig     = "PROMETHEUS_CONFIG"
+	EnvAlertmanagerConfig   = "ALERTMANAGER_CONFIG"
+	EnvPrometheusRuleConfig = "PROMETHEUS_RULE_CONFIG"
 )
