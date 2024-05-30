@@ -65,6 +65,11 @@ const BasicLayout: React.FC = () => {
       icon: <IconFont type="tenant" />,
     },
     {
+      title: 'OBProxy',
+      link: '/obproxy',
+      icon: <IconFont type="obproxy" />,
+    },
+    {
       title: '告警',
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,

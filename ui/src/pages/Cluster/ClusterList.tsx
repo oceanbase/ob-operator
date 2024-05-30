@@ -5,7 +5,6 @@ import { Button, Card, Col, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
-import styles from './index.less';
 interface DataType {
   namespace: string;
   name: string;
@@ -161,20 +160,20 @@ export default function ClusterList({
     <Col span={24}>
       <Card
         title={
-          <div className={styles.clusterHeader}>
-            <h2 style={{ marginBottom: 0 }}>
-              {intl.formatMessage({
-                id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
-                defaultMessage: '集群列表',
-              })}
-            </h2>
-            <Button onClick={handleAddCluster} type="primary">
-              {intl.formatMessage({
-                id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-                defaultMessage: '创建集群',
-              })}
-            </Button>
-          </div>
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
+              defaultMessage: '集群列表',
+            })}
+          </h2>
+        }
+        extra={
+          <Button onClick={handleAddCluster} type="primary">
+            {intl.formatMessage({
+              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+              defaultMessage: '创建集群',
+            })}
+          </Button>
         }
       >
         <Table
