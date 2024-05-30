@@ -4928,6 +4928,9 @@ const docTemplate = `{
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
                 },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
                 "keyword": {
                     "type": "string"
                 },
@@ -5659,12 +5662,14 @@ const docTemplate = `{
         "oceanbase.OBInstanceType": {
             "type": "string",
             "enum": [
+                "unknown",
                 "obcluster",
                 "obzone",
                 "obtenant",
                 "observer"
             ],
             "x-enum-varnames": [
+                "TypeUnknown",
                 "TypeOBCluster",
                 "TypeOBZone",
                 "TypeOBTenant",
@@ -8030,7 +8035,7 @@ const docTemplate = `{
                 "createdBy",
                 "endsAt",
                 "id",
-                "instance",
+                "instances",
                 "matchers",
                 "startsAt",
                 "status",
@@ -8049,7 +8054,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"

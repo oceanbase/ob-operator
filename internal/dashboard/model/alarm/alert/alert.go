@@ -21,7 +21,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
-	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	ammodels "github.com/prometheus/alertmanager/api/v2/models"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -45,7 +45,7 @@ type Alert struct {
 	Description string                `json:"description,omitempty"`
 }
 
-func NewAlert(alert *apimodels.GettableAlert) (*Alert, error) {
+func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
 	rule := "default-rule"
 	rule, ok := alert.Labels[alarmconstant.LabelRuleName]
 	if !ok {

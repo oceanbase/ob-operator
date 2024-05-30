@@ -19,7 +19,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
-	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	ammodels "github.com/prometheus/alertmanager/api/v2/models"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -145,7 +145,7 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 	return instances
 }
 
-func NewSilencerResponse(gettableSilencer *apimodels.GettableSilence) *SilencerResponse {
+func NewSilencerResponse(gettableSilencer *ammodels.GettableSilence) *SilencerResponse {
 	matchers := make([]alarm.Matcher, 0)
 	matcherMap := make(map[string]alarm.Matcher)
 	for _, silenceMatcher := range gettableSilencer.Matchers {

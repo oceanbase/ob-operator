@@ -22,12 +22,13 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 
-	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	ammodels "github.com/prometheus/alertmanager/api/v2/models"
 	logger "github.com/sirupsen/logrus"
 )
 
 func ListAlerts(ctx context.Context, filter *alert.AlertFilter) ([]alert.Alert, error) {
-	gettableAlerts := make(apimodels.GettableAlerts, 0)
+	gettableAlerts := make(ammodels.GettableAlerts, 0)
+	// TODO is it possible to request without parameters
 	resp, err := getClient().R().SetContext(ctx).SetQueryParams(map[string]string{
 		"active":      "true",
 		"silenced":    "true",

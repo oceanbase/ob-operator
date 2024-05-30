@@ -22,7 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	amconfig "github.com/prometheus/alertmanager/config"
 	amlabels "github.com/prometheus/alertmanager/pkg/labels"
-	promcommonmodel "github.com/prometheus/common/model"
+	prommodel "github.com/prometheus/common/model"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -93,9 +93,9 @@ func (r *Route) ToAmRoute() (*amconfig.Route, error) {
 		}
 		matchers = append(matchers, ammatcher)
 	}
-	groupIntervalDuration := promcommonmodel.Duration(r.GroupIntervalMinutes * int64(time.Minute))
-	groupWaitDuration := promcommonmodel.Duration(r.GroupWaitMinutes * int64(time.Minute))
-	RepeatIntervalDuration := promcommonmodel.Duration(r.RepeatIntervalMinutes * int64(time.Minute))
+	groupIntervalDuration := prommodel.Duration(r.GroupIntervalMinutes * int64(time.Minute))
+	groupWaitDuration := prommodel.Duration(r.GroupWaitMinutes * int64(time.Minute))
+	RepeatIntervalDuration := prommodel.Duration(r.RepeatIntervalMinutes * int64(time.Minute))
 	amroute := &amconfig.Route{
 		Receiver:       r.Receiver,
 		GroupByStr:     r.AggregateLabels,

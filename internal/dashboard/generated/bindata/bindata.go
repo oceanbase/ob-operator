@@ -156,7 +156,7 @@ func internalAssetsReceiver_templatesDiscord_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/discord_config.yaml", size: 0, mode: os.FileMode(420), modTime: time.Unix(1716985488, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/discord_config.yaml", size: 0, mode: os.FileMode(420), modTime: time.Unix(1717060917, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -176,7 +176,7 @@ func internalAssetsReceiver_templatesEmail_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/email_config.yaml", size: 581, mode: os.FileMode(420), modTime: time.Unix(1716888322, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/email_config.yaml", size: 581, mode: os.FileMode(420), modTime: time.Unix(1717060917, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

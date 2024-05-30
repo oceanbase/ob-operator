@@ -30,7 +30,7 @@ func (o *OBInstance) Equals(other *OBInstance) bool {
 	case TypeOBServer:
 		return o.OBServer == other.OBServer
 	case TypeOBTenant:
-		return (o.OBServer == other.OBServer) && (o.OBTenant == other.OBTenant)
+		return (o.OBCluster == other.OBCluster) && (o.OBTenant == other.OBTenant)
 	default:
 		return false
 	}

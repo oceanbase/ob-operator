@@ -28,7 +28,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 
 	"github.com/go-resty/resty/v2"
-	apimodels "github.com/prometheus/alertmanager/api/v2/models"
+	ammodels "github.com/prometheus/alertmanager/api/v2/models"
 	amconfig "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	logger "github.com/sirupsen/logrus"
@@ -48,7 +48,7 @@ func getClient() *resty.Client {
 }
 
 func getAlertmanagerConfig(ctx context.Context) (*amconfig.Config, error) {
-	statusResp := &apimodels.AlertmanagerStatus{}
+	statusResp := &ammodels.AlertmanagerStatus{}
 	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetResult(statusResp).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.StatusUrl))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query status from alertmanager")

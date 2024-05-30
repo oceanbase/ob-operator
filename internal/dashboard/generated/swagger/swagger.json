@@ -4921,6 +4921,9 @@
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
                 },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
                 "keyword": {
                     "type": "string"
                 },
@@ -5652,12 +5655,14 @@
         "oceanbase.OBInstanceType": {
             "type": "string",
             "enum": [
+                "unknown",
                 "obcluster",
                 "obzone",
                 "obtenant",
                 "observer"
             ],
             "x-enum-varnames": [
+                "TypeUnknown",
                 "TypeOBCluster",
                 "TypeOBZone",
                 "TypeOBTenant",
@@ -8023,7 +8028,7 @@
                 "createdBy",
                 "endsAt",
                 "id",
-                "instance",
+                "instances",
                 "matchers",
                 "startsAt",
                 "status",
@@ -8042,7 +8047,7 @@
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"

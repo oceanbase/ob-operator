@@ -22,7 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
-	promcommonmodel "github.com/prometheus/common/model"
+	prommodel "github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/rulefmt"
 	promv1 "github.com/prometheus/prometheus/web/api/v1"
 )
@@ -87,7 +87,7 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 	promRule := &rulefmt.Rule{
 		Alert:       r.Name,
 		Expr:        r.Query,
-		For:         promcommonmodel.Duration(r.Duration * int(time.Second)),
+		For:         prommodel.Duration(r.Duration * int(time.Second)),
 		Labels:      bizcommon.KVsToMap(labels),
 		Annotations: annotations,
 	}

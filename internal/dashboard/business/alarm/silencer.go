@@ -19,13 +19,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-openapi/strfmt"
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/errors"
-	apimodels "github.com/prometheus/alertmanager/api/v2/models"
-	opssilence "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence"
+
+	"github.com/go-openapi/strfmt"
+	ammodels "github.com/prometheus/alertmanager/api/v2/models"
+	amsilence "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -40,7 +41,7 @@ func DeleteSilencer(ctx context.Context, id string) error {
 }
 
 func GetSilencer(ctx context.Context, id string) (*silence.SilencerResponse, error) {
-	gettableSilencer := apimodels.GettableSilence{}
+	gettableSilencer := ammodels.GettableSilence{}
 	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetResult(&gettableSilencer).Get(fmt.Sprintf("%s%s/%s", alarmconstant.AlertManagerAddress, alarmconstant.SingleSilencerUrl, id))
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Get silencer from alertmanager")
@@ -54,12 +55,12 @@ func GetSilencer(ctx context.Context, id string) (*silence.SilencerResponse, err
 func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (*silence.SilencerResponse, error) {
 	startTime := strfmt.DateTime(time.Now())
 	endTime := strfmt.DateTime(time.Unix(param.EndsAt, 0))
-	matchers := make(apimodels.Matchers, 0)
+	matchers := make(ammodels.Matchers, 0)
 	rules := strings.Join(param.Rules, alarmconstant.RegexOR)
 	falseValue := false
 	trueValue := true
 	ruleName := alarmconstant.LabelRuleName
-	matchers = append(matchers, &apimodels.Matcher{
+	matchers = append(matchers, &ammodels.Matcher{
 		IsEqual: &trueValue,
 		IsRegex: &trueValue,
 		Name:    &ruleName,
@@ -99,21 +100,21 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 	}
 	instanceValues := strings.Join(instances, alarmconstant.RegexOR)
 	if instanceType != oceanbase.TypeOBCluster {
-		matchers = append(matchers, &apimodels.Matcher{
+		matchers = append(matchers, &ammodels.Matcher{
 			IsEqual: &trueValue,
 			IsRegex: &falseValue,
 			Name:    &labelOBCluster,
 			Value:   &obcluster,
 		})
 	}
-	matchers = append(matchers, &apimodels.Matcher{
+	matchers = append(matchers, &ammodels.Matcher{
 		IsEqual: &trueValue,
 		IsRegex: &trueValue,
 		Name:    &labelInstance,
 		Value:   &instanceValues,
 	})
 	for _, m := range param.Matchers {
-		matchers = append(matchers, &apimodels.Matcher{
+		matchers = append(matchers, &ammodels.Matcher{
 			IsEqual: &trueValue,
 			IsRegex: &m.IsRegex,
 			Name:    &m.Name,
@@ -121,17 +122,17 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 		})
 	}
 
-	silencer := apimodels.Silence{
+	silencer := ammodels.Silence{
 		Comment:   &param.Comment,
 		CreatedBy: &param.CreatedBy,
 		StartsAt:  &startTime,
 		EndsAt:    &endTime,
 		Matchers:  matchers,
 	}
-	postableSilence := &apimodels.PostableSilence{
+	postableSilence := &ammodels.PostableSilence{
 		Silence: silencer,
 	}
-	okBody := opssilence.PostSilencesOKBody{}
+	okBody := amsilence.PostSilencesOKBody{}
 	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil || resp.StatusCode() != http.StatusOK {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
@@ -142,10 +143,10 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 		return nil, errors.Newf(errors.ErrExternal, "Create silencer in alertmanager got unexpected status: %d", resp.StatusCode())
 	}
 	state := string(silence.StateActive)
-	gettableSilencer := apimodels.GettableSilence{
+	gettableSilencer := ammodels.GettableSilence{
 		Silence: silencer,
 		ID:      &okBody.SilenceID,
-		Status: &apimodels.SilenceStatus{
+		Status: &ammodels.SilenceStatus{
 			State: &state,
 		},
 		UpdatedAt: &startTime,
@@ -155,7 +156,7 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 }
 
 func ListSilencers(ctx context.Context, filter *silence.SilencerFilter) ([]silence.SilencerResponse, error) {
-	gettableSilencers := make(apimodels.GettableSilences, 0)
+	gettableSilencers := make(ammodels.GettableSilences, 0)
 	req := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json")
 	resp, err := req.SetResult(&gettableSilencers).Get(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
 	if err != nil {

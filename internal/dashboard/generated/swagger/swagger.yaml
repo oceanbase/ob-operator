@@ -63,6 +63,8 @@ definitions:
         type: integer
       instance:
         $ref: '#/definitions/oceanbase.OBInstance'
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
       serverity:
@@ -562,12 +564,14 @@ definitions:
     type: object
   oceanbase.OBInstanceType:
     enum:
+    - unknown
     - obcluster
     - obzone
     - obtenant
     - observer
     type: string
     x-enum-varnames:
+    - TypeUnknown
     - TypeOBCluster
     - TypeOBZone
     - TypeOBTenant
@@ -2247,7 +2251,7 @@ definitions:
         type: integer
       id:
         type: string
-      instance:
+      instances:
         items:
           $ref: '#/definitions/oceanbase.OBInstance'
         type: array
@@ -2266,7 +2270,7 @@ definitions:
     - createdBy
     - endsAt
     - id
-    - instance
+    - instances
     - matchers
     - startsAt
     - status
