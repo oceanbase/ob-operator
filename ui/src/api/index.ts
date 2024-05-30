@@ -16,7 +16,7 @@ globalAxios.interceptors.response.use((res) => {
 });
 
 const config = new Configuration({
-  basePath: process.env.NODE_ENV === 'development' ? location.origin : '/',
+  basePath: location.origin,
   apiKey: () => document.cookie,
   baseOptions: {
     withCredentials: true,
