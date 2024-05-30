@@ -87,6 +87,14 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		return nil, field.Invalid(field.NewPath("spec").Child("setParameters"), r.Spec.SetParameters, "setParameters must be set for cluster operation of type setParameters")
 	}
 
+	if r.Spec.AddZones != nil {
+		for _, zone := range r.Spec.AddZones {
+			if zone.Replica <= 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("addZones").Child("replica"), zone.Replica, "replica must be greater than 0")
+			}
+		}
+	}
+
 	ctx := context.Background()
 	obcluster := OBCluster{}
 	err := clt.Get(ctx, types.NamespacedName{
@@ -102,6 +110,26 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 	if !r.Spec.Force && obcluster.Status.Status != "running" {
 		return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster is currently operating, please use force to override")
 	}
+
+	if r.Spec.AdjustReplicas != nil {
+		zoneReplicaMap := make(map[string]int)
+		for _, z := range obcluster.Spec.Topology {
+			zoneReplicaMap[z.Zone] = z.Replica
+		}
+		for _, alter := range r.Spec.AdjustReplicas {
+			if alter.To <= 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("to"), alter.To, "replica must be greater than 0")
+			}
+			if alter.By < 0 {
+				for _, zoneName := range alter.Zones {
+					if zoneReplicaMap[zoneName]-alter.By <= 0 {
+						return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("by"), alter.By, "number of replicas to scale down must be less than current replica")
+					}
+				}
+			}
+		}
+	}
+
 	if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeExpandStorageSize)) && r.Spec.ExpandStorageSize != nil {
 		if r.Spec.ExpandStorageSize.DataStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
 			return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("dataStorage"), r.Spec.ExpandStorageSize, "storage size can not be less than current size")

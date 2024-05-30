@@ -5,6 +5,6 @@ import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
 	tModifyClusterSpec ttypes.TaskName = "modify cluster spec"
-	tWaitForCluster ttypes.TaskName = "wait for cluster"
-	tRestartServers ttypes.TaskName = "restart servers"
+	tWaitForCluster    ttypes.TaskName = "wait for cluster"
+	tRestartServers    ttypes.TaskName = "restart servers"
 )

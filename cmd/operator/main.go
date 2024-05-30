@@ -214,8 +214,9 @@ func main() {
 		os.Exit(1)
 	}
 	if err = (&controller.OBClusterOperationReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBClusterOperationControllerName)),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "OBClusterOperation")
 		os.Exit(1)

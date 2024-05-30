@@ -14,6 +14,7 @@ package obclusteroperation
 
 import (
 	"errors"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -45,13 +46,13 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		return err
 	}
 	origin := obcluster.DeepCopy()
-	switch m.Resource.Spec.Type {
-	case constants.ClusterOpTypeAddZones:
+	switch strings.ToLower(string(m.Resource.Spec.Type)) {
+	case strings.ToLower(string(constants.ClusterOpTypeAddZones)):
 		if len(m.Resource.Spec.AddZones) == 0 {
 			return errors.New("AddZones is empty")
 		}
 		obcluster.Spec.Topology = append(obcluster.Spec.Topology, m.Resource.Spec.AddZones...)
-	case constants.ClusterOpTypeDeleteZones:
+	case strings.ToLower(string(constants.ClusterOpTypeDeleteZones)):
 		if len(m.Resource.Spec.DeleteZones) == 0 {
 			return errors.New("DeleteZones is empty")
 		}
@@ -66,7 +67,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			}
 		}
 		obcluster.Spec.Topology = remainList
-	case constants.ClusterOpTypeAdjustReplicas:
+	case strings.ToLower(string(constants.ClusterOpTypeAdjustReplicas)):
 		if len(m.Resource.Spec.AdjustReplicas) == 0 {
 			return errors.New("AdjustReplicas is empty")
 		}
@@ -85,7 +86,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 				}
 			}
 		}
-	case constants.ClusterOpTypeRestartOBServers:
+	case strings.ToLower(string(constants.ClusterOpTypeRestartOBServers)):
 		if m.Resource.Spec.RestartOBServers == nil {
 			return errors.New("RestartOBServers is empty")
 		}
@@ -101,7 +102,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		if m.Resource.Spec.RestartOBServers.AddingBackupVolume != nil {
 			obcluster.Spec.BackupVolume = m.Resource.Spec.RestartOBServers.AddingBackupVolume
 		}
-	case constants.ClusterOpTypeUpgrade:
+	case strings.ToLower(string(constants.ClusterOpTypeUpgrade)):
 		if m.Resource.Spec.Upgrade == nil {
 			return errors.New("Upgrade is empty")
 		}
@@ -109,7 +110,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			return errors.New("Upgrading image is empty")
 		}
 		obcluster.Spec.OBServerTemplate.Image = m.Resource.Spec.Upgrade.Image
-	case constants.ClusterOpTypeExpandStorageSize:
+	case strings.ToLower(string(constants.ClusterOpTypeExpandStorageSize)):
 		if m.Resource.Spec.ExpandStorageSize == nil {
 			return errors.New("ModifyStorageSize is empty")
 		}
@@ -123,7 +124,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		if mutation.RedoLogStorage != nil {
 			obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = *mutation.RedoLogStorage
 		}
-	case constants.ClusterOpTypeModifyStorageClass:
+	case strings.ToLower(string(constants.ClusterOpTypeModifyStorageClass)):
 		if m.Resource.Spec.ModifyStorageClass == nil {
 			return errors.New("ModifyStorageClass is empty")
 		}
@@ -137,7 +138,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		if mutation.RedoLogStorage != "" {
 			obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = mutation.RedoLogStorage
 		}
-	case constants.ClusterOpTypeSetParameters:
+	case strings.ToLower(string(constants.ClusterOpTypeSetParameters)):
 		if m.Resource.Spec.SetParameters == nil {
 			return errors.New("setParameters is empty")
 		}
@@ -146,9 +147,9 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			newParamMap[v.Name] = v.Value
 		}
 		existingMap := make(map[string]struct{})
-		for _, v := range obcluster.Spec.Parameters {
-			if _, ok := newParamMap[v.Name]; ok {
-				v.Value = newParamMap[v.Name]
+		for i, v := range obcluster.Spec.Parameters {
+			if val, ok := newParamMap[v.Name]; ok {
+				obcluster.Spec.Parameters[i].Value = val
 			}
 			existingMap[v.Name] = struct{}{}
 		}

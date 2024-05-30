@@ -14,6 +14,7 @@ package obclusteroperation
 
 import (
 	"context"
+	"strings"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -140,7 +141,7 @@ func (m *OBClusterOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	status := m.Resource.Status.Status
 	switch status {
 	case constants.ClusterOpStatusRunning:
-		if m.Resource.Spec.Type == constants.ClusterOpTypeRestartOBServers &&
+		if strings.EqualFold(string(m.Resource.Spec.Type), string(constants.ClusterOpTypeRestartOBServers)) &&
 			m.Resource.Spec.RestartOBServers != nil && m.Resource.Spec.RestartOBServers.RestartOnly {
 			taskFlow = genRestartOBServersOnlyFlow(m)
 		} else {
