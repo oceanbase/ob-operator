@@ -1020,7 +1020,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-			Resources: corev1.ResourceRequirements{
+			Resources: corev1.VolumeResourceRequirements{
 				Requests: requestsResources,
 			},
 			StorageClassName: &storageSpec.StorageClass,
