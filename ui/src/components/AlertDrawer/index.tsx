@@ -17,6 +17,7 @@ export default function AlertDrawer({
       style={{ paddingBottom: 60 }}
       closable={false}
       onClose={onClose}
+      maskClosable={false}
       {...props}
     >
       {props.children}
