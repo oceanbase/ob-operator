@@ -29,7 +29,7 @@ const (
 	fDeleteOBClusterFinalizer        ttypes.FlowName = "delete obcluster finalizer"
 	fScaleUpOBZones                  ttypes.FlowName = "scale up obzones"
 	fExpandPVC                       ttypes.FlowName = "expand pvc for obcluster"
-	fMountBackupVolume               ttypes.FlowName = "mount backup volume for obcluster"
+	fModifyServerTemplate            ttypes.FlowName = "modify server template"
 	fRollingUpdateOBServers          ttypes.FlowName = "rolling update observers"
 )
 
@@ -63,7 +63,7 @@ const (
 	tCreateServiceForMonitor    ttypes.TaskName = "create service for monitor"
 	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
-	tMountBackupVolume          ttypes.TaskName = "mount backup volume"
+	tModifyServerTemplate       ttypes.TaskName = "modify pod template"
 	tCheckEnvironment           ttypes.TaskName = "check environment"
 	tAdjustParameters           ttypes.TaskName = "adjust parameters"
 	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"

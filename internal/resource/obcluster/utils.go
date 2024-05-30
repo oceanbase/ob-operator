@@ -58,6 +58,10 @@ func (m *OBClusterManager) checkIfBackupVolumeAdded(obzone *v1alpha1.OBZone) boo
 	return obzone.Spec.BackupVolume == nil && m.OBCluster.Spec.BackupVolume != nil
 }
 
+func (m *OBClusterManager) checkIfMonitorAdded(obzone *v1alpha1.OBZone) bool {
+	return obzone.Spec.MonitorTemplate == nil && m.OBCluster.Spec.MonitorTemplate != nil
+}
+
 func (m *OBClusterManager) retryUpdateStatus() error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obcluster, err := m.getOBCluster()
@@ -186,8 +190,9 @@ func (m *OBClusterManager) changeZonesWhenUpdatingOBServers(obzone *v1alpha1.OBZ
 	obzone.Spec.OBServerTemplate = m.OBCluster.Spec.OBServerTemplate
 }
 
-func (m *OBClusterManager) changeZonesWhenMountingBackupVolume(obzone *v1alpha1.OBZone) {
+func (m *OBClusterManager) changeZonesWhenModifyingServerTemplate(obzone *v1alpha1.OBZone) {
 	obzone.Spec.BackupVolume = m.OBCluster.Spec.BackupVolume
+	obzone.Spec.MonitorTemplate = m.OBCluster.Spec.MonitorTemplate
 }
 
 func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, status string, timeoutSeconds int) tasktypes.TaskFunc {

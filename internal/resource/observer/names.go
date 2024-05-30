@@ -27,7 +27,7 @@ const (
 	fAnnotateOBServerPod            ttypes.FlowName = "annotate observer pod"
 	fScaleUpOBServer                ttypes.FlowName = "scale up observer"
 	fExpandPVC                      ttypes.FlowName = "expand pvc for observer"
-	fMountBackupVolume              ttypes.FlowName = "mount backup volume for observer"
+	fModifyPodTemplate              ttypes.FlowName = "modify pod template"
 )
 
 // observer tasks
@@ -49,6 +49,4 @@ const (
 	tWaitForPodDeleted            ttypes.TaskName = "wait for pod being deleted"
 	tExpandPVC                    ttypes.TaskName = "expand pvc"
 	tWaitForPVCResized            ttypes.TaskName = "wait for pvc being resized"
-	tMountBackupVolume            ttypes.TaskName = "mount backup volume"
-	tWaitForBackupVolumeMounted   ttypes.TaskName = "wait for backup volume to be mounted"
 )

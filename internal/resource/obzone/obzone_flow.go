@@ -131,11 +131,11 @@ func genFlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genMountBackupVolumeFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
+func genModifyServerTemplateFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMountBackupVolume,
-			Tasks:        []tasktypes.TaskName{tMountBackupVolume, tWaitForOBServerMounting, tWaitOBServerRunning},
+			Name:         fModifyServerTemplate,
+			Tasks:        []tasktypes.TaskName{tModifyPodTemplate, tWaitForOBServerTemplateModifying, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
 	}

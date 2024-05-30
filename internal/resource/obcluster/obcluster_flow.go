@@ -185,12 +185,12 @@ func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genMountBackupVolumeFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
+func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fMountBackupVolume,
+			Name: fModifyServerTemplate,
 			Tasks: []tasktypes.TaskName{
-				tMountBackupVolume,
+				tModifyServerTemplate,
 				tWaitOBZoneRunning,
 			},
 			TargetStatus: clusterstatus.Running,

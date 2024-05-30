@@ -115,17 +115,14 @@ func (m *OBServerManager) UpdateStatus() error {
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
 			if m.OBServer.SupportStaticIP() {
-				if len(pod.Spec.Containers) > 0 {
-					tmplRes := m.OBServer.Spec.OBServerTemplate.Resource
-					containerRes := pod.Spec.Containers[0].Resources.Limits
-					if containerRes.Cpu().Cmp(tmplRes.Cpu) != 0 || containerRes.Memory().Cmp(tmplRes.Memory) != 0 {
-						m.OBServer.Status.Status = serverstatus.ScaleUp
-					}
+				if m.checkIfResourceChanged(pod) {
+					m.OBServer.Status.Status = serverstatus.ScaleUp
+				}
+				if m.checkIfBackupVolumeAdded(pod) || m.checkIfMonitorAdded(pod) {
+					m.OBServer.Status.Status = serverstatus.ModifyingPodTemplate
 				}
 			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
-			} else if m.checkIfBackupVolumeAdded(pod) {
-				m.OBServer.Status.Status = serverstatus.MountBackupVolume
 			}
 		}
 
@@ -226,9 +223,8 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genScaleUpOBServerFlow(m)
 	case serverstatus.ExpandPVC:
 		taskFlow = genExpandPVCFlow(m)
-	case serverstatus.MountBackupVolume:
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow when observer need to mount backup volume")
-		taskFlow = genMountBackupVolumeFlow(m)
+	case serverstatus.ModifyingPodTemplate:
+		taskFlow = genModifyPodTemplateFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for observer")
 		return nil, nil

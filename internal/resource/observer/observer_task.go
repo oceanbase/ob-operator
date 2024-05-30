@@ -524,11 +524,3 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 	}
 	return nil
 }
-
-func MountBackupVolume(_ *OBServerManager) tasktypes.TaskError {
-	return nil
-}
-
-func WaitForBackupVolumeMounted(_ *OBServerManager) tasktypes.TaskError {
-	return nil
-}

@@ -26,7 +26,7 @@ func init() {
 	taskMap.Register(tCheckMigration, CheckMigration)
 	taskMap.Register(tScaleUpOBZones, ScaleUpOBZones)
 	taskMap.Register(tExpandPVC, ExpandPVC)
-	taskMap.Register(tMountBackupVolume, MountBackupVolume)
+	taskMap.Register(tModifyServerTemplate, ModifyServerTemplate)
 	taskMap.Register(tWaitOBZoneBootstrapReady, WaitOBZoneBootstrapReady)
 	taskMap.Register(tWaitOBZoneRunning, WaitOBZoneRunning)
 	taskMap.Register(tRollingUpdateOBZones, RollingUpdateOBZones)

@@ -117,10 +117,10 @@ func genExpandPVCFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genMountBackupVolumeFlow(_ *OBServerManager) *tasktypes.TaskFlow {
+func genModifyPodTemplateFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMountBackupVolume,
+			Name:         fModifyPodTemplate,
 			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBPod, tWaitOBServerReady},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{

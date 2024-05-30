@@ -25,6 +25,6 @@ const (
 	FinalizerFinished    = "finalizer finished"
 	ScaleUp              = "scale up"
 	ExpandPVC            = "expand pvc"
-	MountBackupVolume    = "mount backup volume"
+	ModifyServerTemplate = "modify server template"
 	RollingUpdateServers = "rolling update servers"
 )

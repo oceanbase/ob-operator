@@ -107,8 +107,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genScaleUpOBZonesFlow(m)
 	case clusterstatus.ExpandPVC:
 		taskFlow = genExpandPVCFlow(m)
-	case clusterstatus.MountBackupVolume:
-		taskFlow = genMountBackupVolumeFlow(m)
+	case clusterstatus.ModifyServerTemplate:
+		taskFlow = genModifyServerTemplateFlow(m)
 	case clusterstatus.RollingUpdateOBServers:
 		taskFlow = genRollingUpdateOBZonesFlow(m)
 	default:
@@ -196,8 +196,8 @@ func (m *OBClusterManager) UpdateStatus() error {
 					m.OBCluster.Status.Status = clusterstatus.ExpandPVC
 					break outer
 				}
-				if m.checkIfBackupVolumeAdded(&obzone) {
-					m.OBCluster.Status.Status = clusterstatus.MountBackupVolume
+				if m.checkIfBackupVolumeAdded(&obzone) || m.checkIfMonitorAdded(&obzone) {
+					m.OBCluster.Status.Status = clusterstatus.ModifyServerTemplate
 					break outer
 				}
 				for _, zone := range m.OBCluster.Spec.Topology {

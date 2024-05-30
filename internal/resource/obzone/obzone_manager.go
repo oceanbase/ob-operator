@@ -113,8 +113,8 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genScaleUpOBServersFlow(m)
 	case zonestatus.ExpandPVC:
 		taskFlow = genFlowExpandPVC(m)
-	case zonestatus.MountBackupVolume:
-		taskFlow = genMountBackupVolumeFlow(m)
+	case zonestatus.ModifyServerTemplate:
+		taskFlow = genModifyServerTemplateFlow(m)
 	case zonestatus.RollingUpdateServers:
 		taskFlow = genRollingReplaceServersFlow(m)
 	case zonestatus.Upgrade:
@@ -234,8 +234,8 @@ func (m *OBZoneManager) UpdateStatus() error {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break
 				}
-				if m.checkIfBackupVolumeAdded(&observer) {
-					m.OBZone.Status.Status = zonestatus.MountBackupVolume
+				if m.checkIfBackupVolumeAdded(&observer) || m.checkIfMonitorAdded(&observer) {
+					m.OBZone.Status.Status = zonestatus.ModifyServerTemplate
 					break
 				}
 			}

@@ -981,8 +981,8 @@ func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {
 	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
-func MountBackupVolume(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+func ModifyServerTemplate(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenModifyingServerTemplate, zonestatus.ModifyServerTemplate, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {

@@ -64,6 +64,10 @@ func (m *OBZoneManager) checkIfBackupVolumeAdded(observer *v1alpha1.OBServer) bo
 	return observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil
 }
 
+func (m *OBZoneManager) checkIfMonitorAdded(observer *v1alpha1.OBServer) bool {
+	return observer.Spec.MonitorTemplate == nil && m.OBZone.Spec.MonitorTemplate != nil
+}
+
 func (m *OBZoneManager) retryUpdateStatus() error {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		obzone, err := m.getOBZone()
