@@ -20,11 +20,7 @@ import (
 	"context"
 	"strings"
 
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-
-	"github.com/oceanbase/ob-operator/api/constants"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -32,6 +28,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	"github.com/oceanbase/ob-operator/api/constants"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 // log is for logging in this package.
@@ -60,7 +59,6 @@ func (r *OBClusterOperation) Default() {
 		obclusteroperationlog.Info("obcluster not found", "name", r.Spec.OBCluster)
 		return
 	}
-
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

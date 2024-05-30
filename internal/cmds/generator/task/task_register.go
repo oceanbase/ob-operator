@@ -122,17 +122,20 @@ func main() {
 	})
 	if err != nil {
 		log.Printf("Failed to execute template: %v", err)
+		return
 	}
 
 	nameTmpl, err := template.New("taskName").Parse(taskNameGenTemplate)
 	if err != nil {
-		log.Fatalf("Failed to parse template: %v", err)
+		log.Printf("Failed to parse template: %v", err)
+		return
 	}
 
 	outputFile2 := sourceFile[:len(sourceFile)-3] + "_taskname_gen.go"
 	f2, err := os.Create(outputFile2)
 	if err != nil {
-		log.Fatalf("Failed to create output file: %v", err)
+		log.Printf("Failed to create output file: %v", err)
+		return
 	}
 	defer f2.Close()
 

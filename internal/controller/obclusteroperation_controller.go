@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	res "github.com/oceanbase/ob-operator/internal/resource/obclusteroperation"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -77,6 +76,6 @@ func (r *OBClusterOperationReconciler) Reconcile(ctx context.Context, req ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBClusterOperationReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&oceanbasev1alpha1.OBClusterOperation{}).
+		For(&v1alpha1.OBClusterOperation{}).
 		Complete(r)
 }
