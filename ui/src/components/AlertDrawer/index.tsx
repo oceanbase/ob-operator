@@ -15,7 +15,7 @@ export default function AlertDrawer({
   return (
     <Drawer
       style={{ paddingBottom: 60 }}
-      closable={false}
+      closeIcon={false}
       onClose={onClose}
       maskClosable={false}
       {...props}
