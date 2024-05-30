@@ -18,6 +18,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+
 	amconfig "github.com/prometheus/alertmanager/config"
 )
 

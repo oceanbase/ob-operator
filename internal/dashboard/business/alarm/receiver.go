@@ -20,9 +20,9 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/pkg/errors"
-	logger "github.com/sirupsen/logrus"
 
 	amconfig "github.com/prometheus/alertmanager/config"
+	logger "github.com/sirupsen/logrus"
 )
 
 var receiverConfigFiles = map[receiver.ReceiverType]string{

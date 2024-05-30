@@ -23,6 +23,7 @@ import (
 	metricconst "github.com/oceanbase/ob-operator/internal/dashboard/business/metric/constant"
 	rulemodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/pkg/errors"
+
 	"github.com/prometheus/prometheus/model/rulefmt"
 	promv1 "github.com/prometheus/prometheus/web/api/v1"
 	logger "github.com/sirupsen/logrus"

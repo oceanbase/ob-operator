@@ -46,7 +46,6 @@ type Alert struct {
 }
 
 func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
-	rule := "default-rule"
 	rule, ok := alert.Labels[alarmconstant.LabelRuleName]
 	if !ok {
 		// TODO: return error
