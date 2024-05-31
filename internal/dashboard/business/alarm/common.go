@@ -15,7 +15,6 @@ package alarm
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"sync"
@@ -70,7 +69,7 @@ func updateAlertManagerConfig(ctx context.Context, config *amconfig.Config) erro
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Encode config content failed")
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.AlertmanagerConfigDir, alarmconstant.AlertmanagerConfigFile), content, 0644)
+	err = os.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.AlertmanagerConfigDir, alarmconstant.AlertmanagerConfigFile), content, 0644)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Write alertmanager config content failed")
 	}
@@ -106,7 +105,7 @@ func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) erro
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Encode rule content failed")
 	}
-	err = ioutil.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.RuleConfigDir, alarmconstant.RuleConfigFile), content, 0644)
+	err = os.WriteFile(fmt.Sprintf("%s/%s", alarmconstant.RuleConfigDir, alarmconstant.RuleConfigFile), content, 0644)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Write rule content failed")
 	}
