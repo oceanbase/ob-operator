@@ -1,18 +1,31 @@
 import { alert } from '@/api';
+import type { RuleRule } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabel from '@/components/InputLabel';
 import { LEVER_OPTIONS_ALARM, SERVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
-import { Col, Form, Input, InputNumber, Row, Select, Tag } from 'antd';
+import {
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Radio,
+  Row,
+  Select,
+  Tag,
+  message,
+} from 'antd';
 import { useEffect } from 'react';
 
 type AlertRuleDrawerProps = {
   ruleName?: string;
+  submitCallback?: () => void;
 } & DrawerProps;
 const { TextArea } = Input;
 export default function RuleDrawerForm({
   ruleName,
+  submitCallback,
   ...props
 }: AlertRuleDrawerProps) {
   const [form] = Form.useForm();
@@ -23,6 +36,15 @@ export default function RuleDrawerForm({
         value: '',
       },
     ],
+    instanceType: 'obcluster',
+  };
+  const submit = (values: RuleRule) => {
+    alert.createOrUpdateRule(values).then(({ successful }) => {
+      if (successful) {
+        message.success('操作成功！');
+        submitCallback && submitCallback();
+      }
+    });
   };
 
   useEffect(() => {
@@ -46,10 +68,30 @@ export default function RuleDrawerForm({
         preserve={false}
         style={{ marginBottom: 64 }}
         layout="vertical"
-        validateTrigger='onBlur'
+        onFinish={submit}
+        validateTrigger="onBlur"
         form={form}
       >
         <Row gutter={[24, 24]}>
+          <Col span={24}>
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              name={'instanceType'}
+              label="屏蔽对象类型"
+            >
+              <Radio.Group>
+                <Radio value="obcluster"> 集群 </Radio>
+                <Radio value="obtenant"> 租户 </Radio>
+                <Radio value="observer"> OBServer </Radio>
+              </Radio.Group>
+            </Form.Item>
+          </Col>
+
           <Col span={16}>
             <Form.Item
               name={'name'}
@@ -180,7 +222,6 @@ export default function RuleDrawerForm({
                 <div>
                   <span>标签</span>
                   <QuestionCircleOutlined />
-                  <span style={{ color: 'rgba(0,0,0,0.45)' }}>(可选)</span>
                 </div>
               }
             >

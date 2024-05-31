@@ -7,7 +7,7 @@ import type {
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
-import { clone, flatten, uniq } from 'lodash';
+import { clone, flatten, uniq, difference} from 'lodash';
 
 /**
  *
@@ -83,6 +83,15 @@ export const getSelectList = (
  *      obtenant:'tenantb'
  *    }
  * ]
+ * {
+ *  obcluster:['clustera'],
+ *  obtenant:['tenanta','tenantb']
+ *  type:'obtenant'
+ * } =>
+ * [
+ *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenanta'},
+ *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenantb'}
+ * ]
  */
 export const formatShieldSubmitData = (
   formData: Alert.ShieldDrawerForm,
@@ -105,24 +114,22 @@ export const formatShieldSubmitData = (
     cloneFormData.instances['obcluster'] = selectList;
   }
 
+  const tempInstances = selectInstance?.map((item)=>({
+    type:cloneFormData.instances.type,
+    [cloneFormData.instances.type]:item,
+  }))||[];
+  
+  tempInstances.forEach((item)=>{
+    const diffKey = difference(Object.keys(cloneFormData.instances),Object.keys(item));
+    for(const key of diffKey){
+      item[key] = cloneFormData.instances[key as Alert.InstancesKey]![0]
+    }
+  })
+
   return {
     ...cloneFormData,
     matchers: cloneFormData.matchers || [],
-    instances: flatten(
-      Object.keys(cloneFormData.instances)
-        .filter((key) => key !== 'type')
-        .map((key) => {
-          return (
-            cloneFormData.instances[key as Alert.InstancesKey]?.map(
-              (value: string) =>
-                ({
-                  type: key,
-                  [key]: value,
-                } as OceanbaseOBInstance),
-            ) || []
-          );
-        }),
-    ),
+    instances: tempInstances,
     endsAt: Math.floor(cloneFormData.endsAt.valueOf() / 1000),
     startsAt: Math.floor(Date.now() / 1000),
     createdBy: localStorage.getItem('user') || '',

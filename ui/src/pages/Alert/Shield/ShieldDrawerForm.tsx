@@ -30,6 +30,7 @@ interface ShieldDrawerProps extends DrawerProps {
   id?: string;
   initialValues?: Alert.ShieldDrawerInitialValues;
   onClose: () => void;
+  submitCallback?: () => void;
 }
 
 const { TextArea } = Input;
@@ -38,6 +39,7 @@ export default function ShieldDrawerForm({
   id,
   onClose,
   initialValues,
+  submitCallback,
   ...props
 }: ShieldDrawerProps) {
   const [form] = Form.useForm<Alert.ShieldDrawerForm>();
@@ -81,6 +83,7 @@ export default function ShieldDrawerForm({
       .then(({ successful }) => {
         if (successful) {
           message.success('操作成功!');
+          submitCallback && submitCallback();
           onClose();
         }
       });
@@ -119,7 +122,16 @@ export default function ShieldDrawerForm({
         layout="vertical"
         initialValues={newInitialValues}
       >
-        <Form.Item name={['instances', 'type']} label="屏蔽对象类型">
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请选择',
+            },
+          ]}
+          name={['instances', 'type']}
+          label="屏蔽对象类型"
+        >
           <Radio.Group>
             <Radio value="obcluster"> 集群 </Radio>
             <Radio value="obtenant"> 租户 </Radio>

@@ -7,7 +7,6 @@ import type {
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
-import { sortAlarmShielding } from '../helper';
 import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -16,6 +15,7 @@ import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
+import { sortAlarmShielding } from '../helper';
 import ShieldDrawerForm from './ShieldDrawerForm';
 const { Text } = Typography;
 
@@ -53,16 +53,22 @@ export default function Shield() {
       title: '屏蔽应用/对象类型',
       dataIndex: 'instances',
       key: 'type',
-      render: (instances: OceanbaseOBInstance) => (
-        <Text>{instances.type || '-'}</Text>
+      render: (instances: OceanbaseOBInstance[]) => (
+        <Text>{instances[0].type || '-'}</Text>
       ),
     },
     {
       title: '屏蔽对象',
       dataIndex: 'instances',
-      key: 'targetObj',
-      render: (instances: OceanbaseOBInstance) => (
-        <Text>{instances[instances.type] || '-'}</Text>
+      key: 'instances',
+      width:300,
+      render: (instances: OceanbaseOBInstance[]) => (
+        <Text>
+          {instances.map((instance) => {
+            delete instance.type;
+            return <pre>{JSON.stringify(instance, null,2)}</pre>;
+          }) || '-'}
+        </Text>
       ),
     },
     {
@@ -177,6 +183,7 @@ export default function Shield() {
         width={880}
         initialValues={initialValues}
         onClose={drawerClose}
+        submitCallback={refresh}
         open={drawerOpen}
         id={editShieldId}
       />
