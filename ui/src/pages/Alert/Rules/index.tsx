@@ -161,6 +161,7 @@ export default function Rules() {
         open={drawerOpen}
         ruleName={editRuleName}
         onClose={drawerClose}
+        submitCallback={refresh}
       />
     </Space>
   );

@@ -115,6 +115,7 @@ export default function Channel() {
         status={drawerStatus}
         setStatus={setDrawerStatus}
         name={clickedChannelName}
+        submitCallback={refresh}
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
       />

@@ -112,6 +112,7 @@ export default function Subscriptions() {
         width={880}
         recevierNames={listRoutes?.map((item) => item.receiver) || []}
         onClose={drawerClose}
+        submitCallback={refresh}
         open={drawerOpen}
         id={clickedId}
       />
