@@ -1,0 +1,11 @@
+api_url: 'https://api.telegram.org'  # The base URL for the Telegram API
+bot_token: 'YOUR_TELEGRAM_BOT_TOKEN'
+chat_id: 'YOUR_CHAT_ID'
+send_resolved: true
+# disable_notifications: false  # Disable notifications for messages
+# http_config:
+#   proxy_url: 'http://your-proxy-url'
+#   basic_auth:
+#     username: 'your-username'
+#     password: 'your-password'
+# message: '{{ template "telegram.default.message" . }}'  # Custom message template

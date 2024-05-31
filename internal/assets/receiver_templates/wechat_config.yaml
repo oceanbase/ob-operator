@@ -1,0 +1,10 @@
+api_secret: 'your-api-secret'
+corp_id: 'your-corp-id'
+agent_id: 'your-agent-id'
+to_party: 'your-to-party-id'
+# Less frequently used options:
+# api_url: 'https://qyapi.weixin.qq.com/cgi-bin/' # WeChat API URL, usually doesn't need changing
+# to_user: 'your-to-user-id' # Overrides to_party, send to specific user ID
+# to_tag: 'your-to-tag-id' # Overrides to_party, send to specific user tag
+# message: '{{ template "wechat.default.message" . }}' # Custom message template
+send_resolved: true

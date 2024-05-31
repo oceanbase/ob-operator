@@ -1,0 +1,16 @@
+user_key: 'YOUR_PUSHOVER_USER_KEY'
+token: 'YOUR_PUSHOVER_API_TOKEN'
+send_resolved: true
+# title: 'Prometheus Alert'  # Title of the Pushover message
+# message: '{{ template "pushover.default.message" . }}'  # Custom message template
+# url: 'http://example.com'  # URL to be included with the message
+# url_title: 'More Info'  # Title for the URL
+# priority: '{{ if eq .CommonLabels.severity "critical" }}2{{ else }}0{{ end }}'  # Priority of the message (range -2 to 2)
+# retry: '30s'  # Retry interval for emergency-priority messages (required if priority is 2)
+# expire: '1h'  # Expiration time for emergency-priority messages (required if priority is 2)
+# sound: 'pushover'  # The sound to play when receiving the message
+# http_config:
+#   proxy_url: 'http://your-proxy-url'  # URL of the proxy server
+#   basic_auth:
+#     username: 'your-username'  # Username for basic auth
+#     password: 'your-password'  # Password for basic auth

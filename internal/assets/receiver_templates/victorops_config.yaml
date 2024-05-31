@@ -1,0 +1,12 @@
+api_url: 'your api url'
+routing_key: 'YOUR_ROUTING_KEY'
+message_type: '{{ .CommonLabels.severity }}'
+entity_display_name: '{{ .CommonAnnotations.summary }}'
+state_message: '{{ template "victorops.default.message" . }}'
+send_resolved: true
+# monitoring_tool: 'Prometheus'  # Name of the monitoring tool
+# labels: #Additional labels to include in the alert
+#   source: '{{ .CommonLabels.source }}'
+#   alert_name: '{{ .CommonLabels.alertname }}'
+# custom_fields: # Custom fields for the alert
+#   product: '{{ .CommonLabels.product }}'

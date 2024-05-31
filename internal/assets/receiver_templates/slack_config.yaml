@@ -1,0 +1,14 @@
+api_url: 'your slack webhook url'
+channel: 'your slack channel'
+username: 'username'
+
+# icon_emoji: ':alert:'
+send_resolved: true
+# text: ''
+# title: ''
+# fallback: ''
+# pretext: ''
+# color: ''
+# footer: ''
+# footer_icon: ''
+# ts: '{{ .StartsAt.Unix }}'

@@ -1,25 +1,13 @@
-- type: email
-  template:
-    to: 'your-email@example.com'
-    from: 'alertmanager@example.com'
-    # hello: "hello"
-    smarthost: 'smtp.example.com:587'
-    auth_username: 'alertmanager'
-    auth_identity: 'alertmanager'
-    auth_password: 'password'
-    # auth_password_file: ''
-    auth_secret: 'secret'
-    headers: "headers"
-    html: ""
-    text: ""
-    require_tls: false
-    tls_config: ""
-      ca: ""
-      cert: ""
-      ca_file: ""
-      cert_file: ""
-      key_file: ""
-      server_name: ""
-      insecure_skip_verify: ""
-      min_version: ""
-      max_version: ""
+to: "your email address"
+smarthost: 
+  host: "address of your email provider"
+  port: "port of your email provider"
+auth_username: "username"
+auth_password: "password"
+# auth_secret: "secret"
+# auth_identity: "alertmanager"
+# auth_password_file: ""
+send_resolved: true
+# from: "<replace with the address of your sender address>"
+# html: ""
+# text: ""
