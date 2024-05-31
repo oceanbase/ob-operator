@@ -70,20 +70,6 @@ export const getSelectList = (
  *
  * 2.format instances
  * {
- *    type:'obtenant',
- *    obtenant:['tenanta','tenantb']
- * } =>
- * [
- *    {
- *      type:'obtenant',
- *      obtenant:'tenanta'
- *    },
- *    {
- *      type:'obtenant',
- *      obtenant:'tenantb'
- *    }
- * ]
- * {
  *  obcluster:['clustera'],
  *  obtenant:['tenanta','tenantb']
  *  type:'obtenant'
