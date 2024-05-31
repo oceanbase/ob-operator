@@ -1,10 +1,13 @@
 import type {
+  AlertAlert,
   OceanbaseOBInstance,
   OceanbaseOBInstanceType,
   SilenceSilencerParam,
+  SilenceSilencerResponse,
 } from '@/api/generated';
+import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
-import { clone, flatten } from 'lodash';
+import { clone, flatten, uniq } from 'lodash';
 
 /**
  *
@@ -54,6 +57,7 @@ export const getSelectList = (
  * Format form data
  *
  * @example
+ *
  * 1.handle allServers allTenants allClusters
  * {
  *  observers:['allServers']
@@ -65,8 +69,6 @@ export const getSelectList = (
  * }
  *
  * 2.format instances
- *
- * @example
  * {
  *    type:'obtenant',
  *    obtenant:['tenanta','tenantb']
@@ -150,4 +152,31 @@ export const getInstancesFromRes = (
     res.obtenant = getInstanceValues('obtenant');
   }
   return res;
+};
+
+/**
+ * @description
+ * Sort alarms by status and time
+ */
+const sortAlarm = (alarms: AlertAlert[] | SilenceSilencerResponse[], map) => {
+  if (!alarms || !alarms.length) return [];
+  const types = uniq(alarms.map((item) => item.status.state));
+  types.sort((pre, cur) => map[cur].weight - map[pre].weight);
+  let res: AlertAlert[] | SilenceSilencerResponse[] = [];
+  for (const type of types) {
+    const events = alarms.filter((event) => event.status.state === type);
+    events.sort((preEvent, curEvent) => curEvent.startsAt - preEvent.startsAt);
+    res = [...res, ...events];
+  }
+  return res;
+};
+
+export const sortEvents = (alertEvents: AlertAlert[]) => {
+  return sortAlarm(alertEvents, ALERT_STATE_MAP);
+};
+
+export const sortAlarmShielding = (
+  listSilencers: SilenceSilencerResponse[],
+) => {
+  return sortAlarm(listSilencers, SHILED_STATUS_MAP);
 };

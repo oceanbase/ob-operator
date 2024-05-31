@@ -7,6 +7,7 @@ import type {
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
+import { sortAlarmShielding } from '../helper';
 import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -37,7 +38,7 @@ export default function Shield() {
       }
     },
   });
-  const listSilencers = listSilencersRes?.data || [];
+  const listSilencers = sortAlarmShielding(listSilencersRes?.data || []);
   const drawerClose = () => {
     setSearchParams('');
     setEditShieldId(undefined);
@@ -89,7 +90,6 @@ export default function Shield() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      defaultSortOrder: 'ascend',
       sorter: (preRecord, curRecord) =>
         SHILED_STATUS_MAP[curRecord.status.state].weight -
         SHILED_STATUS_MAP[preRecord.status.state].weight,

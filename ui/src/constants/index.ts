@@ -190,9 +190,9 @@ const SERVERITY_MAP = {
 };
 
 const SHILED_STATUS_MAP = {
-  active: { text: '活跃', color: 'green', weight: 2 },
-  expired: { text: '过期', color: 'gold', weight: 1 },
-  pending: { text: '未生效', color: 'default', weight: 0 },
+  expired: { text: '过期', color: 'gold', weight: 2 },
+  pending: { text: '未生效', color: 'default', weight: 1 },
+  active: { text: '活跃', color: 'green', weight: 0 },
 };
 
 const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
