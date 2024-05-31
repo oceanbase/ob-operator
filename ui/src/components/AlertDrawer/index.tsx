@@ -13,7 +13,13 @@ export default function AlertDrawer({
   ...props
 }: AlertRuleDrawerProps) {
   return (
-    <Drawer closable={false} onClose={onClose} {...props}>
+    <Drawer
+      style={{ paddingBottom: 60 }}
+      closeIcon={false}
+      onClose={onClose}
+      maskClosable={false}
+      {...props}
+    >
       {props.children}
       <div className={styles.drawerFooter}>
         {footer ? (

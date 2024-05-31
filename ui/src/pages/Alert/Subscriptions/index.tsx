@@ -1,5 +1,6 @@
 import { alert } from '@/api';
 import type { RouteRouteResponse } from '@/api/generated';
+import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { Link } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -48,7 +49,7 @@ export default function Subscriptions() {
       title: '匹配配置',
       dataIndex: 'matchers',
       key: 'matchers',
-      render: (matcher) => <p>{matcher.value}</p>,
+      render: (matchers) => <PreText cols={7} value={matchers} />,
     },
     {
       title: '聚合配置',
@@ -103,7 +104,7 @@ export default function Subscriptions() {
       <Table
         columns={columns}
         dataSource={listRoutes}
-        rowKey="fingerprint"
+        rowKey="id"
         pagination={{ simple: true }}
       />
       <SubscripDrawerForm
