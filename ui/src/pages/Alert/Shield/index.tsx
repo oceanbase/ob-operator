@@ -6,6 +6,7 @@ import type {
 } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
+import { sortAlarmShielding } from '../helper';
 import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
