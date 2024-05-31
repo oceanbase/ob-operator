@@ -78,6 +78,15 @@ export const getSelectList = (
  *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenanta'},
  *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenantb'}
  * ]
+ * {
+ *  obcluster:['clustera'],
+ *  obtenant:['tenanta','tenantb']
+ *  type:'obtenant'
+ * } =>
+ * [
+ *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenanta'},
+ *  { type:'obtenant', obcluster:'clustera',obtenant: 'tenantb'}
+ * ]
  */
 export const formatShieldSubmitData = (
   formData: Alert.ShieldDrawerForm,
