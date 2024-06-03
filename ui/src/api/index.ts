@@ -19,6 +19,7 @@ globalAxios.interceptors.response.use(
   (error) => {
     if (error?.response?.status === 401) {
       message.warning('登陆已过期');
+      location.href = '/#/login';
     } else {
       message.error(error?.response?.data?.message || error.message);
     }
