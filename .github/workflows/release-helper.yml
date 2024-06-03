@@ -1,4 +1,4 @@
-name: release operator
+name: release oceanbase-helper
 
 on: 
   push:
