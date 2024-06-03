@@ -6,7 +6,7 @@ on:
       - 'helper-2.[0-9]+.[0-9]+'
 
 jobs:
-  release-operator:
+  release-oceanbase-helper:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
