@@ -125,7 +125,7 @@ export default function Event() {
                   name: label.key,
                   value: label.value,
                 })),
-              )}`,
+              )}&rule=${record.rule}`,
             );
           }}
         >

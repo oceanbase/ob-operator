@@ -50,7 +50,7 @@ export default function ChannelDrawer({
       manual: true,
     },
   );
-  const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
+  const receiverNames = listReceiversRes?.data?.map((receiver) => receiver.name);
   const listReceiverTemplates = listReceiverTemplatesRes?.data;
   const Footer = () => {
     return (
