@@ -62,41 +62,6 @@ func getAlertmanagerConfig(ctx context.Context) (*externalmodel.Config, error) {
 
 func updateAlertManagerConfig(ctx context.Context, config *externalmodel.Config) error {
 
-	// jsonContent, _ := json.Marshal(config.Receivers)
-	// logger.Debugf("Encode receivers %v", string(jsonContent))
-	// logger.Debugf("Url %s", string(config.Receivers[0].WebhookConfigs[0].URL.String()))
-	// logger.Debugf("Url %s", string(config.Receivers[1].WebhookConfigs[0].URL.String()))
-	// logger.Debugf("Url0 scheme %s", string(config.Receivers[0].WebhookConfigs[0].URL.Scheme))
-	// logger.Debugf("Url1 scheme %s", string(config.Receivers[1].WebhookConfigs[0].URL.Scheme))
-	// // Encode and decode receivers using gob to keep secret properties
-	// receiverContent, err := msgpack.Marshal(config.Receivers)
-	// if err != nil {
-	// 	logger.WithError(err).Error("Encode receivers failed")
-	// 	return errors.Wrap(err, errors.ErrInternal, "Encode receivers using msgpack failed")
-	// }
-	// var receiverMap map[string]interface{}
-	// err = msgpack.Unmarshal(receiverContent, &receiverMap)
-	// if err != nil {
-	// 	logger.WithError(err).Error("Decode receivers failed")
-	// 	return errors.Wrap(err, errors.ErrInternal, "Decode receivers using msgpack failed")
-	// }
-
-	// // Encode and Decode config using yaml
-	// configContent, err := yaml.Marshal(config)
-	// if err != nil {
-	// 	logger.WithError(err).Error("Encode config failed")
-	// 	return errors.Wrap(err, errors.ErrInternal, "Encode config using yaml failed")
-	// }
-	// var configMap map[string]interface{}
-	// err = yaml.Unmarshal(configContent, &configMap)
-	// if err != nil {
-	// 	logger.WithError(err).Error("Decode config failed")
-	// 	return errors.Wrap(err, errors.ErrInternal, "Decode config using yaml failed")
-	// }
-
-	// // Set receivers into configMap
-	// configMap["receivers"] = receiverMap
-
 	// Encode using yaml to generate actual content to persist
 	content, err := yaml.Marshal(config)
 	logger.Debugf("Alertmanager config to persist: %s", string(content))
@@ -134,6 +99,8 @@ func reloadAlertmanager() error {
 }
 
 func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) error {
+
+	// Modify rule config file
 	ruleGroup := rulemodel.ConfigRuleGroup{
 		Name:  alarmconstant.OBRuleGroupName,
 		Rules: configRules,
@@ -149,12 +116,19 @@ func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) erro
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Write rule content failed")
 	}
-	// Write to configmap
+
+	// Reload config to make config take effect
+	err = reloadPrometheus()
+	if err != nil {
+		return errors.Wrap(err, errors.ErrInternal, "Reload prometheus failed")
+	}
+
+	// Write to configmap after reload to ensure keeping a valid version of config
 	err = persistToConfigMap(ctx, os.Getenv(alarmconstant.EnvConfigNamespace), os.Getenv(alarmconstant.EnvPrometheusRuleConfig), alarmconstant.RuleConfigFile, string(content))
 	if err != nil {
 		return errors.Wrap(err, errors.ErrInternal, "Persist rule to configmap failed")
 	}
-	return reloadPrometheus()
+	return nil
 }
 
 func reloadPrometheus() error {
