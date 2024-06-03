@@ -1,0 +1,14 @@
+FROM golang:1.22 as builder
+ARG GOPROXY=https://goproxy.io,direct
+WORKDIR /workspace
+COPY . .
+RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build -a -o oceanbase-helper ./cmd/oceanbase-helper/main.go
+
+FROM openanolis/anolisos:8.8
+WORKDIR /home/admin/oceanbase
+RUN mkdir -p /home/admin/oceanbase/bin
+COPY --from=builder /workspace/oceanbase-helper /home/admin/oceanbase/bin
+RUN yum -y install python3
+RUN ln -sf /usr/bin/python3 /usr/bin/python
+RUN pip3 install mysql-connector-python==8.0.28 -i http://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
