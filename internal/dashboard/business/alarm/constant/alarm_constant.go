@@ -40,6 +40,7 @@ const (
 
 const (
 	LabelRuleName     = "rule_name"
+	LabelRuleType     = "rule_type"
 	LabelServerity    = "serverity"
 	LabelInstanceType = "instance_type"
 )

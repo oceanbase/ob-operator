@@ -35,7 +35,7 @@ type PromRuleResponse struct {
 type Rule struct {
 	Name         string                   `json:"name" binding:"required"`
 	InstanceType oceanbase.OBInstanceType `json:"instanceType" binding:"required"`
-	Type         RuleType                 `json:"type" binding:"required"`
+	Type         RuleType                 `json:"type" default:"customized"`
 	Query        string                   `json:"query" binding:"required"`
 	Duration     int                      `json:"duration" binding:"required"`
 	Labels       []common.KVPair          `json:"labels" binding:"required"`
@@ -73,6 +73,10 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 	annotations[alarmconstant.AnnoDescription] = r.Description
 	labels := r.Labels
 	labels = append(labels, common.KVPair{
+		Key:   alarmconstant.LabelRuleType,
+		Value: string(r.Type),
+	})
+	labels = append(labels, common.KVPair{
 		Key:   alarmconstant.LabelServerity,
 		Value: string(r.Serverity),
 	})
@@ -96,6 +100,7 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 
 func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 	var instanceType oceanbase.OBInstanceType
+	var ruleType RuleType
 	serverity := alarm.ServerityInfo
 	summary := ""
 	description := ""
@@ -111,6 +116,9 @@ func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 		if label.Name == alarmconstant.LabelInstanceType {
 			instanceType = oceanbase.OBInstanceType(label.Value)
 		}
+		if label.Name == alarmconstant.LabelRuleType {
+			ruleType = RuleType(label.Value)
+		}
 	}
 	for _, annotation := range promRule.Annotations {
 		if annotation.Name == alarmconstant.AnnoSummary {
@@ -123,7 +131,7 @@ func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 	rule := &Rule{
 		Name:         promRule.Name,
 		InstanceType: instanceType,
-		Type:         TypeBuiltin,
+		Type:         ruleType,
 		Query:        promRule.Query,
 		Duration:     int(promRule.Duration),
 		Labels:       labels,
