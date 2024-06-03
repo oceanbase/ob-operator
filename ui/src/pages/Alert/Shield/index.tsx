@@ -213,12 +213,13 @@ export default function Shield() {
   ];
   const formatInstanceParam = (instanceParam: Alert.InstanceParamType) => {
     const { obcluster, observer, obtenant, type } = instanceParam;
-    return {
-      obcluster: obcluster && [obcluster],
-      observer: observer && [observer],
-      obtenant: obtenant && [obtenant],
+    const res: Alert.InstancesType = {
       type,
+      obcluster: [obcluster!],
     };
+    if (observer) res.observer = [observer];
+    if (obtenant) res.obtenant = [obtenant];
+    return res;
   };
   const initialValues: Alert.ShieldDrawerInitialValues = {};
   if (searchParams.get('instance')) {

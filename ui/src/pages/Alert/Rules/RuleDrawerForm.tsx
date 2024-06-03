@@ -4,6 +4,7 @@ import AlertDrawer from '@/components/AlertDrawer';
 import InputLabel from '@/components/InputLabel';
 import { LEVER_OPTIONS_ALARM, SERVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
+import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import {
   Col,
@@ -31,6 +32,8 @@ export default function RuleDrawerForm({
   ...props
 }: AlertRuleDrawerProps) {
   const [form] = Form.useForm();
+  const { data: rulesRes } = useRequest(alert.listRules);
+  const rules = rulesRes?.data;
   const isEdit = !!ruleName;
   const initialValues = {
     labels: [
@@ -118,9 +121,8 @@ export default function RuleDrawerForm({
                       },
                       {
                         validator: async (_, value) => {
-                          const res = await alert.listRules();
-                          if (res.successful) {
-                            for (const rule of res.data) {
+                          if (rules) {
+                            for (const rule of rules) {
                               if (rule.name === value) {
                                 return Promise.reject(
                                   new Error('告警规则已存在，请重新输入'),
