@@ -2104,7 +2104,9 @@ definitions:
       summary:
         type: string
       type:
-        $ref: '#/definitions/rule.RuleType'
+        allOf:
+        - $ref: '#/definitions/rule.RuleType'
+        default: customized
     required:
     - description
     - duration
@@ -2114,7 +2116,6 @@ definitions:
     - query
     - serverity
     - summary
-    - type
     type: object
   rule.RuleFilter:
     properties:
@@ -2168,7 +2169,9 @@ definitions:
       summary:
         type: string
       type:
-        $ref: '#/definitions/rule.RuleType'
+        allOf:
+        - $ref: '#/definitions/rule.RuleType'
+        default: customized
     required:
     - description
     - duration
@@ -2183,7 +2186,6 @@ definitions:
     - serverity
     - state
     - summary
-    - type
     type: object
   rule.RuleState:
     enum:

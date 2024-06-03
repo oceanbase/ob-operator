@@ -7816,8 +7816,7 @@ const docTemplate = `{
                 "name",
                 "query",
                 "serverity",
-                "summary",
-                "type"
+                "summary"
             ],
             "properties": {
                 "description": {
@@ -7848,7 +7847,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/rule.RuleType"
+                    "default": "customized",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rule.RuleType"
+                        }
+                    ]
                 }
             }
         },
@@ -7894,8 +7898,7 @@ const docTemplate = `{
                 "query",
                 "serverity",
                 "state",
-                "summary",
-                "type"
+                "summary"
             ],
             "properties": {
                 "description": {
@@ -7944,7 +7947,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/rule.RuleType"
+                    "default": "customized",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rule.RuleType"
+                        }
+                    ]
                 }
             }
         },

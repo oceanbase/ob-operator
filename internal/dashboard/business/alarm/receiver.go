@@ -18,10 +18,10 @@ import (
 
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
+	externalmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/external"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 
-	amconfig "github.com/prometheus/alertmanager/config"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -75,7 +75,7 @@ func CreateOrUpdateReceiver(ctx context.Context, r *receiver.Receiver) error {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
 
-	configReceivers := make([]amconfig.Receiver, 0, len(config.Receivers))
+	configReceivers := make([]externalmodel.Receiver, 0, len(config.Receivers))
 	for _, amreceiver := range config.Receivers {
 		if amreceiver.Name == r.Name {
 			continue
@@ -98,7 +98,7 @@ func DeleteReceiver(ctx context.Context, name string) error {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
 
-	configReceivers := make([]amconfig.Receiver, 0, len(config.Receivers))
+	configReceivers := make([]externalmodel.Receiver, 0, len(config.Receivers))
 	foundReceiver := false
 	for _, amreceiver := range config.Receivers {
 		if amreceiver.Name == name {

@@ -16,9 +16,9 @@ package receiver
 import (
 	"fmt"
 
+	externalmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/external"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 
-	amconfig "github.com/prometheus/alertmanager/config"
 	logger "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
@@ -37,110 +37,110 @@ type Receiver struct {
 	Config string       `json:"config" binding:"required"`
 }
 
-func (r *Receiver) ToAmReceiver() (*amconfig.Receiver, error) {
-	amreceiver := &amconfig.Receiver{
+func (r *Receiver) ToAmReceiver() (*externalmodel.Receiver, error) {
+	amreceiver := &externalmodel.Receiver{
 		Name: r.Name,
 	}
 	var err error
 	switch r.Type {
 	case TypeDiscord:
-		config := &amconfig.DiscordConfig{}
+		config := &externalmodel.DiscordConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.DiscordConfigs = []*amconfig.DiscordConfig{config}
+		amreceiver.DiscordConfigs = []*externalmodel.DiscordConfig{config}
 	case TypeEmail:
-		config := &amconfig.EmailConfig{}
+		config := &externalmodel.EmailConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.EmailConfigs = []*amconfig.EmailConfig{config}
+		amreceiver.EmailConfigs = []*externalmodel.EmailConfig{config}
 	case TypePagerduty:
-		config := &amconfig.PagerdutyConfig{}
+		config := &externalmodel.PagerdutyConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.PagerdutyConfigs = []*amconfig.PagerdutyConfig{config}
+		amreceiver.PagerdutyConfigs = []*externalmodel.PagerdutyConfig{config}
 	case TypeSlack:
-		config := &amconfig.SlackConfig{}
+		config := &externalmodel.SlackConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.SlackConfigs = []*amconfig.SlackConfig{config}
+		amreceiver.SlackConfigs = []*externalmodel.SlackConfig{config}
 	case TypeWebhook:
-		config := &amconfig.WebhookConfig{}
+		config := &externalmodel.WebhookConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.WebhookConfigs = []*amconfig.WebhookConfig{config}
+		amreceiver.WebhookConfigs = []*externalmodel.WebhookConfig{config}
 	case TypeOpsGenie:
-		config := &amconfig.OpsGenieConfig{}
+		config := &externalmodel.OpsGenieConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.OpsGenieConfigs = []*amconfig.OpsGenieConfig{config}
+		amreceiver.OpsGenieConfigs = []*externalmodel.OpsGenieConfig{config}
 	case TypeWechat:
-		config := &amconfig.WechatConfig{}
+		config := &externalmodel.WechatConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.WechatConfigs = []*amconfig.WechatConfig{config}
+		amreceiver.WechatConfigs = []*externalmodel.WechatConfig{config}
 	case TypePushover:
-		config := &amconfig.PushoverConfig{}
+		config := &externalmodel.PushoverConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.PushoverConfigs = []*amconfig.PushoverConfig{config}
+		amreceiver.PushoverConfigs = []*externalmodel.PushoverConfig{config}
 	case TypeVictorOps:
-		config := &amconfig.VictorOpsConfig{}
+		config := &externalmodel.VictorOpsConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.VictorOpsConfigs = []*amconfig.VictorOpsConfig{config}
+		amreceiver.VictorOpsConfigs = []*externalmodel.VictorOpsConfig{config}
 	case TypeSNS:
-		config := &amconfig.SNSConfig{}
+		config := &externalmodel.SNSConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.SNSConfigs = []*amconfig.SNSConfig{config}
+		amreceiver.SNSConfigs = []*externalmodel.SNSConfig{config}
 	case TypeTelegram:
-		config := &amconfig.TelegramConfig{}
+		config := &externalmodel.TelegramConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.TelegramConfigs = []*amconfig.TelegramConfig{config}
+		amreceiver.TelegramConfigs = []*externalmodel.TelegramConfig{config}
 	case TypeWebex:
-		config := &amconfig.WebexConfig{}
+		config := &externalmodel.WebexConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.WebexConfigs = []*amconfig.WebexConfig{config}
+		amreceiver.WebexConfigs = []*externalmodel.WebexConfig{config}
 	case TypeMSTeams:
-		config := &amconfig.MSTeamsConfig{}
+		config := &externalmodel.MSTeamsConfig{}
 		err = yaml.Unmarshal([]byte(r.Config), config)
 		if err != nil {
 			return nil, err
 		}
-		amreceiver.MSTeamsConfigs = []*amconfig.MSTeamsConfig{config}
+		amreceiver.MSTeamsConfigs = []*externalmodel.MSTeamsConfig{config}
 	default:
 		return nil, errors.NewBadRequest(fmt.Sprintf("Type %s not found", r.Type))
 	}
 	return amreceiver, nil
 }
 
-func NewReceiver(amreceiver *amconfig.Receiver) *Receiver {
+func NewReceiver(amreceiver *externalmodel.Receiver) *Receiver {
 	foundConfig := false
 	receiver := &Receiver{
 		Name: amreceiver.Name,

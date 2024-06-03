@@ -130,6 +130,7 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 		Matchers:  matchers,
 	}
 	postableSilence := &ammodels.PostableSilence{
+		ID:      param.Id,
 		Silence: silencer,
 	}
 	okBody := amsilence.PostSilencesOKBody{}
