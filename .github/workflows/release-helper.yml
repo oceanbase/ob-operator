@@ -3,7 +3,7 @@ name: release oceanbase-helper
 on: 
   push:
     tags: 
-      - 'helper-2.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   release-oceanbase-helper:
