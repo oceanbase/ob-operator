@@ -37,6 +37,8 @@ import (
 
 var restyClient *resty.Client
 var restyOnce sync.Once
+var amGuard sync.Mutex
+var promGuard sync.Mutex
 
 func getClient() *resty.Client {
 	restyOnce.Do(func() {
@@ -62,6 +64,8 @@ func getAlertmanagerConfig(ctx context.Context) (*externalmodel.Config, error) {
 
 func updateAlertManagerConfig(ctx context.Context, config *externalmodel.Config) error {
 
+	amGuard.Lock()
+	defer amGuard.Unlock()
 	// Encode using yaml to generate actual content to persist
 	content, err := yaml.Marshal(config)
 	logger.Debugf("Alertmanager config to persist: %s", string(content))
@@ -99,6 +103,9 @@ func reloadAlertmanager() error {
 }
 
 func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) error {
+
+	promGuard.Lock()
+	defer promGuard.Unlock()
 
 	// Modify rule config file
 	ruleGroup := rulemodel.ConfigRuleGroup{
