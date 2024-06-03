@@ -197,8 +197,8 @@ export default function Shield() {
             onClick={() => {
               showDeleteConfirm({
                 title: '确定解除该告警屏蔽条件吗？',
-                content: '删除后不可恢复，请谨慎操作',
-                okText: '删除',
+                content: '解除后不可恢复，请谨慎操作',
+                okText: '解除',
                 onOk: () => {
                   deleteSilencer(record.id);
                 },
