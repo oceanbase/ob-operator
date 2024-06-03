@@ -20,15 +20,18 @@ import { useEffect } from 'react';
 
 type AlertRuleDrawerProps = {
   ruleName?: string;
+  onClose: () => void;
   submitCallback?: () => void;
 } & DrawerProps;
 const { TextArea } = Input;
 export default function RuleDrawerForm({
   ruleName,
   submitCallback,
+  onClose,
   ...props
 }: AlertRuleDrawerProps) {
   const [form] = Form.useForm();
+  const isEdit = !!ruleName;
   const initialValues = {
     labels: [
       {
@@ -39,9 +42,11 @@ export default function RuleDrawerForm({
     instanceType: 'obcluster',
   };
   const submit = (values: RuleRule) => {
+    values.type = 'customized';
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
         message.success('操作成功！');
+        onClose();
         submitCallback && submitCallback();
       }
     });
@@ -61,6 +66,8 @@ export default function RuleDrawerForm({
     <AlertDrawer
       destroyOnClose={true}
       onSubmit={() => form.submit()}
+      title="告警规则配置"
+      onClose={onClose}
       {...props}
     >
       <Form
@@ -75,6 +82,7 @@ export default function RuleDrawerForm({
         <Row gutter={[24, 24]}>
           <Col span={24}>
             <Form.Item
+              style={{ marginBottom: 0 }}
               rules={[
                 {
                   required: true,
@@ -95,27 +103,36 @@ export default function RuleDrawerForm({
           <Col span={16}>
             <Form.Item
               name={'name'}
-              rules={[
-                {
-                  required: true,
-                  message: '请输入',
-                },
-                {
-                  validator: async (_, value) => {
-                    const res = await alert.listRules();
-                    if (res.successful) {
-                      for (const rule of res.data) {
-                        if (rule.name === value) {
-                          return Promise.reject(
-                            new Error('告警规则已存在，请重新输入'),
-                          );
-                        }
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
+              rules={
+                isEdit
+                  ? [
+                      {
+                        required: true,
+                        message: '请输入',
+                      },
+                    ]
+                  : [
+                      {
+                        required: true,
+                        message: '请输入',
+                      },
+                      {
+                        validator: async (_, value) => {
+                          const res = await alert.listRules();
+                          if (res.successful) {
+                            for (const rule of res.data) {
+                              if (rule.name === value) {
+                                return Promise.reject(
+                                  new Error('告警规则已存在，请重新输入'),
+                                );
+                              }
+                            }
+                          }
+                          return Promise.resolve();
+                        },
+                      },
+                    ]
+              }
               label="告警规则名"
             >
               <Input placeholder="请输入" />

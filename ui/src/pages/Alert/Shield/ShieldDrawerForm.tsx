@@ -46,6 +46,7 @@ export default function ShieldDrawerForm({
   const { clusterList, tenantList } = useModel('alarm');
   const shieldObjType = Form.useWatch(['instances', 'type'], form);
   const isEdit = !!id;
+
   const newInitialValues = {
     matchers: [
       {
@@ -78,6 +79,7 @@ export default function ShieldDrawerForm({
       values.instances.type,
       tenantList,
     );
+    if (isEdit) values.id = id;
     alert
       .createOrUpdateSilencer(formatShieldSubmitData(values, _clusterList))
       .then(({ successful }) => {
@@ -93,6 +95,8 @@ export default function ShieldDrawerForm({
     if (isEdit) {
       alert.getSilencer(id).then(({ successful, data }) => {
         if (successful) {
+          console.log(getInstancesFromRes(data.instances));
+
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,
@@ -132,7 +136,17 @@ export default function ShieldDrawerForm({
           name={['instances', 'type']}
           label="屏蔽对象类型"
         >
-          <Radio.Group>
+          <Radio.Group
+            onChange={() => {
+              form.setFieldsValue({
+                instances: {
+                  obcluster: undefined,
+                  obtenant: undefined,
+                  observer: undefined,
+                },
+              });
+            }}
+          >
             <Radio value="obcluster"> 集群 </Radio>
             <Radio value="obtenant"> 租户 </Radio>
             <Radio value="observer"> OBServer </Radio>
