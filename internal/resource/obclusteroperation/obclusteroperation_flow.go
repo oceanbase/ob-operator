@@ -23,7 +23,7 @@ func genModifySpecAndWatchFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow
 			Name: "modify spec and watch",
 			Tasks: []tasktypes.TaskName{
 				tModifyClusterSpec,
-				tWaitForCluster,
+				tWaitForClusterReturnRunning,
 			},
 			TargetStatus: string(constants.ClusterOpStatusSucceeded),
 			OnFailure: tasktypes.FailureRule{
@@ -38,7 +38,7 @@ func genRestartOBServersOnlyFlow(_ *OBClusterOperationManager) *tasktypes.TaskFl
 		OperationContext: &tasktypes.OperationContext{
 			Name: "restart observers only",
 			Tasks: []tasktypes.TaskName{
-				tRestartServers,
+				tRestartOBServers,
 			},
 			TargetStatus: string(constants.ClusterOpStatusSucceeded),
 			OnFailure: tasktypes.FailureRule{

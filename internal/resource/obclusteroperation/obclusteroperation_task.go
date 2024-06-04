@@ -14,7 +14,6 @@ package obclusteroperation
 
 import (
 	"errors"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -46,13 +45,13 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		return err
 	}
 	origin := obcluster.DeepCopy()
-	switch strings.ToLower(string(m.Resource.Spec.Type)) {
-	case strings.ToLower(string(constants.ClusterOpTypeAddZones)):
+	switch m.Resource.Spec.Type {
+	case constants.ClusterOpTypeAddZones:
 		if len(m.Resource.Spec.AddZones) == 0 {
 			return errors.New("AddZones is empty")
 		}
 		obcluster.Spec.Topology = append(obcluster.Spec.Topology, m.Resource.Spec.AddZones...)
-	case strings.ToLower(string(constants.ClusterOpTypeDeleteZones)):
+	case constants.ClusterOpTypeDeleteZones:
 		if len(m.Resource.Spec.DeleteZones) == 0 {
 			return errors.New("DeleteZones is empty")
 		}
@@ -67,7 +66,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			}
 		}
 		obcluster.Spec.Topology = remainList
-	case strings.ToLower(string(constants.ClusterOpTypeAdjustReplicas)):
+	case constants.ClusterOpTypeAdjustReplicas:
 		if len(m.Resource.Spec.AdjustReplicas) == 0 {
 			return errors.New("AdjustReplicas is empty")
 		}
@@ -86,23 +85,47 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 				}
 			}
 		}
-	case strings.ToLower(string(constants.ClusterOpTypeRestartOBServers)):
-		if m.Resource.Spec.RestartOBServers == nil {
-			return errors.New("RestartOBServers is empty")
+	case constants.ClusterOpTypeRestartOBServers:
+		// This is not a real operation, just a placeholder for the task
+	case constants.ClusterOpTypeModifyOBServers:
+		if m.Resource.Spec.ModifyOBServers == nil {
+			return errors.New("modifyOBServers is empty")
 		}
-		if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
-			return errors.New("RestartOBServers only support static ip")
+		if m.Resource.Spec.ModifyOBServers.ExpandStorageSize != nil {
+			mutation := m.Resource.Spec.ModifyOBServers.ExpandStorageSize
+			if mutation.DataStorage != nil {
+				obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size = *mutation.DataStorage
+			}
+			if mutation.LogStorage != nil {
+				obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size = *mutation.LogStorage
+			}
+			if mutation.RedoLogStorage != nil {
+				obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = *mutation.RedoLogStorage
+			}
 		}
-		if m.Resource.Spec.RestartOBServers.Resource != nil {
-			obcluster.Spec.OBServerTemplate.Resource = m.Resource.Spec.RestartOBServers.Resource
+		if m.Resource.Spec.ModifyOBServers.ModifyStorageClass != nil {
+			mutation := m.Resource.Spec.ModifyOBServers.ModifyStorageClass
+			if mutation.DataStorage != "" {
+				obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = mutation.DataStorage
+			}
+			if mutation.LogStorage != "" {
+				obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = mutation.LogStorage
+			}
+			if mutation.RedoLogStorage != "" {
+				obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = mutation.RedoLogStorage
+			}
 		}
-		if m.Resource.Spec.RestartOBServers.AddingMonitor != nil {
-			obcluster.Spec.MonitorTemplate = m.Resource.Spec.RestartOBServers.AddingMonitor
+		supportStaticIP := obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true"
+		if m.Resource.Spec.ModifyOBServers.AddingMonitor != nil && supportStaticIP {
+			obcluster.Spec.MonitorTemplate = m.Resource.Spec.ModifyOBServers.AddingMonitor
 		}
-		if m.Resource.Spec.RestartOBServers.AddingBackupVolume != nil {
-			obcluster.Spec.BackupVolume = m.Resource.Spec.RestartOBServers.AddingBackupVolume
+		if m.Resource.Spec.ModifyOBServers.AddingBackupVolume != nil && supportStaticIP {
+			obcluster.Spec.BackupVolume = m.Resource.Spec.ModifyOBServers.AddingBackupVolume
 		}
-	case strings.ToLower(string(constants.ClusterOpTypeUpgrade)):
+		if m.Resource.Spec.ModifyOBServers.Resource != nil {
+			obcluster.Spec.OBServerTemplate.Resource = m.Resource.Spec.ModifyOBServers.Resource
+		}
+	case constants.ClusterOpTypeUpgrade:
 		if m.Resource.Spec.Upgrade == nil {
 			return errors.New("Upgrade is empty")
 		}
@@ -110,35 +133,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			return errors.New("Upgrading image is empty")
 		}
 		obcluster.Spec.OBServerTemplate.Image = m.Resource.Spec.Upgrade.Image
-	case strings.ToLower(string(constants.ClusterOpTypeExpandStorageSize)):
-		if m.Resource.Spec.ExpandStorageSize == nil {
-			return errors.New("ModifyStorageSize is empty")
-		}
-		mutation := m.Resource.Spec.ExpandStorageSize
-		if mutation.DataStorage != nil {
-			obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size = *mutation.DataStorage
-		}
-		if mutation.LogStorage != nil {
-			obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size = *mutation.LogStorage
-		}
-		if mutation.RedoLogStorage != nil {
-			obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = *mutation.RedoLogStorage
-		}
-	case strings.ToLower(string(constants.ClusterOpTypeModifyStorageClass)):
-		if m.Resource.Spec.ModifyStorageClass == nil {
-			return errors.New("ModifyStorageClass is empty")
-		}
-		mutation := m.Resource.Spec.ModifyStorageClass
-		if mutation.DataStorage != "" {
-			obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = mutation.DataStorage
-		}
-		if mutation.LogStorage != "" {
-			obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = mutation.LogStorage
-		}
-		if mutation.RedoLogStorage != "" {
-			obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = mutation.RedoLogStorage
-		}
-	case strings.ToLower(string(constants.ClusterOpTypeSetParameters)):
+	case constants.ClusterOpTypeSetParameters:
 		if m.Resource.Spec.SetParameters == nil {
 			return errors.New("setParameters is empty")
 		}
@@ -162,6 +157,8 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 	if m.Resource.Spec.Force {
 		obcluster.Status.Status = clusterstatus.Running
 		obcluster.Status.OperationContext = nil
+	} else if obcluster.Status.Status != clusterstatus.Running {
+		return errors.New("obcluster is not running")
 	}
 	oldResourceVersion := obcluster.ResourceVersion
 	err = m.Client.Patch(m.Ctx, obcluster, client.MergeFrom(origin))
@@ -174,7 +171,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		m.Logger.Info("obcluster not changed")
 		return nil
 	}
-	err = m.waitForOBClusterToBeStatus(obcfg.GetConfig().Time.DefaultStateWaitTimeout, func(status string) bool {
+	err = m.waitForOBClusterStatusToMatch(obcfg.GetConfig().Time.DefaultStateWaitTimeout, func(status string) bool {
 		return status != clusterstatus.Running
 	})
 	if err != nil {
@@ -185,10 +182,12 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 
 func WaitForClusterReturnRunning(m *OBClusterOperationManager) tasktypes.TaskError {
 	timeout := obcfg.GetConfig().Time.DefaultStateWaitTimeout
-	if m.Resource.Spec.Type == constants.ClusterOpTypeModifyStorageClass {
+	if m.Resource.Spec.Type == constants.ClusterOpTypeModifyOBServers &&
+		m.Resource.Spec.ModifyOBServers != nil &&
+		m.Resource.Spec.ModifyOBServers.ModifyStorageClass != nil {
 		timeout = obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds
 	}
-	err := m.waitForOBClusterToBeStatus(timeout, func(status string) bool {
+	err := m.waitForOBClusterStatusToMatch(timeout, func(status string) bool {
 		return status == clusterstatus.Running
 	})
 	if err != nil {
@@ -197,15 +196,20 @@ func WaitForClusterReturnRunning(m *OBClusterOperationManager) tasktypes.TaskErr
 	return nil
 }
 
-func RestartServers(m *OBClusterOperationManager) tasktypes.TaskError {
+func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
+	restartingServers := make([]v1alpha1.OBServer, 0)
+	var err error
 	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
 		Namespace: m.Resource.Namespace,
 		Name:      m.Resource.Spec.OBCluster,
 	}, obcluster)
 	if err != nil {
 		m.Logger.Error(err, "Failed to find obcluster")
 		return err
+	}
+	if obcluster.Status.Status != clusterstatus.Running && !m.Resource.Spec.Force {
+		return errors.New("RestartOBServers requires obcluster to be running")
 	}
 	if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
 		return errors.New("RestartOBServers requires obcluster's support for static ip")
@@ -220,7 +224,31 @@ func RestartServers(m *OBClusterOperationManager) tasktypes.TaskError {
 		return err
 	}
 
-	for _, observer := range observerList.Items {
+	if m.Resource.Spec.RestartOBServers.All {
+		restartingServers = append(restartingServers, observerList.Items...)
+	} else if len(m.Resource.Spec.RestartOBServers.OBZones) > 0 {
+		filterZoneMap := make(map[string]struct{})
+		for _, zone := range m.Resource.Spec.RestartOBServers.OBZones {
+			filterZoneMap[zone] = struct{}{}
+		}
+		for _, observer := range observerList.Items {
+			if _, ok := filterZoneMap[observer.Labels[oceanbaseconst.LabelRefOBZone]]; ok {
+				restartingServers = append(restartingServers, observer)
+			}
+		}
+	} else if len(m.Resource.Spec.RestartOBServers.OBServers) > 0 {
+		filterObserverMap := make(map[string]struct{})
+		for _, observer := range m.Resource.Spec.RestartOBServers.OBServers {
+			filterObserverMap[observer] = struct{}{}
+		}
+		for _, observer := range observerList.Items {
+			if _, ok := filterObserverMap[observer.Name]; ok {
+				restartingServers = append(restartingServers, observer)
+			}
+		}
+	}
+
+	for _, observer := range restartingServers {
 		pod := corev1.Pod{}
 		err = m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: observer.Namespace,
@@ -236,13 +264,13 @@ func RestartServers(m *OBClusterOperationManager) tasktypes.TaskError {
 			return err
 		}
 		timeout := obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds
-		err = m.waitForOBServerToBeStatus(observer.Name, timeout, func(status string) bool {
+		err = m.waitForOBServerStatusToMatch(observer.Name, timeout, func(status string) bool {
 			return status != serverstatus.Running
 		})
 		if err != nil {
 			return errors.New("Timeout to wait for server to be operating")
 		}
-		err = m.waitForOBServerToBeStatus(observer.Name, timeout, func(status string) bool {
+		err = m.waitForOBServerStatusToMatch(observer.Name, timeout, func(status string) bool {
 			return status == serverstatus.Running
 		})
 		if err != nil {

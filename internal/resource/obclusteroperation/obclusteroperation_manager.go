@@ -142,7 +142,7 @@ func (m *OBClusterOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	switch status {
 	case constants.ClusterOpStatusRunning:
 		if strings.EqualFold(string(m.Resource.Spec.Type), string(constants.ClusterOpTypeRestartOBServers)) &&
-			m.Resource.Spec.RestartOBServers != nil && m.Resource.Spec.RestartOBServers.RestartOnly {
+			m.Resource.Spec.RestartOBServers != nil {
 			taskFlow = genRestartOBServersOnlyFlow(m)
 		} else {
 			taskFlow = genModifySpecAndWatchFlow(m)

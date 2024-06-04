@@ -32,24 +32,30 @@ type OBClusterOperationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	OBCluster          string                        `json:"obcluster"`
-	Type               apitypes.ClusterOperationType `json:"type"`
-	Force              bool                          `json:"force,omitempty"`
-	AddZones           []apitypes.OBZoneTopology     `json:"addZones,omitempty"`
-	DeleteZones        []string                      `json:"deleteZones,omitempty"`
-	AdjustReplicas     []AlterZoneReplicas           `json:"adjustReplicas,omitempty"`
-	RestartOBServers   *RestartOBServersConfig       `json:"restartOBServers,omitempty"`
-	Upgrade            *UpgradeConfig                `json:"upgrade,omitempty"`
-	ModifyStorageClass *ModifyStorageClassConfig     `json:"modifyStorageClass,omitempty"`
-	ExpandStorageSize  *ExpandStorageSizeConfig      `json:"expandStorageSize,omitempty"`
-	SetParameters      []apitypes.Parameter          `json:"setParameters,omitempty"`
+	OBCluster        string                        `json:"obcluster"`
+	Type             apitypes.ClusterOperationType `json:"type"`
+	Force            bool                          `json:"force,omitempty"`
+	AddZones         []apitypes.OBZoneTopology     `json:"addZones,omitempty"`
+	DeleteZones      []string                      `json:"deleteZones,omitempty"`
+	AdjustReplicas   []AlterZoneReplicas           `json:"adjustReplicas,omitempty"`
+	RestartOBServers *RestartOBServersConfig       `json:"restartOBServers,omitempty"`
+	Upgrade          *UpgradeConfig                `json:"upgrade,omitempty"`
+	ModifyOBServers  *ModifyOBServersConfig        `json:"modifyOBServers,omitempty"`
+	SetParameters    []apitypes.Parameter          `json:"setParameters,omitempty"`
+}
+
+type ModifyOBServersConfig struct {
+	Resource           *apitypes.ResourceSpec     `json:"resource,omitempty"`
+	ExpandStorageSize  *ExpandStorageSizeConfig   `json:"expandStorageSize,omitempty"`
+	ModifyStorageClass *ModifyStorageClassConfig  `json:"modifyStorageClass,omitempty"`
+	AddingMonitor      *apitypes.MonitorTemplate  `json:"addingMonitor,omitempty"`
+	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
 }
 
 type RestartOBServersConfig struct {
-	Resource           *apitypes.ResourceSpec     `json:"resource,omitempty"`
-	AddingMonitor      *apitypes.MonitorTemplate  `json:"addingMonitor,omitempty"`
-	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
-	RestartOnly        bool                       `json:"restartOnly,omitempty"`
+	OBServers []string `json:"observers,omitempty"`
+	OBZones   []string `json:"obzones,omitempty"`
+	All       bool     `json:"all,omitempty"`
 }
 
 type ExpandStorageSizeConfig struct {

@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
@@ -59,6 +60,11 @@ func (r *OBClusterOperation) Default() {
 		obclusteroperationlog.Info("obcluster not found", "name", r.Spec.OBCluster)
 		return
 	}
+	if r.Labels == nil {
+		r.Labels = make(map[string]string)
+	}
+	r.Labels[oceanbaseconst.LabelRefOBCluster] = obcluster.Name
+	r.Spec.Type = apitypes.ClusterOperationType(strings.ToUpper(string(r.Spec.Type[0])) + string(r.Spec.Type[1:]))
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -69,30 +75,20 @@ var _ webhook.Validator = &OBClusterOperation{}
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 	obclusteroperationlog.Info("validate create", "name", r.Name)
-	if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeAddZones)) && r.Spec.AddZones == nil {
+	if r.Spec.Type == constants.ClusterOpTypeAddZones && r.Spec.AddZones == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("addZones"), r.Spec.AddZones, "addZones must be set for cluster operation of type addZones")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeDeleteZones)) && r.Spec.DeleteZones == nil {
+	} else if r.Spec.Type == constants.ClusterOpTypeDeleteZones && r.Spec.DeleteZones == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("deleteZones"), r.Spec.DeleteZones, "deleteZones must be set for cluster operation of type deleteZones")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeAdjustReplicas)) && r.Spec.AdjustReplicas == nil {
+	} else if r.Spec.Type == constants.ClusterOpTypeAdjustReplicas && r.Spec.AdjustReplicas == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas"), r.Spec.AdjustReplicas, "adjustReplicas must be set for cluster operation of type adjustReplicas")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeUpgrade)) && r.Spec.Upgrade == nil {
+	} else if r.Spec.Type == constants.ClusterOpTypeUpgrade && r.Spec.Upgrade == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("upgrade"), r.Spec.Upgrade, "upgrade must be set for cluster operation of type upgrade")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeRestartOBServers)) && r.Spec.RestartOBServers == nil {
+	} else if r.Spec.Type == constants.ClusterOpTypeRestartOBServers && r.Spec.RestartOBServers == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("restartOBServers"), r.Spec.RestartOBServers, "restartOBServers must be set for cluster operation of type restartOBServers")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeModifyStorageClass)) && r.Spec.ModifyStorageClass == nil {
-		return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass"), r.Spec.ModifyStorageClass, "modifyStorageClass must be set for cluster operation of type modifyStorageClass")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeExpandStorageSize)) && r.Spec.ExpandStorageSize == nil {
-		return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageSize"), r.Spec.ExpandStorageSize, "modifyStorageSize must be set for cluster operation of type modifyStorageSize")
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeSetParameters)) && r.Spec.SetParameters == nil {
+	} else if r.Spec.Type == constants.ClusterOpTypeModifyOBServers && r.Spec.ModifyOBServers == nil {
+		return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "modifyOBServers must be set for cluster operation of type modifyOBServers")
+	} else if r.Spec.Type == constants.ClusterOpTypeSetParameters && r.Spec.SetParameters == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("setParameters"), r.Spec.SetParameters, "setParameters must be set for cluster operation of type setParameters")
-	}
-
-	if r.Spec.AddZones != nil {
-		for _, zone := range r.Spec.AddZones {
-			if zone.Replica <= 0 {
-				return nil, field.Invalid(field.NewPath("spec").Child("addZones").Child("replica"), zone.Replica, "replica must be greater than 0")
-			}
-		}
 	}
 
 	ctx := context.Background()
@@ -111,11 +107,31 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster is currently operating, please use force to override")
 	}
 
-	if r.Spec.AdjustReplicas != nil {
-		zoneReplicaMap := make(map[string]int)
-		for _, z := range obcluster.Spec.Topology {
-			zoneReplicaMap[z.Zone] = z.Replica
+	zoneReplicaMap := make(map[string]int)
+	for _, z := range obcluster.Spec.Topology {
+		zoneReplicaMap[z.Zone] = z.Replica
+	}
+
+	if r.Spec.AddZones != nil {
+		for _, zone := range r.Spec.AddZones {
+			if zone.Replica <= 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("addZones").Child("replica"), zone.Replica, "replica must be greater than 0")
+			}
+			if _, ok := zoneReplicaMap[zone.Zone]; ok {
+				return nil, field.Invalid(field.NewPath("spec").Child("addZones").Child("zone"), zone.Zone, "zone already exists")
+			}
 		}
+	}
+
+	if r.Spec.DeleteZones != nil {
+		for _, zone := range r.Spec.DeleteZones {
+			if _, ok := zoneReplicaMap[zone]; !ok {
+				return nil, field.Invalid(field.NewPath("spec").Child("deleteZones").Child("zone"), zone, "zone does not exist")
+			}
+		}
+	}
+
+	if r.Spec.AdjustReplicas != nil {
 		for _, alter := range r.Spec.AdjustReplicas {
 			if alter.To <= 0 {
 				return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("to"), alter.To, "replica must be greater than 0")
@@ -130,35 +146,39 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		}
 	}
 
-	if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeExpandStorageSize)) && r.Spec.ExpandStorageSize != nil {
-		if r.Spec.ExpandStorageSize.DataStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-			return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("dataStorage"), r.Spec.ExpandStorageSize, "storage size can not be less than current size")
+	if r.Spec.Type == constants.ClusterOpTypeModifyOBServers && r.Spec.ModifyOBServers != nil {
+		modifySpec := r.Spec.ModifyOBServers
+		if modifySpec.ExpandStorageSize != nil {
+			if modifySpec.ExpandStorageSize.DataStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("dataStorage"), modifySpec.ExpandStorageSize, "storage size can not be less than current size")
+			}
+			if modifySpec.ExpandStorageSize.LogStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("logStorage"), modifySpec.ExpandStorageSize, "storage size can not be less than current size")
+			}
+			if modifySpec.ExpandStorageSize.RedoLogStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+				return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("redoLogStorage"), modifySpec.ExpandStorageSize, "storage size can not be less than current size")
+			}
+		} else if modifySpec.ModifyStorageClass != nil {
+			if modifySpec.ModifyStorageClass.DataStorage != "" &&
+				modifySpec.ModifyStorageClass.DataStorage != obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass &&
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.DataStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("dataStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
+			}
+			if modifySpec.ModifyStorageClass.LogStorage != "" &&
+				modifySpec.ModifyStorageClass.LogStorage != obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass &&
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.LogStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("logStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
+			}
+			if modifySpec.ModifyStorageClass.RedoLogStorage != "" &&
+				modifySpec.ModifyStorageClass.RedoLogStorage != obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass &&
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.RedoLogStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
+			}
 		}
-		if r.Spec.ExpandStorageSize.LogStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-			return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("logStorage"), r.Spec.ExpandStorageSize, "storage size can not be less than current size")
+	} else if r.Spec.Type == constants.ClusterOpTypeRestartOBServers && r.Spec.RestartOBServers != nil {
+		if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
+			return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster does not support static ip, can not restart observers")
 		}
-		if r.Spec.ExpandStorageSize.RedoLogStorage.Cmp(obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-			return nil, field.Invalid(field.NewPath("spec").Child("expandStorageSize").Child("redoLogStorage"), r.Spec.ExpandStorageSize, "storage size can not be less than current size")
-		}
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeModifyStorageClass)) && r.Spec.ModifyStorageClass != nil {
-		if r.Spec.ModifyStorageClass.DataStorage != "" &&
-			r.Spec.ModifyStorageClass.DataStorage != obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass &&
-			validateStorageClassAllowExpansion(r.Spec.ModifyStorageClass.DataStorage) != nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("dataStorage"), r.Spec.ModifyStorageClass, "storage class does not support expansion")
-		}
-		if r.Spec.ModifyStorageClass.LogStorage != "" &&
-			r.Spec.ModifyStorageClass.LogStorage != obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass &&
-			validateStorageClassAllowExpansion(r.Spec.ModifyStorageClass.LogStorage) != nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("logStorage"), r.Spec.ModifyStorageClass, "storage class does not support expansion")
-		}
-		if r.Spec.ModifyStorageClass.RedoLogStorage != "" &&
-			r.Spec.ModifyStorageClass.RedoLogStorage != obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass &&
-			validateStorageClassAllowExpansion(r.Spec.ModifyStorageClass.RedoLogStorage) != nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), r.Spec.ModifyStorageClass, "storage class does not support expansion")
-		}
-	} else if strings.EqualFold(string(r.Spec.Type), string(constants.ClusterOpTypeRestartOBServers)) &&
-		obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
-		return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster does not support static ip, can not restart observers")
 	}
 
 	return nil, nil

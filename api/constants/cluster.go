@@ -15,14 +15,13 @@ package constants
 import "github.com/oceanbase/ob-operator/api/types"
 
 const (
-	ClusterOpTypeAddZones           types.ClusterOperationType = "AddZones"
-	ClusterOpTypeDeleteZones        types.ClusterOperationType = "DeleteZones"
-	ClusterOpTypeAdjustReplicas     types.ClusterOperationType = "AdjustReplicas"
-	ClusterOpTypeUpgrade            types.ClusterOperationType = "Upgrade"
-	ClusterOpTypeRestartOBServers   types.ClusterOperationType = "RestartOBServers"
-	ClusterOpTypeExpandStorageSize  types.ClusterOperationType = "ExpandStorageSize"
-	ClusterOpTypeModifyStorageClass types.ClusterOperationType = "ModifyStorageClass"
-	ClusterOpTypeSetParameters      types.ClusterOperationType = "SetParameters"
+	ClusterOpTypeAddZones         types.ClusterOperationType = "AddZones"
+	ClusterOpTypeDeleteZones      types.ClusterOperationType = "DeleteZones"
+	ClusterOpTypeAdjustReplicas   types.ClusterOperationType = "AdjustReplicas"
+	ClusterOpTypeUpgrade          types.ClusterOperationType = "Upgrade"
+	ClusterOpTypeRestartOBServers types.ClusterOperationType = "RestartOBServers"
+	ClusterOpTypeModifyOBServers  types.ClusterOperationType = "ModifyOBServers"
+	ClusterOpTypeSetParameters    types.ClusterOperationType = "SetParameters"
 )
 
 const (

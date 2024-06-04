@@ -3,6 +3,6 @@ package obclusteroperation
 
 func init() {
 	taskMap.Register(tModifyClusterSpec, ModifyClusterSpec)
-	taskMap.Register(tWaitForCluster, WaitForClusterReturnRunning)
-	taskMap.Register(tRestartServers, RestartServers)
+	taskMap.Register(tWaitForClusterReturnRunning, WaitForClusterReturnRunning)
+	taskMap.Register(tRestartOBServers, RestartOBServers)
 }

@@ -1007,41 +1007,9 @@ spec:
                 items:
                   type: string
                 type: array
-              expandStorageSize:
-                properties:
-                  dataStorage:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                  logStorage:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                  redoLogStorage:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                type: object
               force:
                 type: boolean
-              modifyStorageClass:
-                properties:
-                  dataStorage:
-                    type: string
-                  logStorage:
-                    type: string
-                  redoLogStorage:
-                    type: string
-                type: object
-              obcluster:
-                type: string
-              restartOBServers:
+              modifyOBServers:
                 properties:
                   addingBackupVolume:
                     properties:
@@ -2733,6 +2701,36 @@ spec:
                     - image
                     - resource
                     type: object
+                  expandStorageSize:
+                    properties:
+                      dataStorage:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      logStorage:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      redoLogStorage:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    type: object
+                  modifyStorageClass:
+                    properties:
+                      dataStorage:
+                        type: string
+                      logStorage:
+                        type: string
+                      redoLogStorage:
+                        type: string
+                    type: object
                   resource:
                     properties:
                       cpu:
@@ -2750,8 +2748,21 @@ spec:
                     required:
                     - memory
                     type: object
-                  restartOnly:
+                type: object
+              obcluster:
+                type: string
+              restartOBServers:
+                properties:
+                  all:
                     type: boolean
+                  observers:
+                    items:
+                      type: string
+                    type: array
+                  obzones:
+                    items:
+                      type: string
+                    type: array
                 type: object
               setParameters:
                 items:

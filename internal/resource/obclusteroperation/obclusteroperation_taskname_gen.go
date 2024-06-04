@@ -4,7 +4,7 @@ package obclusteroperation
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tModifyClusterSpec ttypes.TaskName = "modify cluster spec"
-	tWaitForCluster    ttypes.TaskName = "wait for cluster"
-	tRestartServers    ttypes.TaskName = "restart servers"
+	tModifyClusterSpec           ttypes.TaskName = "modify cluster spec"
+	tWaitForClusterReturnRunning ttypes.TaskName = "wait for cluster return running"
+	tRestartOBServers            ttypes.TaskName = "restart observers"
 )

@@ -84,7 +84,7 @@ func (m *OBClusterOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) er
 
 type matchFunc func(string) bool
 
-func (m *OBClusterOperationManager) waitForOBClusterToBeStatus(timeout int, match matchFunc) error {
+func (m *OBClusterOperationManager) waitForOBClusterStatusToMatch(timeout int, match matchFunc) error {
 	obcluster := &v1alpha1.OBCluster{}
 	for i := 0; i < timeout; i++ {
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
@@ -104,7 +104,7 @@ func (m *OBClusterOperationManager) waitForOBClusterToBeStatus(timeout int, matc
 	return errors.New("Timeout to wait for obcluster to match desired status")
 }
 
-func (m *OBClusterOperationManager) waitForOBServerToBeStatus(server string, timeout int, match matchFunc) error {
+func (m *OBClusterOperationManager) waitForOBServerStatusToMatch(server string, timeout int, match matchFunc) error {
 	observer := &v1alpha1.OBServer{}
 	for i := 0; i < timeout; i++ {
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
