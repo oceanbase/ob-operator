@@ -163,12 +163,17 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		obcluster.Status.Status = clusterstatus.Running
 		obcluster.Status.OperationContext = nil
 	}
+	oldResourceVersion := obcluster.ResourceVersion
 	err = m.Client.Patch(m.Ctx, obcluster, client.MergeFrom(origin))
 	if err != nil {
 		m.Logger.Error(err, "Failed to patch obcluster")
 		return err
 	}
-
+	newResourceVersion := obcluster.ResourceVersion
+	if oldResourceVersion == newResourceVersion {
+		m.Logger.Info("obcluster not changed")
+		return nil
+	}
 	err = m.waitForOBClusterToBeStatus(obcfg.GetConfig().Time.DefaultStateWaitTimeout, func(status string) bool {
 		return status != clusterstatus.Running
 	})
@@ -178,7 +183,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 	return nil
 }
 
-func WaitForCluster(m *OBClusterOperationManager) tasktypes.TaskError {
+func WaitForClusterReturnRunning(m *OBClusterOperationManager) tasktypes.TaskError {
 	timeout := obcfg.GetConfig().Time.DefaultStateWaitTimeout
 	if m.Resource.Spec.Type == constants.ClusterOpTypeModifyStorageClass {
 		timeout = obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds
@@ -203,7 +208,7 @@ func RestartServers(m *OBClusterOperationManager) tasktypes.TaskError {
 		return err
 	}
 	if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
-		return errors.New("RestartOBServers only support static ip")
+		return errors.New("RestartOBServers requires obcluster's support for static ip")
 	}
 
 	observerList := v1alpha1.OBServerList{}
