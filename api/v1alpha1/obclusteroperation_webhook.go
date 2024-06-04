@@ -74,7 +74,18 @@ var _ webhook.Validator = &OBClusterOperation{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
-	obclusteroperationlog.Info("validate create", "name", r.Name)
+	switch r.Spec.Type {
+	case constants.ClusterOpTypeAddZones,
+		constants.ClusterOpTypeDeleteZones,
+		constants.ClusterOpTypeAdjustReplicas,
+		constants.ClusterOpTypeUpgrade,
+		constants.ClusterOpTypeRestartOBServers,
+		constants.ClusterOpTypeModifyOBServers,
+		constants.ClusterOpTypeSetParameters:
+	default:
+		return nil, field.Invalid(field.NewPath("spec").Child("type"), r.Spec.Type, "type must be one of AddZones, DeleteZones, AdjustReplicas, Upgrade, RestartOBServers, ModifyOBServers, SetParameters")
+	}
+
 	if r.Spec.Type == constants.ClusterOpTypeAddZones && r.Spec.AddZones == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("addZones"), r.Spec.AddZones, "addZones must be set for cluster operation of type addZones")
 	} else if r.Spec.Type == constants.ClusterOpTypeDeleteZones && r.Spec.DeleteZones == nil {
@@ -138,7 +149,7 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 			}
 			if alter.By < 0 {
 				for _, zoneName := range alter.Zones {
-					if zoneReplicaMap[zoneName]-alter.By <= 0 {
+					if zoneReplicaMap[zoneName]+alter.By <= 0 {
 						return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("by"), alter.By, "number of replicas to scale down must be less than current replica")
 					}
 				}
