@@ -17,6 +17,7 @@ import {
   Tag,
   message,
 } from 'antd';
+import { filterLabel } from '../helper';
 import { useEffect } from 'react';
 
 type AlertRuleDrawerProps = {
@@ -46,6 +47,7 @@ export default function RuleDrawerForm({
   };
   const submit = (values: RuleRule) => {
     values.type = 'customized';
+    values.labels = filterLabel(values.labels);
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
         message.success('操作成功！');
@@ -248,6 +250,7 @@ export default function RuleDrawerForm({
                 wrapFormName="labels"
                 labelFormName="key"
                 valueFormName="value"
+                form={form}
               />
             </Form.Item>
           </Col>

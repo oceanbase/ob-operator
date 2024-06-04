@@ -5,6 +5,7 @@ import InputLabel from '@/components/InputLabel';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
 import { Col, Form, InputNumber, Row, Select, message } from 'antd';
+import { filterLabel } from '../helper';
 import { useEffect } from 'react';
 import styles from './index.less';
 
@@ -12,7 +13,7 @@ interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
   recevierNames: string[];
   onClose: () => void;
-  submitCallback?:() => void;
+  submitCallback?: () => void;
 }
 
 export default function SubscripDrawerForm({
@@ -38,6 +39,7 @@ export default function SubscripDrawerForm({
     ],
   };
   const submit = async (values: RouteRoute) => {
+    values.matchers = filterLabel(values.matchers);
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
@@ -102,6 +104,7 @@ export default function SubscripDrawerForm({
                 labelFormName="name"
                 valueFormName="value"
                 regBoxFormName="isRegex"
+                form={form}
               />
             </Form.Item>
           </Col>
@@ -132,6 +135,12 @@ export default function SubscripDrawerForm({
           <Col span={8}>
             <Form.Item
               name={'repeatInterval'}
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
               label={
                 <div>
                   推送周期{' '}
@@ -143,13 +152,28 @@ export default function SubscripDrawerForm({
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name={'groupWait'} label="聚合等待时间">
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
+              name={'groupWait'}
+              label="聚合等待时间"
+            >
               <InputNumber min={1} addonAfter="分钟" />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
               name={'groupInterval'}
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
               label={
                 <div>
                   聚合区间{' '}

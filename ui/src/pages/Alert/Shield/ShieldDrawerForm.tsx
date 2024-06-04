@@ -23,6 +23,7 @@ import {
   formatShieldSubmitData,
   getInstancesFromRes,
   getSelectList,
+  filterLabel
 } from '../helper';
 import ShieldObjInput from './ShieldObjInput';
 
@@ -71,9 +72,11 @@ export default function ShieldDrawerForm({
     } else {
       form.setFieldValue('endsAt', dayjs(time));
     }
+    form.validateFields(['endsAt']);
   };
 
   const submit = (values: Alert.ShieldDrawerForm) => {
+    values.matchers = filterLabel(values.matchers);
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,
@@ -155,7 +158,16 @@ export default function ShieldDrawerForm({
         <Form.Item style={{ marginBottom: 0 }} label="屏蔽对象">
           <ShieldObjInput shieldObjType={shieldObjType} form={form} />
         </Form.Item>
-        <Form.Item name={'rules'} label="屏蔽告警规则">
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请选择',
+            },
+          ]}
+          name={'rules'}
+          label="屏蔽告警规则"
+        >
           <Select
             mode="multiple"
             allowClear
@@ -177,12 +189,22 @@ export default function ShieldDrawerForm({
             labelFormName="name"
             valueFormName="value"
             regBoxFormName="isRegex"
+            form={form}
             maxCount={8}
           />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>
           <Col>
-            <Form.Item name="endsAt" label="屏蔽结束时间">
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              name="endsAt"
+              label="屏蔽结束时间"
+            >
               <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" />
             </Form.Item>
           </Col>
@@ -215,7 +237,16 @@ export default function ShieldDrawerForm({
             </Button>
           </Col>
         </Row>
-        <Form.Item name={'comment'} label="备注信息">
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请输入',
+            },
+          ]}
+          name={'comment'}
+          label="备注信息"
+        >
           <TextArea rows={4} placeholder="请输入" />
         </Form.Item>
       </Form>

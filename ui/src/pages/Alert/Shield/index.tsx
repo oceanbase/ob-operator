@@ -20,6 +20,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { clone } from 'lodash';
 import moment from 'moment';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
@@ -93,8 +94,8 @@ export default function Shield() {
 
         const InstancesRender = () => (
           <div>
-            {Object.keys(temp).map((key) => (
-              <p>
+            {Object.keys(temp).map((key,index) => (
+              <p key={index}>
                 {key}：{temp[key].join(',')}
               </p>
             ))}
@@ -118,10 +119,12 @@ export default function Shield() {
       dataIndex: 'matchers',
       key: 'matchers',
       render: (rules) => {
-        if (rules.length) rules.splice(0, 0, { name: '规则名', value: '规则' });
+        const newRules = clone(rules);
+        if (newRules.length)
+          newRules.splice(0, 0, { name: '规则名', value: '规则' });
         return (
           <Space style={{ width: '100%' }} direction="vertical">
-            {rules?.map((rule) => {
+            {newRules?.map((rule) => {
               return (
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between' }}
