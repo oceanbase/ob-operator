@@ -21,6 +21,7 @@ import {
 import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import AlarmFilter from '../AlarmFilter';
+import { sortEvents } from '../helper';
 const { Text } = Typography;
 
 export default function Event() {
@@ -28,7 +29,7 @@ export default function Event() {
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
   );
-  const listAlerts = listAlertsRes?.data || [];
+  const listAlerts = sortEvents(listAlertsRes?.data || []);
   const columns: ColumnsType<AlertAlert> = [
     {
       title: '告警事件',
@@ -93,10 +94,18 @@ export default function Event() {
       title: '产生时间',
       dataIndex: 'startsAt',
       key: 'startsAt',
-      defaultSortOrder: 'ascend',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
         <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+      ),
+    },
+    {
+      title: '结束时间',
+      dataIndex: 'endsAt',
+      key: 'endsAt',
+      sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
+      render: (endsAt: number) => (
+        <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {
@@ -116,7 +125,7 @@ export default function Event() {
                   name: label.key,
                   value: label.value,
                 })),
-              )}`,
+              )}&rule=${record.rule}`,
             );
           }}
         >

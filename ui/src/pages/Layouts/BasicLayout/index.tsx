@@ -27,17 +27,9 @@ const BasicLayout: React.FC = () => {
 
   useEffect(() => {
     getAppInfoFromStorage().then((appInfo) => {
-      setVersion(appInfo.version);
+      setVersion(appInfo?.version);
     });
   }, []);
-
-  // const Title = () => (
-  //   <img
-  //     style={{ height: 20, marginLeft: -16, paddingLeft: 6,cursor:'pointer' }}
-  //     onClick={()=>history.push('/')}
-  //     src="https://www.gartner.com/pi/vendorimages/oceanbase_1640501555454.png"
-  //   />
-  // );
 
   const menus: MenuItem[] = [
     {

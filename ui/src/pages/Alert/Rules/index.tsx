@@ -52,13 +52,14 @@ export default function Rules() {
     {
       title: '触发规则',
       dataIndex: 'description',
-      width:'30%',
+      width: '30%',
       key: 'description',
     },
     {
       title: '持续时间',
       dataIndex: 'duration',
       key: 'duration',
+      render: (value) => <Text>{value}分钟</Text>,
     },
     {
       title: '对象类型',
@@ -161,6 +162,7 @@ export default function Rules() {
         open={drawerOpen}
         ruleName={editRuleName}
         onClose={drawerClose}
+        submitCallback={refresh}
       />
     </Space>
   );

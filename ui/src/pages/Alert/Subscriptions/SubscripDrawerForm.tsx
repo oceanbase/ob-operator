@@ -11,11 +11,15 @@ import styles from './index.less';
 interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
   recevierNames: string[];
+  onClose: () => void;
+  submitCallback?:() => void;
 }
 
 export default function SubscripDrawerForm({
   id,
   recevierNames,
+  submitCallback,
+  onClose,
   ...props
 }: ShieldDrawerFormProps) {
   const isEdit = !!id;
@@ -37,6 +41,8 @@ export default function SubscripDrawerForm({
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
+      submitCallback && submitCallback();
+      onClose();
     }
   };
   useEffect(() => {
@@ -52,6 +58,9 @@ export default function SubscripDrawerForm({
     <AlertDrawer
       destroyOnClose={true}
       onSubmit={() => form.submit()}
+      onClose={() => {
+        onClose();
+      }}
       {...props}
     >
       <Form

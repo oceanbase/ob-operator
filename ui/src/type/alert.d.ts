@@ -1,6 +1,5 @@
 import type {
   AlarmMatcher,
-  OceanbaseOBInstance,
   OceanbaseOBInstanceType,
 } from '@/api/generated';
 import type { Dayjs } from 'dayjs';
@@ -8,8 +7,9 @@ import type { Dayjs } from 'dayjs';
 declare namespace Alert {
   type DrawerStatus = 'create' | 'edit' | 'display';
   type ShieldDrawerInitialValues = {
-    instance?: OceanbaseOBInstance;
+    instances?: InstancesType;
     matchers?: AlarmMatcher;
+    rules?: string[];
   };
   type InstancesKey = 'obcluster' | 'observer' | 'obtenant';
   type InstancesType = {
@@ -39,5 +39,12 @@ declare namespace Alert {
   type ServersList = {
     clusterName: string;
     servers?: string[];
+  };
+
+  type InstanceParamType = {
+    type: InstancesKey;
+    observer?: string;
+    obtenant?: string;
+    obcluster?: string;
   };
 }

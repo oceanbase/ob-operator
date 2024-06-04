@@ -4,19 +4,36 @@ import type {
   SilenceSilencerResponse,
   SilenceStatus,
 } from '@/api/generated';
-import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
+import {
+  Button,
+  Card,
+  Form,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import moment from 'moment';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
+import { sortAlarmShielding } from '../helper';
 import ShieldDrawerForm from './ShieldDrawerForm';
 const { Text } = Typography;
+
+type InstancesRender = {
+  type?: Alert.InstancesKey;
+  observer?: string[];
+  obtenant?: string[];
+  obcluster?: string[];
+  obzone?: string[];
+};
 
 export default function Shield() {
   const [form] = Form.useForm();
@@ -37,7 +54,7 @@ export default function Shield() {
       }
     },
   });
-  const listSilencers = listSilencersRes?.data || [];
+  const listSilencers = sortAlarmShielding(listSilencersRes?.data || []);
   const drawerClose = () => {
     setSearchParams('');
     setEditShieldId(undefined);
@@ -52,24 +69,71 @@ export default function Shield() {
       title: '屏蔽应用/对象类型',
       dataIndex: 'instances',
       key: 'type',
-      render: (instances: OceanbaseOBInstance) => (
-        <Text>{instances.type || '-'}</Text>
+      render: (instances: OceanbaseOBInstance[]) => (
+        <Text>{instances[0].type || '-'}</Text>
       ),
     },
     {
       title: '屏蔽对象',
       dataIndex: 'instances',
-      key: 'targetObj',
-      render: (instances: OceanbaseOBInstance) => (
-        <Text>{instances[instances.type] || '-'}</Text>
-      ),
+      key: 'instances',
+      width: 200,
+      render: (instances: OceanbaseOBInstance[]) => {
+        const temp: InstancesRender = {};
+        for (const instance of instances) {
+          Object.keys(instance).forEach((key: keyof OceanbaseOBInstance) => {
+            if (temp[key]) {
+              temp[key] = [...temp[key], instance[key]];
+            } else {
+              temp[key] = [instance[key]];
+            }
+          });
+        }
+        delete temp.type;
+
+        const InstancesRender = () => (
+          <div>
+            {Object.keys(temp).map((key) => (
+              <p>
+                {key}：{temp[key].join(',')}
+              </p>
+            ))}
+          </div>
+        );
+        return (
+          <Tooltip title={<InstancesRender />}>
+            <div>
+              {Object.keys(temp).map((key) => (
+                <Text ellipsis style={{ width: 200 }}>
+                  {key}：{temp[key].join(',')}
+                </Text>
+              ))}
+            </div>
+          </Tooltip>
+        );
+      },
     },
     {
       title: '屏蔽告警规则',
       dataIndex: 'matchers',
       key: 'matchers',
-      width: 400,
-      render: (rules) => <PreText value={rules} cols={7} />,
+      render: (rules) => {
+        if (rules.length) rules.splice(0, 0, { name: '规则名', value: '规则' });
+        return (
+          <Space style={{ width: '100%' }} direction="vertical">
+            {rules?.map((rule) => {
+              return (
+                <div
+                  style={{ display: 'flex', justifyContent: 'space-between' }}
+                >
+                  <div style={{ flex: 1 }}>{rule.name}</div>
+                  <div style={{ flex: 1 }}> {rule.value}</div>
+                </div>
+              );
+            })}
+          </Space>
+        );
+      },
     },
     {
       title: '屏蔽结束时间',
@@ -89,7 +153,6 @@ export default function Shield() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      defaultSortOrder: 'ascend',
       sorter: (preRecord, curRecord) =>
         SHILED_STATUS_MAP[curRecord.status.state].weight -
         SHILED_STATUS_MAP[preRecord.status.state].weight,
@@ -127,30 +190,50 @@ export default function Shield() {
           </Button>
           <Button
             type="link"
-            style={{ color: '#ff4b4b' }}
+            style={
+              record.status.state !== 'expired' ? { color: '#ff4b4b' } : {}
+            }
+            disabled={record.status.state === 'expired'}
             onClick={() => {
               showDeleteConfirm({
-                title: '确定删除该告警屏蔽条件吗？',
-                content: '删除后不可恢复，请谨慎操作',
-                okText: '删除',
+                title: '确定解除该告警屏蔽条件吗？',
+                content: '解除后不可恢复，请谨慎操作',
+                okText: '解除',
                 onOk: () => {
                   deleteSilencer(record.id);
                 },
               });
             }}
           >
-            删除
+            解除屏蔽
           </Button>
         </>
       ),
     },
   ];
+  const formatInstanceParam = (instanceParam: Alert.InstanceParamType) => {
+    const { obcluster, observer, obtenant, type } = instanceParam;
+    const res: Alert.InstancesType = {
+      type,
+      obcluster: [obcluster!],
+    };
+    if (observer) res.observer = [observer];
+    if (obtenant) res.obtenant = [obtenant];
+    return res;
+  };
   const initialValues: Alert.ShieldDrawerInitialValues = {};
-  if (searchParams.get('instances')) {
-    initialValues.instances = JSON.parse(searchParams.get('instances')!);
+  if (searchParams.get('instance')) {
+    initialValues.instances = formatInstanceParam(
+      JSON.parse(searchParams.get('instance')!),
+    );
   }
   if (searchParams.get('label')) {
     initialValues.matchers = JSON.parse(searchParams.get('label')!);
+  }
+  if (searchParams.get('rule')) {
+    initialValues.rules = searchParams.get('rule')
+      ? [searchParams.get('rule')!]
+      : undefined;
   }
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
@@ -177,6 +260,7 @@ export default function Shield() {
         width={880}
         initialValues={initialValues}
         onClose={drawerClose}
+        submitCallback={refresh}
         open={drawerOpen}
         id={editShieldId}
       />

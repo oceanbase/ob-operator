@@ -30,6 +30,7 @@ interface ShieldDrawerProps extends DrawerProps {
   id?: string;
   initialValues?: Alert.ShieldDrawerInitialValues;
   onClose: () => void;
+  submitCallback?: () => void;
 }
 
 const { TextArea } = Input;
@@ -38,12 +39,14 @@ export default function ShieldDrawerForm({
   id,
   onClose,
   initialValues,
+  submitCallback,
   ...props
 }: ShieldDrawerProps) {
   const [form] = Form.useForm<Alert.ShieldDrawerForm>();
   const { clusterList, tenantList } = useModel('alarm');
   const shieldObjType = Form.useWatch(['instances', 'type'], form);
   const isEdit = !!id;
+
   const newInitialValues = {
     matchers: [
       {
@@ -76,11 +79,13 @@ export default function ShieldDrawerForm({
       values.instances.type,
       tenantList,
     );
+    if (isEdit) values.id = id;
     alert
       .createOrUpdateSilencer(formatShieldSubmitData(values, _clusterList))
       .then(({ successful }) => {
         if (successful) {
           message.success('操作成功!');
+          submitCallback && submitCallback();
           onClose();
         }
       });
@@ -90,6 +95,8 @@ export default function ShieldDrawerForm({
     if (isEdit) {
       alert.getSilencer(id).then(({ successful, data }) => {
         if (successful) {
+          console.log(getInstancesFromRes(data.instances));
+
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,
@@ -119,8 +126,27 @@ export default function ShieldDrawerForm({
         layout="vertical"
         initialValues={newInitialValues}
       >
-        <Form.Item name={['instances', 'type']} label="屏蔽对象类型">
-          <Radio.Group>
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请选择',
+            },
+          ]}
+          name={['instances', 'type']}
+          label="屏蔽对象类型"
+        >
+          <Radio.Group
+            onChange={() => {
+              form.setFieldsValue({
+                instances: {
+                  obcluster: undefined,
+                  obtenant: undefined,
+                  observer: undefined,
+                },
+              });
+            }}
+          >
             <Radio value="obcluster"> 集群 </Radio>
             <Radio value="obtenant"> 租户 </Radio>
             <Radio value="observer"> OBServer </Radio>
