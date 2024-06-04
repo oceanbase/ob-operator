@@ -122,7 +122,7 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		if m.Resource.Spec.ModifyOBServers.AddingBackupVolume != nil && supportStaticIP {
 			obcluster.Spec.BackupVolume = m.Resource.Spec.ModifyOBServers.AddingBackupVolume
 		}
-		if m.Resource.Spec.ModifyOBServers.Resource != nil {
+		if m.Resource.Spec.ModifyOBServers.Resource != nil && supportStaticIP {
 			obcluster.Spec.OBServerTemplate.Resource = m.Resource.Spec.ModifyOBServers.Resource
 		}
 	case constants.ClusterOpTypeUpgrade:

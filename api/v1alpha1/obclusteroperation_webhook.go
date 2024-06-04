@@ -192,9 +192,17 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
 			}
 		}
-	} else if r.Spec.Type == constants.ClusterOpTypeRestartOBServers && r.Spec.RestartOBServers != nil {
-		if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
+	}
+	if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
+		if r.Spec.Type == constants.ClusterOpTypeRestartOBServers && r.Spec.RestartOBServers != nil {
 			return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster does not support static ip, can not restart observers")
+		}
+		if r.Spec.Type == constants.ClusterOpTypeModifyOBServers && r.Spec.ModifyOBServers != nil {
+			if r.Spec.ModifyOBServers.Resource != nil ||
+				r.Spec.ModifyOBServers.AddingBackupVolume != nil ||
+				r.Spec.ModifyOBServers.AddingMonitor != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster does not support static ip, can not modify observers")
+			}
 		}
 	}
 
