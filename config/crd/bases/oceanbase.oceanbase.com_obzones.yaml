@@ -35,10 +35,6 @@ spec:
       name: Task
       priority: 1
       type: string
-    - jsonPath: .status.operationContext.idx
-      name: TaskIdx
-      priority: 1
-      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

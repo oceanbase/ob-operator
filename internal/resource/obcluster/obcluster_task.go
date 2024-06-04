@@ -973,8 +973,8 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	return nil
 }
 
-func ScaleUpOBZones(m *OBClusterManager) tasktypes.TaskError {
-	return m.rollingUpdateZones(m.changeZonesWhenScaling, zonestatus.ScaleUp, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+func ScaleOBZonesVertically(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenScaling, zonestatus.ScaleVertically, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {

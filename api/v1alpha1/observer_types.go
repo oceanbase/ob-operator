@@ -73,7 +73,6 @@ type OBServerStatus struct {
 //+kubebuilder:printcolumn:name="OBStatus",type="string",JSONPath=".status.obStatus",priority=1
 //+kubebuilder:printcolumn:name="Tasks",type="string",JSONPath=".status.operationContext.tasks",priority=1
 //+kubebuilder:printcolumn:name="Task",type="string",JSONPath=".status.operationContext.task",priority=1
-//+kubebuilder:printcolumn:name="TaskIdx",type="string",JSONPath=".status.operationContext.idx",priority=1
 
 // OBServer is the Schema for the observers API
 type OBServer struct {

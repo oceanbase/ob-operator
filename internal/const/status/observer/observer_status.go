@@ -22,7 +22,7 @@ const (
 	Annotate             = "annotate"
 	BootstrapReady       = "bootstrap ready"
 	Deleting             = "deleting"
-	ScaleUp              = "scale up"
+	ScaleVertically      = "scale vertically"
 	ExpandPVC            = "expand pvc"
 	FinalizerFinished    = "finalizer finished"
 	ModifyingPodTemplate = "modifying pod template"

@@ -159,13 +159,13 @@ func genUpgradeOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
+func genScaleOBZonesVerticallyFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "scale up obzones",
+			Name: "scale obzones vertically",
 			Tasks: []tasktypes.TaskName{
 				tAdjustParameters,
-				tScaleUpOBZones,
+				tScaleOBZonesVertically,
 			},
 			TargetStatus: clusterstatus.Running,
 		},

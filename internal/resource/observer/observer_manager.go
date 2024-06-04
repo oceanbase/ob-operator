@@ -116,7 +116,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
 			if m.OBServer.SupportStaticIP() {
 				if m.checkIfResourceChanged(pod) {
-					m.OBServer.Status.Status = serverstatus.ScaleUp
+					m.OBServer.Status.Status = serverstatus.ScaleVertically
 				}
 				if m.checkIfBackupVolumeAdded(pod) || m.checkIfMonitorAdded(pod) {
 					m.OBServer.Status.Status = serverstatus.ModifyingPodTemplate
@@ -219,8 +219,8 @@ func (m *OBServerManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genRecoverOBServerFlow(m)
 	case serverstatus.Annotate:
 		taskFlow = genAnnotateOBServerPodFlow(m)
-	case serverstatus.ScaleUp:
-		taskFlow = genScaleUpOBServerFlow(m)
+	case serverstatus.ScaleVertically:
+		taskFlow = genScaleOBServerVerticallyFlow(m)
 	case serverstatus.ExpandPVC:
 		taskFlow = genExpandPVCFlow(m)
 	case serverstatus.ModifyingPodTemplate:

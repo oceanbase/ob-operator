@@ -17,7 +17,7 @@ const (
 	tUpgradeOBServer                  ttypes.TaskName = "upgrade observer"
 	tWaitOBServerUpgraded             ttypes.TaskName = "wait observer upgraded"
 	tDeleteOBZoneInCluster            ttypes.TaskName = "delete obzone in cluster"
-	tScaleUpOBServers                 ttypes.TaskName = "scale up observers"
+	tScaleOBServersVertically         ttypes.TaskName = "scale observers vertically"
 	tExpandPVC                        ttypes.TaskName = "expand pvc"
 	tModifyPodTemplate                ttypes.TaskName = "modify pod template"
 	tDeleteLegacyOBServers            ttypes.TaskName = "delete legacy observers"

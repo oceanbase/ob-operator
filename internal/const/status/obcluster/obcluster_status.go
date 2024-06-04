@@ -23,7 +23,7 @@ const (
 	ModifyOBParameter      = "modify parameter"
 	Bootstrapped           = "bootstrapped"
 	FinalizerFinished      = "finalizer finished"
-	ScaleUp                = "scale up"
+	ScaleVertically        = "scale vertically"
 	ExpandPVC              = "expand pvc"
 	Failed                 = "failed"
 	ModifyServerTemplate   = "modify server template"

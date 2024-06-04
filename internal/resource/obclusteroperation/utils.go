@@ -85,8 +85,8 @@ func (m *OBClusterOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) er
 type matchFunc func(string) bool
 
 func (m *OBClusterOperationManager) waitForOBClusterToBeStatus(timeout int, match matchFunc) error {
+	obcluster := &v1alpha1.OBCluster{}
 	for i := 0; i < timeout; i++ {
-		obcluster := &v1alpha1.OBCluster{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
 			Name:      m.Resource.Spec.OBCluster,
@@ -100,12 +100,13 @@ func (m *OBClusterOperationManager) waitForOBClusterToBeStatus(timeout int, matc
 		}
 		time.Sleep(time.Second)
 	}
-	return errors.New("Timeout to wait for cluster running")
+	m.Logger.WithValues("currentStatus", obcluster.Status.Status).Info("Timeout to wait for obcluster to match desired status")
+	return errors.New("Timeout to wait for obcluster to match desired status")
 }
 
 func (m *OBClusterOperationManager) waitForOBServerToBeStatus(server string, timeout int, match matchFunc) error {
+	observer := &v1alpha1.OBServer{}
 	for i := 0; i < timeout; i++ {
-		observer := &v1alpha1.OBServer{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
 			Name:      server,
@@ -119,5 +120,6 @@ func (m *OBClusterOperationManager) waitForOBServerToBeStatus(server string, tim
 		}
 		time.Sleep(time.Second)
 	}
-	return errors.New("Timeout to wait for cluster running")
+	m.Logger.WithValues("currentStatus", observer.Status.Status).Info("Timeout to wait for observer to match desired status")
+	return errors.New("Timeout to wait for observer to match desired status")
 }

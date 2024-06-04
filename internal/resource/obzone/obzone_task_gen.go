@@ -15,7 +15,7 @@ func init() {
 	taskMap.Register(tUpgradeOBServer, UpgradeOBServer)
 	taskMap.Register(tWaitOBServerUpgraded, WaitOBServerUpgraded)
 	taskMap.Register(tDeleteOBZoneInCluster, DeleteOBZoneInCluster)
-	taskMap.Register(tScaleUpOBServers, ScaleUpOBServers)
+	taskMap.Register(tScaleOBServersVertically, ScaleOBServersVertically)
 	taskMap.Register(tExpandPVC, ExpandPVC)
 	taskMap.Register(tModifyPodTemplate, ModifyPodTemplate)
 	taskMap.Register(tDeleteLegacyOBServers, DeleteLegacyOBServers)

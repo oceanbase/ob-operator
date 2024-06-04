@@ -103,8 +103,8 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genUpgradeOBClusterFlow(m)
 	case clusterstatus.ModifyOBParameter:
 		taskFlow = genMaintainOBParameterFlow(m)
-	case clusterstatus.ScaleUp:
-		taskFlow = genScaleUpOBZonesFlow(m)
+	case clusterstatus.ScaleVertically:
+		taskFlow = genScaleOBZonesVerticallyFlow(m)
 	case clusterstatus.ExpandPVC:
 		taskFlow = genExpandPVCFlow(m)
 	case clusterstatus.ModifyServerTemplate:
@@ -185,7 +185,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 		outer:
 			for _, obzone := range obzoneList.Items {
 				if m.OBCluster.SupportStaticIP() && m.checkIfCalcResourceChange(&obzone) {
-					m.OBCluster.Status.Status = clusterstatus.ScaleUp
+					m.OBCluster.Status.Status = clusterstatus.ScaleVertically
 					break outer
 				}
 				if m.checkIfStorageClassChange(&obzone) {

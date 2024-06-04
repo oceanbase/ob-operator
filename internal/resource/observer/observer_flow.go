@@ -94,10 +94,10 @@ func genAnnotateOBServerPodFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	}
 }
 
-func genScaleUpOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
+func genScaleOBServerVerticallyFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         "scale up observer",
+			Name:         "scale observer vertically",
 			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBServerPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},

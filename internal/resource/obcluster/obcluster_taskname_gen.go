@@ -26,7 +26,7 @@ const (
 	tCheckImageReady            ttypes.TaskName = "check image ready"
 	tCheckClusterMode           ttypes.TaskName = "check cluster mode"
 	tCheckMigration             ttypes.TaskName = "check migration"
-	tScaleUpOBZones             ttypes.TaskName = "scale up obzones"
+	tScaleOBZonesVertically     ttypes.TaskName = "scale obzones vertically"
 	tExpandPVC                  ttypes.TaskName = "expand pvc"
 	tModifyServerTemplate       ttypes.TaskName = "modify server template"
 	tWaitOBZoneBootstrapReady   ttypes.TaskName = "wait obzone bootstrap ready"

@@ -244,7 +244,7 @@ func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
 	return nil
 }
 
-func ScaleUpOBServers(m *OBZoneManager) tasktypes.TaskError {
+func ScaleOBServersVertically(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
@@ -369,7 +369,7 @@ func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitForOBServerScalingUp(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleVertically, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
