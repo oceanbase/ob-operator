@@ -26,6 +26,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
+	apiconsts "github.com/oceanbase/ob-operator/api/constants"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	res "github.com/oceanbase/ob-operator/internal/resource/obclusteroperation"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -58,6 +59,16 @@ func (r *OBClusterOperationReconciler) Reconcile(ctx context.Context, req ctrl.R
 		}
 		logger.Error(err, "Failed to get cluster operation")
 		return ctrl.Result{}, err
+	}
+
+	switch op.Status.Status {
+	case apiconsts.ClusterOpStatusSucceeded, apiconsts.ClusterOpStatusFailed:
+		if op.ShouldBeCleaned() {
+			if err := r.Client.Delete(ctx, op); err != nil {
+				logger.Error(err, "Failed to delete stale cluster operation")
+				return ctrl.Result{}, err
+			}
+		}
 	}
 
 	// create cluster operation manager

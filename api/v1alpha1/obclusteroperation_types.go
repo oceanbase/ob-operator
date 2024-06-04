@@ -17,6 +17,9 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"strconv"
+	"strings"
+
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -32,16 +35,18 @@ type OBClusterOperationSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	OBCluster        string                        `json:"obcluster"`
-	Type             apitypes.ClusterOperationType `json:"type"`
-	Force            bool                          `json:"force,omitempty"`
-	AddZones         []apitypes.OBZoneTopology     `json:"addZones,omitempty"`
-	DeleteZones      []string                      `json:"deleteZones,omitempty"`
-	AdjustReplicas   []AlterZoneReplicas           `json:"adjustReplicas,omitempty"`
-	RestartOBServers *RestartOBServersConfig       `json:"restartOBServers,omitempty"`
-	Upgrade          *UpgradeConfig                `json:"upgrade,omitempty"`
-	ModifyOBServers  *ModifyOBServersConfig        `json:"modifyOBServers,omitempty"`
-	SetParameters    []apitypes.Parameter          `json:"setParameters,omitempty"`
+	OBCluster string                        `json:"obcluster"`
+	Type      apitypes.ClusterOperationType `json:"type"`
+	Force     bool                          `json:"force,omitempty"`
+	//+kubebuilder:default="7d"
+	TTL              string                    `json:"ttl,omitempty"`
+	AddZones         []apitypes.OBZoneTopology `json:"addZones,omitempty"`
+	DeleteZones      []string                  `json:"deleteZones,omitempty"`
+	AdjustReplicas   []AlterZoneReplicas       `json:"adjustReplicas,omitempty"`
+	RestartOBServers *RestartOBServersConfig   `json:"restartOBServers,omitempty"`
+	Upgrade          *UpgradeConfig            `json:"upgrade,omitempty"`
+	ModifyOBServers  *ModifyOBServersConfig    `json:"modifyOBServers,omitempty"`
+	SetParameters    []apitypes.Parameter      `json:"setParameters,omitempty"`
 }
 
 type ModifyOBServersConfig struct {
@@ -121,4 +126,12 @@ type OBClusterOperationList struct {
 
 func init() {
 	SchemeBuilder.Register(&OBClusterOperation{}, &OBClusterOperationList{})
+}
+
+func (o *OBClusterOperation) ShouldBeCleaned() bool {
+	ttl, err := strconv.Atoi(strings.TrimRight(o.Spec.TTL, "d"))
+	if err != nil {
+		return false
+	}
+	return o.CreationTimestamp.AddDate(0, 0, ttl).Before(metav1.Now().Time)
 }
