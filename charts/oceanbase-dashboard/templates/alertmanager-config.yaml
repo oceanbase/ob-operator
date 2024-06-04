@@ -13,8 +13,9 @@ data:
       group_wait: 30s
       group_interval: 5m
       repeat_interval: 1h
-      receiver: 'dummy'
+      continue: true
+      receiver: 'local'
     receivers:
-      - name: 'dummy'
+      - name: 'local'
         webhook_configs:
-          - url: 'http://127.0.0.1:5001/'
+          - url: 'http://127.0.0.1:8080/api/v1/webhook/alert/log'

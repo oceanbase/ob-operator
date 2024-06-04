@@ -958,6 +958,54 @@ definitions:
       zone:
         type: string
     type: object
+  payload.Alert:
+    properties:
+      annotations:
+        additionalProperties:
+          type: string
+        type: object
+      endsAt:
+        type: string
+      generatorURL:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      startsAt:
+        type: string
+      status:
+        type: string
+    type: object
+  payload.WebhookPayload:
+    properties:
+      alerts:
+        items:
+          $ref: '#/definitions/payload.Alert'
+        type: array
+      commonAnnotations:
+        additionalProperties:
+          type: string
+        type: object
+      commonLabels:
+        additionalProperties:
+          type: string
+        type: object
+      externalURL:
+        type: string
+      groupKey:
+        type: string
+      groupLabels:
+        additionalProperties:
+          type: string
+        type: object
+      receiver:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
   receiver.Receiver:
     properties:
       config:
@@ -5280,6 +5328,46 @@ paths:
       summary: get statistic data
       tags:
       - Info
+  /api/v1/webhook/alert/log:
+    post:
+      consumes:
+      - application/json
+      description: Log alerts sent by alertmanager.
+      operationId: LogAlerts
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/payload.WebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.DashboardInfo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Log alerts
+      tags:
+      - Webhook
 securityDefinitions:
   ApiKeyAuth:
     in: header
