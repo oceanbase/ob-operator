@@ -63,7 +63,6 @@ func getAlertmanagerConfig(ctx context.Context) (*externalmodel.Config, error) {
 }
 
 func updateAlertManagerConfig(ctx context.Context, config *externalmodel.Config) error {
-
 	amGuard.Lock()
 	defer amGuard.Unlock()
 	// Encode using yaml to generate actual content to persist
@@ -103,7 +102,6 @@ func reloadAlertmanager() error {
 }
 
 func updatePrometheusRules(ctx context.Context, configRules []rulefmt.Rule) error {
-
 	promGuard.Lock()
 	defer promGuard.Unlock()
 
