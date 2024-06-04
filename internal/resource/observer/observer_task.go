@@ -35,7 +35,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 var taskMap = builder.NewTaskHub[*OBServerManager]()
 
@@ -97,7 +97,7 @@ func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
 	return errors.New("Timeout to wait obcluster bootstrapped")
 }
 
-func CreateOBPod(m *OBServerManager) tasktypes.TaskError {
+func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create observer pod")
 	obcluster, err := m.getOBCluster()
 	if err != nil {
@@ -135,7 +135,7 @@ func CreateOBPod(m *OBServerManager) tasktypes.TaskError {
 	return nil
 }
 
-func CreateOBPVC(m *OBServerManager) tasktypes.TaskError {
+func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
 	if !sepVolumeAnnoExist || sepVolumeAnnoVal != "true" {
@@ -441,7 +441,7 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 	return nil
 }
 
-func WaitForPVCResized(m *OBServerManager) tasktypes.TaskError {
+func WaitForPvcResized(m *OBServerManager) tasktypes.TaskError {
 outer:
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)

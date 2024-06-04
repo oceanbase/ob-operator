@@ -20,7 +20,7 @@ import (
 func genModifySpecAndWatchFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "Modify spec and watch",
+			Name: "modify spec and watch",
 			Tasks: []tasktypes.TaskName{
 				tModifyClusterSpec,
 				tWaitForCluster,
@@ -36,7 +36,7 @@ func genModifySpecAndWatchFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow
 func genRestartOBServersOnlyFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "Restart OBServers only",
+			Name: "restart observers only",
 			Tasks: []tasktypes.TaskName{
 				tRestartServers,
 			},

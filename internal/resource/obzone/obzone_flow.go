@@ -21,7 +21,7 @@ import (
 func genMigrateOBZoneFromExistingFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMigrateOBZoneFromExisting,
+			Name:         "migrate obzone from existing",
 			Tasks:        []tasktypes.TaskName{tCreateOBServer, tWaitOBServerRunning, tDeleteLegacyOBServers},
 			TargetStatus: zonestatus.Running,
 		},
@@ -31,7 +31,7 @@ func genMigrateOBZoneFromExistingFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genPrepareOBZoneForBootstrapFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fPrepareOBZoneForBootstrap,
+			Name:         "prepare obzone for bootstrap",
 			Tasks:        []tasktypes.TaskName{tCreateOBServer, tWaitOBServerBootstrapReady},
 			TargetStatus: zonestatus.BootstrapReady,
 		},
@@ -41,7 +41,7 @@ func genPrepareOBZoneForBootstrapFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genMaintainOBZoneAfterBootstrapFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMaintainOBZoneAfterBootstrap,
+			Name:         "maintain obzone after bootstrap",
 			Tasks:        []tasktypes.TaskName{tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -51,7 +51,7 @@ func genMaintainOBZoneAfterBootstrapFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genCreateOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fCreateOBZone,
+			Name:         "create obzone",
 			Tasks:        []tasktypes.TaskName{tAddZone, tStartOBZone, tCreateOBServer, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -61,7 +61,7 @@ func genCreateOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genAddOBServerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fAddOBServer,
+			Name:         "add observer",
 			Tasks:        []tasktypes.TaskName{tCreateOBServer, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -71,7 +71,7 @@ func genAddOBServerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genDeleteOBServerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fDeleteOBServer,
+			Name:         "delete observer",
 			Tasks:        []tasktypes.TaskName{tDeleteOBServer, tWaitReplicaMatch},
 			TargetStatus: zonestatus.Running,
 			OnFailure: tasktypes.FailureRule{
@@ -84,7 +84,7 @@ func genDeleteOBServerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genDeleteOBZoneFinalizerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fDeleteOBZoneFinalizer,
+			Name:         "delete obzone finalizer",
 			Tasks:        []tasktypes.TaskName{tStopOBZone, tDeleteAllOBServer, tWaitOBServerDeleted, tDeleteOBZoneInCluster},
 			TargetStatus: zonestatus.FinalizerFinished,
 		},
@@ -94,7 +94,7 @@ func genDeleteOBZoneFinalizerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genUpgradeOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fUpgradeOBZone,
+			Name:         "upgrade obzone",
 			Tasks:        []tasktypes.TaskName{tOBClusterHealthCheck, tStopOBZone, tUpgradeOBServer, tWaitOBServerUpgraded, tOBZoneHealthCheck, tStartOBZone},
 			TargetStatus: zonestatus.Running,
 		},
@@ -104,7 +104,7 @@ func genUpgradeOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genForceUpgradeOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fForceUpgradeOBZone,
+			Name:         "force upgrade obzone",
 			Tasks:        []tasktypes.TaskName{tOBClusterHealthCheck, tUpgradeOBServer, tWaitOBServerUpgraded, tOBZoneHealthCheck},
 			TargetStatus: zonestatus.Running,
 		},
@@ -114,7 +114,7 @@ func genForceUpgradeOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genScaleUpOBServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fScaleUpOBServers,
+			Name:         "scale up observers",
 			Tasks:        []tasktypes.TaskName{tScaleUpOBServers, tWaitForOBServerScalingUp, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -124,7 +124,7 @@ func genScaleUpOBServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genFlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fExpandPVC,
+			Name:         "expand pvc",
 			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitForOBServerExpandingPVC, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -134,7 +134,7 @@ func genFlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genModifyServerTemplateFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fModifyServerTemplate,
+			Name:         "modify server template",
 			Tasks:        []tasktypes.TaskName{tModifyPodTemplate, tWaitForOBServerTemplateModifying, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},
@@ -144,7 +144,7 @@ func genModifyServerTemplateFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genRollingReplaceServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fRollingUpdateOBServers,
+			Name:         "rolling update observers",
 			Tasks:        []tasktypes.TaskName{tRollingReplaceOBServers},
 			TargetStatus: zonestatus.Running,
 		},

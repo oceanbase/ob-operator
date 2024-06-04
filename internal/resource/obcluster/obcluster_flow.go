@@ -23,7 +23,7 @@ import (
 func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fMigrateOBClusterFromExisting,
+			Name: "migrate obcluster from existing",
 			Tasks: []tasktypes.TaskName{
 				tCheckMigration,
 				tCheckImageReady,
@@ -49,7 +49,7 @@ func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlo
 func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fBootstrapOBCluster,
+			Name: "bootstrap obcluster",
 			Tasks: []tasktypes.TaskName{
 				tCheckImageReady,
 				tCheckEnvironment,
@@ -70,7 +70,7 @@ func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fMaintainOBClusterAfterBootstrap,
+			Name: "maintain obcluster after bootstrap",
 			Tasks: []tasktypes.TaskName{
 				tWaitOBZoneRunning,
 				tCreateUsers,
@@ -87,7 +87,7 @@ func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.Task
 func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fAddOBZone,
+			Name: "add obzone",
 			Tasks: []tasktypes.TaskName{
 				tCreateOBZone,
 				tWaitOBZoneRunning,
@@ -101,7 +101,7 @@ func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genDeleteOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fDeleteOBZone,
+			Name: "delete obzone",
 			Tasks: []tasktypes.TaskName{
 				tModifySysTenantReplica,
 				tDeleteOBZone,
@@ -115,7 +115,7 @@ func genDeleteOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genModifyOBZoneReplicaFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fModifyOBZoneReplica,
+			Name: "modify obzone replica",
 			Tasks: []tasktypes.TaskName{
 				tModifyOBZoneReplica,
 				tWaitOBZoneTopologyMatch,
@@ -129,7 +129,7 @@ func genModifyOBZoneReplicaFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genMaintainOBParameterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fMaintainOBParameter,
+			Name: "maintain obparameter",
 			Tasks: []tasktypes.TaskName{
 				tMaintainOBParameter,
 			},
@@ -141,7 +141,7 @@ func genMaintainOBParameterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genUpgradeOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fUpgradeOBCluster,
+			Name: "upgrade obcluster",
 			Tasks: []tasktypes.TaskName{
 				tValidateUpgradeInfo,
 				tBackupEssentialParameters,
@@ -162,7 +162,7 @@ func genUpgradeOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fScaleUpOBZones,
+			Name: "scale up obzones",
 			Tasks: []tasktypes.TaskName{
 				tAdjustParameters,
 				tScaleUpOBZones,
@@ -175,7 +175,7 @@ func genScaleUpOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fExpandPVC,
+			Name: "expand pvc",
 			Tasks: []tasktypes.TaskName{
 				tExpandPVC,
 				tWaitOBZoneRunning,
@@ -188,7 +188,7 @@ func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fModifyServerTemplate,
+			Name: "modify server template",
 			Tasks: []tasktypes.TaskName{
 				tModifyServerTemplate,
 				tWaitOBZoneRunning,
@@ -201,7 +201,7 @@ func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genRollingUpdateOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fRollingUpdateOBServers,
+			Name: "rolling update observers",
 			Tasks: []tasktypes.TaskName{
 				tRollingUpdateOBZones,
 			},

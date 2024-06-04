@@ -5,8 +5,8 @@ func init() {
 	taskMap.Register(tWaitOBServerReady, WaitOBServerReady)
 	taskMap.Register(tAddServer, AddServer)
 	taskMap.Register(tWaitOBClusterBootstrapped, WaitOBClusterBootstrapped)
-	taskMap.Register(tCreateOBPod, CreateOBPod)
-	taskMap.Register(tCreateOBPVC, CreateOBPVC)
+	taskMap.Register(tCreateOBServerPod, CreateOBServerPod)
+	taskMap.Register(tCreateOBServerPVC, CreateOBServerPVC)
 	taskMap.Register(tDeleteOBServerInCluster, DeleteOBServerInCluster)
 	taskMap.Register(tAnnotateOBServerPod, AnnotateOBServerPod)
 	taskMap.Register(tUpgradeOBServerImage, UpgradeOBServerImage)
@@ -16,6 +16,6 @@ func init() {
 	taskMap.Register(tDeletePod, DeletePod)
 	taskMap.Register(tWaitForPodDeleted, WaitForPodDeleted)
 	taskMap.Register(tExpandPVC, ExpandPVC)
-	taskMap.Register(tWaitForPVCResized, WaitForPVCResized)
+	taskMap.Register(tWaitForPvcResized, WaitForPvcResized)
 	taskMap.Register(tCreateOBServerSvc, CreateOBServerSvc)
 }

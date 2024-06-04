@@ -131,7 +131,7 @@ func main() {
 		return
 	}
 
-	outputFile2 := sourceFile[:len(sourceFile)-3] + "_taskname_gen.go"
+	outputFile2 := sourceFile[:len(sourceFile)-3] + "name_gen.go"
 	f2, err := os.Create(outputFile2)
 	if err != nil {
 		log.Printf("Failed to create output file: %v", err)

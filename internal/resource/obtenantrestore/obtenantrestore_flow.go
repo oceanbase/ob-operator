@@ -20,7 +20,7 @@ import (
 func genStartRestoreJobFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fStartRestoreFlow,
+			Name:         "start restore",
 			Tasks:        []tasktypes.TaskName{tStartRestoreJobInOB},
 			TargetStatus: string(constants.RestoreJobRunning),
 			OnFailure: tasktypes.FailureRule{
@@ -33,7 +33,7 @@ func genStartRestoreJobFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 func genRestoreAsPrimaryFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fRestoreAsPrimaryFlow,
+			Name:         "restore as primary",
 			Tasks:        []tasktypes.TaskName{tActivateStandby},
 			TargetStatus: string(constants.RestoreJobSuccessful),
 			OnFailure: tasktypes.FailureRule{
@@ -46,7 +46,7 @@ func genRestoreAsPrimaryFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 func genRestoreAsStandbyFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fRestoreAsStandbyFlow,
+			Name:         "restore as standby",
 			Tasks:        []tasktypes.TaskName{tStartLogReplay},
 			TargetStatus: string(constants.RestoreJobSuccessful),
 			OnFailure: tasktypes.FailureRule{

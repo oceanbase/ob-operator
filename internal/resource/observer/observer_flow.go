@@ -21,8 +21,8 @@ import (
 func genPrepareOBServerForBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fPrepareOBServerForBootstrap,
-			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBPVC, tCreateOBPod, tWaitOBServerReady},
+			Name:         "prepare observer for bootstrap",
+			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
 		},
 	}
@@ -31,7 +31,7 @@ func genPrepareOBServerForBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow 
 func genMaintainOBServerAfterBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMaintainOBServerAfterBootstrap,
+			Name:         "maintain observer after bootstrap",
 			Tasks:        []tasktypes.TaskName{tWaitOBClusterBootstrapped, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
@@ -41,8 +41,8 @@ func genMaintainOBServerAfterBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFl
 func genCreateOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fCreateOBServer,
-			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBPVC, tCreateOBPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
+			Name:         "create observer",
+			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: "Failed",
@@ -54,7 +54,7 @@ func genCreateOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genDeleteOBServerFinalizerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fDeleteOBServerFinalizer,
+			Name:         "delete observer finalizer",
 			Tasks:        []tasktypes.TaskName{tDeleteOBServerInCluster, tWaitOBServerDeletedInCluster},
 			TargetStatus: serverstatus.FinalizerFinished,
 		},
@@ -64,7 +64,7 @@ func genDeleteOBServerFinalizerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genUpgradeOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fUpgradeOBServer,
+			Name:         "upgrade observer",
 			Tasks:        []tasktypes.TaskName{tUpgradeOBServerImage, tWaitOBServerPodReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
@@ -74,8 +74,8 @@ func genUpgradeOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fRecoverOBServer,
-			Tasks:        []tasktypes.TaskName{tCreateOBPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
+			Name:         "recover observer",
+			Tasks:        []tasktypes.TaskName{tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.RetryFromCurrent,
@@ -87,7 +87,7 @@ func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genAnnotateOBServerPodFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fAnnotateOBServerPod,
+			Name:         "annotate observer pod",
 			Tasks:        []tasktypes.TaskName{tAnnotateOBServerPod},
 			TargetStatus: serverstatus.Running,
 		},
@@ -97,8 +97,8 @@ func genAnnotateOBServerPodFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genScaleUpOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fScaleUpOBServer,
-			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
+			Name:         "scale up observer",
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBServerPod, tWaitOBServerReady, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 		},
 	}
@@ -107,8 +107,8 @@ func genScaleUpOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genExpandPVCFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fExpandPVC,
-			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitForPVCResized},
+			Name:         "expand pvc",
+			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitForPvcResized},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.StartOver,
@@ -120,8 +120,8 @@ func genExpandPVCFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 func genModifyPodTemplateFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fModifyPodTemplate,
-			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBPod, tWaitOBServerReady},
+			Name:         "modify pod template",
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBServerPod, tWaitOBServerReady},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.StartOver,
