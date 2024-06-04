@@ -2776,6 +2776,9 @@ spec:
                   - value
                   type: object
                 type: array
+              ttl:
+                default: 7d
+                type: string
               type:
                 type: string
               upgrade:
