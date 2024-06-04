@@ -9,6 +9,7 @@ import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
 import { clone, difference, flatten, uniq } from 'lodash';
 
+
 /**
  *
  * @description Generate data that conforms to the cluster structure

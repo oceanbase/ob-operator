@@ -97,6 +97,8 @@ export default function ShieldDrawerForm({
     if (isEdit) {
       alert.getSilencer(id).then(({ successful, data }) => {
         if (successful) {
+          console.log(getInstancesFromRes(data.instances));
+
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,

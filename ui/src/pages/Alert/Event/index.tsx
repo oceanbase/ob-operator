@@ -109,6 +109,15 @@ export default function Event() {
       ),
     },
     {
+      title: '结束时间',
+      dataIndex: 'endsAt',
+      key: 'endsAt',
+      sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
+      render: (endsAt: number) => (
+        <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+      ),
+    },
+    {
       title: '操作',
       key: 'action',
       render: (_, record) => (
