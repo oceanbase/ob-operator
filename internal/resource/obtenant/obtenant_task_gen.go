@@ -12,7 +12,7 @@ func init() {
 	taskMap.Register(tDeleteTenant, DeleteTenant)
 	taskMap.Register(tCheckAndApplyCharset, CheckAndApplyCharset)
 	taskMap.Register(tCreateEmptyStandbyTenant, CreateEmptyStandbyTenant)
-	taskMap.Register(tCheckPrimaryTenantLSIntegrity, CheckPrimaryTenantLSIntegrity)
+	taskMap.Register(tCheckPrimaryTenantLsIntegrity, CheckPrimaryTenantLsIntegrity)
 	taskMap.Register(tCreateTenantRestoreJobCR, CreateTenantRestoreJobCR)
 	taskMap.Register(tWatchRestoreJobToFinish, WatchRestoreJobToFinish)
 	taskMap.Register(tCancelTenantRestoreJob, CancelTenantRestoreJob)

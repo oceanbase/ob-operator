@@ -87,6 +87,9 @@ func (r *OBTenantBackupPolicy) Default() {
 	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
 		r.Spec.LogArchive.Destination.Path = strings.ReplaceAll(r.Spec.LogArchive.Destination.Path, "/?", "?")
 	}
+	if r.Labels == nil {
+		r.Labels = make(map[string]string)
+	}
 	if r.Spec.TenantCRName != "" {
 		tenant := &OBTenant{}
 		err := bakClt.Get(context.Background(), types.NamespacedName{
@@ -110,12 +113,10 @@ func (r *OBTenantBackupPolicy) Default() {
 			BlockOwnerDeletion: &blockOwnerDeletion,
 		}})
 
-		r.SetLabels(map[string]string{
-			oceanbaseconst.LabelTenantName:   r.Spec.TenantCRName,
-			oceanbaseconst.LabelRefOBCluster: r.Spec.ObClusterName,
-			oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
-		})
+		r.Labels[oceanbaseconst.LabelTenantName] = r.Spec.TenantCRName
+		r.Labels[oceanbaseconst.LabelRefUID] = string(tenant.GetObjectMeta().GetUID())
 	}
+	r.Labels[oceanbaseconst.LabelRefOBCluster] = r.Spec.ObClusterName
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -246,6 +247,13 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 	}
 	if r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS && r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeOSS {
 		return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("type"), r.Spec.DataBackup.Destination.Type, "invalid destination type, only NFS and OSS are supported")
+	}
+
+	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeNFS ||
+		r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeNFS {
+		if cluster.Spec.BackupVolume == nil {
+			return field.Invalid(field.NewPath("spec").Child("clusterName"), r.Spec.ObClusterName, "backupVolume of obcluster is required when using NFS")
+		}
 	}
 
 	// Check oss access of destinations

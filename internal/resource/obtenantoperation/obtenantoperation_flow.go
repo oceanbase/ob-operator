@@ -20,7 +20,7 @@ import (
 func genChangeTenantRootPasswordFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fChangeTenantRootPasswordFlow,
+			Name: "change tenant root password",
 			Tasks: []tasktypes.TaskName{
 				tChangeTenantRootPassword,
 			},
@@ -35,7 +35,7 @@ func genChangeTenantRootPasswordFlow(_ *ObTenantOperationManager) *tasktypes.Tas
 func genActivateStandbyTenantOpFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fActivateStandbyTenantFlow,
+			Name: "activate standby tenant",
 			Tasks: []tasktypes.TaskName{
 				tActivateStandbyTenant,
 				tCreateUsersForActivatedStandby,
@@ -51,7 +51,7 @@ func genActivateStandbyTenantOpFlow(_ *ObTenantOperationManager) *tasktypes.Task
 func genSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fSwitchoverTenantsFlow,
+			Name: "switchover tenants",
 			Tasks: []tasktypes.TaskName{
 				tSwitchTenantsRole,
 				tSetTenantLogRestoreSource,
@@ -67,7 +67,7 @@ func genSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 func genRevertSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fRevertSwitchoverTenantsFlow,
+			Name: "revert switchover tenants",
 			Tasks: []tasktypes.TaskName{
 				tSwitchTenantsRole,
 			},
@@ -82,7 +82,7 @@ func genRevertSwitchoverTenantsFlow(_ *ObTenantOperationManager) *tasktypes.Task
 func genUpgradeTenantFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fOpUpgradeTenant,
+			Name: "upgrade tenant",
 			Tasks: []tasktypes.TaskName{
 				tUpgradeTenant,
 			},
@@ -97,7 +97,7 @@ func genUpgradeTenantFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 func genReplayLogOfStandbyFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: fOpReplayLog,
+			Name: "replay log",
 			Tasks: []tasktypes.TaskName{
 				tReplayLogOfStandby,
 			},

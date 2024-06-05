@@ -109,12 +109,12 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genDeleteOBServerFlow(m)
 	case zonestatus.Deleting:
 		taskFlow = genDeleteOBZoneFinalizerFlow(m)
-	case zonestatus.ScaleUp:
-		taskFlow = genScaleUpOBServersFlow(m)
+	case zonestatus.ScaleVertically:
+		taskFlow = genScaleOBServersVerticallyFlow(m)
 	case zonestatus.ExpandPVC:
 		taskFlow = genFlowExpandPVC(m)
-	case zonestatus.MountBackupVolume:
-		taskFlow = genMountBackupVolumeFlow(m)
+	case zonestatus.ModifyServerTemplate:
+		taskFlow = genModifyServerTemplateFlow(m)
 	case zonestatus.RollingUpdateServers:
 		taskFlow = genRollingReplaceServersFlow(m)
 	case zonestatus.Upgrade:
@@ -223,7 +223,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 		} else {
 			for _, observer := range observerList.Items {
 				if m.OBZone.SupportStaticIP() && m.checkIfCalcResourceChange(&observer) {
-					m.OBZone.Status.Status = zonestatus.ScaleUp
+					m.OBZone.Status.Status = zonestatus.ScaleVertically
 					break
 				}
 				if m.checkIfStorageClassChanged(&observer) {
@@ -234,8 +234,8 @@ func (m *OBZoneManager) UpdateStatus() error {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break
 				}
-				if m.checkIfBackupVolumeAdded(&observer) {
-					m.OBZone.Status.Status = zonestatus.MountBackupVolume
+				if m.checkIfBackupVolumeMutated(&observer) || m.checkIfMonitorMutated(&observer) {
+					m.OBZone.Status.Status = zonestatus.ModifyServerTemplate
 					break
 				}
 			}
