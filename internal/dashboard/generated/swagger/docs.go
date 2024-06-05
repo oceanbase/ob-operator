@@ -22,7 +22,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alerts, filter with alarm objects, serverity, time and keywords.",
+                "description": "List alerts, filter with alarm objects, severity, time and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -796,7 +796,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alarm rules, filter with alarm objects type, serverity and keywords.",
+                "description": "List alarm rules, filter with alarm objects type, severity and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4918,7 +4918,7 @@ const docTemplate = `{
                 }
             }
         },
-        "alarm.Serverity": {
+        "alarm.Severity": {
             "type": "string",
             "enum": [
                 "critical",
@@ -4927,10 +4927,10 @@ const docTemplate = `{
                 "info"
             ],
             "x-enum-varnames": [
-                "ServerityCritical",
-                "ServerityWarning",
-                "ServerityCaution",
-                "ServerityInfo"
+                "SeverityCritical",
+                "SeverityWarning",
+                "SeverityCaution",
+                "SeverityInfo"
             ]
         },
         "alert.Alert": {
@@ -4940,7 +4940,7 @@ const docTemplate = `{
                 "fingerprint",
                 "instance",
                 "rule",
-                "serverity",
+                "severity",
                 "startsAt",
                 "status",
                 "updatedAt"
@@ -4967,8 +4967,8 @@ const docTemplate = `{
                 "rule": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startsAt": {
                     "type": "integer"
@@ -4999,8 +4999,8 @@ const docTemplate = `{
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startTime": {
                     "type": "integer"
@@ -7953,7 +7953,7 @@ const docTemplate = `{
                 "labels",
                 "name",
                 "query",
-                "serverity",
+                "severity",
                 "summary"
             ],
             "properties": {
@@ -7978,8 +7978,8 @@ const docTemplate = `{
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "summary": {
                     "type": "string"
@@ -8003,8 +8003,8 @@ const docTemplate = `{
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 }
             }
         },
@@ -8034,7 +8034,7 @@ const docTemplate = `{
                 "lastEvaluation",
                 "name",
                 "query",
-                "serverity",
+                "severity",
                 "state",
                 "summary"
             ],
@@ -8075,8 +8075,8 @@ const docTemplate = `{
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "state": {
                     "$ref": "#/definitions/rule.RuleState"
@@ -8121,6 +8121,9 @@ const docTemplate = `{
             "properties": {
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
                 },
                 "keyword": {
                     "type": "string"

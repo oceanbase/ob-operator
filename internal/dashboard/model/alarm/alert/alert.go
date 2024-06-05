@@ -22,7 +22,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 
 	ammodels "github.com/prometheus/alertmanager/api/v2/models"
-	logger "github.com/sirupsen/logrus"
 )
 
 type Status struct {
@@ -34,7 +33,7 @@ type Status struct {
 type Alert struct {
 	Fingerprint string                `json:"fingerprint" binding:"required"`
 	Rule        string                `json:"rule" binding:"required"`
-	Serverity   alarm.Serverity       `json:"serverity" binding:"required"`
+	Severity    alarm.Severity        `json:"severity" binding:"required"`
 	Instance    *oceanbase.OBInstance `json:"instance" binding:"required"`
 	StartsAt    int64                 `json:"startsAt" binding:"required"`
 	UpdatedAt   int64                 `json:"updatedAt" binding:"required"`
@@ -48,13 +47,11 @@ type Alert struct {
 func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
 	rule, ok := alert.Labels[alarmconstant.LabelRuleName]
 	if !ok {
-		// TODO: return error
-		// return nil, errors.New("Convert alert failed, no rule")
-		logger.Error("Convert alert failed, no rule label")
+		return nil, errors.New("Convert alert failed, no rule")
 	}
-	serverity, ok := alert.Labels[alarmconstant.LabelServerity]
+	severity, ok := alert.Labels[alarmconstant.LabelSeverity]
 	if !ok {
-		return nil, errors.New("Convert alert failed, no serverity")
+		return nil, errors.New("Convert alert failed, no severity")
 	}
 	labels := make([]common.KVPair, 0, len(alert.Labels))
 	for k, v := range alert.Labels {
@@ -91,7 +88,7 @@ func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
 	return &Alert{
 		Fingerprint: *alert.Fingerprint,
 		Rule:        rule,
-		Serverity:   alarm.Serverity(serverity),
+		Severity:    alarm.Severity(severity),
 		Instance:    instance,
 		StartsAt:    time.Time(*alert.StartsAt).Unix(),
 		UpdatedAt:   time.Time(*alert.UpdatedAt).Unix(),

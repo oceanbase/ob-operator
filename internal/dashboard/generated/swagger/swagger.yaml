@@ -9,7 +9,7 @@ definitions:
       value:
         type: string
     type: object
-  alarm.Serverity:
+  alarm.Severity:
     enum:
     - critical
     - warning
@@ -17,10 +17,10 @@ definitions:
     - info
     type: string
     x-enum-varnames:
-    - ServerityCritical
-    - ServerityWarning
-    - ServerityCaution
-    - ServerityInfo
+    - SeverityCritical
+    - SeverityWarning
+    - SeverityCaution
+    - SeverityInfo
   alert.Alert:
     properties:
       description:
@@ -37,8 +37,8 @@ definitions:
         type: array
       rule:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       startsAt:
         type: integer
       status:
@@ -52,7 +52,7 @@ definitions:
     - fingerprint
     - instance
     - rule
-    - serverity
+    - severity
     - startsAt
     - status
     - updatedAt
@@ -67,8 +67,8 @@ definitions:
         $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       startTime:
         type: integer
     type: object
@@ -2147,8 +2147,8 @@ definitions:
         type: string
       query:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       summary:
         type: string
       type:
@@ -2162,7 +2162,7 @@ definitions:
     - labels
     - name
     - query
-    - serverity
+    - severity
     - summary
     type: object
   rule.RuleFilter:
@@ -2171,8 +2171,8 @@ definitions:
         $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
     type: object
   rule.RuleHealth:
     enum:
@@ -2210,8 +2210,8 @@ definitions:
         type: string
       query:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       state:
         $ref: '#/definitions/rule.RuleState'
       summary:
@@ -2231,7 +2231,7 @@ definitions:
     - lastEvaluation
     - name
     - query
-    - serverity
+    - severity
     - state
     - summary
     type: object
@@ -2255,6 +2255,8 @@ definitions:
     properties:
       instance:
         $ref: '#/definitions/oceanbase.OBInstance'
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
     type: object
@@ -2353,7 +2355,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: List alerts, filter with alarm objects, serverity, time and keywords.
+      description: List alerts, filter with alarm objects, severity, time and keywords.
       operationId: ListAlerts
       parameters:
       - description: alert filter
@@ -2783,7 +2785,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: List alarm rules, filter with alarm objects type, serverity and
+      description: List alarm rules, filter with alarm objects type, severity and
         keywords.
       operationId: ListRules
       parameters:

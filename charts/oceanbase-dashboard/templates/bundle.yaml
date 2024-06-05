@@ -97,7 +97,6 @@ spec:
           emptyDir: {}
         - name: prometheus-rules-volume
           emptyDir: {}
-
         - name: alertmanager-config-readonly-volume
           configMap:
             name: {{ .Release.Name }}-alertmanager-conf

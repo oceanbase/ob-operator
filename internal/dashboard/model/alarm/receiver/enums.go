@@ -15,7 +15,6 @@ package receiver
 
 type ReceiverType string
 
-// TODO add all types
 const (
 	TypeDiscord   ReceiverType = "discord"
 	TypeEmail     ReceiverType = "email"

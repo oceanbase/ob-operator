@@ -14,7 +14,6 @@ package silence
 
 type State string
 
-// TODO add all states
 const (
 	StateActive  State = "active"
 	StateExpired State = "expired"

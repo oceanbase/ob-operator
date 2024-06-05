@@ -26,7 +26,7 @@ import (
 // @ID ListAlerts
 // @Tags Alarm
 // @Summary List alerts
-// @Description List alerts, filter with alarm objects, serverity, time and keywords.
+// @Description List alerts, filter with alarm objects, severity, time and keywords.
 // @Accept application/json
 // @Produce application/json
 // @Param body body alert.AlertFilter false "alert filter"
@@ -128,7 +128,7 @@ func DeleteSilencer(ctx *gin.Context) (any, error) {
 // @ID ListRules
 // @Tags Alarm
 // @Summary List alarm rules
-// @Description List alarm rules, filter with alarm objects type, serverity and keywords.
+// @Description List alarm rules, filter with alarm objects type, severity and keywords.
 // @Accept application/json
 // @Produce application/json
 // @Param body body rule.RuleFilter false "rule filter"

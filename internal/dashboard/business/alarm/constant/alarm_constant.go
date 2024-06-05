@@ -41,7 +41,7 @@ const (
 const (
 	LabelRuleName     = "rule_name"
 	LabelRuleType     = "rule_type"
-	LabelServerity    = "serverity"
+	LabelSeverity     = "severity"
 	LabelInstanceType = "instance_type"
 )
 

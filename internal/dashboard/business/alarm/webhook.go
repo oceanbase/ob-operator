@@ -25,6 +25,7 @@ func LogPayload(pl *payload.WebhookPayload) error {
 		alertContent, err := json.Marshal(alert)
 		if err != nil {
 			logger.WithError(err).Error("Encode alarm info failed")
+			continue
 		}
 		logger.Infof("Received alert: %s", alertContent)
 	}

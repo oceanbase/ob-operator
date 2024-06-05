@@ -15,7 +15,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alerts, filter with alarm objects, serverity, time and keywords.",
+                "description": "List alerts, filter with alarm objects, severity, time and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -789,7 +789,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alarm rules, filter with alarm objects type, serverity and keywords.",
+                "description": "List alarm rules, filter with alarm objects type, severity and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4911,7 +4911,7 @@
                 }
             }
         },
-        "alarm.Serverity": {
+        "alarm.Severity": {
             "type": "string",
             "enum": [
                 "critical",
@@ -4920,10 +4920,10 @@
                 "info"
             ],
             "x-enum-varnames": [
-                "ServerityCritical",
-                "ServerityWarning",
-                "ServerityCaution",
-                "ServerityInfo"
+                "SeverityCritical",
+                "SeverityWarning",
+                "SeverityCaution",
+                "SeverityInfo"
             ]
         },
         "alert.Alert": {
@@ -4933,7 +4933,7 @@
                 "fingerprint",
                 "instance",
                 "rule",
-                "serverity",
+                "severity",
                 "startsAt",
                 "status",
                 "updatedAt"
@@ -4960,8 +4960,8 @@
                 "rule": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startsAt": {
                     "type": "integer"
@@ -4992,8 +4992,8 @@
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startTime": {
                     "type": "integer"
@@ -7946,7 +7946,7 @@
                 "labels",
                 "name",
                 "query",
-                "serverity",
+                "severity",
                 "summary"
             ],
             "properties": {
@@ -7971,8 +7971,8 @@
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "summary": {
                     "type": "string"
@@ -7996,8 +7996,8 @@
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 }
             }
         },
@@ -8027,7 +8027,7 @@
                 "lastEvaluation",
                 "name",
                 "query",
-                "serverity",
+                "severity",
                 "state",
                 "summary"
             ],
@@ -8068,8 +8068,8 @@
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "state": {
                     "$ref": "#/definitions/rule.RuleState"
@@ -8114,6 +8114,9 @@
             "properties": {
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
                 },
                 "keyword": {
                     "type": "string"

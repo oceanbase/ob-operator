@@ -135,9 +135,6 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 	}
 	okBody := amsilence.PostSilencesOKBody{}
 	resp, err := getClient().R().SetContext(ctx).SetHeader("content-type", "application/json").SetBody(postableSilence).SetResult(&okBody).Post(fmt.Sprintf("%s%s", alarmconstant.AlertManagerAddress, alarmconstant.MultiSilencerUrl))
-	if err != nil || resp.StatusCode() != http.StatusOK {
-		return nil, errors.Wrap(err, errors.ErrExternal, "Query silencers from alertmanager")
-	}
 	if err != nil {
 		return nil, errors.Wrap(err, errors.ErrExternal, "Create silencer in alertmanager")
 	} else if resp.StatusCode() != http.StatusOK {
@@ -179,31 +176,33 @@ func ListSilencers(ctx context.Context, filter *silence.SilencerFilter) ([]silen
 
 func filterSilencer(silencer *silence.SilencerResponse, filter *silence.SilencerFilter) bool {
 	matched := true
-	if filter.Keyword != "" {
-		matched = matched && strings.Contains(silencer.Comment, filter.Keyword)
-	}
-	// require at least one instance matches
-	// TODO: whether to consider a cluster in filter matches a tenant or observer if the cluster names are same
+	if filter != nil {
+		if filter.Keyword != "" {
+			matched = matched && strings.Contains(silencer.Comment, filter.Keyword)
+		}
+		// require at least one instance matches
+		// TODO: whether to consider a cluster in filter matches a tenant or observer if the cluster names are same
 
-	if filter.Instance != nil {
-		instanceMatched := false
-		for _, instance := range silencer.Instances {
-			if instance.Equals(filter.Instance) {
-				instanceMatched = true
-				break
+		if filter.Instance != nil {
+			instanceMatched := false
+			for _, instance := range silencer.Instances {
+				if instance.Equals(filter.Instance) {
+					instanceMatched = true
+					break
+				}
 			}
+			matched = matched && instanceMatched
 		}
-		matched = matched && instanceMatched
-	}
-	if filter.InstanceType != "" {
-		instanceTypeMatched := false
-		for _, instance := range silencer.Instances {
-			if instance.Type == filter.InstanceType {
-				instanceTypeMatched = true
-				break
+		if filter.InstanceType != "" {
+			instanceTypeMatched := false
+			for _, instance := range silencer.Instances {
+				if instance.Type == filter.InstanceType {
+					instanceTypeMatched = true
+					break
+				}
 			}
+			matched = matched && instanceTypeMatched
 		}
-		matched = matched && instanceTypeMatched
 	}
 	return matched
 }

@@ -65,7 +65,7 @@ func InitRoutes(router *gin.Engine) {
 
 	v1Group := router.Group("/api/v1")
 	// login api does not require login
-	if os.Getenv("ENABLE_DEV_MODE") != "true" {
+	if os.Getenv("DEBUG_DASHBOARD") != "true" {
 		v1Group = router.Group("/api/v1",
 			middleware.LoginRequired(),
 			middleware.RefreshExpiration(),

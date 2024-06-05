@@ -39,7 +39,7 @@ type Rule struct {
 	Query        string                   `json:"query" binding:"required"`
 	Duration     int                      `json:"duration" binding:"required"`
 	Labels       []common.KVPair          `json:"labels" binding:"required"`
-	Serverity    alarm.Serverity          `json:"serverity" binding:"required"`
+	Severity     alarm.Severity           `json:"severity" binding:"required"`
 	Summary      string                   `json:"summary" binding:"required"`
 	Description  string                   `json:"description" binding:"required"`
 }
@@ -77,8 +77,8 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 		Value: string(r.Type),
 	})
 	labels = append(labels, common.KVPair{
-		Key:   alarmconstant.LabelServerity,
-		Value: string(r.Serverity),
+		Key:   alarmconstant.LabelSeverity,
+		Value: string(r.Severity),
 	})
 	labels = append(labels, common.KVPair{
 		Key:   alarmconstant.LabelRuleName,
@@ -101,7 +101,7 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 	var instanceType oceanbase.OBInstanceType
 	var ruleType RuleType
-	serverity := alarm.ServerityInfo
+	severity := alarm.SeverityInfo
 	summary := ""
 	description := ""
 	labels := make([]common.KVPair, 0, len(promRule.Labels))
@@ -110,8 +110,8 @@ func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 			Key:   label.Name,
 			Value: label.Value,
 		})
-		if label.Name == alarmconstant.LabelServerity {
-			serverity = alarm.Serverity(label.Value)
+		if label.Name == alarmconstant.LabelSeverity {
+			severity = alarm.Severity(label.Value)
 		}
 		if label.Name == alarmconstant.LabelInstanceType {
 			instanceType = oceanbase.OBInstanceType(label.Value)
@@ -135,7 +135,7 @@ func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 		Query:        promRule.Query,
 		Duration:     int(promRule.Duration / 60),
 		Labels:       labels,
-		Serverity:    serverity,
+		Severity:     severity,
 		Summary:      summary,
 		Description:  description,
 	}

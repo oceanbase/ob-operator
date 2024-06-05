@@ -121,8 +121,8 @@ func filterRule(rule *rulemodel.RuleResponse, filter *rulemodel.RuleFilter) bool
 		if filter.InstanceType != "" {
 			matched = matched && (rule.InstanceType == filter.InstanceType)
 		}
-		if filter.Serverity != "" {
-			matched = matched && (rule.Serverity == filter.Serverity)
+		if filter.Severity != "" {
+			matched = matched && (rule.Severity == filter.Severity)
 		}
 	}
 	return matched

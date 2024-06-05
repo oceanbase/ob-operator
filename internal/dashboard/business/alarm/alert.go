@@ -57,8 +57,8 @@ func ListAlerts(ctx context.Context, filter *alert.AlertFilter) ([]alert.Alert, 
 
 func filterAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
 	matched := true
-	if filter.Serverity != "" {
-		matched = matched && (filter.Serverity == alert.Serverity)
+	if filter.Severity != "" {
+		matched = matched && (filter.Severity == alert.Severity)
 	}
 	if filter.StartTime != 0 {
 		matched = matched && (filter.StartTime <= alert.StartsAt)
