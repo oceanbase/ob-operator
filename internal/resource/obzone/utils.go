@@ -60,8 +60,8 @@ func (m *OBZoneManager) checkIfCalcResourceChange(observer *v1alpha1.OBServer) b
 		observer.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBZone.Spec.OBServerTemplate.Resource.Memory) != 0
 }
 
-func (m *OBZoneManager) checkIfBackupVolumeAdded(observer *v1alpha1.OBServer) bool {
-	return observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil
+func (m *OBZoneManager) checkIfBackupVolumeMutated(observer *v1alpha1.OBServer) bool {
+	return (observer.Spec.BackupVolume == nil) != (m.OBZone.Spec.BackupVolume == nil)
 }
 
 func (m *OBZoneManager) checkIfMonitorMutated(observer *v1alpha1.OBServer) bool {

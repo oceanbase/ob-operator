@@ -19,19 +19,19 @@ package v1alpha1
 import (
 	"context"
 	"regexp"
-	"strings"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/oceanbase/ob-operator/api/constants"
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
@@ -65,7 +65,6 @@ func (r *OBClusterOperation) Default() {
 		r.Labels = make(map[string]string)
 	}
 	r.Labels[oceanbaseconst.LabelRefOBCluster] = obcluster.Name
-	r.Spec.Type = apitypes.ClusterOperationType(strings.ToUpper(string(r.Spec.Type[0])) + string(r.Spec.Type[1:]))
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -186,16 +185,40 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 			}
 		}
 		if modifySpec.AddingMonitor != nil && modifySpec.RemoveMonitor {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "can not add and remove monitor at the same time")
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("addingMonitor"), r.Spec.ModifyOBServers, "can not add and remove monitor at the same time")
 		}
 		if modifySpec.AddingMonitor != nil && obcluster.Spec.MonitorTemplate != nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "monitor container already exists")
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("addingMonitor"), r.Spec.ModifyOBServers, "monitor container already exists")
 		}
 		if modifySpec.RemoveMonitor && obcluster.Spec.MonitorTemplate == nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "monitor container does not exist")
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("removeMonitor"), r.Spec.ModifyOBServers, "monitor container does not exist")
 		}
 		if modifySpec.AddingBackupVolume != nil && obcluster.Spec.BackupVolume != nil {
-			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "backup volume already exists")
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("addingBackupVolume"), r.Spec.ModifyOBServers, "backup volume already exists")
+		}
+		if modifySpec.RemoveBackupVolume {
+			if modifySpec.AddingBackupVolume != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("addingBackupVolume"), r.Spec.ModifyOBServers, "can not add and remove backup volume at the same time")
+			}
+			if obcluster.Spec.BackupVolume == nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("removeBackupVolume"), r.Spec.ModifyOBServers, "backup volume does not exist")
+			}
+			policyList := OBTenantBackupPolicyList{}
+			err := clt.List(ctx, &policyList, &client.ListOptions{
+				Namespace: obcluster.Namespace,
+				LabelSelector: labels.SelectorFromSet(map[string]string{
+					oceanbaseconst.LabelRefOBCluster: obcluster.Name,
+				}),
+			})
+			if err != nil {
+				return nil, kubeerrors.NewInternalError(err)
+			}
+			for _, policy := range policyList.Items {
+				if policy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeNFS ||
+					policy.Spec.LogArchive.Destination.Type == constants.BackupDestTypeNFS {
+					return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers").Child("removeBackupVolume"), r.Spec.ModifyOBServers, "backup volume is in use, can not be removed")
+				}
+			}
 		}
 	}
 	if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {

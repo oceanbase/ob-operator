@@ -118,7 +118,7 @@ func (m *OBServerManager) UpdateStatus() error {
 				if m.checkIfResourceChanged(pod) {
 					m.OBServer.Status.Status = serverstatus.ScaleVertically
 				}
-				if m.checkIfBackupVolumeAdded(pod) || m.checkIfMonitorMutated(pod) {
+				if m.checkIfBackupVolumeMutated(pod) || m.checkIfMonitorMutated(pod) {
 					m.OBServer.Status.Status = serverstatus.ModifyingPodTemplate
 				}
 			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {

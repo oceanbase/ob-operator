@@ -190,17 +190,22 @@ func (m *OBServerManager) checkIfResourceChanged(pod *corev1.Pod) bool {
 	return false
 }
 
-func (m *OBServerManager) checkIfBackupVolumeAdded(pod *corev1.Pod) bool {
-	if m.OBServer.Spec.BackupVolume != nil && m.OBServer.Spec.BackupVolume.Volume != nil {
-		// If the backup volume is not mounted, it means the backup volume is added
-		for _, volume := range pod.Spec.Volumes {
-			if volume.Name == m.OBServer.Spec.BackupVolume.Volume.Name {
-				return false
+func (m *OBServerManager) checkIfBackupVolumeMutated(pod *corev1.Pod) bool {
+	addingVolume := m.OBServer.Spec.BackupVolume != nil
+	volumeExist := false
+
+	for _, container := range pod.Spec.Containers {
+		if container.Name == oceanbaseconst.ContainerName {
+			for _, volumeMount := range container.VolumeMounts {
+				if volumeMount.MountPath == oceanbaseconst.BackupPath {
+					volumeExist = true
+					break
+				}
 			}
 		}
-		return true
 	}
-	return false
+
+	return addingVolume != volumeExist
 }
 
 func (m *OBServerManager) checkIfMonitorMutated(pod *corev1.Pod) bool {

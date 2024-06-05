@@ -56,6 +56,7 @@ type ModifyOBServersConfig struct {
 	AddingMonitor      *apitypes.MonitorTemplate  `json:"addingMonitor,omitempty"`
 	RemoveMonitor      bool                       `json:"removeMonitor,omitempty"`
 	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
+	RemoveBackupVolume bool                       `json:"removeBackupVolume,omitempty"`
 }
 
 type RestartOBServersConfig struct {

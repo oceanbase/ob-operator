@@ -2732,6 +2732,8 @@ spec:
                       redoLogStorage:
                         type: string
                     type: object
+                  removeBackupVolume:
+                    type: boolean
                   removeMonitor:
                     type: boolean
                   resource:

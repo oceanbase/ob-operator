@@ -54,8 +54,8 @@ func (m *OBClusterManager) checkIfCalcResourceChange(obzone *v1alpha1.OBZone) bo
 		obzone.Spec.OBServerTemplate.Resource.Memory.Cmp(m.OBCluster.Spec.OBServerTemplate.Resource.Memory) != 0
 }
 
-func (m *OBClusterManager) checkIfBackupVolumeAdded(obzone *v1alpha1.OBZone) bool {
-	return obzone.Spec.BackupVolume == nil && m.OBCluster.Spec.BackupVolume != nil
+func (m *OBClusterManager) checkIfBackupVolumeMutated(obzone *v1alpha1.OBZone) bool {
+	return (obzone.Spec.BackupVolume == nil) != (m.OBCluster.Spec.BackupVolume == nil)
 }
 
 func (m *OBClusterManager) checkIfMonitorMutated(obzone *v1alpha1.OBZone) bool {

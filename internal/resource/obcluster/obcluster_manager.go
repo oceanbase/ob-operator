@@ -196,7 +196,7 @@ func (m *OBClusterManager) UpdateStatus() error {
 					m.OBCluster.Status.Status = clusterstatus.ExpandPVC
 					break outer
 				}
-				if m.checkIfBackupVolumeAdded(&obzone) || m.checkIfMonitorMutated(&obzone) {
+				if m.checkIfBackupVolumeMutated(&obzone) || m.checkIfMonitorMutated(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ModifyServerTemplate
 					break outer
 				}
