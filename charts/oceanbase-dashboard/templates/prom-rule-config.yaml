@@ -122,7 +122,7 @@ data:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} compaction error.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} compaction error.'
       - alert: tenant_cpu_usage
-        expr: sum(rate(ob_sysstat{stat_id="140013"})) by (ob_cluster_name, obzone, svr_ip, tenant_name) / sum(ob_sysstat{stat_id="140005"}) by (ob_cluster_name, obzone, svr_ip, tenant_name) / 100 > 95
+        expr: sum(rate(ob_sysstat{stat_id="140013"}[1m])) by (ob_cluster_name, obzone, svr_ip, tenant_name) / sum(ob_sysstat{stat_id="140005"}) by (ob_cluster_name, obzone, svr_ip, tenant_name) / 100 > 95
         for: 1m
         labels:
           instance_type: obtenant
@@ -221,7 +221,7 @@ data:
           description: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay {{ $value }} seconds.'
           summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay too long.'
       - alert: standby_tenant_sync_error
-        expr: max(standby_tenant_restore_status_code) by (ob_cluster_name, tenant_name) = 2
+        expr: max(standby_tenant_restore_status_code) by (ob_cluster_name, tenant_name) == 2
         for: 10s 
         labels:
           instance_type: obtenant
