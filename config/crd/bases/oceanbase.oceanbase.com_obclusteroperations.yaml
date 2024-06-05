@@ -994,8 +994,6 @@ spec:
               adjustReplicas:
                 items:
                   properties:
-                    by:
-                      type: integer
                     to:
                       type: integer
                     zones:
@@ -2734,6 +2732,8 @@ spec:
                       redoLogStorage:
                         type: string
                     type: object
+                  removeMonitor:
+                    type: boolean
                   resource:
                     properties:
                       cpu:

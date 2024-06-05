@@ -234,7 +234,7 @@ func (m *OBZoneManager) UpdateStatus() error {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
 					break
 				}
-				if m.checkIfBackupVolumeAdded(&observer) || m.checkIfMonitorAdded(&observer) {
+				if m.checkIfBackupVolumeAdded(&observer) || m.checkIfMonitorMutated(&observer) {
 					m.OBZone.Status.Status = zonestatus.ModifyServerTemplate
 					break
 				}

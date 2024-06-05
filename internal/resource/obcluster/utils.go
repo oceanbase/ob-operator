@@ -58,8 +58,8 @@ func (m *OBClusterManager) checkIfBackupVolumeAdded(obzone *v1alpha1.OBZone) boo
 	return obzone.Spec.BackupVolume == nil && m.OBCluster.Spec.BackupVolume != nil
 }
 
-func (m *OBClusterManager) checkIfMonitorAdded(obzone *v1alpha1.OBZone) bool {
-	return obzone.Spec.MonitorTemplate == nil && m.OBCluster.Spec.MonitorTemplate != nil
+func (m *OBClusterManager) checkIfMonitorMutated(obzone *v1alpha1.OBZone) bool {
+	return (obzone.Spec.MonitorTemplate == nil) != (m.OBCluster.Spec.MonitorTemplate == nil)
 }
 
 func (m *OBClusterManager) retryUpdateStatus() error {

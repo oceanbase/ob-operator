@@ -153,13 +153,6 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 			if alter.To <= 0 {
 				return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("to"), alter.To, "replica must be greater than 0")
 			}
-			if alter.By < 0 {
-				for _, zoneName := range alter.Zones {
-					if zoneReplicaMap[zoneName]+alter.By <= 0 {
-						return nil, field.Invalid(field.NewPath("spec").Child("adjustReplicas").Child("by"), alter.By, "number of replicas to scale down must be less than current replica")
-					}
-				}
-			}
 		}
 	}
 
@@ -192,6 +185,18 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
 			}
 		}
+		if modifySpec.AddingMonitor != nil && modifySpec.RemoveMonitor {
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "can not add and remove monitor at the same time")
+		}
+		if modifySpec.AddingMonitor != nil && obcluster.Spec.MonitorTemplate != nil {
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "monitor container already exists")
+		}
+		if modifySpec.RemoveMonitor && obcluster.Spec.MonitorTemplate == nil {
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "monitor container does not exist")
+		}
+		if modifySpec.AddingBackupVolume != nil && obcluster.Spec.BackupVolume != nil {
+			return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "backup volume already exists")
+		}
 	}
 	if obcluster.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] != "true" {
 		if r.Spec.Type == constants.ClusterOpTypeRestartOBServers && r.Spec.RestartOBServers != nil {
@@ -200,7 +205,8 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		if r.Spec.Type == constants.ClusterOpTypeModifyOBServers && r.Spec.ModifyOBServers != nil {
 			if r.Spec.ModifyOBServers.Resource != nil ||
 				r.Spec.ModifyOBServers.AddingBackupVolume != nil ||
-				r.Spec.ModifyOBServers.AddingMonitor != nil {
+				r.Spec.ModifyOBServers.AddingMonitor != nil ||
+				r.Spec.ModifyOBServers.RemoveMonitor {
 				return nil, field.Invalid(field.NewPath("spec").Child("obcluster"), r.Spec.OBCluster, "obcluster does not support static ip, can not modify observers")
 			}
 		}

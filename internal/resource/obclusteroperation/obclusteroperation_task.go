@@ -77,10 +77,8 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 			}
 			for i, t := range obcluster.Spec.Topology {
 				if _, ok := adjustingMap[t.Zone]; ok {
-					if adjust.To != 0 {
+					if adjust.To > 0 {
 						obcluster.Spec.Topology[i].Replica = adjust.To
-					} else {
-						obcluster.Spec.Topology[i].Replica += adjust.By
 					}
 				}
 			}

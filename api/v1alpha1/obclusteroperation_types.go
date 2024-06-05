@@ -54,6 +54,7 @@ type ModifyOBServersConfig struct {
 	ExpandStorageSize  *ExpandStorageSizeConfig   `json:"expandStorageSize,omitempty"`
 	ModifyStorageClass *ModifyStorageClassConfig  `json:"modifyStorageClass,omitempty"`
 	AddingMonitor      *apitypes.MonitorTemplate  `json:"addingMonitor,omitempty"`
+	RemoveMonitor      bool                       `json:"removeMonitor,omitempty"`
 	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
 }
 
@@ -82,7 +83,6 @@ type UpgradeConfig struct {
 type AlterZoneReplicas struct {
 	Zones []string `json:"zones"`
 	To    int      `json:"to,omitempty"`
-	By    int      `json:"by,omitempty"`
 }
 
 // OBClusterOperationStatus defines the observed state of OBClusterOperation

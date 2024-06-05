@@ -203,16 +203,15 @@ func (m *OBServerManager) checkIfBackupVolumeAdded(pod *corev1.Pod) bool {
 	return false
 }
 
-func (m *OBServerManager) checkIfMonitorAdded(pod *corev1.Pod) bool {
-	if m.OBServer.Spec.MonitorTemplate != nil {
-		for _, container := range pod.Spec.Containers {
-			if container.Name == obagentconst.ContainerName {
-				return false
-			}
+func (m *OBServerManager) checkIfMonitorMutated(pod *corev1.Pod) bool {
+	addingMonitor := m.OBServer.Spec.MonitorTemplate != nil
+	monitorExist := false
+	for _, container := range pod.Spec.Containers {
+		if container.Name == obagentconst.ContainerName {
+			monitorExist = true
 		}
-		return true
 	}
-	return false
+	return addingMonitor != monitorExist
 }
 
 func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
