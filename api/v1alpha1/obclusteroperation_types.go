@@ -17,9 +17,6 @@ limitations under the License.
 package v1alpha1
 
 import (
-	"strconv"
-	"strings"
-
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -38,8 +35,8 @@ type OBClusterOperationSpec struct {
 	OBCluster string                        `json:"obcluster"`
 	Type      apitypes.ClusterOperationType `json:"type"`
 	Force     bool                          `json:"force,omitempty"`
-	//+kubebuilder:default="7d"
-	TTL              string                    `json:"ttl,omitempty"`
+	//+kubebuilder:default=7
+	TTLDays          int                       `json:"ttlDays,omitempty"`
 	AddZones         []apitypes.OBZoneTopology `json:"addZones,omitempty"`
 	DeleteZones      []string                  `json:"deleteZones,omitempty"`
 	AdjustReplicas   []AlterZoneReplicas       `json:"adjustReplicas,omitempty"`
@@ -131,9 +128,5 @@ func init() {
 }
 
 func (o *OBClusterOperation) ShouldBeCleaned() bool {
-	ttl, err := strconv.Atoi(strings.TrimRight(o.Spec.TTL, "d"))
-	if err != nil {
-		return false
-	}
-	return o.CreationTimestamp.AddDate(0, 0, ttl).Before(metav1.Now().Time)
+	return o.CreationTimestamp.AddDate(0, 0, o.Spec.TTLDays).Before(metav1.Now().Time)
 }

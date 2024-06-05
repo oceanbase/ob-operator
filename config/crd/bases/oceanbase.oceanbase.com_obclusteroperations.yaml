@@ -2781,9 +2781,9 @@ spec:
                   - value
                   type: object
                 type: array
-              ttl:
-                default: 7d
-                type: string
+              ttlDays:
+                default: 7
+                type: integer
               type:
                 type: string
               upgrade:

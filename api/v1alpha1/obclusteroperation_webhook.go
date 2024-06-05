@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	"context"
-	"regexp"
 
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
@@ -100,11 +99,6 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "modifyOBServers must be set for cluster operation of type modifyOBServers")
 	} else if r.Spec.Type == constants.ClusterOpTypeSetParameters && r.Spec.SetParameters == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("setParameters"), r.Spec.SetParameters, "setParameters must be set for cluster operation of type setParameters")
-	}
-	pattern := regexp.MustCompile(`^[1-9]\d*d$`)
-
-	if pattern.Match([]byte(r.Spec.TTL)) {
-		return nil, field.Invalid(field.NewPath("spec").Child("ttl"), r.Spec.TTL, "ttl should be in the format of ^[1-9]\\d*d$")
 	}
 
 	ctx := context.Background()
