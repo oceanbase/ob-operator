@@ -24,7 +24,7 @@ data:
           summary: 'Too much active sessions for cluster {{ $labels.ob_cluster_name }}.'
       - alert: inactive_server
         expr:  max(ob_server_num{status="inactive"}) by (ob_cluster_name) > 0
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: inactive_server
@@ -35,7 +35,7 @@ data:
           summary: 'Found inactive observer in cluster {{ $labels.ob_cluster_name }}.'
       - alert: index_fail
         expr: max(ob_index_error_num) by (ob_cluster_name) > 0
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: index_fail
@@ -46,7 +46,7 @@ data:
           summary: 'Found index fail table in cluster {{ $labels.ob_cluster_name }}.'
       - alert: frozen_version_check
         expr: max(ob_zone_stat{name="frozen_version"}) by (ob_cluster_name) - min(ob_zone_stat{name="last_merged_version"}) by (ob_cluster_name) > 1
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: frozen_version_check
@@ -57,7 +57,7 @@ data:
           summary: 'Frozen version is too much larger than merged version.'
       - alert: cluster_merge_error
         expr: max(ob_zone_stat{name="is_merge_error"}) by (ob_cluster_name) > 0
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: cluster_merge_error
@@ -68,7 +68,7 @@ data:
           summary: 'Cluster {{ $labels.ob_cluster_name }} merge error.'
       - alert: cluster_merge_timeout
         expr: max(ob_zone_stat{name="is_merge_timeout"}) by (ob_cluster_name) > 0
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: cluster_merge_timeout
@@ -79,7 +79,7 @@ data:
           summary: 'Cluster {{ $labels.ob_cluster_name }} merge timeout.'
       - alert: cluster_no_frozen
         expr:  (max(ob_zone_current_timestamp{name="frozen_time"}) by (ob_cluster_name) - max(ob_zone_stat{name="frozen_time"}) by (ob_cluster_name)) / 1000000 > 90000
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: cluster_no_frozen
@@ -90,7 +90,7 @@ data:
           summary: 'Cluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
       - alert: cluster_no_merge
         expr: (max(ob_zone_current_timestamp{name="merge_start_time"}) by (ob_cluster_name) - max(ob_zone_stat{name="merge_start_time"}) by (ob_cluster_name)) / 1000000  > 90000
-        for: 10s
+        for: 1m
         labels:
           instance_type: obcluster
           rule_name: cluster_no_merge
@@ -112,7 +112,7 @@ data:
           summary: 'Too much active sessions for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
       - alert: tenant_compaction_error
         expr: max(ob_compaction_is_error) by (ob_cluster_name, tenant_name) > 0
-        for: 10s
+        for: 1m
         labels:
           instance_type: obtenant
           rule_name: tenant_compaction_error
@@ -145,7 +145,7 @@ data:
           summary: 'High log disk used percent detected for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
       - alert: tenant_log_stream_downgrade
         expr: sum(log_stream_degraded_count) by (ob_cluster_name, tenant_name) > 0
-        for: 10s 
+        for: 1m 
         labels:
           instance_type: obtenant
           rule_name: tenant_log_stream_downgrade
@@ -156,7 +156,7 @@ data:
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found log stream downgrade.'
       - alert: tenant_no_compaction
         expr: (max(ob_compaction_current_timestamp) by (ob_cluster_name, tenant_name) - max(ob_compaction_start_time) by (ob_cluster_name, tenant_name)) / 1000000 > 90000
-        for: 10s
+        for: 1m
         labels:
           instance_type: obtenant
           rule_name: tenant_no_compaction
@@ -167,7 +167,7 @@ data:
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not compact for a long time.'
       - alert: tenant_no_frozen
         expr: (max(ob_compaction_current_timestamp) by (ob_cluster_name, tenant_name) - max(ob_compaction_frozen_time) by (ob_cluster_name, tenant_name)) / 1000000 > 90000
-        for: 10s
+        for: 1m
         labels:
           instance_type: obtenant
           rule_name: tenant_no_frozen
@@ -200,7 +200,7 @@ data:
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found partition replica absent.'
       - alert: tenant_task_timeout
         expr: max(ob_tenant_task_max_duration_seconds) by (ob_cluster_name, tenant_name) > 10800
-        for: 10s 
+        for: 1m 
         labels:
           instance_type: obtenant
           rule_name: tenant_task_timeout
@@ -211,7 +211,7 @@ data:
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found task not finished for a long time.'
       - alert: standby_tenant_sync_delay
         expr: max(standby_tenant_delay_seconds) by (ob_cluster_name, tenant_name) > 600
-        for: 10s 
+        for: 1m 
         labels:
           instance_type: obtenant
           rule_name: standby_tenant_sync_delay
@@ -222,7 +222,7 @@ data:
           summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay too long.'
       - alert: standby_tenant_sync_error
         expr: max(standby_tenant_restore_status_code) by (ob_cluster_name, tenant_name) == 2
-        for: 10s 
+        for: 1m 
         labels:
           instance_type: obtenant
           rule_name: standby_tenant_sync_error
