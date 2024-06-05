@@ -91,7 +91,7 @@ func (r *Rule) ToPromRule() *rulefmt.Rule {
 	promRule := &rulefmt.Rule{
 		Alert:       r.Name,
 		Expr:        r.Query,
-		For:         prommodel.Duration(r.Duration * int(time.Second)),
+		For:         prommodel.Duration(r.Duration * int(time.Minute)),
 		Labels:      bizcommon.KVsToMap(labels),
 		Annotations: annotations,
 	}
@@ -133,7 +133,7 @@ func NewRuleResponse(promRule *promv1.AlertingRule) *RuleResponse {
 		InstanceType: instanceType,
 		Type:         ruleType,
 		Query:        promRule.Query,
-		Duration:     int(promRule.Duration),
+		Duration:     int(promRule.Duration / 60),
 		Labels:       labels,
 		Serverity:    serverity,
 		Summary:      summary,
