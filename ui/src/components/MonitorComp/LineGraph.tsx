@@ -4,7 +4,7 @@ import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
 import { Empty, Spin } from 'antd';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { useRef, useState } from 'react';
 
 type MetricType = {
@@ -91,14 +91,14 @@ export default function LineGraph({
         tickCount: POINT_NUMBER,
         label: {
           formatter: (text: number) => {
-            const time = moment.unix(Math.ceil(text / 1000)).format('HH:mm');
+            const time = dayjs.unix(Math.ceil(text / 1000)).format('HH:mm');
             return time;
           },
         },
       },
       tooltip: {
         title: (value: number) => {
-          return moment
+          return dayjs
             .unix(Math.ceil(value / 1000))
             .format('YYYY-MM-DD HH:mm:ss');
         },

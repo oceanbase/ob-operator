@@ -1,11 +1,11 @@
 import { alert } from '@/api';
 import type { RouteRoute } from '@/api/generated';
+import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
-import InputLabel from '@/components/InputLabel';
+import InputLabelComp from '@/components/InputLabelComp';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
 import { Col, Form, InputNumber, Row, Select, message } from 'antd';
-import { filterLabel } from '../helper';
 import { useEffect } from 'react';
 import styles from './index.less';
 
@@ -32,14 +32,13 @@ export default function SubscripDrawerForm({
   const initialValues = {
     matchers: [
       {
-        isRegex: false,
         name: '',
         value: '',
+        isRegex: false,
       },
     ],
   };
   const submit = async (values: RouteRoute) => {
-    values.matchers = filterLabel(values.matchers);
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
@@ -91,6 +90,22 @@ export default function SubscripDrawerForm({
           <Col span={24}>
             <p>匹配配置</p>
             <Form.Item
+              name={'matchers'}
+              rules={[
+                {
+                  validator: (_, value: AlarmMatcher[]) => {
+                    console.log(value);
+
+                    if (
+                      value.length &&
+                      value.find((item) => !item.name || !item.value)
+                    ) {
+                      return Promise.reject('请检查标签输入');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
               label={
                 <div>
                   <span>标签</span>
@@ -99,13 +114,7 @@ export default function SubscripDrawerForm({
                 </div>
               }
             >
-              <InputLabel
-                wrapFormName="matchers"
-                labelFormName="name"
-                valueFormName="value"
-                regBoxFormName="isRegex"
-                form={form}
-              />
+              <InputLabelComp regex={true} defaulLabelName="name" />
             </Form.Item>
           </Col>
           <Col span={24}>

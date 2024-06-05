@@ -1,5 +1,5 @@
 import { useUpdateEffect } from 'ahooks';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
 import MonitorComp from '@/components/MonitorComp';
@@ -17,7 +17,7 @@ interface MonitorDetailProps {
 }
 
 const getDate = () => {
-  return moment
+  return dayjs
     .unix(Math.ceil(new Date().valueOf() / 1000))
     .format('YYYY-MM-DD HH:mm:ss');
 };

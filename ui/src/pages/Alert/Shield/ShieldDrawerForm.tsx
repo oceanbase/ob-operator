@@ -1,7 +1,8 @@
 import { alert } from '@/api';
+import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
-import InputLabel from '@/components/InputLabel';
+import InputLabelComp from '@/components/InputLabelComp';
 import { Alert } from '@/type/alert';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -23,7 +24,6 @@ import {
   formatShieldSubmitData,
   getInstancesFromRes,
   getSelectList,
-  filterLabel
 } from '../helper';
 import ShieldObjInput from './ShieldObjInput';
 
@@ -76,7 +76,6 @@ export default function ShieldDrawerForm({
   };
 
   const submit = (values: Alert.ShieldDrawerForm) => {
-    values.matchers = filterLabel(values.matchers);
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,
@@ -98,8 +97,6 @@ export default function ShieldDrawerForm({
     if (isEdit) {
       alert.getSilencer(id).then(({ successful, data }) => {
         if (successful) {
-          console.log(getInstancesFromRes(data.instances));
-
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,
@@ -177,6 +174,20 @@ export default function ShieldDrawerForm({
           />
         </Form.Item>
         <Form.Item
+          name={'matchers'}
+          rules={[
+            {
+              validator: (_, value: AlarmMatcher[]) => {
+                if (
+                  value.length &&
+                  value.find((item) => !item.name || !item.value)
+                ) {
+                  return Promise.reject('请检查标签输入');
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
           label={
             <IconTip
               tip="支持对指定的指标进行屏蔽，如慢 SQL告警，支持对 SQLID 进行过滤，支持正则表达式"
@@ -184,14 +195,7 @@ export default function ShieldDrawerForm({
             />
           }
         >
-          <InputLabel
-            wrapFormName="matchers"
-            labelFormName="name"
-            valueFormName="value"
-            regBoxFormName="isRegex"
-            form={form}
-            maxCount={8}
-          />
+          <InputLabelComp regex={true} maxLength={8} defaulLabelName='name'/>
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>
           <Col>

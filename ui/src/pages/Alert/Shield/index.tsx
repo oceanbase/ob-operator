@@ -21,7 +21,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { clone } from 'lodash';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import { sortAlarmShielding } from '../helper';
@@ -71,7 +71,7 @@ export default function Shield() {
       dataIndex: 'instances',
       key: 'type',
       render: (instances: OceanbaseOBInstance[]) => (
-        <Text>{instances[0].type || '-'}</Text>
+        <Text>{instances?.[0].type || '-'}</Text>
       ),
     },
     {
@@ -79,7 +79,7 @@ export default function Shield() {
       dataIndex: 'instances',
       key: 'instances',
       width: 200,
-      render: (instances: OceanbaseOBInstance[]) => {
+      render: (instances: OceanbaseOBInstance[] = []) => {
         const temp: InstancesRender = {};
         for (const instance of instances) {
           Object.keys(instance).forEach((key: keyof OceanbaseOBInstance) => {
@@ -144,7 +144,7 @@ export default function Shield() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
-        <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {
@@ -171,7 +171,7 @@ export default function Shield() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt) => (
-        <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {

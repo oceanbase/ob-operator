@@ -19,7 +19,7 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import moment from 'moment';
+import dayjs from 'dayjs'
 import AlarmFilter from '../AlarmFilter';
 import { sortEvents } from '../helper';
 const { Text } = Typography;
@@ -96,7 +96,7 @@ export default function Event() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
-        <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {
@@ -105,7 +105,7 @@ export default function Event() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
       render: (endsAt: number) => (
-        <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {
