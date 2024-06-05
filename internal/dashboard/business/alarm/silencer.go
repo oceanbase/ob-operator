@@ -184,6 +184,7 @@ func filterSilencer(silencer *silence.SilencerResponse, filter *silence.Silencer
 	}
 	// require at least one instance matches
 	// TODO: whether to consider a cluster in filter matches a tenant or observer if the cluster names are same
+
 	if filter.Instance != nil {
 		instanceMatched := false
 		for _, instance := range silencer.Instances {
@@ -193,6 +194,16 @@ func filterSilencer(silencer *silence.SilencerResponse, filter *silence.Silencer
 			}
 		}
 		matched = matched && instanceMatched
+	}
+	if filter.InstanceType != "" {
+		instanceTypeMatched := false
+		for _, instance := range silencer.Instances {
+			if instance.Type == filter.InstanceType {
+				instanceTypeMatched = true
+				break
+			}
+		}
+		matched = matched && instanceTypeMatched
 	}
 	return matched
 }
