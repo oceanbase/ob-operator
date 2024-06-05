@@ -126,7 +126,15 @@ export default function ShieldObjInput({
     return (
       <Row gutter={8}>
         <Col span={8}>
-          <Form.Item name={clusterFormName}>
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: '请选择',
+              },
+            ]}
+            name={clusterFormName}
+          >
             <Select
               mode="multiple"
               maxCount={1}
@@ -141,7 +149,16 @@ export default function ShieldObjInput({
             {({ getFieldValue }) => {
               const cluster = getFieldValue(clusterFormName);
               return (
-                <Form.Item name={nextFormName} dependencies={[clusterFormName]}>
+                <Form.Item
+                  name={nextFormName}
+                  rules={[
+                    {
+                      required: true,
+                      message: '请选择',
+                    },
+                  ]}
+                  dependencies={[clusterFormName]}
+                >
                   <Select
                     mode="multiple"
                     onChange={selectOnChange}
@@ -174,7 +191,15 @@ export default function ShieldObjInput({
     return (
       <Row>
         <Col span={24}>
-          <Form.Item name={['instances', 'obcluster']}>
+          <Form.Item
+            rules={[
+              {
+                required: true,
+                message: '请选择',
+              },
+            ]}
+            name={['instances', 'obcluster']}
+          >
             <Select
               mode="multiple"
               maxCount={maxCount}

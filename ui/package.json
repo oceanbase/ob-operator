@@ -26,8 +26,7 @@
     "copy-to-clipboard": "^3.3.3",
     "i18next": "^23.11.1",
     "jsencrypt": "^3.3.2",
-    "lodash": "^4.17.21",
-    "moment": "^2.29.4"
+    "lodash": "^4.17.21"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

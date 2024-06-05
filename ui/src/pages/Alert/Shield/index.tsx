@@ -20,7 +20,8 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import moment from 'moment';
+import { clone } from 'lodash';
+import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import { sortAlarmShielding } from '../helper';
@@ -70,7 +71,7 @@ export default function Shield() {
       dataIndex: 'instances',
       key: 'type',
       render: (instances: OceanbaseOBInstance[]) => (
-        <Text>{instances[0].type || '-'}</Text>
+        <Text>{instances?.[0].type || '-'}</Text>
       ),
     },
     {
@@ -78,7 +79,7 @@ export default function Shield() {
       dataIndex: 'instances',
       key: 'instances',
       width: 200,
-      render: (instances: OceanbaseOBInstance[]) => {
+      render: (instances: OceanbaseOBInstance[] = []) => {
         const temp: InstancesRender = {};
         for (const instance of instances) {
           Object.keys(instance).forEach((key: keyof OceanbaseOBInstance) => {
@@ -93,8 +94,8 @@ export default function Shield() {
 
         const InstancesRender = () => (
           <div>
-            {Object.keys(temp).map((key) => (
-              <p>
+            {Object.keys(temp).map((key,index) => (
+              <p key={index}>
                 {key}：{temp[key].join(',')}
               </p>
             ))}
@@ -118,10 +119,12 @@ export default function Shield() {
       dataIndex: 'matchers',
       key: 'matchers',
       render: (rules) => {
-        if (rules.length) rules.splice(0, 0, { name: '规则名', value: '规则' });
+        const newRules = clone(rules);
+        if (newRules.length)
+          newRules.splice(0, 0, { name: '规则名', value: '规则' });
         return (
           <Space style={{ width: '100%' }} direction="vertical">
-            {rules?.map((rule) => {
+            {newRules?.map((rule) => {
               return (
                 <div
                   style={{ display: 'flex', justifyContent: 'space-between' }}
@@ -141,7 +144,7 @@ export default function Shield() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
-        <Text>{moment.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {
@@ -168,7 +171,7 @@ export default function Shield() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt) => (
-        <Text>{moment.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
       ),
     },
     {

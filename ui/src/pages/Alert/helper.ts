@@ -7,7 +7,7 @@ import type {
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
-import { clone, flatten, uniq, difference} from 'lodash';
+import { clone, difference, flatten, uniq } from 'lodash';
 
 /**
  *
@@ -100,17 +100,21 @@ export const formatShieldSubmitData = (
     cloneFormData.instances['obcluster'] = selectList;
   }
 
-  const tempInstances = selectInstance?.map((item)=>({
-    type:cloneFormData.instances.type,
-    [cloneFormData.instances.type]:item,
-  }))||[];
-  
-  tempInstances.forEach((item)=>{
-    const diffKey = difference(Object.keys(cloneFormData.instances),Object.keys(item));
-    for(const key of diffKey){
-      item[key] = cloneFormData.instances[key as Alert.InstancesKey]![0]
+  const tempInstances =
+    selectInstance?.map((item) => ({
+      type: cloneFormData.instances.type,
+      [cloneFormData.instances.type]: item,
+    })) || [];
+
+  tempInstances.forEach((item) => {
+    const diffKey = difference(
+      Object.keys(cloneFormData.instances),
+      Object.keys(item),
+    );
+    for (const key of diffKey) {
+      item[key] = cloneFormData.instances[key as Alert.InstancesKey]![0];
     }
-  })
+  });
 
   return {
     ...cloneFormData,
@@ -172,4 +176,8 @@ export const sortAlarmShielding = (
   listSilencers: SilenceSilencerResponse[],
 ) => {
   return sortAlarm(listSilencers, SHILED_STATUS_MAP);
+};
+
+export const filterLabel = (labels: Alert.LabelsType[]) => {
+  return labels.filter((label) => (label.name || label.key) && label.value);
 };

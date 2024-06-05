@@ -1,7 +1,7 @@
 import { alert } from '@/api';
-import type { RuleRule } from '@/api/generated';
+import type { CommonKVPair, RuleRule } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
-import InputLabel from '@/components/InputLabel';
+import InputLabelComp from '@/components/InputLabelComp';
 import { LEVER_OPTIONS_ALARM, SERVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -243,12 +243,22 @@ export default function RuleDrawerForm({
                   <QuestionCircleOutlined />
                 </div>
               }
+              rules={[
+                {
+                  validator: (_, value:CommonKVPair[]) => {
+                    if (
+                      value.length &&
+                      value.find((item) => !item.key || !item.value)
+                    ) {
+                      return Promise.reject('请检查标签输入');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+              name="labels"
             >
-              <InputLabel
-                wrapFormName="labels"
-                labelFormName="key"
-                valueFormName="value"
-              />
+              <InputLabelComp />
             </Form.Item>
           </Col>
         </Row>

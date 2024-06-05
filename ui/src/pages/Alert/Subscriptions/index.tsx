@@ -108,7 +108,7 @@ export default function Subscriptions() {
         pagination={{ simple: true }}
       />
       <SubscripDrawerForm
-        title="告警规则配置"
+        title="推送配置"
         width={880}
         recevierNames={listRoutes?.map((item) => item.receiver) || []}
         onClose={drawerClose}
