@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -10,16 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package obtenantbackup
+package main
 
 import (
-	ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
+	"testing"
+
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 )
 
-const (
-	fCreateBackupJobInOB ttypes.FlowName = "create backup job in db"
-)
-
-const (
-	tCreateBackupJobInOB ttypes.TaskName = "create backup job in db"
-)
+func TestTask(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Task Suite")
+}

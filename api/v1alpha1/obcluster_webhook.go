@@ -234,13 +234,13 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	newStorage := r.Spec.OBServerTemplate.Storage
 	oldStorage := oldCluster.Spec.OBServerTemplate.Storage
 	if newStorage.DataStorage.Size.Cmp(oldStorage.DataStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.DataStorage.StorageClass))
+		err = errors.Join(err, validateStorageClassAllowExpansion(newStorage.DataStorage.StorageClass))
 	}
 	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.LogStorage.StorageClass))
+		err = errors.Join(err, validateStorageClassAllowExpansion(newStorage.LogStorage.StorageClass))
 	}
 	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) > 0 {
-		err = errors.Join(err, r.validateStorageClassAllowExpansion(newStorage.RedoLogStorage.StorageClass))
+		err = errors.Join(err, validateStorageClassAllowExpansion(newStorage.RedoLogStorage.StorageClass))
 	}
 	if err != nil {
 		return nil, err
@@ -484,7 +484,7 @@ func (r *OBCluster) createDefaultUserSecret(secretName string) error {
 	})
 }
 
-func (r *OBCluster) validateStorageClassAllowExpansion(storageClassName string) error {
+func validateStorageClassAllowExpansion(storageClassName string) error {
 	sc := storagev1.StorageClass{}
 	err := clt.Get(context.Background(), types.NamespacedName{
 		Name: storageClassName,

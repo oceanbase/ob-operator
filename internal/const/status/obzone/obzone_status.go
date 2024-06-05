@@ -23,8 +23,8 @@ const (
 	Upgrade              = "upgrade"
 	BootstrapReady       = "bootstrap ready"
 	FinalizerFinished    = "finalizer finished"
-	ScaleUp              = "scale up"
+	ScaleVertically      = "scale vertically"
 	ExpandPVC            = "expand pvc"
-	MountBackupVolume    = "mount backup volume"
+	ModifyServerTemplate = "modify server template"
 	RollingUpdateServers = "rolling update servers"
 )

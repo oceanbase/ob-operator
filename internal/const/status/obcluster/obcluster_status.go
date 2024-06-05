@@ -23,9 +23,9 @@ const (
 	ModifyOBParameter      = "modify parameter"
 	Bootstrapped           = "bootstrapped"
 	FinalizerFinished      = "finalizer finished"
-	ScaleUp                = "scale up"
+	ScaleVertically        = "scale vertically"
 	ExpandPVC              = "expand pvc"
 	Failed                 = "failed"
-	MountBackupVolume      = "mount backup volume"
+	ModifyServerTemplate   = "modify server template"
 	RollingUpdateOBServers = "rolling update observers"
 )

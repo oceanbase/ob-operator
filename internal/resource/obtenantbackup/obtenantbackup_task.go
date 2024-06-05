@@ -18,7 +18,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 var taskMap = builder.NewTaskHub[*OBTenantBackupManager]()
 

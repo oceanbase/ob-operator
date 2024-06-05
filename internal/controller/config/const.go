@@ -23,4 +23,5 @@ const (
 	OBTenantBackupPolicyControllerName = "obtenantbackuppolicy-controller"
 	OBTenantOperationControllerName    = "obtenantoperation-controller"
 	OBResourceRescueControllerName     = "obresourcerescue-controller"
+	OBClusterOperationControllerName   = "obclusteroperation-controller"
 )

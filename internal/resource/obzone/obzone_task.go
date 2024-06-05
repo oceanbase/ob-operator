@@ -31,7 +31,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 var taskMap = builder.NewTaskHub[*OBZoneManager]()
 
@@ -244,7 +244,7 @@ func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
 	return nil
 }
 
-func ScaleUpOBServers(m *OBZoneManager) tasktypes.TaskError {
+func ScaleOBServersVertically(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
@@ -293,20 +293,30 @@ func ExpandPVC(m *OBZoneManager) tasktypes.TaskError {
 	return nil
 }
 
-func MountBackupVolume(m *OBZoneManager) tasktypes.TaskError {
+func ModifyPodTemplate(m *OBZoneManager) tasktypes.TaskError {
 	observerList, err := m.listOBServers()
 	if err != nil {
 		return err
 	}
 	for _, observer := range observerList.Items {
 		if observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil {
-			m.Logger.Info("Mount backup volume", "observer", observer.Name)
+			m.Logger.Info("Add backup volume", "observer", observer.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "Mount backup volume %s failed", observer.Name)
+				return errors.Wrapf(err, "Add backup volume %s failed", observer.Name)
+			}
+		}
+		if observer.Spec.MonitorTemplate == nil && m.OBZone.Spec.MonitorTemplate != nil {
+			m.Logger.Info("Add monitor template", "observer", observer.Name)
+			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+				observer.Spec.MonitorTemplate = m.OBZone.Spec.MonitorTemplate
+				return m.Client.Update(m.Ctx, &observer)
+			})
+			if err != nil {
+				return errors.Wrapf(err, "Add monitor template %s failed", observer.Name)
 			}
 		}
 	}
@@ -359,15 +369,15 @@ func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitForOBServerScalingUp(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleUp, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.generateWaitOBServerStatusFunc(serverstatus.ScaleVertically, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
 	return m.generateWaitOBServerStatusFunc(serverstatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
-func WaitForOBServerMounting(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+func WaitForOBServerTemplateModifying(m *OBZoneManager) tasktypes.TaskError {
+	return m.generateWaitOBServerStatusFunc(serverstatus.ModifyingPodTemplate, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {

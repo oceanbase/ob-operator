@@ -180,6 +180,32 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obclusteroperations
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusteroperations/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obclusteroperations/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - obclusters
   verbs:
   - create

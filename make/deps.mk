@@ -43,4 +43,4 @@ tools: kustomize controller-gen envtest install-delve ## Download all tools
 
 .PHONY: init-generator
 init-generator: ## Install generator tools
-	go install cmd/generator/task/task-register.go
+	go install internal/cmds/generator/task/task_register.go
