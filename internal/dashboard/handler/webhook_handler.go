@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/payload"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
+
+	"github.com/gin-gonic/gin"
 )
 
 // @ID LogAlerts
