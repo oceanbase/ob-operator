@@ -30,6 +30,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-obclusteroperation
+  failurePolicy: Fail
+  name: mobclusteroperation.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusteroperations
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obresourcerescue
   failurePolicy: Fail
   name: mobresourcerescue.kb.io
@@ -129,6 +149,26 @@ webhooks:
     - UPDATE
     resources:
     - obclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-oceanbase-oceanbase-com-v1alpha1-obclusteroperation
+  failurePolicy: Fail
+  name: vobclusteroperation.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - obclusteroperations
   sideEffects: None
 - admissionReviewVersions:
   - v1

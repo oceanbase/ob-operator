@@ -35,7 +35,7 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 var taskMap = builder.NewTaskHub[*OBTenantManager]()
 
@@ -238,7 +238,7 @@ func CreateEmptyStandbyTenant(m *OBTenantManager) tasktypes.TaskError {
 	return nil
 }
 
-func CheckPrimaryTenantLSIntegrity(m *OBTenantManager) tasktypes.TaskError {
+func CheckPrimaryTenantLsIntegrity(m *OBTenantManager) tasktypes.TaskError {
 	var err error
 	if m.OBTenant.Spec.Source == nil || m.OBTenant.Spec.Source.Tenant == nil {
 		return errors.New("Primary tenant must have source tenant")

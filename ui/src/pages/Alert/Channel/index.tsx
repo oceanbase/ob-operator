@@ -1,13 +1,14 @@
 import { alert } from '@/api';
 import type { ReceiverReceiver } from '@/api/generated';
+import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { Alert } from '@/type/alert';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import ChannelDrawer from './ChannelDrawer';
-import { Alert } from '@/type/alert';
 
 export default function Channel() {
   const [searchParams] = useSearchParams();
@@ -59,6 +60,7 @@ export default function Channel() {
       title: '通道配置',
       dataIndex: 'config',
       key: 'config',
+      render: (value) => <PreText value={value} />,
     },
     {
       title: '操作',
@@ -113,6 +115,7 @@ export default function Channel() {
         status={drawerStatus}
         setStatus={setDrawerStatus}
         name={clickedChannelName}
+        submitCallback={refresh}
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
       />

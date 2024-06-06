@@ -4,7 +4,7 @@ import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { request } from '@umijs/max';
 import _ from 'lodash';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const obClusterPrefix = '/api/v1/obclusters';
 const clusterPrefix = '/api/v1/cluster';
@@ -47,10 +47,10 @@ export async function getEventsReq(params: API.EventParams) {
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
     for (const event of r.data) {
       event.id = ++count;
-      event.firstOccur = moment
+      event.firstOccur = dayjs
         .unix(event.firstOccur)
         .format('YYYY-MM-DD HH:mm:ss');
-      event.lastSeen = moment
+      event.lastSeen = dayjs
         .unix(event.lastSeen)
         .format('YYYY-MM-DD HH:mm:ss');
     }
@@ -67,7 +67,7 @@ export async function getNodeInfoReq() {
       Object.assign(obj, node.info, node.resource);
       obj.cpu = ((obj.cpuUsed / obj.cpuTotal) * 100).toFixed(1);
       obj.memory = ((obj.memoryUsed / obj.memoryTotal) * 100).toFixed(1);
-      obj.uptime = moment.unix(obj.uptime).format('YYYY-MM-DD HH:mm:ss');
+      obj.uptime = dayjs.unix(obj.uptime).format('YYYY-MM-DD HH:mm:ss');
       res.push(obj);
     }
   }
@@ -126,7 +126,7 @@ export async function getObclusterListReq() {
     const res: API.ClusterList = [];
     for (const cluster of r.data) {
       const obj = {};
-      cluster.createTime = moment
+      cluster.createTime = dayjs
         .unix(cluster.createTime)
         .format('YYYY-MM-DD HH:mm:ss');
       for (const key in cluster) {
@@ -423,7 +423,6 @@ export async function queryMetricsReq({
     if (!r.data || !r.data.length) return [];
     r.data.forEach((metric) => {
       metric.values.forEach((item) => {
-        // item.date = moment.unix(item.timestamp).format('YYYY-MM-DD HH:mm:ss');
         item.date = item.timestamp * 1000;
         if (type === 'OVERVIEW') {
           if (useFor === 'tenant') {

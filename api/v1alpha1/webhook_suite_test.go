@@ -127,6 +127,9 @@ var _ = BeforeSuite(func() {
 	err = (&OBResourceRescue{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
+	err = (&OBClusterOperation{}).SetupWebhookWithManager(mgr)
+	Expect(err).NotTo(HaveOccurred())
+
 	//+kubebuilder:scaffold:webhook
 
 	go func() {

@@ -1,7 +1,8 @@
 import { alert } from '@/api';
+import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
-import InputLabel from '@/components/InputLabel';
+import InputLabelComp from '@/components/InputLabelComp';
 import { Alert } from '@/type/alert';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -30,6 +31,7 @@ interface ShieldDrawerProps extends DrawerProps {
   id?: string;
   initialValues?: Alert.ShieldDrawerInitialValues;
   onClose: () => void;
+  submitCallback?: () => void;
 }
 
 const { TextArea } = Input;
@@ -38,12 +40,14 @@ export default function ShieldDrawerForm({
   id,
   onClose,
   initialValues,
+  submitCallback,
   ...props
 }: ShieldDrawerProps) {
   const [form] = Form.useForm<Alert.ShieldDrawerForm>();
   const { clusterList, tenantList } = useModel('alarm');
   const shieldObjType = Form.useWatch(['instances', 'type'], form);
   const isEdit = !!id;
+
   const newInitialValues = {
     matchers: [
       {
@@ -68,6 +72,7 @@ export default function ShieldDrawerForm({
     } else {
       form.setFieldValue('endsAt', dayjs(time));
     }
+    form.validateFields(['endsAt']);
   };
 
   const submit = (values: Alert.ShieldDrawerForm) => {
@@ -76,11 +81,13 @@ export default function ShieldDrawerForm({
       values.instances.type,
       tenantList,
     );
+    if (isEdit) values.id = id;
     alert
       .createOrUpdateSilencer(formatShieldSubmitData(values, _clusterList))
       .then(({ successful }) => {
         if (successful) {
           message.success('操作成功!');
+          submitCallback && submitCallback();
           onClose();
         }
       });
@@ -119,8 +126,27 @@ export default function ShieldDrawerForm({
         layout="vertical"
         initialValues={newInitialValues}
       >
-        <Form.Item name={['instances', 'type']} label="屏蔽对象类型">
-          <Radio.Group>
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请选择',
+            },
+          ]}
+          name={['instances', 'type']}
+          label="屏蔽对象类型"
+        >
+          <Radio.Group
+            onChange={() => {
+              form.setFieldsValue({
+                instances: {
+                  obcluster: undefined,
+                  obtenant: undefined,
+                  observer: undefined,
+                },
+              });
+            }}
+          >
             <Radio value="obcluster"> 集群 </Radio>
             <Radio value="obtenant"> 租户 </Radio>
             <Radio value="observer"> OBServer </Radio>
@@ -129,7 +155,16 @@ export default function ShieldDrawerForm({
         <Form.Item style={{ marginBottom: 0 }} label="屏蔽对象">
           <ShieldObjInput shieldObjType={shieldObjType} form={form} />
         </Form.Item>
-        <Form.Item name={'rules'} label="屏蔽告警规则">
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请选择',
+            },
+          ]}
+          name={'rules'}
+          label="屏蔽告警规则"
+        >
           <Select
             mode="multiple"
             allowClear
@@ -139,6 +174,20 @@ export default function ShieldDrawerForm({
           />
         </Form.Item>
         <Form.Item
+          name={'matchers'}
+          rules={[
+            {
+              validator: (_, value: AlarmMatcher[]) => {
+                if (
+                  value.length &&
+                  value.find((item) => !item.name || !item.value)
+                ) {
+                  return Promise.reject('请检查标签输入');
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
           label={
             <IconTip
               tip="支持对指定的指标进行屏蔽，如慢 SQL告警，支持对 SQLID 进行过滤，支持正则表达式"
@@ -146,17 +195,20 @@ export default function ShieldDrawerForm({
             />
           }
         >
-          <InputLabel
-            wrapFormName="matchers"
-            labelFormName="name"
-            valueFormName="value"
-            regBoxFormName="isRegex"
-            maxCount={8}
-          />
+          <InputLabelComp regex={true} maxLength={8} defaulLabelName='name'/>
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>
           <Col>
-            <Form.Item name="endsAt" label="屏蔽结束时间">
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请选择',
+                },
+              ]}
+              name="endsAt"
+              label="屏蔽结束时间"
+            >
               <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" />
             </Form.Item>
           </Col>
@@ -189,7 +241,16 @@ export default function ShieldDrawerForm({
             </Button>
           </Col>
         </Row>
-        <Form.Item name={'comment'} label="备注信息">
+        <Form.Item
+          rules={[
+            {
+              required: true,
+              message: '请输入',
+            },
+          ]}
+          name={'comment'}
+          label="备注信息"
+        >
           <TextArea rows={4} placeholder="请输入" />
         </Form.Item>
       </Form>

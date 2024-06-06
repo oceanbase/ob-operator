@@ -2,10 +2,11 @@ import { alert } from '@/api';
 import type { AlarmServerity, RuleRuleResponse } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SERVERITY_MAP } from '@/constants';
+import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import RuleDrawerForm from './RuleDrawerForm';
 
@@ -13,8 +14,13 @@ const { Text } = Typography;
 
 export default function Rules() {
   const [form] = Form.useForm();
-  const { data: listRulesRes, refresh, run: getListRules } = useRequest(alert.listRules);
-  const [editRuleName,setEditRuleName] = useState<string>()
+  const [searchParams, setSearchParams] = useSearchParams();
+  const {
+    data: listRulesRes,
+    refresh,
+    run: getListRules,
+  } = useRequest(alert.listRules);
+  const [editRuleName, setEditRuleName] = useState<string>();
   const { run: deleteRule } = useRequest(alert.deleteRule, {
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -22,13 +28,20 @@ export default function Rules() {
       }
     },
   });
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(
+    Boolean(searchParams.get('rule')),
+  );
   const listRules = listRulesRes?.data || [];
 
-  const editRule = (ruleName:string)=>{
+  const editRule = (ruleName: string) => {
     setEditRuleName(ruleName);
     setDrawerOpen(true);
-  }
+  };
+  const drawerClose = () => {
+    setSearchParams('');
+    setEditRuleName(undefined);
+    setDrawerOpen(false);
+  };
 
   const columns: ColumnsType<RuleRuleResponse> = [
     {
@@ -39,12 +52,14 @@ export default function Rules() {
     {
       title: '触发规则',
       dataIndex: 'description',
+      width: '30%',
       key: 'description',
     },
     {
       title: '持续时间',
       dataIndex: 'duration',
       key: 'duration',
+      render: (value) => <Text>{value}分钟</Text>,
     },
     {
       title: '对象类型',
@@ -55,6 +70,9 @@ export default function Rules() {
       title: '告警等级',
       dataIndex: 'serverity',
       key: 'serverity',
+      sorter: (preRecord, curRecord) =>
+        SERVERITY_MAP[curRecord.serverity].weight -
+        SERVERITY_MAP[preRecord.serverity].weight,
       render: (serverity: AlarmServerity) => (
         <Tag color={SERVERITY_MAP[serverity]?.color}>
           {SERVERITY_MAP[serverity]?.label}
@@ -65,6 +83,17 @@ export default function Rules() {
       title: '类型',
       dataIndex: 'type',
       key: 'type',
+      filters: [
+        {
+          text: '自定义',
+          value: 'customized',
+        },
+        {
+          text: '默认',
+          value: 'builtin',
+        },
+      ],
+      onFilter: (value, record) => record.type === value,
       render: (type) => <Text>{type === 'builtin' ? '默认' : '自定义'}</Text>,
     },
     {
@@ -72,7 +101,11 @@ export default function Rules() {
       dataIndex: 'action',
       render: (_, record) => (
         <>
-          <Button onClick={()=>editRule(record.name)} style={{ paddingLeft: 0 }} type="link">
+          <Button
+            onClick={() => editRule(record.name)}
+            style={{ paddingLeft: 0 }}
+            type="link"
+          >
             编辑
           </Button>
           <Button
@@ -96,6 +129,13 @@ export default function Rules() {
       ),
     },
   ];
+
+  useEffect(() => {
+    if (searchParams.get('rule')) {
+      setEditRuleName(searchParams.get('rule')!);
+    }
+  }, []);
+
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
@@ -121,7 +161,8 @@ export default function Rules() {
         width={880}
         open={drawerOpen}
         ruleName={editRuleName}
-        onClose={() => setDrawerOpen(false)}
+        onClose={drawerClose}
+        submitCallback={refresh}
       />
     </Space>
   );

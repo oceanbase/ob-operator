@@ -5301,7 +5301,7 @@ export interface SilenceSilencerParam {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerParam
      */
-    'instances': Array<OceanbaseOBInstance>;
+    'instance': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}

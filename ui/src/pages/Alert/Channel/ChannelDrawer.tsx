@@ -1,11 +1,11 @@
 import { alert } from '@/api';
+import type { ReceiverReceiver } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
-import { CHANNEL_TYPE_OPTIONS } from '@/constants';
 import { Alert } from '@/type/alert';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import { Button, Form, Input, Select, Space } from 'antd';
+import { Button, Form, Input, Select, Space, message } from 'antd';
 import { useEffect } from 'react';
 
 /**
@@ -16,6 +16,8 @@ interface ChannelDrawerProps extends DrawerProps {
   status: Alert.DrawerStatus;
   name?: string;
   setStatus?: (status: Alert.DrawerStatus) => void;
+  onClose: () => void;
+  submitCallback?: () => void;
 }
 
 const { TextArea } = Input;
@@ -25,6 +27,7 @@ export default function ChannelDrawer({
   name,
   onClose,
   setStatus,
+  submitCallback,
   ...props
 }: ChannelDrawerProps) {
   const [form] = Form.useForm();
@@ -38,14 +41,17 @@ export default function ChannelDrawer({
       }
     },
   });
+  const { data: listReceiverTemplatesRes } = useRequest(
+    alert.listReceiverTemplates,
+  );
   const { data: listReceiversRes, run: getListReceivers } = useRequest(
     alert.listReceivers,
     {
       manual: true,
     },
   );
-  const receiverNames = listReceiversRes?.data.map((receiver) => receiver.name);
-
+  const receiverNames = listReceiversRes?.data?.map((receiver) => receiver.name);
+  const listReceiverTemplates = listReceiverTemplatesRes?.data;
   const Footer = () => {
     return (
       <div>
@@ -65,6 +71,15 @@ export default function ChannelDrawer({
       </div>
     );
   };
+  const submit = (values: ReceiverReceiver) => {
+    alert.createOrUpdateReceiver(values).then(({ successful }) => {
+      if (successful) {
+        message.success('操作成功!');
+        submitCallback && submitCallback();
+        onClose();
+      }
+    });
+  };
 
   useEffect(() => {
     if (status !== 'create' && name) {
@@ -81,10 +96,10 @@ export default function ChannelDrawer({
       footer={<Footer />}
       destroyOnClose={true}
       onSubmit={() => form.submit()}
-      onClose={onClose}
+      onClose={() => onClose()}
       {...props}
     >
-      <Form form={form} preserve={false} layout="vertical">
+      <Form form={form} onFinish={submit} preserve={false} layout="vertical">
         <Form.Item
           wrapperCol={{ span: 12 }}
           label="通道名称"
@@ -127,20 +142,22 @@ export default function ChannelDrawer({
           {status === 'display' ? (
             <p>{form.getFieldValue('type') || '-'} </p>
           ) : (
-            <Select placeholder="请选择" options={CHANNEL_TYPE_OPTIONS} />
+            <Select
+              placeholder="请选择"
+              options={listReceiverTemplates?.map((template) => ({
+                value: template.type,
+                label: template.type,
+              }))}
+            />
           )}
         </Form.Item>
         <Form.Item noStyle dependencies={['type']}>
           {({ setFieldValue, getFieldValue }) => {
             const type = getFieldValue('type');
-            if (type) {
-              alert.getReceiverTemplate(type).then(({ successful, data }) => {
-                if (successful) {
-                  setFieldValue('config', data.template);
-                }
-              });
-            }
-
+            const template = listReceiverTemplates?.find(
+              (item) => item.type === type,
+            );
+            if (template) setFieldValue('config', template.template);
             return (
               <Form.Item
                 name={'config'}
@@ -158,9 +175,9 @@ export default function ChannelDrawer({
                 }
               >
                 {status === 'display' ? (
-                  <p>{form.getFieldValue('config') || '-'}</p>
+                  <pre>{form.getFieldValue('config') || '-'}</pre>
                 ) : (
-                  <TextArea rows={4} placeholder="请输入" />
+                  <TextArea rows={18} placeholder="请输入" />
                 )}
               </Form.Item>
             );

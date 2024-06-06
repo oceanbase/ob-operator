@@ -178,13 +178,21 @@ const SERVERITY_MAP = {
   critical: {
     color: 'red',
     label: '严重',
+    weight: 3,
   },
   warning: {
     color: 'gold',
     label: '警告',
+    weight: 2,
   },
-  caution: { color: 'blue', label: '注意' },
-  info: { color: 'green', label: '提醒' },
+  caution: { color: 'blue', label: '注意', weight: 1 },
+  info: { color: 'green', label: '提醒', weight: 0 },
+};
+
+const SHILED_STATUS_MAP = {
+  expired: { text: '过期', color: 'gold', weight: 1 },
+  pending: { text: '未生效', color: 'default', weight: 0 },
+  active: { text: '活跃', color: 'green', weight: 2 },
 };
 
 const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
@@ -213,7 +221,14 @@ const CHANNEL_TYPE_OPTIONS = [
   },
 ];
 
+const ALERT_STATE_MAP = {
+  active: { text: '活跃', color: 'green', weight: 0 },
+  unprocessed: { text: '未处理', color: 'default', weight: 1 },
+  suppressed: { text: '抑制', color: 'red', weight: 2 },
+};
+
 export {
+  ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
   BADGE_IMG_MAP,
   CHANNEL_TYPE_OPTIONS,
@@ -233,6 +248,7 @@ export {
   RESULT_STATUS,
   SERVERITY_MAP,
   SERVER_IMG_MAP,
+  SHILED_STATUS_MAP,
   STATISTICS_INTERVAL,
   STATUS,
   SUFFIX_UNIT,

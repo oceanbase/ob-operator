@@ -21,7 +21,7 @@ import (
 func genCreateBackupJobInDBFlow(_ *OBTenantBackupManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fCreateBackupJobInOB,
+			Name:         "create backup job in ob",
 			Tasks:        []tasktypes.TaskName{tCreateBackupJobInOB},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: tasktypes.FailureRule{

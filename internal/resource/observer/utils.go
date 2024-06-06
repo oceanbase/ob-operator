@@ -175,17 +175,48 @@ func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClai
 	return false
 }
 
-func (m *OBServerManager) checkIfBackupVolumeAdded(pod *corev1.Pod) bool {
-	if m.OBServer.Spec.BackupVolume != nil && m.OBServer.Spec.BackupVolume.Volume != nil {
-		// If the backup volume is not mounted, it means the backup volume is added
-		for _, volume := range pod.Spec.Volumes {
-			if volume.Name == m.OBServer.Spec.BackupVolume.Volume.Name {
-				return false
+func (m *OBServerManager) checkIfResourceChanged(pod *corev1.Pod) bool {
+	if len(pod.Spec.Containers) > 0 {
+		tmplRes := m.OBServer.Spec.OBServerTemplate.Resource
+		for i, container := range pod.Spec.Containers {
+			if container.Name == oceanbaseconst.ContainerName {
+				containerRes := pod.Spec.Containers[i].Resources.Limits
+				if containerRes.Cpu().Cmp(tmplRes.Cpu) != 0 || containerRes.Memory().Cmp(tmplRes.Memory) != 0 {
+					return true
+				}
 			}
 		}
-		return true
 	}
 	return false
+}
+
+func (m *OBServerManager) checkIfBackupVolumeMutated(pod *corev1.Pod) bool {
+	addingVolume := m.OBServer.Spec.BackupVolume != nil
+	volumeExist := false
+
+	for _, container := range pod.Spec.Containers {
+		if container.Name == oceanbaseconst.ContainerName {
+			for _, volumeMount := range container.VolumeMounts {
+				if volumeMount.MountPath == oceanbaseconst.BackupPath {
+					volumeExist = true
+					break
+				}
+			}
+		}
+	}
+
+	return addingVolume != volumeExist
+}
+
+func (m *OBServerManager) checkIfMonitorMutated(pod *corev1.Pod) bool {
+	addingMonitor := m.OBServer.Spec.MonitorTemplate != nil
+	monitorExist := false
+	for _, container := range pod.Spec.Containers {
+		if container.Name == obagentconst.ContainerName {
+			monitorExist = true
+		}
+	}
+	return addingMonitor != monitorExist
 }
 
 func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
@@ -205,7 +236,6 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 	observerContainer := m.createOBServerContainer(obcluster)
 	containers = append(containers, observerContainer)
 
-	// TODO, add monitor container
 	volumes := make([]corev1.Volume, 0)
 
 	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)

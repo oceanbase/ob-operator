@@ -34,6 +34,14 @@ spec:
       name: OBStatus
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.tasks
+      name: Tasks
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.task
+      name: Task
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:

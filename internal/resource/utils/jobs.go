@@ -177,7 +177,7 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 	container := corev1.Container{
 		Name:    "script-runner",
 		Image:   obcluster.Spec.OBServerTemplate.Image,
-		Command: []string{"bash", "-c", fmt.Sprintf("python2 %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.SqlPort, password, extraOpt)},
+		Command: []string{"bash", "-c", fmt.Sprintf("if [[ `command -v python2` ]]; then ln -sf /usr/bin/python2 /usr/bin/python; fi && python %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.SqlPort, password, extraOpt)},
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

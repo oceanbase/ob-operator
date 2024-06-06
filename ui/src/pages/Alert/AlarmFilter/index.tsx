@@ -139,6 +139,12 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         }
       }
     });
+    if(filter.instance){
+      if(Object.keys(filter.instance).length === 1 && filter.instance?.type){
+        filter.instanceType = filter.instance.type
+        delete filter.instance
+      }
+    }
     debounceDepend(filter);
   }, [formData]);
 

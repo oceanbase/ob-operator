@@ -1,7 +1,8 @@
 import { alert } from '@/api';
 import type { RouteRoute } from '@/api/generated';
+import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
-import InputLabel from '@/components/InputLabel';
+import InputLabelComp from '@/components/InputLabelComp';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
 import { Col, Form, InputNumber, Row, Select, message } from 'antd';
@@ -11,11 +12,15 @@ import styles from './index.less';
 interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
   recevierNames: string[];
+  onClose: () => void;
+  submitCallback?: () => void;
 }
 
 export default function SubscripDrawerForm({
   id,
   recevierNames,
+  submitCallback,
+  onClose,
   ...props
 }: ShieldDrawerFormProps) {
   const isEdit = !!id;
@@ -27,9 +32,9 @@ export default function SubscripDrawerForm({
   const initialValues = {
     matchers: [
       {
-        isRegex: false,
         name: '',
         value: '',
+        isRegex: false,
       },
     ],
   };
@@ -37,6 +42,8 @@ export default function SubscripDrawerForm({
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
+      submitCallback && submitCallback();
+      onClose();
     }
   };
   useEffect(() => {
@@ -52,6 +59,9 @@ export default function SubscripDrawerForm({
     <AlertDrawer
       destroyOnClose={true}
       onSubmit={() => form.submit()}
+      onClose={() => {
+        onClose();
+      }}
       {...props}
     >
       <Form
@@ -80,6 +90,22 @@ export default function SubscripDrawerForm({
           <Col span={24}>
             <p>匹配配置</p>
             <Form.Item
+              name={'matchers'}
+              rules={[
+                {
+                  validator: (_, value: AlarmMatcher[]) => {
+                    console.log(value);
+
+                    if (
+                      value.length &&
+                      value.find((item) => !item.name || !item.value)
+                    ) {
+                      return Promise.reject('请检查标签输入');
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
               label={
                 <div>
                   <span>标签</span>
@@ -88,12 +114,7 @@ export default function SubscripDrawerForm({
                 </div>
               }
             >
-              <InputLabel
-                wrapFormName="matchers"
-                labelFormName="name"
-                valueFormName="value"
-                regBoxFormName="isRegex"
-              />
+              <InputLabelComp regex={true} defaulLabelName="name" />
             </Form.Item>
           </Col>
           <Col span={24}>
@@ -123,6 +144,12 @@ export default function SubscripDrawerForm({
           <Col span={8}>
             <Form.Item
               name={'repeatInterval'}
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
               label={
                 <div>
                   推送周期{' '}
@@ -134,13 +161,28 @@ export default function SubscripDrawerForm({
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Form.Item name={'groupWait'} label="聚合等待时间">
+            <Form.Item
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
+              name={'groupWait'}
+              label="聚合等待时间"
+            >
               <InputNumber min={1} addonAfter="分钟" />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
               name={'groupInterval'}
+              rules={[
+                {
+                  required: true,
+                  message: '请输入',
+                },
+              ]}
               label={
                 <div>
                   聚合区间{' '}

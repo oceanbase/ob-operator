@@ -34,7 +34,7 @@ import (
 
 // OBTenantRestore tasks
 
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 var taskMap = builder.NewTaskHub[*ObTenantRestoreManager]()
 

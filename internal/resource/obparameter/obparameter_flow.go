@@ -20,7 +20,7 @@ import (
 func genSetOBParameterFlow(_ *OBParameterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fSetOBParameter,
+			Name:         "set ob parameter",
 			Tasks:        []tasktypes.TaskName{tSetOBParameter},
 			TargetStatus: parameterstatus.Matched,
 		},

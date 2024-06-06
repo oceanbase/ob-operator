@@ -20,7 +20,7 @@ import (
 func genPrepareBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fPrepareBackupPolicy,
+			Name:         "prepare backup policy",
 			Tasks:        []tasktypes.TaskName{tConfigureServerForBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPrepared),
 			OnFailure: tasktypes.FailureRule{
@@ -33,7 +33,7 @@ func genPrepareBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskF
 func genStartBackupJobFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fStartBackupJob,
+			Name:         "start backup job",
 			Tasks:        []tasktypes.TaskName{tStartBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: tasktypes.FailureRule{
@@ -46,7 +46,7 @@ func genStartBackupJobFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 func genStopBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fStopBackupPolicy,
+			Name:         "stop backup policy",
 			Tasks:        []tasktypes.TaskName{tStopBackup},
 			TargetStatus: string(constants.BackupPolicyStatusStopped),
 		},
@@ -56,7 +56,7 @@ func genStopBackupPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow
 func genMaintainRunningPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fMaintainRunningPolicy,
+			Name:         "maintain running policy",
 			Tasks:        []tasktypes.TaskName{tConfigureServerForBackup, tCleanOldBackupJobs, tCheckAndSpawnJobs},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 			OnFailure: tasktypes.FailureRule{
@@ -69,7 +69,7 @@ func genMaintainRunningPolicyFlow(_ *ObTenantBackupPolicyManager) *tasktypes.Tas
 func genPauseBackupFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fPauseBackup,
+			Name:         "pause backup",
 			Tasks:        []tasktypes.TaskName{tPauseBackup},
 			TargetStatus: string(constants.BackupPolicyStatusPaused),
 		},
@@ -79,7 +79,7 @@ func genPauseBackupFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 func genResumeBackupFlow(_ *ObTenantBackupPolicyManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         fResumeBackup,
+			Name:         "resume backup",
 			Tasks:        []tasktypes.TaskName{tResumeBackup},
 			TargetStatus: string(constants.BackupPolicyStatusRunning),
 		},

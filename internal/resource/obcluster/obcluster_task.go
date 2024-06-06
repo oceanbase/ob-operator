@@ -9,7 +9,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-//go:generate task-register $GOFILE
+//go:generate task_register $GOFILE
 
 package obcluster
 
@@ -973,16 +973,16 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	return nil
 }
 
-func ScaleUpOBZones(m *OBClusterManager) tasktypes.TaskError {
-	return m.rollingUpdateZones(m.changeZonesWhenScaling, zonestatus.ScaleUp, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+func ScaleOBZonesVertically(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenScaling, zonestatus.ScaleVertically, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func ExpandPVC(m *OBClusterManager) tasktypes.TaskError {
 	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenExpandingPVC, zonestatus.ExpandPVC, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
-func MountBackupVolume(m *OBClusterManager) tasktypes.TaskError {
-	return m.modifyOBZonesAndCheckStatus(m.changeZonesWhenMountingBackupVolume, zonestatus.MountBackupVolume, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+func ModifyServerTemplate(m *OBClusterManager) tasktypes.TaskError {
+	return m.rollingUpdateZones(m.changeZonesWhenModifyingServerTemplate, zonestatus.ModifyServerTemplate, zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
 func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {

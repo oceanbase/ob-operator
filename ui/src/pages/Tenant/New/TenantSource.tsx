@@ -16,7 +16,6 @@ import {
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
-import moment from 'moment';
 import { useEffect, useState } from 'react';
 import styles from './index.less';
 
@@ -86,7 +85,7 @@ export default function TenantSource({ ns }: TenantSourceProps) {
   };
 
   const disabledDateTime: RangePickerProps['disabledTime'] = (_) => {
-    const isToday = _?.date() === moment().date();
+    const isToday = _?.date() === dayjs().date();
     if (!isToday)
       return {
         disabledHours: () => [],
@@ -94,16 +93,16 @@ export default function TenantSource({ ns }: TenantSourceProps) {
         disabledSeconds: () => [],
       };
     return {
-      disabledHours: () => range(0, 24).splice(moment().hour() + 1, 24),
+      disabledHours: () => range(0, 24).splice(dayjs().hour() + 1, 24),
       disabledMinutes: (hour) => {
-        if (hour === moment().hour()) {
-          return range(0, 60).splice(moment().minute() + 1, 60);
+        if (hour === dayjs().hour()) {
+          return range(0, 60).splice(dayjs().minute() + 1, 60);
         }
         return [];
       },
       disabledSeconds: (hour, minute) => {
-        if (hour === moment().hour() && minute === moment().minute()) {
-          return range(0, 60).splice(moment().second(), 60);
+        if (hour === dayjs().hour() && minute === dayjs().minute()) {
+          return range(0, 60).splice(dayjs().second(), 60);
         }
         return [];
       },

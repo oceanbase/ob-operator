@@ -15,7 +15,6 @@ import BasicInfo from './BasicInfo';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
 
-//集群详情概览页
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
   const [operateModalVisible, setOperateModalVisible] =
@@ -24,7 +23,6 @@ const ClusterOverview: React.FC = () => {
   const chooseZoneName = useRef<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
-  //当前运维弹窗类型
   const modalType = useRef<API.ModalType>('addZone');
   const { data: clusterDetail, run: getClusterDetail } = useRequest(
     getClusterDetailReq,
@@ -34,7 +32,7 @@ const ClusterOverview: React.FC = () => {
         setChooseClusterName(data.info.clusterName);
         if (data.status === 'operating') {
           timerRef.current = setTimeout(() => {
-            getClusterDetail({ ns, name });
+            getClusterDetail({ ns:ns!, name:name! });
           }, REFRESH_CLUSTER_TIME);
         } else if (timerRef.current) {
           clearTimeout(timerRef.current);
@@ -43,7 +41,7 @@ const ClusterOverview: React.FC = () => {
     },
   );
   const handleDelete = async () => {
-    const res = await deleteClusterReportWrap({ ns, name });
+    const res = await deleteClusterReportWrap({ ns:ns!, name:name! });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -57,7 +55,7 @@ const ClusterOverview: React.FC = () => {
 
   const operateSuccess = () => {
     setTimeout(() => {
-      getClusterDetail({ ns, name });
+      getClusterDetail({ ns:ns!, name:name! });
     }, 1000);
   };
   const handleAddZone = () => {
@@ -127,7 +125,7 @@ const ClusterOverview: React.FC = () => {
   };
 
   useEffect(() => {
-    getClusterDetail({ ns, name });
+    getClusterDetail({ ns:ns!, name:name! });
 
     return () => {
       if (timerRef.current) {

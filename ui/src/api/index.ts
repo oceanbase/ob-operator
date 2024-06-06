@@ -1,3 +1,4 @@
+import { message } from 'antd';
 import globalAxios, { AxiosInstance, AxiosPromise } from 'axios';
 import {
   AlarmApiFactory,
@@ -5,17 +6,29 @@ import {
   Configuration,
   InfoApiFactory,
   OBClusterApiFactory,
+  OBProxyApiFactory,
   OBTenantApiFactory,
   TerminalApiFactory,
   UserApiFactory,
 } from './generated/index';
 
-globalAxios.interceptors.response.use((res) => {
-  return res.data;
-});
+globalAxios.interceptors.response.use(
+  (res) => {
+    return res.data;
+  },
+  (error) => {
+    if (error?.response?.status === 401) {
+      message.warning('登陆已过期');
+      location.href = '/#/login';
+    } else {
+      message.error(error?.response?.data?.message || error.message);
+    }
+    return Promise.reject(error.response);
+  },
+);
 
 const config = new Configuration({
-  basePath: process.env.NODE_ENV === 'development' ? location.origin : '/',
+  basePath: location.origin,
   apiKey: () => document.cookie,
   baseOptions: {
     withCredentials: true,
@@ -47,3 +60,4 @@ export const obtenant = wrapper(OBTenantApiFactory, config);
 export const terminal = wrapper(TerminalApiFactory, config);
 export const user = wrapper(UserApiFactory, config);
 export const alert = wrapper(AlarmApiFactory, config);
+export const obproxy = wrapper(OBProxyApiFactory, config);

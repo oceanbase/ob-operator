@@ -83,6 +83,16 @@ entries:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.3.0-sp.1-100000242024032211/oceanbase-cluster-4.3.0-sp.1-100000242024032211.tgz
     version: 4.3.0-sp.1-100000242024032211
   - apiVersion: v2
+    appVersion: 4.2.1.7-107000152024053114
+    created: "2024-06-05T12:27:57.222000571Z"
+    description: A Helm chart for Kubernetes to deploy OceanBase cluster
+    digest: f3cb67bb17e5d7d010b3924caaaf2a253db352b90594ef6c1ed0caa86f273909
+    name: oceanbase-cluster
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.2.1-sp.7-107000152024053114/oceanbase-cluster-4.2.1-sp.7-107000152024053114.tgz
+    version: 4.2.1-sp.7-107000152024053114
+  - apiVersion: v2
     appVersion: 4.2.1.6-106000012024042515
     created: "2024-05-20T04:00:41.424991735Z"
     description: A Helm chart for Kubernetes to deploy OceanBase cluster
@@ -143,4 +153,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2024-05-22T11:22:39.758544248Z"
+generated: "2024-06-05T12:27:57.222071453Z"
