@@ -96,7 +96,7 @@ export default function Event() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
@@ -105,16 +105,7 @@ export default function Event() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
       render: (endsAt: number) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
-      ),
-    },
-    {
-      title: '结束时间',
-      dataIndex: 'endsAt',
-      key: 'endsAt',
-      sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
-      render: (endsAt: number) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
