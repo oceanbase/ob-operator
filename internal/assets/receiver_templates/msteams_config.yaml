@@ -1,0 +1,11 @@
+webhook_url: 'your webhook url'
+
+send_resolved: true
+# title: ''
+# summary: ''
+# text: ''
+# http_config:
+#   basic_auth:
+#     username: ""
+#     password: ""
+#   proxy_url: http://your-proxy:8080

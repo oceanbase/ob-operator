@@ -1,0 +1,11 @@
+webhook_url: "webhook url"
+
+send_resolved: true
+# webhook_url_file: ""
+# title: "alarm title"
+# message: "alarm message"
+# http_config:
+#   basic_auth:
+#     username: ""
+#     password: ""
+#   proxy_url: http://your-proxy:8080

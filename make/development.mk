@@ -84,4 +84,4 @@ run-delve: fmt vet manifests ## Run with Delve for development purposes against 
 .PHONY: run-local
 run-local: manifests fmt vet ## Run a controller on your local host, with configurations in ~/.kube/config
 	@mkdir -p testreports/covdata
-	CGO_ENABLED=1 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true go run -cover -covermode=atomic ./cmd/operator/main.go --log-verbosity=${LOG_LEVEL} 
+	CGO_ENABLED=0 GOCOVERDIR=testreports/covdata DISABLE_WEBHOOKS=true go run -cover -covermode=atomic ./cmd/operator/main.go --log-verbosity=${LOG_LEVEL} 

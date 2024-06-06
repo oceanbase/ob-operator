@@ -1,0 +1,17 @@
+api_key: 'api key'
+responders:
+  - name: 'team-name'
+    type: 'team'
+tags: ['alertmanager']
+details:
+  severity: '{{ .CommonLabels.severity }}'
+  instance: '{{ .CommonLabels.instance }}'
+  description: '{{ .CommonAnnotations.description }}'
+send_resolved: true
+# api_url: 'https://api.opsgenie.com' # The Opsgenie API URL
+# source: '{{ .CommonLabels.alertname }}' # The source of the alert
+# user: '{{ .CommonLabels.user }}' # The user who is sending the alert
+# note: '{{ .CommonAnnotations.note }}' # An optional note for the alert
+# entity: '{{ .CommonLabels.entity }}' # The entity (e.g. the resource) associated with the alert
+# priority: '{{ .CommonLabels.priority }}' # Sets the priority of the alert
+# actions: ['action1', 'action2'] # Custom actions for the alert

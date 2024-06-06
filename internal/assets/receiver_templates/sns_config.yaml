@@ -1,0 +1,11 @@
+topic_arn: 'your topic arn'
+aws_access_key: 'YOUR_AWS_ACCESS_KEY'
+aws_secret_key: 'YOUR_AWS_SECRET_KEY'
+region: 'your region'
+send_resolved: true
+# sigv4:
+#   region: 'us-east-1'  # AWS region for SigV4
+#   service: 'sns'  # AWS service name for SigV4
+# phone_number: ''  # Phone number to send SMS (overrides topic ARN)
+# subject: 'AlertManager Notification'  # Custom subject for the SNS message
+# message: '{{ template "sns.default.message" . }}'  # Custom message template

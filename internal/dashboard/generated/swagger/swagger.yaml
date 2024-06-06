@@ -2,8 +2,6 @@ basePath: /api/v1
 definitions:
   alarm.Matcher:
     properties:
-      isEqual:
-        type: boolean
       isRegex:
         type: boolean
       name:
@@ -11,7 +9,7 @@ definitions:
       value:
         type: string
     type: object
-  alarm.Serverity:
+  alarm.Severity:
     enum:
     - critical
     - warning
@@ -19,10 +17,10 @@ definitions:
     - info
     type: string
     x-enum-varnames:
-    - ServerityCritical
-    - ServerityWarning
-    - ServerityCaution
-    - ServerityInfo
+    - SeverityCritical
+    - SeverityWarning
+    - SeverityCaution
+    - SeverityInfo
   alert.Alert:
     properties:
       description:
@@ -39,8 +37,8 @@ definitions:
         type: array
       rule:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       startsAt:
         type: integer
       status:
@@ -54,7 +52,7 @@ definitions:
     - fingerprint
     - instance
     - rule
-    - serverity
+    - severity
     - startsAt
     - status
     - updatedAt
@@ -65,10 +63,12 @@ definitions:
         type: integer
       instance:
         $ref: '#/definitions/oceanbase.OBInstance'
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       startTime:
         type: integer
     type: object
@@ -564,14 +564,18 @@ definitions:
     type: object
   oceanbase.OBInstanceType:
     enum:
+    - unknown
     - obcluster
+    - obzone
     - obtenant
     - observer
     type: string
     x-enum-varnames:
-    - OBCluster
-    - OBTenant
-    - OBServer
+    - TypeUnknown
+    - TypeOBCluster
+    - TypeOBZone
+    - TypeOBTenant
+    - TypeOBServer
   param.ChangeTenantRole:
     properties:
       failover:
@@ -954,6 +958,54 @@ definitions:
       zone:
         type: string
     type: object
+  payload.Alert:
+    properties:
+      annotations:
+        additionalProperties:
+          type: string
+        type: object
+      endsAt:
+        type: string
+      generatorURL:
+        type: string
+      labels:
+        additionalProperties:
+          type: string
+        type: object
+      startsAt:
+        type: string
+      status:
+        type: string
+    type: object
+  payload.WebhookPayload:
+    properties:
+      alerts:
+        items:
+          $ref: '#/definitions/payload.Alert'
+        type: array
+      commonAnnotations:
+        additionalProperties:
+          type: string
+        type: object
+      commonLabels:
+        additionalProperties:
+          type: string
+        type: object
+      externalURL:
+        type: string
+      groupKey:
+        type: string
+      groupLabels:
+        additionalProperties:
+          type: string
+        type: object
+      receiver:
+        type: string
+      status:
+        type: string
+      version:
+        type: string
+    type: object
   receiver.Receiver:
     properties:
       config:
@@ -969,12 +1021,34 @@ definitions:
     type: object
   receiver.ReceiverType:
     enum:
-    - dingtalk
+    - discord
+    - email
+    - pagerduty
+    - slack
+    - webhook
+    - opsgenie
     - wechat
+    - pushover
+    - victorops
+    - sns
+    - telegram
+    - webex
+    - msteams
     type: string
     x-enum-varnames:
-    - TypeDingTalk
-    - TypeWeChat
+    - TypeDiscord
+    - TypeEmail
+    - TypePagerduty
+    - TypeSlack
+    - TypeWebhook
+    - TypeOpsGenie
+    - TypeWechat
+    - TypePushover
+    - TypeVictorOps
+    - TypeSNS
+    - TypeTelegram
+    - TypeWebex
+    - TypeMSTeams
   receiver.Template:
     properties:
       template:
@@ -2066,17 +2140,21 @@ definitions:
       instanceType:
         $ref: '#/definitions/oceanbase.OBInstanceType'
       labels:
-        $ref: '#/definitions/common.KVPair'
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       name:
         type: string
       query:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       summary:
         type: string
       type:
-        $ref: '#/definitions/rule.RuleType'
+        allOf:
+        - $ref: '#/definitions/rule.RuleType'
+        default: customized
     required:
     - description
     - duration
@@ -2084,9 +2162,8 @@ definitions:
     - labels
     - name
     - query
-    - serverity
+    - severity
     - summary
-    - type
     type: object
   rule.RuleFilter:
     properties:
@@ -2094,8 +2171,8 @@ definitions:
         $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
     type: object
   rule.RuleHealth:
     enum:
@@ -2122,7 +2199,9 @@ definitions:
       keepFiringFor:
         type: integer
       labels:
-        $ref: '#/definitions/common.KVPair'
+        items:
+          $ref: '#/definitions/common.KVPair'
+        type: array
       lastError:
         type: string
       lastEvaluation:
@@ -2131,14 +2210,16 @@ definitions:
         type: string
       query:
         type: string
-      serverity:
-        $ref: '#/definitions/alarm.Serverity'
+      severity:
+        $ref: '#/definitions/alarm.Severity'
       state:
         $ref: '#/definitions/rule.RuleState'
       summary:
         type: string
       type:
-        $ref: '#/definitions/rule.RuleType'
+        allOf:
+        - $ref: '#/definitions/rule.RuleType'
+        default: customized
     required:
     - description
     - duration
@@ -2150,10 +2231,9 @@ definitions:
     - lastEvaluation
     - name
     - query
-    - serverity
+    - severity
     - state
     - summary
-    - type
     type: object
   rule.RuleState:
     enum:
@@ -2175,6 +2255,8 @@ definitions:
     properties:
       instance:
         $ref: '#/definitions/oceanbase.OBInstance'
+      instanceType:
+        $ref: '#/definitions/oceanbase.OBInstanceType'
       keyword:
         type: string
     type: object
@@ -2188,7 +2270,7 @@ definitions:
         type: integer
       id:
         type: string
-      instance:
+      instances:
         items:
           $ref: '#/definitions/oceanbase.OBInstance'
         type: array
@@ -2196,14 +2278,19 @@ definitions:
         items:
           $ref: '#/definitions/alarm.Matcher'
         type: array
+      rules:
+        items:
+          type: string
+        type: array
       startsAt:
         type: integer
     required:
     - comment
     - createdBy
     - endsAt
-    - instance
+    - instances
     - matchers
+    - rules
     - startsAt
     type: object
   silence.SilencerResponse:
@@ -2216,7 +2303,7 @@ definitions:
         type: integer
       id:
         type: string
-      instance:
+      instances:
         items:
           $ref: '#/definitions/oceanbase.OBInstance'
         type: array
@@ -2235,7 +2322,7 @@ definitions:
     - createdBy
     - endsAt
     - id
-    - instance
+    - instances
     - matchers
     - startsAt
     - status
@@ -2244,9 +2331,13 @@ definitions:
   silence.State:
     enum:
     - active
+    - expired
+    - pending
     type: string
     x-enum-varnames:
     - StateActive
+    - StateExpired
+    - StatePending
   silence.Status:
     properties:
       state:
@@ -2264,7 +2355,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: List alerts, filter with alarm objects, serverity, time and keywords.
+      description: List alerts, filter with alarm objects, severity, time and keywords.
       operationId: ListAlerts
       parameters:
       - description: alert filter
@@ -2694,7 +2785,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: List alarm rules, filter with alarm objects type, serverity and
+      description: List alarm rules, filter with alarm objects type, severity and
         keywords.
       operationId: ListRules
       parameters:
@@ -5239,6 +5330,46 @@ paths:
       summary: get statistic data
       tags:
       - Info
+  /api/v1/webhook/alert/log:
+    post:
+      consumes:
+      - application/json
+      description: Log alerts sent by alertmanager.
+      operationId: LogAlerts
+      parameters:
+      - description: payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/payload.WebhookPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.DashboardInfo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: Log alerts
+      tags:
+      - Webhook
 securityDefinitions:
   ApiKeyAuth:
     in: header

@@ -22,7 +22,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alerts, filter with alarm objects, serverity, time and keywords.",
+                "description": "List alerts, filter with alarm objects, severity, time and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -796,7 +796,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "List alarm rules, filter with alarm objects type, serverity and keywords.",
+                "description": "List alarm rules, filter with alarm objects type, severity and keywords.",
                 "consumes": [
                     "application/json"
                 ],
@@ -4836,15 +4836,77 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/api/v1/webhook/alert/log": {
+            "post": {
+                "description": "Log alerts sent by alertmanager.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Webhook"
+                ],
+                "summary": "Log alerts",
+                "operationId": "LogAlerts",
+                "parameters": [
+                    {
+                        "description": "payload",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/payload.WebhookPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/response.DashboardInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "alarm.Matcher": {
             "type": "object",
             "properties": {
-                "isEqual": {
-                    "type": "boolean"
-                },
                 "isRegex": {
                     "type": "boolean"
                 },
@@ -4856,7 +4918,7 @@ const docTemplate = `{
                 }
             }
         },
-        "alarm.Serverity": {
+        "alarm.Severity": {
             "type": "string",
             "enum": [
                 "critical",
@@ -4865,10 +4927,10 @@ const docTemplate = `{
                 "info"
             ],
             "x-enum-varnames": [
-                "ServerityCritical",
-                "ServerityWarning",
-                "ServerityCaution",
-                "ServerityInfo"
+                "SeverityCritical",
+                "SeverityWarning",
+                "SeverityCaution",
+                "SeverityInfo"
             ]
         },
         "alert.Alert": {
@@ -4878,7 +4940,7 @@ const docTemplate = `{
                 "fingerprint",
                 "instance",
                 "rule",
-                "serverity",
+                "severity",
                 "startsAt",
                 "status",
                 "updatedAt"
@@ -4905,8 +4967,8 @@ const docTemplate = `{
                 "rule": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startsAt": {
                     "type": "integer"
@@ -4931,11 +4993,14 @@ const docTemplate = `{
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
                 },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "startTime": {
                     "type": "integer"
@@ -5662,14 +5727,18 @@ const docTemplate = `{
         "oceanbase.OBInstanceType": {
             "type": "string",
             "enum": [
+                "unknown",
                 "obcluster",
+                "obzone",
                 "obtenant",
                 "observer"
             ],
             "x-enum-varnames": [
-                "OBCluster",
-                "OBTenant",
-                "OBServer"
+                "TypeUnknown",
+                "TypeOBCluster",
+                "TypeOBZone",
+                "TypeOBTenant",
+                "TypeOBServer"
             ]
         },
         "param.ChangeTenantRole": {
@@ -6227,6 +6296,79 @@ const docTemplate = `{
                 }
             }
         },
+        "payload.Alert": {
+            "type": "object",
+            "properties": {
+                "annotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "endsAt": {
+                    "type": "string"
+                },
+                "generatorURL": {
+                    "type": "string"
+                },
+                "labels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "startsAt": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "payload.WebhookPayload": {
+            "type": "object",
+            "properties": {
+                "alerts": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/payload.Alert"
+                    }
+                },
+                "commonAnnotations": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "commonLabels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "externalURL": {
+                    "type": "string"
+                },
+                "groupKey": {
+                    "type": "string"
+                },
+                "groupLabels": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                },
+                "receiver": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
         "receiver.Receiver": {
             "type": "object",
             "required": [
@@ -6249,12 +6391,34 @@ const docTemplate = `{
         "receiver.ReceiverType": {
             "type": "string",
             "enum": [
-                "dingtalk",
-                "wechat"
+                "discord",
+                "email",
+                "pagerduty",
+                "slack",
+                "webhook",
+                "opsgenie",
+                "wechat",
+                "pushover",
+                "victorops",
+                "sns",
+                "telegram",
+                "webex",
+                "msteams"
             ],
             "x-enum-varnames": [
-                "TypeDingTalk",
-                "TypeWeChat"
+                "TypeDiscord",
+                "TypeEmail",
+                "TypePagerduty",
+                "TypeSlack",
+                "TypeWebhook",
+                "TypeOpsGenie",
+                "TypeWechat",
+                "TypePushover",
+                "TypeVictorOps",
+                "TypeSNS",
+                "TypeTelegram",
+                "TypeWebex",
+                "TypeMSTeams"
             ]
         },
         "receiver.Template": {
@@ -7789,9 +7953,8 @@ const docTemplate = `{
                 "labels",
                 "name",
                 "query",
-                "serverity",
-                "summary",
-                "type"
+                "severity",
+                "summary"
             ],
             "properties": {
                 "description": {
@@ -7804,7 +7967,10 @@ const docTemplate = `{
                     "$ref": "#/definitions/oceanbase.OBInstanceType"
                 },
                 "labels": {
-                    "$ref": "#/definitions/common.KVPair"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "name": {
                     "type": "string"
@@ -7812,14 +7978,19 @@ const docTemplate = `{
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "summary": {
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/rule.RuleType"
+                    "default": "customized",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rule.RuleType"
+                        }
+                    ]
                 }
             }
         },
@@ -7832,8 +8003,8 @@ const docTemplate = `{
                 "keyword": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 }
             }
         },
@@ -7863,10 +8034,9 @@ const docTemplate = `{
                 "lastEvaluation",
                 "name",
                 "query",
-                "serverity",
+                "severity",
                 "state",
-                "summary",
-                "type"
+                "summary"
             ],
             "properties": {
                 "description": {
@@ -7888,7 +8058,10 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "labels": {
-                    "$ref": "#/definitions/common.KVPair"
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/common.KVPair"
+                    }
                 },
                 "lastError": {
                     "type": "string"
@@ -7902,8 +8075,8 @@ const docTemplate = `{
                 "query": {
                     "type": "string"
                 },
-                "serverity": {
-                    "$ref": "#/definitions/alarm.Serverity"
+                "severity": {
+                    "$ref": "#/definitions/alarm.Severity"
                 },
                 "state": {
                     "$ref": "#/definitions/rule.RuleState"
@@ -7912,7 +8085,12 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "type": {
-                    "$ref": "#/definitions/rule.RuleType"
+                    "default": "customized",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/rule.RuleType"
+                        }
+                    ]
                 }
             }
         },
@@ -7944,6 +8122,9 @@ const docTemplate = `{
                 "instance": {
                     "$ref": "#/definitions/oceanbase.OBInstance"
                 },
+                "instanceType": {
+                    "$ref": "#/definitions/oceanbase.OBInstanceType"
+                },
                 "keyword": {
                     "type": "string"
                 }
@@ -7955,8 +8136,9 @@ const docTemplate = `{
                 "comment",
                 "createdBy",
                 "endsAt",
-                "instance",
+                "instances",
                 "matchers",
+                "rules",
                 "startsAt"
             ],
             "properties": {
@@ -7972,7 +8154,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"
@@ -7982,6 +8164,12 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/alarm.Matcher"
+                    }
+                },
+                "rules": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
                     }
                 },
                 "startsAt": {
@@ -7996,7 +8184,7 @@ const docTemplate = `{
                 "createdBy",
                 "endsAt",
                 "id",
-                "instance",
+                "instances",
                 "matchers",
                 "startsAt",
                 "status",
@@ -8015,7 +8203,7 @@ const docTemplate = `{
                 "id": {
                     "type": "string"
                 },
-                "instance": {
+                "instances": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/oceanbase.OBInstance"
@@ -8041,10 +8229,14 @@ const docTemplate = `{
         "silence.State": {
             "type": "string",
             "enum": [
-                "active"
+                "active",
+                "expired",
+                "pending"
             ],
             "x-enum-varnames": [
-                "StateActive"
+                "StateActive",
+                "StateExpired",
+                "StatePending"
             ]
         },
         "silence.Status": {

@@ -15,8 +15,18 @@ package receiver
 
 type ReceiverType string
 
-// TODO add all types
 const (
-	TypeDingTalk ReceiverType = "dingtalk"
-	TypeWeChat   ReceiverType = "wechat"
+	TypeDiscord   ReceiverType = "discord"
+	TypeEmail     ReceiverType = "email"
+	TypePagerduty ReceiverType = "pagerduty"
+	TypeSlack     ReceiverType = "slack"
+	TypeWebhook   ReceiverType = "webhook"
+	TypeOpsGenie  ReceiverType = "opsgenie"
+	TypeWechat    ReceiverType = "wechat"
+	TypePushover  ReceiverType = "pushover"
+	TypeVictorOps ReceiverType = "victorops"
+	TypeSNS       ReceiverType = "sns"
+	TypeTelegram  ReceiverType = "telegram"
+	TypeWebex     ReceiverType = "webex"
+	TypeMSTeams   ReceiverType = "msteams"
 )

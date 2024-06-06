@@ -1,0 +1,13 @@
+to: "your email address"
+smarthost: 
+  host: "address of your email provider"
+  port: "port of your email provider"
+auth_username: "username"
+auth_password: "password"
+# auth_secret: "secret"
+# auth_identity: "alertmanager"
+# auth_password_file: ""
+send_resolved: true
+# from: "<replace with the address of your sender address>"
+# html: ""
+# text: ""
