@@ -3114,6 +3114,7 @@ paths:
         - OBCLUSTER
         - OBTENANT
         - OBBACKUPPOLICY
+        - OBPROXY
         in: query
         name: objectType
         type: string

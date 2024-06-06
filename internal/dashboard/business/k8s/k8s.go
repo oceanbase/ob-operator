@@ -21,11 +21,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/k8s/resource"
 )
 
@@ -149,6 +152,8 @@ func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]
 			kind = "OBTenant"
 		case "OBBACKUPPOLICY":
 			kind = "OBTenantBackupPolicy"
+		case "OBPROXY":
+			kind = "Deployment"
 		default:
 			kind = queryEventParam.ObjectType
 		}
@@ -171,10 +176,34 @@ func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]
 	if len(selectors) > 0 {
 		listOptions.FieldSelector = strings.Join(selectors, ",")
 	}
+	var filterMap map[string]struct{}
+	if queryEventParam.ObjectType == "OBPROXY" {
+		// Filter events by obproxy deployments
+		filterMap = make(map[string]struct{})
+		deployments, err := client.GetClient().MetaClient.Resource(schema.GroupVersionResource{
+			Group:    "apps",
+			Version:  "v1",
+			Resource: "deployments",
+		}).Namespace(ns).List(ctx, metav1.ListOptions{
+			LabelSelector: obproxy.LabelOBProxy,
+		})
+		logger.Debugf("List deployments: %+v", deployments.Items)
+		if err != nil {
+			return nil, err
+		}
+		for _, deploy := range deployments.Items {
+			filterMap[deploy.Name] = struct{}{}
+		}
+	}
 	eventList, err := resource.ListEvents(ctx, ns, listOptions)
 	logger.Infof("Query events with param: %+v", queryEventParam)
 	if err == nil {
 		for _, event := range eventList.Items {
+			if filterMap != nil {
+				if _, ok := filterMap[event.InvolvedObject.Name]; !ok {
+					continue
+				}
+			}
 			events = append(events, response.K8sEvent{
 				Namespace:  event.Namespace,
 				Type:       event.Type,

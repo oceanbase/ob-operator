@@ -17,19 +17,19 @@ import (
 	"path/filepath"
 	"sync"
 
-	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 )
 
 type Client struct {
-	ClientSet       *kubernetes.Clientset
-	DynamicClient   dynamic.Interface
-	DiscoveryClient *discovery.DiscoveryClient
-	config          *rest.Config
+	ClientSet     *kubernetes.Clientset
+	DynamicClient dynamic.Interface
+	MetaClient    metadata.Interface
+	config        *rest.Config
 }
 
 var client *Client
@@ -94,15 +94,15 @@ func MustGetClient(config *rest.Config) *Client {
 	if err != nil {
 		panic(err.Error())
 	}
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
+	metaClient, err := metadata.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
 	}
 	return &Client{
-		ClientSet:       clientset,
-		DynamicClient:   dynamicClient,
-		DiscoveryClient: discoveryClient,
-		config:          config,
+		ClientSet:     clientset,
+		DynamicClient: dynamicClient,
+		MetaClient:    metaClient,
+		config:        config,
 	}
 }
 

@@ -1269,7 +1269,8 @@ const docTemplate = `{
                         "enum": [
                             "OBCLUSTER",
                             "OBTENANT",
-                            "OBBACKUPPOLICY"
+                            "OBBACKUPPOLICY",
+                            "OBPROXY"
                         ],
                         "type": "string",
                         "description": "related object types",

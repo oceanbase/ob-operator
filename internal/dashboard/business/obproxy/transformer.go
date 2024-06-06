@@ -251,6 +251,9 @@ func buildOBProxyDeployment(ctx context.Context, param *obproxy.CreateOBProxyPar
 								Key: "password",
 							},
 						},
+					}, {
+						Name:  "ODP_PROXY_MEM_LIMITED",
+						Value: fmt.Sprintf("%dMB", quantMemory.Value()*95/100/(1<<20)),
 					}},
 					Resources: corev1.ResourceRequirements{
 						Requests: corev1.ResourceList{
