@@ -1,0 +1,28 @@
+service_key: 'YOUR_PAGERDUTY_INTEGRATION_KEY'
+url: 'https://events.pagerduty.com/v2/enqueue'
+severity: '{{ .CommonLabels.severity }}'
+details:
+  alertname: '{{ .CommonLabels.alertname }}'
+  instance: '{{ .CommonLabels.instance }}'
+  description: '{{ .CommonAnnotations.description }}'
+
+send_resolved: true
+# client: '{{ .CommonLabels.alertname }}' # Client making the alert
+# client_url: '{{ .CommonAnnotations.runbook }}' # URL for the client making the alert
+# class: '{{ .CommonLabels.class }}' # Event class
+# component: '{{ .CommonLabels.component }}' # Component experiencing the issue
+# group: '{{ .CommonLabels.group }}' # Logical grouping of components
+# http_config:
+#   basic_auth:
+#     username: ""
+#     password: ""
+#   proxy_url: http://your-proxy:8080
+# images:
+#   - src: 'http://example.com/image.jpg'
+#     href: 'http://example.com'
+#     alt: 'An example image'
+# links:
+#   - href: 'http://example.com/link'
+#     text: 'An example link'
+# custom_details:
+#   priority: '{{ .CommonLabels.priority }}' # Custom template for additional details

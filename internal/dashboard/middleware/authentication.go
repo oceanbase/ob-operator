@@ -28,7 +28,7 @@ import (
 
 func LoginRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasSuffix(c.Request.RequestURI, "login") || strings.HasSuffix(c.Request.RequestURI, "info") {
+		if strings.HasSuffix(c.Request.RequestURI, "login") || strings.HasSuffix(c.Request.RequestURI, "info") || strings.HasSuffix(c.Request.RequestURI, "webhook/alert/log") {
 			c.Next()
 			return
 		}

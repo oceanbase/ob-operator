@@ -63,13 +63,17 @@ func InitRoutes(router *gin.Engine) {
 		router.Use(static.Serve("/api-gen", static.LocalFile("internal/dashboard/generated/swagger", false)))
 	}
 
+	v1Group := router.Group("/api/v1")
 	// login api does not require login
-	v1Group := router.Group("/api/v1",
-		middleware.LoginRequired(),
-		middleware.RefreshExpiration(),
-	)
+	if os.Getenv("DEBUG_DASHBOARD") != "true" {
+		v1Group = router.Group("/api/v1",
+			middleware.LoginRequired(),
+			middleware.RefreshExpiration(),
+		)
+	}
 
 	// init all routes under /api/v1
+	v1.InitWebhookRoutes(v1Group)
 	v1.InitInfoRoutes(v1Group)
 	v1.InitK8sRoutes(v1Group)
 	v1.InitMetricRoutes(v1Group)

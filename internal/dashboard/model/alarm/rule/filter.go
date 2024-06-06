@@ -20,6 +20,6 @@ import (
 
 type RuleFilter struct {
 	InstanceType oceanbase.OBInstanceType `json:"instanceType,omitempty"`
-	Serverity    alarm.Serverity          `json:"serverity,omitempty"`
+	Severity     alarm.Severity           `json:"severity,omitempty"`
 	Keyword      string                   `json:"keyword,omitempty"`
 }

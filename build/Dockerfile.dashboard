@@ -11,7 +11,7 @@ ARG GOSUMDB=sum.golang.org
 ARG COMMIT_HASH=unknown
 WORKDIR /workspace
 COPY . .
-RUN make dep-install build-dashboard
+RUN make dashboard-dep-install dashboard-build
 
 # start build docker image
 FROM openanolis/anolisos:8.4-x86_64

@@ -12,11 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package alarm
 
-type Serverity string
+type Severity string
 
 const (
-	ServerityCritical Serverity = "critical"
-	ServerityWarning  Serverity = "warning"
-	ServerityCaution  Serverity = "caution"
-	ServerityInfo     Serverity = "info"
+	SeverityCritical Severity = "critical"
+	SeverityWarning  Severity = "warning"
+	SeverityCaution  Severity = "caution"
+	SeverityInfo     Severity = "info"
 )

@@ -1,0 +1,9 @@
+url: 'https://webexapis.com/v1/messages'
+http_config:
+  bearer_token: 'YOUR_WEBEX_BOT_TOKEN'
+#   proxy_url: 'http://your-proxy-url'
+#   basic_auth:
+#     username: 'your-username'
+#     password: 'your-password'
+send_resolved: true
+# message: '{{ template "webex.default.message" . }}'  # Custom message template
