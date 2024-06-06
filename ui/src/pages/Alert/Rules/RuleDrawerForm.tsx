@@ -2,7 +2,7 @@ import { alert } from '@/api';
 import type { CommonKVPair, RuleRule } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabelComp from '@/components/InputLabelComp';
-import { LEVER_OPTIONS_ALARM, SERVERITY_MAP } from '@/constants';
+import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
@@ -18,6 +18,7 @@ import {
   message,
 } from 'antd';
 import { useEffect } from 'react';
+import { validateLabelValues } from '../helper';
 
 type AlertRuleDrawerProps = {
   ruleName?: string;
@@ -46,6 +47,7 @@ export default function RuleDrawerForm({
   };
   const submit = (values: RuleRule) => {
     values.type = 'customized';
+    if (!values.labels) values.labels = [];
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
         message.success('操作成功！');
@@ -93,7 +95,7 @@ export default function RuleDrawerForm({
                 },
               ]}
               name={'instanceType'}
-              label="屏蔽对象类型"
+              label="对象类型"
             >
               <Radio.Group>
                 <Radio value="obcluster"> 集群 </Radio>
@@ -148,14 +150,14 @@ export default function RuleDrawerForm({
                   message: '请输入',
                 },
               ]}
-              name={'serverity'}
+              name={'severity'}
               label="告警级别"
             >
               <Select
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SERVERITY_MAP[item?.value]?.color}>
+                    <Tag color={SEVERITY_MAP[item?.value]?.color}>
                       {item.label}
                     </Tag>
                   ),
@@ -243,14 +245,12 @@ export default function RuleDrawerForm({
                   <QuestionCircleOutlined />
                 </div>
               }
+              validateDebounce={1500}
               rules={[
                 {
-                  validator: (_, value:CommonKVPair[]) => {
-                    if (
-                      value.length &&
-                      value.find((item) => !item.key || !item.value)
-                    ) {
-                      return Promise.reject('请检查标签输入');
+                  validator: (_, value: CommonKVPair[]) => {
+                    if (!validateLabelValues(value)) {
+                      return Promise.reject('请检查标签是否完整输入');
                     }
                     return Promise.resolve();
                   },

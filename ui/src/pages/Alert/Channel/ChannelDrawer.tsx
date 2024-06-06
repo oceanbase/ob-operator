@@ -144,6 +144,7 @@ export default function ChannelDrawer({
           ) : (
             <Select
               placeholder="请选择"
+              showSearch
               options={listReceiverTemplates?.map((template) => ({
                 value: template.type,
                 label: template.type,

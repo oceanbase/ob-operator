@@ -20,11 +20,11 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { clone } from 'lodash';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import { sortAlarmShielding } from '../helper';
+import PreText from '@/components/PreText';
 import ShieldDrawerForm from './ShieldDrawerForm';
 const { Text } = Typography;
 
@@ -70,6 +70,7 @@ export default function Shield() {
       title: '屏蔽应用/对象类型',
       dataIndex: 'instances',
       key: 'type',
+      fixed:true,
       render: (instances: OceanbaseOBInstance[]) => (
         <Text>{instances?.[0].type || '-'}</Text>
       ),
@@ -118,23 +119,10 @@ export default function Shield() {
       title: '屏蔽告警规则',
       dataIndex: 'matchers',
       key: 'matchers',
+      width:300,
       render: (rules) => {
-        const newRules = clone(rules);
-        if (newRules.length)
-          newRules.splice(0, 0, { name: '规则名', value: '规则' });
         return (
-          <Space style={{ width: '100%' }} direction="vertical">
-            {newRules?.map((rule) => {
-              return (
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between' }}
-                >
-                  <div style={{ flex: 1 }}>{rule.name}</div>
-                  <div style={{ flex: 1 }}> {rule.value}</div>
-                </div>
-              );
-            })}
-          </Space>
+          <PreText cols={7} value={rules} />
         );
       },
     },
@@ -144,7 +132,7 @@ export default function Shield() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
@@ -182,6 +170,7 @@ export default function Shield() {
     {
       title: '操作',
       key: 'action',
+      fixed:'right',
       render: (_, record) => (
         <>
           <Button
@@ -256,7 +245,8 @@ export default function Shield() {
           dataSource={listSilencers}
           rowKey="id"
           pagination={{ simple: true }}
-          // scroll={{ x: 1500 }}
+          scroll={{ x: 1800 }}
+          sticky
         />
       </Card>
       <ShieldDrawerForm

@@ -34,12 +34,6 @@ export interface AlarmMatcher {
      * @type {boolean}
      * @memberof AlarmMatcher
      */
-    'isEqual'?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AlarmMatcher
-     */
     'isRegex'?: boolean;
     /**
      * 
@@ -60,14 +54,14 @@ export interface AlarmMatcher {
  * @enum {string}
  */
 
-export const AlarmServerity = {
-    ServerityCritical: 'critical',
-    ServerityWarning: 'warning',
-    ServerityCaution: 'caution',
-    ServerityInfo: 'info'
+export const AlarmSeverity = {
+    SeverityCritical: 'critical',
+    SeverityWarning: 'warning',
+    SeverityCaution: 'caution',
+    SeverityInfo: 'info'
 } as const;
 
-export type AlarmServerity = typeof AlarmServerity[keyof typeof AlarmServerity];
+export type AlarmSeverity = typeof AlarmSeverity[keyof typeof AlarmSeverity];
 
 
 /**
@@ -114,10 +108,10 @@ export interface AlertAlert {
     'rule': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof AlertAlert
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {number}
@@ -165,16 +159,22 @@ export interface AlertAlertFilter {
     'instance'?: OceanbaseOBInstance;
     /**
      * 
+     * @type {OceanbaseOBInstanceType}
+     * @memberof AlertAlertFilter
+     */
+    'instanceType'?: OceanbaseOBInstanceType;
+    /**
+     * 
      * @type {string}
      * @memberof AlertAlertFilter
      */
     'keyword'?: string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof AlertAlertFilter
      */
-    'serverity'?: AlarmServerity;
+    'severity'?: AlarmSeverity;
     /**
      * 
      * @type {number}
@@ -2143,9 +2143,11 @@ export interface OceanbaseOBInstance {
  */
 
 export const OceanbaseOBInstanceType = {
-    OBCluster: 'obcluster',
-    OBTenant: 'obtenant',
-    OBServer: 'observer'
+    TypeUnknown: 'unknown',
+    TypeOBCluster: 'obcluster',
+    TypeOBZone: 'obzone',
+    TypeOBTenant: 'obtenant',
+    TypeOBServer: 'observer'
 } as const;
 
 export type OceanbaseOBInstanceType = typeof OceanbaseOBInstanceType[keyof typeof OceanbaseOBInstanceType];
@@ -2963,6 +2965,110 @@ export interface ParamZoneTopology {
 /**
  * 
  * @export
+ * @interface PayloadAlert
+ */
+export interface PayloadAlert {
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadAlert
+     */
+    'annotations'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'endsAt'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'generatorURL'?: string;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadAlert
+     */
+    'labels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'startsAt'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'status'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface PayloadWebhookPayload
+ */
+export interface PayloadWebhookPayload {
+    /**
+     * 
+     * @type {Array<PayloadAlert>}
+     * @memberof PayloadWebhookPayload
+     */
+    'alerts'?: Array<PayloadAlert>;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'commonAnnotations'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'commonLabels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'externalURL'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'groupKey'?: string;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'groupLabels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'receiver'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'status'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'version'?: string;
+}
+/**
+ * 
+ * @export
  * @interface QueryMetrics200Response
  */
 export interface QueryMetrics200Response {
@@ -3019,8 +3125,19 @@ export interface ReceiverReceiver {
  */
 
 export const ReceiverReceiverType = {
-    TypeDingTalk: 'dingtalk',
-    TypeWeChat: 'wechat'
+    TypeDiscord: 'discord',
+    TypeEmail: 'email',
+    TypePagerduty: 'pagerduty',
+    TypeSlack: 'slack',
+    TypeWebhook: 'webhook',
+    TypeOpsGenie: 'opsgenie',
+    TypeWechat: 'wechat',
+    TypePushover: 'pushover',
+    TypeVictorOps: 'victorops',
+    TypeSNS: 'sns',
+    TypeTelegram: 'telegram',
+    TypeWebex: 'webex',
+    TypeMSTeams: 'msteams'
 } as const;
 
 export type ReceiverReceiverType = typeof ReceiverReceiverType[keyof typeof ReceiverReceiverType];
@@ -5041,10 +5158,10 @@ export interface RuleRule {
     'instanceType': OceanbaseOBInstanceType;
     /**
      * 
-     * @type {CommonKVPair}
+     * @type {Array<CommonKVPair>}
      * @memberof RuleRule
      */
-    'labels': CommonKVPair;
+    'labels': Array<CommonKVPair>;
     /**
      * 
      * @type {string}
@@ -5059,10 +5176,10 @@ export interface RuleRule {
     'query': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRule
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {string}
@@ -5074,7 +5191,7 @@ export interface RuleRule {
      * @type {RuleRuleType}
      * @memberof RuleRule
      */
-    'type': RuleRuleType;
+    'type'?: RuleRuleType;
 }
 
 
@@ -5098,10 +5215,10 @@ export interface RuleRuleFilter {
     'keyword'?: string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRuleFilter
      */
-    'serverity'?: AlarmServerity;
+    'severity'?: AlarmSeverity;
 }
 
 
@@ -5164,10 +5281,10 @@ export interface RuleRuleResponse {
     'keepFiringFor': number;
     /**
      * 
-     * @type {CommonKVPair}
+     * @type {Array<CommonKVPair>}
      * @memberof RuleRuleResponse
      */
-    'labels': CommonKVPair;
+    'labels': Array<CommonKVPair>;
     /**
      * 
      * @type {string}
@@ -5194,10 +5311,10 @@ export interface RuleRuleResponse {
     'query': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRuleResponse
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {RuleRuleState}
@@ -5215,7 +5332,7 @@ export interface RuleRuleResponse {
      * @type {RuleRuleType}
      * @memberof RuleRuleResponse
      */
-    'type': RuleRuleType;
+    'type'?: RuleRuleType;
 }
 
 
@@ -5261,11 +5378,19 @@ export interface SilenceSilencerFilter {
     'instance'?: OceanbaseOBInstance;
     /**
      * 
+     * @type {OceanbaseOBInstanceType}
+     * @memberof SilenceSilencerFilter
+     */
+    'instanceType'?: OceanbaseOBInstanceType;
+    /**
+     * 
      * @type {string}
      * @memberof SilenceSilencerFilter
      */
     'keyword'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -5301,13 +5426,19 @@ export interface SilenceSilencerParam {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerParam
      */
-    'instance': Array<OceanbaseOBInstance>;
+    'instances': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}
      * @memberof SilenceSilencerParam
      */
     'matchers': Array<AlarmMatcher>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SilenceSilencerParam
+     */
+    'rules': Array<string>;
     /**
      * 
      * @type {number}
@@ -5350,7 +5481,7 @@ export interface SilenceSilencerResponse {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerResponse
      */
-    'instance': Array<OceanbaseOBInstance>;
+    'instances': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}
@@ -5383,7 +5514,9 @@ export interface SilenceSilencerResponse {
  */
 
 export const SilenceState = {
-    StateActive: 'active'
+    StateActive: 'active',
+    StateExpired: 'expired',
+    StatePending: 'pending'
 } as const;
 
 export type SilenceState = typeof SilenceState[keyof typeof SilenceState];
@@ -5901,7 +6034,7 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6037,7 +6170,7 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6290,7 +6423,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6339,7 +6472,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6505,7 +6638,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.getSilencer(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6542,7 +6675,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.listRoutes(options).then((request) => request(axios, basePath));
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6728,7 +6861,7 @@ export class AlarmApi extends BaseAPI {
     }
 
     /**
-     * List alerts, filter with alarm objects, serverity, time and keywords.
+     * List alerts, filter with alarm objects, severity, time and keywords.
      * @summary List alerts
      * @param {AlertAlertFilter} [body] alert filter
      * @param {*} [options] Override http request option.
@@ -6773,7 +6906,7 @@ export class AlarmApi extends BaseAPI {
     }
 
     /**
-     * List alarm rules, filter with alarm objects type, serverity and keywords.
+     * List alarm rules, filter with alarm objects type, severity and keywords.
      * @summary List alarm rules
      * @param {RuleRuleFilter} [body] rule filter
      * @param {*} [options] Override http request option.
@@ -11016,6 +11149,116 @@ export class UserApi extends BaseAPI {
      */
     public logout(options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).logout(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * WebhookApi - axios parameter creator
+ * @export
+ */
+export const WebhookApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logAlerts: async (body: PayloadWebhookPayload, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('logAlerts', 'body', body)
+            const localVarPath = `/api/v1/webhook/alert/log`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * WebhookApi - functional programming interface
+ * @export
+ */
+export const WebhookApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = WebhookApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async logAlerts(body: PayloadWebhookPayload, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetProcessInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.logAlerts(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WebhookApi.logAlerts']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * WebhookApi - factory interface
+ * @export
+ */
+export const WebhookApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = WebhookApiFp(configuration)
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logAlerts(body: PayloadWebhookPayload, options?: any): AxiosPromise<GetProcessInfo200Response> {
+            return localVarFp.logAlerts(body, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * WebhookApi - object-oriented interface
+ * @export
+ * @class WebhookApi
+ * @extends {BaseAPI}
+ */
+export class WebhookApi extends BaseAPI {
+    /**
+     * Log alerts sent by alertmanager.
+     * @summary Log alerts
+     * @param {PayloadWebhookPayload} body payload
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApi
+     */
+    public logAlerts(body: PayloadWebhookPayload, options?: RawAxiosRequestConfig) {
+        return WebhookApiFp(this.configuration).logAlerts(body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

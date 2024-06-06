@@ -1,7 +1,7 @@
 import { alert } from '@/api';
-import type { AlarmServerity, RuleRuleResponse } from '@/api/generated';
+import type { AlarmSeverity, RuleRuleResponse } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { SERVERITY_MAP } from '@/constants';
+import { SEVERITY_MAP } from '@/constants';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
@@ -51,9 +51,9 @@ export default function Rules() {
     },
     {
       title: '触发规则',
-      dataIndex: 'description',
+      dataIndex: 'query',
       width: '30%',
-      key: 'description',
+      key: 'query',
     },
     {
       title: '持续时间',
@@ -68,14 +68,14 @@ export default function Rules() {
     },
     {
       title: '告警等级',
-      dataIndex: 'serverity',
-      key: 'serverity',
+      dataIndex: 'severity',
+      key: 'severity',
       sorter: (preRecord, curRecord) =>
-        SERVERITY_MAP[curRecord.serverity].weight -
-        SERVERITY_MAP[preRecord.serverity].weight,
-      render: (serverity: AlarmServerity) => (
-        <Tag color={SERVERITY_MAP[serverity]?.color}>
-          {SERVERITY_MAP[serverity]?.label}
+        SEVERITY_MAP[curRecord.severity].weight -
+        SEVERITY_MAP[preRecord.severity].weight,
+      render: (severity: AlarmSeverity) => (
+        <Tag color={SEVERITY_MAP[severity]?.color}>
+          {SEVERITY_MAP[severity]?.label}
         </Tag>
       ),
     },
