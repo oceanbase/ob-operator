@@ -16,9 +16,9 @@ type: application
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
 <<<<<<< HEAD
-version: 4.3.1-sp.0-100000032024051615
+version: 4.2.1-sp.7-107000162024060611
 =======
-version: 4.3.1-sp.0-100000032024051615
+version: 4.2.1-sp.7-107000162024060611
 >>>>>>> 87bb04ab2155b979538c6f6462933f0f86c59cfe
 
 # This is the version number of the application being deployed. This version number should be
@@ -26,7 +26,7 @@ version: 4.3.1-sp.0-100000032024051615
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 <<<<<<< HEAD
-appVersion: 4.3.1.0-100000032024051615
+appVersion: 4.2.1.7-107000162024060611
 =======
-appVersion: 4.3.1.0-100000032024051615
+appVersion: 4.2.1.7-107000162024060611
 >>>>>>> 87bb04ab2155b979538c6f6462933f0f86c59cfe
