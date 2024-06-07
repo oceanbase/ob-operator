@@ -11,7 +11,7 @@ export default function PreText({ cols, value }: PreTextProps) {
     <Tooltip
       title={
         <pre className={styles.tooltipContent}>
-          {typeof value === 'string' ? value : JSON.stringify(value, null, 4)}
+          {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
         </pre>
       }
     >
@@ -19,7 +19,7 @@ export default function PreText({ cols, value }: PreTextProps) {
         className={cols ? styles.preText : ''}
         style={{ WebkitLineClamp: cols }}
       >
-        {typeof value === 'string' ? value : JSON.stringify(value, null, 4)}
+        {typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
       </pre>
     </Tooltip>
   );

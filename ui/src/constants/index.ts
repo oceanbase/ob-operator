@@ -174,7 +174,7 @@ const LEVER_OPTIONS_ALARM: SelectProps['options'] = [
     value: 'info',
   },
 ];
-const SERVERITY_MAP = {
+const SEVERITY_MAP = {
   critical: {
     color: 'red',
     label: '严重',
@@ -246,7 +246,7 @@ export {
   REFRESH_FREQUENCY,
   REFRESH_TENANT_TIME,
   RESULT_STATUS,
-  SERVERITY_MAP,
+  SEVERITY_MAP,
   SERVER_IMG_MAP,
   SHILED_STATUS_MAP,
   STATISTICS_INTERVAL,

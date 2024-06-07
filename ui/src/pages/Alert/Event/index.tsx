@@ -1,11 +1,11 @@
 import { alert } from '@/api';
 import type {
-  AlarmServerity,
+  AlarmSeverity,
   AlertAlert,
   AlertStatus,
   OceanbaseOBInstance,
 } from '@/api/generated';
-import { ALERT_STATE_MAP, SERVERITY_MAP } from '@/constants';
+import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
@@ -60,17 +60,17 @@ export default function Event() {
     },
     {
       title: '告警等级',
-      dataIndex: 'serverity',
-      key: 'serverity',
+      dataIndex: 'severity',
+      key: 'severity',
       sorter: (preRecord, curRecord) => {
         return (
-          SERVERITY_MAP[preRecord.serverity].weight -
-          SERVERITY_MAP[curRecord.serverity].weight
+          SEVERITY_MAP[preRecord.severity].weight -
+          SEVERITY_MAP[curRecord.severity].weight
         );
       },
-      render: (serverity: AlarmServerity) => (
-        <Tag color={SERVERITY_MAP[serverity]?.color}>
-          {SERVERITY_MAP[serverity]?.label}
+      render: (severity: AlarmSeverity) => (
+        <Tag color={SEVERITY_MAP[severity]?.color}>
+          {SEVERITY_MAP[severity]?.label}
         </Tag>
       ),
     },
@@ -96,7 +96,7 @@ export default function Event() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
@@ -105,7 +105,7 @@ export default function Event() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
       render: (endsAt: number) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {

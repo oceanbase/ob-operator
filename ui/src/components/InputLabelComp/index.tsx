@@ -1,6 +1,5 @@
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Col, Input, Popconfirm, Row, Space } from 'antd';
-import { clone } from 'lodash';
 
 type Label = {
   [T: string]: string | boolean;
@@ -46,9 +45,8 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
     onChange?.([...labels, temp]);
   };
   const remove = (index: number) => {
-    const newValue = clone(labels);
-    newValue.splice(index, 1);
-    onChange?.(newValue);
+    labels.splice(index, 1);
+    onChange?.([...labels]);
   };
   return (
     <div>
@@ -57,6 +55,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
           <Row gutter={[12, 12]} style={{ alignItems: 'center' }} key={index}>
             <Col span={11}>
               <Input
+                value={label[defaulLabelName] as string}
                 onBlur={onBlur}
                 onChange={(e) => labelNameInput(e.target.value, index)}
                 placeholder="请输入标签名"
@@ -64,6 +63,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
             </Col>
             <Col span={10}>
               <Input
+                value={label.value as string}
                 onBlur={onBlur}
                 onChange={(e) => labelValueInput(e.target.value, index)}
                 placeholder="请输入标签值"
@@ -72,6 +72,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
             {regex && (
               <Col span={2}>
                 <Checkbox
+                  checked={label.isRegex as boolean}
                   onChange={(e) => regChange(e.target.checked, index)}
                 />
                 <span style={{ marginLeft: 8 }}>正则</span>

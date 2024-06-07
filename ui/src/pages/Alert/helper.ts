@@ -1,5 +1,7 @@
 import type {
+  AlarmMatcher,
   AlertAlert,
+  CommonKVPair,
   OceanbaseOBInstance,
   OceanbaseOBInstanceType,
   SilenceSilencerParam,
@@ -144,9 +146,11 @@ export const getInstancesFromRes = (
   if (types.includes('observer')) {
     res.type = 'observer';
     res.observer = getInstanceValues('observer');
+    res.obcluster = [resInstances[0].obcluster!];
   } else if (types.includes('obtenant')) {
     res.type = 'obtenant';
     res.obtenant = getInstanceValues('obtenant');
+    res.obcluster = [resInstances[0].obcluster!];
   }
   return res;
 };
@@ -178,6 +182,25 @@ export const sortAlarmShielding = (
   return sortAlarm(listSilencers, SHILED_STATUS_MAP);
 };
 
-export const filterLabel = (labels: Alert.LabelsType[]) => {
-  return labels.filter((label) => (label.name || label.key) && label.value);
+/**
+ * @description Each item in LabelInput can be empty, but cannot be incomplete.
+ */
+export const validateLabelValues = (
+  labelValues: AlarmMatcher[] | CommonKVPair[],
+) => {
+  for (const labelValue of labelValues) {
+    const tempArr = Object.keys(labelValue).map((key) =>
+      Boolean(labelValue[key]),
+    );
+    const stautsArr = tempArr.filter((item) => item === true);
+    if (stautsArr.length === 1) return false; 
+    if (
+      stautsArr.length === 2 &&
+      tempArr.length > 2 &&
+      (labelValue as AlarmMatcher).isRegex
+    ) {
+      return false;
+    }
+  }
+  return true;
 };

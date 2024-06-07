@@ -7,6 +7,7 @@ import { QuestionCircleOutlined } from '@ant-design/icons';
 import type { DrawerProps } from 'antd';
 import { Col, Form, InputNumber, Row, Select, message } from 'antd';
 import { useEffect } from 'react';
+import { validateLabelValues } from '../helper';
 import styles from './index.less';
 
 interface ShieldDrawerFormProps extends DrawerProps {
@@ -39,6 +40,7 @@ export default function SubscripDrawerForm({
     ],
   };
   const submit = async (values: RouteRoute) => {
+    if (!values.matchers) values.matchers = [];
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
@@ -91,16 +93,12 @@ export default function SubscripDrawerForm({
             <p>匹配配置</p>
             <Form.Item
               name={'matchers'}
+              validateDebounce={1500}
               rules={[
                 {
                   validator: (_, value: AlarmMatcher[]) => {
-                    console.log(value);
-
-                    if (
-                      value.length &&
-                      value.find((item) => !item.name || !item.value)
-                    ) {
-                      return Promise.reject('请检查标签输入');
+                    if (!validateLabelValues(value)) {
+                      return Promise.reject('请检查标签是否完整输入');
                     }
                     return Promise.resolve();
                   },

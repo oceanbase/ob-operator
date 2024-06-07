@@ -49,7 +49,10 @@ export default function Subscriptions() {
       title: '匹配配置',
       dataIndex: 'matchers',
       key: 'matchers',
-      render: (matchers) => <PreText cols={7} value={matchers} />,
+      render: (matchers) => {
+        if (!matchers.length) return '-';
+        return <PreText cols={7} value={matchers} />;
+      },
     },
     {
       title: '聚合配置',

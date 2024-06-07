@@ -24,6 +24,7 @@ import {
   formatShieldSubmitData,
   getInstancesFromRes,
   getSelectList,
+  validateLabelValues,
 } from '../helper';
 import ShieldObjInput from './ShieldObjInput';
 
@@ -76,6 +77,7 @@ export default function ShieldDrawerForm({
   };
 
   const submit = (values: Alert.ShieldDrawerForm) => {
+    if (!values.matchers) values.matchers = [];
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,
@@ -100,7 +102,7 @@ export default function ShieldDrawerForm({
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,
-            endsAt: dayjs(data.endsAt),
+            endsAt: dayjs(data.endsAt * 1000),
             instances: getInstancesFromRes(data.instances),
             rules: data.rules,
           });
@@ -175,14 +177,12 @@ export default function ShieldDrawerForm({
         </Form.Item>
         <Form.Item
           name={'matchers'}
+          validateDebounce={1500}
           rules={[
             {
               validator: (_, value: AlarmMatcher[]) => {
-                if (
-                  value.length &&
-                  value.find((item) => !item.name || !item.value)
-                ) {
-                  return Promise.reject('请检查标签输入');
+                if (!validateLabelValues(value)) {
+                  return Promise.reject('请检查标签是否完整输入');
                 }
                 return Promise.resolve();
               },
@@ -195,7 +195,7 @@ export default function ShieldDrawerForm({
             />
           }
         >
-          <InputLabelComp regex={true} maxLength={8} defaulLabelName='name'/>
+          <InputLabelComp regex={true} maxLength={8} defaulLabelName="name" />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>
           <Col>

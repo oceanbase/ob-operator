@@ -2,7 +2,7 @@ import type { OceanbaseOBInstanceType } from '@/api/generated';
 import {
   LEVER_OPTIONS_ALARM,
   OBJECT_OPTIONS_ALARM,
-  SERVERITY_MAP,
+  SEVERITY_MAP,
 } from '@/constants';
 import { Alert } from '@/type/alert';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
@@ -43,28 +43,60 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
       }));
     }
     if (type === 'obtenant') {
-      return (list as Alert.TenantsList[]).map((cluster) => ({
-        label: <span>{cluster.clusterName}</span>,
-        title: cluster.clusterName,
-        options: cluster.tenants?.map((item) => ({
-          value: item,
-          label: item,
-        })),
-      }));
+      return (list as Alert.TenantsList[])
+        .map((cluster) => ({
+          label: <span>{cluster.clusterName}</span>,
+          title: cluster.clusterName,
+          options: cluster.tenants?.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        }))
+        .filter((item) => item.options?.length);
     }
     if (type === 'observer') {
-      return (list as Alert.ServersList[]).map((cluster) => ({
-        label: <span>{cluster.clusterName}</span>,
-        title: cluster.clusterName,
-        options: cluster.servers?.map((item) => ({
-          value: item,
-          label: item,
-        })),
-      }));
+      return (list as Alert.ServersList[])
+        .map((cluster) => ({
+          label: <span>{cluster.clusterName}</span>,
+          title: cluster.clusterName,
+          options: cluster.servers?.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        }))
+        .filter((item) => item.options?.length);
     }
   };
   const { run: debounceDepend } = useDebounceFn(depend, { wait: 500 });
-  const formData = Form.useWatch([], form) as { [T: string]: string | object };
+  const formData: any = Form.useWatch([], form);
+
+  const findClusterName = (
+    list: API.SimpleClusterList | API.TenantDetail[],
+    type: 'obtenant' | 'observer',
+    target: string,
+  ) => {
+    if (type === 'observer') {
+      return (
+        (list as API.SimpleClusterList).find((cluster) => {
+          return cluster.topology.some((zone) =>
+            zone.observers.some((server) => server.address === target),
+          );
+        })?.clusterName || ''
+      );
+    }
+    if (type === 'obtenant') {
+      const clusterResourceName = (list as API.TenantDetail[]).find(
+        (tenant) => {
+          return tenant.tenantName === target;
+        },
+      )?.clusterResourceName;
+      if (clusterResourceName) {
+        return clusterList?.find(
+          (cluster) => cluster.name === clusterResourceName,
+        )?.clusterName;
+      }
+    }
+  };
   useEffect(() => {
     if (type === 'event') {
       setVisibleConfig({
@@ -130,6 +162,20 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
           filter[key] = Math.ceil(formData[key].valueOf() / 1000);
         } else if (key === 'instance' && formData[key]?.type) {
           const temp = {};
+          if (formData[key]?.obtenant) {
+            formData[key].obcluster = findClusterName(
+              tenantList!,
+              'obtenant',
+              formData[key]?.obtenant,
+            );
+          }
+          if (formData[key]?.observer) {
+            formData[key].obcluster = findClusterName(
+              clusterList!,
+              'observer',
+              formData[key]?.observer,
+            );
+          }
           Object.keys(formData[key]).forEach((innerKey) => {
             if (formData[key][innerKey]) {
               temp[innerKey] = formData[key][innerKey];
@@ -139,10 +185,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         }
       }
     });
-    if(filter.instance){
-      if(Object.keys(filter.instance).length === 1 && filter.instance?.type){
-        filter.instanceType = filter.instance.type
-        delete filter.instance
+    if (filter.instance) {
+      if (Object.keys(filter.instance).length === 1 && filter.instance?.type) {
+        filter.instanceType = filter.instance.type;
+        delete filter.instance;
       }
     }
     debounceDepend(filter);
@@ -199,7 +245,7 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
               label="告警等级"
-              name={'serverity'}
+              name={'severity'}
             >
               <Select
                 allowClear
@@ -207,7 +253,7 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SERVERITY_MAP[item.value]?.color}>
+                    <Tag color={SEVERITY_MAP[item.value]?.color}>
                       {item.label}
                     </Tag>
                   ),
