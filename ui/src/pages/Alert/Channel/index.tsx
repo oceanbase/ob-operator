@@ -3,7 +3,6 @@ import type { ReceiverReceiver } from '@/api/generated';
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { Alert } from '@/type/alert';
-import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -11,16 +10,10 @@ import { useState } from 'react';
 import ChannelDrawer from './ChannelDrawer';
 
 export default function Channel() {
-  const [searchParams] = useSearchParams();
-  const [drawerStatus, setDrawerStatus] = useState<Alert.DrawerStatus>(
-    searchParams.get('receiver') ? 'display' : 'create',
-  );
-  const [drawerOpen, setDrawerOpen] = useState(
-    searchParams.get('openDrawer') === 'true',
-  );
-  const [clickedChannelName, setClickedChannelName] = useState(
-    searchParams.get('receiver') || undefined,
-  );
+  const [drawerStatus, setDrawerStatus] =
+    useState<Alert.DrawerStatus>('create');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [clickedChannelName, setClickedChannelName] = useState<string>();
   const { data: listReceiversRes, refresh } = useRequest(alert.listReceivers);
   const { run: deleteReceiver } = useRequest(alert.deleteReceiver, {
     onSuccess: ({ successful }) => {
@@ -94,6 +87,10 @@ export default function Channel() {
     setDrawerOpen(true);
     setDrawerStatus('create');
   };
+  const drawerClose = () => {
+    setClickedChannelName(undefined);
+    setDrawerOpen(false);
+  };
 
   return (
     <Card
@@ -116,7 +113,7 @@ export default function Channel() {
         setStatus={setDrawerStatus}
         name={clickedChannelName}
         submitCallback={refresh}
-        onClose={() => setDrawerOpen(false)}
+        onClose={drawerClose}
         open={drawerOpen}
       />
     </Card>

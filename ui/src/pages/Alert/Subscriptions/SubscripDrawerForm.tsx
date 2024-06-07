@@ -3,32 +3,28 @@ import type { RouteRoute } from '@/api/generated';
 import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabelComp from '@/components/InputLabelComp';
+import InputTimeComp from '@/components/InputTimeComp';
 import { QuestionCircleOutlined } from '@ant-design/icons';
+import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import { Col, Form, InputNumber, Row, Select, message } from 'antd';
+import { Col, Form, Row, Select, message } from 'antd';
 import { useEffect } from 'react';
 import { validateLabelValues } from '../helper';
 import styles from './index.less';
 
 interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
-  recevierNames: string[];
   onClose: () => void;
   submitCallback?: () => void;
 }
 
 export default function SubscripDrawerForm({
   id,
-  recevierNames,
   submitCallback,
   onClose,
   ...props
 }: ShieldDrawerFormProps) {
   const isEdit = !!id;
-  const recevierOptions = recevierNames.map((name) => ({
-    label: name,
-    value: name,
-  }));
   const [form] = Form.useForm<RouteRoute>();
   const initialValues = {
     matchers: [
@@ -39,6 +35,8 @@ export default function SubscripDrawerForm({
       },
     ],
   };
+  const { data: listReceiversRes } = useRequest(alert.listReceivers);
+  const listReceivers = listReceiversRes?.data;
   const submit = async (values: RouteRoute) => {
     if (!values.matchers) values.matchers = [];
     const { successful } = await alert.createOrUpdateRoute(values);
@@ -86,7 +84,13 @@ export default function SubscripDrawerForm({
               label="告警通道"
               name={'receiver'}
             >
-              <Select placeholder="请选择" options={recevierOptions} />
+              <Select
+                placeholder="请选择"
+                options={listReceivers?.map((receiver) => ({
+                  label: receiver.name,
+                  value: receiver.name,
+                }))}
+              />
             </Form.Item>
           </Col>
           <Col span={24}>
@@ -155,7 +159,7 @@ export default function SubscripDrawerForm({
                 </div>
               }
             >
-              <InputNumber min={1} addonAfter="分钟" />
+              <InputTimeComp />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -169,7 +173,7 @@ export default function SubscripDrawerForm({
               name={'groupWait'}
               label="聚合等待时间"
             >
-              <InputNumber min={1} addonAfter="分钟" />
+              <InputTimeComp />
             </Form.Item>
           </Col>
           <Col span={8}>
@@ -188,7 +192,7 @@ export default function SubscripDrawerForm({
                 </div>
               }
             >
-              <InputNumber min={1} addonAfter="分钟" />
+              <InputTimeComp />
             </Form.Item>
           </Col>
         </Row>

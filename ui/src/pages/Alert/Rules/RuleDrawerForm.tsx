@@ -4,13 +4,13 @@ import AlertDrawer from '@/components/AlertDrawer';
 import InputLabelComp from '@/components/InputLabelComp';
 import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
+import InputTimeComp from '@/components/InputTimeComp';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import {
   Col,
   Form,
   Input,
-  InputNumber,
   Radio,
   Row,
   Select,
@@ -196,7 +196,7 @@ export default function RuleDrawerForm({
               label="持续时间"
               name={'duration'}
             >
-              <InputNumber placeholder="请输入" addonAfter="分钟" min={1} />
+              <InputTimeComp />
             </Form.Item>
           </Col>
           <Col span={24}>

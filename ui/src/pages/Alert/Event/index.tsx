@@ -19,16 +19,25 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
+import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
+import RuleDrawerForm from '../Rules/RuleDrawerForm';
 import { sortEvents } from '../helper';
 const { Text } = Typography;
 
 export default function Event() {
   const [form] = Form.useForm();
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [editRuleName, setEditRuleName] = useState<string>();
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
   );
+  const editRule = (rule: string) => {
+    setEditRuleName(rule);
+    setDrawerOpen(true);
+  };
+
   const listAlerts = sortEvents(listAlertsRes?.data || []);
   const columns: ColumnsType<AlertAlert> = [
     {
@@ -37,10 +46,7 @@ export default function Event() {
       key: 'summary',
       render: (val, record) => {
         return (
-          <Button
-            onClick={() => history.push(`/alert/rules?rule=${record.rule}`)}
-            type="link"
-          >
+          <Button onClick={() => editRule(record.rule)} type="link">
             <Tooltip title={record.description}>{val}</Tooltip>
           </Button>
         );
@@ -134,6 +140,10 @@ export default function Event() {
       ),
     },
   ];
+  const drawerClose = () => {
+    setEditRuleName(undefined);
+    setDrawerOpen(false);
+  };
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
@@ -148,6 +158,12 @@ export default function Event() {
           // scroll={{ x: 1500 }}
         />
       </Card>
+      <RuleDrawerForm
+        width={880}
+        open={drawerOpen}
+        ruleName={editRuleName}
+        onClose={drawerClose}
+      />
     </Space>
   );
 }
