@@ -113,7 +113,6 @@ export default function Subscriptions() {
       <SubscripDrawerForm
         title="推送配置"
         width={880}
-        recevierNames={listRoutes?.map((item) => item.receiver) || []}
         onClose={drawerClose}
         submitCallback={refresh}
         open={drawerOpen}

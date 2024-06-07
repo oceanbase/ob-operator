@@ -11,7 +11,7 @@ import { useState } from 'react';
 import ChannelDrawer from './ChannelDrawer';
 
 export default function Channel() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [drawerStatus, setDrawerStatus] = useState<Alert.DrawerStatus>(
     searchParams.get('receiver') ? 'display' : 'create',
   );
@@ -94,6 +94,11 @@ export default function Channel() {
     setDrawerOpen(true);
     setDrawerStatus('create');
   };
+  const drawerClose = () => {
+    setClickedChannelName(undefined);
+    setSearchParams('');
+    setDrawerOpen(false);
+  };
 
   return (
     <Card
@@ -116,7 +121,7 @@ export default function Channel() {
         setStatus={setDrawerStatus}
         name={clickedChannelName}
         submitCallback={refresh}
-        onClose={() => setDrawerOpen(false)}
+        onClose={drawerClose}
         open={drawerOpen}
       />
     </Card>

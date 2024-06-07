@@ -50,7 +50,9 @@ export default function ChannelDrawer({
       manual: true,
     },
   );
-  const receiverNames = listReceiversRes?.data?.map((receiver) => receiver.name);
+  const receiverNames = listReceiversRes?.data?.map(
+    (receiver) => receiver.name,
+  );
   const listReceiverTemplates = listReceiverTemplatesRes?.data;
   const Footer = () => {
     return (
@@ -79,6 +81,10 @@ export default function ChannelDrawer({
         onClose();
       }
     });
+  };
+  const typeChange = (type: string) => {
+    const template = listReceiverTemplates?.find((item) => item.type === type);
+    if (template) form.setFieldValue('config', template.template);
   };
 
   useEffect(() => {
@@ -144,6 +150,7 @@ export default function ChannelDrawer({
           ) : (
             <Select
               placeholder="请选择"
+              onChange={typeChange}
               showSearch
               options={listReceiverTemplates?.map((template) => ({
                 value: template.type,
@@ -152,37 +159,26 @@ export default function ChannelDrawer({
             />
           )}
         </Form.Item>
-        <Form.Item noStyle dependencies={['type']}>
-          {({ setFieldValue, getFieldValue }) => {
-            const type = getFieldValue('type');
-            const template = listReceiverTemplates?.find(
-              (item) => item.type === type,
-            );
-            if (template) setFieldValue('config', template.template);
-            return (
-              <Form.Item
-                name={'config'}
-                rules={[
-                  {
-                    required: true,
-                    message: '请输入',
-                  },
-                ]}
-                label={
-                  <div>
-                    <span>通道配置 </span>
-                    <QuestionCircleOutlined />
-                  </div>
-                }
-              >
-                {status === 'display' ? (
-                  <pre>{form.getFieldValue('config') || '-'}</pre>
-                ) : (
-                  <TextArea rows={18} placeholder="请输入" />
-                )}
-              </Form.Item>
-            );
-          }}
+        <Form.Item
+          name={'config'}
+          rules={[
+            {
+              required: true,
+              message: '请输入',
+            },
+          ]}
+          label={
+            <div>
+              <span>通道配置 </span>
+              <QuestionCircleOutlined />
+            </div>
+          }
+        >
+          {status === 'display' ? (
+            <pre>{form.getFieldValue('config') || '-'}</pre>
+          ) : (
+            <TextArea rows={18} placeholder="请输入" />
+          )}
         </Form.Item>
       </Form>
     </AlertDrawer>
