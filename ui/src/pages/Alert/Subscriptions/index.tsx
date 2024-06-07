@@ -2,17 +2,22 @@ import { alert } from '@/api';
 import type { RouteRouteResponse } from '@/api/generated';
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { Link } from '@umijs/max';
+import { Alert } from '@/type/alert';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
+import ChannelDrawer from '../Channel/ChannelDrawer';
 import SubscripDrawerForm from './SubscripDrawerForm';
 
 export default function Subscriptions() {
   const { data: listRoutesRes, refresh } = useRequest(alert.listRoutes);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [channelDrawerOpen, setChannelDrawerOpen] = useState(false);
   const [clickedId, setClickedId] = useState<string>();
+  const [drawerStatus, setDrawerStatus] =
+    useState<Alert.DrawerStatus>('display');
+  const [editChannelName, setEditChannelName] = useState<string>();
   const { run: deleteRoute } = useRequest(alert.deleteRoute, {
     onSuccess: ({ successful }) => {
       if (successful) {
@@ -21,7 +26,12 @@ export default function Subscriptions() {
     },
   });
   const drawerClose = () => {
+    setClickedId(undefined);
     setDrawerOpen(false);
+  };
+  const channelDrawerClose = () => {
+    setChannelDrawerOpen(false);
+    setEditChannelName(undefined);
   };
 
   /**
@@ -32,6 +42,12 @@ export default function Subscriptions() {
     setDrawerOpen(true);
   };
 
+  const showChannelDrawer = (receiver: string) => {
+    setEditChannelName(receiver);
+    setDrawerStatus('display');
+    setChannelDrawerOpen(true);
+  };
+
   const listRoutes = listRoutesRes?.data;
 
   const columns: ColumnsType<RouteRouteResponse> = [
@@ -40,9 +56,9 @@ export default function Subscriptions() {
       dataIndex: 'receiver',
       key: 'receiver',
       render: (receiver) => (
-        <Link to={`/alert/channel?receiver=${receiver}&openDrawer=${true}`}>
+        <Button type="link" onClick={() => showChannelDrawer(receiver)}>
           {receiver}
-        </Link>
+        </Button>
       ),
     },
     {
@@ -117,6 +133,14 @@ export default function Subscriptions() {
         submitCallback={refresh}
         open={drawerOpen}
         id={clickedId}
+      />
+      <ChannelDrawer
+        width={880}
+        status={drawerStatus}
+        setStatus={setDrawerStatus}
+        name={editChannelName}
+        onClose={channelDrawerClose}
+        open={channelDrawerOpen}
       />
     </Card>
   );

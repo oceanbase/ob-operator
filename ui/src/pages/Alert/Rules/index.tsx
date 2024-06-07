@@ -2,11 +2,10 @@ import { alert } from '@/api';
 import type { AlarmSeverity, RuleRuleResponse } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SEVERITY_MAP } from '@/constants';
-import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import RuleDrawerForm from './RuleDrawerForm';
 
@@ -14,7 +13,6 @@ const { Text } = Typography;
 
 export default function Rules() {
   const [form] = Form.useForm();
-  const [searchParams, setSearchParams] = useSearchParams();
   const {
     data: listRulesRes,
     refresh,
@@ -28,9 +26,7 @@ export default function Rules() {
       }
     },
   });
-  const [drawerOpen, setDrawerOpen] = useState(
-    Boolean(searchParams.get('rule')),
-  );
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const listRules = listRulesRes?.data || [];
 
   const editRule = (ruleName: string) => {
@@ -38,7 +34,6 @@ export default function Rules() {
     setDrawerOpen(true);
   };
   const drawerClose = () => {
-    setSearchParams('');
     setEditRuleName(undefined);
     setDrawerOpen(false);
   };
@@ -129,12 +124,6 @@ export default function Rules() {
       ),
     },
   ];
-
-  useEffect(() => {
-    if (searchParams.get('rule')) {
-      setEditRuleName(searchParams.get('rule')!);
-    }
-  }, []);
 
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
