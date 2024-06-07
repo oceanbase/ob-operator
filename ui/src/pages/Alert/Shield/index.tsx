@@ -4,6 +4,7 @@ import type {
   SilenceSilencerResponse,
   SilenceStatus,
 } from '@/api/generated';
+import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
@@ -24,7 +25,6 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import { sortAlarmShielding } from '../helper';
-import PreText from '@/components/PreText';
 import ShieldDrawerForm from './ShieldDrawerForm';
 const { Text } = Typography;
 
@@ -70,7 +70,7 @@ export default function Shield() {
       title: '屏蔽应用/对象类型',
       dataIndex: 'instances',
       key: 'type',
-      fixed:true,
+      fixed: true,
       render: (instances: OceanbaseOBInstance[]) => (
         <Text>{instances?.[0].type || '-'}</Text>
       ),
@@ -95,7 +95,7 @@ export default function Shield() {
 
         const InstancesRender = () => (
           <div>
-            {Object.keys(temp).map((key,index) => (
+            {Object.keys(temp).map((key, index) => (
               <p key={index}>
                 {key}：{temp[key].join(',')}
               </p>
@@ -119,11 +119,9 @@ export default function Shield() {
       title: '屏蔽告警规则',
       dataIndex: 'matchers',
       key: 'matchers',
-      width:300,
+      width: 300,
       render: (rules) => {
-        return (
-          <PreText cols={7} value={rules} />
-        );
+        return <PreText cols={7} value={rules} />;
       },
     },
     {
@@ -170,7 +168,7 @@ export default function Shield() {
     {
       title: '操作',
       key: 'action',
-      fixed:'right',
+      fixed: 'right',
       render: (_, record) => (
         <>
           <Button
