@@ -174,6 +174,7 @@ export default function Shield() {
           <Button
             onClick={() => editShield(record.id)}
             style={{ paddingLeft: 0 }}
+            disabled={record.status.state === 'expired'}
             type="link"
           >
             编辑

@@ -8,6 +8,7 @@ import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import ChannelDrawer from '../Channel/ChannelDrawer';
+import { formatDuration } from '../helper';
 import SubscripDrawerForm from './SubscripDrawerForm';
 
 export default function Subscriptions() {
@@ -74,10 +75,12 @@ export default function Subscriptions() {
       title: '聚合配置',
       dataIndex: 'aggregateLabels',
       key: 'aggregateLabels',
+      render: (labels) => <span>{labels.join(',')}</span>,
     },
     {
       title: '推送周期',
       dataIndex: 'repeatInterval',
+      render: (repeatIntervel) => <span>{formatDuration(repeatIntervel)}</span>,
     },
     {
       title: '操作',

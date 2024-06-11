@@ -2,21 +2,12 @@ import { alert } from '@/api';
 import type { CommonKVPair, RuleRule } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import InputLabelComp from '@/components/InputLabelComp';
+import InputTimeComp from '@/components/InputTimeComp';
 import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
 import { QuestionCircleOutlined } from '@ant-design/icons';
-import InputTimeComp from '@/components/InputTimeComp';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import {
-  Col,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Select,
-  Tag,
-  message,
-} from 'antd';
+import { Col, Form, Input, Radio, Row, Select, Tag, message } from 'antd';
 import { useEffect } from 'react';
 import { validateLabelValues } from '../helper';
 
@@ -46,8 +37,8 @@ export default function RuleDrawerForm({
     instanceType: 'obcluster',
   };
   const submit = (values: RuleRule) => {
-    values.type = 'customized';
     if (!values.labels) values.labels = [];
+    values.labels = values.labels.filter((label) => label.key && label.value);
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
         message.success('操作成功！');
@@ -84,10 +75,9 @@ export default function RuleDrawerForm({
         validateTrigger="onBlur"
         form={form}
       >
-        <Row gutter={[24, 24]}>
+        <Row gutter={[24, 0]}>
           <Col span={24}>
             <Form.Item
-              style={{ marginBottom: 0 }}
               rules={[
                 {
                   required: true,

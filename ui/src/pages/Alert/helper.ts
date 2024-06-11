@@ -159,7 +159,10 @@ export const getInstancesFromRes = (
  * @description
  * Sort alarms by status and time
  */
-const sortAlarm = (alarms: AlertAlert[] | SilenceSilencerResponse[], map) => {
+const sortAlarm = (
+  alarms: AlertAlert[] | SilenceSilencerResponse[],
+  map: { [T: string]: { text: string; color: string; weight: number } },
+) => {
   if (!alarms || !alarms.length) return [];
   const types = uniq(alarms.map((item) => item.status.state));
   types.sort((pre, cur) => map[cur].weight - map[pre].weight);
@@ -190,10 +193,10 @@ export const validateLabelValues = (
 ) => {
   for (const labelValue of labelValues) {
     const tempArr = Object.keys(labelValue).map((key) =>
-      Boolean(labelValue[key]),
+      Boolean(labelValue[key as keyof (AlarmMatcher | CommonKVPair)]),
     );
     const stautsArr = tempArr.filter((item) => item === true);
-    if (stautsArr.length === 1) return false; 
+    if (stautsArr.length === 1) return false;
     if (
       stautsArr.length === 2 &&
       tempArr.length > 2 &&
@@ -203,4 +206,18 @@ export const validateLabelValues = (
     }
   }
   return true;
+};
+
+/**
+ *
+ * @param duration The unit is seconds
+ */
+export const formatDuration = (duration: number) => {
+  if (Math.floor(duration / 60) > 180) {
+    return `${Math.floor(duration / 3600)}小时`;
+  }
+  if (duration > 600) {
+    return `${Math.floor(duration / 60)}分钟`;
+  }
+  return `${duration}秒`;
 };
