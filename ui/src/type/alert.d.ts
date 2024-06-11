@@ -24,7 +24,7 @@ declare namespace Alert {
       value?: string;
     }[];
     endsAt: Dayjs;
-    rules:string[];
+    rules: string[];
     id?: string;
     comment: string;
   };
