@@ -120,6 +120,12 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 		if m.Resource.Spec.ModifyOBServers.AddingBackupVolume != nil && supportStaticIP {
 			obcluster.Spec.BackupVolume = m.Resource.Spec.ModifyOBServers.AddingBackupVolume
 		}
+		if m.Resource.Spec.ModifyOBServers.RemoveBackupVolume && supportStaticIP {
+			obcluster.Spec.BackupVolume = nil
+		}
+		if m.Resource.Spec.ModifyOBServers.RemoveMonitor && supportStaticIP {
+			obcluster.Spec.MonitorTemplate = nil
+		}
 		if m.Resource.Spec.ModifyOBServers.Resource != nil && supportStaticIP {
 			obcluster.Spec.OBServerTemplate.Resource = m.Resource.Spec.ModifyOBServers.Resource
 		}
