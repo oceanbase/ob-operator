@@ -39,6 +39,9 @@ export default function SubscripDrawerForm({
   const listReceivers = listReceiversRes?.data;
   const submit = async (values: RouteRoute) => {
     if (!values.matchers) values.matchers = [];
+    values.matchers = values.matchers.filter(
+      (matcher) => matcher.name && matcher.value,
+    );
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);

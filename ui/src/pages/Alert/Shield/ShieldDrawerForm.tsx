@@ -78,6 +78,9 @@ export default function ShieldDrawerForm({
 
   const submit = (values: Alert.ShieldDrawerForm) => {
     if (!values.matchers) values.matchers = [];
+    values.matchers = values.matchers.filter(
+      (matcher) => matcher.name && matcher.value,
+    );
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,

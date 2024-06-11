@@ -227,6 +227,7 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                   >
                     <Select
                       style={{ width: '100%' }}
+                      allowClear
                       options={getOptionsFromType(
                         getFieldValue(['instance', 'type']),
                       )}
@@ -250,10 +251,14 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
               <Select
                 allowClear
                 placeholder="请选择"
-                options={LEVER_OPTIONS_ALARM?.map((item) => ({
+                options={LEVER_OPTIONS_ALARM!.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SEVERITY_MAP[item.value]?.color}>
+                    <Tag
+                      color={
+                        SEVERITY_MAP[item.value as Alert.AlarmLevel]?.color
+                      }
+                    >
                       {item.label}
                     </Tag>
                   ),

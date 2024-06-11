@@ -7,6 +7,7 @@ import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
+import { formatDuration } from '../helper';
 import RuleDrawerForm from './RuleDrawerForm';
 
 const { Text } = Typography;
@@ -54,7 +55,7 @@ export default function Rules() {
       title: '持续时间',
       dataIndex: 'duration',
       key: 'duration',
-      render: (value) => <Text>{value}分钟</Text>,
+      render: (value) => <Text>{formatDuration(value)}</Text>,
     },
     {
       title: '对象类型',
