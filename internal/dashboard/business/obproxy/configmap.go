@@ -71,20 +71,31 @@ func updateConfigMap(ctx context.Context, ns, name string, param *obproxy.PatchO
 		}
 		return nil, httpErr.NewInternal("Failed to get obproxy config map, err msg: " + err.Error())
 	}
-	if cm.Data == nil {
-		cm.Data = map[string]string{}
-	}
-	for _, kv := range param.AddedParameters {
+	cm.Data = map[string]string{}
+	for _, kv := range param.Parameters {
 		cm.Data[strings.ToUpper(envPrefix+kv.Key)] = kv.Value
-	}
-	for _, key := range param.DeletedParameters {
-		delete(cm.Data, strings.ToUpper(envPrefix+key))
 	}
 	configMap, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("Failed to update obproxy config map, err msg: " + err.Error())
 	}
 	return configMap, nil
+}
+
+func doesParametersChanged(ctx context.Context, ns, name string, param *obproxy.PatchOBProxyParam) (bool, error) {
+	cm, err := client.GetClient().ClientSet.CoreV1().ConfigMaps(ns).Get(ctx, cmPrefix+name, metav1.GetOptions{})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return false, httpErr.NewNotFound("ConfigMap not found")
+		}
+		return false, httpErr.NewInternal("Failed to get obproxy config map, err msg: " + err.Error())
+	}
+	for _, kv := range param.Parameters {
+		if val, ok := cm.Data[strings.ToUpper(envPrefix+kv.Key)]; !ok || val != kv.Value {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 func deleteConfigMap(ctx context.Context, ns, name string) (*corev1.ConfigMap, error) {

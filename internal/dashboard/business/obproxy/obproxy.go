@@ -140,12 +140,18 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 	}
 
 	parametersUpdated := false
-	if param.AddedParameters != nil || param.DeletedParameters != nil {
-		_, err := updateConfigMap(ctx, ns, name, param)
+	if param.Parameters != nil {
+		changed, err := doesParametersChanged(ctx, ns, name, param)
 		if err != nil {
 			return nil, err
 		}
-		parametersUpdated = true
+		if changed {
+			_, err := updateConfigMap(ctx, ns, name, param)
+			if err != nil {
+				return nil, err
+			}
+			parametersUpdated = true
+		}
 	}
 	if updated {
 		deployment, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Update(ctx, deploy, metav1.UpdateOptions{})
@@ -168,7 +174,7 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 			if err != nil {
 				return nil, httpErr.NewInternal("Failed to get oceanbase connection by host " + pod.PodIP)
 			}
-			for _, param := range param.AddedParameters {
+			for _, param := range param.Parameters {
 				err = conn.ExecWithDefaultTimeout(ctx, fmt.Sprintf("ALTER proxyconfig SET %s = %s;", param.Key, param.Value))
 				if err != nil {
 					return nil, httpErr.NewInternal("Failed to update obproxy config, err msg: " + err.Error())
