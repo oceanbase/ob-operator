@@ -40,7 +40,7 @@ spec:
             - name: USER_NAMESPACE
               value: {{ .Values.userNamespace | default .Release.Namespace }}
             - name: CONFIG_NAMESPACE
-              value: {{ .Values.userNamespace | default .Release.Namespace }}
+              value: {{ .Values.configNamespace | default .Release.Namespace }}
             - name: PROMETHEUS_CONFIG
               value: {{ .Release.Name }}-prometheus-server-conf
             - name: PROMETHEUS_RULE_CONFIG
