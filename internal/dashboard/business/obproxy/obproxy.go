@@ -215,5 +215,3 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 	}
 	return deleted, nil
 }
-
-func ListOBProxyParameters(ctx context.Context, ns string, name string)
