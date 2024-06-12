@@ -353,7 +353,7 @@ func GetRoute(ctx *gin.Context) (*route.RouteResponse, error) {
 // @Description Create or update alarm route.
 // @Accept application/json
 // @Produce application/json
-// @Param body body route.Route true "route"
+// @Param body body route.RouteParam true "route"
 // @Success 200 object response.APIResponse{data=route.RouteResponse}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -361,7 +361,7 @@ func GetRoute(ctx *gin.Context) (*route.RouteResponse, error) {
 // @Router /api/v1/alarm/route/routes [PUT]
 // @Security ApiKeyAuth
 func CreateOrUpdateRoute(ctx *gin.Context) (*route.RouteResponse, error) {
-	route := &route.Route{}
+	route := &route.RouteParam{}
 	err := ctx.Bind(route)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
