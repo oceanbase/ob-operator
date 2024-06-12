@@ -16,10 +16,10 @@ import (
 	"fmt"
 	"time"
 
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/pkg/errors"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
@@ -253,14 +253,14 @@ func ScaleOBServersVertically(m *OBZoneManager) tasktypes.TaskError {
 	for _, observer := range observerList.Items {
 		serverRes := observer.Spec.OBServerTemplate.Resource
 		if serverRes.Cpu != zoneRes.Cpu || serverRes.Memory != zoneRes.Memory {
-			m.Logger.Info("Scale up observer", "observer", observer.Name)
+			m.Logger.Info("Scale observer vertically", "observer", observer.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				serverRes.Cpu = zoneRes.Cpu
 				serverRes.Memory = zoneRes.Memory
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {
-				return errors.Wrapf(err, "Scale up observer %s failed", observer.Name)
+				return errors.Wrapf(err, "Scale observer %s vertically failed", observer.Name)
 			}
 		}
 	}
@@ -299,24 +299,37 @@ func ModifyPodTemplate(m *OBZoneManager) tasktypes.TaskError {
 		return err
 	}
 	for _, observer := range observerList.Items {
+		observerCopied := observer.DeepCopy()
 		if observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil {
 			m.Logger.Info("Add backup volume", "observer", observer.Name)
-			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-				observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
-				return m.Client.Update(m.Ctx, &observer)
-			})
+			observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
+			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
 			if err != nil {
 				return errors.Wrapf(err, "Add backup volume %s failed", observer.Name)
 			}
 		}
 		if observer.Spec.MonitorTemplate == nil && m.OBZone.Spec.MonitorTemplate != nil {
 			m.Logger.Info("Add monitor template", "observer", observer.Name)
-			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
-				observer.Spec.MonitorTemplate = m.OBZone.Spec.MonitorTemplate
-				return m.Client.Update(m.Ctx, &observer)
-			})
+			observer.Spec.MonitorTemplate = m.OBZone.Spec.MonitorTemplate
+			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
 			if err != nil {
 				return errors.Wrapf(err, "Add monitor template %s failed", observer.Name)
+			}
+		}
+		if observer.Spec.BackupVolume != nil && m.OBZone.Spec.BackupVolume == nil {
+			m.Logger.Info("Remove backup volume", "observer", observer.Name)
+			observer.Spec.BackupVolume = nil
+			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
+			if err != nil {
+				return errors.Wrapf(err, "Remove backup volume %s failed", observer.Name)
+			}
+		}
+		if observer.Spec.MonitorTemplate != nil && m.OBZone.Spec.MonitorTemplate == nil {
+			m.Logger.Info("Remove monitor template", "observer", observer.Name)
+			observer.Spec.MonitorTemplate = nil
+			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
+			if err != nil {
+				return errors.Wrapf(err, "Remove monitor template %s failed", observer.Name)
 			}
 		}
 	}

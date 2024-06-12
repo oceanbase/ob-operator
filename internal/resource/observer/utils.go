@@ -577,7 +577,7 @@ func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
 			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 		}
 	default:
-		m.Logger.Info("Static ip not supported, set empty annotation")
+		m.Logger.Info("No CNI is configured, set empty annotation")
 	}
 	return annotations
 }
