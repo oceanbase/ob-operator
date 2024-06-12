@@ -21,6 +21,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
+
+	"github.com/mcuadros/go-defaults"
 )
 
 // @ID ListAlerts
@@ -180,6 +182,7 @@ func GetRule(ctx *gin.Context) (*rule.RuleResponse, error) {
 // @Security ApiKeyAuth
 func CreateOrUpdateRule(ctx *gin.Context) (*rule.RuleResponse, error) {
 	rule := &rule.Rule{}
+	defaults.SetDefaults(rule)
 	err := ctx.Bind(rule)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
