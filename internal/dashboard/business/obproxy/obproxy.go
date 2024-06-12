@@ -153,13 +153,6 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 			parametersUpdated = true
 		}
 	}
-	if updated {
-		deployment, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Update(ctx, deploy, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, httpErr.NewInternal("Failed to update obproxy, err msg: " + err.Error())
-		}
-		return buildOBProxy(ctx, deployment)
-	}
 	odp, err := buildOBProxy(ctx, deploy)
 	if err != nil {
 		return nil, err
@@ -175,12 +168,19 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 				return nil, httpErr.NewInternal("Failed to get oceanbase connection by host " + pod.PodIP)
 			}
 			for _, param := range param.Parameters {
-				err = conn.ExecWithDefaultTimeout(ctx, fmt.Sprintf("ALTER proxyconfig SET %s = %s;", param.Key, param.Value))
+				err = conn.ExecWithDefaultTimeout(ctx, fmt.Sprintf("ALTER proxyconfig SET %s = '%s';", param.Key, param.Value))
 				if err != nil {
 					return nil, httpErr.NewInternal("Failed to update obproxy config, err msg: " + err.Error())
 				}
 			}
 		}
+	}
+	if updated || parametersUpdated {
+		deployment, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Update(ctx, deploy, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, httpErr.NewInternal("Failed to update obproxy, err msg: " + err.Error())
+		}
+		return buildOBProxy(ctx, deployment)
 	}
 	return odp, nil
 }

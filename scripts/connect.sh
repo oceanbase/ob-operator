@@ -26,6 +26,7 @@ function print_help {
   echo "  --show-password       Show the password in the output."
   echo "  --proxy               Connect to the obproxy deployment with default name."
   echo "  --proxy-name <Name>   Connect to the obproxy deployment with the specified name. (--deploy-name in setup-obproxy.sh)"
+  echo "  --proxy-ns <Namespace>    Namespace of the obproxy. Default is the same as namespace of the obcluster."
 }
 
 # elif [[ $CONNECT == true ]]; then
@@ -110,6 +111,10 @@ while [[ $# -gt 0 ]]; do
       PROXY_DEPLOY_NAME=$2
       shift
       ;;
+    --proxy-ns)
+      PROXY_NS=$2
+      shift
+      ;;
     --show-password)
       SHOW_PASSWORD=true
       ;;
@@ -143,17 +148,18 @@ CONNECTING_HOST=""
 CONNECTING_PORT=""
 
 if [[ $CONNECT_PROXY == true ]]; then
+  CONNECTING_NS=${PROXY_NS:-$NAMESPACE}
   if [[ -z $PROXY_DEPLOY_NAME ]]; then
     PROXY_DEPLOY_NAME=obproxy-$OB_CLUSTER
   fi
 
-  kubectl get deployment $PROXY_DEPLOY_NAME -n $NAMESPACE &> /dev/null
+  kubectl get deployment $PROXY_DEPLOY_NAME -n $CONNECTING_NS &> /dev/null
   if [[ $? -ne 0 ]]; then
-    echo "Error: The obproxy deployment \"$PROXY_DEPLOY_NAME\" in namespace \"$NAMESPACE\" does not exist."
+    echo "Error: The obproxy deployment \"$PROXY_DEPLOY_NAME\" in namespace \"$CONNECTING_NS\" does not exist."
     exit 1
   fi
 
-  CONNECTING_HOST=$(kubectl get service svc-$PROXY_DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.spec.clusterIP}')
+  CONNECTING_HOST=$(kubectl get service svc-$PROXY_DEPLOY_NAME -n $CONNECTING_NS -o jsonpath='{.spec.clusterIP}')
   CONNECTING_PORT=2883
 else
   POD_IP=$(kubectl get pods -n $NAMESPACE -l ref-obcluster=$OB_CLUSTER -o jsonpath='{.items[0].status.podIP}')
