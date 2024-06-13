@@ -19,7 +19,6 @@ package v1alpha1
 import (
 	"context"
 
-	storagev1 "k8s.io/api/storage/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -165,18 +164,18 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		} else if modifySpec.ModifyStorageClass != nil {
 			if modifySpec.ModifyStorageClass.DataStorage != "" &&
 				modifySpec.ModifyStorageClass.DataStorage != obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass &&
-				kubeerrors.IsNotFound(clt.Get(context.TODO(), types.NamespacedName{Name: modifySpec.ModifyStorageClass.DataStorage}, &storagev1.StorageClass{})) {
-				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("dataStorage"), modifySpec.ModifyStorageClass, "storage class does not exist")
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.DataStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("dataStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
 			}
 			if modifySpec.ModifyStorageClass.LogStorage != "" &&
 				modifySpec.ModifyStorageClass.LogStorage != obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass &&
-				kubeerrors.IsNotFound(clt.Get(context.TODO(), types.NamespacedName{Name: modifySpec.ModifyStorageClass.LogStorage}, &storagev1.StorageClass{})) {
-				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("logStorage"), modifySpec.ModifyStorageClass, "storage class does not exist")
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.LogStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("logStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
 			}
 			if modifySpec.ModifyStorageClass.RedoLogStorage != "" &&
 				modifySpec.ModifyStorageClass.RedoLogStorage != obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass &&
-				kubeerrors.IsNotFound(clt.Get(context.TODO(), types.NamespacedName{Name: modifySpec.ModifyStorageClass.RedoLogStorage}, &storagev1.StorageClass{})) {
-				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), modifySpec.ModifyStorageClass, "storage class does not exist")
+				validateStorageClassAllowExpansion(modifySpec.ModifyStorageClass.RedoLogStorage) != nil {
+				return nil, field.Invalid(field.NewPath("spec").Child("modifyStorageClass").Child("redoLogStorage"), modifySpec.ModifyStorageClass, "storage class does not support expansion")
 			}
 		}
 		if modifySpec.AddingMonitor != nil && modifySpec.RemoveMonitor {
