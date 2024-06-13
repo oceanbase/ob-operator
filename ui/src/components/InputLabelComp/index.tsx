@@ -12,6 +12,7 @@ interface InputLabelCompPorps {
   maxLength?: number;
   defaulLabelName?: string;
   regex?: boolean;
+  disable?: boolean;
 }
 
 export default function InputLabelComp(props: InputLabelCompPorps) {
@@ -22,6 +23,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
     onBlur,
     defaulLabelName = 'key',
     regex,
+    disable = false,
   } = props;
 
   const labelNameInput = (value: string, index: number) => {
@@ -53,16 +55,18 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
       <Space style={{ width: '100%', marginBottom: 12 }} direction="vertical">
         {labels?.map((label, index) => (
           <Row gutter={[12, 12]} style={{ alignItems: 'center' }} key={index}>
-            <Col span={11}>
+            <Col span={regex ? 11 : 12}>
               <Input
+                disabled={disable}
                 value={label[defaulLabelName] as string}
                 onBlur={onBlur}
                 onChange={(e) => labelNameInput(e.target.value, index)}
                 placeholder="请输入标签名"
               />
             </Col>
-            <Col span={10}>
+            <Col span={regex ? 10 : 11}>
               <Input
+                disabled={disable}
                 value={label.value as string}
                 onBlur={onBlur}
                 onChange={(e) => labelValueInput(e.target.value, index)}
@@ -99,7 +103,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
         ))}
       </Space>
 
-      {!maxLength || labels.length < maxLength ? (
+      {(!maxLength || labels.length < maxLength) && !disable ? (
         <Row>
           <Col span={24}>
             <Button

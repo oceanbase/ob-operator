@@ -1,5 +1,8 @@
 import type { CommonKVPair, CommonResourceSpec } from '@/api/generated';
+import InputLabelComp from '@/components/InputLabelComp';
 import { Button, Card, Col, Row } from 'antd';
+import { useState } from 'react';
+import ConfigDrawer from './ConfigDrawer';
 
 interface DetailConfigProps {
   name?: string;
@@ -13,17 +16,19 @@ interface DetailConfigProps {
 }
 
 export default function DetailConfig({
-  image,
-  parameters,
-  resource,
-  serviceType,
-  replicas,
   style,
+  ...props
 }: DetailConfigProps) {
+  const {image,serviceType,replicas,resource,parameters} = props;
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <Card
       title={<h2 style={{ marginBottom: 0 }}>详细配置</h2>}
-      extra={<Button>编辑</Button>}
+      extra={
+        <Button onClick={() => setDrawerOpen(true)} type="primary">
+          编辑
+        </Button>
+      }
       style={style}
     >
       <div style={{ marginBottom: 24 }}>
@@ -38,8 +43,14 @@ export default function DetailConfig({
       </div>
       <div>
         <h3>参数设置</h3>
-        <pre>{JSON.stringify(parameters)}</pre>
+        <InputLabelComp disable={true} value={parameters || []} />
       </div>
+      <ConfigDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        width={580}
+        {...props}
+      />
     </Card>
   );
 }

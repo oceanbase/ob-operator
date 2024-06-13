@@ -227,6 +227,25 @@ const ALERT_STATE_MAP = {
   suppressed: { text: '抑制', color: 'red', weight: 2 },
 };
 
+const SERVICE_TYPE = [
+  {
+    label: 'ClusterIP',
+    value: 'ClusterIP',
+  },
+  {
+    label: 'NodePort',
+    value: 'NodePort',
+  },
+  {
+    label: 'LoadBalancer',
+    value: 'LoadBalancer',
+  },
+  {
+    label: 'ExternalName',
+    value: 'ExternalName',
+  },
+];
+
 export {
   ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
@@ -248,6 +267,7 @@ export {
   RESULT_STATUS,
   SEVERITY_MAP,
   SERVER_IMG_MAP,
+  SERVICE_TYPE,
   SHILED_STATUS_MAP,
   STATISTICS_INTERVAL,
   STATUS,

@@ -40,7 +40,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
   },
   {
     title: '副本数',
-    dataIndex: 'Replicas',
+    dataIndex: 'replicas',
     key: 'Replicas',
   },
   {
