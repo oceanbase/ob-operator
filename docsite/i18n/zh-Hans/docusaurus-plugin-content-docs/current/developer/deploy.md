@@ -10,20 +10,20 @@ ob-operator 支持通过 Helm 进行部署，在使用 Helm 命令部署 ob-oper
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.1
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.2.2
 ```
 
 参数说明：
 
 * namespace：命名空间，可自定义，一般建议使用 oceanbase-system。
 
-* version：ob-operator 版本号，建议使用最新的版本 `2.2.1`。
+* version：ob-operator 版本号，建议使用最新的版本 `2.2.2`。
 
 ## 2.2 使用配置文件部署
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.1_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.2_release/deploy/operator.yaml
 ```
 * Development
 ```shell
