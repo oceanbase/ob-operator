@@ -20,7 +20,7 @@ tags
 bin
 
 # lib & package
-.vendor/
+vendor/
 .glide/
 
 # Test binary
