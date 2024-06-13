@@ -3254,7 +3254,7 @@ const docTemplate = `{
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "$ref": "#/definitions/common.ConfigItem"
+                                                "$ref": "#/definitions/obproxy.ConfigItem"
                                             }
                                         }
                                     }
@@ -5159,26 +5159,6 @@ const docTemplate = `{
                 "ClusterModeService"
             ]
         },
-        "common.ConfigItem": {
-            "type": "object",
-            "properties": {
-                "info": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "needReboot": {
-                    "type": "boolean"
-                },
-                "value": {
-                    "type": "string"
-                },
-                "visibleLevel": {
-                    "type": "string"
-                }
-            }
-        },
         "common.KVPair": {
             "type": "object",
             "properties": {
@@ -5569,6 +5549,26 @@ const docTemplate = `{
                 },
                 "storageSize": {
                     "type": "integer"
+                }
+            }
+        },
+        "obproxy.ConfigItem": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needReboot": {
+                    "type": "boolean"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "visibleLevel": {
+                    "type": "string"
                 }
             }
         },

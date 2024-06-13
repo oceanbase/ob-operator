@@ -38,3 +38,11 @@ type OBProxyOverview struct {
 	CreationTime     string    `json:"creationTime" binding:"required"`
 	Status           string    `json:"status" binding:"required"`
 }
+
+type ConfigItem struct {
+	Name         string `json:"name"`
+	Value        string `json:"value"`
+	Info         string `json:"info"`
+	NeedReboot   bool   `json:"needReboot" db:"need_reboot"`
+	VisibleLevel string `json:"visibleLevel" db:"visible_level"`
+}

@@ -16,13 +16,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -217,8 +217,8 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 	return deleted, nil
 }
 
-func ListOBProxyParameters(ctx context.Context, ns string, name string) ([]common.ConfigItem, error) {
-	items := make([]common.ConfigItem, 0)
+func ListOBProxyParameters(ctx context.Context, ns string, name string) ([]obproxy.ConfigItem, error) {
+	items := make([]obproxy.ConfigItem, 0)
 	deploy, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if kubeerrors.IsNotFound(err) {
@@ -233,7 +233,8 @@ func ListOBProxyParameters(ctx context.Context, ns string, name string) ([]commo
 	for _, pod := range odp.Pods {
 		conn, err := utils.GetOBConnectionByHost(ctx, odp.Namespace, pod.PodIP, "root", "proxysys", odp.ProxySysSecret, 2883)
 		if err != nil {
-			return nil, httpErr.NewInternal("Failed to get oceanbase connection by host " + pod.PodIP)
+			logrus.Infof("Failed to get oceanbase connection by host %s", pod.PodIP)
+			continue
 		}
 		err = conn.QueryList(ctx, &items, "SHOW PROXYCONFIG;")
 		if err != nil {

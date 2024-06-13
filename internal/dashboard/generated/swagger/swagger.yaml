@@ -128,19 +128,6 @@ definitions:
     - ClusterModeNormal
     - ClusterModeStandalone
     - ClusterModeService
-  common.ConfigItem:
-    properties:
-      info:
-        type: string
-      name:
-        type: string
-      needReboot:
-        type: boolean
-      value:
-        type: string
-      visibleLevel:
-        type: string
-    type: object
   common.KVPair:
     properties:
       key:
@@ -398,6 +385,19 @@ definitions:
         type: string
       storageSize:
         type: integer
+    type: object
+  obproxy.ConfigItem:
+    properties:
+      info:
+        type: string
+      name:
+        type: string
+      needReboot:
+        type: boolean
+      value:
+        type: string
+      visibleLevel:
+        type: string
     type: object
   obproxy.CreateOBProxyParam:
     properties:
@@ -4353,7 +4353,7 @@ paths:
             - properties:
                 data:
                   items:
-                    $ref: '#/definitions/common.ConfigItem'
+                    $ref: '#/definitions/obproxy.ConfigItem'
                   type: array
               type: object
         "400":
