@@ -147,10 +147,6 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 			return nil, err
 		}
 		if changed {
-			_, err := updateConfigMap(ctx, ns, name, param)
-			if err != nil {
-				return nil, err
-			}
 			parametersUpdated = true
 		}
 	}
@@ -174,6 +170,12 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 					return nil, httpErr.NewInternal("Failed to update obproxy config, err msg: " + err.Error())
 				}
 			}
+		}
+	}
+	if parametersUpdated {
+		_, err := updateConfigMap(ctx, ns, name, param)
+		if err != nil {
+			return nil, err
 		}
 	}
 	if updated || parametersUpdated {
