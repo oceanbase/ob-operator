@@ -5082,6 +5082,12 @@ export interface RouteRoute {
      * @memberof RouteRoute
      */
     'repeatInterval': number;
+     /**
+     * 
+     * @type {string}
+     * @memberof RouteRoute
+     */
+     'id'?: string;
 }
 /**
  * 
