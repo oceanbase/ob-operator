@@ -94,7 +94,11 @@ export default function Backups({
                   </>
                 ) : (
                   <>
-                    全量备份：每周
+                    {intl.formatMessage({
+                      id: 'src.pages.Tenant.Detail.Overview.56424605',
+                      defaultMessage: '全量备份：每周',
+                    })}
+
                     {fullArr
                       .map((item) => WEEK_TEXT_MAP.get(item.day))
                       .join(',')}
@@ -120,7 +124,11 @@ export default function Backups({
                   </>
                 ) : (
                   <>
-                    增量备份：每周
+                    {intl.formatMessage({
+                      id: 'src.pages.Tenant.Detail.Overview.A2F7D655',
+                      defaultMessage: '增量备份：每周',
+                    })}
+
                     {incrementalArr
                       .map((item) => WEEK_TEXT_MAP.get(item.day))
                       .join(',')}

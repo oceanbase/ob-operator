@@ -50,7 +50,10 @@ const subSideMenus: MenuItem[] = [
     icon: <IconFont type="obproxy" />,
   },
   {
-    title: '告警',
+    title: intl.formatMessage({
+      id: 'src.pages.Layouts.DetailLayout.BC23B91F',
+      defaultMessage: '告警',
+    }),
     key: 'alert',
     link: '/alert',
     icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,

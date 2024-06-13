@@ -1,5 +1,6 @@
 import type { OceanbaseOBInstanceType } from '@/api/generated';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import { useUpdateEffect } from 'ahooks';
 import type { FormInstance } from 'antd';
@@ -37,7 +38,13 @@ export default function ShieldObjInput({
         label: clusterName,
       }));
       if (res.length && shieldObjType === 'obcluster') {
-        res.splice(0, 0, { value: 'allClusters', label: '全部集群' });
+        res.splice(0, 0, {
+          value: 'allClusters',
+          label: intl.formatMessage({
+            id: 'src.pages.Alert.Shield.E34008B6',
+            defaultMessage: '全部集群',
+          }),
+        });
       }
       return res;
     }
@@ -52,7 +59,13 @@ export default function ShieldObjInput({
           value: tenantName,
         }));
         if (res?.length) {
-          res.splice(0, 0, { value: 'allTenants', label: '全部租户' });
+          res.splice(0, 0, {
+            value: 'allTenants',
+            label: intl.formatMessage({
+              id: 'src.pages.Alert.Shield.DC28F74E',
+              defaultMessage: '全部租户',
+            }),
+          });
         }
         return res;
       } else {
@@ -77,7 +90,13 @@ export default function ShieldObjInput({
           value: server,
         }));
         if (res?.length) {
-          res.splice(0, 0, { value: 'allServers', label: '全部主机' });
+          res.splice(0, 0, {
+            value: 'allServers',
+            label: intl.formatMessage({
+              id: 'src.pages.Alert.Shield.5EFCC526',
+              defaultMessage: '全部主机',
+            }),
+          });
         }
         return res;
       } else {
@@ -130,7 +149,10 @@ export default function ShieldObjInput({
             rules={[
               {
                 required: true,
-                message: '请选择',
+                message: intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.639D1A8C',
+                  defaultMessage: '请选择',
+                }),
               },
             ]}
             name={clusterFormName}
@@ -140,7 +162,10 @@ export default function ShieldObjInput({
               maxCount={1}
               allowClear
               options={getOptionsFromType(clusterFormName[1])}
-              placeholder="请选择集群"
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Alert.Shield.B0133BD9',
+                defaultMessage: '请选择集群',
+              })}
             />
           </Form.Item>
         </Col>
@@ -154,7 +179,10 @@ export default function ShieldObjInput({
                   rules={[
                     {
                       required: true,
-                      message: '请选择',
+                      message: intl.formatMessage({
+                        id: 'src.pages.Alert.Shield.A519C403',
+                        defaultMessage: '请选择',
+                      }),
                     },
                   ]}
                   dependencies={[clusterFormName]}
@@ -165,9 +193,25 @@ export default function ShieldObjInput({
                     maxCount={maxCount}
                     allowClear
                     options={getOptionsFromType(nextFormName![1], cluster)}
-                    placeholder={`请选择${
-                      nextFormName![1] === 'observer' ? '主机' : '租户'
-                    }`}
+                    placeholder={intl.formatMessage(
+                      {
+                        id: 'src.pages.Alert.Shield.4AE1863A',
+                        defaultMessage:
+                          "请选择${nextFormName![1] === 'observer' ? '主机' : '租户'}",
+                      },
+                      {
+                        ConditionalExpression0:
+                          nextFormName![1] === 'observer'
+                            ? intl.formatMessage({
+                                id: 'src.pages.Alert.Shield.0EEFD182',
+                                defaultMessage: '主机',
+                              })
+                            : intl.formatMessage({
+                                id: 'src.pages.Alert.Shield.74A00B6E',
+                                defaultMessage: '租户',
+                              }),
+                      },
+                    )}
                   />
                 </Form.Item>
               );
@@ -195,7 +239,10 @@ export default function ShieldObjInput({
             rules={[
               {
                 required: true,
-                message: '请选择',
+                message: intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.5F7B1190',
+                  defaultMessage: '请选择',
+                }),
               },
             ]}
             name={['instances', 'obcluster']}
@@ -204,7 +251,10 @@ export default function ShieldObjInput({
               mode="multiple"
               maxCount={maxCount}
               allowClear
-              placeholder="请选择集群"
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Alert.Shield.2E5B9DD9',
+                defaultMessage: '请选择集群',
+              })}
               options={getOptionsFromType(shieldObjType)}
             />
           </Form.Item>
@@ -222,6 +272,7 @@ export default function ShieldObjInput({
           tenantFormName={['instances', 'obtenant']}
         />
       )}
+
       {shieldObjType === 'observer' && (
         <ShieldObjFormItem
           clusterFormName={['instances', 'obcluster']}

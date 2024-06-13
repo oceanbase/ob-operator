@@ -1,6 +1,7 @@
 import IconTip from '@/components/IconTip';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
 import { getSimpleClusterList } from '@/services';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
@@ -16,42 +17,75 @@ export default function BasicConfig({ form }: BasicConfigProps) {
     value: `${cluster.name}+${cluster.namespace}`,
   }));
   return (
-    <Card title="基本设置">
+    <Card
+      title={intl.formatMessage({
+        id: 'src.pages.OBProxy.New.F830C6B7',
+        defaultMessage: '基本设置',
+      })}
+    >
       <Row gutter={[16, 32]}>
         <Col span={8}>
           <Form.Item
-            label="资源名称"
+            label={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.D41C48E1',
+              defaultMessage: '资源名称',
+            })}
             rules={[
               {
                 required: true,
-                message: '请输入',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.A0CBFC04',
+                  defaultMessage: '请输入',
+                }),
               },
             ]}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.E9A192AB',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item
-            label="OBProxy 集群名"
+            label={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.2D601471',
+              defaultMessage: 'OBProxy 集群名',
+            })}
             rules={[
               {
                 required: true,
-                message: '请输入',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.6B7B9E9A',
+                  defaultMessage: '请输入',
+                }),
               },
             ]}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.DEF127D3',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item
-            label="连接 OB 集群"
+            label={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.7D1609DD',
+              defaultMessage: '连接 OB 集群',
+            })}
             name="obCluster"
             rules={[
               {
                 required: true,
-                message: '请选择',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.80C781AA',
+                  defaultMessage: '请选择',
+                }),
               },
             ]}
           >
@@ -61,16 +95,33 @@ export default function BasicConfig({ form }: BasicConfigProps) {
         <Col span={8}>
           <Form.Item
             label={
-              <IconTip content="OBProxy root 密码" tip="root@proxysys 密码" />
+              <IconTip
+                content={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.E711F60D',
+                  defaultMessage: 'OBProxy root 密码',
+                })}
+                tip={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.26311C9E',
+                  defaultMessage: 'root@proxysys 密码',
+                })}
+              />
             }
             rules={[
               {
                 required: true,
-                message: '请输入',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.D76A01D7',
+                  defaultMessage: '请输入',
+                }),
               },
             ]}
           >
-            <Input.Password placeholder="请输入" />
+            <Input.Password
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.B2851499',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>

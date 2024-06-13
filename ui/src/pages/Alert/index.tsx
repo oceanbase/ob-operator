@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { Outlet, history } from '@umijs/max';
 import type { TabsProps } from 'antd';
@@ -10,11 +11,17 @@ const TAB_KEYS = ['event', 'shield', 'rules', 'channel', 'subscriptions'];
 const TAB_ITEMS: TabsProps['items'] = [
   {
     key: 'event',
-    label: '告警事件',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.542DC103',
+      defaultMessage: '告警事件',
+    }),
   },
   {
     key: 'shield',
-    label: '告警屏蔽',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.0E2168FC',
+      defaultMessage: '告警屏蔽',
+    }),
   },
   {
     key: 'divider-1',
@@ -22,7 +29,10 @@ const TAB_ITEMS: TabsProps['items'] = [
   },
   {
     key: 'rules',
-    label: '告警规则',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.6261133D',
+      defaultMessage: '告警规则',
+    }),
   },
   {
     key: 'divider-2',
@@ -30,11 +40,17 @@ const TAB_ITEMS: TabsProps['items'] = [
   },
   {
     key: 'channel',
-    label: '告警通道',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.5208FED8',
+      defaultMessage: '告警通道',
+    }),
   },
   {
     key: 'subscriptions',
-    label: '告警推送',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.8F65A789',
+      defaultMessage: '告警推送',
+    }),
   },
 ];
 
@@ -72,6 +88,7 @@ export default function Alert() {
         items={TAB_ITEMS}
         onChange={onChange}
       />
+
       <Outlet />
     </PageContainer>
   );

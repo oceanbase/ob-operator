@@ -3,6 +3,7 @@ import type { ReceiverReceiver } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import { Button, Form, Input, Select, Space, message } from 'antd';
@@ -66,9 +67,22 @@ export default function ChannelDrawer({
             }
             type="primary"
           >
-            {status === 'display' ? '编辑' : '提交'}
+            {status === 'display'
+              ? intl.formatMessage({
+                  id: 'src.pages.Alert.Channel.D7E7D32B',
+                  defaultMessage: '编辑',
+                })
+              : intl.formatMessage({
+                  id: 'src.pages.Alert.Channel.A787FE28',
+                  defaultMessage: '提交',
+                })}
           </Button>
-          <Button onClick={onClose}>取消</Button>
+          <Button onClick={onClose}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Channel.FDBFEACE',
+              defaultMessage: '取消',
+            })}
+          </Button>
         </Space>
       </div>
     );
@@ -76,7 +90,12 @@ export default function ChannelDrawer({
   const submit = (values: ReceiverReceiver) => {
     alert.createOrUpdateReceiver(values).then(({ successful }) => {
       if (successful) {
-        message.success('操作成功!');
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Alert.Channel.9091A7E9',
+            defaultMessage: '操作成功!',
+          }),
+        );
         submitCallback && submitCallback();
         onClose();
       }
@@ -98,7 +117,10 @@ export default function ChannelDrawer({
 
   return (
     <AlertDrawer
-      title="告警通道配置"
+      title={intl.formatMessage({
+        id: 'src.pages.Alert.Channel.34E59D42',
+        defaultMessage: '告警通道配置',
+      })}
       footer={<Footer />}
       destroyOnClose={true}
       onSubmit={() => form.submit()}
@@ -108,11 +130,17 @@ export default function ChannelDrawer({
       <Form form={form} onFinish={submit} preserve={false} layout="vertical">
         <Form.Item
           wrapperCol={{ span: 12 }}
-          label="通道名称"
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Channel.897D04CA',
+            defaultMessage: '通道名称',
+          })}
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Channel.6B0B7626',
+                defaultMessage: '请输入',
+              }),
             },
             {
               validator: (_, value) => {
@@ -120,7 +148,12 @@ export default function ChannelDrawer({
                   status === 'create' &&
                   receiverNames?.some((receiver) => receiver === value)
                 ) {
-                  return Promise.reject('告警通道已存在，请重新输入');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.pages.Alert.Channel.7965888F',
+                      defaultMessage: '告警通道已存在，请重新输入',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
@@ -131,16 +164,28 @@ export default function ChannelDrawer({
           {status === 'display' ? (
             <p>{form.getFieldValue('name') || '-'}</p>
           ) : (
-            <Input disabled={status !== 'create'} placeholder="请输入" />
+            <Input
+              disabled={status !== 'create'}
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Alert.Channel.DFFB3F07',
+                defaultMessage: '请输入',
+              })}
+            />
           )}
         </Form.Item>
         <Form.Item
           wrapperCol={{ span: 12 }}
-          label="通道类型"
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Channel.B1B680BD',
+            defaultMessage: '通道类型',
+          })}
           rules={[
             {
               required: true,
-              message: '请选择',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Channel.A3D31BA5',
+                defaultMessage: '请选择',
+              }),
             },
           ]}
           name={'type'}
@@ -149,7 +194,10 @@ export default function ChannelDrawer({
             <p>{form.getFieldValue('type') || '-'} </p>
           ) : (
             <Select
-              placeholder="请选择"
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Alert.Channel.AFFFAE43',
+                defaultMessage: '请选择',
+              })}
               onChange={typeChange}
               showSearch
               options={listReceiverTemplates?.map((template) => ({
@@ -164,31 +212,50 @@ export default function ChannelDrawer({
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Channel.BD932A40',
+                defaultMessage: '请输入',
+              }),
             },
           ]}
           label={
             <IconTip
               tip={
                 <span>
-                  使用 yaml 格式配置告警通道，具体通道配置可参考{' '}
+                  {intl.formatMessage({
+                    id: 'src.pages.Alert.Channel.5A64A44C',
+                    defaultMessage:
+                      '使用 yaml 格式配置告警通道，具体通道配置可参考',
+                  })}{' '}
                   <a
                     href="https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    alertmanager 文档
+                    {intl.formatMessage({
+                      id: 'src.pages.Alert.Channel.7F8C8DED',
+                      defaultMessage: 'alertmanager 文档',
+                    })}
                   </a>
                 </span>
               }
-              content="通道配置"
+              content={intl.formatMessage({
+                id: 'src.pages.Alert.Channel.217A737A',
+                defaultMessage: '通道配置',
+              })}
             />
           }
         >
           {status === 'display' ? (
             <pre>{form.getFieldValue('config') || '-'}</pre>
           ) : (
-            <TextArea rows={18} placeholder="请输入" />
+            <TextArea
+              rows={18}
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Alert.Channel.6B980014',
+                defaultMessage: '请输入',
+              })}
+            />
           )}
         </Form.Item>
       </Form>

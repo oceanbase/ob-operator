@@ -6,6 +6,7 @@ import type {
   OceanbaseOBInstance,
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
+import { intl } from '@/utils/intl';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
@@ -41,7 +42,10 @@ export default function Event() {
   const listAlerts = sortEvents(listAlertsRes?.data || []);
   const columns: ColumnsType<AlertAlert> = [
     {
-      title: '告警事件',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.19D28466',
+        defaultMessage: '告警事件',
+      }),
       dataIndex: 'summary',
       key: 'summary',
       render: (val, record) => {
@@ -53,19 +57,33 @@ export default function Event() {
       },
     },
     {
-      title: '告警对象',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.EDED9514',
+        defaultMessage: '告警对象',
+      }),
       dataIndex: 'instance',
       key: 'instance',
       render: (instance: OceanbaseOBInstance) => (
         <Text>
-          对象：{instance[instance.type]}
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.3EAC0543',
+            defaultMessage: '对象：',
+          })}
+          {instance[instance.type]}
           <br />
-          类型：{instance.type}
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.AB6EB56A',
+            defaultMessage: '类型：',
+          })}
+          {instance.type}
         </Text>
       ),
     },
     {
-      title: '告警等级',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.8BDBE511',
+        defaultMessage: '告警等级',
+      }),
       dataIndex: 'severity',
       key: 'severity',
       sorter: (preRecord, curRecord) => {
@@ -81,7 +99,10 @@ export default function Event() {
       ),
     },
     {
-      title: '告警状态',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.26E65D10',
+        defaultMessage: '告警状态',
+      }),
       dataIndex: 'status',
       key: 'status',
       sorter: (preRecord, curRecord) => {
@@ -97,7 +118,10 @@ export default function Event() {
       ),
     },
     {
-      title: '产生时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.90B9AC55',
+        defaultMessage: '产生时间',
+      }),
       dataIndex: 'startsAt',
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
@@ -106,7 +130,10 @@ export default function Event() {
       ),
     },
     {
-      title: '结束时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.929C9905',
+        defaultMessage: '结束时间',
+      }),
       dataIndex: 'endsAt',
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
@@ -115,7 +142,10 @@ export default function Event() {
       ),
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.BD73F875',
+        defaultMessage: '操作',
+      }),
       key: 'action',
       render: (_, record) => (
         <Button
@@ -135,11 +165,15 @@ export default function Event() {
             );
           }}
         >
-          屏蔽
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.2BBFF587',
+            defaultMessage: '屏蔽',
+          })}
         </Button>
       ),
     },
   ];
+
   const drawerClose = () => {
     setEditRuleName(undefined);
     setDrawerOpen(false);
@@ -149,7 +183,16 @@ export default function Event() {
       <Card>
         <AlarmFilter depend={getListAlerts} form={form} type="event" />
       </Card>
-      <Card title={<h2 style={{ marginBottom: 0 }}>事件列表</h2>}>
+      <Card
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Event.0358EEE4',
+              defaultMessage: '事件列表',
+            })}
+          </h2>
+        }
+      >
         <Table
           columns={columns}
           dataSource={listAlerts}

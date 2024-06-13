@@ -5,6 +5,7 @@ import {
   SEVERITY_MAP,
 } from '@/constants';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import { useDebounceFn, useUpdateEffect } from 'ahooks';
@@ -202,12 +203,18 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
             <Form.Item
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
-              label="对象类型"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.95B30216',
+                defaultMessage: '对象类型',
+              })}
               name={['instance', 'type']}
             >
               <Select
                 allowClear
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.0FEF961B',
+                  defaultMessage: '请选择',
+                })}
                 options={OBJECT_OPTIONS_ALARM}
               />
             </Form.Item>
@@ -223,7 +230,17 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                     wrapperCol={{ span: 18 }}
                     labelCol={{ span: 9 }}
                     name={['instance', getFieldValue(['instance', 'type'])]}
-                    label={type === 'event' ? '告警对象' : '屏蔽对象'}
+                    label={
+                      type === 'event'
+                        ? intl.formatMessage({
+                            id: 'src.pages.Alert.AlarmFilter.D2CA6B61',
+                            defaultMessage: '告警对象',
+                          })
+                        : intl.formatMessage({
+                            id: 'src.pages.Alert.AlarmFilter.F8F0181A',
+                            defaultMessage: '屏蔽对象',
+                          })
+                    }
                   >
                     <Select
                       style={{ width: '100%' }}
@@ -231,7 +248,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                       options={getOptionsFromType(
                         getFieldValue(['instance', 'type']),
                       )}
-                      placeholder="请选择"
+                      placeholder={intl.formatMessage({
+                        id: 'src.pages.Alert.AlarmFilter.D5B81118',
+                        defaultMessage: '请选择',
+                      })}
                     />
                   </Form.Item>
                 );
@@ -245,12 +265,18 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
             <Form.Item
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
-              label="告警等级"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.F190260B',
+                defaultMessage: '告警等级',
+              })}
               name={'severity'}
             >
               <Select
                 allowClear
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.55C14EBD',
+                  defaultMessage: '请选择',
+                })}
                 options={LEVER_OPTIONS_ALARM!.map((item) => ({
                   value: item.value,
                   label: (
@@ -273,10 +299,18 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
             <Form.Item
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
-              label="关键词"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.827153E6',
+                defaultMessage: '关键词',
+              })}
               name={'keyword'}
             >
-              <Input placeholder="请输入关键词" />
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.E48EC601',
+                  defaultMessage: '请输入关键词',
+                })}
+              />
             </Form.Item>
           </Col>
         )}
@@ -286,12 +320,18 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
             <Form.Item
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
-              label="开始时间"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.B37ACE1B',
+                defaultMessage: '开始时间',
+              })}
               name={'startTime'}
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.8C7CB828',
+                  defaultMessage: '请选择',
+                })}
                 showTime
                 onChange={(value, dateString) => {
                   console.log('Selected Time: ', value);
@@ -308,10 +348,16 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
               name={'endTime'}
               wrapperCol={{ span: 18 }}
               labelCol={{ span: 9 }}
-              label="结束时间"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.4B625D3F',
+                defaultMessage: '结束时间',
+              })}
             >
               <DatePicker
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.057C32B9',
+                  defaultMessage: '请选择',
+                })}
                 style={{ width: '100%' }}
                 showTime
                 onChange={(value, dateString) => {
@@ -325,17 +371,28 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
       </Row>
       <div style={{ float: 'right' }}>
         <Button type="link" onClick={() => form.resetFields()}>
-          重置
+          {intl.formatMessage({
+            id: 'src.pages.Alert.AlarmFilter.6AF2BC90',
+            defaultMessage: '重置',
+          })}
         </Button>
         {type === 'event' &&
           (isExpand ? (
             <Button onClick={() => setIsExpand(false)} type="link">
-              收起
+              {intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.6380D62A',
+                defaultMessage: '收起',
+              })}
+
               <UpOutlined />
             </Button>
           ) : (
             <Button onClick={() => setIsExpand(true)} type="link">
-              展开
+              {intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.A578D30E',
+                defaultMessage: '展开',
+              })}
+
               <DownOutlined />
             </Button>
           ))}

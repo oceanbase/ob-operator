@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { message } from 'antd';
 import globalAxios, { AxiosInstance, AxiosPromise } from 'axios';
 import {
@@ -18,7 +19,12 @@ globalAxios.interceptors.response.use(
   },
   (error) => {
     if (error?.response?.status === 401) {
-      message.warning('登陆已过期');
+      message.warning(
+        intl.formatMessage({
+          id: 'src.api.2CA64FC6',
+          defaultMessage: '登陆已过期',
+        }),
+      );
       location.href = '/#/login';
     } else {
       message.error(error?.response?.data?.message || error.message);
