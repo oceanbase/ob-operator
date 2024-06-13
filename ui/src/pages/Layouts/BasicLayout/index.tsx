@@ -62,7 +62,10 @@ const BasicLayout: React.FC = () => {
       icon: <IconFont type="obproxy" />,
     },
     {
-      title: '告警',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.BasicLayout.EDA4D7D9',
+        defaultMessage: '告警',
+      }),
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
     },

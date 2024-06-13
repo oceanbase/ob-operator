@@ -1,4 +1,6 @@
 import { obproxy } from '@/api';
+import EventsTable from '@/components/EventsTable';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -7,7 +9,6 @@ import { useEffect } from 'react';
 import BasicInfo from './BasicInfo';
 import DetailConfig from './DetailConfig';
 import NodeInfo from './NodeInfo';
-import EventsTable from '@/components/EventsTable';
 
 export default function Overview() {
   const { ns, name } = useParams();
@@ -20,7 +21,12 @@ export default function Overview() {
   }, []);
 
   return (
-    <PageContainer title="OBProxy 详情">
+    <PageContainer
+      title={intl.formatMessage({
+        id: 'src.pages.OBProxy.Detail.Overview.1CA5DF47',
+        defaultMessage: 'OBProxy 详情',
+      })}
+    >
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <BasicInfo

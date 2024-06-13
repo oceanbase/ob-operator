@@ -9,6 +9,7 @@ import type {
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { clone, difference, flatten, uniq } from 'lodash';
 
 /**
@@ -214,10 +215,25 @@ export const validateLabelValues = (
  */
 export const formatDuration = (duration: number) => {
   if (Math.floor(duration / 60) > 180) {
-    return `${Math.floor(duration / 3600)}小时`;
+    return intl.formatMessage(
+      {
+        id: 'src.pages.Alert.05CE0380',
+        defaultMessage: '${Math.floor(duration / 3600)}小时',
+      },
+      { CallExpression0: Math.floor(duration / 3600) },
+    );
   }
   if (duration > 600) {
-    return `${Math.floor(duration / 60)}分钟`;
+    return intl.formatMessage(
+      {
+        id: 'src.pages.Alert.232CC9E7',
+        defaultMessage: '${Math.floor(duration / 60)}分钟',
+      },
+      { CallExpression0: Math.floor(duration / 60) },
+    );
   }
-  return `${duration}秒`;
+  return intl.formatMessage(
+    { id: 'src.pages.Alert.5ECB5E4A', defaultMessage: '${duration}秒' },
+    { duration: duration },
+  );
 };

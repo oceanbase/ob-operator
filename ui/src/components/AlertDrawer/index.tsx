@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import type { DrawerProps } from 'antd';
 import { Button, Drawer, Space } from 'antd';
 
@@ -27,9 +28,17 @@ export default function AlertDrawer({
         ) : (
           <Space>
             <Button onClick={onSubmit} type="primary">
-              提交
+              {intl.formatMessage({
+                id: 'src.components.AlertDrawer.95C6A631',
+                defaultMessage: '提交',
+              })}
             </Button>
-            <Button onClick={onClose}>取消</Button>
+            <Button onClick={onClose}>
+              {intl.formatMessage({
+                id: 'src.components.AlertDrawer.9B7CD984',
+                defaultMessage: '取消',
+              })}
+            </Button>
           </Space>
         )}
       </div>

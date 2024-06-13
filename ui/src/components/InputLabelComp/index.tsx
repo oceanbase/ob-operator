@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Col, Input, Popconfirm, Row, Space } from 'antd';
 
@@ -58,7 +59,10 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
                 value={label[defaulLabelName] as string}
                 onBlur={onBlur}
                 onChange={(e) => labelNameInput(e.target.value, index)}
-                placeholder="请输入标签名"
+                placeholder={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.36DDAD02',
+                  defaultMessage: '请输入标签名',
+                })}
               />
             </Col>
             <Col span={10}>
@@ -66,7 +70,10 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
                 value={label.value as string}
                 onBlur={onBlur}
                 onChange={(e) => labelValueInput(e.target.value, index)}
-                placeholder="请输入标签值"
+                placeholder={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.DC297030',
+                  defaultMessage: '请输入标签值',
+                })}
               />
             </Col>
             {regex && (
@@ -75,18 +82,34 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
                   checked={label.isRegex as boolean}
                   onChange={(e) => regChange(e.target.checked, index)}
                 />
-                <span style={{ marginLeft: 8 }}>正则</span>
+
+                <span style={{ marginLeft: 8 }}>
+                  {intl.formatMessage({
+                    id: 'src.components.InputLabelComp.1617B8B8',
+                    defaultMessage: '正则',
+                  })}
+                </span>
               </Col>
             )}
+
             {labels.length > 1 && (
               <Popconfirm
                 placement="left"
-                title="确定要删除该配置项吗？"
+                title={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.F6592C30',
+                  defaultMessage: '确定要删除该配置项吗？',
+                })}
                 onConfirm={() => {
                   remove(index);
                 }}
-                okText="删除"
-                cancelText="取消"
+                okText={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.C1E48711',
+                  defaultMessage: '删除',
+                })}
+                cancelText={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.D089EBDE',
+                  defaultMessage: '取消',
+                })}
                 okButtonProps={{
                   danger: true,
                   ghost: true,
@@ -109,7 +132,10 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
               style={{ color: 'rgba(0,0,0,0.65)' }}
             >
               <PlusOutlined />
-              添加
+              {intl.formatMessage({
+                id: 'src.components.InputLabelComp.6C88A39D',
+                defaultMessage: '添加',
+              })}
             </Button>
           </Col>
         </Row>

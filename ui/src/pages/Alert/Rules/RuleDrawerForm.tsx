@@ -5,6 +5,7 @@ import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
 import InputTimeComp from '@/components/InputTimeComp';
 import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import { Col, Form, Input, Radio, Row, Select, Tag, message } from 'antd';
@@ -34,6 +35,7 @@ export default function RuleDrawerForm({
         value: '',
       },
     ],
+
     instanceType: 'obcluster',
   };
   const submit = (values: RuleRule) => {
@@ -41,7 +43,12 @@ export default function RuleDrawerForm({
     values.labels = values.labels.filter((label) => label.key && label.value);
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
-        message.success('操作成功！');
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Alert.Rules.5D79276F',
+            defaultMessage: '操作成功！',
+          }),
+        );
         onClose();
         submitCallback && submitCallback();
       }
@@ -62,7 +69,10 @@ export default function RuleDrawerForm({
     <AlertDrawer
       destroyOnClose={true}
       onSubmit={() => form.submit()}
-      title="告警规则配置"
+      title={intl.formatMessage({
+        id: 'src.pages.Alert.Rules.72206E63',
+        defaultMessage: '告警规则配置',
+      })}
       onClose={onClose}
       {...props}
     >
@@ -81,15 +91,31 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请选择',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.7F6B182B',
+                    defaultMessage: '请选择',
+                  }),
                 },
               ]}
               name={'instanceType'}
-              label="对象类型"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.Rules.6B2322AF',
+                defaultMessage: '对象类型',
+              })}
             >
               <Radio.Group>
-                <Radio value="obcluster"> 集群 </Radio>
-                <Radio value="obtenant"> 租户 </Radio>
+                <Radio value="obcluster">
+                  {intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.60487F0F',
+                    defaultMessage: '集群',
+                  })}
+                </Radio>
+                <Radio value="obtenant">
+                  {intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.C7EBBB92',
+                    defaultMessage: '租户',
+                  })}
+                </Radio>
                 <Radio value="observer"> OBServer </Radio>
               </Radio.Group>
             </Form.Item>
@@ -103,13 +129,19 @@ export default function RuleDrawerForm({
                   ? [
                       {
                         required: true,
-                        message: '请输入',
+                        message: intl.formatMessage({
+                          id: 'src.pages.Alert.Rules.B7B764AE',
+                          defaultMessage: '请输入',
+                        }),
                       },
                     ]
                   : [
                       {
                         required: true,
-                        message: '请输入',
+                        message: intl.formatMessage({
+                          id: 'src.pages.Alert.Rules.50003344',
+                          defaultMessage: '请输入',
+                        }),
                       },
                       {
                         validator: async (_, value) => {
@@ -117,7 +149,13 @@ export default function RuleDrawerForm({
                             for (const rule of rules) {
                               if (rule.name === value) {
                                 return Promise.reject(
-                                  new Error('告警规则已存在，请重新输入'),
+                                  new Error(
+                                    intl.formatMessage({
+                                      id: 'src.pages.Alert.Rules.B46056EE',
+                                      defaultMessage:
+                                        '告警规则已存在，请重新输入',
+                                    }),
+                                  ),
                                 );
                               }
                             }
@@ -127,9 +165,17 @@ export default function RuleDrawerForm({
                       },
                     ]
               }
-              label="告警规则名"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.Rules.14235DA8',
+                defaultMessage: '告警规则名',
+              })}
             >
-              <Input placeholder="请输入" />
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.63C9E8E6',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
           <Col span={7}>
@@ -137,11 +183,17 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.9CB4B6C4',
+                    defaultMessage: '请输入',
+                  }),
                 },
               ]}
               name={'severity'}
-              label="告警级别"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.Rules.821C3FA7',
+                defaultMessage: '告警级别',
+              })}
             >
               <Select
                 options={LEVER_OPTIONS_ALARM?.map((item) => ({
@@ -152,7 +204,10 @@ export default function RuleDrawerForm({
                     </Tag>
                   ),
                 }))}
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.528ED58D',
+                  defaultMessage: '请选择',
+                })}
               />
             </Form.Item>
           </Col>
@@ -162,17 +217,31 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.412594B9',
+                    defaultMessage: '请输入',
+                  }),
                 },
               ]}
               label={
                 <IconTip
-                  tip="判定告警的 PromQL 表达式"
-                  content="指标计算表达式"
+                  tip={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.C01B1EFD',
+                    defaultMessage: '判定告警的 PromQL 表达式',
+                  })}
+                  content={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.9A2D5103',
+                    defaultMessage: '指标计算表达式',
+                  })}
                 />
               }
             >
-              <Input placeholder="请输入" />
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.179A6ACF',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
           <Col span={7}>
@@ -180,10 +249,16 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.0FF3431E',
+                    defaultMessage: '请输入',
+                  }),
                 },
               ]}
-              label="持续时间"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.Rules.D7E8AEDB',
+                defaultMessage: '持续时间',
+              })}
               name={'duration'}
             >
               <InputTimeComp />
@@ -195,17 +270,33 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.A2A41881',
+                    defaultMessage: '请输入',
+                  }),
                 },
               ]}
               label={
                 <IconTip
-                  tip="告警事件的摘要信息模版，可以使用 {{ }} 来标记需要替换的值"
-                  content="summary 信息"
+                  tip={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.8DE8BA49',
+                    defaultMessage:
+                      '告警事件的摘要信息模版，可以使用 {{ }} 来标记需要替换的值',
+                  })}
+                  content={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.363B4BDE',
+                    defaultMessage: 'summary 信息',
+                  })}
                 />
               }
             >
-              <TextArea rows={4} placeholder="请输入" />
+              <TextArea
+                rows={4}
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.9EDCE4CA',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
           <Col span={24}>
@@ -214,28 +305,60 @@ export default function RuleDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请输入',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.E04B7BC2',
+                    defaultMessage: '请输入',
+                  }),
                 },
               ]}
               label={
                 <IconTip
-                  tip="告警事件的详情信息模版，可以使用 {{ }} 来标记需要替换的值"
-                  content="告警详情信息"
+                  tip={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.5FB853B5',
+                    defaultMessage:
+                      '告警事件的详情信息模版，可以使用 {{ }} 来标记需要替换的值',
+                  })}
+                  content={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.B11DCDB0',
+                    defaultMessage: '告警详情信息',
+                  })}
                 />
               }
             >
-              <TextArea rows={4} placeholder="请输入" />
+              <TextArea
+                rows={4}
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.E336DF4E',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </Col>
           <Col span={24}>
             <Form.Item
-              label={<IconTip tip="添加到告警事件的标签" content="标签" />}
+              label={
+                <IconTip
+                  tip={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.1E26B90F',
+                    defaultMessage: '添加到告警事件的标签',
+                  })}
+                  content={intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.66144CF9',
+                    defaultMessage: '标签',
+                  })}
+                />
+              }
               validateDebounce={1500}
               rules={[
                 {
                   validator: (_, value: CommonKVPair[]) => {
                     if (!validateLabelValues(value)) {
-                      return Promise.reject('请检查标签是否完整输入');
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: 'src.pages.Alert.Rules.0EAD0426',
+                          defaultMessage: '请检查标签是否完整输入',
+                        }),
+                      );
                     }
                     return Promise.resolve();
                   },
