@@ -488,7 +488,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/route.Route"
+                            "$ref": "#/definitions/route.RouteParam"
                         }
                     }
                 ],
@@ -5660,20 +5660,14 @@
         "obproxy.PatchOBProxyParam": {
             "type": "object",
             "properties": {
-                "addedParameters": {
+                "image": {
+                    "type": "string"
+                },
+                "parameters": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/common.KVPair"
                     }
-                },
-                "deletedParameters": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "image": {
-                    "type": "string"
                 },
                 "replicas": {
                     "type": "integer"
@@ -7860,7 +7854,7 @@
                 }
             }
         },
-        "route.Route": {
+        "route.RouteParam": {
             "type": "object",
             "required": [
                 "aggregateLabels",
@@ -7882,6 +7876,9 @@
                 },
                 "groupWait": {
                     "type": "integer"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "matchers": {
                     "type": "array",

@@ -495,7 +495,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/route.Route"
+                            "$ref": "#/definitions/route.RouteParam"
                         }
                     }
                 ],
@@ -5667,20 +5667,14 @@ const docTemplate = `{
         "obproxy.PatchOBProxyParam": {
             "type": "object",
             "properties": {
-                "addedParameters": {
+                "image": {
+                    "type": "string"
+                },
+                "parameters": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/common.KVPair"
                     }
-                },
-                "deletedParameters": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "image": {
-                    "type": "string"
                 },
                 "replicas": {
                     "type": "integer"
@@ -7867,7 +7861,7 @@ const docTemplate = `{
                 }
             }
         },
-        "route.Route": {
+        "route.RouteParam": {
             "type": "object",
             "required": [
                 "aggregateLabels",
@@ -7889,6 +7883,9 @@ const docTemplate = `{
                 },
                 "groupWait": {
                     "type": "integer"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "matchers": {
                     "type": "array",
