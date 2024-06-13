@@ -22,6 +22,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -214,4 +215,31 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
 	}
 	return deleted, nil
+}
+
+func ListOBProxyParameters(ctx context.Context, ns string, name string) ([]common.ConfigItem, error) {
+	items := make([]common.ConfigItem, 0)
+	deploy, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewNotFound("OBProxy not found")
+		}
+		return nil, httpErr.NewInternal("Failed to get obproxy, err msg: " + err.Error())
+	}
+	odp, err := buildOBProxy(ctx, deploy)
+	if err != nil {
+		return nil, err
+	}
+	for _, pod := range odp.Pods {
+		conn, err := utils.GetOBConnectionByHost(ctx, odp.Namespace, pod.PodIP, "root", "proxysys", odp.ProxySysSecret, 2883)
+		if err != nil {
+			return nil, httpErr.NewInternal("Failed to get oceanbase connection by host " + pod.PodIP)
+		}
+		err = conn.QueryList(ctx, &items, "SHOW PROXYCONFIG;")
+		if err != nil {
+			return nil, httpErr.NewInternal("Failed to list obproxy config, err msg: " + err.Error())
+		}
+		return items, nil
+	}
+	return items, nil
 }

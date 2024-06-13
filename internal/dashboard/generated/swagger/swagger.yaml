@@ -128,6 +128,19 @@ definitions:
     - ClusterModeNormal
     - ClusterModeStandalone
     - ClusterModeService
+  common.ConfigItem:
+    properties:
+      info:
+        type: string
+      name:
+        type: string
+      needReboot:
+        type: boolean
+      value:
+        type: string
+      visibleLevel:
+        type: string
+    type: object
   common.KVPair:
     properties:
       key:
@@ -4310,6 +4323,52 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Patch OBProxy
+      tags:
+      - OBProxy
+  /api/v1/obproxies/{namespace}/{name}/parameters:
+    get:
+      consumes:
+      - application/json
+      description: List OBProxy Parameters by namespace and name
+      operationId: ListOBProxyParameters
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/common.ConfigItem'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List OBProxy Parameters
       tags:
       - OBProxy
   /api/v1/obtenants:

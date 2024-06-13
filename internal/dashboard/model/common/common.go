@@ -17,6 +17,14 @@ type KVPair struct {
 	Value string `json:"value"`
 }
 
+type ConfigItem struct {
+	Name         string `json:"name"`
+	Value        string `json:"value"`
+	Info         string `json:"info"`
+	NeedReboot   bool   `json:"needReboot" db:"need_reboot"`
+	VisibleLevel string `json:"visibleLevel" db:"visible_level"`
+}
+
 type ResourceSpec struct {
 	Cpu      int64 `json:"cpu"`
 	MemoryGB int64 `json:"memory"`

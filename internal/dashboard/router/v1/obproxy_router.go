@@ -24,4 +24,5 @@ func InitOBProxyRoutes(g *gin.RouterGroup) {
 	g.GET("/obproxies/:namespace/:name", h.Wrap(h.GetOBProxy))
 	g.PATCH("/obproxies/:namespace/:name", h.Wrap(h.PatchOBProxy))
 	g.DELETE("/obproxies/:namespace/:name", h.Wrap(h.DeleteOBProxy))
+	g.GET("/obproxies/:namespace/:name/parameters", h.Wrap(h.ListOBProxyParameters))
 }
