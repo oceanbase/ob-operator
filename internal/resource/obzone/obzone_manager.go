@@ -222,9 +222,15 @@ func (m *OBZoneManager) UpdateStatus() error {
 			m.OBZone.Status.Status = zonestatus.DeleteOBServer
 		} else {
 			for _, observer := range observerList.Items {
-				if m.OBZone.SupportStaticIP() && m.checkIfCalcResourceChange(&observer) {
-					m.OBZone.Status.Status = zonestatus.ScaleVertically
-					break
+				if m.OBZone.SupportStaticIP() {
+					if m.checkIfCalcResourceChange(&observer) {
+						m.OBZone.Status.Status = zonestatus.ScaleVertically
+						break
+					}
+					if m.checkIfBackupVolumeMutated(&observer) || m.checkIfMonitorMutated(&observer) {
+						m.OBZone.Status.Status = zonestatus.ModifyServerTemplate
+						break
+					}
 				}
 				if m.checkIfStorageClassChanged(&observer) {
 					m.OBZone.Status.Status = zonestatus.RollingUpdateServers
@@ -232,10 +238,6 @@ func (m *OBZoneManager) UpdateStatus() error {
 				}
 				if m.checkIfStorageSizeExpand(&observer) {
 					m.OBZone.Status.Status = zonestatus.ExpandPVC
-					break
-				}
-				if m.checkIfBackupVolumeMutated(&observer) || m.checkIfMonitorMutated(&observer) {
-					m.OBZone.Status.Status = zonestatus.ModifyServerTemplate
 					break
 				}
 			}
