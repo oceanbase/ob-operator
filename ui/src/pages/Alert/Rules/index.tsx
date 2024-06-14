@@ -47,6 +47,7 @@ export default function Rules() {
         defaultMessage: '告警规则名',
       }),
       dataIndex: 'name',
+      fixed: true,
       key: 'name',
     },
     {
@@ -135,6 +136,7 @@ export default function Rules() {
         id: 'src.pages.Alert.Rules.F333E1DF',
         defaultMessage: '操作',
       }),
+      fixed: 'right',
       dataIndex: 'action',
       render: (_, record) => (
         <>
@@ -214,7 +216,7 @@ export default function Rules() {
           rowKey="name"
           dataSource={listRules}
           pagination={{ simple: true }}
-          // scroll={{ x: 1500 }}
+          scroll={{ x: 1400 }}
         />
       </Card>
       <RuleDrawerForm

@@ -124,53 +124,41 @@ export default function RuleDrawerForm({
           <Col span={16}>
             <Form.Item
               name={'name'}
-              rules={
-                isEdit
-                  ? [
-                      {
-                        required: true,
-                        message: intl.formatMessage({
-                          id: 'src.pages.Alert.Rules.B7B764AE',
-                          defaultMessage: '请输入',
-                        }),
-                      },
-                    ]
-                  : [
-                      {
-                        required: true,
-                        message: intl.formatMessage({
-                          id: 'src.pages.Alert.Rules.50003344',
-                          defaultMessage: '请输入',
-                        }),
-                      },
-                      {
-                        validator: async (_, value) => {
-                          if (rules) {
-                            for (const rule of rules) {
-                              if (rule.name === value) {
-                                return Promise.reject(
-                                  new Error(
-                                    intl.formatMessage({
-                                      id: 'src.pages.Alert.Rules.B46056EE',
-                                      defaultMessage:
-                                        '告警规则已存在，请重新输入',
-                                    }),
-                                  ),
-                                );
-                              }
-                            }
-                          }
-                          return Promise.resolve();
-                        },
-                      },
-                    ]
-              }
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Rules.50003344',
+                    defaultMessage: '请输入',
+                  }),
+                },
+                {
+                  validator: async (_, value) => {
+                    if (rules) {
+                      for (const rule of rules) {
+                        if (rule.name === value) {
+                          return Promise.reject(
+                            new Error(
+                              intl.formatMessage({
+                                id: 'src.pages.Alert.Rules.B46056EE',
+                                defaultMessage: '告警规则已存在，请重新输入',
+                              }),
+                            ),
+                          );
+                        }
+                      }
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.Rules.14235DA8',
                 defaultMessage: '告警规则名',
               })}
             >
               <Input
+                disabled={isEdit}
                 placeholder={intl.formatMessage({
                   id: 'src.pages.Alert.Rules.63C9E8E6',
                   defaultMessage: '请输入',

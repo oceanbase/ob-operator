@@ -95,7 +95,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
 
   useEffect(() => {
     getAppInfoFromStorage().then((appInfo) => {
-      setVersion(appInfo.version);
+      setVersion(appInfo?.version);
     });
   }, []);
 

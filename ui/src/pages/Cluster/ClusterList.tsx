@@ -124,31 +124,6 @@ const columns: ColumnsType<DataType> = [
     width: 178,
     key: 'createTime',
   },
-
-  //监控还未返回
-  // {
-  //   title: '监控',
-  //   children: [
-  //     {
-  //       title: 'CPU',
-  //       dataIndex: 'cpuPercent',
-  //       key: 'cpuPercent',
-  //       render: (value) => <CanvasPie percent={Number(value)} name="cpu" />,
-  //     },
-  //     {
-  //       title: '内存',
-  //       dataIndex: 'memoryPercent',
-  //       key: 'memoryPercent',
-  //       render: (value) => <CanvasPie percent={Number(value)} name="memory" />,
-  //     },
-  //     {
-  //       title: '磁盘',
-  //       dataIndex: 'diskPercent',
-  //       key: 'diskPercent',
-  //       render: (value) => <CanvasPie percent={Number(value)} name="disk" />,
-  //     },
-  //   ],
-  // },
 ];
 
 export default function ClusterList({
