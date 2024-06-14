@@ -1,22 +1,13 @@
 import { alert } from '@/api';
 import type { CommonKVPair, RuleRule } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
+import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
-import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import InputTimeComp from '@/components/InputTimeComp';
+import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import {
-  Col,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Select,
-  Tag,
-  message,
-} from 'antd';
+import { Col, Form, Input, Radio, Row, Select, Tag, message } from 'antd';
 import { useEffect } from 'react';
 import { validateLabelValues } from '../helper';
 
@@ -46,8 +37,8 @@ export default function RuleDrawerForm({
     instanceType: 'obcluster',
   };
   const submit = (values: RuleRule) => {
-    values.type = 'customized';
     if (!values.labels) values.labels = [];
+    values.labels = values.labels.filter((label) => label.key && label.value);
     alert.createOrUpdateRule(values).then(({ successful }) => {
       if (successful) {
         message.success('操作成功！');
@@ -84,10 +75,9 @@ export default function RuleDrawerForm({
         validateTrigger="onBlur"
         form={form}
       >
-        <Row gutter={[24, 24]}>
+        <Row gutter={[24, 0]}>
           <Col span={24}>
             <Form.Item
-              style={{ marginBottom: 0 }}
               rules={[
                 {
                   required: true,
@@ -176,10 +166,10 @@ export default function RuleDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  <span>指标计算表达式</span>
-                  <QuestionCircleOutlined />
-                </div>
+                <IconTip
+                  tip="判定告警的 PromQL 表达式"
+                  content="指标计算表达式"
+                />
               }
             >
               <Input placeholder="请输入" />
@@ -209,10 +199,10 @@ export default function RuleDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  <span>summary 信息</span>
-                  <QuestionCircleOutlined />
-                </div>
+                <IconTip
+                  tip="告警事件的摘要信息模版，可以使用 {{ }} 来标记需要替换的值"
+                  content="summary 信息"
+                />
               }
             >
               <TextArea rows={4} placeholder="请输入" />
@@ -228,10 +218,10 @@ export default function RuleDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  <span>告警详情信息</span>
-                  <QuestionCircleOutlined />
-                </div>
+                <IconTip
+                  tip="告警事件的详情信息模版，可以使用 {{ }} 来标记需要替换的值"
+                  content="告警详情信息"
+                />
               }
             >
               <TextArea rows={4} placeholder="请输入" />
@@ -239,12 +229,7 @@ export default function RuleDrawerForm({
           </Col>
           <Col span={24}>
             <Form.Item
-              label={
-                <div>
-                  <span>标签</span>
-                  <QuestionCircleOutlined />
-                </div>
-              }
+              label={<IconTip tip="添加到告警事件的标签" content="标签" />}
               validateDebounce={1500}
               rules={[
                 {

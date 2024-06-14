@@ -522,16 +522,12 @@ definitions:
     type: object
   obproxy.PatchOBProxyParam:
     properties:
-      addedParameters:
+      image:
+        type: string
+      parameters:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
-      deletedParameters:
-        items:
-          type: string
-        type: array
-      image:
-        type: string
       replicas:
         type: integer
       resource:
@@ -2076,7 +2072,7 @@ definitions:
     - size
     - storageClass
     type: object
-  route.Route:
+  route.RouteParam:
     properties:
       aggregateLabels:
         items:
@@ -2086,6 +2082,8 @@ definitions:
         type: integer
       groupWait:
         type: integer
+      id:
+        type: string
       matchers:
         items:
           $ref: '#/definitions/alarm.Matcher'
@@ -2675,7 +2673,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/route.Route'
+          $ref: '#/definitions/route.RouteParam'
       produces:
       - application/json
       responses:

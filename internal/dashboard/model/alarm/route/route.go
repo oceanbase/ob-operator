@@ -45,6 +45,11 @@ type RouteResponse struct {
 	Route
 }
 
+type RouteParam struct {
+	Id string `json:"id,omitempty"`
+	Route
+}
+
 func (r *Route) Hash() string {
 	routeBytes, err := json.Marshal(r)
 	if err != nil {

@@ -2,6 +2,7 @@ import { alert } from '@/api';
 import type { RouteRoute } from '@/api/generated';
 import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
+import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
 import InputTimeComp from '@/components/InputTimeComp';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -10,7 +11,6 @@ import type { DrawerProps } from 'antd';
 import { Col, Form, Row, Select, message } from 'antd';
 import { useEffect } from 'react';
 import { validateLabelValues } from '../helper';
-import styles from './index.less';
 
 interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
@@ -38,7 +38,11 @@ export default function SubscripDrawerForm({
   const { data: listReceiversRes } = useRequest(alert.listReceivers);
   const listReceivers = listReceiversRes?.data;
   const submit = async (values: RouteRoute) => {
+    if (isEdit) values.id = id;
     if (!values.matchers) values.matchers = [];
+    values.matchers = values.matchers.filter(
+      (matcher) => matcher.name && matcher.value,
+    );
     const { successful } = await alert.createOrUpdateRoute(values);
     if (successful) {
       message.success(`${isEdit ? '修改' : '创建'}成功!`);
@@ -109,11 +113,16 @@ export default function SubscripDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  <span>标签</span>
-                  <QuestionCircleOutlined className={styles.questionIcon} />
-                  <span style={{ color: 'rgba(0,0,0,0.45)' }}>(可选)</span>
-                </div>
+                <IconTip
+                  icon={
+                    <span style={{ color: 'rgba(0, 0, 0, 0.45)' }}>
+                      <QuestionCircleOutlined />
+                      （可选）
+                    </span>
+                  }
+                  tip="按照标签匹配条件推送告警，支持值匹配或者正则表达式，当所有条件都满足时告警才会被推送"
+                  content="标签"
+                />
               }
             >
               <InputLabelComp regex={true} defaulLabelName="name" />
@@ -128,12 +137,7 @@ export default function SubscripDrawerForm({
                 },
               ]}
               name={'aggregateLabels'}
-              label={
-                <div>
-                  聚合标签{' '}
-                  <QuestionCircleOutlined className={styles.questionIcon} />
-                </div>
-              }
+              label={<IconTip tip="告警聚合使用的标签" content="聚合标签" />}
             >
               <Select
                 mode="tags"
@@ -153,10 +157,7 @@ export default function SubscripDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  推送周期{' '}
-                  <QuestionCircleOutlined className={styles.questionIcon} />
-                </div>
+                <IconTip tip="告警消息推送的重复周期" content="推送周期" />
               }
             >
               <InputTimeComp />
@@ -186,10 +187,7 @@ export default function SubscripDrawerForm({
                 },
               ]}
               label={
-                <div>
-                  聚合区间{' '}
-                  <QuestionCircleOutlined className={styles.questionIcon} />
-                </div>
+                <IconTip tip="告警消息聚合的时间区间" content="聚合区间" />
               }
             >
               <InputTimeComp />

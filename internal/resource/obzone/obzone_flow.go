@@ -114,7 +114,7 @@ func genForceUpgradeOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genScaleOBServersVerticallyFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         "scale up observers",
+			Name:         "scale observers vertically",
 			Tasks:        []tasktypes.TaskName{tScaleOBServersVertically, tWaitForOBServerScalingUp, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,
 		},

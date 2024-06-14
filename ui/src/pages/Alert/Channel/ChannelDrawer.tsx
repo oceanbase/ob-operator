@@ -1,8 +1,8 @@
 import { alert } from '@/api';
 import type { ReceiverReceiver } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
+import IconTip from '@/components/IconTip';
 import { Alert } from '@/type/alert';
-import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import { Button, Form, Input, Select, Space, message } from 'antd';
@@ -168,10 +168,21 @@ export default function ChannelDrawer({
             },
           ]}
           label={
-            <div>
-              <span>通道配置 </span>
-              <QuestionCircleOutlined />
-            </div>
+            <IconTip
+              tip={
+                <span>
+                  使用 yaml 格式配置告警通道，具体通道配置可参考{' '}
+                  <a
+                    href="https://prometheus.io/docs/alerting/latest/configuration/#receiver-integration-settings"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    alertmanager 文档
+                  </a>
+                </span>
+              }
+              content="通道配置"
+            />
           }
         >
           {status === 'display' ? (

@@ -57,6 +57,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	} else if meta.GetAnnotations()[cfg.PauseAnnotation] == "true" {
 		c.Logger.V(2).Info("Pause annotation found, skip execution")
 		result.RequeueAfter = cfg.PausedRequeueDuration
+		return result, nil
 	} else {
 		f, err = c.Manager.GetTaskFlow()
 		if err != nil {

@@ -78,6 +78,9 @@ export default function ShieldDrawerForm({
 
   const submit = (values: Alert.ShieldDrawerForm) => {
     if (!values.matchers) values.matchers = [];
+    values.matchers = values.matchers.filter(
+      (matcher) => matcher.name && matcher.value,
+    );
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,
@@ -190,7 +193,7 @@ export default function ShieldDrawerForm({
           ]}
           label={
             <IconTip
-              tip="支持对指定的指标进行屏蔽，如慢 SQL告警，支持对 SQLID 进行过滤，支持正则表达式"
+              tip="按照标签匹配条件屏蔽告警，支持值匹配或者正则表达式，当所有条件都满足时告警才会被屏蔽"
               content={'标签'}
             />
           }
