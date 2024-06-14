@@ -184,9 +184,15 @@ func (m *OBClusterManager) UpdateStatus() error {
 		} else {
 		outer:
 			for _, obzone := range obzoneList.Items {
-				if m.OBCluster.SupportStaticIP() && m.checkIfCalcResourceChange(&obzone) {
-					m.OBCluster.Status.Status = clusterstatus.ScaleVertically
-					break outer
+				if m.OBCluster.SupportStaticIP() {
+					if m.checkIfCalcResourceChange(&obzone) {
+						m.OBCluster.Status.Status = clusterstatus.ScaleVertically
+						break outer
+					}
+					if m.checkIfBackupVolumeMutated(&obzone) || m.checkIfMonitorMutated(&obzone) {
+						m.OBCluster.Status.Status = clusterstatus.ModifyServerTemplate
+						break outer
+					}
 				}
 				if m.checkIfStorageClassChange(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.RollingUpdateOBServers
@@ -194,10 +200,6 @@ func (m *OBClusterManager) UpdateStatus() error {
 				}
 				if m.checkIfStorageSizeExpand(&obzone) {
 					m.OBCluster.Status.Status = clusterstatus.ExpandPVC
-					break outer
-				}
-				if m.checkIfBackupVolumeMutated(&obzone) || m.checkIfMonitorMutated(&obzone) {
-					m.OBCluster.Status.Status = clusterstatus.ModifyServerTemplate
 					break outer
 				}
 				for _, zone := range m.OBCluster.Spec.Topology {
