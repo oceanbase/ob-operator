@@ -14,6 +14,7 @@ interface InputLabelCompPorps {
   defaulLabelName?: string;
   regex?: boolean;
   disable?: boolean;
+  allowDelete?: boolean;
 }
 
 export default function InputLabelComp(props: InputLabelCompPorps) {
@@ -25,6 +26,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
     defaulLabelName = 'key',
     regex,
     disable = false,
+    allowDelete = true,
   } = props;
 
   const labelNameInput = (value: string, index: number) => {
@@ -96,7 +98,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
               </Col>
             )}
 
-            {labels.length > 1 && (
+            {labels.length > 1 && allowDelete && (
               <Popconfirm
                 placement="left"
                 title={intl.formatMessage({

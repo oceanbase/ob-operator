@@ -30,7 +30,7 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
         </h2>
       }
       extra={
-        <Button>
+        <Button onClick={() => setDrawerOpen(true)} type="primary">
           {intl.formatMessage({
             id: 'src.pages.OBProxy.Detail.Overview.6258C614',
             defaultMessage: '编辑',
@@ -80,7 +80,7 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
               id: 'src.pages.OBProxy.Detail.Overview.5DDD1A0A',
               defaultMessage: '内存大小：',
             })}
-            {resource?.memory || '-'}
+            {resource?.memory ? `${resource.memory}GB` : '-'}
           </Col>
         </Row>
       </div>
@@ -91,14 +91,16 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
             defaultMessage: '参数设置',
           })}
         </h3>
-        <InputLabelComp disable={true} value={parameters || []} />
+        <InputLabelComp allowDelete={false} disable={true} value={parameters || []} />
       </div>
-      <ConfigDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        width={580}
-        {...props}
-      />
+      {props.name && props.namespace ? (
+        <ConfigDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={880}
+          {...props}
+        />
+      ) : null}
     </Card>
   );
 }
