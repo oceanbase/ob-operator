@@ -3,6 +3,7 @@ import type { ReceiverReceiver } from '@/api/generated';
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -35,7 +36,10 @@ export default function Channel() {
   };
   const columns: ColumnsType<ReceiverReceiver> = [
     {
-      title: '通道名',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Channel.6E368EE7',
+        defaultMessage: '通道名',
+      }),
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
@@ -45,44 +49,70 @@ export default function Channel() {
       ),
     },
     {
-      title: '通道类型',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Channel.44150BAB',
+        defaultMessage: '通道类型',
+      }),
       dataIndex: 'type',
       key: 'type',
     },
     {
-      title: '通道配置',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Channel.02ABEE1E',
+        defaultMessage: '通道配置',
+      }),
       dataIndex: 'config',
       key: 'config',
       render: (value) => <PreText value={value} />,
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Channel.75AFBE43',
+        defaultMessage: '操作',
+      }),
       dataIndex: 'action',
       render: (_, record) => (
         <>
           <Button type="link" onClick={() => editChannel(record.name)}>
-            编辑
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Channel.39A85374',
+              defaultMessage: '编辑',
+            })}
           </Button>
           <Button
             style={{ color: '#ff4b4b' }}
             onClick={() => {
               showDeleteConfirm({
-                title: '确定要删除“钉钉群”告警通道吗？',
-                content: '删除后使用该通道的消息推送都将失效，请谨慎操作',
+                title: intl.formatMessage({
+                  id: 'src.pages.Alert.Channel.32271D0F',
+                  defaultMessage: '确定要删除“钉钉群”告警通道吗？',
+                }),
+                content: intl.formatMessage({
+                  id: 'src.pages.Alert.Channel.0B830488',
+                  defaultMessage:
+                    '删除后使用该通道的消息推送都将失效，请谨慎操作',
+                }),
                 onOk: () => {
                   deleteReceiver(record.name);
                 },
-                okText: '删除',
+                okText: intl.formatMessage({
+                  id: 'src.pages.Alert.Channel.152DCAE7',
+                  defaultMessage: '删除',
+                }),
               });
             }}
             type="link"
           >
-            删除
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Channel.93AFF36C',
+              defaultMessage: '删除',
+            })}
           </Button>
         </>
       ),
     },
   ];
+
   const createNewChannel = () => {
     setDrawerOpen(true);
     setDrawerStatus('create');
@@ -96,10 +126,20 @@ export default function Channel() {
     <Card
       extra={
         <Button type="primary" onClick={createNewChannel}>
-          新建告警通道
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Channel.DBCB373E',
+            defaultMessage: '新建告警通道',
+          })}
         </Button>
       }
-      title={<h2 style={{ marginBottom: 0 }}>告警通道</h2>}
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Channel.552AE97C',
+            defaultMessage: '告警通道',
+          })}
+        </h2>
+      }
     >
       <Table
         columns={columns}
@@ -107,6 +147,7 @@ export default function Channel() {
         rowKey="fingerprint"
         pagination={{ simple: true }}
       />
+
       <ChannelDrawer
         width={880}
         status={drawerStatus}

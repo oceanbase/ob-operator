@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { InputNumber, Select } from 'antd';
 import { useState } from 'react';
 
@@ -10,15 +11,24 @@ type UnitType = 'second' | 'minute' | 'hour';
 
 const SELECT_OPTIONS = [
   {
-    label: '秒',
+    label: intl.formatMessage({
+      id: 'src.components.InputTimeComp.5C00F6E6',
+      defaultMessage: '秒',
+    }),
     value: 'second',
   },
   {
-    label: '分钟',
+    label: intl.formatMessage({
+      id: 'src.components.InputTimeComp.7D0C8989',
+      defaultMessage: '分钟',
+    }),
     value: 'minute',
   },
   {
-    label: '小时',
+    label: intl.formatMessage({
+      id: 'src.components.InputTimeComp.C34DD7B4',
+      defaultMessage: '小时',
+    }),
     value: 'hour',
   },
 ];

@@ -3,6 +3,7 @@ import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { resourceNameRule } from '@/constants/rules';
 import { getSimpleClusterList } from '@/services';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
@@ -26,7 +27,12 @@ export default function BasicConfig({ form }: BasicConfigProps) {
     }
   }, [selectCluster]);
   return (
-    <Card title="基本设置">
+    <Card
+      title={intl.formatMessage({
+        id: 'src.pages.OBProxy.New.F830C6B7',
+        defaultMessage: '基本设置',
+      })}
+    >
       <Row gutter={[16, 32]}>
         <Col span={8}>
           <TooltipPretty title={'k8s中资源的名称'}>
@@ -60,12 +66,20 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               },
             ]}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.DEF127D3',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>
           <Form.Item
-            label="连接 OB 集群"
+            label={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.7D1609DD',
+              defaultMessage: '连接 OB 集群',
+            })}
             name="obCluster"
             rules={[
               {
@@ -81,7 +95,16 @@ export default function BasicConfig({ form }: BasicConfigProps) {
           <Form.Item
             name={'proxySysPassword'}
             label={
-              <IconTip content="OBProxy root 密码" tip="root@proxysys 密码" />
+              <IconTip
+                content={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.E711F60D',
+                  defaultMessage: 'OBProxy root 密码',
+                })}
+                tip={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.26311C9E',
+                  defaultMessage: 'root@proxysys 密码',
+                })}
+              />
             }
             rules={[
               {
@@ -90,7 +113,12 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               },
             ]}
           >
-            <Input.Password placeholder="请输入" />
+            <Input.Password
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.B2851499',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>

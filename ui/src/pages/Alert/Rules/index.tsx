@@ -2,6 +2,7 @@ import { alert } from '@/api';
 import type { AlarmSeverity, RuleRuleResponse } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SEVERITY_MAP } from '@/constants';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -41,29 +42,44 @@ export default function Rules() {
 
   const columns: ColumnsType<RuleRuleResponse> = [
     {
-      title: '告警规则名',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.77E702BB',
+        defaultMessage: '告警规则名',
+      }),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: '触发规则',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.C6233D40',
+        defaultMessage: '触发规则',
+      }),
       dataIndex: 'query',
       width: '30%',
       key: 'query',
     },
     {
-      title: '持续时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.188CEA51',
+        defaultMessage: '持续时间',
+      }),
       dataIndex: 'duration',
       key: 'duration',
       render: (value) => <Text>{formatDuration(value)}</Text>,
     },
     {
-      title: '对象类型',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.C8C937C1',
+        defaultMessage: '对象类型',
+      }),
       dataIndex: 'instanceType',
       key: 'instanceType',
     },
     {
-      title: '告警等级',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.18FF1D51',
+        defaultMessage: '告警等级',
+      }),
       dataIndex: 'severity',
       key: 'severity',
       sorter: (preRecord, curRecord) =>
@@ -76,24 +92,49 @@ export default function Rules() {
       ),
     },
     {
-      title: '类型',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.AEB0287D',
+        defaultMessage: '类型',
+      }),
       dataIndex: 'type',
       key: 'type',
       filters: [
         {
-          text: '自定义',
+          text: intl.formatMessage({
+            id: 'src.pages.Alert.Rules.140E8C1E',
+            defaultMessage: '自定义',
+          }),
           value: 'customized',
         },
         {
-          text: '默认',
+          text: intl.formatMessage({
+            id: 'src.pages.Alert.Rules.7789B7EF',
+            defaultMessage: '默认',
+          }),
           value: 'builtin',
         },
       ],
+
       onFilter: (value, record) => record.type === value,
-      render: (type) => <Text>{type === 'builtin' ? '默认' : '自定义'}</Text>,
+      render: (type) => (
+        <Text>
+          {type === 'builtin'
+            ? intl.formatMessage({
+                id: 'src.pages.Alert.Rules.9B28C134',
+                defaultMessage: '默认',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Alert.Rules.224DA83F',
+                defaultMessage: '自定义',
+              })}
+        </Text>
+      ),
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Rules.F333E1DF',
+        defaultMessage: '操作',
+      }),
       dataIndex: 'action',
       render: (_, record) => (
         <>
@@ -102,24 +143,43 @@ export default function Rules() {
             style={{ paddingLeft: 0 }}
             type="link"
           >
-            编辑
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Rules.873B1514',
+              defaultMessage: '编辑',
+            })}
           </Button>
           <Button
             type="link"
             style={{ color: '#ff4b4b' }}
             onClick={() => {
               showDeleteConfirm({
-                title: `确定要删除 ${record.name} 告警规则吗？`,
-                content:
-                  '删除后，引用该告警规则的规则分组与告警模版将同步删除关于此告警规则的配置，请谨慎操作。',
-                okText: '删除',
+                title: intl.formatMessage(
+                  {
+                    id: 'src.pages.Alert.Rules.3FB7D236',
+                    defaultMessage: '确定要删除 ${record.name} 告警规则吗？',
+                  },
+                  { recordName: record.name },
+                ),
+                content: intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.DA9CF3DF',
+                  defaultMessage:
+                    '删除后，引用该告警规则的规则分组与告警模版将同步删除关于此告警规则的配置，请谨慎操作。',
+                }),
+
+                okText: intl.formatMessage({
+                  id: 'src.pages.Alert.Rules.EF19C6D7',
+                  defaultMessage: '删除',
+                }),
                 onOk: () => {
                   deleteRule(record.name);
                 },
               });
             }}
           >
-            删除
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Rules.D7681DA5',
+              defaultMessage: '删除',
+            })}
           </Button>
         </>
       ),
@@ -134,10 +194,20 @@ export default function Rules() {
       <Card
         extra={
           <Button onClick={() => setDrawerOpen(true)} type="primary">
-            新建告警规则
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Rules.90D4952A',
+              defaultMessage: '新建告警规则',
+            })}
           </Button>
         }
-        title={<h2 style={{ marginBottom: 0 }}>规则列表</h2>}
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Rules.B943644E',
+              defaultMessage: '规则列表',
+            })}
+          </h2>
+        }
       >
         <Table
           columns={columns}

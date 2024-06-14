@@ -3210,6 +3210,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/obproxies/{namespace}/{name}/parameters": {
+            "get": {
+                "description": "List OBProxy Parameters by namespace and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "List OBProxy Parameters",
+                "operationId": "ListOBProxyParameters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/obproxy.ConfigItem"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants": {
             "get": {
                 "security": [
@@ -5476,6 +5549,26 @@ const docTemplate = `{
                 },
                 "storageSize": {
                     "type": "integer"
+                }
+            }
+        },
+        "obproxy.ConfigItem": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needReboot": {
+                    "type": "boolean"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "visibleLevel": {
+                    "type": "string"
                 }
             }
         },
