@@ -1,23 +1,16 @@
-import type { CommonKVPair, CommonResourceSpec } from '@/api/generated';
 import InputLabelComp from '@/components/InputLabelComp';
+import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
 import { Button, Card, Col, Row } from 'antd';
 import { useState } from 'react';
 import ConfigDrawer from './ConfigDrawer';
-
-interface DetailConfigProps {
-  name?: string;
-  namespace?: string;
-  image?: string;
-  parameters?: CommonKVPair[];
-  resource?: CommonResourceSpec;
-  serviceType?: string;
-  replicas?: number;
+interface DetailConfigProps extends OBProxy.CommonProxyDetail {
   style?: React.CSSProperties;
 }
 
 export default function DetailConfig({ style, ...props }: DetailConfigProps) {
   const { image, serviceType, replicas, resource, parameters } = props;
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <Card
@@ -91,7 +84,11 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
             defaultMessage: '参数设置',
           })}
         </h3>
-        <InputLabelComp allowDelete={false} disable={true} value={parameters || []} />
+        <InputLabelComp
+          allowDelete={false}
+          disable={true}
+          value={parameters || []}
+        />
       </div>
       {props.name && props.namespace ? (
         <ConfigDrawer

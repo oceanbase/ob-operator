@@ -35,34 +35,60 @@ export default function BasicConfig({ form }: BasicConfigProps) {
     >
       <Row gutter={[16, 32]}>
         <Col span={8}>
-          <TooltipPretty title={'k8s中资源的名称'}>
+          <TooltipPretty
+            title={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.D6D90ACC',
+              defaultMessage: 'k8s中资源的名称',
+            })}
+          >
             <Form.Item
-              label="资源名称"
+              label={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.803427AF',
+                defaultMessage: '资源名称',
+              })}
+              validateFirst
               name={'name'}
               rules={[
                 {
                   required: true,
-                  message: '请输入k8s资源名称',
+                  message: intl.formatMessage({
+                    id: 'src.pages.OBProxy.New.F602E292',
+                    defaultMessage: '请输入k8s资源名称',
+                  }),
                 },
                 {
                   pattern: /\D/,
-                  message: '资源名不能使用纯数字',
+                  message: intl.formatMessage({
+                    id: 'src.pages.OBProxy.New.37FA27BA',
+                    defaultMessage: '资源名不能使用纯数字',
+                  }),
                 },
                 resourceNameRule,
               ]}
             >
-              <Input placeholder="请输入" />
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.9B4BA02B',
+                  defaultMessage: '请输入',
+                })}
+              />
             </Form.Item>
           </TooltipPretty>
         </Col>
         <Col span={8}>
           <Form.Item
-            label="OBProxy 集群名"
+            label={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.BB6BC872',
+              defaultMessage: 'OBProxy 集群名',
+            })}
             name={'proxyClusterName'}
             rules={[
               {
                 required: true,
-                message: '请输入集群名',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.CA42FD5D',
+                  defaultMessage: '请输入集群名',
+                }),
               },
             ]}
           >
@@ -84,7 +110,10 @@ export default function BasicConfig({ form }: BasicConfigProps) {
             rules={[
               {
                 required: true,
-                message: '请选择 OB 集群',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.94339826',
+                  defaultMessage: '请选择 OB 集群',
+                }),
               },
             ]}
           >
@@ -109,7 +138,10 @@ export default function BasicConfig({ form }: BasicConfigProps) {
             rules={[
               {
                 required: true,
-                message: '请输入 OBProxy root 密码',
+                message: intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.67DC144A',
+                  defaultMessage: '请输入 OBProxy root 密码',
+                }),
               },
             ]}
           >

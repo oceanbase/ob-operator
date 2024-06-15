@@ -3,7 +3,7 @@ import { ObproxyCreateOBProxyParam } from '@/api/generated';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
-import { Button, Col, Form, Row, message } from 'antd';
+import { Button, Form, Space, message } from 'antd';
 import BasicConfig from './BasicConfig';
 import DetailConfig from './DetailConfig';
 
@@ -21,7 +21,13 @@ export default function New() {
         obCluster: JSON.parse(values.obCluster),
       });
       if (res.successful) {
-        message.success('创建成功！', 3);
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.OBProxy.New.49694AC5',
+            defaultMessage: '创建成功！',
+          }),
+          3,
+        );
         form.resetFields();
         history.back();
       }
@@ -54,16 +60,13 @@ export default function New() {
           })}
         </Button>,
       ]}
+      style={{ paddingBottom: 50 }}
     >
       <Form onFinish={submit} form={form}>
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <BasicConfig form={form} />
-          </Col>
-          <Col span={24}>
-            <DetailConfig form={form} />
-          </Col>
-        </Row>
+        <Space direction="vertical">
+          <BasicConfig form={form} />
+          <DetailConfig form={form} />
+        </Space>
       </Form>
     </PageContainer>
   );

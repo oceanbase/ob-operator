@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import type { FormItemProps } from 'antd';
 import { Form } from 'antd';
 
-export const CustomFormItem = (prop: FormItemProps & { message: string }) => {
+export const CustomFormItem = (prop: FormItemProps & { message?: string }) => {
   const { label, message } = prop;
   return (
     <Form.Item
@@ -11,7 +11,8 @@ export const CustomFormItem = (prop: FormItemProps & { message: string }) => {
         {
           required: true,
           message:
-            message || typeof label === 'string'
+            message ||
+            (typeof label === 'string'
               ? intl.formatMessage(
                   {
                     id: 'Dashboard.Cluster.New.Observer.EnterLabel',
@@ -19,7 +20,10 @@ export const CustomFormItem = (prop: FormItemProps & { message: string }) => {
                   },
                   { label: label as string },
                 )
-              : '请输入',
+              : intl.formatMessage({
+                  id: 'src.components.CustomFormItem.2C6315A1',
+                  defaultMessage: '请输入',
+                })),
         },
       ]}
     >

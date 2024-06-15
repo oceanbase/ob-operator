@@ -1,10 +1,11 @@
 import { obproxy } from '@/api';
-import type { CommonKVPair, CommonResourceSpec } from '@/api/generated';
+import type { CommonKVPair } from '@/api/generated';
 import { ObproxyPatchOBProxyParam } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import { CustomFormItem } from '@/components/CustomFormItem';
 import { SERVICE_TYPE, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_OBPROXY } from '@/constants/doc';
+import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -22,16 +23,10 @@ import {
 import { useEffect, useRef } from 'react';
 import { isDifferentParams } from '../../helper';
 
-interface ConfigDrawerProps extends DrawerProps {
+type ConfigDrawerProps = {
   onClose: () => void;
-  name: string;
-  namespace: string;
-  image?: string;
-  parameters?: CommonKVPair[];
-  resource?: CommonResourceSpec;
-  serviceType?: string;
-  replicas?: number;
-}
+} & OBProxy.CommonProxyDetail &
+  DrawerProps;
 
 type FormValue = {
   parameters?: { key: string; value: string }[];
@@ -79,7 +74,10 @@ export default function ConfigDrawer({
   }, [props.parameters]);
   return (
     <AlertDrawer
-      title="详细配置"
+      title={intl.formatMessage({
+        id: 'src.pages.OBProxy.Detail.Overview.680A1826',
+        defaultMessage: '详细配置',
+      })}
       onSubmit={() => form.submit()}
       destroyOnClose={true}
       onClose={() => onClose()}
@@ -92,7 +90,12 @@ export default function ConfigDrawer({
         preserve={false}
         layout="vertical"
       >
-        <p style={titleStyle}>资源设置</p>
+        <p style={titleStyle}>
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.F9D66FC0',
+            defaultMessage: '资源设置',
+          })}
+        </p>
         <CustomFormItem
           label={
             <>
@@ -121,19 +124,73 @@ export default function ConfigDrawer({
             })}
           />
         </CustomFormItem>
-        <CustomFormItem name="serviceType" label="服务类型">
-          <Select placeholder="请选择" options={SERVICE_TYPE} />
+        <CustomFormItem
+          name="serviceType"
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.DBE1B6C0',
+            defaultMessage: '服务类型',
+          })}
+        >
+          <Select
+            placeholder={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.E7B1B575',
+              defaultMessage: '请选择',
+            })}
+            options={SERVICE_TYPE}
+          />
         </CustomFormItem>
-        <CustomFormItem name="replicas" label="副本数">
-          <InputNumber placeholder="请输入" min={1} />
+        <CustomFormItem
+          name="replicas"
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.2DA6A0A7',
+            defaultMessage: '副本数',
+          })}
+        >
+          <InputNumber
+            placeholder={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.52C1F09A',
+              defaultMessage: '请输入',
+            })}
+            min={1}
+          />
         </CustomFormItem>
-        <CustomFormItem name={['resource', 'cpu']} label="CPU 核数">
-          <InputNumber placeholder="请输入" min={1} />
+        <CustomFormItem
+          name={['resource', 'cpu']}
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.A4448DF2',
+            defaultMessage: 'CPU 核数',
+          })}
+        >
+          <InputNumber
+            placeholder={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.2FA13720',
+              defaultMessage: '请输入',
+            })}
+            min={1}
+          />
         </CustomFormItem>
-        <CustomFormItem name={['resource', 'memory']} label="内存大小">
-          <InputNumber placeholder="请输入" min={1} addonAfter={SUFFIX_UNIT} />
+        <CustomFormItem
+          name={['resource', 'memory']}
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.0075C2B3',
+            defaultMessage: '内存大小',
+          })}
+        >
+          <InputNumber
+            placeholder={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.3F3066D5',
+              defaultMessage: '请输入',
+            })}
+            min={1}
+            addonAfter={SUFFIX_UNIT}
+          />
         </CustomFormItem>
-        <p style={titleStyle}>参数设置</p>
+        <p style={titleStyle}>
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.D537DD35',
+            defaultMessage: '参数设置',
+          })}
+        </p>
         <Form.List name={'parameters'}>
           {(fields, { add, remove }) => (
             <>
@@ -142,7 +199,10 @@ export default function ConfigDrawer({
                   <Col span={12}>
                     <CustomFormItem name={[name, 'key']}>
                       <Select
-                        placeholder="请选择"
+                        placeholder={intl.formatMessage({
+                          id: 'src.pages.OBProxy.Detail.Overview.8A75D872',
+                          defaultMessage: '请选择',
+                        })}
                         onChange={(val) => labelChange(val, name)}
                         optionLabelProp="selectLabel"
                         options={listParametersOptions?.map((item) => ({
@@ -192,8 +252,8 @@ export default function ConfigDrawer({
                   icon={<PlusOutlined />}
                 >
                   {intl.formatMessage({
-                    id: 'OBDashboard.components.NodeSelector.AddNodeselector',
-                    defaultMessage: '添加 nodeSelector',
+                    id: 'src.pages.OBProxy.Detail.Overview.8E87D135',
+                    defaultMessage: '添加',
                   })}
                 </Button>
               </CustomFormItem>
