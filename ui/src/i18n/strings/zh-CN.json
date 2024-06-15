@@ -826,7 +826,7 @@
   "src.pages.Alert.Shield.639D1A8C": "请选择",
   "src.pages.Alert.Shield.B0133BD9": "请选择集群",
   "src.pages.Alert.Shield.A519C403": "请选择",
-  "src.pages.Alert.Shield.4AE1863A": "请选择{nextFormName![1] === 'observer' ? '主机' : '租户'}",
+  "src.pages.Alert.Shield.4AE1863A": "请选择{ConditionalExpression0}",
   "src.pages.Alert.Shield.0EEFD182": "主机",
   "src.pages.Alert.Shield.74A00B6E": "租户",
   "src.pages.Alert.Shield.5F7B1190": "请选择",

@@ -197,7 +197,7 @@ export default function ShieldObjInput({
                       {
                         id: 'src.pages.Alert.Shield.4AE1863A',
                         defaultMessage:
-                          "请选择${nextFormName![1] === 'observer' ? '主机' : '租户'}",
+                          "请选择{ConditionalExpression0}",
                       },
                       {
                         ConditionalExpression0:
