@@ -90,6 +90,9 @@ func doesParametersChanged(ctx context.Context, ns, name string, param *obproxy.
 		}
 		return false, httpErr.NewInternal("Failed to get obproxy config map, err msg: " + err.Error())
 	}
+	if len(cm.Data) != len(param.Parameters) {
+		return true, nil
+	}
 	for _, kv := range param.Parameters {
 		if val, ok := cm.Data[strings.ToUpper(envPrefix+kv.Key)]; !ok || val != kv.Value {
 			return true, nil

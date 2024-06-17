@@ -120,12 +120,9 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 		}
 		for _, container := range pod.Spec.Containers {
 			containerInfo := response.ContainerInfo{
-				Name:         container.Name,
-				Image:        container.Image,
-				RestartCount: pod.Status.ContainerStatuses[0].RestartCount,
-				Ready:        pod.Status.ContainerStatuses[0].Ready,
-				StartTime:    pod.Status.ContainerStatuses[0].State.Running.StartedAt.Format(time.DateTime),
-				Ports:        []int32{},
+				Name:  container.Name,
+				Image: container.Image,
+				Ports: []int32{},
 				Requests: common.ResourceSpec{
 					Cpu:      container.Resources.Requests.Cpu().Value(),
 					MemoryGB: container.Resources.Requests.Memory().ScaledValue(resource.Giga),
@@ -134,6 +131,13 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 					Cpu:      container.Resources.Limits.Cpu().Value(),
 					MemoryGB: container.Resources.Limits.Memory().ScaledValue(resource.Giga),
 				},
+			}
+			if len(pod.Status.ContainerStatuses) > 0 {
+				containerInfo.RestartCount = pod.Status.ContainerStatuses[0].RestartCount
+				containerInfo.Ready = pod.Status.ContainerStatuses[0].Ready
+				if pod.Status.ContainerStatuses[0].State.Running != nil {
+					containerInfo.StartTime = pod.Status.ContainerStatuses[0].State.Running.StartedAt.Format(time.DateTime)
+				}
 			}
 			for _, port := range container.Ports {
 				containerInfo.Ports = append(containerInfo.Ports, port.ContainerPort)
