@@ -67,7 +67,12 @@ export default function ConfigDrawer({
     }
     const res = await obproxy.patchOBProxy(namespace!, name!, values);
     if (res.successful) {
-      message.success('操作成功！');
+      message.success(
+        intl.formatMessage({
+          id: 'src.pages.OBProxy.Detail.Overview.A9BB34D6',
+          defaultMessage: '操作成功！',
+        }),
+      );
       submitCallback && submitCallback();
       onClose();
     }
@@ -203,7 +208,11 @@ export default function ConfigDrawer({
         </CustomFormItem>
         <p style={titleStyle}>
           <IconTip
-            tip="删除列表中的参数并不会将原来已经设置的参数复原，如果需要参数立即生效，请覆盖参数为原值或者重启集群"
+            tip={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.FEBB24FF',
+              defaultMessage:
+                '删除列表中的参数并不会将原来已经设置的参数复原，如果需要参数立即生效，请覆盖参数为原值或者重启集群',
+            })}
             content={intl.formatMessage({
               id: 'src.pages.OBProxy.Detail.Overview.D537DD35',
               defaultMessage: '参数设置',
@@ -249,7 +258,12 @@ export default function ConfigDrawer({
                   </Col>
                   <Col span={11}>
                     <CustomFormItem name={[name, 'value']}>
-                      <Input placeholder="请输入" />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: 'src.pages.OBProxy.Detail.Overview.A6701513',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </CustomFormItem>
                   </Col>
                   <Col

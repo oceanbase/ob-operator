@@ -25,14 +25,19 @@ export default function BasicConfig({ form }: BasicConfigProps) {
     if (selectCluster && !form.getFieldValue('namespace')) {
       try {
         form.setFieldValue('namespace', JSON.parse(selectCluster).namespace);
-        form.validateFields(['namespace'])
+        form.validateFields(['namespace']);
       } catch (err) {
         console.error('err:', err);
       }
     }
   }, [selectCluster]);
   return (
-    <Card title={'基本信息'}>
+    <Card
+      title={intl.formatMessage({
+        id: 'src.pages.OBProxy.New.2C466A93',
+        defaultMessage: '基本信息',
+      })}
+    >
       <Row gutter={[16, 32]}>
         <Col span={8}>
           <TooltipPretty
@@ -117,7 +122,13 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               },
             ]}
           >
-            <Select placeholder="请选择" options={clisterList} />
+            <Select
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.0AE478F2',
+                defaultMessage: '请选择',
+              })}
+              options={clisterList}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>

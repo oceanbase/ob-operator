@@ -26,7 +26,17 @@ export default function BasicInfo({
   style,
 }: BasicInfoProps) {
   return (
-    <Card style={style} title={<h2 style={{ marginBottom: 0 }}>基本信息</h2>}>
+    <Card
+      style={style}
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.4AB0B6DC',
+            defaultMessage: '基本信息',
+          })}
+        </h2>
+      }
+    >
       <Descriptions column={3}>
         <Descriptions.Item
           label={intl.formatMessage({

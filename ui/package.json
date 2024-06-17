@@ -9,7 +9,7 @@
     "postinstall": "max setup",
     "lint": "eslint src",
     "oic:clear": "oic --configPath ./must.cjs --clear",
-    "oic:extract": "oic --configPath ./must.cjs --extract --translate",
+    "oic:extract": "oic --configPath ./must.cjs --extract",
     "prepare": "cd .. && husky ui/.husky",
     "setup": "max setup",
     "start": "npm run dev"
