@@ -22,6 +22,10 @@ const COLOR_MAP = new Map([
   ['creating', 'blue'],
   ['failed', 'red'],
 ]);
+const OBPROXY_COLOR_MAP = new Map([
+  ['Running', 'geekblue'],
+  ['Pending', 'gold'],
+]);
 const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
   ['deleting', clusterOperating],
@@ -44,6 +48,8 @@ const BADGE_IMG_MAP = new Map([
 ]);
 
 const REFRESH_TENANT_TIME = 5000;
+
+const REFRESH_OBPROXY_TIME = 3000;
 
 const REFRESH_CLUSTER_TIME = 10000;
 // Monitor automatic refresh interval 15s
@@ -327,6 +333,12 @@ const SERVICE_TYPE = [
   },
 ];
 
+const DEFAULT_QUERY_RANGE: Monitor.QueryRangeType = {
+  step: 20,
+  endTimestamp: Math.floor(new Date().valueOf() / 1000),
+  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
+};
+
 export {
   ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
@@ -336,14 +348,17 @@ export {
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
+  DEFAULT_QUERY_RANGE,
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
   MODE_MAP,
   OBJECT_OPTIONS_ALARM,
+  OBPROXY_COLOR_MAP,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
+  REFRESH_OBPROXY_TIME,
   REFRESH_TENANT_TIME,
   RESULT_STATUS,
   SERVER_IMG_MAP,

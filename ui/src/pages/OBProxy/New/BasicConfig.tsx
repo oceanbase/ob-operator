@@ -23,16 +23,16 @@ export default function BasicConfig({ form }: BasicConfigProps) {
 
   useEffect(() => {
     if (selectCluster && !form.getFieldValue('namespace')) {
-      form.setFieldValue('namespace', selectCluster.split('+')?.[1]);
+      try {
+        form.setFieldValue('namespace', JSON.parse(selectCluster).namespace);
+        form.validateFields(['namespace'])
+      } catch (err) {
+        console.error('err:', err);
+      }
     }
   }, [selectCluster]);
   return (
-    <Card
-      title={intl.formatMessage({
-        id: 'src.pages.OBProxy.New.F830C6B7',
-        defaultMessage: '基本设置',
-      })}
-    >
+    <Card title={'基本信息'}>
       <Row gutter={[16, 32]}>
         <Col span={8}>
           <TooltipPretty
@@ -117,7 +117,7 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               },
             ]}
           >
-            <Select options={clisterList} />
+            <Select placeholder="请选择" options={clisterList} />
           </Form.Item>
         </Col>
         <Col span={8}>

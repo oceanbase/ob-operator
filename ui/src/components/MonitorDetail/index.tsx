@@ -3,29 +3,23 @@ import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
 import MonitorComp from '@/components/MonitorComp';
-import { REFRESH_FREQUENCY } from '@/constants';
+import { DEFAULT_QUERY_RANGE, REFRESH_FREQUENCY } from '@/constants';
 import DataFilter from './DataFilter';
 
 interface MonitorDetailProps {
   filterData: Monitor.FilterDataType;
-  setFilterData:React.Dispatch<React.SetStateAction<Monitor.FilterDataType>>;
-  basicInfo:JSX.Element | null | undefined;
-  filterLabel:Monitor.LabelType[];
-  setFilterLabel:React.Dispatch<React.SetStateAction<Monitor.LabelType[]>>;
-  groupLabels:API.LableKeys[];
-  queryScope:API.EventObjectType;
+  setFilterData: React.Dispatch<React.SetStateAction<Monitor.FilterDataType>>;
+  basicInfo: JSX.Element | null | undefined;
+  filterLabel: Monitor.LabelType[];
+  setFilterLabel: React.Dispatch<React.SetStateAction<Monitor.LabelType[]>>;
+  groupLabels: API.LableKeys[];
+  queryScope: API.EventObjectType;
 }
 
 const getDate = () => {
   return dayjs
     .unix(Math.ceil(new Date().valueOf() / 1000))
     .format('YYYY-MM-DD HH:mm:ss');
-};
-
-const defaultQueryRange = {
-  step: 20,
-  endTimestamp: Math.floor(new Date().valueOf() / 1000),
-  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 };
 
 //Query is somewhat similar to sql statement, label is equivalent to filter condition，for example: where label1=xxx and label2 = xxx
@@ -36,14 +30,14 @@ export default function MonitorDetail({
   setFilterLabel,
   basicInfo,
   groupLabels,
-  queryScope
-}:MonitorDetailProps) {
+  queryScope,
+}: MonitorDetailProps) {
   const [isRefresh, setIsRefresh] = useState<boolean>(false);
   const [realTime, setRealTime] = useState<string>(getDate());
   const timerRef = useRef<NodeJS.Timeout>();
   const updateTimer = useRef<NodeJS.Timer>();
   const [queryRange, setQueryRange] =
-    useState<Monitor.QueryRangeType>(defaultQueryRange);
+    useState<Monitor.QueryRangeType>(DEFAULT_QUERY_RANGE);
   const newQueryRangeRef = useRef<Monitor.QueryRangeType>(); //Only used to solve the problem of not getting the latest value in interval
 
   useUpdateEffect(() => {
@@ -84,7 +78,7 @@ export default function MonitorDetail({
 
   return (
     <div style={{ marginTop: 12 }}>
-      { basicInfo }
+      {basicInfo}
       <DataFilter
         realTime={realTime}
         isRefresh={isRefresh}

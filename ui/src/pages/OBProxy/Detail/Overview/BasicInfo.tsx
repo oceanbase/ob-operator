@@ -1,6 +1,7 @@
 import IconTip from '@/components/IconTip';
+import { OBPROXY_COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card, Descriptions } from 'antd';
+import { Card, Descriptions, Tag } from 'antd';
 
 interface BasicInfoProps {
   name?: string;
@@ -25,17 +26,7 @@ export default function BasicInfo({
   style,
 }: BasicInfoProps) {
   return (
-    <Card
-      style={style}
-      title={
-        <h2 style={{ marginBottom: 0 }}>
-          {intl.formatMessage({
-            id: 'src.pages.OBProxy.Detail.Overview.6E321376',
-            defaultMessage: '基本设置',
-          })}
-        </h2>
-      }
-    >
+    <Card style={style} title={<h2 style={{ marginBottom: 0 }}>基本信息</h2>}>
       <Descriptions column={3}>
         <Descriptions.Item
           label={intl.formatMessage({
@@ -91,7 +82,11 @@ export default function BasicInfo({
             defaultMessage: '状态',
           })}
         >
-          {status || '-'}
+          {status ? (
+            <Tag color={OBPROXY_COLOR_MAP.get(status)}>{status}</Tag>
+          ) : (
+            '-'
+          )}
         </Descriptions.Item>
       </Descriptions>
     </Card>

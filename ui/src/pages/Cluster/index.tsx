@@ -6,14 +6,9 @@ import { useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
-import ClusterList from './ClusterList';
+import { DEFAULT_QUERY_RANGE } from '@/constants';
 import { getObclusterListReq } from '@/services';
-
-const defaultQueryRange:Monitor.QueryRangeType = {
-  step: 20,
-  endTimestamp: Math.floor(new Date().valueOf() / 1000),
-  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
-}
+import ClusterList from './ClusterList';
 
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
@@ -44,15 +39,14 @@ const ClusterPage: React.FC = () => {
         />
         <EventsTable objectType="OBCLUSTER" />
       </Row>
-      <MonitorComp 
-        filterLabel={clusterNames} 
-        queryScope='OBCLUSTER_OVERVIEW' 
-        type='OVERVIEW' 
+      <MonitorComp
+        filterLabel={clusterNames}
+        queryScope="OBCLUSTER_OVERVIEW"
+        type="OVERVIEW"
         groupLabels={['ob_cluster_name']}
-        queryRange={defaultQueryRange}
+        queryRange={DEFAULT_QUERY_RANGE}
         filterData={clusterList}
-        />
-        
+      />
     </PageContainer>
   );
 };

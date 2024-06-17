@@ -1,7 +1,7 @@
 declare namespace OBProxy {
   interface CommonProxyDetail {
-    name: string;
-    namespace: string;
+    name?: string;
+    namespace?: string;
     image?: string;
     parameters?: CommonKVPair[];
     resource?: CommonResourceSpec;

@@ -19,7 +19,7 @@ export default function Monitor() {
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([
     {
       key: 'ob_cluster_name',
-      value: clusterName,
+      value: clusterName!,
     },
   ]);
   const { data: clusterDetail, run: getClusterDetail } = useRequest(
@@ -35,7 +35,7 @@ export default function Monitor() {
   );
 
   useEffect(() => {
-    getClusterDetail({ ns, name });
+    getClusterDetail({ ns:ns!, name:name! });
   }, []);
   return (
     <PageContainer>

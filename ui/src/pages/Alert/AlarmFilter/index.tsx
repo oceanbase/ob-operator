@@ -199,10 +199,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
     <Form form={form}>
       <Row>
         {visibleConfig.objectType && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.AlarmFilter.95B30216',
                 defaultMessage: '对象类型',
@@ -222,13 +222,13 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.object && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item noStyle dependencies={[['instance', 'type']]}>
               {({ getFieldValue }) => {
                 return (
                   <Form.Item
-                    wrapperCol={{ span: 18 }}
-                    labelCol={{ span: 9 }}
+                    wrapperCol={{ span: 16 }}
+                    labelCol={{ span: 6 }}
                     name={['instance', getFieldValue(['instance', 'type'])]}
                     label={
                       type === 'event'
@@ -261,10 +261,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.level && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.AlarmFilter.F190260B',
                 defaultMessage: '告警等级',
@@ -295,10 +295,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.keyword && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.AlarmFilter.827153E6',
                 defaultMessage: '关键词',
@@ -316,10 +316,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.startTime && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.AlarmFilter.B37ACE1B',
                 defaultMessage: '开始时间',
@@ -343,11 +343,11 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.endTime && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
               name={'endTime'}
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
               label={intl.formatMessage({
                 id: 'src.pages.Alert.AlarmFilter.4B625D3F',
                 defaultMessage: '结束时间',
