@@ -1,10 +1,12 @@
+import { info, terminal } from '@/api';
 import { OBTerminal } from '@/components/Terminal/terminal';
 import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
+import { LinkOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { request, useParams } from '@umijs/max';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, message } from 'antd';
+import { Button, Row, Space, message } from 'antd';
 import React, { useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
@@ -19,25 +21,15 @@ const ClusterConnection: React.FC = () => {
   };
   const { ns, name } = useParams();
 
+  const { data: dashboardInfo } = useRequest(info.getProcessInfo);
+
   const { data: clusterDetail } = useRequest(getClusterDetailReq, {
     defaultParams: [{ name: name!, ns: ns! }],
   });
 
-  const { runAsync } = useRequest(
-    async (): Promise<{
-      data: { terminalId: string };
-    }> => {
-      return request(
-        `/api/v1/obclusters/namespace/${ns}/name/${name}/terminal`,
-        {
-          method: 'PUT',
-        },
-      );
-    },
-    {
-      manual: true,
-    },
-  );
+  const { runAsync } = useRequest(terminal.createOBClusterConnection, {
+    manual: true,
+  });
 
   const [terminalId, setTerminalId] = useState<string>();
 
@@ -66,30 +58,55 @@ const ClusterConnection: React.FC = () => {
               }}
             />
           ) : (
-            <Button
-              onClick={async () => {
-                if (
-                  (clusterDetail.info as API.ClusterInfo).status !== 'running'
-                ) {
-                  message.error(
-                    intl.formatMessage({
-                      id: 'Dashboard.Cluster.Detail.NotRunning',
-                      defaultMessage: '集群未运行',
-                    }),
-                  );
-                  return;
-                }
-                const res = await runAsync();
-                if (res?.data?.terminalId) {
-                  setTerminalId(res.data.terminalId);
-                }
-              }}
-            >
-              {intl.formatMessage({
-                id: 'Dashboard.Cluster.Detail.CreateConnection',
-                defaultMessage: '创建连接',
-              })}
-            </Button>
+            <Space>
+              <Button
+                onClick={async () => {
+                  if (clusterDetail.info.status !== 'running') {
+                    message.error(
+                      intl.formatMessage({
+                        id: 'Dashboard.Cluster.Detail.NotRunning',
+                        defaultMessage: '集群未运行',
+                      }),
+                    );
+                    return;
+                  }
+                  const res = await runAsync(ns!, name!);
+                  if (res?.data?.terminalId) {
+                    setTerminalId(res.data.terminalId);
+                  }
+                }}
+              >
+                {intl.formatMessage({
+                  id: 'Dashboard.Cluster.Detail.CreateConnection',
+                  defaultMessage: '创建连接',
+                })}
+              </Button>
+              {dashboardInfo?.data.configurableInfo.odcURL && (
+                <Button
+                  onClick={async () => {
+                    if (clusterDetail.info.status !== 'running') {
+                      message.error(
+                        intl.formatMessage({
+                          id: 'Dashboard.Cluster.Detail.NotRunning',
+                          defaultMessage: '集群未运行',
+                        }),
+                      );
+                      return;
+                    }
+                    const res = await terminal.createOBClusterConnection(
+                      ns!,
+                      name!,
+                      'ODC',
+                    );
+                    if (res?.data?.odcConnectionURL) {
+                      window.open(res.data.odcConnectionURL);
+                    }
+                  }}
+                >
+                  通过 ODC 连接 <LinkOutlined />
+                </Button>
+              )}
+            </Space>
           )}
         </div>
       </Row>

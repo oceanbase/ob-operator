@@ -1,10 +1,12 @@
+import { info, terminal } from '@/api';
 import { OBTerminal } from '@/components/Terminal/terminal';
 import { getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { LinkOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { request, useParams } from '@umijs/max';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, message } from 'antd';
+import { Button, Row, Space, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
@@ -28,18 +30,7 @@ const TenantConnection: React.FC = () => {
     manual: true,
   });
 
-  const { runAsync } = useRequest(
-    async (): Promise<{
-      data: { terminalId: string };
-    }> => {
-      return request(`/api/v1/obtenants/${ns}/${name}/terminal`, {
-        method: 'PUT',
-      });
-    },
-    {
-      manual: true,
-    },
-  );
+  const { data: dashboardInfo } = useRequest(info.getProcessInfo);
 
   useEffect(() => {
     getTenantDetail({ ns: ns!, name: name! });
@@ -78,28 +69,61 @@ const TenantConnection: React.FC = () => {
               }}
             />
           ) : (
-            <Button
-              onClick={async () => {
-                if (!tenantDetail || tenantDetail.info.status !== 'running') {
-                  message.error(
-                    intl.formatMessage({
-                      id: 'Dashboard.Cluster.Detail.AbnormalOperation',
-                      defaultMessage: '租户未正常运行',
-                    }),
+            <Space>
+              <Button
+                onClick={async () => {
+                  if (!tenantDetail || tenantDetail.info.status !== 'running') {
+                    message.error(
+                      intl.formatMessage({
+                        id: 'Dashboard.Cluster.Detail.AbnormalOperation',
+                        defaultMessage: '租户未正常运行',
+                      }),
+                    );
+                    return;
+                  }
+                  const res = await terminal.createOBTenantConnection(
+                    ns!,
+                    name!,
                   );
-                  return;
-                }
-                const res = await runAsync();
-                if (res?.data?.terminalId) {
-                  setTerminalId(res.data.terminalId);
-                }
-              }}
-            >
-              {intl.formatMessage({
-                id: 'Dashboard.Cluster.Detail.CreateConnection',
-                defaultMessage: '创建连接',
-              })}
-            </Button>
+                  if (res?.data?.terminalId) {
+                    setTerminalId(res.data.terminalId);
+                  }
+                }}
+              >
+                {intl.formatMessage({
+                  id: 'Dashboard.Cluster.Detail.CreateConnection',
+                  defaultMessage: '创建连接',
+                })}
+              </Button>
+              {dashboardInfo?.data.configurableInfo.odcURL && (
+                <Button
+                  onClick={async () => {
+                    if (
+                      !tenantDetail ||
+                      tenantDetail.info.status !== 'running'
+                    ) {
+                      message.error(
+                        intl.formatMessage({
+                          id: 'Dashboard.Cluster.Detail.AbnormalOperation',
+                          defaultMessage: '租户未正常运行',
+                        }),
+                      );
+                      return;
+                    }
+                    const res = await terminal.createOBTenantConnection(
+                      ns!,
+                      name!,
+                      'ODC',
+                    );
+                    if (res?.data?.odcConnectionURL) {
+                      window.open(res.data.odcConnectionURL);
+                    }
+                  }}
+                >
+                  通过 ODC 连接 <LinkOutlined />
+                </Button>
+              )}
+            </Space>
           )}
         </div>
       </Row>
