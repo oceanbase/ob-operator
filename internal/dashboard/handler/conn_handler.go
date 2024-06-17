@@ -251,7 +251,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 
 	conn.ClientIP = c.ClientIP()
 	conn.Namespace = nn.Namespace
-	conn.Cluster = nn.Name
+	conn.Tenant = nn.Name
 	conn.User = "root@" + obtenant.Spec.TenantName
 	conn.Password = passwd
 

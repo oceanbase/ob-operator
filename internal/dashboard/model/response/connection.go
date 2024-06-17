@@ -18,10 +18,10 @@ type OBConnection struct {
 	Tenant     string `json:"tenant,omitempty"`
 	Pod        string `json:"pod"`
 	ClientIP   string `json:"clientIp"`
-	TerminalID string `json:"terminalId"`
+	TerminalID string `json:"terminalId,omitempty"`
 	User       string `json:"user"`
 	Password   string `json:"-"`
 	Host       string `json:"-"`
 
-	OdcVisitURL string `json:"odcVisitURL"`
+	OdcVisitURL string `json:"odcVisitURL,omitempty"`
 }
