@@ -56,8 +56,8 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
       id: 'src.pages.OBProxy.A62C101E',
       defaultMessage: '副本数',
     }),
-    dataIndex: 'Replicas',
-    key: 'Replicas',
+    dataIndex: 'replicas',
+    key: 'replicas',
   },
   {
     title: intl.formatMessage({

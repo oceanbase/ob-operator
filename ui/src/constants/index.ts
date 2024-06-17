@@ -308,6 +308,25 @@ const ALERT_STATE_MAP = {
   },
 };
 
+const SERVICE_TYPE = [
+  {
+    label: 'ClusterIP',
+    value: 'ClusterIP',
+  },
+  {
+    label: 'NodePort',
+    value: 'NodePort',
+  },
+  {
+    label: 'LoadBalancer',
+    value: 'LoadBalancer',
+  },
+  {
+    label: 'ExternalName',
+    value: 'ExternalName',
+  },
+];
+
 export {
   ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
@@ -328,6 +347,7 @@ export {
   REFRESH_TENANT_TIME,
   RESULT_STATUS,
   SERVER_IMG_MAP,
+  SERVICE_TYPE,
   SEVERITY_MAP,
   SHILED_STATUS_MAP,
   STATISTICS_INTERVAL,

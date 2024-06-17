@@ -1,12 +1,40 @@
+import { obproxy } from '@/api';
+import { ObproxyCreateOBProxyParam } from '@/api/generated';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
-import { Button, Col, Form, Row } from 'antd';
+import { Button, Form, Space, message } from 'antd';
 import BasicConfig from './BasicConfig';
+import DetailConfig from './DetailConfig';
+
+type FormValues = {
+  obCluster: string;
+} & ObproxyCreateOBProxyParam;
 
 export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const submit = async (values: FormValues) => {
+    try {
+      const res = await obproxy.createOBPROXY({
+        ...values,
+        obCluster: JSON.parse(values.obCluster),
+      });
+      if (res.successful) {
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.OBProxy.New.49694AC5',
+            defaultMessage: '创建成功！',
+          }),
+          3,
+        );
+        form.resetFields();
+        history.back();
+      }
+    } catch (err) {
+      console.error('err:', err);
+    }
+  };
   return (
     <PageContainer
       header={{
@@ -25,20 +53,20 @@ export default function New() {
             defaultMessage: '取消',
           })}
         </Button>,
-        <Button>
+        <Button onClick={() => form.submit()} type="primary">
           {intl.formatMessage({
             id: 'src.pages.OBProxy.New.E2247569',
             defaultMessage: '提交',
           })}
         </Button>,
       ]}
+      style={{ paddingBottom: 50 }}
     >
-      <Form form={form}>
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <BasicConfig form={form} />
-          </Col>
-        </Row>
+      <Form onFinish={submit} form={form}>
+        <Space direction="vertical">
+          <BasicConfig form={form} />
+          <DetailConfig form={form} />
+        </Space>
       </Form>
     </PageContainer>
   );

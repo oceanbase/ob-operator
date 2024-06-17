@@ -849,4 +849,5 @@ declare namespace API {
     setVisible: (prop: boolean) => void;
     successCallback?: (val?: any) => void;
   };
+
 }

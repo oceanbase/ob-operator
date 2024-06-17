@@ -1,10 +1,13 @@
 import IconTip from '@/components/IconTip';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
+import TooltipPretty from '@/components/TooltipPretty';
+import { resourceNameRule } from '@/constants/rules';
 import { getSimpleClusterList } from '@/services';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
+import { useEffect } from 'react';
 
 interface BasicConfigProps {
   form: FormInstance<any>;
@@ -12,10 +15,17 @@ interface BasicConfigProps {
 
 export default function BasicConfig({ form }: BasicConfigProps) {
   const { data: clusterListRes } = useRequest(getSimpleClusterList);
+  const selectCluster = Form.useWatch('obCluster');
   const clisterList = clusterListRes?.data.map((cluster) => ({
     label: cluster.name,
-    value: `${cluster.name}+${cluster.namespace}`,
+    value: JSON.stringify({ name: cluster.name, namespace: cluster.namespace }),
   }));
+
+  useEffect(() => {
+    if (selectCluster && !form.getFieldValue('namespace')) {
+      form.setFieldValue('namespace', selectCluster.split('+')?.[1]);
+    }
+  }, [selectCluster]);
   return (
     <Card
       title={intl.formatMessage({
@@ -25,41 +35,59 @@ export default function BasicConfig({ form }: BasicConfigProps) {
     >
       <Row gutter={[16, 32]}>
         <Col span={8}>
-          <Form.Item
-            label={intl.formatMessage({
-              id: 'src.pages.OBProxy.New.D41C48E1',
-              defaultMessage: '资源名称',
+          <TooltipPretty
+            title={intl.formatMessage({
+              id: 'src.pages.OBProxy.New.D6D90ACC',
+              defaultMessage: 'k8s中资源的名称',
             })}
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'src.pages.OBProxy.New.A0CBFC04',
-                  defaultMessage: '请输入',
-                }),
-              },
-            ]}
           >
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'src.pages.OBProxy.New.E9A192AB',
-                defaultMessage: '请输入',
+            <Form.Item
+              label={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.803427AF',
+                defaultMessage: '资源名称',
               })}
-            />
-          </Form.Item>
+              validateFirst
+              name={'name'}
+              rules={[
+                {
+                  required: true,
+                  message: intl.formatMessage({
+                    id: 'src.pages.OBProxy.New.F602E292',
+                    defaultMessage: '请输入k8s资源名称',
+                  }),
+                },
+                {
+                  pattern: /\D/,
+                  message: intl.formatMessage({
+                    id: 'src.pages.OBProxy.New.37FA27BA',
+                    defaultMessage: '资源名不能使用纯数字',
+                  }),
+                },
+                resourceNameRule,
+              ]}
+            >
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.OBProxy.New.9B4BA02B',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </Form.Item>
+          </TooltipPretty>
         </Col>
         <Col span={8}>
           <Form.Item
             label={intl.formatMessage({
-              id: 'src.pages.OBProxy.New.2D601471',
+              id: 'src.pages.OBProxy.New.BB6BC872',
               defaultMessage: 'OBProxy 集群名',
             })}
+            name={'proxyClusterName'}
             rules={[
               {
                 required: true,
                 message: intl.formatMessage({
-                  id: 'src.pages.OBProxy.New.6B7B9E9A',
-                  defaultMessage: '请输入',
+                  id: 'src.pages.OBProxy.New.CA42FD5D',
+                  defaultMessage: '请输入集群名',
                 }),
               },
             ]}
@@ -83,8 +111,8 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               {
                 required: true,
                 message: intl.formatMessage({
-                  id: 'src.pages.OBProxy.New.80C781AA',
-                  defaultMessage: '请选择',
+                  id: 'src.pages.OBProxy.New.94339826',
+                  defaultMessage: '请选择 OB 集群',
                 }),
               },
             ]}
@@ -94,6 +122,7 @@ export default function BasicConfig({ form }: BasicConfigProps) {
         </Col>
         <Col span={8}>
           <Form.Item
+            name={'proxySysPassword'}
             label={
               <IconTip
                 content={intl.formatMessage({
@@ -110,8 +139,8 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               {
                 required: true,
                 message: intl.formatMessage({
-                  id: 'src.pages.OBProxy.New.D76A01D7',
-                  defaultMessage: '请输入',
+                  id: 'src.pages.OBProxy.New.67DC144A',
+                  defaultMessage: '请输入 OBProxy root 密码',
                 }),
               },
             ]}

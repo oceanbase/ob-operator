@@ -1,26 +1,17 @@
-import type { CommonKVPair, CommonResourceSpec } from '@/api/generated';
+import InputLabelComp from '@/components/InputLabelComp';
+import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
 import { Button, Card, Col, Row } from 'antd';
-
-interface DetailConfigProps {
-  name?: string;
-  namespace?: string;
-  image?: string;
-  parameters?: CommonKVPair[];
-  resource?: CommonResourceSpec;
-  serviceType?: string;
-  replicas?: number;
+import { useState } from 'react';
+import ConfigDrawer from './ConfigDrawer';
+interface DetailConfigProps extends OBProxy.CommonProxyDetail {
   style?: React.CSSProperties;
 }
 
-export default function DetailConfig({
-  image,
-  parameters,
-  resource,
-  serviceType,
-  replicas,
-  style,
-}: DetailConfigProps) {
+export default function DetailConfig({ style, ...props }: DetailConfigProps) {
+  const { image, serviceType, replicas, resource, parameters } = props;
+
+  const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <Card
       title={
@@ -32,7 +23,7 @@ export default function DetailConfig({
         </h2>
       }
       extra={
-        <Button>
+        <Button onClick={() => setDrawerOpen(true)} type="primary">
           {intl.formatMessage({
             id: 'src.pages.OBProxy.Detail.Overview.6258C614',
             defaultMessage: '编辑',
@@ -82,7 +73,7 @@ export default function DetailConfig({
               id: 'src.pages.OBProxy.Detail.Overview.5DDD1A0A',
               defaultMessage: '内存大小：',
             })}
-            {resource?.memory || '-'}
+            {resource?.memory ? `${resource.memory}GB` : '-'}
           </Col>
         </Row>
       </div>
@@ -93,8 +84,20 @@ export default function DetailConfig({
             defaultMessage: '参数设置',
           })}
         </h3>
-        <pre>{JSON.stringify(parameters)}</pre>
+        <InputLabelComp
+          allowDelete={false}
+          disable={true}
+          value={parameters || []}
+        />
       </div>
+      {props.name && props.namespace ? (
+        <ConfigDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          width={880}
+          {...props}
+        />
+      ) : null}
     </Card>
   );
 }

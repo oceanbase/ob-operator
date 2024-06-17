@@ -993,6 +993,31 @@ export interface ListOBProxies200Response {
 /**
  * 
  * @export
+ * @interface ListOBProxyParameters200Response
+ */
+export interface ListOBProxyParameters200Response {
+    /**
+     * 
+     * @type {Array<ObproxyConfigItem>}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'data': Array<ObproxyConfigItem>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListReceiverTemplates200Response
  */
 export interface ListReceiverTemplates200Response {
@@ -1799,6 +1824,43 @@ export interface ModelsStorageSpec {
 /**
  * 
  * @export
+ * @interface ObproxyConfigItem
+ */
+export interface ObproxyConfigItem {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'info'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ObproxyConfigItem
+     */
+    'needReboot'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'value'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'visibleLevel'?: string;
+}
+/**
+ * 
+ * @export
  * @interface ObproxyCreateOBProxyParam
  */
 export interface ObproxyCreateOBProxyParam {
@@ -2052,22 +2114,16 @@ export interface ObproxyOBProxyOverview {
 export interface ObproxyPatchOBProxyParam {
     /**
      * 
-     * @type {Array<CommonKVPair>}
-     * @memberof ObproxyPatchOBProxyParam
-     */
-    'addedParameters'?: Array<CommonKVPair>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ObproxyPatchOBProxyParam
-     */
-    'deletedParameters'?: Array<string>;
-    /**
-     * 
      * @type {string}
      * @memberof ObproxyPatchOBProxyParam
      */
     'image'?: string;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'parameters'?: Array<CommonKVPair>;
     /**
      * 
      * @type {number}
@@ -5043,51 +5099,51 @@ export interface ResponseStorageSpec {
 /**
  * 
  * @export
- * @interface RouteRoute
+ * @interface RouteRouteParam
  */
-export interface RouteRoute {
+export interface RouteRouteParam {
     /**
      * 
      * @type {Array<string>}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'aggregateLabels': Array<string>;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'groupInterval': number;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'groupWait': number;
     /**
      * 
+     * @type {string}
+     * @memberof RouteRouteParam
+     */
+    'id'?: string;
+    /**
+     * 
      * @type {Array<AlarmMatcher>}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'matchers': Array<AlarmMatcher>;
     /**
      * 
      * @type {string}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'receiver': string;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'repeatInterval': number;
-     /**
-     * 
-     * @type {string}
-     * @memberof RouteRoute
-     */
-     'id'?: string;
 }
 /**
  * 
@@ -5592,11 +5648,11 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateRoute: async (body: RouteRoute, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOrUpdateRoute: async (body: RouteRouteParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             assertParamExists('createOrUpdateRoute', 'body', body)
             const localVarPath = `/api/v1/alarm/route/routes`;
@@ -6275,11 +6331,11 @@ export const AlarmApiFp = function(configuration?: Configuration) {
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOrUpdateRoute(body: RouteRoute, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateRoute200Response>> {
+        async createOrUpdateRoute(body: RouteRouteParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateRoute200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateRoute(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AlarmApi.createOrUpdateRoute']?.[localVarOperationServerIndex]?.url;
@@ -6526,11 +6582,11 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateRoute(body: RouteRoute, options?: any): AxiosPromise<CreateOrUpdateRoute200Response> {
+        createOrUpdateRoute(body: RouteRouteParam, options?: any): AxiosPromise<CreateOrUpdateRoute200Response> {
             return localVarFp.createOrUpdateRoute(body, options).then((request) => request(axios, basePath));
         },
         /**
@@ -6725,12 +6781,12 @@ export class AlarmApi extends BaseAPI {
     /**
      * Create or update alarm route.
      * @summary Create or update alarm route
-     * @param {RouteRoute} body route
+     * @param {RouteRouteParam} body route
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AlarmApi
      */
-    public createOrUpdateRoute(body: RouteRoute, options?: RawAxiosRequestConfig) {
+    public createOrUpdateRoute(body: RouteRouteParam, options?: RawAxiosRequestConfig) {
         return AlarmApiFp(this.configuration).createOrUpdateRoute(body, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -7347,7 +7403,8 @@ export class ClusterApi extends BaseAPI {
 export const ListK8sEventsObjectTypeEnum = {
     OBCLUSTER: 'OBCLUSTER',
     OBTENANT: 'OBTENANT',
-    OBBACKUPPOLICY: 'OBBACKUPPOLICY'
+    OBBACKUPPOLICY: 'OBBACKUPPOLICY',
+    OBPROXY: 'OBPROXY'
 } as const;
 export type ListK8sEventsObjectTypeEnum = typeof ListK8sEventsObjectTypeEnum[keyof typeof ListK8sEventsObjectTypeEnum];
 /**
@@ -8801,6 +8858,44 @@ export const OBProxyApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxyParameters: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBProxyParameters', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBProxyParameters', 'name', name)
+            const localVarPath = `/api/v1/obproxies/{namespace}/{name}/parameters`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Patch OBProxy with the specified parameters
          * @summary Patch OBProxy
          * @param {string} namespace namespace of obproxy deployment
@@ -8912,6 +9007,20 @@ export const OBProxyApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBProxyParameters(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBProxyParameters200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBProxyParameters(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.listOBProxyParameters']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Patch OBProxy with the specified parameters
          * @summary Patch OBProxy
          * @param {string} namespace namespace of obproxy deployment
@@ -8977,6 +9086,17 @@ export const OBProxyApiFactory = function (configuration?: Configuration, basePa
          */
         listOBProxies(ns?: string, options?: any): AxiosPromise<ListOBProxies200Response> {
             return localVarFp.listOBProxies(ns, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxyParameters(namespace: string, name: string, options?: any): AxiosPromise<ListOBProxyParameters200Response> {
+            return localVarFp.listOBProxyParameters(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Patch OBProxy with the specified parameters
@@ -9048,6 +9168,19 @@ export class OBProxyApi extends BaseAPI {
      */
     public listOBProxies(ns?: string, options?: RawAxiosRequestConfig) {
         return OBProxyApiFp(this.configuration).listOBProxies(ns, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List OBProxy Parameters by namespace and name
+     * @summary List OBProxy Parameters
+     * @param {string} namespace namespace of obproxy deployment
+     * @param {string} name name of obproxy deployment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public listOBProxyParameters(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).listOBProxyParameters(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

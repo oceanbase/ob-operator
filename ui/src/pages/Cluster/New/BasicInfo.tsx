@@ -1,12 +1,12 @@
 import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, Row, Select, Tooltip } from 'antd';
+import { Card, Col, Form, Input, Row, Select } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 import PasswordInput from '@/components/PasswordInput';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
+import TooltipPretty from '@/components/TooltipPretty';
 import { MODE_MAP } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
-import styles from './index.less';
 
 interface BasicInfoProps {
   form: FormInstance<API.CreateClusterData>;
@@ -40,11 +40,7 @@ export default function BasicInfo({
             />
           </Col>
           <Col span={8} style={{ height: 48 }}>
-            <Tooltip
-              color="#fff"
-              overlayInnerStyle={{ color: 'rgba(0,0,0,.85)' }}
-              overlayClassName={styles.toolTipContent}
-              placement="topLeft"
+            <TooltipPretty
               title={intl.formatMessage({
                 id: 'OBDashboard.Cluster.New.BasicInfo.TheNameOfTheResource',
                 defaultMessage: 'k8s中资源的名称',
@@ -83,7 +79,7 @@ export default function BasicInfo({
                   })}
                 />
               </Form.Item>
-            </Tooltip>
+            </TooltipPretty>
           </Col>
 
           <Col span={8} style={{ height: 72 }}>

@@ -3,14 +3,13 @@ import {
   Button,
   Card,
   Col,
-  Form,
   Input,
   InputNumber,
   Row,
   Tooltip,
 } from 'antd';
 import { FormInstance } from 'antd/lib/form';
-
+import { CustomFormItem } from '@/components/CustomFormItem';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
 import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
@@ -69,31 +68,6 @@ export const TooltipItemContent = ({ item }) => {
 };
 
 export default function Observer({ storageClasses, form }: ObserverProps) {
-  const CustomItem = (prop: any) => {
-    const { label, message } = prop;
-    return (
-      <Form.Item
-        {...prop}
-        rules={[
-          {
-            required: true,
-            message:
-              message ||
-              intl.formatMessage(
-                {
-                  id: 'Dashboard.Cluster.New.Observer.EnterLabel',
-                  defaultMessage: '请输入{{label}}',
-                },
-                { label: label },
-              ),
-          },
-        ]}
-      >
-        {prop.children}
-      </Form.Item>
-    );
-  };
-
   const setMinimalConfiguration = () => {
     const originObserver = clone(form.getFieldsValue());
     form.setFieldsValue({
@@ -134,7 +108,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
         }
       >
         <Tooltip title={observerToolTipText}>
-          <CustomItem
+          <CustomFormItem
             style={{ width: '50%' }}
             message={intl.formatMessage({
               id: 'Dashboard.Cluster.New.Observer.EnterAnImage',
@@ -162,7 +136,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                 defaultMessage: '请输入镜像',
               })}
             />
-          </CustomItem>
+          </CustomFormItem>
         </Tooltip>
         <Row>
           <Col>
@@ -174,7 +148,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
             </p>
 
             <div className={styles.resourceContent}>
-              <CustomItem
+              <CustomFormItem
                 className={styles.leftContent}
                 label="cpu"
                 name={['observer', 'resource', 'cpu']}
@@ -186,8 +160,8 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     defaultMessage: '请输入',
                   })}
                 />
-              </CustomItem>
-              <CustomItem
+              </CustomFormItem>
+              <CustomFormItem
                 label={intl.formatMessage({
                   id: 'OBDashboard.Cluster.New.Observer.Memory',
                   defaultMessage: '内存',
@@ -202,7 +176,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     defaultMessage: '请输入',
                   })}
                 />
-              </CustomItem>
+              </CustomFormItem>
             </div>
           </Col>
         </Row>
@@ -217,7 +191,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
               })}
             </p>
             <div className={styles.dataContent}>
-              <CustomItem
+              <CustomFormItem
                 className={styles.leftContent}
                 label="size"
                 name={['observer', 'storage', 'data', 'size']}
@@ -230,8 +204,8 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     defaultMessage: '请输入',
                   })}
                 />
-              </CustomItem>
-              <CustomItem
+              </CustomFormItem>
+              <CustomFormItem
                 label="storageClass"
                 name={['observer', 'storage', 'data', 'storageClass']}
               >
@@ -245,7 +219,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                 )}
 
                 {/* <CustomSelect /> */}
-              </CustomItem>
+              </CustomFormItem>
             </div>
           </Col>
           <Col span={8}>
@@ -256,7 +230,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
               })}
             </p>
             <div className={styles.logContent}>
-              <CustomItem
+              <CustomFormItem
                 className={styles.leftContent}
                 label="size"
                 name={['observer', 'storage', 'log', 'size']}
@@ -269,8 +243,8 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     defaultMessage: '请输入',
                   })}
                 />
-              </CustomItem>
-              <CustomItem
+              </CustomFormItem>
+              <CustomFormItem
                 label="storageClass"
                 name={['observer', 'storage', 'log', 'storageClass']}
               >
@@ -282,13 +256,13 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     TooltipItemContent={TooltipItemContent}
                   />
                 )}
-              </CustomItem>
+              </CustomFormItem>
             </div>
           </Col>
           <Col span={8}>
             <p className={styles.subTitleText}>redoLog</p>
             <div className={styles.redologContent}>
-              <CustomItem
+              <CustomFormItem
                 className={styles.leftContent}
                 label="size"
                 name={['observer', 'storage', 'redoLog', 'size']}
@@ -301,8 +275,8 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     defaultMessage: '请输入',
                   })}
                 />
-              </CustomItem>
-              <CustomItem
+              </CustomFormItem>
+              <CustomFormItem
                 label="storageClass"
                 validateTrigger="onBlur"
                 name={['observer', 'storage', 'redoLog', 'storageClass']}
@@ -315,7 +289,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     TooltipItemContent={TooltipItemContent}
                   />
                 )}
-              </CustomItem>
+              </CustomFormItem>
             </div>
           </Col>
         </Row>
