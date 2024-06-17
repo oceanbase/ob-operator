@@ -1578,6 +1578,64 @@
                 }
             }
         },
+        "/api/v1/configurable-infos": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Set configurable infos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Set configurable infos",
+                "operationId": "ConfigureInfo",
+                "parameters": [
+                    {
+                        "description": "metric query request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ConfigurableInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/conn/{terminalId}": {
             "get": {
                 "security": [
@@ -2583,6 +2641,16 @@
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -4644,6 +4712,16 @@
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5658,7 +5736,7 @@
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5703,7 +5781,11 @@
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5722,7 +5804,7 @@
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5746,7 +5828,11 @@
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5845,6 +5931,14 @@
                 },
                 "user": {
                     "description": "Description: The user name of the database account, only root is supported now.",
+                    "type": "string"
+                }
+            }
+        },
+        "param.ConfigurableInfo": {
+            "type": "object",
+            "properties": {
+                "odcURL": {
                     "type": "string"
                 }
             }
@@ -6677,6 +6771,17 @@
                 }
             }
         },
+        "response.ConfigurableInfo": {
+            "type": "object",
+            "required": [
+                "odcURL"
+            ],
+            "properties": {
+                "odcURL": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ContainerInfo": {
             "type": "object",
             "required": [
@@ -6723,6 +6828,7 @@
             "type": "object",
             "required": [
                 "appName",
+                "configurableInfo",
                 "publicKey",
                 "reportHost",
                 "reportStatistics",
@@ -6731,6 +6837,9 @@
             "properties": {
                 "appName": {
                     "type": "string"
+                },
+                "configurableInfo": {
+                    "$ref": "#/definitions/response.ConfigurableInfo"
                 },
                 "publicKey": {
                     "type": "string"
@@ -7343,6 +7452,9 @@
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "odcVisitURL": {
                     "type": "string"
                 },
                 "pod": {

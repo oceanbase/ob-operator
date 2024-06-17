@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -10,16 +10,15 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package auth
 
-import (
-	"github.com/gin-gonic/gin"
+type AuthUser struct {
+	Username string `json:"username"`
+	Nickname string `json:"nickname"`
+}
 
-	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
-)
+type Token string
 
-func InitUserRoutes(g *gin.RouterGroup) {
-	g.POST("/login", h.Wrap(h.Login))
-	g.POST("/logout", h.Wrap(h.Logout))
-	g.POST("/auth/:token", h.Wrap(h.Authz))
+func (t Token) String() string {
+	return string(t)
 }

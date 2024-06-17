@@ -24,6 +24,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/auth"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 	"github.com/oceanbase/ob-operator/internal/store"
@@ -101,6 +102,23 @@ func Logout(c *gin.Context) (string, error) {
 		store.GetCache().Delete(usernameEntry.(string))
 	}
 	return "logout successfully", nil
+}
+
+func Authz(c *gin.Context) (*auth.AuthUser, error) {
+	urlParam := struct {
+		Token auth.Token `uri:"token" binding:"required"`
+	}{}
+
+	err := c.BindUri(&urlParam)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	authUser, ok := auth.ValidateToken(urlParam.Token)
+	if !ok {
+		return nil, httpErr.NewUnauthorized("invalid token")
+	}
+
+	return authUser, nil
 }
 
 func getDashboardUserCredentials(c context.Context) (*v1.Secret, error) {

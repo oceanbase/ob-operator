@@ -455,7 +455,7 @@ definitions:
   obproxy.OBProxy:
     properties:
       creationTime:
-        type: string
+        type: integer
       image:
         type: string
       name:
@@ -485,6 +485,9 @@ definitions:
       serviceIp:
         type: string
       status:
+        enum:
+        - Running
+        - Pending
         type: string
     required:
     - creationTime
@@ -505,7 +508,7 @@ definitions:
   obproxy.OBProxyOverview:
     properties:
       creationTime:
-        type: string
+        type: integer
       image:
         type: string
       name:
@@ -521,6 +524,9 @@ definitions:
       serviceIp:
         type: string
       status:
+        enum:
+        - Running
+        - Pending
         type: string
     required:
     - creationTime
@@ -603,6 +609,11 @@ definitions:
     required:
     - password
     - user
+    type: object
+  param.ConfigurableInfo:
+    properties:
+      odcURL:
+        type: string
     type: object
   param.CreateBackupPolicy:
     properties:
@@ -1187,6 +1198,13 @@ definitions:
     - tenantName
     - uid
     type: object
+  response.ConfigurableInfo:
+    properties:
+      odcURL:
+        type: string
+    required:
+    - odcURL
+    type: object
   response.ContainerInfo:
     properties:
       image:
@@ -1221,6 +1239,8 @@ definitions:
     properties:
       appName:
         type: string
+      configurableInfo:
+        $ref: '#/definitions/response.ConfigurableInfo'
       publicKey:
         type: string
       reportHost:
@@ -1231,6 +1251,7 @@ definitions:
         type: string
     required:
     - appName
+    - configurableInfo
     - publicKey
     - reportHost
     - reportStatistics
@@ -1651,6 +1672,8 @@ definitions:
       cluster:
         type: string
       namespace:
+        type: string
+      odcVisitURL:
         type: string
       pod:
         type: string
@@ -3322,6 +3345,43 @@ paths:
       summary: list k8s storage classes
       tags:
       - Cluster
+  /api/v1/configurable-infos:
+    patch:
+      consumes:
+      - application/json
+      description: Set configurable infos
+      operationId: ConfigureInfo
+      parameters:
+      - description: metric query request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ConfigurableInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set configurable infos
+      tags:
+      - Info
   /api/v1/conn/{terminalId}:
     get:
       consumes:
@@ -4035,6 +4095,13 @@ paths:
         in: path
         name: name
         required: true
+        type: string
+      - description: channel
+        enum:
+        - TERMINAL
+        - ODC
+        in: query
+        name: channel
         type: string
       produces:
       - application/json
@@ -5187,6 +5254,13 @@ paths:
         in: path
         name: name
         required: true
+        type: string
+      - description: channel
+        enum:
+        - TERMINAL
+        - ODC
+        in: query
+        name: channel
         type: string
       produces:
       - application/json

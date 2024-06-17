@@ -52,7 +52,7 @@ func buildOBProxyOverview(deploy *appsv1.Deployment) *obproxy.OBProxyOverview {
 		Image:            deploy.Spec.Template.Spec.Containers[0].Image,
 		Replicas:         *deploy.Spec.Replicas,
 		Status:           getDeploymentStatus(deploy),
-		CreationTime:     deploy.CreationTimestamp.String(),
+		CreationTime:     deploy.CreationTimestamp.Unix(),
 		ServiceIP:        deploy.Annotations[AnnotationServiceIP],
 	}
 	return overview

@@ -18,8 +18,10 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -107,12 +109,20 @@ func (w wsWrapper) Close() error {
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/terminal [PUT]
 // @Param namespace path string true "namespace"
 // @Param name path string true "name"
+// @Param channel query string false "channel" Enums(TERMINAL, ODC)
 // @Security ApiKeyAuth
 func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	channel := c.Query("channel")
+	if channel == "" {
+		channel = "TERMINAL"
+	}
+	if OdcURL == "" && channel == "ODC" {
+		return nil, httpErr.NewBadRequest("odc not enabled")
 	}
 	obcluster, err := clients.GetOBCluster(c, nn.Namespace, nn.Name)
 	if err != nil {
@@ -136,19 +146,31 @@ func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error)
 		return nil, httpErr.NewBadRequest("no running pods found in obcluster")
 	}
 
-	term := &response.OBConnection{}
-	term.ClientIP = c.ClientIP()
-	term.TerminalID = rand.String(32)
-	term.Namespace = nn.Namespace
-	term.Cluster = nn.Name
-	term.Pod = pods.Items[0].Name
-	term.Host = pods.Items[0].Status.PodIP
-	term.User = "root"
-	term.Password = passwd
+	conn := &response.OBConnection{}
+	conn.Namespace = nn.Namespace
+	conn.Cluster = nn.Name
+	conn.Pod = pods.Items[0].Name
+	conn.Host = pods.Items[0].Status.PodIP
+	conn.ClientIP = c.ClientIP()
+	conn.Password = passwd
+	conn.User = "root"
 
-	openTermMap.Add(term.TerminalID, term)
+	if channel == "TERMINAL" {
+		conn.TerminalID = rand.String(32)
+		openTermMap.Add(conn.TerminalID, conn)
+	} else if channel == "ODC" {
+		param, err := generateOdcParam(c, conn.Host, conn.User, passwd)
+		if err != nil {
+			return nil, err
+		}
+		visitUrl, err := url.JoinPath(OdcURL, "#", "gateway", param)
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+		conn.OdcVisitURL = strings.ReplaceAll(visitUrl, "%23", "#")
+	}
 
-	return term, nil
+	return conn, nil
 }
 
 // @ID CreateOBTenantConnection
@@ -164,12 +186,20 @@ func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error)
 // @Router /api/v1/obtenants/{namespace}/{name}/terminal [PUT]
 // @Param namespace path string true "namespace"
 // @Param name path string true "name"
+// @Param channel query string false "channel" Enums(TERMINAL, ODC)
 // @Security ApiKeyAuth
 func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	channel := c.Query("channel")
+	if channel == "" {
+		channel = "TERMINAL"
+	}
+	if OdcURL == "" && channel == "ODC" {
+		return nil, httpErr.NewBadRequest("odc not enabled")
 	}
 	obtenant, err := clients.GetOBTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,
@@ -220,13 +250,25 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 	}
 
 	conn.ClientIP = c.ClientIP()
-	conn.TerminalID = rand.String(32)
 	conn.Namespace = nn.Namespace
 	conn.Cluster = nn.Name
 	conn.User = "root@" + obtenant.Spec.TenantName
 	conn.Password = passwd
 
-	openTermMap.Add(conn.TerminalID, conn)
+	if channel == "TERMINAL" {
+		conn.TerminalID = rand.String(32)
+		openTermMap.Add(conn.TerminalID, conn)
+	} else if channel == "ODC" {
+		param, err := generateOdcParam(c, conn.Host, conn.User, passwd)
+		if err != nil {
+			return nil, err
+		}
+		visitUrl, err := url.JoinPath(OdcURL, "#", "gateway", param)
+		if err != nil {
+			return nil, httpErr.NewInternal(err.Error())
+		}
+		conn.OdcVisitURL = strings.ReplaceAll(visitUrl, "%23", "#")
+	}
 
 	return conn, nil
 }

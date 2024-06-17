@@ -13,9 +13,16 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"encoding/base64"
+	"encoding/json"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/auth"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 func loggingCreateOBClusterParam(param *param.CreateOBClusterParam) {
@@ -46,4 +53,54 @@ func loggingCreateOBTenantParam(param *param.CreateOBTenantParam) {
 		WithField("TenantRole", param.TenantRole).
 		WithField("Source", param.Source).
 		Infof("Create OBTenant param")
+}
+
+type OdcBastionData struct {
+	AccountVerifyToken string `json:"accountVerifyToken"`
+	Type               string `json:"type"`
+	UnionDbUser        string `json:"unionDbUser"`
+	Host               string `json:"host"`
+	Password           string `json:"password"`
+	Port               int    `json:"port"`
+}
+
+type OdcBastion struct {
+	Action  string         `json:"action"`
+	Data    OdcBastionData `json:"data"`
+	Encrypt bool           `json:"encrypt"`
+}
+
+func generateOdcParam(c *gin.Context, host, user, passwd string) (string, error) {
+	session := sessions.Default(c)
+	var username string
+	if session.Get("username") == nil {
+		username = "user"
+	} else {
+		username = session.Get("username").(string)
+	}
+
+	token := auth.GenerateAuthToken(&auth.AuthUser{
+		Username: username,
+		Nickname: username,
+	})
+
+	odcBastionData := OdcBastionData{
+		AccountVerifyToken: token.String(),
+		Type:               "OB_MYSQL",
+		UnionDbUser:        user,
+		Host:               host,
+		Password:           passwd,
+		Port:               2881,
+	}
+
+	odcBastion := OdcBastion{
+		Action: "newTempSession",
+		Data:   odcBastionData,
+	}
+	jsonData, err := json.Marshal(odcBastion)
+	if err != nil {
+		return "", httpErr.NewInternal(err.Error())
+	}
+	paramStr := base64.StdEncoding.EncodeToString(jsonData)
+	return paramStr, nil
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -10,16 +10,22 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package auth
 
 import (
-	"github.com/gin-gonic/gin"
+	"time"
 
-	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
+	"github.com/hashicorp/golang-lru/v2/expirable"
+	"github.com/sirupsen/logrus"
 )
 
-func InitUserRoutes(g *gin.RouterGroup) {
-	g.POST("/login", h.Wrap(h.Login))
-	g.POST("/logout", h.Wrap(h.Logout))
-	g.POST("/auth/:token", h.Wrap(h.Authz))
+var tokenPool *expirable.LRU[Token, *AuthUser]
+
+func onEvict(token Token, auth *AuthUser) {
+	// do something
+	logrus.Debugf("evict token: %s, user: %+v", token, auth)
+}
+
+func init() {
+	tokenPool = expirable.NewLRU(100, onEvict, time.Minute*10)
 }

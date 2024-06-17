@@ -18,4 +18,10 @@ type DashboardInfo struct {
 	PublicKey        string `json:"publicKey" binding:"required"`
 	ReportStatistics bool   `json:"reportStatistics" binding:"required"`
 	ReportHost       string `json:"reportHost" binding:"required"`
+
+	ConfigurableInfo ConfigurableInfo `json:"configurableInfo" binding:"required"`
+}
+
+type ConfigurableInfo struct {
+	OdcURL string `json:"odcURL" binding:"required"`
 }
