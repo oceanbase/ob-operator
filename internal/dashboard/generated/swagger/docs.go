@@ -1585,6 +1585,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/configurable-infos": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Set configurable infos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Set configurable infos",
+                "operationId": "ConfigureInfo",
+                "parameters": [
+                    {
+                        "description": "metric query request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ConfigurableInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/conn/{terminalId}": {
             "get": {
                 "security": [
@@ -2590,6 +2648,16 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -4651,6 +4719,16 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5665,7 +5743,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5710,7 +5788,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5729,7 +5811,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5753,7 +5835,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5852,6 +5938,14 @@ const docTemplate = `{
                 },
                 "user": {
                     "description": "Description: The user name of the database account, only root is supported now.",
+                    "type": "string"
+                }
+            }
+        },
+        "param.ConfigurableInfo": {
+            "type": "object",
+            "properties": {
+                "odcURL": {
                     "type": "string"
                 }
             }
@@ -6684,6 +6778,17 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ConfigurableInfo": {
+            "type": "object",
+            "required": [
+                "odcURL"
+            ],
+            "properties": {
+                "odcURL": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ContainerInfo": {
             "type": "object",
             "required": [
@@ -6730,6 +6835,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "appName",
+                "configurableInfo",
                 "publicKey",
                 "reportHost",
                 "reportStatistics",
@@ -6738,6 +6844,9 @@ const docTemplate = `{
             "properties": {
                 "appName": {
                     "type": "string"
+                },
+                "configurableInfo": {
+                    "$ref": "#/definitions/response.ConfigurableInfo"
                 },
                 "publicKey": {
                     "type": "string"
@@ -7350,6 +7459,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "odcConnectionURL": {
                     "type": "string"
                 },
                 "pod": {

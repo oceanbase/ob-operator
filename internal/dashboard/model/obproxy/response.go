@@ -35,8 +35,8 @@ type OBProxyOverview struct {
 	Image            string    `json:"image" binding:"required"`
 	Replicas         int32     `json:"replicas" binding:"required"`
 	ServiceIP        string    `json:"serviceIp" binding:"required"`
-	CreationTime     string    `json:"creationTime" binding:"required"`
-	Status           string    `json:"status" binding:"required"`
+	CreationTime     int64     `json:"creationTime" binding:"required"`
+	Status           string    `json:"status" binding:"required" enums:"Running,Pending"`
 }
 
 type ConfigItem struct {

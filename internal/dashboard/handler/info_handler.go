@@ -29,6 +29,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
@@ -37,11 +38,20 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
+// Injected by build script
 var (
 	Version    = ""
 	CommitHash = ""
 	BuildTime  = ""
 )
+
+var (
+	OdcURL = ""
+)
+
+func init() {
+	OdcURL = os.Getenv("ODC_URL")
+}
 
 // @ID GetProcessInfo
 // @Summary Get process info
@@ -63,6 +73,9 @@ func GetProcessInfo(_ *gin.Context) (*response.DashboardInfo, error) {
 		PublicKey:        string(pubBytes),
 		ReportStatistics: os.Getenv(telemetry.DisableTelemetryEnvName) != "true",
 		ReportHost:       telemetry.TelemetryReportScheme + "://" + telemetry.TelemetryReportHost,
+		ConfigurableInfo: response.ConfigurableInfo{
+			OdcURL: OdcURL,
+		},
 	}, nil
 }
 
@@ -205,6 +218,33 @@ func GetStatistics(c *gin.Context) (*response.StatisticData, error) {
 
 	logger.Debugf("Get statistic data: %+v", reportData)
 	return &reportData, nil
+}
+
+// @ID ConfigureInfo
+// @Summary Set configurable infos
+// @Description Set configurable infos
+// @Tags Info
+// @Accept application/json
+// @Produce application/json
+// @Param body body param.ConfigurableInfo true "metric query request body"
+// @Success 200 object response.APIResponse{response.ConfigurableInfo}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/configurable-infos [PATCH]
+// @Security ApiKeyAuth
+func ConfigureInfo(c *gin.Context) (*response.ConfigurableInfo, error) {
+	data := &param.ConfigurableInfo{}
+	err := c.Bind(data)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if data.OdcURL != "" {
+		OdcURL = data.OdcURL
+	}
+	return &response.ConfigurableInfo{
+		OdcURL: OdcURL,
+	}, nil
 }
 
 // contains checks if the target is in the arr

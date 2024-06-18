@@ -21,4 +21,5 @@ import (
 func InitInfoRoutes(g *gin.RouterGroup) {
 	g.GET("/info", h.Wrap(h.GetProcessInfo))
 	g.GET("/statistics", h.Wrap(h.GetStatistics))
+	g.PATCH("/info", h.Wrap(h.ConfigureInfo))
 }
