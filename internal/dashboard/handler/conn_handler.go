@@ -167,7 +167,7 @@ func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error)
 		if err != nil {
 			return nil, httpErr.NewInternal(err.Error())
 		}
-		conn.OdcVisitURL = strings.ReplaceAll(visitUrl, "%23", "#")
+		conn.OdcConnectionURL = strings.ReplaceAll(visitUrl, "%23", "#")
 	}
 
 	return conn, nil
@@ -267,7 +267,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 		if err != nil {
 			return nil, httpErr.NewInternal(err.Error())
 		}
-		conn.OdcVisitURL = strings.ReplaceAll(visitUrl, "%23", "#")
+		conn.OdcConnectionURL = strings.ReplaceAll(visitUrl, "%23", "#")
 	}
 
 	return conn, nil

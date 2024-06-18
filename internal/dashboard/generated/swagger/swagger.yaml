@@ -1673,7 +1673,7 @@ definitions:
         type: string
       namespace:
         type: string
-      odcVisitURL:
+      odcConnectionURL:
         type: string
       pod:
         type: string

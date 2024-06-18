@@ -7461,7 +7461,7 @@ const docTemplate = `{
                 "namespace": {
                     "type": "string"
                 },
-                "odcVisitURL": {
+                "odcConnectionURL": {
                     "type": "string"
                 },
                 "pod": {

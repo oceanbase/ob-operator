@@ -23,5 +23,5 @@ type OBConnection struct {
 	Password   string `json:"-"`
 	Host       string `json:"-"`
 
-	OdcVisitURL string `json:"odcVisitURL,omitempty"`
+	OdcConnectionURL string `json:"odcConnectionURL,omitempty"`
 }
