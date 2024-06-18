@@ -99,16 +99,17 @@ type ContainerInfo struct {
 }
 
 type K8sService struct {
-	Name       string           `json:"name"`
-	Namespace  string           `json:"namespace"`
-	Type       string           `json:"type"`
-	ClusterIP  string           `json:"clusterIP"`
+	Name       string           `json:"name" binding:"required"`
+	Namespace  string           `json:"namespace" binding:"required"`
+	Type       string           `json:"type" binding:"required"`
+	ClusterIP  string           `json:"clusterIP" binding:"required"`
 	ExternalIP string           `json:"externalIP"`
-	Ports      []K8sServicePort `json:"ports"`
+	Ports      []K8sServicePort `json:"ports" binding:"required"`
 }
 
 type K8sServicePort struct {
 	Name       string `json:"name,omitempty"`
-	Port       int32  `json:"port"`
-	TargetPort int32  `json:"targetPort"`
+	Port       int32  `json:"port" binding:"required"`
+	TargetPort int32  `json:"targetPort" binding:"required"`
+	NodePort   int32  `json:"nodePort,omitempty"`
 }

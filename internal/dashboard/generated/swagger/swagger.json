@@ -5732,6 +5732,7 @@
                 "resource",
                 "service",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
@@ -5780,6 +5781,9 @@
                 "serviceIp": {
                     "type": "string"
                 },
+                "serviceType": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string",
                     "enum": [
@@ -5800,6 +5804,7 @@
                 "proxyClusterName",
                 "replicas",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
@@ -5825,6 +5830,9 @@
                     "type": "integer"
                 },
                 "serviceIp": {
+                    "type": "string"
+                },
+                "serviceType": {
                     "type": "string"
                 },
                 "status": {
@@ -7067,6 +7075,13 @@
         },
         "response.K8sService": {
             "type": "object",
+            "required": [
+                "clusterIP",
+                "name",
+                "namespace",
+                "ports",
+                "type"
+            ],
             "properties": {
                 "clusterIP": {
                     "type": "string"
@@ -7093,9 +7108,16 @@
         },
         "response.K8sServicePort": {
             "type": "object",
+            "required": [
+                "port",
+                "targetPort"
+            ],
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "nodePort": {
+                    "type": "integer"
                 },
                 "port": {
                     "type": "integer"

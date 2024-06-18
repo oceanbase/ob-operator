@@ -54,6 +54,7 @@ func buildOBProxyOverview(deploy *appsv1.Deployment) *obproxy.OBProxyOverview {
 		Status:           getDeploymentStatus(deploy),
 		CreationTime:     deploy.CreationTimestamp.Unix(),
 		ServiceIP:        deploy.Annotations[AnnotationServiceIP],
+		ServiceType:      deploy.Annotations[AnnotationServiceType],
 	}
 	return overview
 }
@@ -97,6 +98,7 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 			Name:       port.Name,
 			Port:       port.Port,
 			TargetPort: port.TargetPort.IntVal,
+			NodePort:   port.NodePort,
 		})
 	}
 	for k, v := range cm.Data {

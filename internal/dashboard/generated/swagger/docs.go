@@ -5739,6 +5739,7 @@ const docTemplate = `{
                 "resource",
                 "service",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
@@ -5787,6 +5788,9 @@ const docTemplate = `{
                 "serviceIp": {
                     "type": "string"
                 },
+                "serviceType": {
+                    "type": "string"
+                },
                 "status": {
                     "type": "string",
                     "enum": [
@@ -5807,6 +5811,7 @@ const docTemplate = `{
                 "proxyClusterName",
                 "replicas",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
@@ -5832,6 +5837,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "serviceIp": {
+                    "type": "string"
+                },
+                "serviceType": {
                     "type": "string"
                 },
                 "status": {
@@ -7074,6 +7082,13 @@ const docTemplate = `{
         },
         "response.K8sService": {
             "type": "object",
+            "required": [
+                "clusterIP",
+                "name",
+                "namespace",
+                "ports",
+                "type"
+            ],
             "properties": {
                 "clusterIP": {
                     "type": "string"
@@ -7100,9 +7115,16 @@ const docTemplate = `{
         },
         "response.K8sServicePort": {
             "type": "object",
+            "required": [
+                "port",
+                "targetPort"
+            ],
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "nodePort": {
+                    "type": "integer"
                 },
                 "port": {
                     "type": "integer"
