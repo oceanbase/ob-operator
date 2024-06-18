@@ -61,6 +61,10 @@ export default function InputTimeComp({ onChange, value }: InputTimeCompProps) {
       min={1}
       onChange={durationChange}
       value={getValue(value)}
+      placeholder={intl.formatMessage({
+        id: 'src.components.InputTimeComp.9628BB2C',
+        defaultMessage: '请输入',
+      })}
       addonAfter={
         <Select
           defaultValue={'minute'}

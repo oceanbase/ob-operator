@@ -339,6 +339,10 @@ const DEFAULT_QUERY_RANGE: Monitor.QueryRangeType = {
   startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
 };
 
+const LABELNAME_REG = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+const VALIDATE_DEBOUNCE = 1000;
+
 export {
   ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
@@ -349,6 +353,7 @@ export {
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
   DEFAULT_QUERY_RANGE,
+  LABELNAME_REG,
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
@@ -370,6 +375,7 @@ export {
   SUFFIX_UNIT,
   TOPO_INFO_CONFIG,
   TZ_NAME_REG,
+  VALIDATE_DEBOUNCE,
   ZONE_IMG_MAP,
   getMinResource,
 };

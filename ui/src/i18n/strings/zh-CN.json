@@ -1027,5 +1027,9 @@
   "src.pages.OBProxy.Detail.Overview.A9BB34D6": "操作成功！",
   "src.pages.OBProxy.Detail.Overview.FEBB24FF": "删除列表中的参数并不会将原来已经设置的参数复原，如果需要参数立即生效，请覆盖参数为原值或者重启集群",
   "src.pages.OBProxy.Detail.Overview.A6701513": "请输入",
-  "src.pages.OBProxy.Detail.Overview.4AB0B6DC": "基本信息"
+  "src.pages.OBProxy.Detail.Overview.4AB0B6DC": "基本信息",
+  "src.pages.Alert.Subscriptions.FEDAA081": "标签名需满足以字母或下划线开头，包含字母，数字，下划线",
+  "src.pages.Alert.Rules.3282A224": "告警规则名需满足：以字母或下划线开头，包含字母，数字，下划线",
+  "src.constants.93456456": "标签名需满足以字母或下划线开头，包含字母，数字，下划线",
+  "src.components.InputTimeComp.9628BB2C": "请输入"
 }

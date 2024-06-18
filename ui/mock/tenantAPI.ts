@@ -6,11 +6,12 @@ export default {
         clusterName: 'string',
         createTime: 'string',
         locality: 'string',
-        name: 'test',
-        namespace: 'test',
+        name: 'string',
+        namespace: 'string',
         status: 'string',
         tenantName: 'string',
         tenantRole: 'string',
+        clusterResourceName: 'string',
         topology: [
           {
             iopsWeight: 0,
