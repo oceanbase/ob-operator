@@ -23,7 +23,7 @@ data:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} active sessions on observer {{ $labels.svr_ip }}.'
           summary: 'Too much active sessions for cluster {{ $labels.ob_cluster_name }}.'
       - alert: inactive_server
-        expr:  max(ob_server_num{status="inactive"}) by (ob_cluster_name) > 0
+        expr:  max(ob_server_num{status="INACTIVE"}) by (ob_cluster_name) > 0
         for: 1m
         labels:
           instance_type: obcluster

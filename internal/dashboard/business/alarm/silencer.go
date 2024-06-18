@@ -51,21 +51,23 @@ func GetSilencer(ctx context.Context, id string) (*silence.SilencerResponse, err
 	return silence.NewSilencerResponse(&gettableSilencer), nil
 }
 
-// TODO: fill in instances and rules to matchers
 func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (*silence.SilencerResponse, error) {
 	startTime := strfmt.DateTime(time.Now())
 	endTime := strfmt.DateTime(time.Unix(param.EndsAt, 0))
 	matchers := make(ammodels.Matchers, 0)
+	matcherMap := make(map[string]*ammodels.Matcher)
 	rules := strings.Join(param.Rules, alarmconstant.RegexOR)
 	falseValue := false
 	trueValue := true
 	ruleName := alarmconstant.LabelRuleName
-	matchers = append(matchers, &ammodels.Matcher{
+	ruleMatcher := &ammodels.Matcher{
 		IsEqual: &trueValue,
 		IsRegex: &trueValue,
 		Name:    &ruleName,
 		Value:   &rules,
-	})
+	}
+	matchers = append(matchers, ruleMatcher)
+	matcherMap[ruleName] = ruleMatcher
 	instanceType := oceanbase.TypeUnknown
 	labelOBCluster := alarmconstant.LabelOBCluster
 	labelInstance := alarmconstant.LabelOBCluster
@@ -100,26 +102,40 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 	}
 	instanceValues := strings.Join(instances, alarmconstant.RegexOR)
 	if instanceType != oceanbase.TypeOBCluster {
-		matchers = append(matchers, &ammodels.Matcher{
+		clusterMatcher := &ammodels.Matcher{
 			IsEqual: &trueValue,
 			IsRegex: &falseValue,
 			Name:    &labelOBCluster,
 			Value:   &obcluster,
-		})
+		}
+		matchers = append(matchers, clusterMatcher)
+		matcherMap[labelOBCluster] = clusterMatcher
 	}
-	matchers = append(matchers, &ammodels.Matcher{
+
+	instanceMatcher := &ammodels.Matcher{
 		IsEqual: &trueValue,
 		IsRegex: &trueValue,
 		Name:    &labelInstance,
 		Value:   &instanceValues,
-	})
+	}
+
+	matchers = append(matchers, instanceMatcher)
+	matcherMap[labelInstance] = instanceMatcher
 	for _, m := range param.Matchers {
-		matchers = append(matchers, &ammodels.Matcher{
+		matcher := &ammodels.Matcher{
 			IsEqual: &trueValue,
 			IsRegex: &m.IsRegex,
 			Name:    &m.Name,
 			Value:   &m.Value,
-		})
+		}
+		_, exists := matcherMap[m.Name]
+		if !exists {
+			logger.Infof("matcher %s not exists, add it", m.Name)
+			matchers = append(matchers, matcher)
+			matcherMap[m.Name] = matcher
+		} else {
+			logger.Infof("matcher %s exists, skip it", m.Name)
+		}
 	}
 
 	silencer := ammodels.Silence{
