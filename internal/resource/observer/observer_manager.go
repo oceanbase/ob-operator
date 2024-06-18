@@ -111,6 +111,11 @@ func (m *OBServerManager) UpdateStatus() error {
 		if err != nil {
 			m.Logger.Info("Get pvc failed: " + err.Error())
 		}
+		if m.OBServer.Status.Status == serverstatus.Running {
+			if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
+				m.OBServer.Status.Status = serverstatus.ExpandPVC
+			}
+		}
 		// 1. Check status of observer in OB database
 		if m.OBServer.Status.Status == serverstatus.Running {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check observer in obcluster")
@@ -121,8 +126,6 @@ func (m *OBServerManager) UpdateStatus() error {
 				if m.checkIfBackupVolumeMutated(pod) || m.checkIfMonitorMutated(pod) {
 					m.OBServer.Status.Status = serverstatus.ModifyingPodTemplate
 				}
-			} else if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
-				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}
 
