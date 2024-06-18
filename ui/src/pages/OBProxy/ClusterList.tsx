@@ -1,8 +1,10 @@
 import type { ObproxyOBProxyOverview } from '@/api/generated';
+import { OBPROXY_COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Typography } from 'antd';
+import { Button, Card, Col, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import dayjs from 'dayjs';
 
 interface ClusterListProps {
   handleAddCluster: () => void;
@@ -33,6 +35,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'proxyClusterName',
     key: 'proxyClusterName',
+    render: (value) => <Text>{value || '-'}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -41,7 +44,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'obCluster',
     key: 'obCluster',
-    render: (value) => <Text>{value.name}</Text>,
+    render: (value) => <Text>{value.name || '-'}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -49,7 +52,11 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
       defaultMessage: '版本',
     }),
     dataIndex: 'image',
+    width: '20%',
     key: 'image',
+    render: (value) => (
+      <Text ellipsis={{ tooltip: value }}>{value || '-'}</Text>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -58,6 +65,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'replicas',
     key: 'replicas',
+    render: (value) => <Text>{value.name || '-'}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -66,6 +74,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'serviceIp',
     key: 'serviceIp',
+    render: (value) => <Text>{value || '-'}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -73,7 +82,11 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
       defaultMessage: '创建时间',
     }),
     dataIndex: 'creationTime',
+    width: 178,
     key: 'creationTime',
+    render: (value) => (
+      <span>{dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss') || '-'}</span>
+    ),
   },
   {
     title: intl.formatMessage({
@@ -82,6 +95,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'status',
     key: 'status',
+    render: (value) => <Tag color={OBPROXY_COLOR_MAP.get(value)}>{value}</Tag>,
   },
 ];
 
@@ -116,6 +130,7 @@ export default function ClusterList({
           dataSource={obproxies}
           pagination={{ simple: true }}
           rowKey="name"
+          scroll={{ x: 1200 }}
           bordered
           sticky
         />

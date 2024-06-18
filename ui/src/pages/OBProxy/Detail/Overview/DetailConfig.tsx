@@ -6,6 +6,7 @@ import { useState } from 'react';
 import ConfigDrawer from './ConfigDrawer';
 interface DetailConfigProps extends OBProxy.CommonProxyDetail {
   style?: React.CSSProperties;
+  submitCallback?: () => void;
 }
 
 export default function DetailConfig({ style, ...props }: DetailConfigProps) {

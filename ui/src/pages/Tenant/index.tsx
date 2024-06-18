@@ -9,12 +9,8 @@ import MonitorComp from '@/components/MonitorComp';
 import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import { getAllTenants } from '@/services/tenant';
 import TenantsList from './TenantsList';
+import { DEFAULT_QUERY_RANGE } from '@/constants';
 
-const defaultQueryRange: Monitor.QueryRangeType = {
-  step: 20,
-  endTimestamp: Math.floor(new Date().valueOf() / 1000),
-  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
-};
 // tenant overview page
 export default function TenantPage() {
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([]);
@@ -72,7 +68,7 @@ export default function TenantPage() {
         type="OVERVIEW"
         useFor='tenant'
         groupLabels={['tenant_name','ob_cluster_name']}
-        queryRange={defaultQueryRange}
+        queryRange={DEFAULT_QUERY_RANGE}
         filterData={tenantsList}
       />
     </PageContainer>

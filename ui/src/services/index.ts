@@ -435,7 +435,7 @@ export async function queryMetricsReq({
           } else {
             item.name =
               metric.metric.labels.find(
-                (label) => label.key === 'ob_cluster_name',
+                (label) => label.key === 'ob_cluster_name' || label.key === 'cluster',
               ).value || '';
           }
         } else {

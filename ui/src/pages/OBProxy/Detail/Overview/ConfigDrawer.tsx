@@ -3,6 +3,7 @@ import type { CommonKVPair } from '@/api/generated';
 import { ObproxyPatchOBProxyParam } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import { CustomFormItem } from '@/components/CustomFormItem';
+import IconTip from '@/components/IconTip';
 import { SERVICE_TYPE, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_OBPROXY } from '@/constants/doc';
 import { OBProxy } from '@/type/obproxy';
@@ -19,12 +20,14 @@ import {
   Row,
   Select,
   Typography,
+  message,
 } from 'antd';
 import { useEffect, useRef } from 'react';
 import { isDifferentParams } from '../../helper';
 
 type ConfigDrawerProps = {
   onClose: () => void;
+  submitCallback?: () => void;
 } & OBProxy.CommonProxyDetail &
   DrawerProps;
 
@@ -38,14 +41,16 @@ export default function ConfigDrawer({
   onClose,
   name,
   namespace,
+  submitCallback,
   ...props
 }: ConfigDrawerProps) {
   const [form] = Form.useForm();
+
   const preParameters = useRef<CommonKVPair[] | undefined>();
   const { data: listParametersRes } = useRequest(
     obproxy.listOBProxyParameters,
     {
-      defaultParams: [namespace, name],
+      defaultParams: [namespace!, name!],
     },
   );
   const listParametersOptions = listParametersRes?.data.map((item) => ({
@@ -54,11 +59,22 @@ export default function ConfigDrawer({
     info: item.info,
   }));
 
-  const submit = (values: FormValue) => {
+  const submit = async (values: FormValue) => {
     if (
       !isDifferentParams(values.parameters || [], preParameters.current || [])
     ) {
       delete values.parameters;
+    }
+    const res = await obproxy.patchOBProxy(namespace!, name!, values);
+    if (res.successful) {
+      message.success(
+        intl.formatMessage({
+          id: 'src.pages.OBProxy.Detail.Overview.A9BB34D6',
+          defaultMessage: '操作成功！',
+        }),
+      );
+      submitCallback && submitCallback();
+      onClose();
     }
   };
   const titleStyle = { fontSize: 14, fontWeight: 600 };
@@ -67,11 +83,14 @@ export default function ConfigDrawer({
     const value = listParametersRes?.data?.find(
       (parameter) => parameter.name === label,
     )?.value;
-    value && form.setFieldValue(['parameters', name, 'value'], value);
+    if (typeof value !== 'undefined') {
+      form.setFieldValue(['parameters', name, 'value'], value);
+    }
   };
   useEffect(() => {
     preParameters.current = props.parameters;
   }, [props.parameters]);
+
   return (
     <AlertDrawer
       title={intl.formatMessage({
@@ -80,14 +99,16 @@ export default function ConfigDrawer({
       })}
       onSubmit={() => form.submit()}
       destroyOnClose={true}
-      onClose={() => onClose()}
+      onClose={() => {
+        form.resetFields();
+        onClose();
+      }}
       {...props}
     >
       <Form
         initialValues={props}
         form={form}
         onFinish={submit}
-        preserve={false}
         layout="vertical"
       >
         <p style={titleStyle}>
@@ -186,10 +207,17 @@ export default function ConfigDrawer({
           />
         </CustomFormItem>
         <p style={titleStyle}>
-          {intl.formatMessage({
-            id: 'src.pages.OBProxy.Detail.Overview.D537DD35',
-            defaultMessage: '参数设置',
-          })}
+          <IconTip
+            tip={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.FEBB24FF',
+              defaultMessage:
+                '删除列表中的参数并不会将原来已经设置的参数复原，如果需要参数立即生效，请覆盖参数为原值或者重启集群',
+            })}
+            content={intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.D537DD35',
+              defaultMessage: '参数设置',
+            })}
+          />
         </p>
         <Form.List name={'parameters'}>
           {(fields, { add, remove }) => (
@@ -230,7 +258,12 @@ export default function ConfigDrawer({
                   </Col>
                   <Col span={11}>
                     <CustomFormItem name={[name, 'value']}>
-                      <Input />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: 'src.pages.OBProxy.Detail.Overview.A6701513',
+                          defaultMessage: '请输入',
+                        })}
+                      />
                     </CustomFormItem>
                   </Col>
                   <Col

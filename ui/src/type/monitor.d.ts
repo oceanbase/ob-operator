@@ -5,7 +5,8 @@ declare namespace Monitor {
     | 'tenant_name'
     | 'tenant_id'
     | 'svr_ip'
-    | 'obzone';
+    | 'obzone'
+    | 'cluster';
 
   type LabelType = {
     key: Label;

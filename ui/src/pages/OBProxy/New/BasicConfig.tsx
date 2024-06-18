@@ -23,14 +23,19 @@ export default function BasicConfig({ form }: BasicConfigProps) {
 
   useEffect(() => {
     if (selectCluster && !form.getFieldValue('namespace')) {
-      form.setFieldValue('namespace', selectCluster.split('+')?.[1]);
+      try {
+        form.setFieldValue('namespace', JSON.parse(selectCluster).namespace);
+        form.validateFields(['namespace']);
+      } catch (err) {
+        console.error('err:', err);
+      }
     }
   }, [selectCluster]);
   return (
     <Card
       title={intl.formatMessage({
-        id: 'src.pages.OBProxy.New.F830C6B7',
-        defaultMessage: '基本设置',
+        id: 'src.pages.OBProxy.New.2C466A93',
+        defaultMessage: '基本信息',
       })}
     >
       <Row gutter={[16, 32]}>
@@ -117,7 +122,13 @@ export default function BasicConfig({ form }: BasicConfigProps) {
               },
             ]}
           >
-            <Select options={clisterList} />
+            <Select
+              placeholder={intl.formatMessage({
+                id: 'src.pages.OBProxy.New.0AE478F2',
+                defaultMessage: '请选择',
+              })}
+              options={clisterList}
+            />
           </Form.Item>
         </Col>
         <Col span={8}>
