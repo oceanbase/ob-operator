@@ -109,12 +109,16 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 	}
 	// TODO: Move pods fetching to another function?
 	for _, pod := range pods.Items {
+		podStatus := string(pod.Status.Phase)
+		if pod.DeletionTimestamp != nil {
+			podStatus = "Terminating"
+		}
 		podInfo := response.K8sPodInfo{
 			Name:       pod.Name,
 			Namespace:  pod.Namespace,
 			NodeName:   pod.Spec.NodeName,
 			PodIP:      pod.Status.PodIP,
-			Status:     string(pod.Status.Phase),
+			Status:     podStatus,
 			Message:    pod.Status.Message,
 			Reason:     pod.Status.Reason,
 			StartTime:  pod.Status.StartTime.Format(time.DateTime),
