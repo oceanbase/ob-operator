@@ -327,10 +327,6 @@ const SERVICE_TYPE = [
     label: 'LoadBalancer',
     value: 'LoadBalancer',
   },
-  {
-    label: 'ExternalName',
-    value: 'ExternalName',
-  },
 ];
 
 const DEFAULT_QUERY_RANGE: Monitor.QueryRangeType = {

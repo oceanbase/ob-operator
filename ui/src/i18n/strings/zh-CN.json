@@ -1031,5 +1031,9 @@
   "src.pages.Alert.Subscriptions.FEDAA081": "标签名需满足以字母或下划线开头，包含字母，数字，下划线",
   "src.pages.Alert.Rules.3282A224": "告警规则名需满足：以字母或下划线开头，包含字母，数字，下划线",
   "src.constants.93456456": "标签名需满足以字母或下划线开头，包含字母，数字，下划线",
-  "src.components.InputTimeComp.9628BB2C": "请输入"
+  "src.components.InputTimeComp.9628BB2C": "请输入",
+  "src.pages.OBProxy.Detail.Overview.5015890A": "删除成功",
+  "src.pages.OBProxy.Detail.Overview.A9E634FB": "确认删除该 OBProxy 吗？",
+  "src.pages.OBProxy.Detail.Overview.102C210B": "服务地址：",
+  "src.pages.OBProxy.Detail.Overview.357D1CE4": "端口映射："
 }

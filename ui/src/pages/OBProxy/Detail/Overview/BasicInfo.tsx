@@ -60,7 +60,7 @@ export default function BasicInfo({
             defaultMessage: 'OB 集群',
           })}
         >
-          {JSON.stringify(obCluster) || '-'}
+          {obCluster?.name || '-'}
         </Descriptions.Item>
         <Descriptions.Item
           label={

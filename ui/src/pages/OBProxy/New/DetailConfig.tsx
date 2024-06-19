@@ -137,7 +137,14 @@ export default function DetailConfig() {
           })}
         </p>
         <Col span={24}>
-          <CustomFormItem name={'parameters'}>
+          <CustomFormItem
+            rules={[
+              {
+                required: false,
+              },
+            ]}
+            name={'parameters'}
+          >
             <InputLabelComp />
           </CustomFormItem>
         </Col>

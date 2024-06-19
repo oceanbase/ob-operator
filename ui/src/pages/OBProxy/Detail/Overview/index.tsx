@@ -1,11 +1,12 @@
 import { obproxy } from '@/api';
 import EventsTable from '@/components/EventsTable';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_OBPROXY_TIME } from '@/constants';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useParams } from '@umijs/max';
+import { history, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Col, Row } from 'antd';
+import { Button, Col, Row, message } from 'antd';
 import { useEffect, useRef } from 'react';
 import BasicInfo from './BasicInfo';
 import DetailConfig from './DetailConfig';
@@ -17,7 +18,7 @@ export default function Overview() {
   const {
     data: obproxyDetailRes,
     run: getOBProxy,
-    refresh,
+    refresh
   } = useRequest(obproxy.getOBProxy, {
     manual: true,
     onSuccess: ({ successful, data }) => {
@@ -30,9 +31,17 @@ export default function Overview() {
           clearTimeout(timer.current);
         }
       }
-    },
+    }
   });
   const obproxyDetail = obproxyDetailRes?.data;
+  const deleteCluster = async () => {
+    const res = await obproxy.deleteOBProxy(ns!, name!);
+    if (res.successful) {
+      message.success(intl.formatMessage({ id: "src.pages.OBProxy.Detail.Overview.5015890A", defaultMessage: "删除成功" }));
+      history.push('/obproxy');
+    }
+  };
+
   useEffect(() => {
     getOBProxy(ns!, name!);
   }, []);
@@ -41,9 +50,26 @@ export default function Overview() {
     <PageContainer
       title={intl.formatMessage({
         id: 'src.pages.OBProxy.Detail.Overview.1CA5DF47',
-        defaultMessage: 'OBProxy 详情',
+        defaultMessage: 'OBProxy 详情'
       })}
-    >
+      extra={
+      <Button
+        onClick={() =>
+        showDeleteConfirm({
+          onOk: deleteCluster,
+          title: intl.formatMessage({ id: "src.pages.OBProxy.Detail.Overview.A9E634FB", defaultMessage: "确认删除该 OBProxy 吗？" })
+        })}
+
+        type="primary"
+        danger>
+
+          {intl.formatMessage({
+          id: 'OBDashboard.Detail.Overview.Delete',
+          defaultMessage: '删除'
+        })}
+        </Button>}>
+
+
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <BasicInfo
@@ -52,8 +78,8 @@ export default function Overview() {
             status={obproxyDetail?.status}
             obCluster={obproxyDetail?.obCluster}
             proxySysSecret={obproxyDetail?.proxySysSecret}
-            proxyClusterName={obproxyDetail?.proxyClusterName}
-          />
+            proxyClusterName={obproxyDetail?.proxyClusterName} />
+
         </Col>
         <Col span={24}>
           <DetailConfig
@@ -63,19 +89,19 @@ export default function Overview() {
             parameters={obproxyDetail?.parameters}
             resource={obproxyDetail?.resource}
             replicas={obproxyDetail?.replicas}
-            serviceType={obproxyDetail?.service.type}
-            submitCallback={refresh}
-          />
+            service={obproxyDetail?.service}
+            submitCallback={refresh} />
+
         </Col>
         <Col span={24}>
           <NodeInfo pods={obproxyDetail?.pods} />
         </Col>
         <Col span={24}>
-          {obproxyDetail?.name && (
-            <EventsTable objectType={'OBPROXY'} name={obproxyDetail?.name} />
-          )}
+          {obproxyDetail?.name &&
+          <EventsTable objectType={'OBPROXY'} name={obproxyDetail?.name} />}
+
         </Col>
       </Row>
-    </PageContainer>
-  );
+    </PageContainer>);
+
 }

@@ -1031,5 +1031,9 @@
   "src.pages.Alert.Subscriptions.FEDAA081": "The label name must start with a letter or underscore and contain letters, numbers, and underscores.",
   "src.pages.Alert.Rules.3282A224": "The alarm rule name must start with a letter or underscore, and contain letters, numbers, and underscores.",
   "src.constants.93456456": "The label name must start with a letter or underscore and contain letters, numbers, and underscores.",
-  "src.components.InputTimeComp.9628BB2C": "Please enter"
+  "src.components.InputTimeComp.9628BB2C": "Please enter",
+  "src.pages.OBProxy.Detail.Overview.5015890A": "Deleted successfully",
+  "src.pages.OBProxy.Detail.Overview.A9E634FB": "Are you sure to delete the OBProxy?",
+  "src.pages.OBProxy.Detail.Overview.102C210B": "Service Address:",
+  "src.pages.OBProxy.Detail.Overview.357D1CE4": "Port Mapping:"
 }
