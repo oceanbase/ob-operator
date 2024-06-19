@@ -63,7 +63,7 @@ export default function New() {
       style={{ paddingBottom: 50 }}
     >
       <Form onFinish={submit} form={form}>
-        <Space style={{width:'100%'}} size={'large'} direction="vertical">
+        <Space style={{ width: '100%' }} size={'large'} direction="vertical">
           <BasicConfig form={form} />
           <DetailConfig />
         </Space>
