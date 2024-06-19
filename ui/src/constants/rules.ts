@@ -55,7 +55,7 @@ const LABEL_NAME_RULE = {
       value.some(
         (item) =>
           (item?.name || item?.key) &&
-          !LABELNAME_REG.test(item?.name || item?.key || ''),
+          !LABELNAME_REG.test(item?.name || item?.key),
       )
     ) {
       return Promise.reject(
