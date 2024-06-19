@@ -65,7 +65,16 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'replicas',
     key: 'replicas',
-    render: (value) => <Text>{value.name || '-'}</Text>,
+    render: (value) => <Text>{value || '-'}</Text>,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'src.pages.OBProxy.New.88D0BC94',
+      defaultMessage: '服务类型',
+    }),
+    dataIndex: 'serviceType',
+    key: 'serviceType',
+    render: (value) => <Text>{value || '-'}</Text>,
   },
   {
     title: intl.formatMessage({

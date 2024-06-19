@@ -1,5 +1,7 @@
+import type { AlarmMatcher, CommonKVPair } from '@/api/generated';
 import { intl } from '@/utils/intl';
-import { TZ_NAME_REG } from '.';
+import type { RuleObject } from 'antd/es/form';
+import { LABELNAME_REG, TZ_NAME_REG } from '.';
 
 /**
  * Check whether the resource name conforms to the domain name format.
@@ -47,4 +49,25 @@ const RULER_ZONE = [
   resourceNameRule,
 ];
 
-export { RULER_ZONE, checkName, resourceNameRule };
+const LABEL_NAME_RULE = {
+  validator: (_: RuleObject, value: AlarmMatcher[] | CommonKVPair[]) => {
+    if (
+      value.some(
+        (item) =>
+          (item?.name || item?.key) &&
+          !LABELNAME_REG.test(item?.name || item?.key),
+      )
+    ) {
+      return Promise.reject(
+        intl.formatMessage({
+          id: 'src.constants.93456456',
+          defaultMessage:
+            '标签名需满足以字母或下划线开头，包含字母，数字，下划线',
+        }),
+      );
+    }
+    return Promise.resolve();
+  },
+};
+
+export { LABEL_NAME_RULE, RULER_ZONE, checkName, resourceNameRule };

@@ -157,7 +157,7 @@ export default function NodesTable() {
       <Card
         loading={loading}
         title={
-          <h2 style={{marginBottom:0}}>
+          <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
               id: 'OBDashboard.pages.Overview.NodesTable.Node',
               defaultMessage: '节点',

@@ -3,22 +3,14 @@ import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
+import { VALIDATE_DEBOUNCE } from '@/constants';
+import { LABEL_NAME_RULE } from '@/constants/rules';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import {
-  Button,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Select,
-  message,
-} from 'antd';
+import { Button, Col, DatePicker, Form, Input, Radio, Row, Select, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import {
@@ -221,7 +213,8 @@ export default function ShieldDrawerForm({
         </Form.Item>
         <Form.Item
           name={'matchers'}
-          validateDebounce={1500}
+          validateFirst
+          validateDebounce={VALIDATE_DEBOUNCE}
           rules={[
             {
               validator: (_, value: AlarmMatcher[]) => {
@@ -236,6 +229,7 @@ export default function ShieldDrawerForm({
                 return Promise.resolve();
               },
             },
+            LABEL_NAME_RULE,
           ]}
           label={
             <IconTip

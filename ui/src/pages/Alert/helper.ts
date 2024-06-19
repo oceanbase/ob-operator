@@ -87,8 +87,7 @@ export const formatShieldSubmitData = (
   selectList: Alert.ServersList[] & Alert.TenantsList[] & string[],
 ): SilenceSilencerParam => {
   const cloneFormData = clone(formData);
-  const selectInstance = cloneFormData.instances[cloneFormData.instances.type];
-
+  let selectInstance = cloneFormData.instances[cloneFormData.instances.type];
   if (
     selectInstance?.includes('allServers') ||
     selectInstance?.includes('allTenants')
@@ -98,9 +97,11 @@ export const formatShieldSubmitData = (
     ) as Alert.ServersList & Alert.TenantsList;
     cloneFormData.instances[cloneFormData.instances.type] =
       temp?.tenants || temp?.servers || [];
+    selectInstance = temp?.tenants || temp?.servers || [];
   }
   if (selectInstance?.includes('allClusters')) {
     cloneFormData.instances['obcluster'] = selectList;
+    selectInstance = selectList;
   }
 
   const tempInstances =

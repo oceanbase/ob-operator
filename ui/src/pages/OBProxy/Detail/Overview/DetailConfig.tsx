@@ -1,3 +1,4 @@
+import type { ResponseK8sService } from '@/api/generated';
 import InputLabelComp from '@/components/InputLabelComp';
 import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
@@ -7,10 +8,11 @@ import ConfigDrawer from './ConfigDrawer';
 interface DetailConfigProps extends OBProxy.CommonProxyDetail {
   style?: React.CSSProperties;
   submitCallback?: () => void;
+  service?: ResponseK8sService;
 }
 
 export default function DetailConfig({ style, ...props }: DetailConfigProps) {
-  const { image, serviceType, replicas, resource, parameters } = props;
+  const { image, replicas, resource, parameters, service } = props;
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   return (
@@ -48,12 +50,35 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
             })}
             {image || '-'}
           </Col>
-          <Col span={24}>
+          <Col span={8}>
             {intl.formatMessage({
               id: 'src.pages.OBProxy.Detail.Overview.23ED4374',
               defaultMessage: '服务类型：',
             })}
-            {serviceType || '-'}
+            {service?.type || '-'}
+          </Col>
+          <Col span={8}>
+            {intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.102C210B',
+              defaultMessage: '服务地址：',
+            })}
+            {service?.clusterIP || '-'}
+          </Col>
+          <Col span={8}>
+            {service?.type === 'LoadBalancer' ? (
+              <span>externalIP：{service?.externalIP || '-'}</span>
+            ) : service?.type === 'NodePort' ? (
+              <span>
+                {intl.formatMessage({
+                  id: 'src.pages.OBProxy.Detail.Overview.357D1CE4',
+                  defaultMessage: '端口映射：',
+                })}
+
+                {service.ports
+                  ?.map((portItem) => `${portItem.port}:${portItem.nodePort}`)
+                  .join(',')}
+              </span>
+            ) : null}
           </Col>
           <Col span={8}>
             {intl.formatMessage({
@@ -97,6 +122,7 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
           onClose={() => setDrawerOpen(false)}
           width={880}
           {...props}
+          serviceType={props.service?.type}
         />
       ) : null}
     </Card>

@@ -6,7 +6,6 @@ export const CustomFormItem = (prop: FormItemProps & { message?: string }) => {
   const { label, message } = prop;
   return (
     <Form.Item
-      {...prop}
       rules={[
         {
           required: true,
@@ -26,6 +25,7 @@ export const CustomFormItem = (prop: FormItemProps & { message?: string }) => {
                 })),
         },
       ]}
+      {...prop}
     >
       {prop.children}
     </Form.Item>

@@ -29,8 +29,11 @@ export default function Rules() {
     },
   });
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const listRules = listRulesRes?.data || [];
-
+  const listRules =
+    listRulesRes?.data.sort(
+      (pre, cur) =>
+        SEVERITY_MAP[cur.severity].weight - SEVERITY_MAP[pre.severity].weight,
+    ) || [];
   const editRule = (ruleName: string) => {
     setEditRuleName(ruleName);
     setDrawerOpen(true);

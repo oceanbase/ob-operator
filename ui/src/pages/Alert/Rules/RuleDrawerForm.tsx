@@ -4,7 +4,13 @@ import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
 import InputTimeComp from '@/components/InputTimeComp';
-import { LEVER_OPTIONS_ALARM, SEVERITY_MAP } from '@/constants';
+import {
+  LABELNAME_REG,
+  LEVER_OPTIONS_ALARM,
+  SEVERITY_MAP,
+  VALIDATE_DEBOUNCE,
+} from '@/constants';
+import { LABEL_NAME_RULE } from '@/constants/rules';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
@@ -82,7 +88,6 @@ export default function RuleDrawerForm({
         style={{ marginBottom: 64 }}
         layout="vertical"
         onFinish={submit}
-        validateTrigger="onBlur"
         form={form}
       >
         <Row gutter={[24, 0]}>
@@ -124,6 +129,7 @@ export default function RuleDrawerForm({
           <Col span={16}>
             <Form.Item
               name={'name'}
+              validateFirst
               rules={[
                 {
                   required: true,
@@ -131,6 +137,20 @@ export default function RuleDrawerForm({
                     id: 'src.pages.Alert.Rules.50003344',
                     defaultMessage: '请输入',
                   }),
+                },
+                {
+                  validator: (_, value) => {
+                    if (!LABELNAME_REG.test(value)) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: 'src.pages.Alert.Rules.3282A224',
+                          defaultMessage:
+                            '告警规则名需满足：以字母或下划线开头，包含字母，数字，下划线',
+                        }),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
                 },
                 {
                   validator: async (_, value) => {
@@ -336,7 +356,8 @@ export default function RuleDrawerForm({
                   })}
                 />
               }
-              validateDebounce={1500}
+              validateFirst
+              validateDebounce={VALIDATE_DEBOUNCE}
               rules={[
                 {
                   validator: (_, value: CommonKVPair[]) => {
@@ -351,6 +372,7 @@ export default function RuleDrawerForm({
                     return Promise.resolve();
                   },
                 },
+                LABEL_NAME_RULE,
               ]}
               name="labels"
             >

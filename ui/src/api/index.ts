@@ -35,7 +35,6 @@ globalAxios.interceptors.response.use(
 
 const config = new Configuration({
   basePath: location.origin,
-  apiKey: () => document.cookie,
   baseOptions: {
     withCredentials: true,
   },

@@ -1,6 +1,12 @@
 import type { RequestConfig } from '@umijs/max';
-import { message } from 'antd';
 import { getLocale } from '@umijs/max';
+import { message } from 'antd';
+import dayjs from 'dayjs';
+import localeData from 'dayjs/plugin/localeData';
+import weekday from 'dayjs/plugin/weekday';
+
+dayjs.extend(weekday);
+dayjs.extend(localeData);
 
 // 错误处理方案： 错误类型
 enum ErrorShowType {}

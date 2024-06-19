@@ -1,10 +1,12 @@
 import { alert } from '@/api';
-import type { RouteRoute } from '@/api/generated';
+import type { RouteRouteParam } from '@/api/generated';
 import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
 import InputTimeComp from '@/components/InputTimeComp';
+import { LABELNAME_REG, VALIDATE_DEBOUNCE } from '@/constants';
+import { LABEL_NAME_RULE } from '@/constants/rules';
 import { intl } from '@/utils/intl';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -26,7 +28,7 @@ export default function SubscripDrawerForm({
   ...props
 }: ShieldDrawerFormProps) {
   const isEdit = !!id;
-  const [form] = Form.useForm<RouteRoute>();
+  const [form] = Form.useForm<RouteRouteParam>();
   const initialValues = {
     matchers: [
       {
@@ -38,7 +40,7 @@ export default function SubscripDrawerForm({
   };
   const { data: listReceiversRes } = useRequest(alert.listReceivers);
   const listReceivers = listReceiversRes?.data;
-  const submit = async (values: RouteRoute) => {
+  const submit = async (values: RouteRouteParam) => {
     if (isEdit) values.id = id;
     if (!values.matchers) values.matchers = [];
     values.matchers = values.matchers.filter(
@@ -50,7 +52,7 @@ export default function SubscripDrawerForm({
         intl.formatMessage(
           {
             id: 'src.pages.Alert.Subscriptions.BA84E413',
-            defaultMessage: "${isEdit ? '修改' : '创建'}成功!",
+            defaultMessage: "{ConditionalExpression0 ? '修改' : '创建'}成功!",
           },
           {
             ConditionalExpression0: isEdit
@@ -139,7 +141,8 @@ export default function SubscripDrawerForm({
             </p>
             <Form.Item
               name={'matchers'}
-              validateDebounce={1500}
+              validateDebounce={VALIDATE_DEBOUNCE}
+              validateFirst
               rules={[
                 {
                   validator: (_, value: AlarmMatcher[]) => {
@@ -154,6 +157,7 @@ export default function SubscripDrawerForm({
                     return Promise.resolve();
                   },
                 },
+                LABEL_NAME_RULE,
               ]}
               label={
                 <IconTip
@@ -183,6 +187,7 @@ export default function SubscripDrawerForm({
           </Col>
           <Col span={24}>
             <Form.Item
+              validateFirst
               rules={[
                 {
                   required: true,
@@ -190,6 +195,23 @@ export default function SubscripDrawerForm({
                     id: 'src.pages.Alert.Subscriptions.22115027',
                     defaultMessage: '请输入',
                   }),
+                },
+                {
+                  validator: (_, value) => {
+                    console.log(value);
+                    if (
+                      value.some((item: string) => !LABELNAME_REG.test(item))
+                    ) {
+                      return Promise.reject(
+                        intl.formatMessage({
+                          id: 'src.pages.Alert.Subscriptions.FEDAA081',
+                          defaultMessage:
+                            '标签名需满足以字母或下划线开头，包含字母，数字，下划线',
+                        }),
+                      );
+                    }
+                    return Promise.resolve();
+                  },
                 },
               ]}
               name={'aggregateLabels'}
