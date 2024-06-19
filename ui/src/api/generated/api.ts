@@ -1962,10 +1962,10 @@ export interface ObproxyK8sObject {
 export interface ObproxyOBProxy {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ObproxyOBProxy
      */
-    'creationTime': string;
+    'creationTime': number;
     /**
      * 
      * @type {string}
@@ -2043,8 +2043,16 @@ export interface ObproxyOBProxy {
      * @type {string}
      * @memberof ObproxyOBProxy
      */
-    'status': string;
+    'status': ObproxyOBProxyStatusEnum;
 }
+
+export const ObproxyOBProxyStatusEnum = {
+    Running: 'Running',
+    Pending: 'Pending'
+} as const;
+
+export type ObproxyOBProxyStatusEnum = typeof ObproxyOBProxyStatusEnum[keyof typeof ObproxyOBProxyStatusEnum];
+
 /**
  * 
  * @export
@@ -2053,10 +2061,10 @@ export interface ObproxyOBProxy {
 export interface ObproxyOBProxyOverview {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ObproxyOBProxyOverview
      */
-    'creationTime': string;
+    'creationTime': number;
     /**
      * 
      * @type {string}
@@ -2104,8 +2112,16 @@ export interface ObproxyOBProxyOverview {
      * @type {string}
      * @memberof ObproxyOBProxyOverview
      */
-    'status': string;
+    'status': ObproxyOBProxyOverviewStatusEnum;
 }
+
+export const ObproxyOBProxyOverviewStatusEnum = {
+    Running: 'Running',
+    Pending: 'Pending'
+} as const;
+
+export type ObproxyOBProxyOverviewStatusEnum = typeof ObproxyOBProxyOverviewStatusEnum[keyof typeof ObproxyOBProxyOverviewStatusEnum];
+
 /**
  * 
  * @export
@@ -2246,6 +2262,19 @@ export interface ParamChangeUserPassword {
      * @memberof ParamChangeUserPassword
      */
     'user': string;
+}
+/**
+ * 
+ * @export
+ * @interface ParamConfigurableInfo
+ */
+export interface ParamConfigurableInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamConfigurableInfo
+     */
+    'odcURL'?: string;
 }
 /**
  * 
@@ -3442,6 +3471,19 @@ export interface ResponseBackupPolicy {
 /**
  * 
  * @export
+ * @interface ResponseConfigurableInfo
+ */
+export interface ResponseConfigurableInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseConfigurableInfo
+     */
+    'odcURL': string;
+}
+/**
+ * 
+ * @export
  * @interface ResponseContainerInfo
  */
 export interface ResponseContainerInfo {
@@ -3506,6 +3548,12 @@ export interface ResponseDashboardInfo {
      * @memberof ResponseDashboardInfo
      */
     'appName': string;
+    /**
+     * 
+     * @type {ResponseConfigurableInfo}
+     * @memberof ResponseDashboardInfo
+     */
+    'configurableInfo': ResponseConfigurableInfo;
     /**
      * 
      * @type {string}
@@ -4342,6 +4390,12 @@ export interface ResponseOBConnection {
      * @memberof ResponseOBConnection
      */
     'namespace'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBConnection
+     */
+    'odcConnectionURL'?: string;
     /**
      * 
      * @type {string}
@@ -7424,6 +7478,45 @@ export type ListK8sEventsTypeEnum = typeof ListK8sEventsTypeEnum[keyof typeof Li
 export const InfoApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        configureInfo: async (body: ParamConfigurableInfo, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('configureInfo', 'body', body)
+            const localVarPath = `/api/v1/configurable-infos`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
          * @param {*} [options] Override http request option.
@@ -7497,6 +7590,19 @@ export const InfoApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = InfoApiAxiosParamCreator(configuration)
     return {
         /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async configureInfo(body: ParamConfigurableInfo, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.configureInfo(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InfoApi.configureInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
          * @param {*} [options] Override http request option.
@@ -7531,6 +7637,16 @@ export const InfoApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = InfoApiFp(configuration)
     return {
         /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        configureInfo(body: ParamConfigurableInfo, options?: any): AxiosPromise<ResponseAPIResponse> {
+            return localVarFp.configureInfo(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
          * @param {*} [options] Override http request option.
@@ -7558,6 +7674,18 @@ export const InfoApiFactory = function (configuration?: Configuration, basePath?
  * @extends {BaseAPI}
  */
 export class InfoApi extends BaseAPI {
+    /**
+     * Set configurable infos
+     * @summary Set configurable infos
+     * @param {ParamConfigurableInfo} body metric query request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InfoApi
+     */
+    public configureInfo(body: ParamConfigurableInfo, options?: RawAxiosRequestConfig) {
+        return InfoApiFp(this.configuration).configureInfo(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Get process info of OceanBase Dashboard, including process name etc.
      * @summary Get process info
@@ -10897,10 +11025,11 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBClusterConnection: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOBClusterConnection: async (namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'namespace' is not null or undefined
             assertParamExists('createOBClusterConnection', 'namespace', namespace)
             // verify required parameter 'name' is not null or undefined
@@ -10922,6 +11051,10 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
             // authentication ApiKeyAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
 
+            if (channel !== undefined) {
+                localVarQueryParameter['channel'] = channel;
+            }
+
 
     
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -10938,10 +11071,11 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBTenantConnection: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOBTenantConnection: async (namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'namespace' is not null or undefined
             assertParamExists('createOBTenantConnection', 'namespace', namespace)
             // verify required parameter 'name' is not null or undefined
@@ -10962,6 +11096,10 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication ApiKeyAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+            if (channel !== undefined) {
+                localVarQueryParameter['channel'] = channel;
+            }
 
 
     
@@ -11002,11 +11140,12 @@ export const TerminalApiFp = function(configuration?: Configuration) {
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOBClusterConnection(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBClusterConnection(namespace, name, options);
+        async createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBClusterConnection(namespace, name, channel, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TerminalApi.createOBClusterConnection']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -11016,11 +11155,12 @@ export const TerminalApiFp = function(configuration?: Configuration) {
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOBTenantConnection(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBTenantConnection(namespace, name, options);
+        async createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBTenantConnection(namespace, name, channel, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TerminalApi.createOBTenantConnection']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -11050,22 +11190,24 @@ export const TerminalApiFactory = function (configuration?: Configuration, baseP
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBClusterConnection(namespace: string, name: string, options?: any): AxiosPromise<ConnectDatabase200Response> {
-            return localVarFp.createOBClusterConnection(namespace, name, options).then((request) => request(axios, basePath));
+        createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: any): AxiosPromise<ConnectDatabase200Response> {
+            return localVarFp.createOBClusterConnection(namespace, name, channel, options).then((request) => request(axios, basePath));
         },
         /**
          * Create oceanbase tenant connection terminal
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBTenantConnection(namespace: string, name: string, options?: any): AxiosPromise<ConnectDatabase200Response> {
-            return localVarFp.createOBTenantConnection(namespace, name, options).then((request) => request(axios, basePath));
+        createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: any): AxiosPromise<ConnectDatabase200Response> {
+            return localVarFp.createOBTenantConnection(namespace, name, channel, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -11094,12 +11236,13 @@ export class TerminalApi extends BaseAPI {
      * @summary Create oceanbase cluster connection
      * @param {string} namespace namespace
      * @param {string} name name
+     * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TerminalApi
      */
-    public createOBClusterConnection(namespace: string, name: string, options?: RawAxiosRequestConfig) {
-        return TerminalApiFp(this.configuration).createOBClusterConnection(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    public createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: RawAxiosRequestConfig) {
+        return TerminalApiFp(this.configuration).createOBClusterConnection(namespace, name, channel, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -11107,15 +11250,32 @@ export class TerminalApi extends BaseAPI {
      * @summary Create oceanbase tenant connection
      * @param {string} namespace namespace
      * @param {string} name name
+     * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TerminalApi
      */
-    public createOBTenantConnection(namespace: string, name: string, options?: RawAxiosRequestConfig) {
-        return TerminalApiFp(this.configuration).createOBTenantConnection(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    public createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: RawAxiosRequestConfig) {
+        return TerminalApiFp(this.configuration).createOBTenantConnection(namespace, name, channel, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
+/**
+ * @export
+ */
+export const CreateOBClusterConnectionChannelEnum = {
+    TERMINAL: 'TERMINAL',
+    ODC: 'ODC'
+} as const;
+export type CreateOBClusterConnectionChannelEnum = typeof CreateOBClusterConnectionChannelEnum[keyof typeof CreateOBClusterConnectionChannelEnum];
+/**
+ * @export
+ */
+export const CreateOBTenantConnectionChannelEnum = {
+    TERMINAL: 'TERMINAL',
+    ODC: 'ODC'
+} as const;
+export type CreateOBTenantConnectionChannelEnum = typeof CreateOBTenantConnectionChannelEnum[keyof typeof CreateOBTenantConnectionChannelEnum];
 
 
 /**
