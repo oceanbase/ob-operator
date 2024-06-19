@@ -75,7 +75,7 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
                 })}
 
                 {service.ports
-                  ?.map((portItem) => `${portItem.port}:${portItem.targetPort}`)
+                  ?.map((portItem) => `${portItem.port}:${portItem.nodePort}`)
                   .join(',')}
               </span>
             ) : null}

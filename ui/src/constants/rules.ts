@@ -52,7 +52,11 @@ const RULER_ZONE = [
 const LABEL_NAME_RULE = {
   validator: (_: RuleObject, value: AlarmMatcher[] | CommonKVPair[]) => {
     if (
-      value.some((item) => !LABELNAME_REG.test(item?.name || item?.key || ''))
+      value.some(
+        (item) =>
+          (item?.name || item?.key) &&
+          !LABELNAME_REG.test(item?.name || item?.key || ''),
+      )
     ) {
       return Promise.reject(
         intl.formatMessage({

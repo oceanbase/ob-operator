@@ -69,6 +69,15 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
   },
   {
     title: intl.formatMessage({
+      id: 'src.pages.OBProxy.New.88D0BC94',
+      defaultMessage: '服务类型',
+    }),
+    dataIndex: 'serviceType',
+    key: 'serviceType',
+    render: (value) => <Text>{value || '-'}</Text>,
+  },
+  {
+    title: intl.formatMessage({
       id: 'src.pages.OBProxy.4172D3BD',
       defaultMessage: '服务 IP',
     }),
