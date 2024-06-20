@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { InputNumber, Select } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface InputTimeCompProps {
   onChange?: (value: number | null) => void;
@@ -56,6 +56,12 @@ export default function InputTimeComp({ onChange, value }: InputTimeCompProps) {
     return value;
   };
 
+  useEffect(()=>{
+    if(value && value < 60 && unit === 'minute'){
+      setUnit('second')
+    }
+  },[value])
+
   return (
     <InputNumber
       min={1}
@@ -68,6 +74,7 @@ export default function InputTimeComp({ onChange, value }: InputTimeCompProps) {
       addonAfter={
         <Select
           defaultValue={'minute'}
+          value={unit}
           onChange={(val: UnitType) => setUnit(val)}
           options={SELECT_OPTIONS}
         />

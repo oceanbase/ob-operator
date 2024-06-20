@@ -130,48 +130,53 @@ export default function RuleDrawerForm({
             <Form.Item
               name={'name'}
               validateFirst
-              rules={[
-                {
-                  required: true,
-                  message: intl.formatMessage({
-                    id: 'src.pages.Alert.Rules.50003344',
-                    defaultMessage: '请输入',
-                  }),
-                },
-                {
-                  validator: (_, value) => {
-                    if (!LABELNAME_REG.test(value)) {
-                      return Promise.reject(
-                        intl.formatMessage({
-                          id: 'src.pages.Alert.Rules.3282A224',
-                          defaultMessage:
-                            '告警规则名需满足：以字母或下划线开头，包含字母，数字，下划线',
+              rules={
+                !isEdit
+                  ? [
+                      {
+                        required: true,
+                        message: intl.formatMessage({
+                          id: 'src.pages.Alert.Rules.50003344',
+                          defaultMessage: '请输入',
                         }),
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-                {
-                  validator: async (_, value) => {
-                    if (rules) {
-                      for (const rule of rules) {
-                        if (rule.name === value) {
-                          return Promise.reject(
-                            new Error(
+                      },
+                      {
+                        validator: (_, value) => {
+                          if (!LABELNAME_REG.test(value)) {
+                            return Promise.reject(
                               intl.formatMessage({
-                                id: 'src.pages.Alert.Rules.B46056EE',
-                                defaultMessage: '告警规则已存在，请重新输入',
+                                id: 'src.pages.Alert.Rules.3282A224',
+                                defaultMessage:
+                                  '告警规则名需满足：以字母或下划线开头，包含字母，数字，下划线',
                               }),
-                            ),
-                          );
-                        }
-                      }
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
+                            );
+                          }
+                          return Promise.resolve();
+                        },
+                      },
+                      {
+                        validator: async (_, value) => {
+                          if (rules) {
+                            for (const rule of rules) {
+                              if (rule.name === value) {
+                                return Promise.reject(
+                                  new Error(
+                                    intl.formatMessage({
+                                      id: 'src.pages.Alert.Rules.B46056EE',
+                                      defaultMessage:
+                                        '告警规则已存在，请重新输入',
+                                    }),
+                                  ),
+                                );
+                              }
+                            }
+                          }
+                          return Promise.resolve();
+                        },
+                      },
+                    ]
+                  : []
+              }
               label={intl.formatMessage({
                 id: 'src.pages.Alert.Rules.14235DA8',
                 defaultMessage: '告警规则名',
