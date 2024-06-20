@@ -24,11 +24,13 @@ function print_help {
   echo "  -A, --all                 List OBProxy deployments in all namespaces, paired with -l."
   echo "  -i, --info                Display the obproxy deployment information."
   echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
+  echo "  -r, --replicas <Number>   Number of replicas of the obproxy deployment. Default is 2."
   echo "  --destroy                 Destroy the obproxy deployment."
   echo "  --cpu <CPU>               CPU limit of the obproxy deployment. Default is 1."
   echo "  --memory <Memory>         Memory limit of the obproxy deployment. Default is 2Gi."
   echo "  --svc-type <Type>         Service type of the obproxy deployment. Default is ClusterIP. Valid values are ClusterIP, NodePort, LoadBalancer."
   echo "  --proxy-version <Version> Version of the obproxy image. Default is 4.2.1.0-11."
+  echo "  --proxy-image <Image>     Image of the obproxy. Default is oceanbase/obproxy-ce:4.2.1.0-11."
 }
 
 function print_version {
@@ -67,6 +69,10 @@ while [[ $# -gt 0 ]]; do
     --destroy)
       DESTROY=true
       ;;
+    -r|--replicas)
+      REPLICAS=$2
+      shift
+      ;;
     --svc-type)
       SVC_TYPE=$2
       if [[ $SVC_TYPE != "ClusterIP" && $SVC_TYPE != "NodePort" && $SVC_TYPE != "LoadBalancer" ]]; then
@@ -92,6 +98,10 @@ while [[ $# -gt 0 ]]; do
     -A|--all)
       LIST_ALL=true
       ;;
+    --proxy-image)
+      PROXY_IMAGE=$2
+      shift
+      ;;
     *)
       break
       ;;
@@ -102,9 +112,9 @@ done
 if [[ $LIST == true ]]; then
   echo -e "\nOBProxy Deployments: \n"
   if [[ $LIST_ALL == true ]]; then
-    kubectl get deployment -A -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+    kubectl get deployment -A -l obproxy.oceanbase.com/obproxy -L obproxy.oceanbase.com/for-obcluster -o wide
   else
-    kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obpxory -L obproxy.oceanbase.com/for-obcluster -o wide
+    kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obproxy -L obproxy.oceanbase.com/for-obcluster -o wide
   fi
   exit 0
 fi
@@ -194,14 +204,14 @@ metadata:
   name: $DEPLOY_NAME
   namespace: $NAMESPACE
   labels:
-    obproxy.oceanbase.com/obpxory: "$DEPLOY_NAME"
+    obproxy.oceanbase.com/obproxy: "$DEPLOY_NAME"
     obproxy.oceanbase.com/for-obcluster: "$OB_CLUSTER"
     obproxy.oceanbase.com/for-namespace: "$NAMESPACE"
 spec:
   selector:
     matchLabels:
       app: app-$DEPLOY_NAME
-  replicas: 2
+  replicas: ${REPLICAS:-2}
   template:
     metadata:
       labels:
@@ -209,7 +219,7 @@ spec:
     spec:
       containers:
         - name: obproxy
-          image: oceanbase/obproxy-ce:$PROXY_VERSION
+          image: ${PROXY_IMAGE:-"oceanbase/obproxy-ce:"$PROXY_VERSION}
           ports:
             - containerPort: 2883
               name: "sql"

@@ -28,7 +28,7 @@ import (
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
-// @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT, OBBACKUPPOLICY)
+// @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT, OBBACKUPPOLICY, OBPROXY)
 // @Param type query string false "event level" Enums(NORMAL, WARNING)
 // @Param name query string false "Object name" string
 // @Param namespace query string false "Namespace" string
