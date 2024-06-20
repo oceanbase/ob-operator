@@ -88,7 +88,7 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 		},
 		Resource: common.ResourceSpec{
 			Cpu:      deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().Value(),
-			MemoryGB: deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().ScaledValue(resource.Giga),
+			MemoryGB: deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().Value() / (1 << 30),
 		},
 		Parameters: []common.KVPair{},
 		Pods:       []response.K8sPodInfo{},
