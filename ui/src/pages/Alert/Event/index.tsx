@@ -48,10 +48,20 @@ export default function Event() {
       }),
       dataIndex: 'summary',
       key: 'summary',
+      width:'25%',
       render: (val, record) => {
         return (
           <Button onClick={() => editRule(record.rule)} type="link">
-            <Tooltip title={record.description}>{val}</Tooltip>
+            <Tooltip title={record.description}>
+              <div
+                style={{
+                  whiteSpace: 'break-spaces',
+                  textAlign: 'left',
+                }}
+              >
+                {val}
+              </div>
+            </Tooltip>
           </Button>
         );
       },
