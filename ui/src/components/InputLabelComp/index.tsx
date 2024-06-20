@@ -1,6 +1,6 @@
+import { intl } from '@/utils/intl';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Col, Input, Popconfirm, Row, Space } from 'antd';
-import { clone } from 'lodash';
 
 type Label = {
   [T: string]: string | boolean;
@@ -13,6 +13,8 @@ interface InputLabelCompPorps {
   maxLength?: number;
   defaulLabelName?: string;
   regex?: boolean;
+  disable?: boolean;
+  allowDelete?: boolean;
 }
 
 export default function InputLabelComp(props: InputLabelCompPorps) {
@@ -23,6 +25,8 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
     onBlur,
     defaulLabelName = 'key',
     regex,
+    disable = false,
+    allowDelete = true,
   } = props;
 
   const labelNameInput = (value: string, index: number) => {
@@ -46,46 +50,72 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
     onChange?.([...labels, temp]);
   };
   const remove = (index: number) => {
-    const newValue = clone(labels);
-    newValue.splice(index, 1);
-    onChange?.(newValue);
+    labels.splice(index, 1);
+    onChange?.([...labels]);
   };
   return (
     <div>
       <Space style={{ width: '100%', marginBottom: 12 }} direction="vertical">
         {labels?.map((label, index) => (
           <Row gutter={[12, 12]} style={{ alignItems: 'center' }} key={index}>
-            <Col span={11}>
+            <Col span={regex ? 11 : 12}>
               <Input
+                disabled={disable}
+                value={label[defaulLabelName] as string}
                 onBlur={onBlur}
                 onChange={(e) => labelNameInput(e.target.value, index)}
-                placeholder="请输入标签名"
+                placeholder={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.36DDAD02',
+                  defaultMessage: '请输入标签名',
+                })}
               />
             </Col>
-            <Col span={10}>
+            <Col span={regex ? 10 : 11}>
               <Input
+                disabled={disable}
+                value={label.value as string}
                 onBlur={onBlur}
                 onChange={(e) => labelValueInput(e.target.value, index)}
-                placeholder="请输入标签值"
+                placeholder={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.DC297030',
+                  defaultMessage: '请输入标签值',
+                })}
               />
             </Col>
             {regex && (
               <Col span={2}>
                 <Checkbox
+                  checked={label.isRegex as boolean}
                   onChange={(e) => regChange(e.target.checked, index)}
                 />
-                <span style={{ marginLeft: 8 }}>正则</span>
+
+                <span style={{ marginLeft: 8 }}>
+                  {intl.formatMessage({
+                    id: 'src.components.InputLabelComp.1617B8B8',
+                    defaultMessage: '正则',
+                  })}
+                </span>
               </Col>
             )}
-            {labels.length > 1 && (
+
+            {labels.length > 1 && allowDelete && (
               <Popconfirm
                 placement="left"
-                title="确定要删除该配置项吗？"
+                title={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.F6592C30',
+                  defaultMessage: '确定要删除该配置项吗？',
+                })}
                 onConfirm={() => {
                   remove(index);
                 }}
-                okText="删除"
-                cancelText="取消"
+                okText={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.C1E48711',
+                  defaultMessage: '删除',
+                })}
+                cancelText={intl.formatMessage({
+                  id: 'src.components.InputLabelComp.D089EBDE',
+                  defaultMessage: '取消',
+                })}
                 okButtonProps={{
                   danger: true,
                   ghost: true,
@@ -98,7 +128,7 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
         ))}
       </Space>
 
-      {!maxLength || labels.length < maxLength ? (
+      {(!maxLength || labels.length < maxLength) && !disable ? (
         <Row>
           <Col span={24}>
             <Button
@@ -108,7 +138,10 @@ export default function InputLabelComp(props: InputLabelCompPorps) {
               style={{ color: 'rgba(0,0,0,0.65)' }}
             >
               <PlusOutlined />
-              添加
+              {intl.formatMessage({
+                id: 'src.components.InputLabelComp.6C88A39D',
+                defaultMessage: '添加',
+              })}
             </Button>
           </Col>
         </Row>

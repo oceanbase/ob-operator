@@ -1,5 +1,7 @@
 import type {
+  AlarmMatcher,
   AlertAlert,
+  CommonKVPair,
   OceanbaseOBInstance,
   OceanbaseOBInstanceType,
   SilenceSilencerParam,
@@ -7,6 +9,7 @@ import type {
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { clone, difference, flatten, uniq } from 'lodash';
 
 /**
@@ -84,8 +87,7 @@ export const formatShieldSubmitData = (
   selectList: Alert.ServersList[] & Alert.TenantsList[] & string[],
 ): SilenceSilencerParam => {
   const cloneFormData = clone(formData);
-  const selectInstance = cloneFormData.instances[cloneFormData.instances.type];
-
+  let selectInstance = cloneFormData.instances[cloneFormData.instances.type];
   if (
     selectInstance?.includes('allServers') ||
     selectInstance?.includes('allTenants')
@@ -95,9 +97,11 @@ export const formatShieldSubmitData = (
     ) as Alert.ServersList & Alert.TenantsList;
     cloneFormData.instances[cloneFormData.instances.type] =
       temp?.tenants || temp?.servers || [];
+    selectInstance = temp?.tenants || temp?.servers || [];
   }
   if (selectInstance?.includes('allClusters')) {
     cloneFormData.instances['obcluster'] = selectList;
+    selectInstance = selectList;
   }
 
   const tempInstances =
@@ -144,9 +148,11 @@ export const getInstancesFromRes = (
   if (types.includes('observer')) {
     res.type = 'observer';
     res.observer = getInstanceValues('observer');
+    res.obcluster = [resInstances[0].obcluster!];
   } else if (types.includes('obtenant')) {
     res.type = 'obtenant';
     res.obtenant = getInstanceValues('obtenant');
+    res.obcluster = [resInstances[0].obcluster!];
   }
   return res;
 };
@@ -155,7 +161,10 @@ export const getInstancesFromRes = (
  * @description
  * Sort alarms by status and time
  */
-const sortAlarm = (alarms: AlertAlert[] | SilenceSilencerResponse[], map) => {
+const sortAlarm = (
+  alarms: AlertAlert[] | SilenceSilencerResponse[],
+  map: { [T: string]: { text: string; color: string; weight: number } },
+) => {
   if (!alarms || !alarms.length) return [];
   const types = uniq(alarms.map((item) => item.status.state));
   types.sort((pre, cur) => map[cur].weight - map[pre].weight);
@@ -178,6 +187,54 @@ export const sortAlarmShielding = (
   return sortAlarm(listSilencers, SHILED_STATUS_MAP);
 };
 
-export const filterLabel = (labels: Alert.LabelsType[]) => {
-  return labels.filter((label) => (label.name || label.key) && label.value);
+/**
+ * @description Each item in LabelInput can be empty, but cannot be incomplete.
+ */
+export const validateLabelValues = (
+  labelValues: AlarmMatcher[] | CommonKVPair[],
+) => {
+  for (const labelValue of labelValues) {
+    const tempArr = Object.keys(labelValue).map((key) =>
+      Boolean(labelValue[key as keyof (AlarmMatcher | CommonKVPair)]),
+    );
+    const stautsArr = tempArr.filter((item) => item === true);
+    if (stautsArr.length === 1) return false;
+    if (
+      stautsArr.length === 2 &&
+      tempArr.length > 2 &&
+      (labelValue as AlarmMatcher).isRegex
+    ) {
+      return false;
+    }
+  }
+  return true;
+};
+
+/**
+ *
+ * @param duration The unit is seconds
+ */
+export const formatDuration = (duration: number) => {
+  if (Math.floor(duration / 60) > 180) {
+    return intl.formatMessage(
+      {
+        id: 'src.pages.Alert.05CE0380',
+        defaultMessage: '${Math.floor(duration / 3600)}小时',
+      },
+      { CallExpression0: Math.floor(duration / 3600) },
+    );
+  }
+  if (duration > 600) {
+    return intl.formatMessage(
+      {
+        id: 'src.pages.Alert.232CC9E7',
+        defaultMessage: '${Math.floor(duration / 60)}分钟',
+      },
+      { CallExpression0: Math.floor(duration / 60) },
+    );
+  }
+  return intl.formatMessage(
+    { id: 'src.pages.Alert.5ECB5E4A', defaultMessage: '${duration}秒' },
+    { duration: duration },
+  );
 };

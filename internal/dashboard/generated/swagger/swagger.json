@@ -488,7 +488,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/route.Route"
+                            "$ref": "#/definitions/route.RouteParam"
                         }
                     }
                 ],
@@ -1578,6 +1578,64 @@
                 }
             }
         },
+        "/api/v1/configurable-infos": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Set configurable infos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Set configurable infos",
+                "operationId": "ConfigureInfo",
+                "parameters": [
+                    {
+                        "description": "metric query request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ConfigurableInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/conn/{terminalId}": {
             "get": {
                 "security": [
@@ -2583,6 +2641,16 @@
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3176,6 +3244,79 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obproxies/{namespace}/{name}/parameters": {
+            "get": {
+                "description": "List OBProxy Parameters by namespace and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "List OBProxy Parameters",
+                "operationId": "ListOBProxyParameters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/obproxy.ConfigItem"
+                                            }
                                         }
                                     }
                                 }
@@ -4571,6 +4712,16 @@
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5472,6 +5623,26 @@
                 }
             }
         },
+        "obproxy.ConfigItem": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needReboot": {
+                    "type": "boolean"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "visibleLevel": {
+                    "type": "string"
+                }
+            }
+        },
         "obproxy.CreateOBProxyParam": {
             "type": "object",
             "required": [
@@ -5561,11 +5732,12 @@
                 "resource",
                 "service",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5609,8 +5781,15 @@
                 "serviceIp": {
                     "type": "string"
                 },
-                "status": {
+                "serviceType": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5625,11 +5804,12 @@
                 "proxyClusterName",
                 "replicas",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5652,28 +5832,29 @@
                 "serviceIp": {
                     "type": "string"
                 },
-                "status": {
+                "serviceType": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
         "obproxy.PatchOBProxyParam": {
             "type": "object",
             "properties": {
-                "addedParameters": {
+                "image": {
+                    "type": "string"
+                },
+                "parameters": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/common.KVPair"
                     }
-                },
-                "deletedParameters": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "image": {
-                    "type": "string"
                 },
                 "replicas": {
                     "type": "integer"
@@ -5758,6 +5939,14 @@
                 },
                 "user": {
                     "description": "Description: The user name of the database account, only root is supported now.",
+                    "type": "string"
+                }
+            }
+        },
+        "param.ConfigurableInfo": {
+            "type": "object",
+            "properties": {
+                "odcURL": {
                     "type": "string"
                 }
             }
@@ -6590,6 +6779,17 @@
                 }
             }
         },
+        "response.ConfigurableInfo": {
+            "type": "object",
+            "required": [
+                "odcURL"
+            ],
+            "properties": {
+                "odcURL": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ContainerInfo": {
             "type": "object",
             "required": [
@@ -6636,6 +6836,7 @@
             "type": "object",
             "required": [
                 "appName",
+                "configurableInfo",
                 "publicKey",
                 "reportHost",
                 "reportStatistics",
@@ -6644,6 +6845,9 @@
             "properties": {
                 "appName": {
                     "type": "string"
+                },
+                "configurableInfo": {
+                    "$ref": "#/definitions/response.ConfigurableInfo"
                 },
                 "publicKey": {
                     "type": "string"
@@ -6871,6 +7075,13 @@
         },
         "response.K8sService": {
             "type": "object",
+            "required": [
+                "clusterIP",
+                "name",
+                "namespace",
+                "ports",
+                "type"
+            ],
             "properties": {
                 "clusterIP": {
                     "type": "string"
@@ -6897,9 +7108,16 @@
         },
         "response.K8sServicePort": {
             "type": "object",
+            "required": [
+                "port",
+                "targetPort"
+            ],
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "nodePort": {
+                    "type": "integer"
                 },
                 "port": {
                     "type": "integer"
@@ -7256,6 +7474,9 @@
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "odcConnectionURL": {
                     "type": "string"
                 },
                 "pod": {
@@ -7860,7 +8081,7 @@
                 }
             }
         },
-        "route.Route": {
+        "route.RouteParam": {
             "type": "object",
             "required": [
                 "aggregateLabels",
@@ -7882,6 +8103,9 @@
                 },
                 "groupWait": {
                     "type": "integer"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "matchers": {
                     "type": "array",

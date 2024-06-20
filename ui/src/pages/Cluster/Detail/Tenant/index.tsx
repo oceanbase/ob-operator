@@ -1,5 +1,6 @@
 import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
+import { DEFAULT_QUERY_RANGE } from '@/constants';
 import TenantsList from '@/pages/Tenant/TenantsList';
 import { getClusterDetailReq } from '@/services';
 import { getAllTenants } from '@/services/tenant';
@@ -8,12 +9,6 @@ import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
-
-const defaultQueryRange = {
-  step: 20,
-  endTimestamp: Math.floor(new Date().valueOf() / 1000),
-  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
-};
 
 export default function Tenant() {
   const { ns, name, clusterName } = useParams();
@@ -48,7 +43,7 @@ export default function Tenant() {
         {tenantsList && (
           <Col span={24}>
             <MonitorComp
-              queryRange={defaultQueryRange}
+              queryRange={DEFAULT_QUERY_RANGE}
               type="OVERVIEW"
               queryScope="OBTENANT"
               groupLabels={['tenant_name']}

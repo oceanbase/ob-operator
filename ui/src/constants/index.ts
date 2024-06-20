@@ -22,6 +22,10 @@ const COLOR_MAP = new Map([
   ['creating', 'blue'],
   ['failed', 'red'],
 ]);
+const OBPROXY_COLOR_MAP = new Map([
+  ['Running', 'geekblue'],
+  ['Pending', 'gold'],
+]);
 const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
   ['deleting', clusterOperating],
@@ -44,6 +48,8 @@ const BADGE_IMG_MAP = new Map([
 ]);
 
 const REFRESH_TENANT_TIME = 5000;
+
+const REFRESH_OBPROXY_TIME = 3000;
 
 const REFRESH_CLUSTER_TIME = 10000;
 // Monitor automatic refresh interval 15s
@@ -158,50 +164,110 @@ const MODE_MAP = new Map([
 
 const LEVER_OPTIONS_ALARM: SelectProps['options'] = [
   {
-    label: '严重',
+    label: intl.formatMessage({
+      id: 'src.constants.BA2DCE55',
+      defaultMessage: '严重',
+    }),
     value: 'critical',
   },
   {
-    label: '警告',
+    label: intl.formatMessage({
+      id: 'src.constants.CA3D7CB8',
+      defaultMessage: '警告',
+    }),
     value: 'warning',
   },
   {
-    label: '注意',
+    label: intl.formatMessage({
+      id: 'src.constants.2DF58E75',
+      defaultMessage: '注意',
+    }),
     value: 'caution',
   },
   {
-    label: '提醒',
+    label: intl.formatMessage({
+      id: 'src.constants.53A94A0E',
+      defaultMessage: '提醒',
+    }),
     value: 'info',
   },
 ];
-const SERVERITY_MAP = {
+
+const SEVERITY_MAP = {
   critical: {
     color: 'red',
-    label: '严重',
+    label: intl.formatMessage({
+      id: 'src.constants.101F76A0',
+      defaultMessage: '严重',
+    }),
     weight: 3,
   },
   warning: {
     color: 'gold',
-    label: '警告',
+    label: intl.formatMessage({
+      id: 'src.constants.9076A376',
+      defaultMessage: '警告',
+    }),
     weight: 2,
   },
-  caution: { color: 'blue', label: '注意', weight: 1 },
-  info: { color: 'green', label: '提醒', weight: 0 },
+  caution: {
+    color: 'blue',
+    label: intl.formatMessage({
+      id: 'src.constants.0C9F6F8C',
+      defaultMessage: '注意',
+    }),
+    weight: 1,
+  },
+  info: {
+    color: 'green',
+    label: intl.formatMessage({
+      id: 'src.constants.661BB167',
+      defaultMessage: '提醒',
+    }),
+    weight: 0,
+  },
 };
 
 const SHILED_STATUS_MAP = {
-  expired: { text: '过期', color: 'gold', weight: 1 },
-  pending: { text: '未生效', color: 'default', weight: 0 },
-  active: { text: '活跃', color: 'green', weight: 2 },
+  expired: {
+    text: intl.formatMessage({
+      id: 'src.constants.041D1159',
+      defaultMessage: '过期',
+    }),
+    color: 'gold',
+    weight: 1,
+  },
+  pending: {
+    text: intl.formatMessage({
+      id: 'src.constants.5A1A196E',
+      defaultMessage: '未生效',
+    }),
+    color: 'default',
+    weight: 0,
+  },
+  active: {
+    text: intl.formatMessage({
+      id: 'src.constants.7BCA3313',
+      defaultMessage: '活跃',
+    }),
+    color: 'green',
+    weight: 2,
+  },
 };
 
 const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
   {
-    label: '集群',
+    label: intl.formatMessage({
+      id: 'src.constants.5D9B444A',
+      defaultMessage: '集群',
+    }),
     value: 'obcluster',
   },
   {
-    label: '租户',
+    label: intl.formatMessage({
+      id: 'src.constants.FB06E464',
+      defaultMessage: '租户',
+    }),
     value: 'obtenant',
   },
   {
@@ -222,10 +288,56 @@ const CHANNEL_TYPE_OPTIONS = [
 ];
 
 const ALERT_STATE_MAP = {
-  active: { text: '活跃', color: 'green', weight: 0 },
-  unprocessed: { text: '未处理', color: 'default', weight: 1 },
-  suppressed: { text: '抑制', color: 'red', weight: 2 },
+  active: {
+    text: intl.formatMessage({
+      id: 'src.constants.D7C4C6F1',
+      defaultMessage: '活跃',
+    }),
+    color: 'green',
+    weight: 0,
+  },
+  unprocessed: {
+    text: intl.formatMessage({
+      id: 'src.constants.D953F862',
+      defaultMessage: '未处理',
+    }),
+    color: 'default',
+    weight: 1,
+  },
+  suppressed: {
+    text: intl.formatMessage({
+      id: 'src.constants.F77CCEC3',
+      defaultMessage: '抑制',
+    }),
+    color: 'red',
+    weight: 2,
+  },
 };
+
+const SERVICE_TYPE = [
+  {
+    label: 'ClusterIP',
+    value: 'ClusterIP',
+  },
+  {
+    label: 'NodePort',
+    value: 'NodePort',
+  },
+  {
+    label: 'LoadBalancer',
+    value: 'LoadBalancer',
+  },
+];
+
+const DEFAULT_QUERY_RANGE: Monitor.QueryRangeType = {
+  step: 20,
+  endTimestamp: Math.floor(new Date().valueOf() / 1000),
+  startTimestamp: Math.floor(new Date().valueOf() / 1000) - 60 * 30,
+};
+
+const LABELNAME_REG = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+
+const VALIDATE_DEBOUNCE = 1000;
 
 export {
   ALERT_STATE_MAP,
@@ -236,24 +348,30 @@ export {
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
   COLOR_MAP,
+  DEFAULT_QUERY_RANGE,
+  LABELNAME_REG,
   LEVER_OPTIONS_ALARM,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
   MODE_MAP,
   OBJECT_OPTIONS_ALARM,
+  OBPROXY_COLOR_MAP,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
+  REFRESH_OBPROXY_TIME,
   REFRESH_TENANT_TIME,
   RESULT_STATUS,
-  SERVERITY_MAP,
   SERVER_IMG_MAP,
+  SERVICE_TYPE,
+  SEVERITY_MAP,
   SHILED_STATUS_MAP,
   STATISTICS_INTERVAL,
   STATUS,
   SUFFIX_UNIT,
   TOPO_INFO_CONFIG,
   TZ_NAME_REG,
+  VALIDATE_DEBOUNCE,
   ZONE_IMG_MAP,
   getMinResource,
 };

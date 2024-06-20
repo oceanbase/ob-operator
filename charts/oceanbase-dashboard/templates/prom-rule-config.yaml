@@ -8,7 +8,7 @@ metadata:
     name: {{ .Release.Name }}-prometheus-rules-conf
 data:
   prometheus.rules: |-
-    groups:
+    {{`groups:
     - name: ob-rule
       rules:
       - alert: cluster_active_session
@@ -18,18 +18,18 @@ data:
           instance_type: obcluster
           rule_name: cluster_active_session
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} active sessions on observer {{ $labels.svr_ip }}.'
           summary: 'Too much active sessions for cluster {{ $labels.ob_cluster_name }}.'
       - alert: inactive_server
-        expr:  max(ob_server_num{status="inactive"}) by (ob_cluster_name) > 0
+        expr:  max(ob_server_num{status="INACTIVE"}) by (ob_cluster_name) > 0
         for: 1m
         labels:
           instance_type: obcluster
           rule_name: inactive_server
           rule_type: builtin
-          serverity: critical
+          severity: critical
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} inactive observers.'
           summary: 'Found inactive observer in cluster {{ $labels.ob_cluster_name }}.'
@@ -40,7 +40,7 @@ data:
           instance_type: obcluster
           rule_name: index_fail
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} index fail tables.'
           summary: 'Found index fail table in cluster {{ $labels.ob_cluster_name }}.'
@@ -51,7 +51,7 @@ data:
           instance_type: obcluster
           rule_name: frozen_version_check
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} delta versions between merged and frozen data.'
           summary: 'Frozen version is too much larger than merged version.'
@@ -62,7 +62,7 @@ data:
           instance_type: obcluster
           rule_name: cluster_merge_error
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} merge error.'
           summary: 'Cluster {{ $labels.ob_cluster_name }} merge error.'
@@ -73,7 +73,7 @@ data:
           instance_type: obcluster
           rule_name: cluster_merge_timeout
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} merge timeout.'
           summary: 'Cluster {{ $labels.ob_cluster_name }} merge timeout.'
@@ -84,7 +84,7 @@ data:
           instance_type: obcluster
           rule_name: cluster_no_frozen
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has not frozen for {{ $value }} seconds.'
           summary: 'Cluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
@@ -95,7 +95,7 @@ data:
           instance_type: obcluster
           rule_name: cluster_no_merge
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has not merge for {{ $value }} seconds.'
           summary: 'Cluster {{ $labels.ob_cluster_name }} has not merge for a long time.'
@@ -106,7 +106,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_active_session
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has {{ $value }} active sessions on observer {{ $labels.svr_ip }}.'
           summary: 'Too much active sessions for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
@@ -117,7 +117,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_compaction_error
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} compaction error.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} compaction error.'
@@ -128,7 +128,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_cpu_usage
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} on observer {{ $labels.svr_ip }} cpu usage {{ $value }}%.'
           summary: 'High cpu usage detected for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
@@ -139,7 +139,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_log_disk_used_percent
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} on observer {{ $labels.svr_ip }} log used percent {{ $value }} is over threshold.'
           summary: 'High log disk used percent detected for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
@@ -150,7 +150,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_log_stream_downgrade
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} downgrade log stream count is {{ $value }}.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found log stream downgrade.'
@@ -161,7 +161,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_no_compaction
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not compact for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not compact for a long time.'
@@ -172,7 +172,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_no_frozen
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
@@ -183,7 +183,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_partition_leader_absent
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found {{ $value }} partition leader absent.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found partition leader absent.'
@@ -194,7 +194,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_partition_replica_absent
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found {{ $value }} partition replica absent.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found partition replica absent.'
@@ -205,7 +205,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_task_timeout
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found task not finished for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found task not finished for a long time.'
@@ -216,7 +216,7 @@ data:
           instance_type: obtenant
           rule_name: standby_tenant_sync_delay
           rule_type: builtin
-          serverity: caution
+          severity: caution
         annotations:
           description: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay {{ $value }} seconds.'
           summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay too long.'
@@ -227,7 +227,7 @@ data:
           instance_type: obtenant
           rule_name: standby_tenant_sync_error
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync error.'
           summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync error.'
@@ -238,7 +238,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_memstore_percent
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} on observer {{ $labels.svr_ip }} memstore percent {{ $value }} is over threshold.'
           summary: 'High memstore used ratio detected for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
@@ -249,7 +249,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_active_memstore_percent
           rule_type: builtin
-          serverity: warning
+          severity: warning
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} on observer {{ $labels.svr_ip }} active memstore percent {{ $value }} is over threshold.'
           summary: 'High active memstore used ratio detected for tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }}.'
@@ -260,7 +260,7 @@ data:
           instance_type: obtenant
           rule_name: tenant_thread_used_percent
           rule_type: builtin
-          serverity: caution
+          severity: caution
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} thread used percent is {{ $value }}.'
-          summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} used too much thread.'
+          summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} used too much thread.'`}}

@@ -1,5 +1,8 @@
+import { getSimpleClusterList } from '@/services';
+import { getAllTenants } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { Outlet, history } from '@umijs/max';
+import { Outlet, history, useModel } from '@umijs/max';
 import type { TabsProps } from 'antd';
 import { Divider, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
@@ -10,11 +13,17 @@ const TAB_KEYS = ['event', 'shield', 'rules', 'channel', 'subscriptions'];
 const TAB_ITEMS: TabsProps['items'] = [
   {
     key: 'event',
-    label: '告警事件',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.542DC103',
+      defaultMessage: '告警事件',
+    }),
   },
   {
     key: 'shield',
-    label: '告警屏蔽',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.0E2168FC',
+      defaultMessage: '告警屏蔽',
+    }),
   },
   {
     key: 'divider-1',
@@ -22,7 +31,10 @@ const TAB_ITEMS: TabsProps['items'] = [
   },
   {
     key: 'rules',
-    label: '告警规则',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.6261133D',
+      defaultMessage: '告警规则',
+    }),
   },
   {
     key: 'divider-2',
@@ -30,11 +42,17 @@ const TAB_ITEMS: TabsProps['items'] = [
   },
   {
     key: 'channel',
-    label: '告警通道',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.5208FED8',
+      defaultMessage: '告警通道',
+    }),
   },
   {
     key: 'subscriptions',
-    label: '告警推送',
+    label: intl.formatMessage({
+      id: 'src.pages.Alert.8F65A789',
+      defaultMessage: '告警推送',
+    }),
   },
 ];
 
@@ -46,6 +64,7 @@ const getInitialActiveKey = () => {
 };
 
 export default function Alert() {
+  const { setClusterList, setTenantList } = useModel('alarm');
   const [activeKey, setActiveKey] = useState<string>(getInitialActiveKey());
   const onChange = (key: string) => {
     setActiveKey(key);
@@ -53,6 +72,12 @@ export default function Alert() {
   };
 
   useEffect(() => {
+    getSimpleClusterList().then(({ successful, data }) => {
+      if (successful) setClusterList(data);
+    });
+    getAllTenants().then(({ successful, data }) => {
+      if (successful) setTenantList(data);
+    });
     const unlisten = history.listen(({ location }) => {
       const curKey =
         location.pathname.split('/')[location.pathname.split('/').length - 1];
@@ -72,6 +97,7 @@ export default function Alert() {
         items={TAB_ITEMS}
         onChange={onChange}
       />
+
       <Outlet />
     </PageContainer>
   );

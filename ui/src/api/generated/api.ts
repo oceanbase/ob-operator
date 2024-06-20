@@ -34,12 +34,6 @@ export interface AlarmMatcher {
      * @type {boolean}
      * @memberof AlarmMatcher
      */
-    'isEqual'?: boolean;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof AlarmMatcher
-     */
     'isRegex'?: boolean;
     /**
      * 
@@ -60,14 +54,14 @@ export interface AlarmMatcher {
  * @enum {string}
  */
 
-export const AlarmServerity = {
-    ServerityCritical: 'critical',
-    ServerityWarning: 'warning',
-    ServerityCaution: 'caution',
-    ServerityInfo: 'info'
+export const AlarmSeverity = {
+    SeverityCritical: 'critical',
+    SeverityWarning: 'warning',
+    SeverityCaution: 'caution',
+    SeverityInfo: 'info'
 } as const;
 
-export type AlarmServerity = typeof AlarmServerity[keyof typeof AlarmServerity];
+export type AlarmSeverity = typeof AlarmSeverity[keyof typeof AlarmSeverity];
 
 
 /**
@@ -114,10 +108,10 @@ export interface AlertAlert {
     'rule': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof AlertAlert
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {number}
@@ -165,16 +159,22 @@ export interface AlertAlertFilter {
     'instance'?: OceanbaseOBInstance;
     /**
      * 
+     * @type {OceanbaseOBInstanceType}
+     * @memberof AlertAlertFilter
+     */
+    'instanceType'?: OceanbaseOBInstanceType;
+    /**
+     * 
      * @type {string}
      * @memberof AlertAlertFilter
      */
     'keyword'?: string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof AlertAlertFilter
      */
-    'serverity'?: AlarmServerity;
+    'severity'?: AlarmSeverity;
     /**
      * 
      * @type {number}
@@ -993,6 +993,31 @@ export interface ListOBProxies200Response {
 /**
  * 
  * @export
+ * @interface ListOBProxyParameters200Response
+ */
+export interface ListOBProxyParameters200Response {
+    /**
+     * 
+     * @type {Array<ObproxyConfigItem>}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'data': Array<ObproxyConfigItem>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBProxyParameters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListReceiverTemplates200Response
  */
 export interface ListReceiverTemplates200Response {
@@ -1799,6 +1824,43 @@ export interface ModelsStorageSpec {
 /**
  * 
  * @export
+ * @interface ObproxyConfigItem
+ */
+export interface ObproxyConfigItem {
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'info'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ObproxyConfigItem
+     */
+    'needReboot'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'value'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'visibleLevel'?: string;
+}
+/**
+ * 
+ * @export
  * @interface ObproxyCreateOBProxyParam
  */
 export interface ObproxyCreateOBProxyParam {
@@ -1900,10 +1962,10 @@ export interface ObproxyK8sObject {
 export interface ObproxyOBProxy {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ObproxyOBProxy
      */
-    'creationTime': string;
+    'creationTime': number;
     /**
      * 
      * @type {string}
@@ -1981,8 +2043,16 @@ export interface ObproxyOBProxy {
      * @type {string}
      * @memberof ObproxyOBProxy
      */
-    'status': string;
+    'status': ObproxyOBProxyStatusEnum;
 }
+
+export const ObproxyOBProxyStatusEnum = {
+    Running: 'Running',
+    Pending: 'Pending'
+} as const;
+
+export type ObproxyOBProxyStatusEnum = typeof ObproxyOBProxyStatusEnum[keyof typeof ObproxyOBProxyStatusEnum];
+
 /**
  * 
  * @export
@@ -1991,10 +2061,10 @@ export interface ObproxyOBProxy {
 export interface ObproxyOBProxyOverview {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ObproxyOBProxyOverview
      */
-    'creationTime': string;
+    'creationTime': number;
     /**
      * 
      * @type {string}
@@ -2042,8 +2112,16 @@ export interface ObproxyOBProxyOverview {
      * @type {string}
      * @memberof ObproxyOBProxyOverview
      */
-    'status': string;
+    'status': ObproxyOBProxyOverviewStatusEnum;
 }
+
+export const ObproxyOBProxyOverviewStatusEnum = {
+    Running: 'Running',
+    Pending: 'Pending'
+} as const;
+
+export type ObproxyOBProxyOverviewStatusEnum = typeof ObproxyOBProxyOverviewStatusEnum[keyof typeof ObproxyOBProxyOverviewStatusEnum];
+
 /**
  * 
  * @export
@@ -2052,22 +2130,16 @@ export interface ObproxyOBProxyOverview {
 export interface ObproxyPatchOBProxyParam {
     /**
      * 
-     * @type {Array<CommonKVPair>}
-     * @memberof ObproxyPatchOBProxyParam
-     */
-    'addedParameters'?: Array<CommonKVPair>;
-    /**
-     * 
-     * @type {Array<string>}
-     * @memberof ObproxyPatchOBProxyParam
-     */
-    'deletedParameters'?: Array<string>;
-    /**
-     * 
      * @type {string}
      * @memberof ObproxyPatchOBProxyParam
      */
     'image'?: string;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ObproxyPatchOBProxyParam
+     */
+    'parameters'?: Array<CommonKVPair>;
     /**
      * 
      * @type {number}
@@ -2143,9 +2215,11 @@ export interface OceanbaseOBInstance {
  */
 
 export const OceanbaseOBInstanceType = {
-    OBCluster: 'obcluster',
-    OBTenant: 'obtenant',
-    OBServer: 'observer'
+    TypeUnknown: 'unknown',
+    TypeOBCluster: 'obcluster',
+    TypeOBZone: 'obzone',
+    TypeOBTenant: 'obtenant',
+    TypeOBServer: 'observer'
 } as const;
 
 export type OceanbaseOBInstanceType = typeof OceanbaseOBInstanceType[keyof typeof OceanbaseOBInstanceType];
@@ -2188,6 +2262,19 @@ export interface ParamChangeUserPassword {
      * @memberof ParamChangeUserPassword
      */
     'user': string;
+}
+/**
+ * 
+ * @export
+ * @interface ParamConfigurableInfo
+ */
+export interface ParamConfigurableInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamConfigurableInfo
+     */
+    'odcURL'?: string;
 }
 /**
  * 
@@ -2963,6 +3050,110 @@ export interface ParamZoneTopology {
 /**
  * 
  * @export
+ * @interface PayloadAlert
+ */
+export interface PayloadAlert {
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadAlert
+     */
+    'annotations'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'endsAt'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'generatorURL'?: string;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadAlert
+     */
+    'labels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'startsAt'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadAlert
+     */
+    'status'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface PayloadWebhookPayload
+ */
+export interface PayloadWebhookPayload {
+    /**
+     * 
+     * @type {Array<PayloadAlert>}
+     * @memberof PayloadWebhookPayload
+     */
+    'alerts'?: Array<PayloadAlert>;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'commonAnnotations'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'commonLabels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'externalURL'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'groupKey'?: string;
+    /**
+     * 
+     * @type {{ [key: string]: string; }}
+     * @memberof PayloadWebhookPayload
+     */
+    'groupLabels'?: { [key: string]: string; };
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'receiver'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'status'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof PayloadWebhookPayload
+     */
+    'version'?: string;
+}
+/**
+ * 
+ * @export
  * @interface QueryMetrics200Response
  */
 export interface QueryMetrics200Response {
@@ -3019,8 +3210,19 @@ export interface ReceiverReceiver {
  */
 
 export const ReceiverReceiverType = {
-    TypeDingTalk: 'dingtalk',
-    TypeWeChat: 'wechat'
+    TypeDiscord: 'discord',
+    TypeEmail: 'email',
+    TypePagerduty: 'pagerduty',
+    TypeSlack: 'slack',
+    TypeWebhook: 'webhook',
+    TypeOpsGenie: 'opsgenie',
+    TypeWechat: 'wechat',
+    TypePushover: 'pushover',
+    TypeVictorOps: 'victorops',
+    TypeSNS: 'sns',
+    TypeTelegram: 'telegram',
+    TypeWebex: 'webex',
+    TypeMSTeams: 'msteams'
 } as const;
 
 export type ReceiverReceiverType = typeof ReceiverReceiverType[keyof typeof ReceiverReceiverType];
@@ -3269,6 +3471,19 @@ export interface ResponseBackupPolicy {
 /**
  * 
  * @export
+ * @interface ResponseConfigurableInfo
+ */
+export interface ResponseConfigurableInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseConfigurableInfo
+     */
+    'odcURL': string;
+}
+/**
+ * 
+ * @export
  * @interface ResponseContainerInfo
  */
 export interface ResponseContainerInfo {
@@ -3333,6 +3548,12 @@ export interface ResponseDashboardInfo {
      * @memberof ResponseDashboardInfo
      */
     'appName': string;
+    /**
+     * 
+     * @type {ResponseConfigurableInfo}
+     * @memberof ResponseDashboardInfo
+     */
+    'configurableInfo': ResponseConfigurableInfo;
     /**
      * 
      * @type {string}
@@ -4174,6 +4395,12 @@ export interface ResponseOBConnection {
      * @type {string}
      * @memberof ResponseOBConnection
      */
+    'odcConnectionURL'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBConnection
+     */
     'pod'?: string;
     /**
      * 
@@ -4926,43 +5153,49 @@ export interface ResponseStorageSpec {
 /**
  * 
  * @export
- * @interface RouteRoute
+ * @interface RouteRouteParam
  */
-export interface RouteRoute {
+export interface RouteRouteParam {
     /**
      * 
      * @type {Array<string>}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'aggregateLabels': Array<string>;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'groupInterval': number;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'groupWait': number;
     /**
      * 
+     * @type {string}
+     * @memberof RouteRouteParam
+     */
+    'id'?: string;
+    /**
+     * 
      * @type {Array<AlarmMatcher>}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'matchers': Array<AlarmMatcher>;
     /**
      * 
      * @type {string}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'receiver': string;
     /**
      * 
      * @type {number}
-     * @memberof RouteRoute
+     * @memberof RouteRouteParam
      */
     'repeatInterval': number;
 }
@@ -5041,10 +5274,10 @@ export interface RuleRule {
     'instanceType': OceanbaseOBInstanceType;
     /**
      * 
-     * @type {CommonKVPair}
+     * @type {Array<CommonKVPair>}
      * @memberof RuleRule
      */
-    'labels': CommonKVPair;
+    'labels': Array<CommonKVPair>;
     /**
      * 
      * @type {string}
@@ -5059,10 +5292,10 @@ export interface RuleRule {
     'query': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRule
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {string}
@@ -5074,7 +5307,7 @@ export interface RuleRule {
      * @type {RuleRuleType}
      * @memberof RuleRule
      */
-    'type': RuleRuleType;
+    'type'?: RuleRuleType;
 }
 
 
@@ -5098,10 +5331,10 @@ export interface RuleRuleFilter {
     'keyword'?: string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRuleFilter
      */
-    'serverity'?: AlarmServerity;
+    'severity'?: AlarmSeverity;
 }
 
 
@@ -5164,10 +5397,10 @@ export interface RuleRuleResponse {
     'keepFiringFor': number;
     /**
      * 
-     * @type {CommonKVPair}
+     * @type {Array<CommonKVPair>}
      * @memberof RuleRuleResponse
      */
-    'labels': CommonKVPair;
+    'labels': Array<CommonKVPair>;
     /**
      * 
      * @type {string}
@@ -5194,10 +5427,10 @@ export interface RuleRuleResponse {
     'query': string;
     /**
      * 
-     * @type {AlarmServerity}
+     * @type {AlarmSeverity}
      * @memberof RuleRuleResponse
      */
-    'serverity': AlarmServerity;
+    'severity': AlarmSeverity;
     /**
      * 
      * @type {RuleRuleState}
@@ -5215,7 +5448,7 @@ export interface RuleRuleResponse {
      * @type {RuleRuleType}
      * @memberof RuleRuleResponse
      */
-    'type': RuleRuleType;
+    'type'?: RuleRuleType;
 }
 
 
@@ -5261,11 +5494,19 @@ export interface SilenceSilencerFilter {
     'instance'?: OceanbaseOBInstance;
     /**
      * 
+     * @type {OceanbaseOBInstanceType}
+     * @memberof SilenceSilencerFilter
+     */
+    'instanceType'?: OceanbaseOBInstanceType;
+    /**
+     * 
      * @type {string}
      * @memberof SilenceSilencerFilter
      */
     'keyword'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -5301,13 +5542,19 @@ export interface SilenceSilencerParam {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerParam
      */
-    'instance': Array<OceanbaseOBInstance>;
+    'instances': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}
      * @memberof SilenceSilencerParam
      */
     'matchers': Array<AlarmMatcher>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SilenceSilencerParam
+     */
+    'rules': Array<string>;
     /**
      * 
      * @type {number}
@@ -5350,7 +5597,7 @@ export interface SilenceSilencerResponse {
      * @type {Array<OceanbaseOBInstance>}
      * @memberof SilenceSilencerResponse
      */
-    'instance': Array<OceanbaseOBInstance>;
+    'instances': Array<OceanbaseOBInstance>;
     /**
      * 
      * @type {Array<AlarmMatcher>}
@@ -5383,7 +5630,9 @@ export interface SilenceSilencerResponse {
  */
 
 export const SilenceState = {
-    StateActive: 'active'
+    StateActive: 'active',
+    StateExpired: 'expired',
+    StatePending: 'pending'
 } as const;
 
 export type SilenceState = typeof SilenceState[keyof typeof SilenceState];
@@ -5453,11 +5702,11 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateRoute: async (body: RouteRoute, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOrUpdateRoute: async (body: RouteRouteParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             assertParamExists('createOrUpdateRoute', 'body', body)
             const localVarPath = `/api/v1/alarm/route/routes`;
@@ -5901,7 +6150,7 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6037,7 +6286,7 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6136,11 +6385,11 @@ export const AlarmApiFp = function(configuration?: Configuration) {
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOrUpdateRoute(body: RouteRoute, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateRoute200Response>> {
+        async createOrUpdateRoute(body: RouteRouteParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateRoute200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateRoute(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['AlarmApi.createOrUpdateRoute']?.[localVarOperationServerIndex]?.url;
@@ -6290,7 +6539,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6339,7 +6588,7 @@ export const AlarmApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6387,11 +6636,11 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
         /**
          * Create or update alarm route.
          * @summary Create or update alarm route
-         * @param {RouteRoute} body route
+         * @param {RouteRouteParam} body route
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateRoute(body: RouteRoute, options?: any): AxiosPromise<CreateOrUpdateRoute200Response> {
+        createOrUpdateRoute(body: RouteRouteParam, options?: any): AxiosPromise<CreateOrUpdateRoute200Response> {
             return localVarFp.createOrUpdateRoute(body, options).then((request) => request(axios, basePath));
         },
         /**
@@ -6505,7 +6754,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.getSilencer(id, options).then((request) => request(axios, basePath));
         },
         /**
-         * List alerts, filter with alarm objects, serverity, time and keywords.
+         * List alerts, filter with alarm objects, severity, time and keywords.
          * @summary List alerts
          * @param {AlertAlertFilter} [body] alert filter
          * @param {*} [options] Override http request option.
@@ -6542,7 +6791,7 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.listRoutes(options).then((request) => request(axios, basePath));
         },
         /**
-         * List alarm rules, filter with alarm objects type, serverity and keywords.
+         * List alarm rules, filter with alarm objects type, severity and keywords.
          * @summary List alarm rules
          * @param {RuleRuleFilter} [body] rule filter
          * @param {*} [options] Override http request option.
@@ -6586,12 +6835,12 @@ export class AlarmApi extends BaseAPI {
     /**
      * Create or update alarm route.
      * @summary Create or update alarm route
-     * @param {RouteRoute} body route
+     * @param {RouteRouteParam} body route
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AlarmApi
      */
-    public createOrUpdateRoute(body: RouteRoute, options?: RawAxiosRequestConfig) {
+    public createOrUpdateRoute(body: RouteRouteParam, options?: RawAxiosRequestConfig) {
         return AlarmApiFp(this.configuration).createOrUpdateRoute(body, options).then((request) => request(this.axios, this.basePath));
     }
 
@@ -6728,7 +6977,7 @@ export class AlarmApi extends BaseAPI {
     }
 
     /**
-     * List alerts, filter with alarm objects, serverity, time and keywords.
+     * List alerts, filter with alarm objects, severity, time and keywords.
      * @summary List alerts
      * @param {AlertAlertFilter} [body] alert filter
      * @param {*} [options] Override http request option.
@@ -6773,7 +7022,7 @@ export class AlarmApi extends BaseAPI {
     }
 
     /**
-     * List alarm rules, filter with alarm objects type, serverity and keywords.
+     * List alarm rules, filter with alarm objects type, severity and keywords.
      * @summary List alarm rules
      * @param {RuleRuleFilter} [body] rule filter
      * @param {*} [options] Override http request option.
@@ -7208,7 +7457,8 @@ export class ClusterApi extends BaseAPI {
 export const ListK8sEventsObjectTypeEnum = {
     OBCLUSTER: 'OBCLUSTER',
     OBTENANT: 'OBTENANT',
-    OBBACKUPPOLICY: 'OBBACKUPPOLICY'
+    OBBACKUPPOLICY: 'OBBACKUPPOLICY',
+    OBPROXY: 'OBPROXY'
 } as const;
 export type ListK8sEventsObjectTypeEnum = typeof ListK8sEventsObjectTypeEnum[keyof typeof ListK8sEventsObjectTypeEnum];
 /**
@@ -7227,6 +7477,45 @@ export type ListK8sEventsTypeEnum = typeof ListK8sEventsTypeEnum[keyof typeof Li
  */
 export const InfoApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        configureInfo: async (body: ParamConfigurableInfo, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('configureInfo', 'body', body)
+            const localVarPath = `/api/v1/configurable-infos`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
@@ -7301,6 +7590,19 @@ export const InfoApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = InfoApiAxiosParamCreator(configuration)
     return {
         /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async configureInfo(body: ParamConfigurableInfo, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.configureInfo(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InfoApi.configureInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
          * @param {*} [options] Override http request option.
@@ -7335,6 +7637,16 @@ export const InfoApiFactory = function (configuration?: Configuration, basePath?
     const localVarFp = InfoApiFp(configuration)
     return {
         /**
+         * Set configurable infos
+         * @summary Set configurable infos
+         * @param {ParamConfigurableInfo} body metric query request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        configureInfo(body: ParamConfigurableInfo, options?: any): AxiosPromise<ResponseAPIResponse> {
+            return localVarFp.configureInfo(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Get process info of OceanBase Dashboard, including process name etc.
          * @summary Get process info
          * @param {*} [options] Override http request option.
@@ -7362,6 +7674,18 @@ export const InfoApiFactory = function (configuration?: Configuration, basePath?
  * @extends {BaseAPI}
  */
 export class InfoApi extends BaseAPI {
+    /**
+     * Set configurable infos
+     * @summary Set configurable infos
+     * @param {ParamConfigurableInfo} body metric query request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InfoApi
+     */
+    public configureInfo(body: ParamConfigurableInfo, options?: RawAxiosRequestConfig) {
+        return InfoApiFp(this.configuration).configureInfo(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Get process info of OceanBase Dashboard, including process name etc.
      * @summary Get process info
@@ -8662,6 +8986,44 @@ export const OBProxyApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxyParameters: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBProxyParameters', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBProxyParameters', 'name', name)
+            const localVarPath = `/api/v1/obproxies/{namespace}/{name}/parameters`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Patch OBProxy with the specified parameters
          * @summary Patch OBProxy
          * @param {string} namespace namespace of obproxy deployment
@@ -8773,6 +9135,20 @@ export const OBProxyApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBProxyParameters(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBProxyParameters200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBProxyParameters(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBProxyApi.listOBProxyParameters']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Patch OBProxy with the specified parameters
          * @summary Patch OBProxy
          * @param {string} namespace namespace of obproxy deployment
@@ -8838,6 +9214,17 @@ export const OBProxyApiFactory = function (configuration?: Configuration, basePa
          */
         listOBProxies(ns?: string, options?: any): AxiosPromise<ListOBProxies200Response> {
             return localVarFp.listOBProxies(ns, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List OBProxy Parameters by namespace and name
+         * @summary List OBProxy Parameters
+         * @param {string} namespace namespace of obproxy deployment
+         * @param {string} name name of obproxy deployment
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBProxyParameters(namespace: string, name: string, options?: any): AxiosPromise<ListOBProxyParameters200Response> {
+            return localVarFp.listOBProxyParameters(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Patch OBProxy with the specified parameters
@@ -8909,6 +9296,19 @@ export class OBProxyApi extends BaseAPI {
      */
     public listOBProxies(ns?: string, options?: RawAxiosRequestConfig) {
         return OBProxyApiFp(this.configuration).listOBProxies(ns, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List OBProxy Parameters by namespace and name
+     * @summary List OBProxy Parameters
+     * @param {string} namespace namespace of obproxy deployment
+     * @param {string} name name of obproxy deployment
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBProxyApi
+     */
+    public listOBProxyParameters(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBProxyApiFp(this.configuration).listOBProxyParameters(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10625,10 +11025,11 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBClusterConnection: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOBClusterConnection: async (namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'namespace' is not null or undefined
             assertParamExists('createOBClusterConnection', 'namespace', namespace)
             // verify required parameter 'name' is not null or undefined
@@ -10650,6 +11051,10 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
             // authentication ApiKeyAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
 
+            if (channel !== undefined) {
+                localVarQueryParameter['channel'] = channel;
+            }
+
 
     
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -10666,10 +11071,11 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBTenantConnection: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOBTenantConnection: async (namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'namespace' is not null or undefined
             assertParamExists('createOBTenantConnection', 'namespace', namespace)
             // verify required parameter 'name' is not null or undefined
@@ -10690,6 +11096,10 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
 
             // authentication ApiKeyAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+            if (channel !== undefined) {
+                localVarQueryParameter['channel'] = channel;
+            }
 
 
     
@@ -10730,11 +11140,12 @@ export const TerminalApiFp = function(configuration?: Configuration) {
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOBClusterConnection(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBClusterConnection(namespace, name, options);
+        async createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBClusterConnection(namespace, name, channel, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TerminalApi.createOBClusterConnection']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10744,11 +11155,12 @@ export const TerminalApiFp = function(configuration?: Configuration) {
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOBTenantConnection(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBTenantConnection(namespace, name, options);
+        async createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ConnectDatabase200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOBTenantConnection(namespace, name, channel, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['TerminalApi.createOBTenantConnection']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -10778,22 +11190,24 @@ export const TerminalApiFactory = function (configuration?: Configuration, baseP
          * @summary Create oceanbase cluster connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBClusterConnection(namespace: string, name: string, options?: any): AxiosPromise<ConnectDatabase200Response> {
-            return localVarFp.createOBClusterConnection(namespace, name, options).then((request) => request(axios, basePath));
+        createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: any): AxiosPromise<ConnectDatabase200Response> {
+            return localVarFp.createOBClusterConnection(namespace, name, channel, options).then((request) => request(axios, basePath));
         },
         /**
          * Create oceanbase tenant connection terminal
          * @summary Create oceanbase tenant connection
          * @param {string} namespace namespace
          * @param {string} name name
+         * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOBTenantConnection(namespace: string, name: string, options?: any): AxiosPromise<ConnectDatabase200Response> {
-            return localVarFp.createOBTenantConnection(namespace, name, options).then((request) => request(axios, basePath));
+        createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: any): AxiosPromise<ConnectDatabase200Response> {
+            return localVarFp.createOBTenantConnection(namespace, name, channel, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -10822,12 +11236,13 @@ export class TerminalApi extends BaseAPI {
      * @summary Create oceanbase cluster connection
      * @param {string} namespace namespace
      * @param {string} name name
+     * @param {CreateOBClusterConnectionChannelEnum} [channel] channel
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TerminalApi
      */
-    public createOBClusterConnection(namespace: string, name: string, options?: RawAxiosRequestConfig) {
-        return TerminalApiFp(this.configuration).createOBClusterConnection(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    public createOBClusterConnection(namespace: string, name: string, channel?: CreateOBClusterConnectionChannelEnum, options?: RawAxiosRequestConfig) {
+        return TerminalApiFp(this.configuration).createOBClusterConnection(namespace, name, channel, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -10835,15 +11250,32 @@ export class TerminalApi extends BaseAPI {
      * @summary Create oceanbase tenant connection
      * @param {string} namespace namespace
      * @param {string} name name
+     * @param {CreateOBTenantConnectionChannelEnum} [channel] channel
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof TerminalApi
      */
-    public createOBTenantConnection(namespace: string, name: string, options?: RawAxiosRequestConfig) {
-        return TerminalApiFp(this.configuration).createOBTenantConnection(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    public createOBTenantConnection(namespace: string, name: string, channel?: CreateOBTenantConnectionChannelEnum, options?: RawAxiosRequestConfig) {
+        return TerminalApiFp(this.configuration).createOBTenantConnection(namespace, name, channel, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
+/**
+ * @export
+ */
+export const CreateOBClusterConnectionChannelEnum = {
+    TERMINAL: 'TERMINAL',
+    ODC: 'ODC'
+} as const;
+export type CreateOBClusterConnectionChannelEnum = typeof CreateOBClusterConnectionChannelEnum[keyof typeof CreateOBClusterConnectionChannelEnum];
+/**
+ * @export
+ */
+export const CreateOBTenantConnectionChannelEnum = {
+    TERMINAL: 'TERMINAL',
+    ODC: 'ODC'
+} as const;
+export type CreateOBTenantConnectionChannelEnum = typeof CreateOBTenantConnectionChannelEnum[keyof typeof CreateOBTenantConnectionChannelEnum];
 
 
 /**
@@ -11016,6 +11448,116 @@ export class UserApi extends BaseAPI {
      */
     public logout(options?: RawAxiosRequestConfig) {
         return UserApiFp(this.configuration).logout(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * WebhookApi - axios parameter creator
+ * @export
+ */
+export const WebhookApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logAlerts: async (body: PayloadWebhookPayload, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('logAlerts', 'body', body)
+            const localVarPath = `/api/v1/webhook/alert/log`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * WebhookApi - functional programming interface
+ * @export
+ */
+export const WebhookApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = WebhookApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async logAlerts(body: PayloadWebhookPayload, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetProcessInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.logAlerts(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['WebhookApi.logAlerts']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * WebhookApi - factory interface
+ * @export
+ */
+export const WebhookApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = WebhookApiFp(configuration)
+    return {
+        /**
+         * Log alerts sent by alertmanager.
+         * @summary Log alerts
+         * @param {PayloadWebhookPayload} body payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        logAlerts(body: PayloadWebhookPayload, options?: any): AxiosPromise<GetProcessInfo200Response> {
+            return localVarFp.logAlerts(body, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * WebhookApi - object-oriented interface
+ * @export
+ * @class WebhookApi
+ * @extends {BaseAPI}
+ */
+export class WebhookApi extends BaseAPI {
+    /**
+     * Log alerts sent by alertmanager.
+     * @summary Log alerts
+     * @param {PayloadWebhookPayload} body payload
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhookApi
+     */
+    public logAlerts(body: PayloadWebhookPayload, options?: RawAxiosRequestConfig) {
+        return WebhookApiFp(this.configuration).logAlerts(body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

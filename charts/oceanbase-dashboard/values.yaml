@@ -4,6 +4,7 @@ adminPassword:
 
 userCredentials: 
 userNamespace: 
+configNamespace: 
 
 service:
   type: NodePort

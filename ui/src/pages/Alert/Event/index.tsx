@@ -1,11 +1,12 @@
 import { alert } from '@/api';
 import type {
-  AlarmServerity,
+  AlarmSeverity,
   AlertAlert,
   AlertStatus,
   OceanbaseOBInstance,
 } from '@/api/generated';
-import { ALERT_STATE_MAP, SERVERITY_MAP } from '@/constants';
+import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
+import { intl } from '@/utils/intl';
 import { history } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
@@ -19,63 +20,99 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
+import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
+import RuleDrawerForm from '../Rules/RuleDrawerForm';
 import { sortEvents } from '../helper';
 const { Text } = Typography;
 
 export default function Event() {
   const [form] = Form.useForm();
+  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [editRuleName, setEditRuleName] = useState<string>();
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
   );
+  const editRule = (rule: string) => {
+    setEditRuleName(rule);
+    setDrawerOpen(true);
+  };
+
   const listAlerts = sortEvents(listAlertsRes?.data || []);
   const columns: ColumnsType<AlertAlert> = [
     {
-      title: '告警事件',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.19D28466',
+        defaultMessage: '告警事件',
+      }),
       dataIndex: 'summary',
       key: 'summary',
+      width:'25%',
       render: (val, record) => {
         return (
-          <Button
-            onClick={() => history.push(`/alert/rules?rule=${record.rule}`)}
-            type="link"
-          >
-            <Tooltip title={record.description}>{val}</Tooltip>
+          <Button onClick={() => editRule(record.rule)} type="link">
+            <Tooltip title={record.description}>
+              <div
+                style={{
+                  whiteSpace: 'break-spaces',
+                  textAlign: 'left',
+                }}
+              >
+                {val}
+              </div>
+            </Tooltip>
           </Button>
         );
       },
     },
     {
-      title: '告警对象',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.EDED9514',
+        defaultMessage: '告警对象',
+      }),
       dataIndex: 'instance',
       key: 'instance',
       render: (instance: OceanbaseOBInstance) => (
         <Text>
-          对象：{instance[instance.type]}
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.3EAC0543',
+            defaultMessage: '对象：',
+          })}
+          {instance[instance.type]}
           <br />
-          类型：{instance.type}
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.AB6EB56A',
+            defaultMessage: '类型：',
+          })}
+          {instance.type}
         </Text>
       ),
     },
     {
-      title: '告警等级',
-      dataIndex: 'serverity',
-      key: 'serverity',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.8BDBE511',
+        defaultMessage: '告警等级',
+      }),
+      dataIndex: 'severity',
+      key: 'severity',
       sorter: (preRecord, curRecord) => {
         return (
-          SERVERITY_MAP[preRecord.serverity].weight -
-          SERVERITY_MAP[curRecord.serverity].weight
+          SEVERITY_MAP[preRecord.severity].weight -
+          SEVERITY_MAP[curRecord.severity].weight
         );
       },
-      render: (serverity: AlarmServerity) => (
-        <Tag color={SERVERITY_MAP[serverity]?.color}>
-          {SERVERITY_MAP[serverity]?.label}
+      render: (severity: AlarmSeverity) => (
+        <Tag color={SEVERITY_MAP[severity]?.color}>
+          {SEVERITY_MAP[severity]?.label}
         </Tag>
       ),
     },
     {
-      title: '告警状态',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.26E65D10',
+        defaultMessage: '告警状态',
+      }),
       dataIndex: 'status',
       key: 'status',
       sorter: (preRecord, curRecord) => {
@@ -91,25 +128,34 @@ export default function Event() {
       ),
     },
     {
-      title: '产生时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.90B9AC55',
+        defaultMessage: '产生时间',
+      }),
       dataIndex: 'startsAt',
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
-      title: '结束时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.929C9905',
+        defaultMessage: '结束时间',
+      }),
       dataIndex: 'endsAt',
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
       render: (endsAt: number) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Event.BD73F875',
+        defaultMessage: '操作',
+      }),
       key: 'action',
       render: (_, record) => (
         <Button
@@ -129,17 +175,34 @@ export default function Event() {
             );
           }}
         >
-          屏蔽
+          {intl.formatMessage({
+            id: 'src.pages.Alert.Event.2BBFF587',
+            defaultMessage: '屏蔽',
+          })}
         </Button>
       ),
     },
   ];
+
+  const drawerClose = () => {
+    setEditRuleName(undefined);
+    setDrawerOpen(false);
+  };
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
         <AlarmFilter depend={getListAlerts} form={form} type="event" />
       </Card>
-      <Card title={<h2 style={{ marginBottom: 0 }}>事件列表</h2>}>
+      <Card
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Event.0358EEE4',
+              defaultMessage: '事件列表',
+            })}
+          </h2>
+        }
+      >
         <Table
           columns={columns}
           dataSource={listAlerts}
@@ -148,6 +211,12 @@ export default function Event() {
           // scroll={{ x: 1500 }}
         />
       </Card>
+      <RuleDrawerForm
+        width={880}
+        open={drawerOpen}
+        ruleName={editRuleName}
+        onClose={drawerClose}
+      />
     </Space>
   );
 }

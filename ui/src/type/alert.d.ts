@@ -1,4 +1,4 @@
-import type { AlarmMatcher, OceanbaseOBInstanceType } from '@/api/generated';
+import type { AlarmMatcher } from '@/api/generated';
 import type { Dayjs } from 'dayjs';
 
 declare namespace Alert {
@@ -9,8 +9,9 @@ declare namespace Alert {
     rules?: string[];
   };
   type InstancesKey = 'obcluster' | 'observer' | 'obtenant';
+  type AlarmLevel = 'critical' | 'warning' | 'caution' | 'info';
   type InstancesType = {
-    type: OceanbaseOBInstanceType;
+    type: InstancesKey;
     obcluster: string[];
     observer?: string[];
     obtenant?: string[];
@@ -23,6 +24,7 @@ declare namespace Alert {
       value?: string;
     }[];
     endsAt: Dayjs;
+    rules: string[];
     id?: string;
     comment: string;
   };

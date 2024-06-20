@@ -2,9 +2,10 @@ import type { OceanbaseOBInstanceType } from '@/api/generated';
 import {
   LEVER_OPTIONS_ALARM,
   OBJECT_OPTIONS_ALARM,
-  SERVERITY_MAP,
+  SEVERITY_MAP,
 } from '@/constants';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useModel } from '@umijs/max';
 import { useDebounceFn, useUpdateEffect } from 'ahooks';
@@ -43,28 +44,60 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
       }));
     }
     if (type === 'obtenant') {
-      return (list as Alert.TenantsList[]).map((cluster) => ({
-        label: <span>{cluster.clusterName}</span>,
-        title: cluster.clusterName,
-        options: cluster.tenants?.map((item) => ({
-          value: item,
-          label: item,
-        })),
-      }));
+      return (list as Alert.TenantsList[])
+        .map((cluster) => ({
+          label: <span>{cluster.clusterName}</span>,
+          title: cluster.clusterName,
+          options: cluster.tenants?.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        }))
+        .filter((item) => item.options?.length);
     }
     if (type === 'observer') {
-      return (list as Alert.ServersList[]).map((cluster) => ({
-        label: <span>{cluster.clusterName}</span>,
-        title: cluster.clusterName,
-        options: cluster.servers?.map((item) => ({
-          value: item,
-          label: item,
-        })),
-      }));
+      return (list as Alert.ServersList[])
+        .map((cluster) => ({
+          label: <span>{cluster.clusterName}</span>,
+          title: cluster.clusterName,
+          options: cluster.servers?.map((item) => ({
+            value: item,
+            label: item,
+          })),
+        }))
+        .filter((item) => item.options?.length);
     }
   };
   const { run: debounceDepend } = useDebounceFn(depend, { wait: 500 });
-  const formData = Form.useWatch([], form) as { [T: string]: string | object };
+  const formData: any = Form.useWatch([], form);
+
+  const findClusterName = (
+    list: API.SimpleClusterList | API.TenantDetail[],
+    type: 'obtenant' | 'observer',
+    target: string,
+  ) => {
+    if (type === 'observer') {
+      return (
+        (list as API.SimpleClusterList).find((cluster) => {
+          return cluster.topology.some((zone) =>
+            zone.observers.some((server) => server.address === target),
+          );
+        })?.clusterName || ''
+      );
+    }
+    if (type === 'obtenant') {
+      const clusterResourceName = (list as API.TenantDetail[]).find(
+        (tenant) => {
+          return tenant.tenantName === target;
+        },
+      )?.clusterResourceName;
+      if (clusterResourceName) {
+        return clusterList?.find(
+          (cluster) => cluster.name === clusterResourceName,
+        )?.clusterName;
+      }
+    }
+  };
   useEffect(() => {
     if (type === 'event') {
       setVisibleConfig({
@@ -130,6 +163,20 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
           filter[key] = Math.ceil(formData[key].valueOf() / 1000);
         } else if (key === 'instance' && formData[key]?.type) {
           const temp = {};
+          if (formData[key]?.obtenant) {
+            formData[key].obcluster = findClusterName(
+              tenantList!,
+              'obtenant',
+              formData[key]?.obtenant,
+            );
+          }
+          if (formData[key]?.observer) {
+            formData[key].obcluster = findClusterName(
+              clusterList!,
+              'observer',
+              formData[key]?.observer,
+            );
+          }
           Object.keys(formData[key]).forEach((innerKey) => {
             if (formData[key][innerKey]) {
               temp[innerKey] = formData[key][innerKey];
@@ -139,10 +186,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         }
       }
     });
-    if(filter.instance){
-      if(Object.keys(filter.instance).length === 1 && filter.instance?.type){
-        filter.instanceType = filter.instance.type
-        delete filter.instance
+    if (filter.instance) {
+      if (Object.keys(filter.instance).length === 1 && filter.instance?.type) {
+        filter.instanceType = filter.instance.type;
+        delete filter.instance;
       }
     }
     debounceDepend(filter);
@@ -152,16 +199,22 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
     <Form form={form}>
       <Row>
         {visibleConfig.objectType && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
-              label="对象类型"
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.95B30216',
+                defaultMessage: '对象类型',
+              })}
               name={['instance', 'type']}
             >
               <Select
                 allowClear
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.0FEF961B',
+                  defaultMessage: '请选择',
+                })}
                 options={OBJECT_OPTIONS_ALARM}
               />
             </Form.Item>
@@ -169,22 +222,36 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.object && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item noStyle dependencies={[['instance', 'type']]}>
               {({ getFieldValue }) => {
                 return (
                   <Form.Item
-                    wrapperCol={{ span: 18 }}
-                    labelCol={{ span: 9 }}
+                    wrapperCol={{ span: 16 }}
+                    labelCol={{ span: 6 }}
                     name={['instance', getFieldValue(['instance', 'type'])]}
-                    label={type === 'event' ? '告警对象' : '屏蔽对象'}
+                    label={
+                      type === 'event'
+                        ? intl.formatMessage({
+                            id: 'src.pages.Alert.AlarmFilter.D2CA6B61',
+                            defaultMessage: '告警对象',
+                          })
+                        : intl.formatMessage({
+                            id: 'src.pages.Alert.AlarmFilter.F8F0181A',
+                            defaultMessage: '屏蔽对象',
+                          })
+                    }
                   >
                     <Select
                       style={{ width: '100%' }}
+                      allowClear
                       options={getOptionsFromType(
                         getFieldValue(['instance', 'type']),
                       )}
-                      placeholder="请选择"
+                      placeholder={intl.formatMessage({
+                        id: 'src.pages.Alert.AlarmFilter.D5B81118',
+                        defaultMessage: '请选择',
+                      })}
                     />
                   </Form.Item>
                 );
@@ -194,20 +261,30 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.level && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
-              label="告警等级"
-              name={'serverity'}
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.F190260B',
+                defaultMessage: '告警等级',
+              })}
+              name={'severity'}
             >
               <Select
                 allowClear
-                placeholder="请选择"
-                options={LEVER_OPTIONS_ALARM?.map((item) => ({
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.55C14EBD',
+                  defaultMessage: '请选择',
+                })}
+                options={LEVER_OPTIONS_ALARM!.map((item) => ({
                   value: item.value,
                   label: (
-                    <Tag color={SERVERITY_MAP[item.value]?.color}>
+                    <Tag
+                      color={
+                        SEVERITY_MAP[item.value as Alert.AlarmLevel]?.color
+                      }
+                    >
                       {item.label}
                     </Tag>
                   ),
@@ -218,29 +295,43 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.keyword && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
-              label="关键词"
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.827153E6',
+                defaultMessage: '关键词',
+              })}
               name={'keyword'}
             >
-              <Input placeholder="请输入关键词" />
+              <Input
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.E48EC601',
+                  defaultMessage: '请输入关键词',
+                })}
+              />
             </Form.Item>
           </Col>
         )}
 
         {visibleConfig.startTime && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
-              label="开始时间"
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.B37ACE1B',
+                defaultMessage: '开始时间',
+              })}
               name={'startTime'}
             >
               <DatePicker
                 style={{ width: '100%' }}
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.8C7CB828',
+                  defaultMessage: '请选择',
+                })}
                 showTime
                 onChange={(value, dateString) => {
                   console.log('Selected Time: ', value);
@@ -252,15 +343,21 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
         )}
 
         {visibleConfig.endTime && (
-          <Col span={8}>
+          <Col span={6}>
             <Form.Item
               name={'endTime'}
-              wrapperCol={{ span: 18 }}
-              labelCol={{ span: 9 }}
-              label="结束时间"
+              wrapperCol={{ span: 16 }}
+              labelCol={{ span: 6 }}
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.4B625D3F',
+                defaultMessage: '结束时间',
+              })}
             >
               <DatePicker
-                placeholder="请选择"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Alert.AlarmFilter.057C32B9',
+                  defaultMessage: '请选择',
+                })}
                 style={{ width: '100%' }}
                 showTime
                 onChange={(value, dateString) => {
@@ -274,17 +371,28 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
       </Row>
       <div style={{ float: 'right' }}>
         <Button type="link" onClick={() => form.resetFields()}>
-          重置
+          {intl.formatMessage({
+            id: 'src.pages.Alert.AlarmFilter.6AF2BC90',
+            defaultMessage: '重置',
+          })}
         </Button>
         {type === 'event' &&
           (isExpand ? (
             <Button onClick={() => setIsExpand(false)} type="link">
-              收起
+              {intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.6380D62A',
+                defaultMessage: '收起',
+              })}
+
               <UpOutlined />
             </Button>
           ) : (
             <Button onClick={() => setIsExpand(true)} type="link">
-              展开
+              {intl.formatMessage({
+                id: 'src.pages.Alert.AlarmFilter.A578D30E',
+                defaultMessage: '展开',
+              })}
+
               <DownOutlined />
             </Button>
           ))}

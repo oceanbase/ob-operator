@@ -21,4 +21,5 @@ import (
 func InitUserRoutes(g *gin.RouterGroup) {
 	g.POST("/login", h.Wrap(h.Login))
 	g.POST("/logout", h.Wrap(h.Logout))
+	g.POST("/auth/:token", h.Wrap(h.Authz))
 }

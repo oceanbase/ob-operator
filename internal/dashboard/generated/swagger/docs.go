@@ -495,7 +495,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/route.Route"
+                            "$ref": "#/definitions/route.RouteParam"
                         }
                     }
                 ],
@@ -1585,6 +1585,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/configurable-infos": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Set configurable infos",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Info"
+                ],
+                "summary": "Set configurable infos",
+                "operationId": "ConfigureInfo",
+                "parameters": [
+                    {
+                        "description": "metric query request body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ConfigurableInfo"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/conn/{terminalId}": {
             "get": {
                 "security": [
@@ -2590,6 +2648,16 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -3183,6 +3251,79 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/obproxy.OBProxy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/obproxies/{namespace}/{name}/parameters": {
+            "get": {
+                "description": "List OBProxy Parameters by namespace and name",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBProxy"
+                ],
+                "summary": "List OBProxy Parameters",
+                "operationId": "ListOBProxyParameters",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "namespace of obproxy deployment",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "name of obproxy deployment",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/obproxy.ConfigItem"
+                                            }
                                         }
                                     }
                                 }
@@ -4578,6 +4719,16 @@ const docTemplate = `{
                         "name": "name",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "TERMINAL",
+                            "ODC"
+                        ],
+                        "type": "string",
+                        "description": "channel",
+                        "name": "channel",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -5479,6 +5630,26 @@ const docTemplate = `{
                 }
             }
         },
+        "obproxy.ConfigItem": {
+            "type": "object",
+            "properties": {
+                "info": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "needReboot": {
+                    "type": "boolean"
+                },
+                "value": {
+                    "type": "string"
+                },
+                "visibleLevel": {
+                    "type": "string"
+                }
+            }
+        },
         "obproxy.CreateOBProxyParam": {
             "type": "object",
             "required": [
@@ -5568,11 +5739,12 @@ const docTemplate = `{
                 "resource",
                 "service",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5616,8 +5788,15 @@ const docTemplate = `{
                 "serviceIp": {
                     "type": "string"
                 },
-                "status": {
+                "serviceType": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
@@ -5632,11 +5811,12 @@ const docTemplate = `{
                 "proxyClusterName",
                 "replicas",
                 "serviceIp",
+                "serviceType",
                 "status"
             ],
             "properties": {
                 "creationTime": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "image": {
                     "type": "string"
@@ -5659,28 +5839,29 @@ const docTemplate = `{
                 "serviceIp": {
                     "type": "string"
                 },
-                "status": {
+                "serviceType": {
                     "type": "string"
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "Running",
+                        "Pending"
+                    ]
                 }
             }
         },
         "obproxy.PatchOBProxyParam": {
             "type": "object",
             "properties": {
-                "addedParameters": {
+                "image": {
+                    "type": "string"
+                },
+                "parameters": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/common.KVPair"
                     }
-                },
-                "deletedParameters": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "image": {
-                    "type": "string"
                 },
                 "replicas": {
                     "type": "integer"
@@ -5765,6 +5946,14 @@ const docTemplate = `{
                 },
                 "user": {
                     "description": "Description: The user name of the database account, only root is supported now.",
+                    "type": "string"
+                }
+            }
+        },
+        "param.ConfigurableInfo": {
+            "type": "object",
+            "properties": {
+                "odcURL": {
                     "type": "string"
                 }
             }
@@ -6597,6 +6786,17 @@ const docTemplate = `{
                 }
             }
         },
+        "response.ConfigurableInfo": {
+            "type": "object",
+            "required": [
+                "odcURL"
+            ],
+            "properties": {
+                "odcURL": {
+                    "type": "string"
+                }
+            }
+        },
         "response.ContainerInfo": {
             "type": "object",
             "required": [
@@ -6643,6 +6843,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "appName",
+                "configurableInfo",
                 "publicKey",
                 "reportHost",
                 "reportStatistics",
@@ -6651,6 +6852,9 @@ const docTemplate = `{
             "properties": {
                 "appName": {
                     "type": "string"
+                },
+                "configurableInfo": {
+                    "$ref": "#/definitions/response.ConfigurableInfo"
                 },
                 "publicKey": {
                     "type": "string"
@@ -6878,6 +7082,13 @@ const docTemplate = `{
         },
         "response.K8sService": {
             "type": "object",
+            "required": [
+                "clusterIP",
+                "name",
+                "namespace",
+                "ports",
+                "type"
+            ],
             "properties": {
                 "clusterIP": {
                     "type": "string"
@@ -6904,9 +7115,16 @@ const docTemplate = `{
         },
         "response.K8sServicePort": {
             "type": "object",
+            "required": [
+                "port",
+                "targetPort"
+            ],
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "nodePort": {
+                    "type": "integer"
                 },
                 "port": {
                     "type": "integer"
@@ -7263,6 +7481,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "namespace": {
+                    "type": "string"
+                },
+                "odcConnectionURL": {
                     "type": "string"
                 },
                 "pod": {
@@ -7867,7 +8088,7 @@ const docTemplate = `{
                 }
             }
         },
-        "route.Route": {
+        "route.RouteParam": {
             "type": "object",
             "required": [
                 "aggregateLabels",
@@ -7889,6 +8110,9 @@ const docTemplate = `{
                 },
                 "groupWait": {
                     "type": "integer"
+                },
+                "id": {
+                    "type": "string"
                 },
                 "matchers": {
                     "type": "array",

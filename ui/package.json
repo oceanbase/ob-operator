@@ -8,6 +8,8 @@
     "gen:api": "openapi-generator-cli generate -i ../internal/dashboard/generated/swagger/swagger.yaml -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
     "postinstall": "max setup",
     "lint": "eslint src",
+    "oic:clear": "oic --configPath ./must.cjs --clear",
+    "oic:extract": "oic --configPath ./must.cjs --extract",
     "prepare": "cd .. && husky ui/.husky",
     "setup": "max setup",
     "start": "npm run dev"
@@ -30,6 +32,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
+    "@oceanbase-odc/ob-intl-cli": "^2.0.9",
     "@types/lodash": "^4.14.197",
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",

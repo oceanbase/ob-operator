@@ -43,4 +43,67 @@ export default {
     message: '',
     successful: true,
   },
+
+  '/api/v1/obclusters': {
+    data: [
+      {
+        clusterId: 0,
+        clusterName: 'string',
+        createTime: 0,
+        image: 'string',
+        mode: 'NORMAL',
+        name: 'string',
+        namespace: 'string',
+        status: 'string',
+        statusDetail: 'string',
+        topology: [
+          {
+            affinities: [
+              {
+                key: 'string',
+                type: 'NODE',
+                value: 'string',
+              },
+            ],
+            name: 'string',
+            namespace: 'string',
+            nodeSelector: [
+              {
+                key: 'string',
+                value: 'string',
+              },
+            ],
+            observers: [
+              {
+                address: 'string',
+                metrics: {
+                  cpuPercent: 0,
+                  diskPercent: 0,
+                  memoryPercent: 0,
+                },
+                name: 'string',
+                namespace: 'string',
+                status: 'string',
+                statusDetail: 'string',
+              },
+            ],
+            replicas: 0,
+            rootService: 'string',
+            status: 'string',
+            statusDetail: 'string',
+            tolerations: [
+              {
+                key: 'string',
+                value: 'string',
+              },
+            ],
+            zone: 'string',
+          },
+        ],
+        uid: 'string',
+      },
+    ],
+    message: 'string',
+    successful: true,
+  },
 };

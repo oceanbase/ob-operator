@@ -14,6 +14,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/mcuadros/go-defaults"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/receiver"
@@ -180,6 +182,7 @@ func GetRule(ctx *gin.Context) (*rule.RuleResponse, error) {
 // @Security ApiKeyAuth
 func CreateOrUpdateRule(ctx *gin.Context) (*rule.RuleResponse, error) {
 	rule := &rule.Rule{}
+	defaults.SetDefaults(rule)
 	err := ctx.Bind(rule)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
@@ -353,7 +356,7 @@ func GetRoute(ctx *gin.Context) (*route.RouteResponse, error) {
 // @Description Create or update alarm route.
 // @Accept application/json
 // @Produce application/json
-// @Param body body route.Route true "route"
+// @Param body body route.RouteParam true "route"
 // @Success 200 object response.APIResponse{data=route.RouteResponse}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -361,7 +364,7 @@ func GetRoute(ctx *gin.Context) (*route.RouteResponse, error) {
 // @Router /api/v1/alarm/route/routes [PUT]
 // @Security ApiKeyAuth
 func CreateOrUpdateRoute(ctx *gin.Context) (*route.RouteResponse, error) {
-	route := &route.Route{}
+	route := &route.RouteParam{}
 	err := ctx.Bind(route)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())

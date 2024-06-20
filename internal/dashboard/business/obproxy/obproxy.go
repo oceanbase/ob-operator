@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -140,19 +141,14 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 	}
 
 	parametersUpdated := false
-	if param.AddedParameters != nil || param.DeletedParameters != nil {
-		_, err := updateConfigMap(ctx, ns, name, param)
+	if param.Parameters != nil {
+		changed, err := doesParametersChanged(ctx, ns, name, param)
 		if err != nil {
 			return nil, err
 		}
-		parametersUpdated = true
-	}
-	if updated {
-		deployment, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Update(ctx, deploy, metav1.UpdateOptions{})
-		if err != nil {
-			return nil, httpErr.NewInternal("Failed to update obproxy, err msg: " + err.Error())
+		if changed {
+			parametersUpdated = true
 		}
-		return buildOBProxy(ctx, deployment)
 	}
 	odp, err := buildOBProxy(ctx, deploy)
 	if err != nil {
@@ -168,13 +164,26 @@ func PatchOBProxy(ctx context.Context, ns, name string, param *obproxy.PatchOBPr
 			if err != nil {
 				return nil, httpErr.NewInternal("Failed to get oceanbase connection by host " + pod.PodIP)
 			}
-			for _, param := range param.AddedParameters {
-				err = conn.ExecWithDefaultTimeout(ctx, fmt.Sprintf("ALTER proxyconfig SET %s = %s;", param.Key, param.Value))
+			for _, param := range param.Parameters {
+				err = conn.ExecWithDefaultTimeout(ctx, fmt.Sprintf("ALTER proxyconfig SET %s = ?;", param.Key), param.Value)
 				if err != nil {
 					return nil, httpErr.NewInternal("Failed to update obproxy config, err msg: " + err.Error())
 				}
 			}
 		}
+	}
+	if parametersUpdated {
+		_, err := updateConfigMap(ctx, ns, name, param)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if updated || parametersUpdated {
+		deployment, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Update(ctx, deploy, metav1.UpdateOptions{})
+		if err != nil {
+			return nil, httpErr.NewInternal("Failed to update obproxy, err msg: " + err.Error())
+		}
+		return buildOBProxy(ctx, deployment)
 	}
 	return odp, nil
 }
@@ -208,4 +217,32 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
 	}
 	return deleted, nil
+}
+
+func ListOBProxyParameters(ctx context.Context, ns string, name string) ([]obproxy.ConfigItem, error) {
+	items := make([]obproxy.ConfigItem, 0)
+	deploy, err := client.GetClient().ClientSet.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewNotFound("OBProxy not found")
+		}
+		return nil, httpErr.NewInternal("Failed to get obproxy, err msg: " + err.Error())
+	}
+	odp, err := buildOBProxy(ctx, deploy)
+	if err != nil {
+		return nil, err
+	}
+	for _, pod := range odp.Pods {
+		conn, err := utils.GetOBConnectionByHost(ctx, odp.Namespace, pod.PodIP, "root", "proxysys", odp.ProxySysSecret, 2883)
+		if err != nil {
+			logrus.Infof("Failed to get oceanbase connection by host %s", pod.PodIP)
+			continue
+		}
+		err = conn.QueryList(ctx, &items, "SHOW PROXYCONFIG;")
+		if err != nil {
+			return nil, httpErr.NewInternal("Failed to list obproxy config, err msg: " + err.Error())
+		}
+		return items, nil
+	}
+	return items, nil
 }

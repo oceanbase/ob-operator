@@ -135,3 +135,25 @@ func DeleteOBProxy(c *gin.Context) (*obproxy.OBProxy, error) {
 	}
 	return biz.DeleteOBProxy(c, nn.Namespace, nn.Name)
 }
+
+// @ID ListOBProxyParameters
+// @Summary List OBProxy Parameters
+// @Description List OBProxy Parameters by namespace and name
+// @Tags OBProxy
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "namespace of obproxy deployment"
+// @Param name path string true "name of obproxy deployment"
+// @Success 200 object response.APIResponse{data=[]obproxy.ConfigItem}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obproxies/{namespace}/{name}/parameters [GET]
+func ListOBProxyParameters(c *gin.Context) ([]obproxy.ConfigItem, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return biz.ListOBProxyParameters(c, nn.Namespace, nn.Name)
+}

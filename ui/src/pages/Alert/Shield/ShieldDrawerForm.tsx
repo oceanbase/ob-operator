@@ -3,27 +3,21 @@ import { AlarmMatcher } from '@/api/generated';
 import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
+import { VALIDATE_DEBOUNCE } from '@/constants';
+import { LABEL_NAME_RULE } from '@/constants/rules';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import {
-  Button,
-  Col,
-  DatePicker,
-  Form,
-  Input,
-  Radio,
-  Row,
-  Select,
-  message,
-} from 'antd';
+import { Button, Col, DatePicker, Form, Input, Radio, Row, Select, message } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import {
   formatShieldSubmitData,
   getInstancesFromRes,
   getSelectList,
+  validateLabelValues,
 } from '../helper';
 import ShieldObjInput from './ShieldObjInput';
 
@@ -56,6 +50,7 @@ export default function ShieldDrawerForm({
         isRegex: false,
       },
     ],
+
     instances: {
       type: 'obcluster',
     },
@@ -76,6 +71,10 @@ export default function ShieldDrawerForm({
   };
 
   const submit = (values: Alert.ShieldDrawerForm) => {
+    if (!values.matchers) values.matchers = [];
+    values.matchers = values.matchers.filter(
+      (matcher) => matcher.name && matcher.value,
+    );
     const _clusterList = getSelectList(
       clusterList!,
       values.instances.type,
@@ -86,7 +85,12 @@ export default function ShieldDrawerForm({
       .createOrUpdateSilencer(formatShieldSubmitData(values, _clusterList))
       .then(({ successful }) => {
         if (successful) {
-          message.success('操作成功!');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Alert.Shield.04F03990',
+              defaultMessage: '操作成功!',
+            }),
+          );
           submitCallback && submitCallback();
           onClose();
         }
@@ -100,7 +104,7 @@ export default function ShieldDrawerForm({
           form.setFieldsValue({
             comment: data.comment,
             matchers: data.matchers,
-            endsAt: dayjs(data.endsAt),
+            endsAt: dayjs(data.endsAt * 1000),
             instances: getInstancesFromRes(data.instances),
             rules: data.rules,
           });
@@ -116,7 +120,10 @@ export default function ShieldDrawerForm({
       }}
       destroyOnClose={true}
       onSubmit={() => form.submit()}
-      title="屏蔽条件"
+      title={intl.formatMessage({
+        id: 'src.pages.Alert.Shield.BBB1C040',
+        defaultMessage: '屏蔽条件',
+      })}
       {...props}
     >
       <Form
@@ -130,11 +137,17 @@ export default function ShieldDrawerForm({
           rules={[
             {
               required: true,
-              message: '请选择',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Shield.1EFE1B33',
+                defaultMessage: '请选择',
+              }),
             },
           ]}
           name={['instances', 'type']}
-          label="屏蔽对象类型"
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.3F7E9AA4',
+            defaultMessage: '屏蔽对象类型',
+          })}
         >
           <Radio.Group
             onChange={() => {
@@ -147,55 +160,92 @@ export default function ShieldDrawerForm({
               });
             }}
           >
-            <Radio value="obcluster"> 集群 </Radio>
-            <Radio value="obtenant"> 租户 </Radio>
+            <Radio value="obcluster">
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.A4A5A44C',
+                defaultMessage: '集群',
+              })}
+            </Radio>
+            <Radio value="obtenant">
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.3B8541B0',
+                defaultMessage: '租户',
+              })}
+            </Radio>
             <Radio value="observer"> OBServer </Radio>
           </Radio.Group>
         </Form.Item>
-        <Form.Item style={{ marginBottom: 0 }} label="屏蔽对象">
+        <Form.Item
+          style={{ marginBottom: 0 }}
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.68A6FF3F',
+            defaultMessage: '屏蔽对象',
+          })}
+        >
           <ShieldObjInput shieldObjType={shieldObjType} form={form} />
         </Form.Item>
         <Form.Item
           rules={[
             {
               required: true,
-              message: '请选择',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Shield.248B977C',
+                defaultMessage: '请选择',
+              }),
             },
           ]}
           name={'rules'}
-          label="屏蔽告警规则"
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.376304F5',
+            defaultMessage: '屏蔽告警规则',
+          })}
         >
           <Select
             mode="multiple"
             allowClear
             style={{ width: '100%' }}
-            placeholder="请选择"
+            placeholder={intl.formatMessage({
+              id: 'src.pages.Alert.Shield.0A4B5A6C',
+              defaultMessage: '请选择',
+            })}
             options={listRules}
           />
         </Form.Item>
         <Form.Item
           name={'matchers'}
+          validateFirst
+          validateDebounce={VALIDATE_DEBOUNCE}
           rules={[
             {
               validator: (_, value: AlarmMatcher[]) => {
-                if (
-                  value.length &&
-                  value.find((item) => !item.name || !item.value)
-                ) {
-                  return Promise.reject('请检查标签输入');
+                if (!validateLabelValues(value)) {
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.pages.Alert.Shield.ED437281',
+                      defaultMessage: '请检查标签是否完整输入',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
             },
+            LABEL_NAME_RULE,
           ]}
           label={
             <IconTip
-              tip="支持对指定的指标进行屏蔽，如慢 SQL告警，支持对 SQLID 进行过滤，支持正则表达式"
-              content={'标签'}
+              tip={intl.formatMessage({
+                id: 'src.pages.Alert.Shield.43E9A1E1',
+                defaultMessage:
+                  '按照标签匹配条件屏蔽告警，支持值匹配或者正则表达式，当所有条件都满足时告警才会被屏蔽',
+              })}
+              content={intl.formatMessage({
+                id: 'src.pages.Alert.Shield.C4C1B8A3',
+                defaultMessage: '标签',
+              })}
             />
           }
         >
-          <InputLabelComp regex={true} maxLength={8} defaulLabelName='name'/>
+          <InputLabelComp regex={true} maxLength={8} defaulLabelName="name" />
         </Form.Item>
         <Row style={{ alignItems: 'center' }}>
           <Col>
@@ -203,11 +253,17 @@ export default function ShieldDrawerForm({
               rules={[
                 {
                   required: true,
-                  message: '请选择',
+                  message: intl.formatMessage({
+                    id: 'src.pages.Alert.Shield.3D1B719E',
+                    defaultMessage: '请选择',
+                  }),
                 },
               ]}
               name="endsAt"
-              label="屏蔽结束时间"
+              label={intl.formatMessage({
+                id: 'src.pages.Alert.Shield.11B30410',
+                defaultMessage: '屏蔽结束时间',
+              })}
             >
               <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" />
             </Form.Item>
@@ -217,19 +273,28 @@ export default function ShieldDrawerForm({
               type="link"
               onClick={() => fieldEndTimeChange(6 * 3600 * 1000)}
             >
-              6小时
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.0CCBF1B7',
+                defaultMessage: '6小时',
+              })}
             </Button>
             <Button
               type="link"
               onClick={() => fieldEndTimeChange(12 * 3600 * 1000)}
             >
-              12小时
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.00AF8CB8',
+                defaultMessage: '12小时',
+              })}
             </Button>
             <Button
               type="link"
               onClick={() => fieldEndTimeChange(24 * 3600 * 1000)}
             >
-              1天
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.42A3A94B',
+                defaultMessage: '1天',
+              })}
             </Button>
             <Button
               onClick={() =>
@@ -237,7 +302,10 @@ export default function ShieldDrawerForm({
               }
               type="link"
             >
-              永久
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.FDAD010D',
+                defaultMessage: '永久',
+              })}
             </Button>
           </Col>
         </Row>
@@ -245,13 +313,25 @@ export default function ShieldDrawerForm({
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.pages.Alert.Shield.1AC4B3C9',
+                defaultMessage: '请输入',
+              }),
             },
           ]}
           name={'comment'}
-          label="备注信息"
+          label={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.01368558',
+            defaultMessage: '备注信息',
+          })}
         >
-          <TextArea rows={4} placeholder="请输入" />
+          <TextArea
+            rows={4}
+            placeholder={intl.formatMessage({
+              id: 'src.pages.Alert.Shield.E49D589A',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Form>
     </AlertDrawer>

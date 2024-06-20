@@ -34,7 +34,16 @@ type OBProxyOverview struct {
 	ProxyClusterName string    `json:"proxyClusterName" binding:"required"`
 	Image            string    `json:"image" binding:"required"`
 	Replicas         int32     `json:"replicas" binding:"required"`
+	ServiceType      string    `json:"serviceType" binding:"required"`
 	ServiceIP        string    `json:"serviceIp" binding:"required"`
-	CreationTime     string    `json:"creationTime" binding:"required"`
-	Status           string    `json:"status" binding:"required"`
+	CreationTime     int64     `json:"creationTime" binding:"required"`
+	Status           string    `json:"status" binding:"required" enums:"Running,Pending"`
+}
+
+type ConfigItem struct {
+	Name         string `json:"name"`
+	Value        string `json:"value"`
+	Info         string `json:"info"`
+	NeedReboot   bool   `json:"needReboot" db:"need_reboot"`
+	VisibleLevel string `json:"visibleLevel" db:"visible_level"`
 }

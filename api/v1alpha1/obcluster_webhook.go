@@ -221,13 +221,15 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			return nil, errors.New("Assigned CPU is larger than new CPU size")
 		}
 	}
-	if r.Spec.BackupVolume == nil && oldCluster.Spec.BackupVolume != nil {
-		return nil, errors.New("forbid to remove backup volume")
-	}
 	var err error
-	if r.Spec.BackupVolume != nil && oldCluster.Spec.BackupVolume == nil {
+	if (r.Spec.BackupVolume == nil) != (oldCluster.Spec.BackupVolume == nil) {
 		if !oldCluster.SupportStaticIP() {
-			err = errors.New("forbid to add backup volume to non-static-ip cluster")
+			err = errors.New("forbid to add/remove backup volume to non-static-ip cluster")
+		}
+	}
+	if (r.Spec.MonitorTemplate == nil) != (oldCluster.Spec.MonitorTemplate == nil) {
+		if !oldCluster.SupportStaticIP() {
+			err = errors.New("forbid to add/remove monitor container to non-static-ip cluster")
 		}
 	}
 

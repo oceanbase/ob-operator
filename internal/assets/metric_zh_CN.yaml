@@ -694,8 +694,8 @@ OBCLUSTER_OVERVIEW:
       unit: "\u03BCs"
     name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"
 OBPROXY:
-- name: OBProxy service monitoring
-  description: Obproxy service monitoring
+- name: OBProxy 服务监控
+  description: OBProxy 服务监控
   metricGroups:
   - name: TPS
     description: TPS

@@ -260,7 +260,12 @@ declare namespace API {
     memoryPercent: number;
   };
 
-  type MetricScope = 'OBCLUSTER' | 'OBTENANT' | 'OBCLUSTER_OVERVIEW';
+  type MetricScope =
+    | 'OBCLUSTER'
+    | 'OBTENANT'
+    | 'OBCLUSTER_OVERVIEW'
+    | 'OBPROXY_OVERVIEW'
+    | 'OBPROXY';
 
   type NodeSelector = {
     key: string;
@@ -438,7 +443,9 @@ declare namespace API {
     | 'tenant_name'
     | 'tenant_id'
     | 'svr_ip'
-    | 'obzone';
+    | 'obzone'
+    | 'cluster';
+     
 
   type BackupType = 'Full' | 'Incremental';
   type ScheduleType = 'Weekly' | 'Monthly';

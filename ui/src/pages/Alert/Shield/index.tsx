@@ -4,9 +4,11 @@ import type {
   SilenceSilencerResponse,
   SilenceStatus,
 } from '@/api/generated';
+import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
+import { intl } from '@/utils/intl';
 import { useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
@@ -20,7 +22,6 @@ import {
   Typography,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { clone } from 'lodash';
 import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
@@ -67,15 +68,22 @@ export default function Shield() {
   };
   const columns: ColumnsType<SilenceSilencerResponse> = [
     {
-      title: '屏蔽应用/对象类型',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.1F7B5A21',
+        defaultMessage: '屏蔽应用/对象类型',
+      }),
       dataIndex: 'instances',
       key: 'type',
+      fixed: true,
       render: (instances: OceanbaseOBInstance[]) => (
         <Text>{instances?.[0].type || '-'}</Text>
       ),
     },
     {
-      title: '屏蔽对象',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.67222E65',
+        defaultMessage: '屏蔽对象',
+      }),
       dataIndex: 'instances',
       key: 'instances',
       width: 200,
@@ -94,13 +102,14 @@ export default function Shield() {
 
         const InstancesRender = () => (
           <div>
-            {Object.keys(temp).map((key,index) => (
+            {Object.keys(temp).map((key, index) => (
               <p key={index}>
                 {key}：{temp[key].join(',')}
               </p>
             ))}
           </div>
         );
+
         return (
           <Tooltip title={<InstancesRender />}>
             <div>
@@ -115,45 +124,42 @@ export default function Shield() {
       },
     },
     {
-      title: '屏蔽告警规则',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.421ADBA5',
+        defaultMessage: '屏蔽告警规则',
+      }),
       dataIndex: 'matchers',
       key: 'matchers',
+      width: 300,
       render: (rules) => {
-        const newRules = clone(rules);
-        if (newRules.length)
-          newRules.splice(0, 0, { name: '规则名', value: '规则' });
-        return (
-          <Space style={{ width: '100%' }} direction="vertical">
-            {newRules?.map((rule) => {
-              return (
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between' }}
-                >
-                  <div style={{ flex: 1 }}>{rule.name}</div>
-                  <div style={{ flex: 1 }}> {rule.value}</div>
-                </div>
-              );
-            })}
-          </Space>
-        );
+        return <PreText cols={7} value={rules} />;
       },
     },
     {
-      title: '屏蔽结束时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.7EDD5A25',
+        defaultMessage: '屏蔽结束时间',
+      }),
       dataIndex: 'endsAt',
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
-      title: '创建人',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.A05F9C0D',
+        defaultMessage: '创建人',
+      }),
       dataIndex: 'createdBy',
       key: 'createdBy',
     },
     {
-      title: '状态',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.8F7F01F0',
+        defaultMessage: '状态',
+      }),
       dataIndex: 'status',
       key: 'status',
       sorter: (preRecord, curRecord) =>
@@ -166,30 +172,44 @@ export default function Shield() {
       ),
     },
     {
-      title: '创建时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.1A9C03D1',
+        defaultMessage: '创建时间',
+      }),
       dataIndex: 'startsAt',
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:MM:SS')}</Text>
+        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
       ),
     },
     {
-      title: '备注',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.A76CF352',
+        defaultMessage: '备注',
+      }),
       dataIndex: 'comment',
       key: 'comment',
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Alert.Shield.13E125D2',
+        defaultMessage: '操作',
+      }),
       key: 'action',
+      fixed: 'right',
       render: (_, record) => (
         <>
           <Button
             onClick={() => editShield(record.id)}
             style={{ paddingLeft: 0 }}
+            disabled={record.status.state === 'expired'}
             type="link"
           >
-            编辑
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Shield.F061005B',
+              defaultMessage: '编辑',
+            })}
           </Button>
           <Button
             type="link"
@@ -199,21 +219,34 @@ export default function Shield() {
             disabled={record.status.state === 'expired'}
             onClick={() => {
               showDeleteConfirm({
-                title: '确定解除该告警屏蔽条件吗？',
-                content: '解除后不可恢复，请谨慎操作',
-                okText: '解除',
+                title: intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.460BD8D2',
+                  defaultMessage: '确定解除该告警屏蔽条件吗？',
+                }),
+                content: intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.9409CF7B',
+                  defaultMessage: '解除后不可恢复，请谨慎操作',
+                }),
+                okText: intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.07F07EAE',
+                  defaultMessage: '解除',
+                }),
                 onOk: () => {
                   deleteSilencer(record.id);
                 },
               });
             }}
           >
-            解除屏蔽
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Shield.44370F70',
+              defaultMessage: '解除屏蔽',
+            })}
           </Button>
         </>
       ),
     },
   ];
+
   const formatInstanceParam = (instanceParam: Alert.InstanceParamType) => {
     const { obcluster, observer, obtenant, type } = instanceParam;
     const res: Alert.InstancesType = {
@@ -244,10 +277,20 @@ export default function Shield() {
         <AlarmFilter depend={getListSilencers} form={form} type="shield" />
       </Card>
       <Card
-        title={<h2 style={{ marginBottom: 0 }}>屏蔽列表</h2>}
+        title={
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Shield.90D196D5',
+              defaultMessage: '屏蔽列表',
+            })}
+          </h2>
+        }
         extra={
           <Button type="primary" onClick={() => setDrawerOpen(true)}>
-            新建屏蔽
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Shield.65BD013B',
+              defaultMessage: '新建屏蔽',
+            })}
           </Button>
         }
       >
@@ -256,7 +299,8 @@ export default function Shield() {
           dataSource={listSilencers}
           rowKey="id"
           pagination={{ simple: true }}
-          // scroll={{ x: 1500 }}
+          scroll={{ x: 1800 }}
+          sticky
         />
       </Card>
       <ShieldDrawerForm

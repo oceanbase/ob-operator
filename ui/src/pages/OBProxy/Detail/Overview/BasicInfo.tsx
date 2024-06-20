@@ -1,5 +1,7 @@
 import IconTip from '@/components/IconTip';
-import { Card, Descriptions } from 'antd';
+import { OBPROXY_COLOR_MAP } from '@/constants';
+import { intl } from '@/utils/intl';
+import { Card, Descriptions, Tag } from 'antd';
 
 interface BasicInfoProps {
   name?: string;
@@ -24,26 +26,78 @@ export default function BasicInfo({
   style,
 }: BasicInfoProps) {
   return (
-    <Card style={style} title={<h2 style={{ marginBottom: 0 }}>基本设置</h2>}>
+    <Card
+      style={style}
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.4AB0B6DC',
+            defaultMessage: '基本信息',
+          })}
+        </h2>
+      }
+    >
       <Descriptions column={3}>
-        <Descriptions.Item label="资源名称">{name || '-'}</Descriptions.Item>
-        <Descriptions.Item label="OBProxy 集群名">
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.25425D3D',
+            defaultMessage: '资源名称',
+          })}
+        >
+          {name || '-'}
+        </Descriptions.Item>
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.E31DF8FD',
+            defaultMessage: 'OBProxy 集群名',
+          })}
+        >
           {proxyClusterName || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="OB 集群">
-          {JSON.stringify(obCluster) || '-'}
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.00DC8B97',
+            defaultMessage: 'OB 集群',
+          })}
+        >
+          {obCluster?.name || '-'}
         </Descriptions.Item>
         <Descriptions.Item
           label={
-            <IconTip content="OBProxy root 密码" tip={'root@proxysys 密码'} />
+            <IconTip
+              content={intl.formatMessage({
+                id: 'src.pages.OBProxy.Detail.Overview.E0E978D2',
+                defaultMessage: 'OBProxy root 密码',
+              })}
+              tip={intl.formatMessage({
+                id: 'src.pages.OBProxy.Detail.Overview.AEC19030',
+                defaultMessage: 'root@proxysys 密码',
+              })}
+            />
           }
         >
           {proxySysSecret || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="命名空间">
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.B42C8F94',
+            defaultMessage: '命名空间',
+          })}
+        >
           {namespace || '-'}
         </Descriptions.Item>
-        <Descriptions.Item label="状态">{status || '-'}</Descriptions.Item>
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.OBProxy.Detail.Overview.CE7D4E98',
+            defaultMessage: '状态',
+          })}
+        >
+          {status ? (
+            <Tag color={OBPROXY_COLOR_MAP.get(status)}>{status}</Tag>
+          ) : (
+            '-'
+          )}
+        </Descriptions.Item>
       </Descriptions>
     </Card>
   );

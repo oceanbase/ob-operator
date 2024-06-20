@@ -73,14 +73,14 @@ func DeleteRoute(ctx context.Context, id string) error {
 	return updateAlertManagerConfig(ctx, config)
 }
 
-func CreateOrUpdateRoute(ctx context.Context, r *route.Route) error {
+func CreateOrUpdateRoute(ctx context.Context, r *route.RouteParam) error {
 	config, err := getAlertmanagerConfig(ctx)
 	if err != nil {
 		return errors.Wrap(err, errors.ErrExternal, "Failed to get config")
 	}
 	configRoutes := make([]*amconfig.Route, 0)
 	for _, amroute := range config.Route.Routes {
-		if route.NewRoute(amroute).Hash() == r.Hash() {
+		if route.NewRoute(amroute).Hash() == r.Id {
 			continue
 		}
 		configRoutes = append(configRoutes, amroute)

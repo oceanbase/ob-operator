@@ -386,6 +386,19 @@ definitions:
       storageSize:
         type: integer
     type: object
+  obproxy.ConfigItem:
+    properties:
+      info:
+        type: string
+      name:
+        type: string
+      needReboot:
+        type: boolean
+      value:
+        type: string
+      visibleLevel:
+        type: string
+    type: object
   obproxy.CreateOBProxyParam:
     properties:
       image:
@@ -442,7 +455,7 @@ definitions:
   obproxy.OBProxy:
     properties:
       creationTime:
-        type: string
+        type: integer
       image:
         type: string
       name:
@@ -471,7 +484,12 @@ definitions:
         $ref: '#/definitions/response.K8sService'
       serviceIp:
         type: string
+      serviceType:
+        type: string
       status:
+        enum:
+        - Running
+        - Pending
         type: string
     required:
     - creationTime
@@ -487,12 +505,13 @@ definitions:
     - resource
     - service
     - serviceIp
+    - serviceType
     - status
     type: object
   obproxy.OBProxyOverview:
     properties:
       creationTime:
-        type: string
+        type: integer
       image:
         type: string
       name:
@@ -507,7 +526,12 @@ definitions:
         type: integer
       serviceIp:
         type: string
+      serviceType:
+        type: string
       status:
+        enum:
+        - Running
+        - Pending
         type: string
     required:
     - creationTime
@@ -518,20 +542,17 @@ definitions:
     - proxyClusterName
     - replicas
     - serviceIp
+    - serviceType
     - status
     type: object
   obproxy.PatchOBProxyParam:
     properties:
-      addedParameters:
+      image:
+        type: string
+      parameters:
         items:
           $ref: '#/definitions/common.KVPair'
         type: array
-      deletedParameters:
-        items:
-          type: string
-        type: array
-      image:
-        type: string
       replicas:
         type: integer
       resource:
@@ -594,6 +615,11 @@ definitions:
     required:
     - password
     - user
+    type: object
+  param.ConfigurableInfo:
+    properties:
+      odcURL:
+        type: string
     type: object
   param.CreateBackupPolicy:
     properties:
@@ -1178,6 +1204,13 @@ definitions:
     - tenantName
     - uid
     type: object
+  response.ConfigurableInfo:
+    properties:
+      odcURL:
+        type: string
+    required:
+    - odcURL
+    type: object
   response.ContainerInfo:
     properties:
       image:
@@ -1212,6 +1245,8 @@ definitions:
     properties:
       appName:
         type: string
+      configurableInfo:
+        $ref: '#/definitions/response.ConfigurableInfo'
       publicKey:
         type: string
       reportHost:
@@ -1222,6 +1257,7 @@ definitions:
         type: string
     required:
     - appName
+    - configurableInfo
     - publicKey
     - reportHost
     - reportStatistics
@@ -1392,15 +1428,26 @@ definitions:
         type: array
       type:
         type: string
+    required:
+    - clusterIP
+    - name
+    - namespace
+    - ports
+    - type
     type: object
   response.K8sServicePort:
     properties:
       name:
         type: string
+      nodePort:
+        type: integer
       port:
         type: integer
       targetPort:
         type: integer
+    required:
+    - port
+    - targetPort
     type: object
   response.Metric:
     properties:
@@ -1642,6 +1689,8 @@ definitions:
       cluster:
         type: string
       namespace:
+        type: string
+      odcConnectionURL:
         type: string
       pod:
         type: string
@@ -2076,7 +2125,7 @@ definitions:
     - size
     - storageClass
     type: object
-  route.Route:
+  route.RouteParam:
     properties:
       aggregateLabels:
         items:
@@ -2086,6 +2135,8 @@ definitions:
         type: integer
       groupWait:
         type: integer
+      id:
+        type: string
       matchers:
         items:
           $ref: '#/definitions/alarm.Matcher'
@@ -2675,7 +2726,7 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/route.Route'
+          $ref: '#/definitions/route.RouteParam'
       produces:
       - application/json
       responses:
@@ -3311,6 +3362,43 @@ paths:
       summary: list k8s storage classes
       tags:
       - Cluster
+  /api/v1/configurable-infos:
+    patch:
+      consumes:
+      - application/json
+      description: Set configurable infos
+      operationId: ConfigureInfo
+      parameters:
+      - description: metric query request body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/param.ConfigurableInfo'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Set configurable infos
+      tags:
+      - Info
   /api/v1/conn/{terminalId}:
     get:
       consumes:
@@ -4025,6 +4113,13 @@ paths:
         name: name
         required: true
         type: string
+      - description: channel
+        enum:
+        - TERMINAL
+        - ODC
+        in: query
+        name: channel
+        type: string
       produces:
       - application/json
       responses:
@@ -4312,6 +4407,52 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: Patch OBProxy
+      tags:
+      - OBProxy
+  /api/v1/obproxies/{namespace}/{name}/parameters:
+    get:
+      consumes:
+      - application/json
+      description: List OBProxy Parameters by namespace and name
+      operationId: ListOBProxyParameters
+      parameters:
+      - description: namespace of obproxy deployment
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: name of obproxy deployment
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/obproxy.ConfigItem'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      summary: List OBProxy Parameters
       tags:
       - OBProxy
   /api/v1/obtenants:
@@ -5130,6 +5271,13 @@ paths:
         in: path
         name: name
         required: true
+        type: string
+      - description: channel
+        enum:
+        - TERMINAL
+        - ODC
+        in: query
+        name: channel
         type: string
       produces:
       - application/json

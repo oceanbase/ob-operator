@@ -35,10 +35,9 @@ type CreateOBProxyParam struct {
 }
 
 type PatchOBProxyParam struct {
-	Image             *string              `json:"image,omitempty"`
-	ServiceType       *string              `json:"serviceType,omitempty" example:"ClusterIP" enums:"ClusterIP,NodePort,LoadBalancer,ExternalName" default:"ClusterIP"`
-	Replicas          *int32               `json:"replicas,omitempty"`
-	Resource          *common.ResourceSpec `json:"resource,omitempty"`
-	AddedParameters   []common.KVPair      `json:"addedParameters,omitempty"`
-	DeletedParameters []string             `json:"deletedParameters,omitempty"`
+	Image       *string              `json:"image,omitempty"`
+	ServiceType *string              `json:"serviceType,omitempty" example:"ClusterIP" enums:"ClusterIP,NodePort,LoadBalancer,ExternalName" default:"ClusterIP"`
+	Replicas    *int32               `json:"replicas,omitempty"`
+	Resource    *common.ResourceSpec `json:"resource,omitempty"`
+	Parameters  []common.KVPair      `json:"parameters,omitempty"`
 }
