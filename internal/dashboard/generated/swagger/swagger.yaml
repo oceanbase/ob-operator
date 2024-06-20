@@ -484,6 +484,8 @@ definitions:
         $ref: '#/definitions/response.K8sService'
       serviceIp:
         type: string
+      serviceType:
+        type: string
       status:
         enum:
         - Running
@@ -503,6 +505,7 @@ definitions:
     - resource
     - service
     - serviceIp
+    - serviceType
     - status
     type: object
   obproxy.OBProxyOverview:
@@ -523,6 +526,8 @@ definitions:
         type: integer
       serviceIp:
         type: string
+      serviceType:
+        type: string
       status:
         enum:
         - Running
@@ -537,6 +542,7 @@ definitions:
     - proxyClusterName
     - replicas
     - serviceIp
+    - serviceType
     - status
     type: object
   obproxy.PatchOBProxyParam:
@@ -1422,15 +1428,26 @@ definitions:
         type: array
       type:
         type: string
+    required:
+    - clusterIP
+    - name
+    - namespace
+    - ports
+    - type
     type: object
   response.K8sServicePort:
     properties:
       name:
         type: string
+      nodePort:
+        type: integer
       port:
         type: integer
       targetPort:
         type: integer
+    required:
+    - port
+    - targetPort
     type: object
   response.Metric:
     properties:

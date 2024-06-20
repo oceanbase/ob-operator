@@ -19,6 +19,7 @@ rules:
       - secrets
       - namespaces
       - configmaps
+      - services
       - pods/exec
     verbs: ["get", "list", "watch", "create", "update", "patch"]
   - apiGroups:

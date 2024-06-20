@@ -34,6 +34,7 @@ type OBProxyOverview struct {
 	ProxyClusterName string    `json:"proxyClusterName" binding:"required"`
 	Image            string    `json:"image" binding:"required"`
 	Replicas         int32     `json:"replicas" binding:"required"`
+	ServiceType      string    `json:"serviceType" binding:"required"`
 	ServiceIP        string    `json:"serviceIp" binding:"required"`
 	CreationTime     int64     `json:"creationTime" binding:"required"`
 	Status           string    `json:"status" binding:"required" enums:"Running,Pending"`

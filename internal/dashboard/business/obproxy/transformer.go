@@ -54,6 +54,7 @@ func buildOBProxyOverview(deploy *appsv1.Deployment) *obproxy.OBProxyOverview {
 		Status:           getDeploymentStatus(deploy),
 		CreationTime:     deploy.CreationTimestamp.Unix(),
 		ServiceIP:        deploy.Annotations[AnnotationServiceIP],
+		ServiceType:      deploy.Annotations[AnnotationServiceType],
 	}
 	return overview
 }
@@ -87,7 +88,7 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 		},
 		Resource: common.ResourceSpec{
 			Cpu:      deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Cpu().Value(),
-			MemoryGB: deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().ScaledValue(resource.Giga),
+			MemoryGB: deploy.Spec.Template.Spec.Containers[0].Resources.Limits.Memory().Value() / (1 << 30),
 		},
 		Parameters: []common.KVPair{},
 		Pods:       []response.K8sPodInfo{},
@@ -97,6 +98,7 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 			Name:       port.Name,
 			Port:       port.Port,
 			TargetPort: port.TargetPort.IntVal,
+			NodePort:   port.NodePort,
 		})
 	}
 	for k, v := range cm.Data {
@@ -107,12 +109,16 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 	}
 	// TODO: Move pods fetching to another function?
 	for _, pod := range pods.Items {
+		podStatus := string(pod.Status.Phase)
+		if pod.DeletionTimestamp != nil {
+			podStatus = "Terminating"
+		}
 		podInfo := response.K8sPodInfo{
 			Name:       pod.Name,
 			Namespace:  pod.Namespace,
 			NodeName:   pod.Spec.NodeName,
 			PodIP:      pod.Status.PodIP,
-			Status:     string(pod.Status.Phase),
+			Status:     podStatus,
 			Message:    pod.Status.Message,
 			Reason:     pod.Status.Reason,
 			StartTime:  pod.Status.StartTime.Format(time.DateTime),
