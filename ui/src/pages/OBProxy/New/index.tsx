@@ -6,6 +6,7 @@ import { useNavigate } from '@umijs/max';
 import { Button, Form, Space, message } from 'antd';
 import BasicConfig from './BasicConfig';
 import DetailConfig from './DetailConfig';
+import { filterParams } from '../helper';
 
 type FormValues = {
   obCluster: string;
@@ -15,6 +16,7 @@ export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const submit = async (values: FormValues) => {
+    filterParams(values)
     try {
       const res = await obproxy.createOBPROXY({
         ...values,
