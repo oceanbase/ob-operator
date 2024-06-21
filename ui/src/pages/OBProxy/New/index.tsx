@@ -1,12 +1,13 @@
 import { obproxy } from '@/api';
 import { ObproxyCreateOBProxyParam } from '@/api/generated';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { Button, Form, Space, message } from 'antd';
+import { filterParams } from '../helper';
 import BasicConfig from './BasicConfig';
 import DetailConfig from './DetailConfig';
-import { filterParams } from '../helper';
 
 type FormValues = {
   obCluster: string;
@@ -14,9 +15,14 @@ type FormValues = {
 
 export default function New() {
   const navigate = useNavigate();
+  const publicKey = usePublicKey();
   const [form] = Form.useForm();
   const submit = async (values: FormValues) => {
-    filterParams(values)
+    filterParams(values);
+    values.proxySysPassword = encryptText(
+      values.proxySysPassword,
+      publicKey,
+    ) as string;
     try {
       const res = await obproxy.createOBPROXY({
         ...values,
