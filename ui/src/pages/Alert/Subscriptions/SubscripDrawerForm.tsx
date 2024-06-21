@@ -14,6 +14,7 @@ import type { DrawerProps } from 'antd';
 import { Col, Form, Row, Select, message } from 'antd';
 import { useEffect } from 'react';
 import { validateLabelValues } from '../helper';
+import styles from './index.less';
 
 interface ShieldDrawerFormProps extends DrawerProps {
   id?: string;
@@ -52,7 +53,7 @@ export default function SubscripDrawerForm({
         intl.formatMessage(
           {
             id: 'src.pages.Alert.Subscriptions.BA84E413',
-            defaultMessage: "{ConditionalExpression0 ? '修改' : '创建'}成功!",
+            defaultMessage: "{ConditionalExpression0}成功!",
           },
           {
             ConditionalExpression0: isEdit
@@ -229,6 +230,7 @@ export default function SubscripDrawerForm({
               }
             >
               <Select
+                className={styles.aggregateLabels}
                 mode="tags"
                 tokenSeparators={[',']}
                 dropdownStyle={{ display: 'none' }}

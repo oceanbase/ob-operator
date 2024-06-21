@@ -2,7 +2,7 @@ import type { ResponseK8sService } from '@/api/generated';
 import InputLabelComp from '@/components/InputLabelComp';
 import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
-import { Button, Card, Col, Row } from 'antd';
+import { Button, Card, Col, Row,Empty } from 'antd';
 import { useState } from 'react';
 import ConfigDrawer from './ConfigDrawer';
 interface DetailConfigProps extends OBProxy.CommonProxyDetail {
@@ -110,11 +110,15 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
             defaultMessage: '参数设置',
           })}
         </h3>
-        <InputLabelComp
-          allowDelete={false}
-          disable={true}
-          value={parameters || []}
-        />
+        {parameters?.length ? (
+          <InputLabelComp
+            allowDelete={false}
+            disable={true}
+            value={parameters}
+          />
+        ) : (
+          <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        )}
       </div>
       {props.name && props.namespace ? (
         <ConfigDrawer

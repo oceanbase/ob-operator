@@ -1,7 +1,7 @@
 import type { PoolDetailType } from '@/components/customModal/ModifyUnitDetailModal';
 import { STATISTICS_INTERVAL } from '@/constants';
-import { getAppInfo,getStatistics } from '@/services';
-import { REPORT_PARAMS_MAP,reportData } from '@/services/reportRequest';
+import { getAppInfo, getStatistics } from '@/services';
+import { REPORT_PARAMS_MAP, reportData } from '@/services/reportRequest';
 import { intl } from '@/utils/intl';
 type StatisticStatus = 'running' | 'deleting' | 'operating' | 'failed';
 
@@ -75,7 +75,6 @@ export const formatPatchPoolData = (
   return newOriginUnitData;
 };
 
-
 export const strTrim = (obj: ObjType): ObjType => {
   Object.keys(obj).forEach((key: keyof ObjType) => {
     if (typeof obj[key] === 'string') {
@@ -114,6 +113,6 @@ export const reportPollData = async () => {
   } catch (err) {}
 };
 
-export function floorToTwoDecimalPlaces(num:number) {
+export function floorToTwoDecimalPlaces(num: number) {
   return Math.floor(num * 100) / 100;
 }
