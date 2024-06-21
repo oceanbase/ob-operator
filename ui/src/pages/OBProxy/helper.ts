@@ -1,4 +1,5 @@
 import type { CommonKVPair } from '@/api/generated';
+import { ObproxyCreateOBProxyParam } from '@/api/generated';
 
 const buildLabelsMap = (labels: CommonKVPair[]) => {
   const labelsMap = new Map();
@@ -23,4 +24,12 @@ export const isDifferentParams = (
     if (newParamsMap.get(key) !== oldParamsMap.get(key)) return true;
   }
   return false;
+};
+
+export const filterParams = (proxyConfig: ObproxyCreateOBProxyParam) => {
+  proxyConfig.parameters = proxyConfig.parameters?.filter(
+    (param) => param.key && param.value,
+  );
+  if (!proxyConfig.parameters || !proxyConfig.parameters.length)
+    delete proxyConfig.parameters;
 };
