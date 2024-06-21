@@ -25,6 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
+	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -64,7 +65,10 @@ func CreateOBProxy(ctx context.Context, param *obproxy.CreateOBProxyParam) (*obp
 		}
 		return nil, httpErr.NewInternal("Failed to get obcluster, err msg: " + err.Error())
 	}
-	// TODO: Decrypted the password
+	param.ProxySysPassword, err = crypto.DecryptWithPrivateKey(param.ProxySysPassword)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("Failed to decrypt password")
+	}
 	proxySysSecret, err := createPasswordSecret(ctx, param.Namespace, proxySysSecretPrefix+param.Name, param.ProxySysPassword)
 	if err != nil {
 		return nil, err
@@ -196,25 +200,25 @@ func DeleteOBProxy(ctx context.Context, ns, name string) (*obproxy.OBProxy, erro
 		}
 	}
 	deleted, _ := buildOBProxy(ctx, deploy)
-	_, err = deleteOBProxyService(ctx, ns, name)
-	if err != nil {
-		return nil, err
-	}
 	err = client.GetClient().ClientSet.AppsV1().Deployments(ns).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("Failed to delete obproxy, err msg: " + err.Error())
 	}
+	_, err = deleteOBProxyService(ctx, ns, name)
+	if err != nil {
+		logrus.Warnf("Failed to delete obproxy service, err msg: %s", err.Error())
+	}
 	_, err = deleteConfigMap(ctx, ns, name)
 	if err != nil {
-		return nil, err
+		logrus.Warnf("Failed to delete obproxy configmap, err msg: %s", err.Error())
 	}
 	err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, proxySysSecretPrefix+name, metav1.DeleteOptions{})
 	if err != nil {
-		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
+		logrus.Warnf("Failed to delete obproxy secret, err msg: %s", err.Error())
 	}
 	err = client.GetClient().ClientSet.CoreV1().Secrets(ns).Delete(ctx, proxyRoSecretPrefix+name, metav1.DeleteOptions{})
 	if err != nil {
-		return nil, httpErr.NewInternal("Failed to delete obproxy secret, err msg: " + err.Error())
+		logrus.Warnf("Failed to delete obproxy secret, err msg: %s", err.Error())
 	}
 	return deleted, nil
 }
