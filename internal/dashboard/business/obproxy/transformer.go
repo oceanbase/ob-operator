@@ -121,8 +121,10 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 			Status:     podStatus,
 			Message:    pod.Status.Message,
 			Reason:     pod.Status.Reason,
-			StartTime:  pod.Status.StartTime.Format(time.DateTime),
 			Containers: []response.ContainerInfo{},
+		}
+		if pod.Status.StartTime != nil {
+			podInfo.StartTime = pod.Status.StartTime.Format(time.DateTime)
 		}
 		for _, container := range pod.Spec.Containers {
 			containerInfo := response.ContainerInfo{
@@ -131,11 +133,11 @@ func buildOBProxy(ctx context.Context, deploy *appsv1.Deployment) (*obproxy.OBPr
 				Ports: []int32{},
 				Requests: common.ResourceSpec{
 					Cpu:      container.Resources.Requests.Cpu().Value(),
-					MemoryGB: container.Resources.Requests.Memory().ScaledValue(resource.Giga),
+					MemoryGB: container.Resources.Requests.Memory().Value() / (1 << 30),
 				},
 				Limits: common.ResourceSpec{
 					Cpu:      container.Resources.Limits.Cpu().Value(),
-					MemoryGB: container.Resources.Limits.Memory().ScaledValue(resource.Giga),
+					MemoryGB: container.Resources.Limits.Memory().Value() / (1 << 30),
 				},
 			}
 			if len(pod.Status.ContainerStatuses) > 0 {
