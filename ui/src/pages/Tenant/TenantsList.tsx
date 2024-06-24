@@ -1,7 +1,7 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Tag, Typography } from 'antd';
+import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import styles from './index.less';
@@ -41,11 +41,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     dataIndex: 'namespace',
     width: '10%',
     key: 'namespace',
-    render: (value) => (
-      <Text ellipsis={{ tooltip: value }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -55,11 +51,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     dataIndex: 'clusterResourceName',
     key: 'clusterResourceName',
     width: '10%',
-    render: (value) => (
-      <Text ellipsis={{ tooltip: `${value}` }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <Text ellipsis={{ tooltip: `${value}` }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -87,11 +79,7 @@ const columns: ColumnsType<API.TenantDetail> = [
     width: '20%',
     dataIndex: 'locality',
     key: 'locality',
-    render: (value) => (
-      <Text ellipsis={{ tooltip: value }}>
-        {value}
-      </Text>
-    ),
+    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
   },
   {
     title: intl.formatMessage({
@@ -127,36 +115,34 @@ export default function TenantsList({
   loading,
 }: TenantsListProps) {
   return (
-    <Col span={24}>
-      <Card
-        loading={loading}
-        title={
-          <div className={styles.clusterHeader}>
-            <h2 style={{ marginBottom: 0 }}>
-              {intl.formatMessage({
-                id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
-                defaultMessage: '租户列表',
-              })}
-            </h2>
-            <Button onClick={turnToCreateTenant} type="primary">
-              {intl.formatMessage({
-                id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
-                defaultMessage: '创建租户',
-              })}
-            </Button>
-          </div>
-        }
-      >
-        <Table
-          columns={columns}
-          dataSource={tenantsList}
-          scroll={{ x: 1200 }}
-          pagination={{ simple: true }}
-          rowKey="name"
-          bordered
-          sticky
-        />
-      </Card>
-    </Col>
+    <Card
+      loading={loading}
+      title={
+        <div className={styles.clusterHeader}>
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'Dashboard.pages.Tenant.TenantsList.TenantList',
+              defaultMessage: '租户列表',
+            })}
+          </h2>
+          <Button onClick={turnToCreateTenant} type="primary">
+            {intl.formatMessage({
+              id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
+              defaultMessage: '创建租户',
+            })}
+          </Button>
+        </div>
+      }
+    >
+      <Table
+        columns={columns}
+        dataSource={tenantsList}
+        scroll={{ x: 1200 }}
+        pagination={{ simple: true }}
+        rowKey="name"
+        bordered
+        sticky
+      />
+    </Card>
   );
 }

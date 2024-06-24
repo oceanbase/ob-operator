@@ -1,35 +1,37 @@
 import EmptyImg from '@/assets/empty.svg';
-import { BACKUP_RESULT_STATUS,REFRESH_TENANT_TIME } from '@/constants';
-import { useParams } from '@umijs/max';
-import { getBackupPolicy,getTenant } from '@/services/tenant';
+import { BACKUP_RESULT_STATUS, REFRESH_TENANT_TIME } from '@/constants';
+import { getBackupPolicy, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history } from '@umijs/max';
+import { history, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Card,Col,Row } from 'antd';
-import { useEffect,useRef,useState } from 'react';
+import { Button, Card, Col, Row } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
-  const [backupPolicy,setBackupPolicy] = useState<API.BackupPolicy>();
-  const timerRef = useRef<NodeJS.Timeout>()
+  const [backupPolicy, setBackupPolicy] = useState<API.BackupPolicy>();
+  const timerRef = useRef<NodeJS.Timeout>();
 
-  const { refresh: backupPolicyRefresh, loading } = useRequest(getBackupPolicy, {
-    defaultParams: [{ ns, name }],
-    onSuccess: ({ successful, data }) => {
-      if (successful) {
-        setBackupPolicy(data);
-        if (!BACKUP_RESULT_STATUS.includes(data.status)) {
-          timerRef.current = setTimeout(()=>{
-            backupPolicyRefresh();
-          },REFRESH_TENANT_TIME)
+  const { refresh: backupPolicyRefresh, loading } = useRequest(
+    getBackupPolicy,
+    {
+      defaultParams: [{ ns, name }],
+      onSuccess: ({ successful, data }) => {
+        if (successful) {
+          setBackupPolicy(data);
+          if (!BACKUP_RESULT_STATUS.includes(data.status)) {
+            timerRef.current = setTimeout(() => {
+              backupPolicyRefresh();
+            }, REFRESH_TENANT_TIME);
+          }
         }
-      }
+      },
     },
-  });
+  );
   const { data: tenantDetailResponse } = useRequest(getTenant, {
     defaultParams: [{ ns, name }],
   });
@@ -40,7 +42,7 @@ export default function Backup() {
       clearTimeout(timerRef.current);
     };
   }, []);
-  
+
   return (
     <PageContainer loading={loading}>
       {!backupPolicy ? (
@@ -84,7 +86,12 @@ export default function Backup() {
       ) : (
         <Row gutter={[16, 16]}>
           {tenantDetail && (
-            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+            <Col span={24}>
+              <BasicInfo
+                info={tenantDetail.info}
+                source={tenantDetail.source}
+              />
+            </Col>
           )}
           <Col span={24}>
             <BackupConfiguration

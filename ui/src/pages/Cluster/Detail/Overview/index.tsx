@@ -2,12 +2,12 @@ import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { history, useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, message } from 'antd';
+import { Button, Col, Row, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
 import { getClusterDetailReq } from '@/services';
 import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
@@ -32,7 +32,7 @@ const ClusterOverview: React.FC = () => {
         setChooseClusterName(data.info.clusterName);
         if (data.status === 'operating') {
           timerRef.current = setTimeout(() => {
-            getClusterDetail({ ns:ns!, name:name! });
+            getClusterDetail({ ns: ns!, name: name! });
           }, REFRESH_CLUSTER_TIME);
         } else if (timerRef.current) {
           clearTimeout(timerRef.current);
@@ -41,7 +41,7 @@ const ClusterOverview: React.FC = () => {
     },
   );
   const handleDelete = async () => {
-    const res = await deleteClusterReportWrap({ ns:ns!, name:name! });
+    const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -55,7 +55,7 @@ const ClusterOverview: React.FC = () => {
 
   const operateSuccess = () => {
     setTimeout(() => {
-      getClusterDetail({ ns:ns!, name:name! });
+      getClusterDetail({ ns: ns!, name: name! });
     }, 1000);
   };
   const handleAddZone = () => {
@@ -125,7 +125,7 @@ const ClusterOverview: React.FC = () => {
   };
 
   useEffect(() => {
-    getClusterDetail({ ns:ns!, name:name! });
+    getClusterDetail({ ns: ns!, name: name! });
 
     return () => {
       if (timerRef.current) {
@@ -138,7 +138,9 @@ const ClusterOverview: React.FC = () => {
     <PageContainer header={header()}>
       <Row gutter={[16, 16]}>
         {clusterDetail && (
-          <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          <Col span={24}>
+            <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          </Col>
         )}
         {clusterDetail && (
           <ZoneTable
@@ -154,10 +156,12 @@ const ClusterOverview: React.FC = () => {
           <ServerTable servers={clusterDetail.servers as API.Server[]} />
         )}
         {clusterDetail && (
-          <EventsTable
-            objectType="OBCLUSTER"
-            name={clusterDetail?.info?.name}
-          />
+          <Col span={24}>
+            <EventsTable
+              objectType="OBCLUSTER"
+              name={clusterDetail?.info?.name}
+            />
+          </Col>
         )}
       </Row>
       <OperateModal

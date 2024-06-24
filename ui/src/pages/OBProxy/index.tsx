@@ -5,7 +5,7 @@ import { DEFAULT_QUERY_RANGE, REFRESH_OBPROXY_TIME } from '@/constants';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Row } from 'antd';
+import { Col, Row } from 'antd';
 import { useRef } from 'react';
 import ClusterList from './ClusterList';
 
@@ -34,12 +34,16 @@ export default function OBProxy() {
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
-        <ClusterList
-          loading={loading}
-          obproxies={obproxies}
-          handleAddCluster={handleAddCluster}
-        />
-        <EventsTable objectType="OBPROXY" />
+        <Col span={24}>
+          <ClusterList
+            loading={loading}
+            obproxies={obproxies}
+            handleAddCluster={handleAddCluster}
+          />
+        </Col>
+        <Col span={24}>
+          <EventsTable objectType="OBPROXY" />
+        </Col>
       </Row>
       <MonitorComp
         filterLabel={[]}

@@ -44,8 +44,8 @@ export default function NewBackup() {
       return;
     }
     const res = await createBackupReportWrap({
-      ns:ns!,
-      name:name!,
+      ns: ns!,
+      name: name!,
       ...formatBackupForm(strTrim(values), publicKey),
     });
     if (res.successful) {
@@ -103,7 +103,9 @@ export default function NewBackup() {
     >
       <Form initialValues={initialValues} form={form} onFinish={handleSubmit}>
         {tenantDetail && (
-          <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+          <Col span={24}>
+            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+          </Col>
         )}
 
         <Card style={{ marginTop: 24, marginBottom: 24 }}>

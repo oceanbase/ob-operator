@@ -102,8 +102,64 @@ export default {
         ],
         uid: 'string',
       },
+      {
+        clusterId: 0,
+        clusterName: 'string1',
+        createTime: 0,
+        image: 'string1',
+        mode: 'NORMAL',
+        name: 'string1',
+        namespace: 'string1',
+        status: 'string1',
+        statusDetail: 'string1',
+        topology: [
+          {
+            affinities: [
+              {
+                key: 'string1',
+                type: 'NODE',
+                value: 'string1',
+              },
+            ],
+            name: 'string1',
+            namespace: 'string1',
+            nodeSelector: [
+              {
+                key: 'string1',
+                value: 'string1',
+              },
+            ],
+            observers: [
+              {
+                address: 'string1',
+                metrics: {
+                  cpuPercent: 0,
+                  diskPercent: 0,
+                  memoryPercent: 0,
+                },
+                name: 'string1',
+                namespace: 'string1',
+                status: 'string1',
+                statusDetail: 'string1',
+              },
+            ],
+            replicas: 0,
+            rootService: 'string1',
+            status: 'string1',
+            statusDetail: 'string1',
+            tolerations: [
+              {
+                key: 'string1',
+                value: 'string1',
+              },
+            ],
+            zone: 'string1',
+          },
+        ],
+        uid: 'string1',
+      },
     ],
-    message: 'string',
+    message: 'string1',
     successful: true,
   },
 };

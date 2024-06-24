@@ -1,7 +1,7 @@
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Row } from 'antd';
+import { Col, Row } from 'antd';
 import { useState } from 'react';
 
 import EventsTable from '@/components/EventsTable';
@@ -32,12 +32,16 @@ const ClusterPage: React.FC = () => {
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>
-        <ClusterList
-          loading={loading}
-          clusterList={clusterList}
-          handleAddCluster={handleAddCluster}
-        />
-        <EventsTable objectType="OBCLUSTER" />
+        <Col span={24}>
+          <ClusterList
+            loading={loading}
+            clusterList={clusterList}
+            handleAddCluster={handleAddCluster}
+          />
+        </Col>
+        <Col span={24}>
+          <EventsTable objectType="OBCLUSTER" />
+        </Col>
       </Row>
       <MonitorComp
         filterLabel={clusterNames}

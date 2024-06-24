@@ -1,25 +1,25 @@
 import EventsTable from '@/components/EventsTable';
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
-import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import {
-getEssentialParameters as getEssentialParametersReq,
-getSimpleClusterList,
+  getEssentialParameters as getEssentialParametersReq,
+  getSimpleClusterList,
 } from '@/services';
 import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
-import {
-getBackupJobs,
-getBackupPolicy,
-getTenant,
-} from '@/services/tenant';
+import { getBackupJobs, getBackupPolicy, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { history,useParams } from '@umijs/max';
+import { history, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Row,Tooltip,message } from 'antd';
-import { useEffect,useMemo,useRef,useState } from 'react';
-import { getClusterFromTenant,getOriginResourceUsages,getZonesOptions } from '../../helper';
+import { Button, Col, Row, Tooltip, message } from 'antd';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  getClusterFromTenant,
+  getOriginResourceUsages,
+  getZonesOptions,
+} from '../../helper';
 import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
@@ -61,7 +61,10 @@ export default function TenantOverview() {
       manual: true,
     });
 
-  const openOperateModal = (type: API.ModalType, operateType?: OBTenant.OperateType) => {
+  const openOperateModal = (
+    type: API.ModalType,
+    operateType?: OBTenant.OperateType,
+  ) => {
     if (operateType) {
       operateTypeRef.current = operateType;
     }
@@ -70,7 +73,7 @@ export default function TenantOverview() {
   };
 
   const handleDelete = async () => {
-    const res = await deleteTenantReportWrap({ ns:ns!, name:name! });
+    const res = await deleteTenantReportWrap({ ns: ns!, name: name! });
     if (res.successful) {
       message.success(
         intl.formatMessage({
@@ -106,10 +109,10 @@ export default function TenantOverview() {
   });
 
   const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
-    defaultParams: [{ name:name!, ns:ns! }],
+    defaultParams: [{ name: name!, ns: ns! }],
   });
   const { data: backupJobsResponse } = useRequest(getBackupJobs, {
-    defaultParams: [{ name:name!, ns:ns!, type: 'FULL' }],
+    defaultParams: [{ name: name!, ns: ns!, type: 'FULL' }],
   });
 
   const tenantDetail = tenantDetailResponse?.data;
@@ -253,7 +256,7 @@ export default function TenantOverview() {
   };
 
   useEffect(() => {
-    getTenantDetail({ name:name!, ns:ns! });
+    getTenantDetail({ name: name!, ns: ns! });
 
     return () => {
       if (timerRef.current) {
@@ -286,11 +289,13 @@ export default function TenantOverview() {
         <Row justify="start" gutter={[16, 16]}>
           {useMemo(() => {
             return (
-              <BasicInfo
-                loading={loading}
-                info={tenantDetail?.info}
-                source={tenantDetail?.source}
-              />
+              <Col span={24}>
+                <BasicInfo
+                  loading={loading}
+                  info={tenantDetail?.info}
+                  source={tenantDetail?.source}
+                />
+              </Col>
             );
           }, [tenantDetail])}
 
@@ -310,12 +315,14 @@ export default function TenantOverview() {
             />
           )}
           {tenantDetail && (
-            <EventsTable
-              defaultExpand={true}
-              objectType={['OBTENANT', 'OBBACKUPPOLICY']}
-              collapsible={true}
-              name={tenantDetail?.info.name}
-            />
+            <Col span={24}>
+              <EventsTable
+                defaultExpand={true}
+                objectType={['OBTENANT', 'OBBACKUPPOLICY']}
+                collapsible={true}
+                name={tenantDetail?.info.name}
+              />
+            </Col>
           )}
 
           <Backups

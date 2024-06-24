@@ -1,6 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Card,Col,Descriptions,Tag } from 'antd';
+import { Card, Descriptions, Tag } from 'antd';
 
 export default function BasicInfo({
   info = {},
@@ -75,49 +75,45 @@ export default function BasicInfo({
   };
 
   return (
-    <Col span={24}>
-      <Card
-        loading={loading}
-        title={
-          <h2 style={{ marginBottom: 0 }}>
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation',
-              defaultMessage: '租户信息',
-            })}
-          </h2>
-        }
-        style={style}
-      >
-        <Descriptions column={5}>
-          {Object.keys(InfoConfig).map(
-            (key, index) => {
-              return (
-                <Descriptions.Item key={index} label={InfoConfig[key]}>
-                  {key !== 'status' ? (
-                    info[key]
-                  ) : (
-                    <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
-                  )}
-                </Descriptions.Item>
-              );
-            },
-          )}
+    <Card
+      loading={loading}
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.TenantBasicInformation',
+            defaultMessage: '租户信息',
+          })}
+        </h2>
+      }
+      style={style}
+    >
+      <Descriptions column={5}>
+        {Object.keys(InfoConfig).map((key, index) => {
+          return (
+            <Descriptions.Item key={index} label={InfoConfig[key]}>
+              {key !== 'status' ? (
+                info[key]
+              ) : (
+                <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
+              )}
+            </Descriptions.Item>
+          );
+        })}
+      </Descriptions>
+      {checkSource(source) && (
+        <Descriptions
+          title={intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.TenantResources',
+            defaultMessage: '租户资源',
+          })}
+        >
+          {Object.keys(SourceConfig).map((key, index) => (
+            <Descriptions.Item label={SourceConfig[key]} key={index}>
+              {source[key]}
+            </Descriptions.Item>
+          ))}
         </Descriptions>
-        {checkSource(source) && (
-          <Descriptions
-            title={intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.TenantResources',
-              defaultMessage: '租户资源',
-            })}
-          >
-            {Object.keys(SourceConfig).map((key, index) => (
-              <Descriptions.Item label={SourceConfig[key]} key={index}>
-                {source[key]}
-              </Descriptions.Item>
-            ))}
-          </Descriptions>
-        )}
-      </Card>
-    </Col>
+      )}
+    </Card>
   );
 }

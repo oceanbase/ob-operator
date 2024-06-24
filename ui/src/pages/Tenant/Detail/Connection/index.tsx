@@ -6,7 +6,7 @@ import { LinkOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Space, message } from 'antd';
+import { Button, Col, Row, Space, message } from 'antd';
 import React, { useEffect, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
@@ -48,11 +48,13 @@ const TenantConnection: React.FC = () => {
       />
       <Row gutter={[16, 16]}>
         {tenantDetail && (
-          <BasicInfo
-            info={tenantDetail.info}
-            source={tenantDetail.source}
-            loading={loading}
-          />
+          <Col span={24}>
+            <BasicInfo
+              info={tenantDetail.info}
+              source={tenantDetail.source}
+              loading={loading}
+            />
+          </Col>
         )}
         <div style={{ margin: 12, width: '100%' }}>
           {terminalId ? (

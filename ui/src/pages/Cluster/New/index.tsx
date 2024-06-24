@@ -1,14 +1,14 @@
 import { getStorageClasses } from '@/services';
 import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button,Form,Row,message } from 'antd';
-import { strTrim } from '@/utils/helper';
+import { Button, Col, Form, Row, message } from 'antd';
 import { useState } from 'react';
 
-import { encryptText,usePublicKey } from '@/hook/usePublicKey';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
 import Monitor from './Monitor';
@@ -43,13 +43,13 @@ export default function New() {
   const onFinish = async (values: API.CreateClusterData) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
-    
-    const res = await createClusterReportWrap({...strTrim(values)});
+
+    const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();
       setPasswordVal('');
-      history.back()
+      history.back();
     }
   };
   const initialValues = {
@@ -103,11 +103,13 @@ export default function New() {
         style={{ marginBottom: 56 }}
       >
         <Row gutter={[16, 16]}>
-          <BasicInfo
-            passwordVal={passwordVal}
-            setPasswordVal={setPasswordVal}
-            form={form}
-          />
+          <Col span={24}>
+            <BasicInfo
+              passwordVal={passwordVal}
+              setPasswordVal={setPasswordVal}
+              form={form}
+            />
+          </Col>
           <Topo form={form} />
           <Observer storageClasses={storageClasses} form={form} />
           <Monitor />

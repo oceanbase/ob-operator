@@ -6,7 +6,7 @@ import { LinkOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Row, Space, message } from 'antd';
+import { Button, Col, Row, Space, message } from 'antd';
 import React, { useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
@@ -41,7 +41,9 @@ const ClusterConnection: React.FC = () => {
       />
       <Row gutter={[16, 16]}>
         {clusterDetail && (
-          <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          <Col span={24}>
+            <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          </Col>
         )}
         <div style={{ margin: 12, width: '100%' }}>
           {terminalId ? (

@@ -23,7 +23,7 @@ export default function Overview() {
     manual: true,
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        if (data.status === 'Pending') {
+        if (data.status === 'Pending' && !timer.current) {
           timer.current = setTimeout(() => {
             refresh();
           }, REFRESH_OBPROXY_TIME);
