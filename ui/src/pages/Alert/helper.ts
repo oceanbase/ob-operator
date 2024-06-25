@@ -27,8 +27,34 @@ export const getSelectList = (
   clusterList: API.SimpleClusterList,
   type: OceanbaseOBInstanceType,
   tenantList?: API.TenantDetail[],
+  selectedTenants?: string[],
+  selectedServers?: string[],
 ): Alert.SelectList => {
   if (type === 'obcluster') {
+    if (selectedTenants?.length) {
+      return clusterList
+        .filter((cluster) => {
+          const temp = tenantList?.filter((tenant) =>
+            selectedTenants.includes(tenant.name),
+          );
+          return temp?.some(
+            (tenant) => tenant.clusterResourceName === cluster.name,
+          );
+        })
+        .map((cluster) => cluster.clusterName);
+    }
+    if (selectedServers?.length) {
+      return clusterList
+        .filter((cluster) => {
+          for (const zone of cluster.topology) {
+            for (const observer of zone.observers) {
+              if (selectedServers.includes(observer.address)) return true;
+            }
+          }
+          return false;
+        })
+        .map((cluster) => cluster.clusterName);
+    }
     return clusterList.map((cluster) => cluster.clusterName);
   }
   if (type === 'obtenant') {

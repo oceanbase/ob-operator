@@ -31,15 +31,21 @@ export default function Tenant() {
     <PageContainer>
       <Row gutter={[16, 16]}>
         {clusterDetail && (
-          <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          <Col span={24}>
+            <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
+          </Col>
         )}
         {tenantsList && (
-          <TenantsList
-            tenantsList={tenantsList}
-            turnToCreateTenant={handleAddCluster}
-          />
+          <Col span={24}>
+            <TenantsList
+              tenantsList={tenantsList}
+              turnToCreateTenant={handleAddCluster}
+            />
+          </Col>
         )}
-        <EventsTable objectType="OBTENANT" />
+        <Col span={24}>
+          <EventsTable objectType="OBTENANT" />
+        </Col>
         {tenantsList && (
           <Col span={24}>
             <MonitorComp

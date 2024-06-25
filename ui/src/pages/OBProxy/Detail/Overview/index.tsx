@@ -14,7 +14,7 @@ import NodeInfo from './NodeInfo';
 
 export default function Overview() {
   const { ns, name } = useParams();
-  const timer = useRef<NodeJS.Timeout>();
+  const timer = useRef<NodeJS.Timeout | null>(null);
   const {
     data: obproxyDetailRes,
     run: getOBProxy,
@@ -23,12 +23,13 @@ export default function Overview() {
     manual: true,
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        if (data.status === 'Pending') {
-          timer.current = setTimeout(() => {
+        if (data.status === 'Pending' && !timer.current) {
+          timer.current = setInterval(() => {
             refresh();
           }, REFRESH_OBPROXY_TIME);
-        } else {
-          clearTimeout(timer.current);
+        } else if (data.status !== 'Pending' && timer.current) {
+          clearInterval(timer.current);
+          timer.current = null;
         }
       }
     },
@@ -49,6 +50,13 @@ export default function Overview() {
 
   useEffect(() => {
     getOBProxy(ns!, name!);
+
+    return () => {
+      if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
+    };
   }, []);
 
   return (

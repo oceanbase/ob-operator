@@ -82,7 +82,7 @@ export default function ZoneTable({
           defaultMessage: '操作',
         }),
         key: 'action',
-        render: (value, record) => {
+        render: (_, record) => {
           return (
             <>
               <Button
@@ -137,8 +137,8 @@ export default function ZoneTable({
   };
   const handleDelete = async (zoneName: string) => {
     const res = await deleteObzoneReportWrap({
-      ns,
-      name,
+      ns: ns!,
+      name: name!,
       zoneName,
     });
     if (res.successful) {

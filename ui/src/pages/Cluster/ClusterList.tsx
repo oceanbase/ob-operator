@@ -1,7 +1,7 @@
 import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Tag, Typography } from 'antd';
+import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 import { COLOR_MAP } from '@/constants';
@@ -132,36 +132,34 @@ export default function ClusterList({
   loading,
 }: ClusterListProps) {
   return (
-    <Col span={24}>
-      <Card
-        title={
-          <h2 style={{ marginBottom: 0 }}>
-            {intl.formatMessage({
-              id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
-              defaultMessage: '集群列表',
-            })}
-          </h2>
-        }
-        extra={
-          <Button onClick={handleAddCluster} type="primary">
-            {intl.formatMessage({
-              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-              defaultMessage: '创建集群',
-            })}
-          </Button>
-        }
-      >
-        <Table
-          loading={loading}
-          columns={columns}
-          dataSource={clusterList}
-          scroll={{ x: 1200 }}
-          pagination={{ simple: true }}
-          rowKey="name"
-          bordered
-          sticky
-        />
-      </Card>
-    </Col>
+    <Card
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'dashboard.pages.Cluster.ClusterList.ClusterList',
+            defaultMessage: '集群列表',
+          })}
+        </h2>
+      }
+      extra={
+        <Button onClick={handleAddCluster} type="primary">
+          {intl.formatMessage({
+            id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+            defaultMessage: '创建集群',
+          })}
+        </Button>
+      }
+    >
+      <Table
+        loading={loading}
+        columns={columns}
+        dataSource={clusterList}
+        scroll={{ x: 1200 }}
+        pagination={{ simple: true }}
+        rowKey="name"
+        bordered
+        sticky
+      />
+    </Card>
   );
 }

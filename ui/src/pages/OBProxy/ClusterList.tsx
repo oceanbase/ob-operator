@@ -2,7 +2,7 @@ import type { ObproxyOBProxyOverview } from '@/api/generated';
 import { OBPROXY_COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Link } from '@umijs/max';
-import { Button, Card, Col, Table, Tag, Typography } from 'antd';
+import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 
@@ -114,36 +114,34 @@ export default function ClusterList({
   obproxies,
 }: ClusterListProps) {
   return (
-    <Col span={24}>
-      <Card
-        title={
-          <h2 style={{ marginBottom: 0 }}>
-            {intl.formatMessage({
-              id: 'src.pages.OBProxy.0608BC29',
-              defaultMessage: '集群列表',
-            })}
-          </h2>
-        }
-        extra={
-          <Button onClick={handleAddCluster} type="primary">
-            {intl.formatMessage({
-              id: 'src.pages.OBProxy.EFFF5E84',
-              defaultMessage: '创建 OBProxy 集群',
-            })}
-          </Button>
-        }
-      >
-        <Table
-          loading={loading}
-          columns={columns}
-          dataSource={obproxies}
-          pagination={{ simple: true }}
-          rowKey="name"
-          scroll={{ x: 1200 }}
-          bordered
-          sticky
-        />
-      </Card>
-    </Col>
+    <Card
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.0608BC29',
+            defaultMessage: '集群列表',
+          })}
+        </h2>
+      }
+      extra={
+        <Button onClick={handleAddCluster} type="primary">
+          {intl.formatMessage({
+            id: 'src.pages.OBProxy.EFFF5E84',
+            defaultMessage: '创建 OBProxy 集群',
+          })}
+        </Button>
+      }
+    >
+      <Table
+        loading={loading}
+        columns={columns}
+        dataSource={obproxies}
+        pagination={{ simple: true }}
+        rowKey="name"
+        scroll={{ x: 1200 }}
+        bordered
+        sticky
+      />
+    </Card>
   );
 }

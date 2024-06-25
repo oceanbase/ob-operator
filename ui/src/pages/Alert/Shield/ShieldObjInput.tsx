@@ -31,7 +31,15 @@ export default function ShieldObjInput({
   ) => {
     if (!type || !clusterList || (type === 'obtenant' && !tenantList))
       return [];
-    const list = getSelectList(clusterList, type, tenantList);
+    const selectedTenants = form.getFieldValue(['instances', 'obtenant']);
+    const selectedServers = form.getFieldValue(['instances', 'observer']);
+    const list = getSelectList(
+      clusterList,
+      type,
+      tenantList,
+      selectedTenants,
+      selectedServers,
+    );
     if (type === 'obcluster') {
       const res = list?.map((clusterName) => ({
         value: clusterName,
@@ -121,11 +129,7 @@ export default function ShieldObjInput({
 
     const [maxCount, setMaxCount] = useState<number>();
     const selectOnChange = (vals: string[]) => {
-      if (
-        vals.includes('allTenants') ||
-        vals.includes('allServers') ||
-        !selectedCluster?.length
-      ) {
+      if (vals.includes('allTenants') || vals.includes('allServers')) {
         setMaxCount(1);
       } else {
         setMaxCount(undefined);
@@ -145,28 +149,32 @@ export default function ShieldObjInput({
     return (
       <Row gutter={8}>
         <Col span={8}>
-          <Form.Item
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'src.pages.Alert.Shield.639D1A8C',
-                  defaultMessage: '请选择',
-                }),
-              },
-            ]}
-            name={clusterFormName}
-          >
-            <Select
-              mode="multiple"
-              maxCount={1}
-              allowClear
-              options={getOptionsFromType(clusterFormName[1])}
-              placeholder={intl.formatMessage({
-                id: 'src.pages.Alert.Shield.B0133BD9',
-                defaultMessage: '请选择集群',
-              })}
-            />
+          <Form.Item noStyle dependencies={[nextFormName]}>
+            {() => (
+              <Form.Item
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'src.pages.Alert.Shield.639D1A8C',
+                      defaultMessage: '请选择',
+                    }),
+                  },
+                ]}
+                name={clusterFormName}
+              >
+                <Select
+                  mode="multiple"
+                  maxCount={1}
+                  allowClear
+                  options={getOptionsFromType(clusterFormName[1])}
+                  placeholder={intl.formatMessage({
+                    id: 'src.pages.Alert.Shield.B0133BD9',
+                    defaultMessage: '请选择集群',
+                  })}
+                />
+              </Form.Item>
+            )}
           </Form.Item>
         </Col>
         <Col span={16}>
@@ -196,8 +204,7 @@ export default function ShieldObjInput({
                     placeholder={intl.formatMessage(
                       {
                         id: 'src.pages.Alert.Shield.4AE1863A',
-                        defaultMessage:
-                          "请选择{ConditionalExpression0}",
+                        defaultMessage: '请选择{ConditionalExpression0}',
                       },
                       {
                         ConditionalExpression0:

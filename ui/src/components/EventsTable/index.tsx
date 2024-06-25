@@ -1,7 +1,7 @@
 import { intl } from '@/utils/intl';
 import { ProCard } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
-import { Col, Table, Tag } from 'antd';
+import { Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import CollapsibleCard from '../CollapsibleCard';
 
@@ -135,23 +135,23 @@ export default function EventsTable({
   cardType,
   collapsible = false,
   defaultExpand = false,
-  name
+  name,
 }: EventsTableProps) {
-  const defaultParams:API.EventParams = {};
-  if(objectType){
+  const defaultParams: API.EventParams = {};
+  if (objectType) {
     defaultParams.objectType = objectType;
   }
-  if(name){
+  if (name) {
     defaultParams.name = name;
   }
-  
-  const { data,loading } = useRequest(getEventsReq, {
+
+  const { data, loading } = useRequest(getEventsReq, {
     defaultParams: [defaultParams],
   });
 
   const CustomCard = (props) => {
     const { title, loading } = props;
-    
+
     return (
       <>
         {cardType === 'proCard' ? (
@@ -159,7 +159,12 @@ export default function EventsTable({
             {props.children}
           </ProCard>
         ) : (
-          <CollapsibleCard loading={loading} defaultExpand={defaultExpand} title={title} collapsible={collapsible}>
+          <CollapsibleCard
+            loading={loading}
+            defaultExpand={defaultExpand}
+            title={title}
+            collapsible={collapsible}
+          >
             {props.children}
           </CollapsibleCard>
         )}
@@ -168,25 +173,23 @@ export default function EventsTable({
   };
 
   return (
-    <Col span={24}>
-      <CustomCard
-        loading={loading}
-        title={
-          <h2 style={{marginBottom:0}}>
-            {intl.formatMessage({
-              id: 'OBDashboard.components.EventsTable.Event',
-              defaultMessage: '事件',
-            })}
-          </h2>
-        }
-      >
-        <Table
-          rowKey="id"
-          pagination={{ simple: true }}
-          columns={columns}
-          dataSource={data}
-        />
-      </CustomCard>
-    </Col>
+    <CustomCard
+      loading={loading}
+      title={
+        <h2 style={{ marginBottom: 0 }}>
+          {intl.formatMessage({
+            id: 'OBDashboard.components.EventsTable.Event',
+            defaultMessage: '事件',
+          })}
+        </h2>
+      }
+    >
+      <Table
+        rowKey="id"
+        pagination={{ simple: true }}
+        columns={columns}
+        dataSource={data}
+      />
+    </CustomCard>
   );
 }
