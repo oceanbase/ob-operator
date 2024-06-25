@@ -18,7 +18,7 @@ import TenantsList from './TenantsList';
 export default function TenantPage() {
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([]);
   const navigate = useNavigate();
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const {
     data: tenantsListResponse,
     refresh: reGetAllTenants,
@@ -30,11 +30,13 @@ export default function TenantPage() {
           (tenant) => !RESULT_STATUS.includes(tenant.status),
         );
         if (operatingTenant) {
-          timerRef.current = setTimeout(() => {
-            reGetAllTenants();
-          }, REFRESH_TENANT_TIME);
+          if (!timerRef.current)
+            timerRef.current = setInterval(() => {
+              reGetAllTenants();
+            }, REFRESH_TENANT_TIME);
         } else if (timerRef.current) {
-          clearTimeout(timerRef.current);
+          clearInterval(timerRef.current);
+          timerRef.current = null;
         }
         setFilterLabel(
           data.map((item) => ({
@@ -51,7 +53,8 @@ export default function TenantPage() {
   useEffect(() => {
     return () => {
       if (timerRef.current) {
-        clearTimeout(timerRef.current);
+        clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);

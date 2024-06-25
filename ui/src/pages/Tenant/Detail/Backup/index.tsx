@@ -14,32 +14,40 @@ import BackupJobs from './BackupJobs';
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
   const [backupPolicy, setBackupPolicy] = useState<API.BackupPolicy>();
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { refresh: backupPolicyRefresh, loading } = useRequest(
     getBackupPolicy,
     {
-      defaultParams: [{ ns, name }],
+      defaultParams: [{ ns: ns!, name: name! }],
       onSuccess: ({ successful, data }) => {
         if (successful) {
           setBackupPolicy(data);
           if (!BACKUP_RESULT_STATUS.includes(data.status)) {
-            timerRef.current = setTimeout(() => {
-              backupPolicyRefresh();
-            }, REFRESH_TENANT_TIME);
+            if (!timerRef.current) {
+              timerRef.current = setInterval(() => {
+                backupPolicyRefresh();
+              }, REFRESH_TENANT_TIME);
+            }
+          } else if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
           }
         }
       },
     },
   );
   const { data: tenantDetailResponse } = useRequest(getTenant, {
-    defaultParams: [{ ns, name }],
+    defaultParams: [{ ns: ns!, name: name! }],
   });
   const tenantDetail = tenantDetailResponse?.data;
 
   useEffect(() => {
     return () => {
-      clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, []);
 

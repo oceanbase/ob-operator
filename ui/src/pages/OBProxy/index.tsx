@@ -6,13 +6,13 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import ClusterList from './ClusterList';
 
 export default function OBProxy() {
   const navigate = useNavigate();
   const handleAddCluster = () => navigate('new');
-  const timer = useRef<NodeJS.Timeout>();
+  const timer = useRef<NodeJS.Timeout | null>(null);
   const {
     data: obproxiesRes,
     loading,
@@ -21,16 +21,28 @@ export default function OBProxy() {
     onSuccess({ data, successful }) {
       if (successful) {
         if (data.some((obcluster) => obcluster.status === 'Pending')) {
-          timer.current = setTimeout(() => {
-            refresh();
-          }, REFRESH_OBPROXY_TIME);
+          if (!timer.current) {
+            timer.current = setInterval(() => {
+              refresh();
+            }, REFRESH_OBPROXY_TIME);
+          }
         } else if (timer.current) {
-          clearTimeout(timer.current);
+          clearInterval(timer.current);
+          timer.current = null;
         }
       }
     },
   });
   const obproxies = obproxiesRes?.data;
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) {
+        clearInterval(timer.current);
+        timer.current = null;
+      }
+    };
+  }, []);
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>

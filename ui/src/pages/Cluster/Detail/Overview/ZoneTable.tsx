@@ -137,8 +137,8 @@ export default function ZoneTable({
   };
   const handleDelete = async (zoneName: string) => {
     const res = await deleteObzoneReportWrap({
-      ns:ns!,
-      name:name!,
+      ns: ns!,
+      name: name!,
       zoneName,
     });
     if (res.successful) {
