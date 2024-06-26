@@ -82,6 +82,9 @@ export default function ShieldObjInput({
           title: cluster.clusterName,
           options: cluster.tenants?.map((item) => ({
             value: item,
+            disabled: selectedTenants?.length
+              ? !cluster.tenants?.includes(selectedTenants[0])
+              : false,
             label: item,
           })),
         }));
@@ -113,6 +116,9 @@ export default function ShieldObjInput({
           title: cluster.clusterName,
           options: cluster.servers?.map((item) => ({
             value: item,
+            disabled: selectedServers?.length
+              ? !cluster.servers?.includes(selectedServers[0])
+              : false,
             label: item,
           })),
         }));
@@ -144,6 +150,7 @@ export default function ShieldObjInput({
     useUpdateEffect(() => {
       if (!selectedCluster?.length) {
         form.setFieldValue(nextFormName, undefined);
+        form.setFieldValue(clusterFormName, undefined);
       }
     }, [selectedCluster]);
     return (
@@ -178,7 +185,7 @@ export default function ShieldObjInput({
           </Form.Item>
         </Col>
         <Col span={16}>
-          <Form.Item noStyle dependencies={[clusterFormName]}>
+          <Form.Item noStyle dependencies={[clusterFormName, nextFormName]}>
             {({ getFieldValue }) => {
               const cluster = getFieldValue(clusterFormName);
               return (

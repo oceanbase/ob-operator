@@ -9,7 +9,7 @@ import { MIRROR_OBPROXY } from '@/constants/doc';
 import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
 import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons';
-import { useRequest } from 'ahooks';
+import { useDebounceFn, useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
 import {
   Button,
@@ -77,6 +77,7 @@ export default function ConfigDrawer({
       onClose();
     }
   };
+  const { run: debounceSubmit } = useDebounceFn(submit, { wait: 300 });
   const titleStyle = { fontSize: 14, fontWeight: 600 };
 
   const labelChange = (label: string, name: number) => {
@@ -108,7 +109,7 @@ export default function ConfigDrawer({
       <Form
         initialValues={props}
         form={form}
-        onFinish={submit}
+        onFinish={debounceSubmit}
         layout="vertical"
       >
         <p style={titleStyle}>
