@@ -121,6 +121,10 @@ export const formatShieldSubmitData = (
     const temp = selectList.find(
       (item) => item?.clusterName === cloneFormData.instances.obcluster[0],
     ) as Alert.ServersList & Alert.TenantsList;
+    
+    // Manually add the default tenant sys
+    selectInstance?.includes('allTenants') && temp.tenants?.push('sys');
+
     cloneFormData.instances[cloneFormData.instances.type] =
       temp?.tenants || temp?.servers || [];
     selectInstance = temp?.tenants || temp?.servers || [];
