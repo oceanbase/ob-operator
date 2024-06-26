@@ -35,7 +35,7 @@ export const getSelectList = (
       return clusterList
         .filter((cluster) => {
           const temp = tenantList?.filter((tenant) =>
-            selectedTenants.includes(tenant.name),
+            selectedTenants.includes(tenant.tenantName),
           );
           return temp?.some(
             (tenant) => tenant.clusterResourceName === cluster.name,
