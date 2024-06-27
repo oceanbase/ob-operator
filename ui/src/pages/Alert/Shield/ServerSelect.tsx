@@ -151,7 +151,10 @@ export default function ServerSelect({
           onChange={serverChange}
           options={serversOptions}
           allowClear
-          placeholder="请选择主机"
+          placeholder={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.E7B0A331',
+            defaultMessage: '请选择主机',
+          })}
         />
       </Col>
     </Row>

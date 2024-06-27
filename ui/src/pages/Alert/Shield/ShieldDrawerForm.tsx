@@ -206,7 +206,14 @@ export default function ShieldDrawerForm({
                         !instances[instances.type] ||
                         !instances[instances.type]?.length
                       ) {
-                        return Promise.reject(new Error('请选择'));
+                        return Promise.reject(
+                          new Error(
+                            intl.formatMessage({
+                              id: 'src.pages.Alert.Shield.FA536583',
+                              defaultMessage: '请选择',
+                            }),
+                          ),
+                        );
                       }
                       return Promise.resolve();
                     },

@@ -158,7 +158,10 @@ export default function TenantSelect({
           onChange={tenantChange}
           options={tenantOptions}
           allowClear
-          placeholder="请选择租户"
+          placeholder={intl.formatMessage({
+            id: 'src.pages.Alert.Shield.CEA364B8',
+            defaultMessage: '请选择租户',
+          })}
         />
       </Col>
     </Row>

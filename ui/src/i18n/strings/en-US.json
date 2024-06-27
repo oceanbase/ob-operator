@@ -1035,5 +1035,10 @@
   "src.pages.OBProxy.Detail.Overview.5015890A": "Deleted successfully",
   "src.pages.OBProxy.Detail.Overview.A9E634FB": "Are you sure to delete the OBProxy?",
   "src.pages.OBProxy.Detail.Overview.102C210B": "Service Address:",
-  "src.pages.OBProxy.Detail.Overview.357D1CE4": "Port Mapping:"
+  "src.pages.OBProxy.Detail.Overview.357D1CE4": "Port Mapping:",
+  "src.pages.Tenant.Detail.Connection.E5D2E652": "Connect via ODC",
+  "src.pages.Cluster.Detail.Connection.F8A13BAA": "Connect via ODC",
+  "src.pages.Alert.Shield.CEA364B8": "Please select a tenant",
+  "src.pages.Alert.Shield.FA536583": "Please Select",
+  "src.pages.Alert.Shield.E7B0A331": "Please select host"
 }

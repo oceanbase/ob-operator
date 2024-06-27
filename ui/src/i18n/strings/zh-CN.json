@@ -1035,5 +1035,10 @@
   "src.pages.OBProxy.Detail.Overview.5015890A": "删除成功",
   "src.pages.OBProxy.Detail.Overview.A9E634FB": "确认删除该 OBProxy 吗？",
   "src.pages.OBProxy.Detail.Overview.102C210B": "服务地址：",
-  "src.pages.OBProxy.Detail.Overview.357D1CE4": "端口映射："
+  "src.pages.OBProxy.Detail.Overview.357D1CE4": "端口映射：",
+  "src.pages.Tenant.Detail.Connection.E5D2E652": "通过 ODC 连接",
+  "src.pages.Cluster.Detail.Connection.F8A13BAA": "通过 ODC 连接",
+  "src.pages.Alert.Shield.CEA364B8": "请选择租户",
+  "src.pages.Alert.Shield.FA536583": "请选择",
+  "src.pages.Alert.Shield.E7B0A331": "请选择主机"
 }
