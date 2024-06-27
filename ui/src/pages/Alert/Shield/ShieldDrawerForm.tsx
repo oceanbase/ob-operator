@@ -10,7 +10,17 @@ import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { DrawerProps } from 'antd';
-import { Button, Col, DatePicker, Form, Input, Radio, Row, Select, message } from 'antd';
+import {
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Radio,
+  Row,
+  Select,
+  message,
+} from 'antd';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import {
@@ -19,7 +29,9 @@ import {
   getSelectList,
   validateLabelValues,
 } from '../helper';
-import ShieldObjInput from './ShieldObjInput';
+import ClusterSelect from './ClusterSelect';
+import ServerSelect from './ServerSelect';
+import TenantSelect from './TenantSelect';
 
 interface ShieldDrawerProps extends DrawerProps {
   id?: string;
@@ -39,7 +51,6 @@ export default function ShieldDrawerForm({
 }: ShieldDrawerProps) {
   const [form] = Form.useForm<Alert.ShieldDrawerForm>();
   const { clusterList, tenantList } = useModel('alarm');
-  const shieldObjType = Form.useWatch(['instances', 'type'], form);
   const isEdit = !!id;
 
   const newInitialValues = {
@@ -175,15 +186,41 @@ export default function ShieldDrawerForm({
             <Radio value="observer"> OBServer </Radio>
           </Radio.Group>
         </Form.Item>
-        <Form.Item
-          style={{ marginBottom: 0 }}
-          label={intl.formatMessage({
-            id: 'src.pages.Alert.Shield.68A6FF3F',
-            defaultMessage: '屏蔽对象',
-          })}
-        >
-          <ShieldObjInput shieldObjType={shieldObjType} form={form} />
+        <Form.Item noStyle dependencies={['instances', 'type']}>
+          {({ getFieldValue }) => {
+            const type = getFieldValue(['instances', 'type']);
+            return (
+              <Form.Item
+                label={intl.formatMessage({
+                  id: 'src.pages.Alert.Shield.68A6FF3F',
+                  defaultMessage: '屏蔽对象',
+                })}
+                name={['instances']}
+                required
+                rules={[
+                  {
+                    validator: (_, instances: Alert.InstancesType) => {
+                      if (
+                        !instances.obcluster ||
+                        !instances.obcluster.length ||
+                        !instances[instances.type] ||
+                        !instances[instances.type]?.length
+                      ) {
+                        return Promise.reject(new Error('请选择'));
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                {type === 'obcluster' && <ClusterSelect />}
+                {type === 'obtenant' && <TenantSelect />}
+                {type === 'observer' && <ServerSelect />}
+              </Form.Item>
+            );
+          }}
         </Form.Item>
+
         <Form.Item
           rules={[
             {

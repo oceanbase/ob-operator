@@ -333,10 +333,6 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                   defaultMessage: '请选择',
                 })}
                 showTime
-                onChange={(value, dateString) => {
-                  console.log('Selected Time: ', value);
-                  console.log('Formatted Selected Time: ', dateString);
-                }}
               />
             </Form.Item>
           </Col>
@@ -360,10 +356,6 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
                 })}
                 style={{ width: '100%' }}
                 showTime
-                onChange={(value, dateString) => {
-                  console.log('Selected Time: ', value);
-                  console.log('Formatted Selected Time: ', dateString);
-                }}
               />
             </Form.Item>
           </Col>
