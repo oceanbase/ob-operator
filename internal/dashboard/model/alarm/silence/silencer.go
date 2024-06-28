@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package silence
 
 import (
+	"strings"
 	"time"
 
 	alarmconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/alarm/constant"
@@ -44,6 +45,7 @@ type SilencerResponse struct {
 	Instances []oceanbase.OBInstance `json:"instances" binding:"required"`
 	Status    *Status                `json:"status" binding:"required"`
 	UpdatedAt int64                  `json:"updatedAt" binding:"required"`
+	Rules     []string               `json:"rules" binding:"required"`
 	Silencer  `json:",inline"`
 }
 
@@ -148,6 +150,7 @@ func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstanc
 func NewSilencerResponse(gettableSilencer *ammodels.GettableSilence) *SilencerResponse {
 	matchers := make([]alarm.Matcher, 0)
 	matcherMap := make(map[string]alarm.Matcher)
+	rules := make([]string, 0)
 	for _, silenceMatcher := range gettableSilencer.Matchers {
 		matcher := alarm.Matcher{
 			IsRegex: *silenceMatcher.IsRegex,
@@ -156,6 +159,9 @@ func NewSilencerResponse(gettableSilencer *ammodels.GettableSilence) *SilencerRe
 		}
 		matchers = append(matchers, matcher)
 		matcherMap[matcher.Name] = matcher
+		if matcher.Name == alarmconstant.LabelRuleName {
+			rules = strings.Split(matcher.Value, alarmconstant.RegexOR)
+		}
 	}
 
 	instances := extractInstances(matcherMap)
@@ -174,6 +180,7 @@ func NewSilencerResponse(gettableSilencer *ammodels.GettableSilence) *SilencerRe
 			State: State(*gettableSilencer.Status.State),
 		},
 		Instances: instances,
+		Rules:     rules,
 	}
 	return silencerResponse
 }
