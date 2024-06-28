@@ -2,6 +2,7 @@ import IconTip from '@/components/IconTip';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { resourceNameRule } from '@/constants/rules';
+import { passwordRules } from '@/pages/Cluster/New/helper';
 import { getSimpleClusterList } from '@/services';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
@@ -134,6 +135,7 @@ export default function BasicConfig({ form }: BasicConfigProps) {
         <Col span={8}>
           <Form.Item
             name={'proxySysPassword'}
+            validateFirst
             label={
               <IconTip
                 content={intl.formatMessage({
@@ -146,15 +148,7 @@ export default function BasicConfig({ form }: BasicConfigProps) {
                 })}
               />
             }
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'src.pages.OBProxy.New.67DC144A',
-                  defaultMessage: '请输入 OBProxy root 密码',
-                }),
-              },
-            ]}
+            rules={passwordRules}
           >
             <Input.Password
               placeholder={intl.formatMessage({

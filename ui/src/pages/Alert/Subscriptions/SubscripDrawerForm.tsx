@@ -199,7 +199,6 @@ export default function SubscripDrawerForm({
                 },
                 {
                   validator: (_, value) => {
-                    console.log(value);
                     if (
                       value.some((item: string) => !LABELNAME_REG.test(item))
                     ) {

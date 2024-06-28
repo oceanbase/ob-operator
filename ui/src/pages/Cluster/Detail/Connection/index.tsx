@@ -39,12 +39,14 @@ const ClusterConnection: React.FC = () => {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css"
       />
+
       <Row gutter={[16, 16]}>
         {clusterDetail && (
           <Col span={24}>
             <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
           </Col>
         )}
+
         <div style={{ margin: 12, width: '100%' }}>
           {terminalId ? (
             <OBTerminal
@@ -105,7 +107,12 @@ const ClusterConnection: React.FC = () => {
                     }
                   }}
                 >
-                  通过 ODC 连接 <LinkOutlined />
+                  {intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Connection.F8A13BAA',
+                    defaultMessage: '通过 ODC 连接',
+                  })}
+
+                  <LinkOutlined />
                 </Button>
               )}
             </Space>

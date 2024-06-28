@@ -32,6 +32,10 @@ export const getSelectList = (
 ): Alert.SelectList => {
   if (type === 'obcluster') {
     if (selectedTenants?.length) {
+      // ['sys&clusterName']
+      if (selectedTenants.length === 1 && selectedTenants[0].includes('sys')) {
+        return [selectedTenants[0].split('&')[1]];
+      }
       return clusterList
         .filter((cluster) => {
           const temp = tenantList?.filter((tenant) =>
@@ -60,13 +64,16 @@ export const getSelectList = (
   if (type === 'obtenant') {
     return clusterList.map((cluster) => ({
       clusterName: cluster.clusterName,
-      tenants: tenantList
-        ?.filter(
-          (tenant) =>
-            tenant.namespace === cluster.namespace &&
-            tenant.clusterResourceName === cluster.name,
-        )
-        .map((tenant) => tenant.tenantName),
+      tenants: [
+        ...(tenantList
+          ?.filter(
+            (tenant) =>
+              tenant.namespace === cluster.namespace &&
+              tenant.clusterResourceName === cluster.name,
+          )
+          .map((tenant) => tenant.tenantName) || []),
+        `sys&${cluster.clusterName}`,
+      ],
     }));
   }
   if (type === 'observer') {
@@ -80,6 +87,22 @@ export const getSelectList = (
     }));
   }
   return [];
+};
+
+const removeUselessAttr = (instances: Alert.InstancesType) => {
+  Object.keys(instances).forEach((key: keyof Alert.InstancesType) => {
+    if (!instances[key]) {
+      delete instances[key];
+    }
+  });
+};
+
+const handleSystemTenant = (instances: string[] | undefined) => {
+  if (!instances) return;
+  return instances?.map((tenant) => {
+    if (tenant.includes('sys')) return 'sys';
+    else return tenant;
+  });
 };
 
 /**
@@ -113,6 +136,8 @@ export const formatShieldSubmitData = (
   selectList: Alert.ServersList[] & Alert.TenantsList[] & string[],
 ): SilenceSilencerParam => {
   const cloneFormData = clone(formData);
+  removeUselessAttr(cloneFormData.instances);
+
   let selectInstance = cloneFormData.instances[cloneFormData.instances.type];
   if (
     selectInstance?.includes('allServers') ||
@@ -122,9 +147,6 @@ export const formatShieldSubmitData = (
       (item) => item?.clusterName === cloneFormData.instances.obcluster[0],
     ) as Alert.ServersList & Alert.TenantsList;
     
-    // Manually add the default tenant sys
-    selectInstance?.includes('allTenants') && temp.tenants?.push('sys');
-
     cloneFormData.instances[cloneFormData.instances.type] =
       temp?.tenants || temp?.servers || [];
     selectInstance = temp?.tenants || temp?.servers || [];
@@ -133,7 +155,9 @@ export const formatShieldSubmitData = (
     cloneFormData.instances['obcluster'] = selectList;
     selectInstance = selectList;
   }
-
+  if (cloneFormData.instances.type === 'obtenant') {
+    selectInstance = handleSystemTenant(selectInstance);
+  }
   const tempInstances =
     selectInstance?.map((item) => ({
       type: cloneFormData.instances.type,
@@ -183,6 +207,10 @@ export const getInstancesFromRes = (
     res.type = 'obtenant';
     res.obtenant = getInstanceValues('obtenant');
     res.obcluster = [resInstances[0].obcluster!];
+    for (let i = 0; i < res.obtenant.length; i++) {
+      if (res.obtenant[i] === 'sys')
+        res.obtenant[i] = `sys&${res.obcluster[0]}`;
+    }
   }
   return res;
 };
@@ -267,4 +295,12 @@ export const formatDuration = (duration: number) => {
     { id: 'src.pages.Alert.5ECB5E4A', defaultMessage: '${duration}秒' },
     { duration: duration },
   );
+};
+
+export const isListSame = (pre: string[], cur: string[]) => {
+  if (pre.length !== cur.length) return false;
+  for (const tenant of pre) {
+    if (!cur.includes(tenant)) return false;
+  }
+  return true;
 };

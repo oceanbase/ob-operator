@@ -46,6 +46,7 @@ const TenantConnection: React.FC = () => {
         rel="stylesheet"
         href="https://cdn.jsdelivr.net/npm/xterm/css/xterm.css"
       />
+
       <Row gutter={[16, 16]}>
         {tenantDetail && (
           <Col span={24}>
@@ -56,6 +57,7 @@ const TenantConnection: React.FC = () => {
             />
           </Col>
         )}
+
         <div style={{ margin: 12, width: '100%' }}>
           {terminalId ? (
             <OBTerminal
@@ -122,7 +124,12 @@ const TenantConnection: React.FC = () => {
                     }
                   }}
                 >
-                  通过 ODC 连接 <LinkOutlined />
+                  {intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Connection.E5D2E652',
+                    defaultMessage: '通过 ODC 连接',
+                  })}
+
+                  <LinkOutlined />
                 </Button>
               )}
             </Space>
