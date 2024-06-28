@@ -249,7 +249,7 @@ EOF
   echo "Waiting for the obproxy deployment to be ready..."
 
   # Wait for the obproxy deployment to be ready
-  kubectl wait --for=condition=available --timeout=5m deployment/$DEPLOY_NAME -n oceanbase
+  kubectl wait --for=condition=available --timeout=5m deployment/$DEPLOY_NAME -n $NAMESPACE
 }
 
 # Check whether the obproxy deployment already exists
