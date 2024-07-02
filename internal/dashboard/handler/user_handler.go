@@ -104,6 +104,7 @@ func Logout(c *gin.Context) (string, error) {
 	return "logout successfully", nil
 }
 
+// Authorization handler that does not show in swagger
 func Authz(c *gin.Context) (*auth.AuthUser, error) {
 	urlParam := struct {
 		Token auth.Token `uri:"token" binding:"required"`

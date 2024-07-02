@@ -1,5 +1,103 @@
 basePath: /api/v1
 definitions:
+  ac.Account:
+    properties:
+      description:
+        type: string
+      lastLoginAt:
+        type: string
+      nickname:
+        type: string
+      role:
+        $ref: '#/definitions/ac.Role'
+      username:
+        type: string
+    required:
+    - role
+    - username
+    type: object
+  ac.Action:
+    enum:
+    - READ
+    - WRITE
+    type: string
+    x-enum-varnames:
+    - ActionRead
+    - ActionWrite
+  ac.CreateRoleParam:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/ac.Policy'
+        type: array
+    required:
+    - name
+    - permissions
+    type: object
+  ac.CreateUserParam:
+    properties:
+      description:
+        type: string
+      nickname:
+        type: string
+      password:
+        type: string
+      roleName:
+        type: string
+      username:
+        type: string
+    required:
+    - nickname
+    - password
+    - roleName
+    - username
+    type: object
+  ac.PatchRoleParam:
+    properties:
+      description:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/ac.Policy'
+        type: array
+    type: object
+  ac.PatchUserParam:
+    properties:
+      description:
+        type: string
+      nickname:
+        type: string
+      password:
+        type: string
+      roleName:
+        type: string
+    type: object
+  ac.Policy:
+    properties:
+      action:
+        $ref: '#/definitions/ac.Action'
+      subject:
+        type: string
+    required:
+    - action
+    - subject
+    type: object
+  ac.Role:
+    properties:
+      name:
+        type: string
+      policies:
+        items:
+          $ref: '#/definitions/ac.Policy'
+        type: array
+    required:
+    - name
+    - policies
+    type: object
   alarm.Matcher:
     properties:
       isRegex:
@@ -2362,6 +2460,10 @@ definitions:
         items:
           $ref: '#/definitions/alarm.Matcher'
         type: array
+      rules:
+        items:
+          type: string
+        type: array
       startsAt:
         type: integer
       status:
@@ -2375,6 +2477,7 @@ definitions:
     - id
     - instances
     - matchers
+    - rules
     - startsAt
     - status
     - updatedAt
@@ -2402,6 +2505,408 @@ info:
   title: OceanBase Dashboard API
   version: "1.0"
 paths:
+  /api/v1/ac/accounts:
+    get:
+      consumes:
+      - application/json
+      description: List all accounts
+      operationId: ListAllAccounts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ac.Account'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all accounts
+      tags:
+      - AccessControl
+    post:
+      consumes:
+      - application/json
+      description: Create an account
+      operationId: CreateAccount
+      parameters:
+      - description: Account information
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/ac.CreateUserParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create an account
+      tags:
+      - AccessControl
+  /api/v1/ac/accounts/{username}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an account
+      operationId: DeleteAccount
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete an account
+      tags:
+      - AccessControl
+    patch:
+      consumes:
+      - application/json
+      description: Patch an account
+      operationId: PatchAccount
+      parameters:
+      - description: Account information
+        in: body
+        name: account
+        required: true
+        schema:
+          $ref: '#/definitions/ac.PatchUserParam'
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Patch an account
+      tags:
+      - AccessControl
+  /api/v1/ac/info:
+    get:
+      consumes:
+      - application/json
+      description: get account info
+      operationId: GetAccountInfo
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get account info
+      tags:
+      - AccessControl
+  /api/v1/ac/policies:
+    get:
+      consumes:
+      - application/json
+      description: List all policies
+      operationId: ListAllPolicies
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ac.Policy'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all policies
+      tags:
+      - AccessControl
+  /api/v1/ac/roles:
+    get:
+      consumes:
+      - application/json
+      description: List all roles
+      operationId: ListAllRoles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ac.Role'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List all roles
+      tags:
+      - AccessControl
+    post:
+      consumes:
+      - application/json
+      description: Create an role
+      operationId: CreateRole
+      parameters:
+      - description: Role information
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/ac.CreateRoleParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create an role
+      tags:
+      - AccessControl
+  /api/v1/ac/roles/{name}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an role
+      operationId: DeleteRole
+      parameters:
+      - description: Role name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete an role
+      tags:
+      - AccessControl
+    patch:
+      consumes:
+      - application/json
+      description: Patch an role
+      operationId: PatchRole
+      parameters:
+      - description: Role information
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/ac.PatchRoleParam'
+      - description: Role name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Role'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Patch an role
+      tags:
+      - AccessControl
   /api/v1/alarm/alert/alerts:
     post:
       consumes:
