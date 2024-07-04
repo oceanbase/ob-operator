@@ -13,8 +13,5 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 const (
-	LogLevelDefault = 0
-	LogLevelInfo    = 0
-	LogLevelDebug   = 1
-	LogLevelTrace   = 2
+	DefaultDeletePriority = 100
 )

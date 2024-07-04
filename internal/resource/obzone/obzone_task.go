@@ -29,6 +29,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 )
 
 //go:generate task_register $GOFILE
@@ -79,14 +80,18 @@ func DeleteOBServer(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
 	}
 	observerCount := 0
+	queue := pq.NewWith(resourceutils.CompOBServerDeletionPriority)
 	for _, observer := range observerList.Items {
-		// bugfix: if an observer is being deleted, it won't be deleted again or counted as a working observer
+		queue.Enqueue(&observer)
+	}
+	for !queue.Empty() {
+		observer, _ := queue.Dequeue()
 		if observer.Status.Status == serverstatus.Deleting {
 			continue
 		}
 		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
 			m.Logger.Info("Delete observer", "observer", observer)
-			err = m.Client.Delete(m.Ctx, &observer)
+			err = m.Client.Delete(m.Ctx, observer)
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
