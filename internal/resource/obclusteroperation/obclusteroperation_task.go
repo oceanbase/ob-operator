@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 package obclusteroperation
 
 import (
-	"errors"
+	"strconv"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -157,6 +158,37 @@ func ModifyClusterSpec(m *OBClusterOperationManager) tasktypes.TaskError {
 				obcluster.Spec.Parameters = append(obcluster.Spec.Parameters, apitypes.Parameter{Name: k, Value: v})
 			}
 		}
+	case constants.ClusterOpTypeDeleteOBServers:
+		if len(m.Resource.Spec.DeleteOBServers.OBServers) == 0 {
+			return errors.New("Delete observers is empty")
+		}
+		observerList := v1alpha1.OBServerList{}
+		err = m.Client.List(m.Ctx, &observerList, client.InNamespace(m.Resource.Namespace), client.MatchingLabels{
+			oceanbaseconst.LabelRefOBCluster: m.Resource.Spec.OBCluster,
+		})
+		if err != nil {
+			m.Logger.Error(err, "Failed to list observers")
+			return err
+		}
+		zoneModificationMap := make(map[string]int)
+		for _, observer := range observerList.Items {
+			for _, observerName := range m.Resource.Spec.DeleteOBServers.OBServers {
+				if observer.Name == observerName {
+					val, ok := zoneModificationMap[observer.Spec.Zone]
+					if !ok {
+						val = 0
+					}
+					zoneModificationMap[observer.Spec.Zone] = val + 1
+				}
+			}
+		}
+		for i, t := range obcluster.Spec.Topology {
+			if v, ok := zoneModificationMap[t.Zone]; ok {
+				if t.Replica-v > 0 {
+					obcluster.Spec.Topology[i].Replica = t.Replica - v
+				}
+			}
+		}
 	}
 	if m.Resource.Spec.Force {
 		obcluster.Status.Status = clusterstatus.Running
@@ -196,6 +228,42 @@ func WaitForClusterReturnRunning(m *OBClusterOperationManager) tasktypes.TaskErr
 	})
 	if err != nil {
 		return errors.New("Timeout to wait for cluster to be running")
+	}
+	return nil
+}
+
+func AnnotateOBServersForDeletion(m *OBClusterOperationManager) tasktypes.TaskError {
+	var err error
+	obcluster := &v1alpha1.OBCluster{}
+	err = m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.Resource.Namespace,
+		Name:      m.Resource.Spec.OBCluster,
+	}, obcluster)
+	if err != nil {
+		m.Logger.Error(err, "Failed to find obcluster")
+		return err
+	}
+	if obcluster.Status.Status != clusterstatus.Running && !m.Resource.Spec.Force {
+		return errors.New("RestartOBServers requires obcluster to be running")
+	}
+
+	observerList := v1alpha1.OBServerList{}
+	err = m.Client.List(m.Ctx, &observerList, client.InNamespace(m.Resource.Namespace), client.MatchingLabels{
+		oceanbaseconst.LabelRefOBCluster: m.Resource.Spec.OBCluster,
+	})
+	if err != nil {
+		m.Logger.Error(err, "Failed to list observers")
+		return err
+	}
+
+	for _, observer := range observerList.Items {
+		for _, observerName := range m.Resource.Spec.DeleteOBServers.OBServers {
+			if observer.Name == observerName {
+				observer.Annotations[oceanbaseconst.AnnotationsDeletionPriority] = strconv.Itoa(oceanbaseconst.DefaultDeletePriority)
+				err = m.Client.Update(m.Ctx, &observer)
+				return errors.Wrapf(err, "Failed to annotate observer %s", observerName)
+			}
+		}
 	}
 	return nil
 }

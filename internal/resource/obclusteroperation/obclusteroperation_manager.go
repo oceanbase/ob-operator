@@ -144,6 +144,9 @@ func (m *OBClusterOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if strings.EqualFold(string(m.Resource.Spec.Type), string(constants.ClusterOpTypeRestartOBServers)) &&
 			m.Resource.Spec.RestartOBServers != nil {
 			taskFlow = genRestartOBServersOnlyFlow(m)
+		} else if strings.EqualFold(string(m.Resource.Spec.Type), string(constants.ClusterOpTypeDeleteOBServers)) &&
+			m.Resource.Spec.DeleteOBServers != nil {
+			taskFlow = genDeleteOBServersFlow(m)
 		} else {
 			taskFlow = genModifySpecAndWatchFlow(m)
 		}

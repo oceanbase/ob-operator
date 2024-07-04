@@ -81,9 +81,10 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		constants.ClusterOpTypeUpgrade,
 		constants.ClusterOpTypeRestartOBServers,
 		constants.ClusterOpTypeModifyOBServers,
-		constants.ClusterOpTypeSetParameters:
+		constants.ClusterOpTypeSetParameters,
+		constants.ClusterOpTypeDeleteOBServers:
 	default:
-		return nil, field.Invalid(field.NewPath("spec").Child("type"), r.Spec.Type, "type must be one of AddZones, DeleteZones, AdjustReplicas, Upgrade, RestartOBServers, ModifyOBServers, SetParameters")
+		return nil, field.Invalid(field.NewPath("spec").Child("type"), r.Spec.Type, "type must be one of AddZones, DeleteZones, AdjustReplicas, Upgrade, RestartOBServers, ModifyOBServers, SetParameters, DeleteOBServers")
 	}
 
 	if r.Spec.Type == constants.ClusterOpTypeAddZones && r.Spec.AddZones == nil {
@@ -100,6 +101,8 @@ func (r *OBClusterOperation) ValidateCreate() (admission.Warnings, error) {
 		return nil, field.Invalid(field.NewPath("spec").Child("modifyOBServers"), r.Spec.ModifyOBServers, "modifyOBServers must be set for cluster operation of type modifyOBServers")
 	} else if r.Spec.Type == constants.ClusterOpTypeSetParameters && r.Spec.SetParameters == nil {
 		return nil, field.Invalid(field.NewPath("spec").Child("setParameters"), r.Spec.SetParameters, "setParameters must be set for cluster operation of type setParameters")
+	} else if r.Spec.Type == constants.ClusterOpTypeDeleteOBServers && r.Spec.DeleteOBServers == nil {
+		return nil, field.Invalid(field.NewPath("spec").Child("deleteOBServers"), r.Spec.DeleteOBServers, "deleteOBServers must be set for cluster operation of type deleteOBServers")
 	}
 
 	ctx := context.Background()
