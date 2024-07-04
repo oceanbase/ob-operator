@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -29,7 +30,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 )
 
 //go:generate task_register $GOFILE
