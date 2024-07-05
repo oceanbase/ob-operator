@@ -12,16 +12,31 @@ See the Mulan PSL v2 for more details.
 
 package ac
 
-type Subject string
+type Object string
 
 type Action string
 
-const (
-	ActionRead  Action = "READ"
-	ActionWrite Action = "WRITE"
-)
+type Domain string
 
 type Policy struct {
-	Subject Subject `json:"subject" binding:"required"`
-	Action  Action  `json:"action" binding:"required"`
+	Domain Domain `json:"domain" binding:"required"`
+	Object Object `json:"object" binding:"required"`
+	Action Action `json:"action" binding:"required"`
+}
+
+func (p Policy) String() string {
+	return string(p.Domain) + ":" + string(p.Object) + ":" + string(p.Action)
+}
+
+// ComposeDomainObject returns the domain and object of the policy in format "domain/object"
+func (p Policy) ComposeDomainObject() string {
+	return string(p.Domain) + "/" + string(p.Object)
+}
+
+func NewPolicy(domain, object, action string) Policy {
+	return Policy{
+		Domain: Domain(domain),
+		Object: Object(object),
+		Action: Action(action),
+	}
 }

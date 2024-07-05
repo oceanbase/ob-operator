@@ -32,7 +32,7 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/info [GET]
 // @Security ApiKeyAuth
-func GetAccountInfo(c *gin.Context) (*acmodel.Account, error) {
+func GetAccountInfo(_ *gin.Context) (*acmodel.Account, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -48,7 +48,7 @@ func GetAccountInfo(c *gin.Context) (*acmodel.Account, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/accounts [GET]
 // @Security ApiKeyAuth
-func ListAccounts(c *gin.Context) ([]acmodel.Account, error) {
+func ListAccounts(_ *gin.Context) ([]acmodel.Account, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -65,7 +65,7 @@ func ListAccounts(c *gin.Context) ([]acmodel.Account, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/accounts [POST]
 // @Security ApiKeyAuth
-func CreateAccount(c *gin.Context) (*acmodel.Account, error) {
+func CreateAccount(_ *gin.Context) (*acmodel.Account, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -83,7 +83,7 @@ func CreateAccount(c *gin.Context) (*acmodel.Account, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/accounts/{username} [PATCH]
 // @Security ApiKeyAuth
-func PatchAccount(c *gin.Context) (*acmodel.Account, error) {
+func PatchAccount(_ *gin.Context) (*acmodel.Account, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -100,7 +100,7 @@ func PatchAccount(c *gin.Context) (*acmodel.Account, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/accounts/{username} [DELETE]
 // @Security ApiKeyAuth
-func DeleteAccount(c *gin.Context) (*acmodel.Account, error) {
+func DeleteAccount(_ *gin.Context) (*acmodel.Account, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -116,7 +116,7 @@ func DeleteAccount(c *gin.Context) (*acmodel.Account, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/roles [GET]
 // @Security ApiKeyAuth
-func ListRoles(c *gin.Context) ([]acmodel.Role, error) {
+func ListRoles(_ *gin.Context) ([]acmodel.Role, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -133,7 +133,7 @@ func ListRoles(c *gin.Context) ([]acmodel.Role, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/roles [POST]
 // @Security ApiKeyAuth
-func CreateRole(c *gin.Context) (*acmodel.Role, error) {
+func CreateRole(_ *gin.Context) (*acmodel.Role, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -151,7 +151,7 @@ func CreateRole(c *gin.Context) (*acmodel.Role, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/roles/{name} [PATCH]
 // @Security ApiKeyAuth
-func PatchRole(c *gin.Context) (*acmodel.Role, error) {
+func PatchRole(_ *gin.Context) (*acmodel.Role, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -168,7 +168,7 @@ func PatchRole(c *gin.Context) (*acmodel.Role, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/roles/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteRole(c *gin.Context) (*acmodel.Role, error) {
+func DeleteRole(_ *gin.Context) (*acmodel.Role, error) {
 	return nil, httpErr.New(httpErr.ErrNotImplemented, "Not implemented")
 }
 
@@ -184,6 +184,6 @@ func DeleteRole(c *gin.Context) (*acmodel.Role, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/ac/policies [GET]
 // @Security ApiKeyAuth
-func ListAllPolicies(c *gin.Context) ([]acmodel.Policy, error) {
+func ListAllPolicies(_ *gin.Context) ([]acmodel.Policy, error) {
 	return acbiz.AllPolicies, nil
 }

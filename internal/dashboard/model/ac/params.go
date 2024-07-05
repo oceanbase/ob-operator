@@ -12,7 +12,7 @@ See the Mulan PSL v2 for more details.
 
 package ac
 
-type CreateUserParam struct {
+type CreateAccountParam struct {
 	Username    string `json:"username" binding:"required"`
 	Nickname    string `json:"nickname" binding:"required"`
 	Description string `json:"description"`
@@ -20,7 +20,7 @@ type CreateUserParam struct {
 	RoleName    string `json:"roleName" binding:"required"`
 }
 
-type PatchUserParam struct {
+type PatchAccountParam struct {
 	Nickname    string `json:"nickname"`
 	Description string `json:"description"`
 	RoleName    string `json:"roleName"`

@@ -23,6 +23,7 @@ type Account struct {
 }
 
 type Role struct {
-	Name     string   `json:"name" binding:"required"`
-	Policies []Policy `json:"policies" binding:"required"`
+	Name        string   `json:"name" binding:"required"`
+	Description string   `json:"description"`
+	Policies    []Policy `json:"policies" binding:"required"`
 }

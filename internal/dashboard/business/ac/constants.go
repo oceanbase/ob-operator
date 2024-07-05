@@ -16,45 +16,59 @@ import (
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 )
 
+const (
+	ActionRead  acmodel.Action = "READ"
+	ActionWrite acmodel.Action = "WRITE"
+	ActionAll   acmodel.Action = "ALL"
+)
+
+const (
+	DomainOBCluster     acmodel.Domain = "OBCluster"
+	DomainOBTenant      acmodel.Domain = "OBTenant"
+	DomainAlarm         acmodel.Domain = "Alarm"
+	DomainOBProxy       acmodel.Domain = "OBProxy"
+	DomainAccessControl acmodel.Domain = "AccessControl"
+)
+
 var AllPolicies = []acmodel.Policy{
 	{
-		Subject: acmodel.Subject("OBCluster"),
-		Action:  acmodel.ActionRead,
+		Domain: DomainOBCluster,
+		Action: ActionRead,
 	},
 	{
-		Subject: acmodel.Subject("OBCluster"),
-		Action:  acmodel.ActionWrite,
+		Domain: DomainOBCluster,
+		Action: ActionWrite,
 	},
 	{
-		Subject: acmodel.Subject("OBTenant"),
-		Action:  acmodel.ActionRead,
+		Domain: DomainOBTenant,
+		Action: ActionRead,
 	},
 	{
-		Subject: acmodel.Subject("OBTenant"),
-		Action:  acmodel.ActionWrite,
+		Domain: DomainOBTenant,
+		Action: ActionWrite,
 	},
 	{
-		Subject: acmodel.Subject("Alarm"),
-		Action:  acmodel.ActionRead,
+		Domain: DomainAlarm,
+		Action: ActionRead,
 	},
 	{
-		Subject: acmodel.Subject("Alarm"),
-		Action:  acmodel.ActionWrite,
+		Domain: DomainAlarm,
+		Action: ActionWrite,
 	},
 	{
-		Subject: acmodel.Subject("OBProxy"),
-		Action:  acmodel.ActionRead,
+		Domain: DomainOBProxy,
+		Action: ActionRead,
 	},
 	{
-		Subject: acmodel.Subject("OBProxy"),
-		Action:  acmodel.ActionWrite,
+		Domain: DomainOBProxy,
+		Action: ActionWrite,
 	},
 	{
-		Subject: acmodel.Subject("AccessControl"),
-		Action:  acmodel.ActionRead,
+		Domain: DomainAccessControl,
+		Action: ActionRead,
 	},
 	{
-		Subject: acmodel.Subject("AccessControl"),
-		Action:  acmodel.ActionWrite,
+		Domain: DomainAccessControl,
+		Action: ActionWrite,
 	},
 }

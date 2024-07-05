@@ -1,0 +1,3 @@
+p, admin, *, *, "Super admin"
+p, admin2, book/*, READ, "Book reader"
+g, admin, admin
