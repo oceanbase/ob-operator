@@ -16,29 +16,7 @@ definitions:
     - role
     - username
     type: object
-  ac.Action:
-    enum:
-    - READ
-    - WRITE
-    type: string
-    x-enum-varnames:
-    - ActionRead
-    - ActionWrite
-  ac.CreateRoleParam:
-    properties:
-      description:
-        type: string
-      name:
-        type: string
-      permissions:
-        items:
-          $ref: '#/definitions/ac.Policy'
-        type: array
-    required:
-    - name
-    - permissions
-    type: object
-  ac.CreateUserParam:
+  ac.CreateAccountParam:
     properties:
       description:
         type: string
@@ -56,16 +34,21 @@ definitions:
     - roleName
     - username
     type: object
-  ac.PatchRoleParam:
+  ac.CreateRoleParam:
     properties:
       description:
+        type: string
+      name:
         type: string
       permissions:
         items:
           $ref: '#/definitions/ac.Policy'
         type: array
+    required:
+    - name
+    - permissions
     type: object
-  ac.PatchUserParam:
+  ac.PatchAccountParam:
     properties:
       description:
         type: string
@@ -76,18 +59,32 @@ definitions:
       roleName:
         type: string
     type: object
+  ac.PatchRoleParam:
+    properties:
+      description:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/ac.Policy'
+        type: array
+    type: object
   ac.Policy:
     properties:
       action:
-        $ref: '#/definitions/ac.Action'
-      subject:
+        type: string
+      domain:
+        type: string
+      object:
         type: string
     required:
     - action
-    - subject
+    - domain
+    - object
     type: object
   ac.Role:
     properties:
+      description:
+        type: string
       name:
         type: string
       policies:
@@ -2553,7 +2550,7 @@ paths:
         name: account
         required: true
         schema:
-          $ref: '#/definitions/ac.CreateUserParam'
+          $ref: '#/definitions/ac.CreateAccountParam'
       produces:
       - application/json
       responses:
@@ -2635,7 +2632,7 @@ paths:
         name: account
         required: true
         schema:
-          $ref: '#/definitions/ac.PatchUserParam'
+          $ref: '#/definitions/ac.PatchAccountParam'
       - description: Username
         in: path
         name: username
@@ -3990,7 +3987,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/response.APIResponse'
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
         "400":
           description: Bad Request
           schema:

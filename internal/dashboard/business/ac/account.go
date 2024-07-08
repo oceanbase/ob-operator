@@ -14,6 +14,8 @@ package ac
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"os"
 	"strconv"
 	"strings"
@@ -67,7 +69,9 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 	if err != nil {
 		return nil, err
 	}
-	if account.password != password {
+	bts := sha256.Sum256([]byte(password))
+	sha256EncodedPwd := hex.EncodeToString(bts[:])
+	if account.password != sha256EncodedPwd {
 		return nil, httpErr.NewBadRequest("username or password is incorrect")
 	}
 	role, err := getAccountRole(username)
@@ -76,6 +80,16 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 	} else {
 		account.Role = *role
 	}
+
+	now := time.Now().Unix()
+	credentials.Data[username] = []byte(strings.Join([]string{account.password, account.Nickname, strconv.FormatInt(now, 10), account.Description}, " "))
+
+	clt := client.GetClient()
+	_, err = clt.ClientSet.CoreV1().Secrets(os.Getenv("USER_NAMESPACE")).Update(ctx, credentials, metav1.UpdateOptions{})
+	if err != nil {
+		logrus.WithError(err).Warn("failed to update user credentials")
+	}
+
 	return &account.Account, nil
 }
 
@@ -88,7 +102,7 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 		return nil, httpErr.NewBadRequest("username already exists")
 	}
 
-	roles, err := enforcer.GetRoleManager().GetRoles(param.RoleName)
+	roles, err := enforcer.GetFilteredPolicy(0, param.RoleName)
 	if err != nil {
 		return nil, err
 	}
@@ -102,14 +116,18 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 	if !ok {
 		return nil, httpErr.NewInternal("failed to add role for user")
 	}
-
-	credentials.Data[param.Username] = []byte(strings.Join([]string{param.Password, param.Nickname, "0", param.Description}, " "))
+	bts := sha256.Sum256([]byte(param.Password))
+	sha256EncodedPwd := hex.EncodeToString(bts[:])
+	credentials.Data[param.Username] = []byte(strings.Join([]string{sha256EncodedPwd, param.Nickname, "0", param.Description}, " "))
 	clt := client.GetClient()
 	_, err = clt.ClientSet.CoreV1().Secrets(os.Getenv("USER_NAMESPACE")).Update(ctx, credentials, metav1.UpdateOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal("failed to update user credentials")
 	}
-
+	err = persistPolicies(ctx, enforcer.policyPath, enforcer.configMapPath)
+	if err != nil {
+		return nil, err
+	}
 	acc, err := fetchAccount(credentials, param.Username)
 	if err != nil {
 		return nil, err
@@ -127,7 +145,7 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		return nil, err
 	}
 	if param.RoleName != "" && acc.Role.Name != param.RoleName {
-		roles, err := enforcer.GetRoleManager().GetRoles(param.RoleName)
+		roles, err := enforcer.GetFilteredPolicy(0, param.RoleName)
 		if err != nil {
 			return nil, err
 		}
@@ -147,6 +165,10 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		}
 		if !ok {
 			return nil, httpErr.NewInternal("failed to add role for user")
+		}
+		err = persistPolicies(ctx, enforcer.policyPath, enforcer.configMapPath)
+		if err != nil {
+			return nil, err
 		}
 	}
 	accountChanged := false
@@ -170,6 +192,10 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 			return nil, httpErr.NewInternal("failed to update user credentials")
 		}
 	}
+	acc, err = fetchAccount(credentials, username)
+	if err != nil {
+		return nil, err
+	}
 	return &acc.Account, nil
 }
 
@@ -189,7 +215,10 @@ func DeleteAccount(ctx context.Context, username string) (*acmodel.Account, erro
 	if !ok {
 		return nil, httpErr.NewInternal("failed to delete role for user")
 	}
-
+	err = persistPolicies(ctx, enforcer.policyPath, enforcer.configMapPath)
+	if err != nil {
+		return nil, err
+	}
 	delete(credentials.Data, username)
 	clt := client.GetClient()
 	_, err = clt.ClientSet.CoreV1().Secrets(os.Getenv("USER_NAMESPACE")).Update(ctx, credentials, metav1.UpdateOptions{})
@@ -227,6 +256,17 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 	if err != nil {
 		return nil, httpErr.NewInternal("User credentials file is corrupted: last login time is not a valid timestamp")
 	}
+	roles, err := enforcer.GetRolesForUser(username)
+	if err != nil {
+		return nil, err
+	}
+	if len(roles) == 0 {
+		return nil, httpErr.NewInternal("User credentials file is corrupted: user has no role")
+	}
+	modelRole, err := GetRole(roles[0])
+	if err != nil {
+		return nil, err
+	}
 	lastLoginAt := time.Unix(ts, 0)
 	return &account{
 		Account: acmodel.Account{
@@ -234,6 +274,7 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 			Nickname:    parts[1],
 			LastLoginAt: &lastLoginAt,
 			Description: parts[3],
+			Role:        *modelRole,
 		},
 		password: parts[0],
 	}, nil

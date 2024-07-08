@@ -19,6 +19,8 @@ import (
 	"github.com/casbin/casbin/v2/model"
 	fa "github.com/casbin/casbin/v2/persist/file-adapter"
 	"github.com/casbin/casbin/v2/util"
+
+	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 const modelDefinition = `
@@ -39,10 +41,17 @@ m = g(r.sub, p.sub) && g(r.obj, p.obj) && g(r.act, p.act)
 `
 
 const (
-	envRBACPolicyPath = "RBAC_POLICY_PATH"
+	envRBACPolicyPath      = "RBAC_POLICY_PATH"
+	envRBACPolicyConfigMap = "RBAC_POLICY_CONFIG_MAP"
 )
 
-var enforcer *casbin.Enforcer
+type enf struct {
+	*casbin.Enforcer
+	policyPath    string
+	configMapPath string
+}
+
+var enforcer *enf
 
 func init() {
 	var err error
@@ -59,28 +68,36 @@ func init() {
 // e.g., alice, domain1/data1, read
 // e.g., bob, domain2/*, write
 func Enforcer() *casbin.Enforcer {
-	return enforcer
+	return enforcer.Enforcer
 }
 
-func initEnforcer() (*casbin.Enforcer, error) {
+func initEnforcer() (*enf, error) {
 	var err error
 	var rbacPolicyPath = os.Getenv(envRBACPolicyPath)
+	var rbacPolicyCm = os.Getenv(envRBACPolicyConfigMap)
 	model, err := model.NewModelFromString(modelDefinition)
 	if err != nil {
 		return nil, err
 	}
-
+	if rbacPolicyCm == "" {
+		return nil, httpErr.NewBadRequest("RBAC_POLICY_CONFIG_MAP is required")
+	}
 	if rbacPolicyPath == "" {
-		rbacPolicyPath = "./rbac_policy.csv"
+		rbacPolicyPath = "/etc/rbac/rbac_policy.csv"
 	}
 
 	adapter := fa.NewAdapter(rbacPolicyPath)
 
-	enforcer, err = casbin.NewEnforcer(model, adapter)
+	e, err := casbin.NewEnforcer(model, adapter)
 	if err != nil {
 		return nil, err
 	}
-	enforcer.AddNamedMatchingFunc("g", "KeyMatch2", util.KeyMatch2)
+	internal := &enf{
+		Enforcer:      e,
+		policyPath:    rbacPolicyPath,
+		configMapPath: os.Getenv(envRBACPolicyConfigMap),
+	}
+	internal.AddNamedMatchingFunc("g", "KeyMatch2", util.KeyMatch2)
 
-	return enforcer, nil
+	return internal, nil
 }

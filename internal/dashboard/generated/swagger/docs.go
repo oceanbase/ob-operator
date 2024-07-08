@@ -101,7 +101,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ac.CreateUserParam"
+                            "$ref": "#/definitions/ac.CreateAccountParam"
                         }
                     }
                 ],
@@ -237,7 +237,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/ac.PatchUserParam"
+                            "$ref": "#/definitions/ac.PatchAccountParam"
                         }
                     },
                     {
@@ -2449,7 +2449,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.APIResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ac.Account"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -5747,39 +5759,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ac.Action": {
-            "type": "string",
-            "enum": [
-                "READ",
-                "WRITE"
-            ],
-            "x-enum-varnames": [
-                "ActionRead",
-                "ActionWrite"
-            ]
-        },
-        "ac.CreateRoleParam": {
-            "type": "object",
-            "required": [
-                "name",
-                "permissions"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "permissions": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/ac.Policy"
-                    }
-                }
-            }
-        },
-        "ac.CreateUserParam": {
+        "ac.CreateAccountParam": {
             "type": "object",
             "required": [
                 "nickname",
@@ -5805,10 +5785,17 @@ const docTemplate = `{
                 }
             }
         },
-        "ac.PatchRoleParam": {
+        "ac.CreateRoleParam": {
             "type": "object",
+            "required": [
+                "name",
+                "permissions"
+            ],
             "properties": {
                 "description": {
+                    "type": "string"
+                },
+                "name": {
                     "type": "string"
                 },
                 "permissions": {
@@ -5819,7 +5806,7 @@ const docTemplate = `{
                 }
             }
         },
-        "ac.PatchUserParam": {
+        "ac.PatchAccountParam": {
             "type": "object",
             "properties": {
                 "description": {
@@ -5836,17 +5823,35 @@ const docTemplate = `{
                 }
             }
         },
+        "ac.PatchRoleParam": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ac.Policy"
+                    }
+                }
+            }
+        },
         "ac.Policy": {
             "type": "object",
             "required": [
                 "action",
-                "subject"
+                "domain",
+                "object"
             ],
             "properties": {
                 "action": {
-                    "$ref": "#/definitions/ac.Action"
+                    "type": "string"
                 },
-                "subject": {
+                "domain": {
+                    "type": "string"
+                },
+                "object": {
                     "type": "string"
                 }
             }
@@ -5858,6 +5863,9 @@ const docTemplate = `{
                 "policies"
             ],
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },

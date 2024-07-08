@@ -13,13 +13,15 @@ See the Mulan PSL v2 for more details.
 package ac
 
 import (
-	"github.com/casbin/casbin/v2"
+	"crypto/sha256"
+	"encoding/hex"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Access Control", Ordered, func() {
-	var enforcer *casbin.Enforcer
+	var enforcer *enf
 	var err error
 	BeforeAll(func() {
 		enforcer, err = initEnforcer()
@@ -76,5 +78,11 @@ var _ = Describe("Access Control", Ordered, func() {
 		ok, err = enforcer.Enforce("admin2", "book/2", "READ")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
+	})
+
+	It("Validate password", func() {
+		// password is "hello"
+		hash := sha256.Sum256([]byte("hello"))
+		Expect(hex.EncodeToString(hash[:])).To(Equal("2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"))
 	})
 })

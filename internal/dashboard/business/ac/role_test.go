@@ -17,7 +17,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/casbin/casbin/v2"
 	"github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -26,7 +25,7 @@ import (
 )
 
 var _ = Describe("Role", Ordered, func() {
-	var enforcer *casbin.Enforcer
+	var enforcer *enf
 	var err error
 	BeforeAll(func() {
 		enforcer, err = initEnforcer()

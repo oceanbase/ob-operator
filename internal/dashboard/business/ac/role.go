@@ -25,6 +25,33 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
+func GetRole(name string) (*acmodel.Role, error) {
+	policies, err := enforcer.GetFilteredPolicy(0, name)
+	if err != nil {
+		return nil, err
+	}
+	if len(policies) == 0 {
+		return nil, httpErr.NewNotFound("role not found")
+	}
+	role := &acmodel.Role{
+		Name: name,
+	}
+	for _, p := range policies {
+		role.Description = p[3]
+		if p[1] == "*" {
+			role.Policies = append(role.Policies, acmodel.NewPolicy("*", "*", p[2]))
+		} else {
+			parts := strings.Split(p[1], "/")
+			if len(parts) != 2 {
+				return nil, httpErr.NewInternal("corrupted policy" + strings.Join(p, " "))
+			}
+			role.Policies = append(role.Policies, acmodel.NewPolicy(parts[0], parts[1], p[2]))
+		}
+	}
+	return role, nil
+}
+
+// NOTES: The returned type must be []*acmodel.Role, not []acmodel.Role
 func ListRoles(_ context.Context) ([]*acmodel.Role, error) {
 	polices, err := enforcer.GetPolicy()
 	if err != nil {
@@ -95,11 +122,7 @@ func DeleteRole(ctx context.Context, roleName string, extra ...string) (*acmodel
 		}
 	}
 	if len(extra) == 0 {
-		if os.Getenv("RBAC_POLICY_CONFIG_MAP") != "" {
-			err = persistPolicies(ctx, os.Getenv("RBAC_POLICY_FILE"), os.Getenv("RBAC_POLICY_CONFIG_MAP"))
-		} else {
-			err = persistPolicies(ctx, os.Getenv("RBAC_POLICY_FILE"))
-		}
+		err = persistPolicies(ctx, enforcer.policyPath, enforcer.configMapPath)
 		if err != nil {
 			return nil, err
 		}
@@ -126,11 +149,7 @@ func CreateRole(ctx context.Context, param *acmodel.CreateRoleParam, extra ...st
 		role.Policies = append(role.Policies, p)
 	}
 	if len(extra) == 0 {
-		if os.Getenv("RBAC_POLICY_CONFIG_MAP") != "" {
-			err = persistPolicies(ctx, os.Getenv("RBAC_POLICY_FILE"), os.Getenv("RBAC_POLICY_CONFIG_MAP"))
-		} else {
-			err = persistPolicies(ctx, os.Getenv("RBAC_POLICY_FILE"))
-		}
+		err = persistPolicies(ctx, enforcer.policyPath, enforcer.configMapPath)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +190,7 @@ func persistPolicies(ctx context.Context, targetFile string, extra ...string) er
 	if len(extra) > 0 {
 		clt := client.GetClient()
 		var cm *corev1.ConfigMap
-		cm, err = clt.ClientSet.CoreV1().ConfigMaps("default").Get(ctx, targetFile, metav1.GetOptions{})
+		cm, err = clt.ClientSet.CoreV1().ConfigMaps("default").Get(ctx, extra[0], metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -180,16 +199,15 @@ func persistPolicies(ctx context.Context, targetFile string, extra ...string) er
 		if err != nil {
 			return err
 		}
-	} else {
-		file, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		_, err = file.WriteString(csv)
-		if err != nil {
-			return err
-		}
+	}
+	file, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = file.WriteString(csv)
+	if err != nil {
+		return err
 	}
 	return nil
 }

@@ -19,12 +19,12 @@ import (
 const (
 	ActionRead  acmodel.Action = "READ"
 	ActionWrite acmodel.Action = "WRITE"
-	ActionAll   acmodel.Action = "ALL"
+	ActionAll   acmodel.Action = "*"
 )
 
 const (
+	// DomainOBTenant      acmodel.Domain = "OBTenant"
 	DomainOBCluster     acmodel.Domain = "OBCluster"
-	DomainOBTenant      acmodel.Domain = "OBTenant"
 	DomainAlarm         acmodel.Domain = "Alarm"
 	DomainOBProxy       acmodel.Domain = "OBProxy"
 	DomainAccessControl acmodel.Domain = "AccessControl"
@@ -39,14 +39,14 @@ var AllPolicies = []acmodel.Policy{
 		Domain: DomainOBCluster,
 		Action: ActionWrite,
 	},
-	{
-		Domain: DomainOBTenant,
-		Action: ActionRead,
-	},
-	{
-		Domain: DomainOBTenant,
-		Action: ActionWrite,
-	},
+	// {
+	// 	Domain: DomainOBTenant,
+	// 	Action: ActionRead,
+	// },
+	// {
+	// 	Domain: DomainOBTenant,
+	// 	Action: ActionWrite,
+	// },
 	{
 		Domain: DomainAlarm,
 		Action: ActionRead,
