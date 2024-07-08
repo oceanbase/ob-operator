@@ -5,4 +5,5 @@ func init() {
 	taskMap.Register(tModifyClusterSpec, ModifyClusterSpec)
 	taskMap.Register(tWaitForClusterReturnRunning, WaitForClusterReturnRunning)
 	taskMap.Register(tRestartOBServers, RestartOBServers)
+	taskMap.Register(tAnnotateOBServersForDeletion, AnnotateOBServersForDeletion)
 }

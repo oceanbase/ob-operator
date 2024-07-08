@@ -40,6 +40,7 @@ type OBClusterOperationSpec struct {
 	AddZones         []apitypes.OBZoneTopology `json:"addZones,omitempty"`
 	DeleteZones      []string                  `json:"deleteZones,omitempty"`
 	AdjustReplicas   []AlterZoneReplicas       `json:"adjustReplicas,omitempty"`
+	DeleteOBServers  *DeleteOBServersConfig    `json:"deleteOBServers,omitempty"`
 	RestartOBServers *RestartOBServersConfig   `json:"restartOBServers,omitempty"`
 	Upgrade          *UpgradeConfig            `json:"upgrade,omitempty"`
 	ModifyOBServers  *ModifyOBServersConfig    `json:"modifyOBServers,omitempty"`
@@ -54,6 +55,10 @@ type ModifyOBServersConfig struct {
 	RemoveMonitor      bool                       `json:"removeMonitor,omitempty"`
 	AddingBackupVolume *apitypes.BackupVolumeSpec `json:"addingBackupVolume,omitempty"`
 	RemoveBackupVolume bool                       `json:"removeBackupVolume,omitempty"`
+}
+
+type DeleteOBServersConfig struct {
+	OBServers []string `json:"observers,omitempty"`
 }
 
 type RestartOBServersConfig struct {

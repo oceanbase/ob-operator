@@ -20,6 +20,7 @@ const (
 	ClusterOpTypeAdjustReplicas   types.ClusterOperationType = "AdjustReplicas"
 	ClusterOpTypeUpgrade          types.ClusterOperationType = "Upgrade"
 	ClusterOpTypeRestartOBServers types.ClusterOperationType = "RestartOBServers"
+	ClusterOpTypeDeleteOBServers  types.ClusterOperationType = "DeleteOBServers"
 	ClusterOpTypeModifyOBServers  types.ClusterOperationType = "ModifyOBServers"
 	ClusterOpTypeSetParameters    types.ClusterOperationType = "SetParameters"
 )

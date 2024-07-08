@@ -1174,6 +1174,13 @@ spec:
                   - zones
                   type: object
                 type: array
+              deleteOBServers:
+                properties:
+                  observers:
+                    items:
+                      type: string
+                    type: array
+                type: object
               deleteZones:
                 items:
                   type: string

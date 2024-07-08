@@ -25,6 +25,7 @@ const (
 	AnnotationsIgnoreDeletion          = "oceanbase.oceanbase.com/ignore-deletion"
 	AnnotationsPauseReconciling        = "oceanbase.oceanbase.com/pause-reconciling"
 	AnnotationsSupportStaticIP         = "oceanbase.oceanbase.com/support-static-ip"
+	AnnotationsDeletionPriority        = "oceanbase.oceanbase.com/deletion-priority"
 )
 
 const (

@@ -84,6 +84,7 @@ func (m *OBClusterManager) listOBZones() (*v1alpha1.OBZoneList, error) {
 	}
 	return obzoneList, nil
 }
+
 func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
 	// this label always exists
 	obparameterList := &v1alpha1.OBParameterList{}

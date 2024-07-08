@@ -33,6 +33,23 @@ func genModifySpecAndWatchFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow
 	}
 }
 
+func genDeleteOBServersFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name: "delete observers",
+			Tasks: []tasktypes.TaskName{
+				tAnnotateOBServersForDeletion,
+				tModifyClusterSpec,
+				tWaitForClusterReturnRunning,
+			},
+			TargetStatus: string(constants.ClusterOpStatusSucceeded),
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: string(constants.ClusterOpStatusFailed),
+			},
+		},
+	}
+}
+
 func genRestartOBServersOnlyFlow(_ *OBClusterOperationManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{

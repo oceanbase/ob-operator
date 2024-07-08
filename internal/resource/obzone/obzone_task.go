@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -79,14 +80,18 @@ func DeleteOBServer(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrapf(err, "List observrers of obzone %s", m.OBZone.Name)
 	}
 	observerCount := 0
+	queue := pq.NewWith(resourceutils.CompOBServerDeletionPriority)
 	for _, observer := range observerList.Items {
-		// bugfix: if an observer is being deleted, it won't be deleted again or counted as a working observer
+		queue.Enqueue(&observer)
+	}
+	for !queue.Empty() {
+		observer, _ := queue.Dequeue()
 		if observer.Status.Status == serverstatus.Deleting {
 			continue
 		}
 		if observer.Status.Status == serverstatus.Unrecoverable || observerCount >= m.OBZone.Spec.Topology.Replica {
 			m.Logger.Info("Delete observer", "observer", observer)
-			err = m.Client.Delete(m.Ctx, &observer)
+			err = m.Client.Delete(m.Ctx, observer)
 			if err != nil {
 				return errors.Wrapf(err, "Delete observer %s failed", observer.Name)
 			}
