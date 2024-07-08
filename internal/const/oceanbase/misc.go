@@ -13,5 +13,5 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 const (
-	DefaultDeletePriority = 100
+	DefaultDeletionPriority = 100
 )
