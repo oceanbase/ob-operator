@@ -21,12 +21,6 @@ import (
 )
 
 var _ = Describe("Access Control", Ordered, func() {
-	var enforcer *enf
-	var err error
-	BeforeAll(func() {
-		enforcer, err = initEnforcer()
-		Expect(err).To(BeNil())
-	})
 	It("GetPolicies", func() {
 		ps, err := enforcer.GetPolicy()
 		Expect(err).To(BeNil())

@@ -25,12 +25,6 @@ import (
 )
 
 var _ = Describe("Role", Ordered, func() {
-	var enforcer *enf
-	var err error
-	BeforeAll(func() {
-		enforcer, err = initEnforcer()
-		Expect(err).To(BeNil())
-	})
 	It("Policies to CSV", func() {
 		bts, err := os.ReadFile("rbac_policy.csv")
 		Expect(err).To(BeNil())
