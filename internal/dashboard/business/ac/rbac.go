@@ -93,7 +93,7 @@ func initEnforcer(rbacPolicyPath, rbacPolicyCm string) (*enf, error) {
 	internal := &enf{
 		Enforcer:      e,
 		policyPath:    rbacPolicyPath,
-		configMapPath: os.Getenv(envRBACPolicyConfigMap),
+		configMapPath: rbacPolicyCm,
 	}
 	internal.AddNamedMatchingFunc("g", "KeyMatch2", util.KeyMatch2)
 
