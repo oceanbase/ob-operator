@@ -317,6 +317,9 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
+	if m.OBServer.Annotations[oceanbaseconst.AnnotationsMode] == oceanbaseconst.ModeStandalone {
+		observerInfo.Ip = "127.0.0.1"
+	}
 	active := false
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
