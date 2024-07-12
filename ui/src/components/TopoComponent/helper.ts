@@ -5,9 +5,9 @@ import {
   TOPO_INFO_CONFIG,
   ZONE_IMG_MAP,
 } from '@/constants';
+import type { Topo } from '@/type/topo';
 import { intl } from '@/utils/intl';
 import { Graph, INode } from '@antv/g6';
-import type { Topo } from '@/type/topo';
 import _ from 'lodash';
 
 const propsToEventMap = {
@@ -40,7 +40,8 @@ export function appenAutoShapeListener(graph: Graph) {
       const item = evt.item as INode;
       const graph = evt.currentTarget as Graph;
       const func =
-        (shape?.get(propName) as Topo.ShapeEventListner) || evt.target.cfg[propName];
+        (shape?.get(propName) as Topo.ShapeEventListner) ||
+        evt.target.cfg[propName];
       if (func) {
         func(evt, item, shape, graph);
       }
@@ -48,11 +49,14 @@ export function appenAutoShapeListener(graph: Graph) {
   });
 }
 
-function getZoneTypeText(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
+function getZoneTypeText(
+  zone: Pick<API.ReplicaDetailType, 'zone'>,
+  tenantTopoData: API.ReplicaDetailType[],
+) {
   return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
 }
 
-function getTooltipInfo(zone: any, tenantTopoData: API.ReplicaDetailType[]) {
+function getTooltipInfo(zone: Pick<API.ReplicaDetailType,'zone'>, tenantTopoData: API.ReplicaDetailType[]) {
   const targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
   if (targetZone) {
     return {
@@ -138,12 +142,6 @@ export const formatTopoData = (
   };
   topoData.children = getChildren(responseData.topology, tenantReplicas);
 
-  // let basicInfo: Topo.BasicInfoType = {
-  //   name: responseData.name,
-  //   namespace: responseData.namespace,
-  //   status: responseData.status,
-  //   image: responseData.image,
-  // };
   const basicInfo: API.ClusterInfo = {};
   for (const key of Object.keys(responseData)) {
     if (TOPO_INFO_CONFIG.includes(key)) {
