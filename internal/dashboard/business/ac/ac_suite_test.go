@@ -19,6 +19,14 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+/**
+rbac_policy.csv
+p, admin, *, *, "Super admin"
+p, admin2, book/*, READ, "Book reader"
+g, admin, admin
+g, admin, admin2
+*/
+
 func TestAc(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Ac Suite")

@@ -159,9 +159,6 @@ func CreateRole(ctx context.Context, param *acmodel.CreateRoleParam, extra ...st
 
 // Transform the policies to a CSV string
 func policiesToCsv() (string, error) {
-	// "policies"=[["admin" "*" "*" "Super admin"] ["admin2" "book/*" "read" "Book reader"]]
-	// admin, *, *, "Super admin"
-	// admin2, book/*, read, "Book reader"
 	csv := ""
 	policies, err := enforcer.GetPolicy()
 	if err != nil {
@@ -183,6 +180,8 @@ func policiesToCsv() (string, error) {
 // Persist the policies to the file or config map
 // Extra[0] is the config map name
 func persistPolicies(ctx context.Context, targetFile string, extra ...string) error {
+	enforcer.policyMu.Lock()
+	defer enforcer.policyMu.Unlock()
 	csv, err := policiesToCsv()
 	if err != nil {
 		return err

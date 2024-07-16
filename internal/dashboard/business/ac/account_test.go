@@ -20,7 +20,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Access Control", Ordered, func() {
+var _ = Describe("Access Control", Ordered, ContinueOnFailure, func() {
 	It("GetPolicies", func() {
 		ps, err := enforcer.GetPolicy()
 		Expect(err).To(BeNil())
@@ -31,13 +31,13 @@ var _ = Describe("Access Control", Ordered, func() {
 	It("GetAllRoles", func() {
 		roles, err := enforcer.GetAllRoles()
 		Expect(err).To(BeNil())
-		Expect(roles).To(Equal([]string{"admin"}))
+		Expect(roles).To(Equal([]string{"admin", "admin2"}))
 	})
 
 	It("GetAccountInfo", func() {
 		roles, err := enforcer.GetRolesForUser("admin")
 		Expect(err).To(BeNil())
-		Expect(roles).To(Equal([]string{"admin"}))
+		Expect(roles).To(Equal([]string{"admin2", "admin"}))
 	})
 
 	It("Enforce some permissions", func() {

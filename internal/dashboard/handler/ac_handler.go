@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
@@ -33,12 +34,12 @@ import (
 // @Router /api/v1/ac/info [GET]
 // @Security ApiKeyAuth
 func GetAccountInfo(c *gin.Context) (*acmodel.Account, error) {
-	// session := sessions.Default(c)
-	// username := session.Get("username")
-	// if username == nil {
-	// 	return nil, httpErr.New(httpErr.ErrUnauthorized, "Unauthorized")
-	// }
-	return acbiz.GetAccount(c, "admin")
+	session := sessions.Default(c)
+	username := session.Get("username")
+	if username == nil {
+		return nil, httpErr.New(httpErr.ErrUnauthorized, "Unauthorized")
+	}
+	return acbiz.GetAccount(c, username.(string))
 }
 
 // @ID ListAllAccounts
@@ -120,11 +121,11 @@ func PatchAccount(c *gin.Context) (*acmodel.Account, error) {
 // @Router /api/v1/ac/accounts/{username} [DELETE]
 // @Security ApiKeyAuth
 func DeleteAccount(c *gin.Context) (*acmodel.Account, error) {
-	// session := sessions.Default(c)
-	// currentUser := session.Get("username").(string)
-	// if currentUser == c.Param("username") {
-	// 	return nil, httpErr.NewBadRequest("You can't delete yourself")
-	// }
+	session := sessions.Default(c)
+	currentUser := session.Get("username").(string)
+	if currentUser == c.Param("username") {
+		return nil, httpErr.NewBadRequest("You can't delete yourself")
+	}
 	username := c.Param("username")
 	if username == "" {
 		return nil, httpErr.NewBadRequest("Username is required")

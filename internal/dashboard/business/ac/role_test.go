@@ -24,7 +24,7 @@ import (
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 )
 
-var _ = Describe("Role", Ordered, func() {
+var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 	It("Policies to CSV", func() {
 		bts, err := os.ReadFile("rbac_policy.csv")
 		Expect(err).To(BeNil())
@@ -119,6 +119,7 @@ p, test, test/1, READ, "test"
 p, test, test/2, READ, "test"
 p, test, test2/*, *, "test"
 g, admin, admin
+g, admin, admin2
 `
 		actualCSV, err := policiesToCsv()
 		Expect(err).To(BeNil())
@@ -138,6 +139,7 @@ g, admin, admin
 p, admin, *, *, "Super admin"
 p, admin2, book/*, READ, "Book reader"
 g, admin, admin
+g, admin, admin2
 `
 		actualCSV, err := policiesToCsv()
 		Expect(err).To(BeNil())

@@ -18,7 +18,7 @@ type Account struct {
 	Username    string     `json:"username" binding:"required"`
 	Nickname    string     `json:"nickname"`
 	Description string     `json:"description"`
-	Role        Role       `json:"role" binding:"required"`
+	Roles       []Role     `json:"roles" binding:"required"`
 	LastLoginAt *time.Time `json:"lastLoginAt"`
 }
 

@@ -14,6 +14,7 @@ package ac
 
 import (
 	"os"
+	"sync"
 
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
@@ -45,6 +46,8 @@ const (
 
 type enf struct {
 	*casbin.Enforcer
+	policyMu      sync.RWMutex
+	accMu         sync.RWMutex
 	policyPath    string
 	configMapPath string
 }
