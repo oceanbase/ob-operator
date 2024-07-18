@@ -26,6 +26,205 @@ import { BASE_PATH, COLLECTION_FORMATS, BaseAPI, RequiredError, operationServerM
 /**
  * 
  * @export
+ * @interface AcAccount
+ */
+export interface AcAccount {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcAccount
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcAccount
+     */
+    'lastLoginAt'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcAccount
+     */
+    'nickname'?: string;
+    /**
+     * 
+     * @type {AcRole}
+     * @memberof AcAccount
+     */
+    'roles': AcRole[];
+    /**
+     * 
+     * @type {string}
+     * @memberof AcAccount
+     */
+    'username': string;
+}
+/**
+ * 
+ * @export
+ * @interface AcCreateAccountParam
+ */
+export interface AcCreateAccountParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateAccountParam
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateAccountParam
+     */
+    'nickname': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateAccountParam
+     */
+    'password': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateAccountParam
+     */
+    'roleName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateAccountParam
+     */
+    'username': string;
+}
+/**
+ * 
+ * @export
+ * @interface AcCreateRoleParam
+ */
+export interface AcCreateRoleParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateRoleParam
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcCreateRoleParam
+     */
+    'name': string;
+    /**
+     * 
+     * @type {Array<AcPolicy>}
+     * @memberof AcCreateRoleParam
+     */
+    'permissions': Array<AcPolicy>;
+}
+/**
+ * 
+ * @export
+ * @interface AcPatchAccountParam
+ */
+export interface AcPatchAccountParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPatchAccountParam
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPatchAccountParam
+     */
+    'nickname'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPatchAccountParam
+     */
+    'password'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPatchAccountParam
+     */
+    'roleName'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface AcPatchRoleParam
+ */
+export interface AcPatchRoleParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPatchRoleParam
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {Array<AcPolicy>}
+     * @memberof AcPatchRoleParam
+     */
+    'permissions'?: Array<AcPolicy>;
+}
+/**
+ * 
+ * @export
+ * @interface AcPolicy
+ */
+export interface AcPolicy {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPolicy
+     */
+    'action': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPolicy
+     */
+    'domain': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcPolicy
+     */
+    'object': string;
+}
+/**
+ * 
+ * @export
+ * @interface AcRole
+ */
+export interface AcRole {
+    /**
+     * 
+     * @type {string}
+     * @memberof AcRole
+     */
+    'description'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AcRole
+     */
+    'name': string;
+    /**
+     * 
+     * @type {Array<AcPolicy>}
+     * @memberof AcRole
+     */
+    'policies': Array<AcPolicy>;
+}
+/**
+ * 
+ * @export
  * @interface AlarmMatcher
  */
 export interface AlarmMatcher {
@@ -368,6 +567,31 @@ export interface ConnectDatabase200Response {
 /**
  * 
  * @export
+ * @interface CreateAccount200Response
+ */
+export interface CreateAccount200Response {
+    /**
+     * 
+     * @type {AcAccount}
+     * @memberof CreateAccount200Response
+     */
+    'data': AcAccount;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateAccount200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateAccount200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface CreateOBCluster200Response
  */
 export interface CreateOBCluster200Response {
@@ -512,6 +736,31 @@ export interface CreateOrUpdateSilencer200Response {
      * 
      * @type {boolean}
      * @memberof CreateOrUpdateSilencer200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface CreateRole200Response
+ */
+export interface CreateRole200Response {
+    /**
+     * 
+     * @type {AcRole}
+     * @memberof CreateRole200Response
+     */
+    'data': AcRole;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateRole200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateRole200Response
      */
     'successful': boolean;
 }
@@ -743,6 +992,31 @@ export interface ListAlerts200Response {
 /**
  * 
  * @export
+ * @interface ListAllAccounts200Response
+ */
+export interface ListAllAccounts200Response {
+    /**
+     * 
+     * @type {Array<AcAccount>}
+     * @memberof ListAllAccounts200Response
+     */
+    'data': Array<AcAccount>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListAllAccounts200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListAllAccounts200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListAllMetrics200Response
  */
 export interface ListAllMetrics200Response {
@@ -762,6 +1036,56 @@ export interface ListAllMetrics200Response {
      * 
      * @type {boolean}
      * @memberof ListAllMetrics200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListAllPolicies200Response
+ */
+export interface ListAllPolicies200Response {
+    /**
+     * 
+     * @type {Array<AcPolicy>}
+     * @memberof ListAllPolicies200Response
+     */
+    'data': Array<AcPolicy>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListAllPolicies200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListAllPolicies200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListAllRoles200Response
+ */
+export interface ListAllRoles200Response {
+    /**
+     * 
+     * @type {Array<AcRole>}
+     * @memberof ListAllRoles200Response
+     */
+    'data': Array<AcRole>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListAllRoles200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListAllRoles200Response
      */
     'successful': boolean;
 }
@@ -2043,6 +2367,12 @@ export interface ObproxyOBProxy {
      * @type {string}
      * @memberof ObproxyOBProxy
      */
+    'serviceType': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxy
+     */
     'status': ObproxyOBProxyStatusEnum;
 }
 
@@ -2107,6 +2437,12 @@ export interface ObproxyOBProxyOverview {
      * @memberof ObproxyOBProxyOverview
      */
     'serviceIp': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ObproxyOBProxyOverview
+     */
+    'serviceType': string;
     /**
      * 
      * @type {string}
@@ -3872,7 +4208,7 @@ export interface ResponseK8sService {
      * @type {string}
      * @memberof ResponseK8sService
      */
-    'clusterIP'?: string;
+    'clusterIP': string;
     /**
      * 
      * @type {string}
@@ -3884,25 +4220,25 @@ export interface ResponseK8sService {
      * @type {string}
      * @memberof ResponseK8sService
      */
-    'name'?: string;
+    'name': string;
     /**
      * 
      * @type {string}
      * @memberof ResponseK8sService
      */
-    'namespace'?: string;
+    'namespace': string;
     /**
      * 
      * @type {Array<ResponseK8sServicePort>}
      * @memberof ResponseK8sService
      */
-    'ports'?: Array<ResponseK8sServicePort>;
+    'ports': Array<ResponseK8sServicePort>;
     /**
      * 
      * @type {string}
      * @memberof ResponseK8sService
      */
-    'type'?: string;
+    'type': string;
 }
 /**
  * 
@@ -3921,13 +4257,19 @@ export interface ResponseK8sServicePort {
      * @type {number}
      * @memberof ResponseK8sServicePort
      */
-    'port'?: number;
+    'nodePort'?: number;
     /**
      * 
      * @type {number}
      * @memberof ResponseK8sServicePort
      */
-    'targetPort'?: number;
+    'port': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseK8sServicePort
+     */
+    'targetPort': number;
 }
 /**
  * 
@@ -5606,6 +5948,12 @@ export interface SilenceSilencerResponse {
     'matchers': Array<AlarmMatcher>;
     /**
      * 
+     * @type {Array<string>}
+     * @memberof SilenceSilencerResponse
+     */
+    'rules': Array<string>;
+    /**
+     * 
      * @type {number}
      * @memberof SilenceSilencerResponse
      */
@@ -5650,6 +5998,759 @@ export interface SilenceStatus {
      * @memberof SilenceStatus
      */
     'state': SilenceState;
+}
+
+
+
+/**
+ * AccessControlApi - axios parameter creator
+ * @export
+ */
+export const AccessControlApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Create an account
+         * @summary Create an account
+         * @param {AcCreateAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAccount: async (account: AcCreateAccountParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'account' is not null or undefined
+            assertParamExists('createAccount', 'account', account)
+            const localVarPath = `/api/v1/ac/accounts`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(account, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Create an role
+         * @summary Create an role
+         * @param {AcCreateRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createRole: async (role: AcCreateRoleParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'role' is not null or undefined
+            assertParamExists('createRole', 'role', role)
+            const localVarPath = `/api/v1/ac/roles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(role, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Delete an account
+         * @summary Delete an account
+         * @param {string} username Username
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteAccount: async (username: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'username' is not null or undefined
+            assertParamExists('deleteAccount', 'username', username)
+            const localVarPath = `/api/v1/ac/accounts/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Delete an role
+         * @summary Delete an role
+         * @param {string} name Role name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRole: async (name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteRole', 'name', name)
+            const localVarPath = `/api/v1/ac/roles/{name}`
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * get account info
+         * @summary get account info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccountInfo: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/ac/info`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * List all accounts
+         * @summary List all accounts
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllAccounts: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/ac/accounts`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * List all policies
+         * @summary List all policies
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllPolicies: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/ac/policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * List all roles
+         * @summary List all roles
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllRoles: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/ac/roles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Patch an account
+         * @summary Patch an account
+         * @param {string} username Username
+         * @param {AcPatchAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccount: async (username: string, account: AcPatchAccountParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'username' is not null or undefined
+            assertParamExists('patchAccount', 'username', username)
+            // verify required parameter 'account' is not null or undefined
+            assertParamExists('patchAccount', 'account', account)
+            const localVarPath = `/api/v1/ac/accounts/{username}`
+                .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(account, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Patch an role
+         * @summary Patch an role
+         * @param {string} name Role name
+         * @param {AcPatchRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchRole: async (name: string, role: AcPatchRoleParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('patchRole', 'name', name)
+            // verify required parameter 'role' is not null or undefined
+            assertParamExists('patchRole', 'role', role)
+            const localVarPath = `/api/v1/ac/roles/{name}`
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(role, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * AccessControlApi - functional programming interface
+ * @export
+ */
+export const AccessControlApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = AccessControlApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Create an account
+         * @summary Create an account
+         * @param {AcCreateAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createAccount(account: AcCreateAccountParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createAccount(account, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.createAccount']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Create an role
+         * @summary Create an role
+         * @param {AcCreateRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createRole(role: AcCreateRoleParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateRole200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createRole(role, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.createRole']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Delete an account
+         * @summary Delete an account
+         * @param {string} username Username
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteAccount(username: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteAccount(username, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.deleteAccount']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Delete an role
+         * @summary Delete an role
+         * @param {string} name Role name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteRole(name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateRole200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteRole(name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.deleteRole']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * get account info
+         * @summary get account info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getAccountInfo(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getAccountInfo(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.getAccountInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * List all accounts
+         * @summary List all accounts
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listAllAccounts(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListAllAccounts200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listAllAccounts(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.listAllAccounts']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * List all policies
+         * @summary List all policies
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listAllPolicies(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListAllPolicies200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listAllPolicies(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.listAllPolicies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * List all roles
+         * @summary List all roles
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listAllRoles(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListAllRoles200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listAllRoles(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.listAllRoles']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Patch an account
+         * @summary Patch an account
+         * @param {string} username Username
+         * @param {AcPatchAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async patchAccount(username: string, account: AcPatchAccountParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.patchAccount(username, account, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.patchAccount']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Patch an role
+         * @summary Patch an role
+         * @param {string} name Role name
+         * @param {AcPatchRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async patchRole(name: string, role: AcPatchRoleParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateRole200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.patchRole(name, role, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.patchRole']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * AccessControlApi - factory interface
+ * @export
+ */
+export const AccessControlApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = AccessControlApiFp(configuration)
+    return {
+        /**
+         * Create an account
+         * @summary Create an account
+         * @param {AcCreateAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createAccount(account: AcCreateAccountParam, options?: any): AxiosPromise<CreateAccount200Response> {
+            return localVarFp.createAccount(account, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Create an role
+         * @summary Create an role
+         * @param {AcCreateRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createRole(role: AcCreateRoleParam, options?: any): AxiosPromise<CreateRole200Response> {
+            return localVarFp.createRole(role, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Delete an account
+         * @summary Delete an account
+         * @param {string} username Username
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteAccount(username: string, options?: any): AxiosPromise<CreateAccount200Response> {
+            return localVarFp.deleteAccount(username, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Delete an role
+         * @summary Delete an role
+         * @param {string} name Role name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteRole(name: string, options?: any): AxiosPromise<CreateRole200Response> {
+            return localVarFp.deleteRole(name, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * get account info
+         * @summary get account info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccountInfo(options?: any): AxiosPromise<CreateAccount200Response> {
+            return localVarFp.getAccountInfo(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List all accounts
+         * @summary List all accounts
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllAccounts(options?: any): AxiosPromise<ListAllAccounts200Response> {
+            return localVarFp.listAllAccounts(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List all policies
+         * @summary List all policies
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllPolicies(options?: any): AxiosPromise<ListAllPolicies200Response> {
+            return localVarFp.listAllPolicies(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List all roles
+         * @summary List all roles
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listAllRoles(options?: any): AxiosPromise<ListAllRoles200Response> {
+            return localVarFp.listAllRoles(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Patch an account
+         * @summary Patch an account
+         * @param {string} username Username
+         * @param {AcPatchAccountParam} account Account information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchAccount(username: string, account: AcPatchAccountParam, options?: any): AxiosPromise<CreateAccount200Response> {
+            return localVarFp.patchAccount(username, account, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Patch an role
+         * @summary Patch an role
+         * @param {string} name Role name
+         * @param {AcPatchRoleParam} role Role information
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchRole(name: string, role: AcPatchRoleParam, options?: any): AxiosPromise<CreateRole200Response> {
+            return localVarFp.patchRole(name, role, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * AccessControlApi - object-oriented interface
+ * @export
+ * @class AccessControlApi
+ * @extends {BaseAPI}
+ */
+export class AccessControlApi extends BaseAPI {
+    /**
+     * Create an account
+     * @summary Create an account
+     * @param {AcCreateAccountParam} account Account information
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public createAccount(account: AcCreateAccountParam, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).createAccount(account, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Create an role
+     * @summary Create an role
+     * @param {AcCreateRoleParam} role Role information
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public createRole(role: AcCreateRoleParam, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).createRole(role, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Delete an account
+     * @summary Delete an account
+     * @param {string} username Username
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public deleteAccount(username: string, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).deleteAccount(username, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Delete an role
+     * @summary Delete an role
+     * @param {string} name Role name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public deleteRole(name: string, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).deleteRole(name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * get account info
+     * @summary get account info
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public getAccountInfo(options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).getAccountInfo(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List all accounts
+     * @summary List all accounts
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public listAllAccounts(options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).listAllAccounts(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List all policies
+     * @summary List all policies
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public listAllPolicies(options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).listAllPolicies(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List all roles
+     * @summary List all roles
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public listAllRoles(options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).listAllRoles(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Patch an account
+     * @summary Patch an account
+     * @param {string} username Username
+     * @param {AcPatchAccountParam} account Account information
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public patchAccount(username: string, account: AcPatchAccountParam, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).patchAccount(username, account, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Patch an role
+     * @summary Patch an role
+     * @param {string} name Role name
+     * @param {AcPatchRoleParam} role Role information
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public patchRole(name: string, role: AcPatchRoleParam, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).patchRole(name, role, options).then((request) => request(this.axios, this.basePath));
+    }
 }
 
 
@@ -11370,7 +12471,7 @@ export const UserApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async login(loginInfo: ParamLoginParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+        async login(loginInfo: ParamLoginParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.login(loginInfo, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['UserApi.login']?.[localVarOperationServerIndex]?.url;
@@ -11405,7 +12506,7 @@ export const UserApiFactory = function (configuration?: Configuration, basePath?
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        login(loginInfo: ParamLoginParam, options?: any): AxiosPromise<ResponseAPIResponse> {
+        login(loginInfo: ParamLoginParam, options?: any): AxiosPromise<CreateAccount200Response> {
             return localVarFp.login(loginInfo, options).then((request) => request(axios, basePath));
         },
         /**

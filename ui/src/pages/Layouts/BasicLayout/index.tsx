@@ -69,6 +69,10 @@ const BasicLayout: React.FC = () => {
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
     },
+    {
+      title:'权限控制',
+      link:'/access',
+    }
   ];
 
   const userMenu = (

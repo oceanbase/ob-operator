@@ -2,6 +2,7 @@ import { intl } from '@/utils/intl';
 import { message } from 'antd';
 import globalAxios, { AxiosInstance, AxiosPromise } from 'axios';
 import {
+  AccessControlApiFactory,
   AlarmApiFactory,
   ClusterApiFactory,
   Configuration,
@@ -66,3 +67,4 @@ export const terminal = wrapper(TerminalApiFactory, config);
 export const user = wrapper(UserApiFactory, config);
 export const alert = wrapper(AlarmApiFactory, config);
 export const obproxy = wrapper(OBProxyApiFactory, config);
+export const access = wrapper(AccessControlApiFactory, config);
