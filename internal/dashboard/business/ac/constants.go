@@ -17,17 +17,18 @@ import (
 )
 
 const (
-	ActionRead  acmodel.Action = "READ"
-	ActionWrite acmodel.Action = "WRITE"
+	ActionRead  acmodel.Action = "read"
+	ActionWrite acmodel.Action = "write"
 	ActionAll   acmodel.Action = "*"
 )
 
 const (
-	// DomainOBTenant      acmodel.Domain = "OBTenant"
-	DomainOBCluster     acmodel.Domain = "OBCluster"
-	DomainAlarm         acmodel.Domain = "Alarm"
-	DomainOBProxy       acmodel.Domain = "OBProxy"
-	DomainAccessControl acmodel.Domain = "AccessControl"
+	DomainAc        acmodel.Domain = "ac"
+	DomainAlarm     acmodel.Domain = "alarm"
+	DomainSystem    acmodel.Domain = "system"
+	DomainOBCluster acmodel.Domain = "obcluster"
+	DomainOBTenant  acmodel.Domain = "obtenant"
+	DomainOBProxy   acmodel.Domain = "obproxy"
 )
 
 var AllPolicies = []acmodel.Policy{
@@ -37,6 +38,14 @@ var AllPolicies = []acmodel.Policy{
 	},
 	{
 		Domain: DomainOBCluster,
+		Action: ActionWrite,
+	},
+	{
+		Domain: DomainSystem,
+		Action: ActionRead,
+	},
+	{
+		Domain: DomainSystem,
 		Action: ActionWrite,
 	},
 	// {
@@ -64,11 +73,11 @@ var AllPolicies = []acmodel.Policy{
 		Action: ActionWrite,
 	},
 	{
-		Domain: DomainAccessControl,
+		Domain: DomainAc,
 		Action: ActionRead,
 	},
 	{
-		Domain: DomainAccessControl,
+		Domain: DomainAc,
 		Action: ActionWrite,
 	},
 }

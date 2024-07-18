@@ -14,6 +14,7 @@ package ac
 
 import (
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/casbin/casbin/v2"
@@ -81,6 +82,10 @@ func Enforcer() *casbin.Enforcer {
 	return enforcer.Enforcer
 }
 
+func keyMatch(key1, key2 string) bool {
+	return util.KeyMatch2(key1, key2) || (strings.HasSuffix(key1, "/") && strings.HasPrefix(key2, key1))
+}
+
 func initEnforcer(rbacPolicyPath, rbacPolicyCm string) (*enf, error) {
 	var err error
 	model, err := model.NewModelFromString(modelDefinition)
@@ -98,7 +103,7 @@ func initEnforcer(rbacPolicyPath, rbacPolicyCm string) (*enf, error) {
 		policyPath:    rbacPolicyPath,
 		configMapPath: rbacPolicyCm,
 	}
-	internal.AddNamedMatchingFunc("g", "KeyMatch2", util.KeyMatch2)
+	internal.AddNamedMatchingFunc("g", "keyMatch", keyMatch)
 
 	return internal, nil
 }

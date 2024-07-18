@@ -15,19 +15,20 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitOBClusterRoutes(g *gin.RouterGroup) {
-	g.GET("/obclusters/statistic", h.Wrap(h.GetOBClusterStatistic))
-	g.GET("/obclusters", h.Wrap(h.ListOBClusters))
-	g.POST("/obclusters", h.Wrap(h.CreateOBCluster))
-	g.GET("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.GetOBCluster))
-	g.POST("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.UpgradeOBCluster))
-	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.DeleteOBCluster))
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.Wrap(h.AddOBZone))
-	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.Wrap(h.ScaleOBServer))
-	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone))
-	g.GET("/obclusters/:namespace/:name/resource-usages", h.Wrap(h.ListOBClusterResources))
-	g.GET("/obclusters/:namespace/:name/related-events", h.Wrap(h.ListOBClusterRelatedEvents))
+	g.GET("/obclusters/statistic", h.Wrap(h.GetOBClusterStatistic, acbiz.PathGuard("obcluster", "*", "read")))
+	g.GET("/obclusters", h.Wrap(h.ListOBClusters, acbiz.PathGuard("obcluster", "", "read")))
+	g.POST("/obclusters", h.Wrap(h.CreateOBCluster, acbiz.PathGuard("obcluster", "*", "read")))
+	g.GET("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.GetOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
+	g.POST("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.UpgradeOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.DeleteOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones", h.Wrap(h.AddOBZone, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.POST("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName/scale", h.Wrap(h.ScaleOBServer, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.GET("/obclusters/:namespace/:name/resource-usages", h.Wrap(h.ListOBClusterResources, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
+	g.GET("/obclusters/:namespace/:name/related-events", h.Wrap(h.ListOBClusterRelatedEvents, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
 }
