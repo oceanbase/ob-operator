@@ -1,9 +1,10 @@
 import { access } from '@/api';
 import type { AcAccount, AcRole } from '@/api/generated';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
-import { Button, Space, Table } from 'antd';
+import { Button, Space, Table, message } from 'antd';
 import { useState } from 'react';
 import { Type } from '.';
 
@@ -11,6 +12,14 @@ export default function Accounts() {
   const { data: allAccountsRes } = useRequest(access.listAllAccounts);
   const allAccounts = allAccountsRes?.data;
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const { run: deleteAccount } = useRequest(access.deleteAccount, {
+    manual: true,
+    onSuccess: ({ successful }) => {
+      if (successful) {
+        message.success('删除成功');
+      }
+    },
+  });
   const columns: TableProps<AcAccount>['columns'] = [
     {
       title: '用户名',
@@ -57,6 +66,12 @@ export default function Accounts() {
               disabled={disabled}
               style={disabled ? {} : { color: '#ff4b4b' }}
               type="link"
+              onClick={() =>
+                showDeleteConfirm({
+                  title: '你确定要删除该用户吗？',
+                  onOk: () => deleteAccount(record.username),
+                })
+              }
             >
               删除
             </Button>

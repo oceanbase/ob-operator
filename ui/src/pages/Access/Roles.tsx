@@ -68,7 +68,7 @@ export default function Roles() {
               style={disabled ? {} : { color: '#ff4b4b' }}
               onClick={() =>
                 showDeleteConfirm({
-                  title: '你确定要删除该角色吗',
+                  title: '你确定要删除该角色吗？',
                   onOk: () => deleteRole(record.name),
                 })
               }
