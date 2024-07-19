@@ -5,13 +5,16 @@ import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
+import { Type } from '@/pages/Access';
 import CustomModal from '.';
+
+
 interface HandleRoleModalProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
   successCallback?: () => void;
   editValue?: AcRole;
-  type: 'create' | 'edit';
+  type: Type;
 }
 
 interface PermissionSelectProps {
@@ -139,7 +142,7 @@ export default function HandleRoleModal({
 
   const allPolicies = uniqBy(allPoliciesRes?.data, 'domain') || [];
   const defaultValue = allPolicies.map((item) => {
-    if (type === 'create') {
+    if (type === Type.CREATE) {
       return { ...item, action: '' };
     } else {
       const editItem = editValue?.policies.find(
@@ -150,11 +153,11 @@ export default function HandleRoleModal({
   });
   const onFinish = async (formData: AcCreateRoleParam) => {
     const res =
-      type === 'create'
+      type === Type.CREATE
         ? await access.createRole(formData)
         : await access.patchRole(
             formData.name,
-            pick(formData, 'description', 'permissions'),
+            pick(formData, ['description', 'permissions']),
           );
     if (res.successful) {
       message.success('操作成功！');
@@ -165,7 +168,7 @@ export default function HandleRoleModal({
   };
 
   useEffect(() => {
-    if (type === 'edit') {
+    if (type === Type.EDIT) {
       form.setFieldsValue({
         description: editValue?.description,
         permissions: editValue?.policies,
@@ -175,15 +178,16 @@ export default function HandleRoleModal({
 
   return (
     <CustomModal
-      title={`${type === 'edit' ? '编辑' : '创建'}角色`}
+      title={`${type === Type.EDIT ? '编辑' : '创建'}角色`}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {
+        form.resetFields();
         setVisible(false);
       }}
     >
       <Form form={form} onFinish={onFinish}>
-        {type === 'create' && (
+        {type === Type.CREATE && (
           <Form.Item
             rules={[{ required: true, message: '请输入角色名称' }]}
             label="名称"

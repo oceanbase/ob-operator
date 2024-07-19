@@ -1,16 +1,26 @@
 import { access } from '@/api';
 import type { AcPolicy, AcRole } from '@/api/generated';
 import HandleRoleModal from '@/components/customModal/HandleRoleModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
-import { Button, Space, Table } from 'antd';
+import { Button, Space, Table, message } from 'antd';
 import { useState } from 'react';
+import { Type } from '.';
 
 export default function Roles() {
-  const { data: allRolesRes } = useRequest(access.listAllRoles);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [editData, setEditData] = useState<AcRole>();
+  const { data: allRolesRes } = useRequest(access.listAllRoles);
   const allRoles = allRolesRes?.data;
+  const { run: deleteRole } = useRequest(access.deleteRole, {
+    manual: true,
+    onSuccess: ({ successful }) => {
+      if (successful) {
+        message.success('删除成功！');
+      }
+    },
+  });
   const columns: TableProps<AcRole>['columns'] = [
     {
       title: '角色',
@@ -56,6 +66,12 @@ export default function Roles() {
               disabled={disabled}
               type="link"
               style={disabled ? {} : { color: '#ff4b4b' }}
+              onClick={() =>
+                showDeleteConfirm({
+                  title: '你确定要删除该角色吗',
+                  onOk: () => deleteRole(record.name),
+                })
+              }
             >
               删除
             </Button>
@@ -77,7 +93,7 @@ export default function Roles() {
         visible={modalVisible}
         editValue={editData}
         setVisible={setModalVisible}
-        type="edit"
+        type={Type.EDIT}
       />
     </div>
   );

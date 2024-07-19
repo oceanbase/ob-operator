@@ -89,7 +89,7 @@ export interface AcCreateAccountParam {
      * @type {string}
      * @memberof AcCreateAccountParam
      */
-    'roleName': string;
+    'roles': string[];
     /**
      * 
      * @type {string}

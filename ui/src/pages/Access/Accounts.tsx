@@ -1,12 +1,16 @@
 import { access } from '@/api';
 import type { AcAccount, AcRole } from '@/api/generated';
+import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, Space, Table } from 'antd';
+import { useState } from 'react';
+import { Type } from '.';
 
 export default function Accounts() {
   const { data: allAccountsRes } = useRequest(access.listAllAccounts);
   const allAccounts = allAccountsRes?.data;
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
   const columns: TableProps<AcAccount>['columns'] = [
     {
       title: '用户名',
@@ -61,5 +65,14 @@ export default function Accounts() {
       },
     },
   ];
-  return <Table dataSource={allAccounts} columns={columns} />;
+  return (
+    <div>
+      <Table dataSource={allAccounts} columns={columns} />
+      <HandleAccountModal
+        setVisible={setModalVisible}
+        visible={modalVisible}
+        type={Type.EDIT}
+      />
+    </div>
+  );
 }
