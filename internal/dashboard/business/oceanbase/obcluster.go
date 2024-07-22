@@ -127,7 +127,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
 		respCluster.Monitor.Resource = response.ResourceSpecRender{
 			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.String(),
+			MemoryGB: fmt.Sprintf("%d GB", obcluster.Spec.MonitorTemplate.Resource.Memory.Value()>>30),
 		}
 	}
 	if obcluster.Spec.BackupVolume != nil {
@@ -138,20 +138,20 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	if obcluster.Spec.OBServerTemplate != nil {
 		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
 			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.String(),
+			MemoryGB: fmt.Sprintf("%d GB", obcluster.Spec.OBServerTemplate.Resource.Memory.Value()>>30),
 		}
 		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
 			DataStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.String(),
+				SizeGB:       fmt.Sprintf("%d GB", obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value()>>30),
 			},
 			RedoLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(),
+				SizeGB:       fmt.Sprintf("%d GB", obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value()>>30),
 			},
 			SysLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.String(),
+				SizeGB:       fmt.Sprintf("%d GB", obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value()>>30),
 			},
 		}
 	}
