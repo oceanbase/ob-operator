@@ -1,13 +1,12 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
+import { Type } from '@/pages/Access/type';
 import { useRequest } from 'ahooks';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
-import { Type } from '@/pages/Access';
 import CustomModal from '.';
-
 
 interface HandleRoleModalProps {
   visible: boolean;

@@ -6,16 +6,7 @@ import { Button, Tabs } from 'antd';
 import { useState } from 'react';
 import Accounts from './Accounts';
 import Roles from './Roles';
-
-enum ActiveKey {
-  ACCOUNTS = 'accounts',
-  ROLES = 'roles',
-}
-
-export enum Type {
-  CREATE = 'create',
-  EDIT = 'edit',
-}
+import { ActiveKey, Type } from './type';
 
 export default function Access() {
   const [activeKey, setActiveKey] = useState<ActiveKey>(ActiveKey.ACCOUNTS);

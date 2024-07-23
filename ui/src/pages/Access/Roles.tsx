@@ -6,7 +6,7 @@ import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, Space, Table, message } from 'antd';
 import { useState } from 'react';
-import { Type } from '.';
+import { Type } from './type';
 
 export default function Roles() {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
