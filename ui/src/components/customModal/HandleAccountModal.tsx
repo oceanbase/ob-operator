@@ -1,10 +1,10 @@
 import { access } from '@/api';
 import type { AcCreateAccountParam } from '@/api/generated';
+import { Type } from '@/pages/Access/type';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
 import { useMemo } from 'react';
-import { Type } from '@/pages/Access/type';
 import CustomModal from '.';
 
 interface HandleRoleModalProps {
@@ -29,8 +29,12 @@ export default function HandleAccountModal({
   };
   const { data: allRolesRes } = useRequest(access.listAllRoles);
   const rolesOption = useMemo(() => {
-    allRolesRes?.data.map((role) => ({ label: role.name, value: role.name })) ||
-      [];
+    return (
+      allRolesRes?.data.map((role) => ({
+        label: role.name,
+        value: role.name,
+      })) || []
+    );
   }, [allRolesRes]);
   const onFinish = async (
     formData: AcCreateAccountParam & { confirmPassword: string },
