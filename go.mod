@@ -1,6 +1,6 @@
 module github.com/oceanbase/ob-operator
 
-go 1.22.3
+go 1.22
 
 require (
 	github.com/casbin/casbin/v2 v2.97.0
