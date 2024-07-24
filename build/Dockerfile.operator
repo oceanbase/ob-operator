@@ -11,12 +11,10 @@ COPY . .
 RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build ${RACE} -o manager cmd/operator/main.go
 
 # start build docker image
-FROM openanolis/anolisos:8.8
+FROM registry.access.redhat.com/ubi8/ubi:8.10
 WORKDIR /
 COPY --from=builder /workspace/manager .
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-RUN groupadd admin && useradd admin -d /home/admin -s /bin/bash -g admin && chown -R admin:admin /home/admin
-RUN chown -R admin:admin /manager
-USER admin
+USER 65534:65534
 
 ENTRYPOINT ["/manager"]
