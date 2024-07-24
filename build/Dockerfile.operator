@@ -15,6 +15,8 @@ FROM openanolis/anolisos:8.8
 WORKDIR /
 COPY --from=builder /workspace/manager .
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-USER 65534:65534
+RUN groupadd admin && useradd admin -d /home/admin -s /bin/bash -g admin && chown -R admin:admin /home/admin
+RUN chown -R admin:admin /manager
+USER admin
 
 ENTRYPOINT ["/manager"]
