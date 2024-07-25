@@ -13,12 +13,12 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
-	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
 	corev1 "k8s.io/api/core/v1"
+
+	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
 )
 
 func GetDefaultSecurityContext() *corev1.PodSecurityContext {
-
 	groupID := podconst.DefaultUserGroupID
 	securityContext := &corev1.PodSecurityContext{
 		FSGroup: &groupID,
