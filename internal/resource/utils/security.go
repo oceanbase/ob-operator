@@ -10,13 +10,18 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package pod
+package utils
 
-const (
-	ReadyTimeoutSeconds = 1800
+import (
+	corev1 "k8s.io/api/core/v1"
+
+	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
 )
 
-const (
-	DefaultUserGroupID int64 = 1000
-	DefaultUserID      int64 = 1000
-)
+func GetDefaultSecurityContext() *corev1.PodSecurityContext {
+	groupID := podconst.DefaultUserGroupID
+	securityContext := &corev1.PodSecurityContext{
+		FSGroup: &groupID,
+	}
+	return securityContext
+}

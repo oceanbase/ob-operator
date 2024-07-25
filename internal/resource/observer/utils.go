@@ -285,6 +285,7 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		Affinity:           m.OBServer.Spec.Affinity,
 		Tolerations:        m.OBServer.Spec.Tolerations,
 		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
+		SecurityContext:    resourceutils.GetDefaultSecurityContext(),
 	}
 	return podSpec
 }
