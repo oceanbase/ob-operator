@@ -20,10 +20,8 @@ import (
 func GetDefaultSecurityContext() *corev1.PodSecurityContext {
 
 	groupID := podconst.DefaultUserGroupID
-	userID := podconst.DefaultUserID
 	securityContext := &corev1.PodSecurityContext{
-		FSGroup:   &groupID,
-		RunAsUser: &userID,
+		FSGroup: &groupID,
 	}
 	return securityContext
 }
