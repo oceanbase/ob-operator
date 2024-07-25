@@ -14,12 +14,18 @@ COPY . .
 RUN make dashboard-dep-install dashboard-build
 
 # start build docker image
-FROM openanolis/anolisos:8.4-x86_64
-WORKDIR /root
+FROM registry.access.redhat.com/ubi8/ubi:8.10
+WORKDIR /opt
 COPY --from=builder-be /workspace/bin/oceanbase-dashboard .
 COPY --from=builder-fe /workspace/dist ./ui/dist
-RUN yum update -y && yum install -y mysql && yum clean all
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-USER root
+RUN yum update -y && yum install -y procps-ng && yum clean all
 
-ENTRYPOINT ["/root/oceanbase-dashboard"]
+RUN rpm -ivh https://mirrors.aliyun.com/mysql/MySQL-8.0/mysql-community-common-8.0.27-1.el8.x86_64.rpm
+RUN rpm -ivh https://mirrors.aliyun.com/mysql/MySQL-8.0/mysql-community-client-plugins-8.0.27-1.el8.x86_64.rpm
+RUN rpm -ivh https://mirrors.aliyun.com/mysql/MySQL-8.0/mysql-community-libs-8.0.27-1.el8.x86_64.rpm
+RUN rpm -ivh https://mirrors.aliyun.com/mysql/MySQL-8.0/mysql-community-client-8.0.27-1.el8.x86_64.rpm
+
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+USER 65534:65534
+
+ENTRYPOINT ["/opt/oceanbase-dashboard"]
