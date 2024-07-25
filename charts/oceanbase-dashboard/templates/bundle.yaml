@@ -72,6 +72,7 @@ spec:
               mountPath: /prometheus/
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
+            - name: rbac-policy-volume
         - name: alertmanager
           image: prom/alertmanager:v0.27.0
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]

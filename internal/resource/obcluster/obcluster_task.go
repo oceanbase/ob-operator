@@ -364,9 +364,8 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
-					Containers:      []corev1.Container{container},
-					RestartPolicy:   corev1.RestartPolicyNever,
-					SecurityContext: resourceutils.GetDefaultSecurityContext(),
+					Containers:    []corev1.Container{container},
+					RestartPolicy: corev1.RestartPolicyNever,
 				},
 			},
 			BackoffLimit:            &backoffLimit,
@@ -763,8 +762,7 @@ func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
 						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
 						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
 					}},
-					RestartPolicy:   corev1.RestartPolicyNever,
-					SecurityContext: resourceutils.GetDefaultSecurityContext(),
+					RestartPolicy: corev1.RestartPolicyNever,
 				},
 			},
 			TTLSecondsAfterFinished: &ttl,
