@@ -51,6 +51,8 @@ spec:
               value: {{ .Release.Name }}-alertmanager-conf
             - name: RBAC_POLICY_CONFIG_MAP
               value: {{ .Release.Name }}-rbac-policy
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
         - name: prometheus
           image: prom/prometheus:v2.51.1
           resources:
