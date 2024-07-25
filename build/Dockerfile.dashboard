@@ -14,7 +14,7 @@ COPY . .
 RUN make dashboard-dep-install dashboard-build
 
 # start build docker image
-FROM openanolis/anolisos:8.4-x86_64
+FROM openanolis/anolisos:8.8
 WORKDIR /root
 COPY --from=builder-be /workspace/bin/oceanbase-dashboard .
 COPY --from=builder-fe /workspace/dist ./ui/dist
