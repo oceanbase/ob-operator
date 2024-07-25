@@ -39,7 +39,7 @@ func PathGuard(perms ...string) EnforceFunc {
 		}
 		for i := 0; i < totalLen; i += 3 {
 			domain, resource, action := perms[i], perms[i+1], perms[i+2]
-			var finalResource string = resource
+			finalResource := resource
 			if strings.Contains(resource, "+") {
 				// resource is a list
 				resources := strings.Split(resource, "+")
