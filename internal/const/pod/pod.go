@@ -15,8 +15,3 @@ package pod
 const (
 	ReadyTimeoutSeconds = 1800
 )
-
-const (
-	DefaultUserGroupID int64 = 1000
-	DefaultUserID      int64 = 1000
-)
