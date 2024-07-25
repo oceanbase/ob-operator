@@ -371,6 +371,8 @@ func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions
 	if err != nil {
 		return nil, err
 	}
+	username := ctx.Value("username").(string)
+	tenantList = filterTenants(username, "read", tenantList)
 	sort.Slice(tenantList.Items, func(i, j int) bool {
 		return tenantList.Items[i].Name < tenantList.Items[j].Name
 	})
@@ -585,6 +587,8 @@ func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, e
 	if err != nil {
 		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
 	}
+	username := ctx.Value("username").(string)
+	tenantList = filterTenants(username, "read", tenantList)
 	var runningCount, deletingCount, operatingCount, failedCount int
 	for _, tenant := range tenantList.Items {
 		switch tenant.Status.Status {
