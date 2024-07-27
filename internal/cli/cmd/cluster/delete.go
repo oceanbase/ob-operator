@@ -14,33 +14,32 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"errors"
-
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/spf13/cobra"
 )
 
+// NewDeleteCmd delete ob clusters
 func NewDeleteCmd() *cobra.Command {
 	o := cluster.NewDeleteOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
 		Aliases: []string{"d"},
+		Args:    cobra.MinimumNArgs(1),
 		Short:   "Delete ob cluster",
+		Long:    "Delete ob cluster, support multiple cluster names",
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				logger.Println(errors.New("Cluster name is required"))
-				return
-			}
 			o.Names = args
 			for _, name := range o.Names {
 				err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, name)
 				if err != nil {
-					logger.Println(err)
+					logger.Fatalln(err)
 				}
+				logger.Printf("Delete ob cluster %s success", name)
 			}
+
 		},
 	}
 	o.AddFlags(cmd)

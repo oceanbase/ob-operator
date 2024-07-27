@@ -25,6 +25,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewUpgradeCmd upgrade obclusters
 func NewUpgradeCmd() *cobra.Command {
 	o := cluster.NewUpgradeOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()

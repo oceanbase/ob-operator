@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewListCmd list all ob clusters
 func NewListCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	logger := cmdUtil.GetDefaultLoggerInstance()
