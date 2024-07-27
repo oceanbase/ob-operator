@@ -26,8 +26,7 @@ func NewCliCmd() *cobra.Command {
 	cmd.AddCommand(version.NewVersionCmd())
 	cmd.AddCommand(cluster.NewClusterCmd())
 	cmd.AddCommand(tenant.NewTenantCmd())
-	flags := cmd.PersistentFlags()
-	flags.BoolP("version", "v", false, "Print the version number of oceanbase cli")
+	cmd.Flags().BoolP("version", "v", false, "Print the version number of oceanbase cli")
 	return cmd
 }
 

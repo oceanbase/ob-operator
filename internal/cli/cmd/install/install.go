@@ -11,22 +11,8 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package install
 
-import (
-	"github.com/spf13/cobra"
-)
+func NewInstallCmd() {
 
-// NewClusterCmd is command for cluster management
-func NewClusterCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "cluster <subcommand>",
-		Short: "Command for cluster management",
-		Long:  `Command for cluster management, such as Create, UpGrade, Delete, Scale.`,
-	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewUpgradeCmd())
-	cmd.AddCommand(NewListCmd())
-	return cmd
 }

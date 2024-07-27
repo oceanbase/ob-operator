@@ -11,22 +11,29 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package util
 
 import (
-	"github.com/spf13/cobra"
+	"log"
+	"os"
+	"text/tabwriter"
 )
 
-// NewClusterCmd is command for cluster management
-func NewClusterCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "cluster <subcommand>",
-		Short: "Command for cluster management",
-		Long:  `Command for cluster management, such as Create, UpGrade, Delete, Scale.`,
-	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewUpgradeCmd())
-	cmd.AddCommand(NewListCmd())
-	return cmd
+var fLog *log.Logger
+var tbLog *log.Logger
+var tbw = tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+
+func init() {
+	fLog = log.New(os.Stdout, "[obocli]: ", 0)
+	tbLog = log.New(tbw, "", 0)
+}
+
+// GetDefaultLoggerInstance 返回默认的日志实例
+func GetDefaultLoggerInstance() *log.Logger {
+	return fLog
+}
+
+// GetTableLoggerInstance 返回表格日志实例
+func GetTableLoggerInstance() (*tabwriter.Writer, *log.Logger) {
+	return tbw, tbLog
 }

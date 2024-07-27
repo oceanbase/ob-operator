@@ -16,8 +16,8 @@ package cluster
 import (
 	"errors"
 	"fmt"
-	"log"
 
+	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
@@ -27,28 +27,30 @@ import (
 
 func NewUpgradeCmd() *cobra.Command {
 	o := cluster.NewUpgradeOptions()
+	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:   "upgrade <cluster_name>",
-		Short: "Upgrade ob cluster",
+		Use:     "upgrade <cluster_name>",
+		Aliases: []string{"u"},
+		Short:   "Upgrade ob cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				log.Println(errors.New("please specify cluster name"))
+				logger.Println(errors.New("please specify cluster name"))
 			}
 			o.Names = args
 			for _, name := range o.Names {
 				obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, name)
 				if err != nil {
-					log.Println(err)
+					logger.Println(err)
 				}
 				if obcluster.Status.Status != clusterstatus.Running {
-					log.Println(fmt.Errorf("Obcluster status invalid %s", obcluster.Status.Status))
+					logger.Println(fmt.Errorf("Obcluster status invalid %s", obcluster.Status.Status))
 				}
 				obcluster.Spec.OBServerTemplate.Image = o.Image
 				cluster, err := clients.UpdateOBCluster(cmd.Context(), obcluster)
 				if err != nil {
-					log.Println(oberr.NewInternal(err.Error()))
+					logger.Println(oberr.NewInternal(err.Error()))
 				}
-				log.Println(cluster)
+				logger.Println(cluster)
 			}
 		},
 	}
