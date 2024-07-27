@@ -13,24 +13,19 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"context"
-	"errors"
-	"os"
 	"time"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	v1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/auth"
+	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 	"github.com/oceanbase/ob-operator/internal/store"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
-	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 // @ID Login
@@ -40,43 +35,32 @@ import (
 // @Accept application/json
 // @Produce application/json
 // @Param loginInfo body param.LoginParam true "login"
-// @Success 200 object response.APIResponse
+// @Success 200 object response.APIResponse{data=ac.Account}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/login [POST]
-func Login(c *gin.Context) (string, error) {
+func Login(c *gin.Context) (*acmodel.Account, error) {
 	loginParams := &param.LoginParam{}
 	if err := c.BindJSON(loginParams); err != nil {
-		return "", httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	credentials, err := getDashboardUserCredentials(c)
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			return "", httpErr.NewBadRequest(err.Error())
-		}
-		return "", httpErr.NewInternal(err.Error())
-	}
-	fetchedPwdRaw, exist := credentials.Data[loginParams.Username]
-	if !exist {
-		return "", httpErr.NewBadRequest("username or password is incorrect")
-	}
-	fetchedPwd := string(fetchedPwdRaw)
 	decryptedPwd, err := crypto.DecryptWithPrivateKey(loginParams.Password)
 	if err != nil {
-		return "", httpErr.NewBadRequest(err.Error())
+		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	if fetchedPwd != decryptedPwd {
-		return "", httpErr.NewBadRequest("username or password is incorrect")
+	acc, err := acbiz.ValidateAccount(c, loginParams.Username, decryptedPwd)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("username or password is incorrect")
 	}
 	sess := sessions.Default(c)
 	sess.Set("username", loginParams.Username)
 	sess.Set("expiration", time.Now().Add(constant.DefaultSessionExpiration*time.Second).Unix())
 	if err := sess.Save(); err != nil {
-		return "", httpErr.NewInternal(err.Error())
+		return nil, httpErr.NewInternal(err.Error())
 	}
 	store.GetCache().Store(loginParams.Username, struct{}{})
-	return "login successfully", nil
+	return acc, nil
 }
 
 // @ID Logout
@@ -104,6 +88,7 @@ func Logout(c *gin.Context) (string, error) {
 	return "logout successfully", nil
 }
 
+// Authorization handler that does not show in swagger
 func Authz(c *gin.Context) (*auth.AuthUser, error) {
 	urlParam := struct {
 		Token auth.Token `uri:"token" binding:"required"`
@@ -119,17 +104,4 @@ func Authz(c *gin.Context) (*auth.AuthUser, error) {
 	}
 
 	return authUser, nil
-}
-
-func getDashboardUserCredentials(c context.Context) (*v1.Secret, error) {
-	credentialSecret, exist := os.LookupEnv("USER_CREDENTIALS_SECRET")
-	if !exist || credentialSecret == "" {
-		return nil, errors.New("env USER_CREDENTIALS_SECRET is not set")
-	}
-	ns, exist := os.LookupEnv("USER_NAMESPACE")
-	if !exist || ns == "" {
-		return nil, errors.New("env USER_NAMESPACE is not set")
-	}
-	clt := client.GetClient()
-	return clt.ClientSet.CoreV1().Secrets(ns).Get(c, credentialSecret, metav1.GetOptions{})
 }

@@ -9,11 +9,11 @@ type StatisticDataType = { status: StatisticStatus; count: number }[];
 
 type ObjType = { [key: string]: unknown };
 
-export const getInitialObjOfKeys = (targetObj: ObjType, keys: string[]) => {
+export const getInitialObjOfKeys = <T>(targetObj: T, keys: (keyof T)[]) => {
   return keys.reduce((pre, cur) => {
     pre[cur] = targetObj[cur];
     return pre;
-  }, {});
+  }, {} as T);
 };
 
 export const formatStatisticData = (
@@ -80,7 +80,7 @@ export const strTrim = (obj: ObjType): ObjType => {
     if (typeof obj[key] === 'string') {
       obj[key] = obj[key].trim();
     } else if (typeof obj[key] === 'object' && obj[key] !== null) {
-      strTrim(obj[key]);
+      strTrim(obj[key] as ObjType);
     }
   });
   return obj;

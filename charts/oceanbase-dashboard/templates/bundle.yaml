@@ -34,6 +34,8 @@ spec:
               mountPath: /etc/alertmanager
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
+            - name: rbac-policy-volume
+              mountPath: /etc/rbac
           env:
             - name: USER_CREDENTIALS_SECRET
               value: {{ .Values.userCredentials | default (nospace (cat .Release.Name "-user-credentials")) }}
@@ -47,6 +49,8 @@ spec:
               value: {{ .Release.Name }}-prometheus-rules-conf
             - name: ALERTMANAGER_CONFIG
               value: {{ .Release.Name }}-alertmanager-conf
+            - name: RBAC_POLICY_CONFIG_MAP
+              value: {{ .Release.Name }}-rbac-policy
         - name: prometheus
           image: prom/prometheus:v2.51.1
           resources:
@@ -68,6 +72,7 @@ spec:
               mountPath: /prometheus/
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
+            - name: rbac-policy-volume
         - name: alertmanager
           image: prom/alertmanager:v0.27.0
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
@@ -106,3 +111,6 @@ spec:
           emptyDir: {}
         - name: alertmanager-config-volume
           emptyDir: {}
+        - name: rbac-policy-volume
+          configMap:
+            name: {{ .Release.Name }}-rbac-policy
