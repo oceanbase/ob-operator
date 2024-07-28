@@ -14,18 +14,207 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerTemplate {
+	if observerSpec == nil {
+		return nil
+	}
+	observerTemplate := &apitypes.OBServerTemplate{
+		Image: observerSpec.Image,
+		Resource: &apitypes.ResourceSpec{
+			Cpu:    *apiresource.NewQuantity(observerSpec.Resource.Cpu, apiresource.DecimalSI),
+			Memory: *apiresource.NewQuantity(observerSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
+		},
+		Storage: &apitypes.OceanbaseStorageSpec{
+			DataStorage: &apitypes.StorageSpec{
+				StorageClass: observerSpec.Storage.Data.StorageClass,
+				Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+			RedoLogStorage: &apitypes.StorageSpec{
+				StorageClass: observerSpec.Storage.RedoLog.StorageClass,
+				Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+			LogStorage: &apitypes.StorageSpec{
+				StorageClass: observerSpec.Storage.Log.StorageClass,
+				Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+		},
+	}
+	return observerTemplate
+}
+func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *apitypes.BackupVolumeSpec {
+	if nfsVolumeSpec == nil {
+		return nil
+	}
+	backupVolume := &apitypes.BackupVolumeSpec{
+		Volume: &corev1.Volume{
+			Name: "ob-backup",
+			VolumeSource: corev1.VolumeSource{
+				NFS: &corev1.NFSVolumeSource{
+					Server:   nfsVolumeSpec.Address,
+					Path:     nfsVolumeSpec.Path,
+					ReadOnly: false,
+				},
+			},
+		},
+	}
+	return backupVolume
+}
+
+func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopology {
+	obzoneTopology := make([]apitypes.OBZoneTopology, 0)
+	for _, zone := range topology {
+		topo := apitypes.OBZoneTopology{
+			Zone:         zone.Zone,
+			NodeSelector: common.KVsToMap(zone.NodeSelector),
+			Replica:      zone.Replicas,
+		}
+		if len(zone.Affinities) > 0 {
+			topo.Affinity = &corev1.Affinity{}
+			for _, kv := range zone.Affinities {
+				switch kv.Type {
+				case modelcommon.NodeAffinityType:
+					if topo.Affinity.NodeAffinity == nil {
+						topo.Affinity.NodeAffinity = &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{},
+							},
+						}
+					}
+					nodeSelectorTerm := corev1.NodeSelectorTerm{
+						MatchExpressions: []corev1.NodeSelectorRequirement{{
+							Key:      kv.Key,
+							Operator: corev1.NodeSelectorOpIn,
+							Values:   []string{kv.Value},
+						}},
+					}
+					topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, nodeSelectorTerm)
+				case modelcommon.PodAffinityType:
+					if topo.Affinity.PodAffinity == nil {
+						topo.Affinity.PodAffinity = &corev1.PodAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
+						}
+					}
+					podAffinityTerm := corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      kv.Key,
+								Operator: metav1.LabelSelectorOpIn,
+								Values:   []string{kv.Value},
+							}},
+						},
+					}
+					topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAffinityTerm)
+				case modelcommon.PodAntiAffinityType:
+					if topo.Affinity.PodAntiAffinity == nil {
+						topo.Affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
+						}
+					}
+					podAntiAffinityTerm := corev1.PodAffinityTerm{
+						LabelSelector: &metav1.LabelSelector{
+							MatchExpressions: []metav1.LabelSelectorRequirement{{
+								Key:      kv.Key,
+								Operator: metav1.LabelSelectorOpIn,
+								Values:   []string{kv.Value},
+							}},
+						},
+					}
+					topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAntiAffinityTerm)
+				}
+			}
+		}
+		if len(zone.Tolerations) > 0 {
+			topo.Tolerations = make([]corev1.Toleration, 0)
+			for _, kv := range zone.Tolerations {
+				toleration := corev1.Toleration{
+					Key:      kv.Key,
+					Operator: corev1.TolerationOpEqual,
+					Value:    kv.Value,
+					Effect:   corev1.TaintEffectNoSchedule,
+				}
+				topo.Tolerations = append(topo.Tolerations, toleration)
+			}
+		}
+		obzoneTopology = append(obzoneTopology, topo)
+	}
+	return obzoneTopology
+}
+
+func buildOBClusterParameters(parameters []modelcommon.KVPair) []apitypes.Parameter {
+	obparameters := make([]apitypes.Parameter, 0)
+	for _, parameter := range parameters {
+		obparameters = append(obparameters, apitypes.Parameter{
+			Name:  parameter.Key,
+			Value: parameter.Value,
+		})
+	}
+	return obparameters
+}
+func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTemplate {
+	if monitorSpec == nil {
+		return nil
+	}
+	monitorTemplate := &apitypes.MonitorTemplate{
+		Image: monitorSpec.Image,
+		Resource: &apitypes.ResourceSpec{
+			Cpu:    *apiresource.NewQuantity(monitorSpec.Resource.Cpu, apiresource.DecimalSI),
+			Memory: *apiresource.NewQuantity(monitorSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
+		},
+	}
+	return monitorTemplate
+}
+
+// Create an OBClusterInstance
+func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
+	observerTemplate := buildOBServerTemplate(param.OBServer)
+	monitorTemplate := buildMonitorTemplate(param.Monitor)
+	backupVolume := buildBackupVolume(param.BackupVolume)
+	parameters := buildOBClusterParameters(param.Parameters)
+	topology := buildOBClusterTopology(param.Topology)
+	obcluster := &v1alpha1.OBCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace:   param.Namespace,
+			Name:        param.Name,
+			Annotations: map[string]string{},
+		},
+		Spec: v1alpha1.OBClusterSpec{
+			ClusterName:      param.ClusterName,
+			ClusterId:        param.ClusterId,
+			OBServerTemplate: observerTemplate,
+			MonitorTemplate:  monitorTemplate,
+			BackupVolume:     backupVolume,
+			Parameters:       parameters,
+			Topology:         topology,
+			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
+		},
+	}
+	switch param.Mode {
+	case string(modelcommon.ClusterModeStandalone):
+		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
+	case string(modelcommon.ClusterModeService):
+		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
+	default:
+	}
+	return obcluster
+}
 func NewCreateOptions() *CreateOptions {
 	return &CreateOptions{
 		OBServer: &param.OBServerSpec{
@@ -38,8 +227,7 @@ func NewCreateOptions() *CreateOptions {
 }
 
 type CreateOptions struct {
-	Namespace    string               `json:"namespace"`
-	Name         string               `json:"name"`
+	BaseOptions
 	ClusterName  string               `json:"clusterName"`
 	ClusterId    int64                `json:"clusterId"`
 	RootPassword string               `json:"rootPassword"`
@@ -52,48 +240,36 @@ type CreateOptions struct {
 	Mode         string               `json:"mode"`
 }
 
-// Parse Cli args and set options
-func (o *CreateOptions) Parse() error {
+func (o *CreateOptions) Validate() error {
+	if !CheckPassword(o.RootPassword) {
+		return fmt.Errorf("Password is not secure, must contain at least 2 uppercase and lowercase letters, numbers and special characters")
+	}
 	if !CheckResourceName(o.Name) {
 		return fmt.Errorf("invalid resource name in k8s: %s", o.Name)
 	}
-	for zoneName, replicaStr := range o.Zones {
-		replica, err := strconv.Atoi(replicaStr)
-		if err != nil {
-			return fmt.Errorf("invalid value for zone %s: %s", zoneName, replicaStr)
-		}
-		// 添加到ZoneTopology
-		o.Topology = append(o.Topology, param.ZoneTopology{
-			Zone:         zoneName,
-			Replicas:     replica,
-			NodeSelector: make([]common.KVPair, 0),
-			Tolerations:  make([]common.KVPair, 0),
-			Affinities:   make([]common.AffinitySpec, 0),
-		})
-	}
 	return nil
 }
 
-// Validate cli args
-func (o *CreateOptions) Validate(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return errors.New("cluster name is required")
+// Parse Cli args and set options
+func (o *CreateOptions) Parse() error {
+	topology, err := mapZonesToTopology(o.Zones)
+	if err != nil {
+		return err
 	}
-	return nil
-}
-
-// Complete command
-func (o *CreateOptions) Complete() {
+	o.Topology = topology
+	// if not specific id, using timestamp
 	if o.ClusterId == 0 {
 		o.ClusterId = time.Now().Unix() % 4294901759
 	}
+	// if not specific password, using random password
 	if o.RootPassword == "" {
 		o.RootPassword = generateRandomPassword()
 	}
+	// if not specific name, using cluster name
 	if o.Name == "" {
 		o.Name = o.ClusterName
 	}
-	return
+	return nil
 }
 
 // AddZoneFlags adds the zone-related flags to the command.
@@ -106,7 +282,7 @@ func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 // AddBaseFlags adds the base flags to the command.
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Name, "name", "", "The name in k8s")
+	baseFlags.StringVar(&o.Name, "name", "", "The name in k8s, if not specified, use cluster name")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
 	baseFlags.Int64Var(&o.ClusterId, "id", 0, "The id of the cluster")
 	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")

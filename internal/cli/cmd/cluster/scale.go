@@ -16,41 +16,75 @@ package cluster
 import (
 	"fmt"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
-// NewUpgradeCmd upgrade obclusters
-func NewUpgradeCmd() *cobra.Command {
-	o := cluster.NewUpgradeOptions()
+// NewScaleCmd scale zones in ob cluster
+func NewScaleCmd() *cobra.Command {
+	o := cluster.NewScaleOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:   "upgrade <cluster_name>",
-		Short: "Upgrade ob cluster",
-		Long:  "Upgrade ob cluster, please specify the new image",
+		Use:   "scale <cluster_name>",
 		Args:  cobra.ExactArgs(1),
+		Short: "scale ob cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			o.Name = args[0]
-			if err := o.Validate(); err != nil {
+			if err := o.Parse(); err != nil {
 				logger.Fatalln(err)
 			}
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
 				logger.Fatalln(err)
 			}
+			o.ZoneNum = len(obcluster.Spec.Topology)
+			if err := o.Validate(); err != nil {
+				logger.Fatalln(err)
+			}
 			if obcluster.Status.Status != clusterstatus.Running {
 				logger.Fatalln(fmt.Errorf("Obcluster status invalid, Status:%s", obcluster.Status.Status))
 			}
-			obcluster.Spec.OBServerTemplate.Image = o.Image
+			for _, zone := range o.Topology {
+				found := false
+				for idx, obzone := range obcluster.Spec.Topology {
+					if obzone.Zone == zone.Zone {
+						found = true
+						if zone.Replicas == 0 {
+							obcluster.Spec.Topology = append(obcluster.Spec.Topology[:idx], obcluster.Spec.Topology[idx+1:]...)
+							idx--
+							logger.Printf("Delete obzone %s", obzone.Zone)
+						} else if obzone.Replica != zone.Replicas {
+							obcluster.Spec.Topology[idx].Replica = zone.Replicas
+							logger.Printf("Scale obzone %s from %d to %d", obzone.Zone, obzone.Replica, zone.Replicas)
+						} else {
+							logger.Printf("No need to scale obzone %s", obzone.Zone)
+						}
+						break
+					}
+				}
+				if !found {
+					obcluster.Spec.Topology = append(obcluster.Spec.Topology, apitypes.OBZoneTopology{
+						Zone:         zone.Zone,
+						NodeSelector: common.KVsToMap(zone.NodeSelector),
+						Replica:      zone.Replicas,
+					})
+				}
+			}
+			if err != nil {
+				logger.Fatalln(err)
+			}
 			cluster, err := clients.UpdateOBCluster(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(oberr.NewInternal(err.Error()))
 			}
-			logger.Printf("Obcluster %s update success", cluster.Name)
+			logger.Printf("Scale ob cluster %s success", cluster.Name)
+
 		},
 	}
 	o.AddFlags(cmd)

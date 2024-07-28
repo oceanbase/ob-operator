@@ -13,12 +13,15 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
-import "github.com/spf13/cobra"
+import (
+	"errors"
+
+	"github.com/spf13/cobra"
+)
 
 type UpgradeOptions struct {
-	Namespace string   `json:"namespace"`
-	Names     []string `json:"names"`
-	Image     string   `json:"image"`
+	BaseOptions
+	Image string `json:"image"`
 }
 
 func NewUpgradeOptions() *UpgradeOptions {
@@ -26,5 +29,11 @@ func NewUpgradeOptions() *UpgradeOptions {
 }
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
-	cmd.Flags().StringVar(&o.Image, "image", "", "image of ob cluster")
+	cmd.Flags().StringVar(&o.Image, "image", "", "The image of observer")
+}
+func (o *UpgradeOptions) Validate() error {
+	if o.Image == "" {
+		return errors.New("image is required")
+	}
+	return nil
 }

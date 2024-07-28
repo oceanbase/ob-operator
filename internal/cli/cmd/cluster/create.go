@@ -28,13 +28,15 @@ func NewCreateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <cluster_name>",
-		Aliases: []string{"c"},
 		Short:   "Create ob cluster",
+		Aliases: []string{"c"},
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			o.ClusterName = args[0]
-			o.Complete()
 			if err := o.Parse(); err != nil {
+				logger.Fatalln(err)
+			}
+			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
 			obcluster := cluster.CreateOBClusterInstance(o)

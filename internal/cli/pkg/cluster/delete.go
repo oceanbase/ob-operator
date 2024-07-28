@@ -18,8 +18,7 @@ import (
 )
 
 type DeleteOptions struct {
-	Namespace string   `json:"namespace"`
-	Names     []string `json:"names"`
+	BaseOptions
 }
 
 func NewDeleteOptions() *DeleteOptions {

@@ -13,23 +13,14 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
-// NewClusterCmd is command for cluster management
-func NewClusterCmd() *cobra.Command {
+// NewShowCmd show the overview and operations of ob cluster
+func NewShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "cluster <subcommand>",
-		Short: "Command for cluster management",
-		Long:  `Command for cluster management, such as Create, UpGrade, Delete, Scale.`,
+		Use:   "show <cluster_name>",
+		Short: "show overview of ob cluster",
+		Args:  cobra.ExactArgs(1),
 	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewUpgradeCmd())
-	cmd.AddCommand(NewUpdateCmd())
-	cmd.AddCommand(NewListCmd())
-	cmd.AddCommand(NewScaleCmd())
-	cmd.AddCommand(NewShowCmd())
 	return cmd
 }

@@ -13,6 +13,20 @@ See the Mulan PSL v2 for more details.
 */
 package install
 
-func NewInstallCmd() {
+import (
+	"fmt"
 
+	"github.com/spf13/cobra"
+)
+
+// NewInstallCmd install the ob-operator and other components
+func NewInstallCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "install",
+		Short: "Command for ob-operator and components installation",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("install..")
+		},
+	}
+	return cmd
 }

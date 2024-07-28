@@ -26,19 +26,16 @@ func NewDeleteCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
-		Aliases: []string{"d"},
-		Args:    cobra.MinimumNArgs(1),
 		Short:   "Delete ob cluster",
-		Long:    "Delete ob cluster, support multiple cluster names",
+		Aliases: []string{"d"},
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			o.Names = args
-			for _, name := range o.Names {
-				err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, name)
-				if err != nil {
-					logger.Fatalln(err)
-				}
-				logger.Printf("Delete ob cluster %s success", name)
+			o.Name = args[0]
+			err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, o.Name)
+			if err != nil {
+				logger.Fatalln(err)
 			}
+			logger.Printf("Delete ob cluster %s success", o.Name)
 
 		},
 	}

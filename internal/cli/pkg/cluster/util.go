@@ -4,203 +4,17 @@ import (
 	"crypto/rand"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
-	corev1 "k8s.io/api/core/v1"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// Create an OBClusterInstance
-func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
-	observerTemplate := buildOBServerTemplate(param.OBServer)
-	monitorTemplate := buildMonitorTemplate(param.Monitor)
-	backupVolume := buildBackupVolume(param.BackupVolume)
-	parameters := buildOBClusterParameters(param.Parameters)
-	topology := buildOBClusterTopology(param.Topology)
-	obcluster := &v1alpha1.OBCluster{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   param.Namespace,
-			Name:        param.Name,
-			Annotations: map[string]string{},
-		},
-		Spec: v1alpha1.OBClusterSpec{
-			ClusterName:      param.ClusterName,
-			ClusterId:        param.ClusterId,
-			OBServerTemplate: observerTemplate,
-			MonitorTemplate:  monitorTemplate,
-			BackupVolume:     backupVolume,
-			Parameters:       parameters,
-			Topology:         topology,
-			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
-		},
-	}
-	switch param.Mode {
-	case string(modelcommon.ClusterModeStandalone):
-		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
-	case string(modelcommon.ClusterModeService):
-		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
-	default:
-	}
-	return obcluster
-}
-func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerTemplate {
-	if observerSpec == nil {
-		return nil
-	}
-	observerTemplate := &apitypes.OBServerTemplate{
-		Image: observerSpec.Image,
-		Resource: &apitypes.ResourceSpec{
-			Cpu:    *apiresource.NewQuantity(observerSpec.Resource.Cpu, apiresource.DecimalSI),
-			Memory: *apiresource.NewQuantity(observerSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
-		},
-		Storage: &apitypes.OceanbaseStorageSpec{
-			DataStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.Data.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-			RedoLogStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.RedoLog.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-			LogStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.Log.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-		},
-	}
-	return observerTemplate
-}
-func buildBackupVolume(nfsVolumeSpec *param.NFSVolumeSpec) *apitypes.BackupVolumeSpec {
-	if nfsVolumeSpec == nil {
-		return nil
-	}
-	backupVolume := &apitypes.BackupVolumeSpec{
-		Volume: &corev1.Volume{
-			Name: "ob-backup",
-			VolumeSource: corev1.VolumeSource{
-				NFS: &corev1.NFSVolumeSource{
-					Server:   nfsVolumeSpec.Address,
-					Path:     nfsVolumeSpec.Path,
-					ReadOnly: false,
-				},
-			},
-		},
-	}
-	return backupVolume
-}
-
-func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopology {
-	obzoneTopology := make([]apitypes.OBZoneTopology, 0)
-	for _, zone := range topology {
-		topo := apitypes.OBZoneTopology{
-			Zone:         zone.Zone,
-			NodeSelector: common.KVsToMap(zone.NodeSelector),
-			Replica:      zone.Replicas,
-		}
-		if len(zone.Affinities) > 0 {
-			topo.Affinity = &corev1.Affinity{}
-			for _, kv := range zone.Affinities {
-				switch kv.Type {
-				case modelcommon.NodeAffinityType:
-					if topo.Affinity.NodeAffinity == nil {
-						topo.Affinity.NodeAffinity = &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{},
-							},
-						}
-					}
-					nodeSelectorTerm := corev1.NodeSelectorTerm{
-						MatchExpressions: []corev1.NodeSelectorRequirement{{
-							Key:      kv.Key,
-							Operator: corev1.NodeSelectorOpIn,
-							Values:   []string{kv.Value},
-						}},
-					}
-					topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = append(topo.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms, nodeSelectorTerm)
-				case modelcommon.PodAffinityType:
-					if topo.Affinity.PodAffinity == nil {
-						topo.Affinity.PodAffinity = &corev1.PodAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
-						}
-					}
-					podAffinityTerm := corev1.PodAffinityTerm{
-						LabelSelector: &metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      kv.Key,
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{kv.Value},
-							}},
-						},
-					}
-					topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAffinityTerm)
-				case modelcommon.PodAntiAffinityType:
-					if topo.Affinity.PodAntiAffinity == nil {
-						topo.Affinity.PodAntiAffinity = &corev1.PodAntiAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: []corev1.PodAffinityTerm{},
-						}
-					}
-					podAntiAffinityTerm := corev1.PodAffinityTerm{
-						LabelSelector: &metav1.LabelSelector{
-							MatchExpressions: []metav1.LabelSelectorRequirement{{
-								Key:      kv.Key,
-								Operator: metav1.LabelSelectorOpIn,
-								Values:   []string{kv.Value},
-							}},
-						},
-					}
-					topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution = append(topo.Affinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution, podAntiAffinityTerm)
-				}
-			}
-		}
-		if len(zone.Tolerations) > 0 {
-			topo.Tolerations = make([]corev1.Toleration, 0)
-			for _, kv := range zone.Tolerations {
-				toleration := corev1.Toleration{
-					Key:      kv.Key,
-					Operator: corev1.TolerationOpEqual,
-					Value:    kv.Value,
-					Effect:   corev1.TaintEffectNoSchedule,
-				}
-				topo.Tolerations = append(topo.Tolerations, toleration)
-			}
-		}
-		obzoneTopology = append(obzoneTopology, topo)
-	}
-	return obzoneTopology
-}
-
-func buildOBClusterParameters(parameters []modelcommon.KVPair) []apitypes.Parameter {
-	obparameters := make([]apitypes.Parameter, 0)
-	for _, parameter := range parameters {
-		obparameters = append(obparameters, apitypes.Parameter{
-			Name:  parameter.Key,
-			Value: parameter.Value,
-		})
-	}
-	return obparameters
-}
-func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTemplate {
-	if monitorSpec == nil {
-		return nil
-	}
-	monitorTemplate := &apitypes.MonitorTemplate{
-		Image: monitorSpec.Image,
-		Resource: &apitypes.ResourceSpec{
-			Cpu:    *apiresource.NewQuantity(monitorSpec.Resource.Cpu, apiresource.DecimalSI),
-			Memory: *apiresource.NewQuantity(monitorSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
-		},
-	}
-	return monitorTemplate
-}
 func generateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSecrets {
 	return &apitypes.OBUserSecrets{
 		Root:     fmt.Sprintf("%s-%d-root-%s", clusterName, clusterId, generateUUID()),
@@ -210,7 +24,6 @@ func generateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSe
 	}
 }
 
-// chekc resource name in k8s
 func CheckResourceName(name string) bool {
 	// 定义正则表达式
 	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
@@ -225,6 +38,54 @@ func CheckResourceName(name string) bool {
 	// 检查整个字符串是否符合正则表达式的模式
 	return re.MatchString(name)
 }
+func CheckPassword(password string) bool {
+	var (
+		countUppercase   int
+		countLowercase   int
+		countNumber      int
+		countSpecialChar int
+	)
+
+	// 遍历密码中的每个字符
+	for _, char := range password {
+		switch {
+		case regexp.MustCompile(`[A-Z]`).MatchString(string(char)):
+			countUppercase++
+		case regexp.MustCompile(`[a-z]`).MatchString(string(char)):
+			countLowercase++
+		case regexp.MustCompile(`[0-9]`).MatchString(string(char)):
+			countNumber++
+		default:
+			countSpecialChar++
+		}
+		// 提前返回
+		if countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2 {
+			return true
+		}
+	}
+	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
+}
+func mapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
+	if zones == nil {
+		return nil, fmt.Errorf("Zone value is required") // 无效的zone信息
+	}
+	topology := make([]param.ZoneTopology, 0)
+	for zoneName, replicaStr := range zones {
+		replica, err := strconv.Atoi(replicaStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for zone %s: %s", zoneName, replicaStr)
+		}
+		topology = append(topology, param.ZoneTopology{
+			Zone:         zoneName,
+			Replicas:     replica,
+			NodeSelector: make([]common.KVPair, 0),
+			Tolerations:  make([]common.KVPair, 0),
+			Affinities:   make([]common.AffinitySpec, 0),
+		})
+	}
+	return topology, nil
+}
+
 func generateRandomPassword() string {
 	const (
 		maxLength      = 32

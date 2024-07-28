@@ -27,9 +27,9 @@ func NewListCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "list",
-		Aliases: []string{"ls", "l"},
 		Short:   "List ob clusters",
 		Long:    `List ob clusters.`,
+		Aliases: []string{"ls", "l"},
 		Run: func(cmd *cobra.Command, args []string) {
 			obclusterList, err := clients.ListAllOBClusters(cmd.Context())
 			if err != nil {
@@ -44,10 +44,6 @@ func NewListCmd() *cobra.Command {
 			}
 			tbLog.Println("Namespace \t Pod \t Create Time \t Status")
 			for _, cluster := range obclusterList.Items {
-				if err != nil {
-					logger.Println(err.Error())
-					return
-				}
 				tbLog.Printf("%s \t %s \t %s \t %s\n", cluster.Namespace, cluster.Name, cluster.CreationTimestamp, cluster.Status.Status)
 			}
 			_ = tbw.Flush()
