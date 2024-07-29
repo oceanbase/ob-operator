@@ -14,7 +14,7 @@ See the Mulan PSL v2 for more details.
 package install
 
 import (
-	"fmt"
+	"log"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -23,16 +23,12 @@ import (
 // NewInstallCmd install the ob-operator and other components
 func NewInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "install <components>",
-		Short:   "Command for ob-operator and components installation",
-		PreRunE: Validate,
+		Use:   "install <components>",
+		Short: "Command for ob-operator and components installation",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("Installing components:", strings.Join(args, ", "))
+			// 如果没提供参数，默认安装所有组件，修改option参数即可
+			log.Println("Installing components:", strings.Join(args, ", "))
 		},
 	}
 	return cmd
-}
-func Validate(cmd *cobra.Command, args []string) error {
-	// 如果没提供参数，默认安装所有组件，修改option参数即可
-	return nil
 }

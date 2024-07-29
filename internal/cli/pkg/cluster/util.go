@@ -126,8 +126,10 @@ func generateRandomPassword() string {
 
 		randomIndex := int(b[0]) % len(characters)
 		randomChar := characters[randomIndex]
-
-		sb.WriteByte(randomChar) // 追加字符到密码
+		// 追加字符到密码
+		if err := sb.WriteByte(randomChar); err != nil {
+			panic(err)
+		}
 
 		switch {
 		case regexp.MustCompile(`[A-Z]`).MatchString(string(randomChar)):

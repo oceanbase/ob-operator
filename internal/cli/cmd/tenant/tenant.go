@@ -14,7 +14,7 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +25,7 @@ func NewTenantCmd() *cobra.Command {
 		Short: "Command for tenant management",
 		Long:  `Command for tenant management, such as Create, Update, Delete.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("oceanbase tenant management")
+			log.Println("oceanbase tenant management")
 		},
 	}
 	return cmd

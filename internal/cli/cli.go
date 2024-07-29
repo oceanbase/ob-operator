@@ -14,7 +14,7 @@ See the Mulan PSL v2 for more details.
 package cli
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/install"
@@ -23,6 +23,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// NewCliCmd return ob-operator cli
 func NewCliCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "obocli",
@@ -33,7 +34,7 @@ func NewCliCmd() *cobra.Command {
 				versionCmd := version.NewVersionCmd()
 				versionCmd.Run(cmd, args)
 			} else {
-				cmd.Help()
+				_ = cmd.Help()
 			}
 		},
 	}
@@ -49,6 +50,6 @@ func Execute() {
 	rootCmd := NewCliCmd()
 	err := rootCmd.Execute()
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalln(err)
 	}
 }

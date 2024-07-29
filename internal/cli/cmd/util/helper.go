@@ -35,5 +35,4 @@ func PrintFlagValues(cmd *cobra.Command) {
 	inheritedFlags.VisitAll(func(f *pflag.Flag) {
 		fmt.Printf("%s : %v\n", f.Name, f.Value.String())
 	})
-
 }

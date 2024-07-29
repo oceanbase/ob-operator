@@ -53,15 +53,15 @@ func NewScaleCmd() *cobra.Command {
 			}
 			for _, zone := range o.Topology {
 				found := false
-				for idx, obzone := range obcluster.Spec.Topology {
+				for i := 0; i < len(obcluster.Spec.Topology); i++ {
+					obzone := obcluster.Spec.Topology[i]
 					if obzone.Zone == zone.Zone {
 						found = true
 						if zone.Replicas == 0 {
-							obcluster.Spec.Topology = append(obcluster.Spec.Topology[:idx], obcluster.Spec.Topology[idx+1:]...)
-							idx--
+							obcluster.Spec.Topology = append(obcluster.Spec.Topology[:i], obcluster.Spec.Topology[i+1:]...)
 							logger.Printf("Delete obzone %s", obzone.Zone)
 						} else if obzone.Replica != zone.Replicas {
-							obcluster.Spec.Topology[idx].Replica = zone.Replicas
+							obcluster.Spec.Topology[i].Replica = zone.Replicas
 							logger.Printf("Scale obzone %s from %d to %d", obzone.Zone, obzone.Replica, zone.Replicas)
 						} else {
 							logger.Printf("No need to scale obzone %s", obzone.Zone)
@@ -85,7 +85,6 @@ func NewScaleCmd() *cobra.Command {
 				logger.Fatalln(oberr.NewInternal(err.Error()))
 			}
 			logger.Printf("Scale ob cluster %s success", cluster.Name)
-
 		},
 	}
 	o.AddFlags(cmd)
