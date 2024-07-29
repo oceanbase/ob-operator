@@ -19,6 +19,7 @@ import (
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 )
@@ -34,8 +35,30 @@ func logHandlerError(c *gin.Context, err error) {
 		Error("handler error")
 }
 
-func Wrap[T any](h Handler[T]) gin.HandlerFunc {
+func Wrap[T any](h Handler[T], funcs ...acbiz.EnforceFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if len(funcs) > 0 {
+			for _, f := range funcs {
+				ok, err := f(c)
+				if err != nil {
+					logHandlerError(c, err)
+					c.JSON(http.StatusInternalServerError, &response.APIResponse{
+						Data:       nil,
+						Message:    err.Error(),
+						Successful: false,
+					})
+					return
+				}
+				if !ok {
+					c.JSON(http.StatusForbidden, &response.APIResponse{
+						Data:       nil,
+						Message:    "forbidden",
+						Successful: false,
+					})
+					return
+				}
+			}
+		}
 		res, err := h(c)
 		statusCode := http.StatusOK
 		var errMsg string

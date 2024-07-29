@@ -5738,7 +5738,7 @@ const docTemplate = `{
         "ac.Account": {
             "type": "object",
             "required": [
-                "role",
+                "roles",
                 "username"
             ],
             "properties": {
@@ -5751,8 +5751,11 @@ const docTemplate = `{
                 "nickname": {
                     "type": "string"
                 },
-                "role": {
-                    "$ref": "#/definitions/ac.Role"
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ac.Role"
+                    }
                 },
                 "username": {
                     "type": "string"
@@ -5764,7 +5767,7 @@ const docTemplate = `{
             "required": [
                 "nickname",
                 "password",
-                "roleName",
+                "roles",
                 "username"
             ],
             "properties": {
@@ -5777,8 +5780,11 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
-                "roleName": {
-                    "type": "string"
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "username": {
                     "type": "string"
@@ -5818,8 +5824,11 @@ const docTemplate = `{
                 "password": {
                     "type": "string"
                 },
-                "roleName": {
-                    "type": "string"
+                "roles": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -8613,19 +8622,19 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "logDiskSize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "maxCPU": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "maxIops": {
                     "type": "integer"
                 },
                 "memorySize": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "minCPU": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "minIops": {
                     "type": "integer"
@@ -8763,7 +8772,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "memory": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -8902,7 +8911,7 @@ const docTemplate = `{
             ],
             "properties": {
                 "size": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "storageClass": {
                     "type": "string"

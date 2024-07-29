@@ -145,4 +145,13 @@ g, admin, admin2
 		Expect(err).To(BeNil())
 		Expect(strings.TrimSpace(actualCSV)).To(Equal(strings.TrimSpace(expectedCSV)))
 	})
+
+	It("Key match", func() {
+		Expect(keyMatch("test", "test")).To(BeTrue())
+		Expect(keyMatch("test", "test2")).To(BeFalse())
+		Expect(keyMatch("test", "test*")).To(BeTrue())
+		Expect(keyMatch("test2", "test*")).To(BeFalse())
+		Expect(keyMatch("test/", "test/1")).To(BeTrue())
+		Expect(keyMatch("test/", "test/*")).To(BeTrue())
+	})
 })

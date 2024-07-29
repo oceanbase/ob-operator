@@ -189,12 +189,12 @@ func persistPolicies(ctx context.Context, targetFile string, extra ...string) er
 	if len(extra) > 0 {
 		clt := client.GetClient()
 		var cm *corev1.ConfigMap
-		cm, err = clt.ClientSet.CoreV1().ConfigMaps("default").Get(ctx, extra[0], metav1.GetOptions{})
+		cm, err = clt.ClientSet.CoreV1().ConfigMaps(enforcer.policyNamespace).Get(ctx, extra[0], metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
-		cm.Data[targetFile] = csv
-		_, err = clt.ClientSet.CoreV1().ConfigMaps("default").Update(ctx, cm, metav1.UpdateOptions{})
+		cm.Data[enforcer.policyCmKey] = csv
+		_, err = clt.ClientSet.CoreV1().ConfigMaps(enforcer.policyNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}

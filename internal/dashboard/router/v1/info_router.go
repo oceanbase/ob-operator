@@ -15,11 +15,12 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitInfoRoutes(g *gin.RouterGroup) {
 	g.GET("/info", h.Wrap(h.GetProcessInfo))
-	g.GET("/statistics", h.Wrap(h.GetStatistics))
-	g.PATCH("/info", h.Wrap(h.ConfigureInfo))
+	g.GET("/statistics", h.Wrap(h.GetStatistics, acbiz.PathGuard("system", "*", "read")))
+	g.PATCH("/info", h.Wrap(h.ConfigureInfo, acbiz.PathGuard("system", "*", "write")))
 }

@@ -2,7 +2,7 @@ import logoImg from '@/assets/logo1.svg';
 import { logoutReq } from '@/services';
 import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { AlertFilled } from '@ant-design/icons';
+import { AlertFilled, TeamOutlined } from '@ant-design/icons';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
@@ -68,6 +68,11 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
+    },
+    {
+      title: '权限控制',
+      link: '/access',
+      icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
     },
   ];
 

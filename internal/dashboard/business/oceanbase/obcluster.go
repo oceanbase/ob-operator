@@ -126,8 +126,8 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		respCluster.Monitor = &response.MonitorSpec{}
 		respCluster.Monitor.Image = obcluster.Spec.MonitorTemplate.Image
 		respCluster.Monitor.Resource = response.ResourceSpecRender{
-			Cpu:      obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.MonitorTemplate.Resource.Memory.String(),
+			Cpu:    obcluster.Spec.MonitorTemplate.Resource.Cpu.Value(),
+			Memory: obcluster.Spec.MonitorTemplate.Resource.Memory.Value(),
 		}
 	}
 	if obcluster.Spec.BackupVolume != nil {
@@ -137,21 +137,21 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	}
 	if obcluster.Spec.OBServerTemplate != nil {
 		respCluster.OBClusterExtra.Resource = response.ResourceSpecRender{
-			Cpu:      obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
-			MemoryGB: obcluster.Spec.OBServerTemplate.Resource.Memory.String(),
+			Cpu:    obcluster.Spec.OBServerTemplate.Resource.Cpu.Value(),
+			Memory: obcluster.Spec.OBServerTemplate.Resource.Memory.Value(),
 		}
 		respCluster.OBClusterExtra.Storage = response.OBServerStorage{
 			DataStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.String(),
+				Size:         obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value(),
 			},
 			RedoLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(),
+				Size:         obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
 			},
 			SysLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
-				SizeGB:       obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.String(),
+				Size:         obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value(),
 			},
 		}
 	}
@@ -277,6 +277,8 @@ func ListOBClusters(ctx context.Context) ([]response.OBClusterOverview, error) {
 	if err != nil {
 		return obclusters, errors.Wrap(err, "failed to list obclusters")
 	}
+	username := ctx.Value("username").(string)
+	obclusterList = filterClusters(username, "read", obclusterList)
 	sort.Slice(obclusterList.Items, func(i, j int) bool {
 		return obclusterList.Items[i].Name < obclusterList.Items[j].Name
 	})
@@ -627,6 +629,8 @@ func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStatistic, 
 	if err != nil {
 		return statisticResult, errors.Wrap(err, "failed to list obclusters")
 	}
+	username := ctx.Value("username").(string)
+	obclusterList = filterClusters(username, "read", obclusterList)
 	var (
 		runningCount   int
 		deletingCount  int

@@ -76,8 +76,8 @@ type OBCluster struct {
 }
 
 type ResourceSpecRender struct {
-	Cpu      int64  `json:"cpu" binding:"required"`
-	MemoryGB string `json:"memory" binding:"required"`
+	Cpu    int64 `json:"cpu" binding:"required"`
+	Memory int64 `json:"memory" binding:"required"`
 }
 
 type OBClusterExtra struct {
@@ -108,7 +108,7 @@ type OBServerStorage struct {
 
 type StorageSpec struct {
 	StorageClass string `json:"storageClass" binding:"required"`
-	SizeGB       string `json:"size" binding:"required"`
+	Size         int64  `json:"size" binding:"required"`
 }
 
 type OBClusterResources struct {

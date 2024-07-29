@@ -80,6 +80,11 @@ export default [
                 ],
               },
               {
+                path:'access',
+                component: 'Access',
+                name: '权限控制'
+              },
+              {
                 path: 'overview',
                 component: 'Overview',
                 name: '系统概览页',
