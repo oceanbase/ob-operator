@@ -24,7 +24,7 @@ type EnforceFunc func(c *gin.Context) (bool, error)
 // groups of domain, resource and action
 // if resource is prefixed with ":", it means a parameter in the path
 // if resource contains "+", it means a list of resources, like :namespace+:name
-func PathGuard(perms ...string) EnforceFunc {
+func PathGuard(domain, resource, action string) EnforceFunc {
 	return func(c *gin.Context) (bool, error) {
 		sess := sessions.Default(c)
 		usernameIf := sess.Get("username")
@@ -32,36 +32,28 @@ func PathGuard(perms ...string) EnforceFunc {
 			return false, nil
 		}
 		username := usernameIf.(string)
-		totalLen := len(perms)
-		if totalLen%3 != 0 {
-			// invalid perms due to wrong coding, let it go
-			return true, nil
-		}
-		for i := 0; i < totalLen; i += 3 {
-			domain, resource, action := perms[i], perms[i+1], perms[i+2]
-			finalResource := resource
-			if strings.Contains(resource, "+") {
-				// resource is a list
-				resources := strings.Split(resource, "+")
-				parts := make([]string, 0, len(resources))
-				for _, res := range resources {
-					if strings.HasPrefix(res, ":") {
-						parts = append(parts, c.Param(res[1:]))
-					} else {
-						parts = append(parts, res)
-					}
+		finalResource := resource
+		if strings.Contains(resource, "+") {
+			// resource is a list
+			resources := strings.Split(resource, "+")
+			parts := make([]string, 0, len(resources))
+			for _, res := range resources {
+				if strings.HasPrefix(res, ":") {
+					parts = append(parts, c.Param(res[1:]))
+				} else {
+					parts = append(parts, res)
 				}
-				finalResource = strings.Join(parts, "+")
-			} else if strings.HasPrefix(resource, ":") {
-				finalResource = c.Param(resource[1:])
 			}
-			ok, err := enforcer.Enforce(username, domain+"/"+finalResource, action)
-			if err != nil {
-				return false, err
-			}
-			if !ok {
-				return false, nil
-			}
+			finalResource = strings.Join(parts, "+")
+		} else if strings.HasPrefix(resource, ":") {
+			finalResource = c.Param(resource[1:])
+		}
+		ok, err := enforcer.Enforce(username, domain+"/"+finalResource, action)
+		if err != nil {
+			return false, err
+		}
+		if !ok {
+			return false, nil
 		}
 		return true, nil
 	}

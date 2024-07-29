@@ -15,7 +15,6 @@ package oceanbase
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sort"
 	"strings"
 
@@ -183,13 +182,13 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 			Type:     pool.Type.Name,
 		}
 		if pool.UnitConfig != nil {
-			replica.MaxCPU = pool.UnitConfig.MaxCPU.String()
-			replica.MinCPU = pool.UnitConfig.MinCPU.String()
+			replica.MaxCPU = pool.UnitConfig.MaxCPU.Value()
+			replica.MinCPU = pool.UnitConfig.MinCPU.Value()
 			replica.MaxIops = pool.UnitConfig.MaxIops
 			replica.MinIops = pool.UnitConfig.MinIops
 			replica.IopsWeight = pool.UnitConfig.IopsWeight
-			replica.MemorySize = fmt.Sprintf("%d GB", pool.UnitConfig.MemorySize.Value()>>30)
-			replica.LogDiskSize = fmt.Sprintf("%d GB", pool.UnitConfig.LogDiskSize.Value()>>30)
+			replica.MemorySize = pool.UnitConfig.MemorySize.Value()
+			replica.LogDiskSize = pool.UnitConfig.LogDiskSize.Value()
 		}
 		rt.Topology = append(rt.Topology, replica)
 	}

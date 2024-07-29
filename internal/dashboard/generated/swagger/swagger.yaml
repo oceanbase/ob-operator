@@ -8,12 +8,14 @@ definitions:
         type: string
       nickname:
         type: string
-      role:
-        $ref: '#/definitions/ac.Role'
+      roles:
+        items:
+          $ref: '#/definitions/ac.Role'
+        type: array
       username:
         type: string
     required:
-    - role
+    - roles
     - username
     type: object
   ac.CreateAccountParam:
@@ -24,14 +26,16 @@ definitions:
         type: string
       password:
         type: string
-      roleName:
-        type: string
+      roles:
+        items:
+          type: string
+        type: array
       username:
         type: string
     required:
     - nickname
     - password
-    - roleName
+    - roles
     - username
     type: object
   ac.CreateRoleParam:
@@ -56,8 +60,10 @@ definitions:
         type: string
       password:
         type: string
-      roleName:
-        type: string
+      roles:
+        items:
+          type: string
+        type: array
     type: object
   ac.PatchRoleParam:
     properties:
@@ -2004,15 +2010,15 @@ definitions:
       iopsWeight:
         type: integer
       logDiskSize:
-        type: string
+        type: integer
       maxCPU:
-        type: string
+        type: integer
       maxIops:
         type: integer
       memorySize:
-        type: string
+        type: integer
       minCPU:
-        type: string
+        type: integer
       minIops:
         type: integer
       priority:
@@ -2117,7 +2123,7 @@ definitions:
       cpu:
         type: integer
       memory:
-        type: string
+        type: integer
     required:
     - cpu
     - memory
@@ -2213,7 +2219,7 @@ definitions:
   response.StorageSpec:
     properties:
       size:
-        type: string
+        type: integer
       storageClass:
         type: string
     required:
