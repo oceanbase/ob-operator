@@ -1855,6 +1855,9 @@ spec:
                   - value
                   type: object
                 type: array
+              scenario:
+                default: htap
+                type: string
               serviceAccount:
                 default: default
                 type: string

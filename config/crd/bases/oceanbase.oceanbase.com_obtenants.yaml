@@ -159,6 +159,8 @@ spec:
                   - zone
                   type: object
                 type: array
+              scenario:
+                type: string
               source:
                 description: Source for restoring or creating standby
                 properties:
