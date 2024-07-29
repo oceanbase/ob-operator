@@ -14,12 +14,13 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
-	"github.com/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCmd create an ob cluster

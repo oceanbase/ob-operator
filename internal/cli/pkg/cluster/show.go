@@ -14,8 +14,9 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 type ShowOptions struct {

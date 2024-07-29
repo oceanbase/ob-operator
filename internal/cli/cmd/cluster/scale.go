@@ -16,6 +16,8 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
@@ -23,7 +25,6 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
-	"github.com/spf13/cobra"
 )
 
 // NewScaleCmd scale zones in ob cluster

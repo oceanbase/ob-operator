@@ -16,6 +16,10 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
@@ -23,9 +27,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // NewUpgradeCmd upgrade obclusters

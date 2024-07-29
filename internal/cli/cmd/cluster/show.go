@@ -14,10 +14,11 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
+	"github.com/spf13/cobra"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
 )
 
 // NewShowCmd show the overview and operations of ob cluster

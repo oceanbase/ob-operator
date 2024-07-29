@@ -16,9 +16,10 @@ package cluster
 import (
 	"sort"
 
+	"github.com/spf13/cobra"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
 )
 
 // NewListCmd list all ob clusters

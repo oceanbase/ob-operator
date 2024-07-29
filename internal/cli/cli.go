@@ -16,11 +16,12 @@ package cli
 import (
 	"log"
 
+	"github.com/spf13/cobra"
+
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/install"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/tenant"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/version"
-	"github.com/spf13/cobra"
 )
 
 // NewCliCmd return ob-operator cli

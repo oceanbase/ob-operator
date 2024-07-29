@@ -16,11 +16,13 @@ package cluster
 import (
 	"crypto/rand"
 	"fmt"
+	"log"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
@@ -44,7 +46,7 @@ func CheckResourceName(name string) bool {
 	// 编译正则表达式
 	re, err := regexp.Compile(regex)
 	if err != nil {
-		fmt.Println("Error compiling regex:", err)
+		log.Println("Error compiling regex:", err)
 		return false
 	}
 

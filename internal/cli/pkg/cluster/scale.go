@@ -16,8 +16,9 @@ package cluster
 import (
 	"fmt"
 
-	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/spf13/cobra"
+
+	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 type ScaleOptions struct {
