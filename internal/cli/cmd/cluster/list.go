@@ -46,7 +46,9 @@ func NewListCmd() *cobra.Command {
 			for _, cluster := range obclusterList.Items {
 				tbLog.Printf("%s \t %s \t %s \t %s\n", cluster.Namespace, cluster.Name, cluster.CreationTimestamp, cluster.Status.Status)
 			}
-			_ = tbw.Flush()
+			if err := tbw.Flush(); err != nil {
+				logger.Fatalln(err)
+			}
 		},
 	}
 	return cmd

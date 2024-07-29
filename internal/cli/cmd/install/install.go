@@ -15,6 +15,7 @@ package install
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -22,11 +23,16 @@ import (
 // NewInstallCmd install the ob-operator and other components
 func NewInstallCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install",
-		Short: "Command for ob-operator and components installation",
+		Use:     "install <components>",
+		Short:   "Command for ob-operator and components installation",
+		PreRunE: Validate,
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("install..")
+			fmt.Println("Installing components:", strings.Join(args, ", "))
 		},
 	}
 	return cmd
+}
+func Validate(cmd *cobra.Command, args []string) error {
+	// 如果没提供参数，默认安装所有组件，修改option参数即可
+	return nil
 }

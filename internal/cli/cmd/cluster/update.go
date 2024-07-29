@@ -16,6 +16,9 @@ package cluster
 import (
 	"fmt"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
@@ -24,6 +27,8 @@ import (
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/spf13/cobra"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // NewUpdateCmd update obcluster
@@ -33,9 +38,10 @@ func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update <cluster_name>",
 		Short: "Update ob cluster",
-		Long:  "Update ob cluster, support update cpu/memory/storage",
+		Long:  "Update ob cluster, support update cpu/memory",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
+			// TODO: support update storage
 			o.Name = args[0]
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
@@ -53,12 +59,27 @@ func NewUpdateCmd() *cobra.Command {
 			if o.MemoryGB != 0 {
 				obcluster.Spec.OBServerTemplate.Resource.Memory = *apiresource.NewQuantity(o.MemoryGB*constant.GB, apiresource.BinarySI)
 			}
-			if o.StorageGB != 0 {
-				obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size = *apiresource.NewQuantity(o.StorageGB*constant.GB, apiresource.BinarySI)
-			}
 			cluster, err := clients.UpdateOBCluster(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(oberr.NewInternal(err.Error()))
+			}
+			updateOp := v1alpha1.OBClusterOperation{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      o.Name + "-update-" + rand.String(6),
+					Namespace: o.Namespace,
+				},
+				Spec: v1alpha1.OBClusterOperationSpec{
+					OBCluster: o.Name,
+					Type:      apiconst.ClusterOpTypeModifyOBServers,
+					ModifyOBServers: &v1alpha1.ModifyOBServersConfig{Resource: &types.ResourceSpec{
+						Cpu:    obcluster.Spec.MonitorTemplate.Resource.Cpu,
+						Memory: obcluster.Spec.OBServerTemplate.Resource.Memory,
+					}},
+				},
+			}
+			_, err = clients.CreateOBClusterOperation(cmd.Context(), &updateOp)
+			if err != nil {
+				logger.Fatalln(err)
 			}
 			logger.Printf("Obcluster %s update success", cluster.Name)
 		},

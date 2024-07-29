@@ -16,12 +16,16 @@ package cluster
 import (
 	"fmt"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // NewUpgradeCmd upgrade obclusters
@@ -49,6 +53,21 @@ func NewUpgradeCmd() *cobra.Command {
 			cluster, err := clients.UpdateOBCluster(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(oberr.NewInternal(err.Error()))
+			}
+			upgradeOp := v1alpha1.OBClusterOperation{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      o.Name + "-upgrade-" + rand.String(6),
+					Namespace: o.Namespace,
+				},
+				Spec: v1alpha1.OBClusterOperationSpec{
+					OBCluster: o.Name,
+					Type:      apiconst.ClusterOpTypeUpgrade,
+					Upgrade:   &v1alpha1.UpgradeConfig{Image: o.Image},
+				},
+			}
+			_, err = clients.CreateOBClusterOperation(cmd.Context(), &upgradeOp)
+			if err != nil {
+				logger.Fatalln(err)
 			}
 			logger.Printf("Obcluster %s update success", cluster.Name)
 		},

@@ -21,9 +21,8 @@ import (
 
 type UpdateOptions struct {
 	BaseOptions
-	Cpu       int64 `json:"cpu"`
-	MemoryGB  int64 `json:"memoryGB"`
-	StorageGB int64 `json:"storageGB"`
+	Cpu      int64 `json:"cpu"`
+	MemoryGB int64 `json:"memoryGB"`
 }
 
 func NewUpdateOptions() *UpdateOptions {
@@ -33,14 +32,10 @@ func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 	cmd.Flags().Int64Var(&o.Cpu, "cpu", 0, "The cpu of the observer")
 	cmd.Flags().Int64Var(&o.MemoryGB, "memory", 0, "The memory of the observer")
-	cmd.Flags().Int64Var(&o.StorageGB, "data-storage-size", 0, "The size of the data storage")
 }
 func (o *UpdateOptions) Validate() error {
-	if o.Cpu == 0 && o.MemoryGB == 0 && o.StorageGB == 0 {
-		return errors.New("please specify update options, support cpu, memoryGB, storage")
+	if o.Cpu == 0 && o.MemoryGB == 0 {
+		return errors.New("please specify update options, support cpu, memoryGB")
 	}
-	return nil
-}
-func (o *UpdateOptions) Run() error {
 	return nil
 }

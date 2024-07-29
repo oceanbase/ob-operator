@@ -36,6 +36,7 @@ func NewScaleCmd() *cobra.Command {
 		Short: "scale ob cluster",
 		Run: func(cmd *cobra.Command, args []string) {
 			o.Name = args[0]
+			// TODO: support operation record
 			if err := o.Parse(); err != nil {
 				logger.Fatalln(err)
 			}
