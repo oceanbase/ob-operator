@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: obtenantoperations.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -40,14 +40,19 @@ spec:
         description: OBTenantOperation is the Schema for the obtenantoperations API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -147,16 +152,19 @@ spec:
                 description: OBTenant is the Schema for the obtenants API
                 properties:
                   apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                    description: |-
+                      APIVersion defines the versioned schema of this representation of an object.
+                      Servers should convert recognized schemas to the latest internal value, and
+                      may reject unrecognized values.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
                     type: string
                   kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind is a string value representing the REST resource this object represents.
+                      Servers may infer this from the endpoint the client submits requests to.
+                      Cannot be updated.
+                      In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   metadata:
                     type: object
@@ -615,9 +623,9 @@ spec:
                                 - tenant_id
                                 type: object
                               status:
-                                description: 'INSERT ADDITIONAL STATUS FIELD - define
-                                  observed state of cluster Important: Run "make"
-                                  to regenerate code after modifying this file'
+                                description: |-
+                                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                                  Important: Run "make" to regenerate code after modifying this file
                                 type: string
                             required:
                             - status
@@ -626,9 +634,9 @@ spec:
                             type: string
                         type: object
                       status:
-                        description: 'INSERT ADDITIONAL STATUS FIELD - define observed
-                          state of cluster Important: Run "make" to regenerate code
-                          after modifying this file'
+                        description: |-
+                          INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                          Important: Run "make" to regenerate code after modifying this file
                         type: string
                       tenantRecordInfo:
                         properties:
@@ -667,16 +675,19 @@ spec:
                 description: OBTenant is the Schema for the obtenants API
                 properties:
                   apiVersion:
-                    description: 'APIVersion defines the versioned schema of this
-                      representation of an object. Servers should convert recognized
-                      schemas to the latest internal value, and may reject unrecognized
-                      values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                    description: |-
+                      APIVersion defines the versioned schema of this representation of an object.
+                      Servers should convert recognized schemas to the latest internal value, and
+                      may reject unrecognized values.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
                     type: string
                   kind:
-                    description: 'Kind is a string value representing the REST resource
-                      this object represents. Servers may infer this from the endpoint
-                      the client submits requests to. Cannot be updated. In CamelCase.
-                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                    description: |-
+                      Kind is a string value representing the REST resource this object represents.
+                      Servers may infer this from the endpoint the client submits requests to.
+                      Cannot be updated.
+                      In CamelCase.
+                      More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
                     type: string
                   metadata:
                     type: object
@@ -1135,9 +1146,9 @@ spec:
                                 - tenant_id
                                 type: object
                               status:
-                                description: 'INSERT ADDITIONAL STATUS FIELD - define
-                                  observed state of cluster Important: Run "make"
-                                  to regenerate code after modifying this file'
+                                description: |-
+                                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                                  Important: Run "make" to regenerate code after modifying this file
                                 type: string
                             required:
                             - status
@@ -1146,9 +1157,9 @@ spec:
                             type: string
                         type: object
                       status:
-                        description: 'INSERT ADDITIONAL STATUS FIELD - define observed
-                          state of cluster Important: Run "make" to regenerate code
-                          after modifying this file'
+                        description: |-
+                          INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                          Important: Run "make" to regenerate code after modifying this file
                         type: string
                       tenantRecordInfo:
                         properties:
@@ -1184,9 +1195,9 @@ spec:
                     type: object
                 type: object
               status:
-                description: 'INSERT ADDITIONAL STATUS FIELD - define observed state
-                  of cluster Important: Run "make" to regenerate code after modifying
-                  this file'
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
                 type: string
             required:
             - status

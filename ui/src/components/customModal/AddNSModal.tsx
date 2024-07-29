@@ -7,13 +7,17 @@ import { createNameSpace } from '@/services';
 
 import CustomModal from '.';
 
+interface FormData {
+  namespace: string;
+}
+
 export default function AddNSModal({
   visible,
   setVisible,
   successCallback,
 }: API.CommonModalType) {
-  const [form] = Form.useForm();
-  const newNamespace = useRef<string>('')
+  const [form] = Form.useForm<FormData>();
+  const newNamespace = useRef<string>('');
   const { run: createNS } = useRequest(createNameSpace, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -25,7 +29,7 @@ export default function AddNSModal({
           }),
         );
         setVisible(false);
-        if(successCallback)successCallback(newNamespace.current);
+        if (successCallback) successCallback(newNamespace.current);
       }
     },
   });
@@ -36,7 +40,7 @@ export default function AddNSModal({
     } catch (err) {}
   };
   const handleCancel = () => setVisible(false);
-  const onFinish = async (val: any) => {
+  const onFinish = async (val: FormData) => {
     newNamespace.current = val.namespace;
     await createNS(val.namespace);
   };
