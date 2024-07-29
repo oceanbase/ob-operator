@@ -76,6 +76,7 @@ func LoginRequired() gin.HandlerFunc {
 			})
 			return
 		}
+		c.Set("username", username)
 		c.Next()
 	}
 }

@@ -182,13 +182,13 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 			Type:     pool.Type.Name,
 		}
 		if pool.UnitConfig != nil {
-			replica.MaxCPU = pool.UnitConfig.MaxCPU.String()
-			replica.MemorySize = pool.UnitConfig.MemorySize.String()
-			replica.MinCPU = pool.UnitConfig.MinCPU.String()
+			replica.MaxCPU = pool.UnitConfig.MaxCPU.Value()
+			replica.MinCPU = pool.UnitConfig.MinCPU.Value()
 			replica.MaxIops = pool.UnitConfig.MaxIops
 			replica.MinIops = pool.UnitConfig.MinIops
 			replica.IopsWeight = pool.UnitConfig.IopsWeight
-			replica.LogDiskSize = pool.UnitConfig.LogDiskSize.String()
+			replica.MemorySize = pool.UnitConfig.MemorySize.Value()
+			replica.LogDiskSize = pool.UnitConfig.LogDiskSize.Value()
 		}
 		rt.Topology = append(rt.Topology, replica)
 	}
@@ -370,6 +370,8 @@ func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions
 	if err != nil {
 		return nil, err
 	}
+	username := ctx.Value("username").(string)
+	tenantList = filterTenants(username, "read", tenantList)
 	sort.Slice(tenantList.Items, func(i, j int) bool {
 		return tenantList.Items[i].Name < tenantList.Items[j].Name
 	})
@@ -584,6 +586,8 @@ func GetOBTenantStatistics(ctx context.Context) ([]response.OBTenantStatistic, e
 	if err != nil {
 		return nil, oberr.Wrap(err, oberr.ErrInternal, "failed to list tenants")
 	}
+	username := ctx.Value("username").(string)
+	tenantList = filterTenants(username, "read", tenantList)
 	var runningCount, deletingCount, operatingCount, failedCount int
 	for _, tenant := range tenantList.Items {
 		switch tenant.Status.Status {
