@@ -28,6 +28,7 @@ func genCreateTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 				tCreateResourcePoolAndConfig,
 				tCreateTenantWithClear,
 				tCreateUserWithCredentialSecrets,
+				tOptimizeTenantByScenario,
 			},
 			TargetStatus: tenantstatus.Running,
 			OnFailure: tasktypes.FailureRule{

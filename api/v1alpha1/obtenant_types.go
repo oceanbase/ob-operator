@@ -50,6 +50,7 @@ type OBTenantSpec struct {
 	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
 	Source      *TenantSourceSpec   `json:"source,omitempty"`
 	Credentials TenantCredentials   `json:"credentials,omitempty"`
+	Scenario    string              `json:"scenario,omitempty"`
 }
 
 type TenantCredentials struct {

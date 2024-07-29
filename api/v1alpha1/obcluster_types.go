@@ -42,6 +42,8 @@ type OBClusterSpec struct {
 	UserSecrets      *apitypes.OBUserSecrets    `json:"userSecrets"`
 	//+kubebuilder:default=default
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+	//+kubebuilder:default=htap
+	Scenario string `json:"scenario,omitempty"`
 }
 
 // OBClusterStatus defines the observed state of OBCluster

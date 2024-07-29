@@ -14,6 +14,8 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -22,13 +24,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -506,6 +511,41 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 		return errors.Wrapf(err, "Failed to wait for 'ALTER_TENANT' job of adding pool task to finish %s", tenantName)
 	}
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("'ALTER_TENANT' job of adding pool task succeeded", "tenantName", tenantName)
+	return nil
+}
+
+func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
+	// TODO: implement this
+	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster")
+	}
+	jobName := fmt.Sprintf("optimize-tenant-%s-%s", m.OBTenant.Name, rand.String(6))
+	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBTenant.Namespace, jobName, obcluster.Spec.OBServerTemplate.Image, fmt.Sprintf("bin/oceanbase-helper optimize tenant %s", m.OBTenant.Spec.Scenario))
+	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
+		optimizeConfig := &helpermodel.OptimizationResponse{}
+		err := json.Unmarshal([]byte(output), optimizeConfig)
+		if err != nil {
+			m.Logger.Error(err, "Failed to parse optimization config")
+		}
+		conn, err := m.getTenantClient()
+		if err != nil {
+			m.Logger.Error(err, "Get tenant operation manager failed")
+		}
+		for _, parameter := range optimizeConfig.Parameters {
+			err := conn.SetParameter(m.Ctx, parameter.Name, parameter.Value, nil)
+			if err != nil {
+				m.Logger.Error(err, "Failed to set parameter")
+			}
+		}
+		for _, variable := range optimizeConfig.Variables {
+			err := conn.SetGlobalVariable(m.Ctx, variable.Name, variable.Value)
+			if err != nil {
+				m.Logger.Error(err, "Failed to set global variable")
+			}
+		}
+	}
 	return nil
 }
 
