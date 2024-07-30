@@ -95,7 +95,6 @@ func readOptimizedParams(scope, scenario string) ([]model.OBConfig, error) {
 		case "tenant":
 			obconfigs = parameter.Parameters.Tenant
 		}
-
 	}
 	return obconfigs, nil
 }
@@ -121,7 +120,6 @@ func readOptimizedVariables(scope, scenario string) ([]model.OBConfig, error) {
 		case "tenant":
 			obconfigs = variable.Variables.Tenant
 		}
-
 	}
 	return obconfigs, nil
 }

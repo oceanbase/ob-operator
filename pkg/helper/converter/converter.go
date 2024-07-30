@@ -17,7 +17,7 @@ import (
 	"math"
 )
 
-func ConvertToString(value interface{}) string {
+func ConvertToString(value any) string {
 	switch v := value.(type) {
 	case string:
 		return v
@@ -32,7 +32,7 @@ func ConvertToString(value interface{}) string {
 	}
 }
 
-func ConvertFloat(value interface{}) interface{} {
+func ConvertFloat(value any) any {
 	switch v := value.(type) {
 	case float64:
 		return int64(math.Round(v))
