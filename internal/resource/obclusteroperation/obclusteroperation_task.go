@@ -259,6 +259,9 @@ func AnnotateOBServersForDeletion(m *OBClusterOperationManager) tasktypes.TaskEr
 	for _, observer := range observerList.Items {
 		for _, observerName := range m.Resource.Spec.DeleteOBServers.OBServers {
 			if observer.Name == observerName {
+				if observer.Annotations == nil {
+					observer.Annotations = make(map[string]string)
+				}
 				observer.Annotations[oceanbaseconst.AnnotationsDeletionPriority] = strconv.Itoa(oceanbaseconst.DefaultDeletionPriority)
 				err = m.Client.Update(m.Ctx, &observer)
 				return errors.Wrapf(err, "Failed to annotate observer %s", observerName)
