@@ -40,6 +40,7 @@ import (
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -1138,8 +1139,8 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 		}
 		// obcluster only need to set parameters
 		for _, parameter := range optimizeConfig.Parameters {
-			m.Logger.Info("Set parameter %s to %s", parameter.Name, parameter.Value)
-			err := conn.SetParameter(m.Ctx, parameter.Name, parameter.Value, nil)
+			m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
+			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
 			if err != nil {
 				m.Logger.Error(err, "Failed to set parameter")
 			}

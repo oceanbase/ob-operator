@@ -33,6 +33,7 @@ import (
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -535,15 +536,15 @@ func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
 			m.Logger.Error(err, "Get tenant operation manager failed")
 		}
 		for _, parameter := range optimizeConfig.Parameters {
-			m.Logger.Info("Set parameter %s to %s", parameter.Name, parameter.Value)
-			err := conn.SetParameter(m.Ctx, parameter.Name, parameter.Value, nil)
+			m.Logger.Info("Set parameter %s to %v", parameter.Name, converter.ConvertFloat(parameter.Value))
+			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
 			if err != nil {
 				m.Logger.Error(err, "Failed to set parameter")
 			}
 		}
 		for _, variable := range optimizeConfig.Variables {
-			m.Logger.Info("Set parameter %s to %s", variable.Name, variable.Value)
-			err := conn.SetGlobalVariable(m.Ctx, variable.Name, variable.Value)
+			m.Logger.Info("Set variable %s to %v", variable.Name, converter.ConvertFloat(variable.Value))
+			err := conn.SetGlobalVariable(m.Ctx, variable.Name, converter.ConvertFloat(variable.Value))
 			if err != nil {
 				m.Logger.Error(err, "Failed to set global variable")
 			}
