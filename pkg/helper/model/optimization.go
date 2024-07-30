@@ -13,9 +13,9 @@ See the Mulan PSL v2 for more details.
 package model
 
 type OBConfig struct {
-	Name    string `json:"name"`
-	Value   string `json:"value"`
-	Comment string `json:"comment"`
+	Name    string      `json:"name"`
+	Value   interface{} `json:"value"`
+	Comment string      `json:"comment"`
 }
 
 type ScopedOBConfigs struct {

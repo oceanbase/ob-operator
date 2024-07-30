@@ -1123,6 +1123,7 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 
 func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
+	m.Logger.Info("Start to optimize obcluster parameters")
 	jobName := fmt.Sprintf("optimize-cluster-%s-%s", m.OBCluster.Name, rand.String(6))
 	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, jobName, m.OBCluster.Spec.OBServerTemplate.Image, fmt.Sprintf("bin/oceanbase-helper optimize cluster %s", m.OBCluster.Spec.Scenario))
 	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
@@ -1137,6 +1138,7 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 		}
 		// obcluster only need to set parameters
 		for _, parameter := range optimizeConfig.Parameters {
+			m.Logger.Info("Set parameter %s to %s", parameter.Name, parameter.Value)
 			err := conn.SetParameter(m.Ctx, parameter.Name, parameter.Value, nil)
 			if err != nil {
 				m.Logger.Error(err, "Failed to set parameter")

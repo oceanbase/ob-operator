@@ -521,6 +521,7 @@ func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster")
 	}
+	m.Logger.Info("Start to optimize tenant parameter and variable")
 	jobName := fmt.Sprintf("optimize-tenant-%s-%s", m.OBTenant.Name, rand.String(6))
 	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBTenant.Namespace, jobName, obcluster.Spec.OBServerTemplate.Image, fmt.Sprintf("bin/oceanbase-helper optimize tenant %s", m.OBTenant.Spec.Scenario))
 	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
@@ -534,12 +535,14 @@ func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
 			m.Logger.Error(err, "Get tenant operation manager failed")
 		}
 		for _, parameter := range optimizeConfig.Parameters {
+			m.Logger.Info("Set parameter %s to %s", parameter.Name, parameter.Value)
 			err := conn.SetParameter(m.Ctx, parameter.Name, parameter.Value, nil)
 			if err != nil {
 				m.Logger.Error(err, "Failed to set parameter")
 			}
 		}
 		for _, variable := range optimizeConfig.Variables {
+			m.Logger.Info("Set parameter %s to %s", variable.Name, variable.Value)
 			err := conn.SetGlobalVariable(m.Ctx, variable.Name, variable.Value)
 			if err != nil {
 				m.Logger.Error(err, "Failed to set global variable")

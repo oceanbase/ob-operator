@@ -46,12 +46,12 @@ var optimizeCmd = &cobra.Command{
 		ignorableErr := make([]error, 0)
 		parameters, err := readOptimizedParams(scope, scenario)
 		if err != nil {
-			cmd.PrintErr("Failed to read optimized parameters")
+			cmd.PrintErrf("Failed to read optimized parameters, %v", err)
 			ignorableErr = append(ignorableErr, err)
 		}
 		variables, err := readOptimizedVariables(scope, scenario)
 		if err != nil {
-			cmd.PrintErr("Failed to read optimized parameters")
+			cmd.PrintErrf("Failed to read optimized variables, %v", err)
 			ignorableErr = append(ignorableErr, err)
 		}
 		optimizationResult := &model.OptimizationResponse{
