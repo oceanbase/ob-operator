@@ -57,7 +57,7 @@ func GetAccount(ctx context.Context, username string) (*acmodel.Account, error) 
 }
 
 func Enforce(_ context.Context, username string, policy *acmodel.Policy) (bool, error) {
-	return enforcer.Enforce(username, policy.Object, policy.Action)
+	return enforcer.Enforce(username, policy.ComposeDomainObject(), policy.Action)
 }
 
 func ValidateAccount(ctx context.Context, username, password string) (*acmodel.Account, error) {

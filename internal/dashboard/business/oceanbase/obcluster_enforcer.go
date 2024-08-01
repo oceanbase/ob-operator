@@ -15,6 +15,8 @@ package oceanbase
 import (
 	"context"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
@@ -30,8 +32,10 @@ func filterClusters(username, action string, list *v1alpha1.OBClusterList) *v1al
 			Action: acmodel.Action(action),
 		})
 		if err != nil {
+			logrus.Error(err)
 			continue
 		}
+		logrus.Debugf("enforce user %s for cluster %s is %t", username, c.Name, ok)
 		if ok {
 			newList = append(newList, list.Items[i])
 		}
