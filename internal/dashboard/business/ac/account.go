@@ -318,10 +318,15 @@ func getAccountRoles(username string) ([]acmodel.Role, error) {
 		}
 		policies := make([]acmodel.Policy, 0, len(policyLines))
 		for _, line := range policyLines {
-			policies = append(policies, acmodel.Policy{
-				Object: acmodel.Object(line[1]),
-				Action: acmodel.Action(line[2]),
-			})
+			if line[1] == "*" {
+				policies = append(policies, acmodel.NewPolicy("*", "*", line[2]))
+			} else {
+				parts := strings.Split(line[1], "/")
+				if len(parts) != 2 {
+					return nil, httpErr.NewInternal("corrupted policy" + strings.Join(line, " "))
+				}
+				policies = append(policies, acmodel.NewPolicy(parts[0], parts[1], line[2]))
+			}
 		}
 		modelRoles = append(modelRoles, acmodel.Role{
 			Name:     role,
