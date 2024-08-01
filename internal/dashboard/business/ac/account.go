@@ -26,6 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -57,7 +58,7 @@ func GetAccount(ctx context.Context, username string) (*acmodel.Account, error) 
 }
 
 func Enforce(_ context.Context, username string, policy *acmodel.Policy) (bool, error) {
-	return enforcer.Enforce(username, policy.ComposeDomainObject(), policy.Action)
+	return enforcer.Enforce(username, policy.ComposeDomainObject(), string(policy.Action))
 }
 
 func ValidateAccount(ctx context.Context, username, password string) (*acmodel.Account, error) {
@@ -81,13 +82,58 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 		account.Roles = roles
 	}
 
-	now := time.Now().Unix()
-	err = updateUserCredentials(ctx, credentials, username, account.password, account.Nickname, strconv.FormatInt(now, 10), account.Description)
-	if err != nil {
-		logrus.WithError(err).Warn("failed to update user credentials")
+	if account.LastLoginAt != nil && !account.LastLoginAt.IsZero() {
+		enforcer.accMu.Lock()
+		defer enforcer.accMu.Unlock()
+		// Update latest login time
+		now := time.Now().Unix()
+		up := &acmodel.UpdateAccountCreds{
+			Username:          username,
+			EncryptedPassword: account.password,
+			Nickname:          account.Nickname,
+			LastLoginAtUnix:   now,
+			Description:       account.Description,
+		}
+		err = updateUserCredentials(ctx, credentials, up)
+		if err != nil {
+			logrus.WithError(err).Warn("failed to update user credentials")
+		}
 	}
 
 	return &account.Account, nil
+}
+
+func ResetAccountPassword(ctx context.Context, username string, resetParam *param.ResetPasswordParam) (*acmodel.Account, error) {
+	credentials, err := getDashboardUserCredentials(ctx)
+	if err != nil {
+		return nil, err
+	}
+	account, err := fetchAccount(credentials, username)
+	if err != nil {
+		return nil, err
+	}
+	if account.LastLoginAt != nil && !account.LastLoginAt.IsZero() {
+		bts := sha256.Sum256([]byte(resetParam.OldPassword))
+		sha256EncodedPwd := hex.EncodeToString(bts[:])
+		if account.password != sha256EncodedPwd {
+			return nil, httpErr.NewBadRequest("password is incorrect")
+		}
+	}
+	newBts := sha256.Sum256([]byte(resetParam.Password))
+	newEncryptedPwd := hex.EncodeToString(newBts[:])
+
+	up := &acmodel.UpdateAccountCreds{
+		Username:          username,
+		EncryptedPassword: newEncryptedPwd,
+		Nickname:          account.password,
+		LastLoginAtUnix:   time.Now().Unix(),
+		Description:       account.Description,
+	}
+	err = updateUserCredentials(ctx, credentials, up)
+	if err != nil {
+		return nil, httpErr.NewInternal("failed to update user credentials")
+	}
+	return nil, nil
 }
 
 func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acmodel.Account, error) {
@@ -119,7 +165,13 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 	}
 	bts := sha256.Sum256([]byte(param.Password))
 	sha256EncodedPwd := hex.EncodeToString(bts[:])
-	err = updateUserCredentials(ctx, credentials, param.Username, sha256EncodedPwd, param.Nickname, "0", param.Description)
+	up := &acmodel.UpdateAccountCreds{
+		Username:          param.Username,
+		EncryptedPassword: sha256EncodedPwd,
+		Nickname:          param.Nickname,
+		Description:       param.Description,
+	}
+	err = updateUserCredentials(ctx, credentials, up)
 	if err != nil {
 		return nil, httpErr.NewInternal("failed to update user credentials")
 	}
@@ -184,7 +236,14 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		accountChanged = true
 	}
 	if accountChanged {
-		err = updateUserCredentials(ctx, credentials, username, acc.password, acc.Nickname, strconv.FormatInt(time.Now().Unix(), 10), acc.Description)
+		up := &acmodel.UpdateAccountCreds{
+			Username:          username,
+			EncryptedPassword: acc.password,
+			Nickname:          acc.Nickname,
+			LastLoginAtUnix:   acc.LastLoginAt.Unix(),
+			Description:       acc.Description,
+		}
+		err = updateUserCredentials(ctx, credentials, up)
 		if err != nil {
 			return nil, httpErr.NewInternal("failed to update user credentials")
 		}
@@ -220,7 +279,10 @@ func DeleteAccount(ctx context.Context, username string) (*acmodel.Account, erro
 	if err != nil {
 		return nil, err
 	}
-	err = updateUserCredentials(ctx, credentials, username, "", "", "0", "")
+	err = updateUserCredentials(ctx, credentials, &acmodel.UpdateAccountCreds{
+		Username: username,
+		Delete:   true,
+	})
 	if err != nil {
 		return nil, httpErr.NewInternal("failed to update user credentials")
 	}
@@ -240,18 +302,17 @@ func getDashboardUserCredentials(c context.Context) (*v1.Secret, error) {
 	return clt.ClientSet.CoreV1().Secrets(ns).Get(c, secretName, metav1.GetOptions{})
 }
 
-func updateUserCredentials(c context.Context, credentials *v1.Secret, username, password, nickname, lastLoginAtUnix, description string) error {
-	if password == "" {
-		delete(credentials.Data, username)
+func updateUserCredentials(c context.Context, credentials *v1.Secret, up *acmodel.UpdateAccountCreds) error {
+	if up.Delete {
+		delete(credentials.Data, up.Username)
 	} else {
-		credentials.Data[username] = []byte(strings.Join([]string{password, nickname, lastLoginAtUnix, description}, " "))
+		credentials.Data[up.Username] = []byte(up.String())
 	}
 	clt := client.GetClient()
 	_, err := clt.ClientSet.CoreV1().Secrets(os.Getenv("USER_NAMESPACE")).Update(c, credentials, metav1.UpdateOptions{})
 	return err
 }
 
-// pwd nickname lastLogin description
 func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 	if _, ok := credentials.Data[username]; !ok {
 		return nil, httpErr.NewBadRequest("username or password is incorrect")

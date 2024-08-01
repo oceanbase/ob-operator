@@ -12,19 +12,22 @@ See the Mulan PSL v2 for more details.
 
 package ac
 
-import "time"
+import (
+	"fmt"
+	"strings"
+)
 
-type Account struct {
-	Username    string     `json:"username" binding:"required"`
-	Nickname    string     `json:"nickname"`
-	Description string     `json:"description"`
-	Roles       []Role     `json:"roles" binding:"required"`
-	LastLoginAt *time.Time `json:"lastLoginAt"`
-	NeedReset   bool       `json:"needReset"`
+type UpdateAccountCreds struct {
+	Username          string
+	EncryptedPassword string
+	Nickname          string
+	LastLoginAtUnix   int64
+	Description       string
+	Delete            bool
 }
 
-type Role struct {
-	Name        string   `json:"name" binding:"required"`
-	Description string   `json:"description"`
-	Policies    []Policy `json:"policies" binding:"required"`
+// key value format -> admin: pwd nickname lastLogin description
+func (u *UpdateAccountCreds) String() string {
+	lastLoginAtStr := fmt.Sprintf("%d", u.LastLoginAtUnix)
+	return strings.Join([]string{u.EncryptedPassword, u.Nickname, lastLoginAtStr, u.Description}, " ")
 }

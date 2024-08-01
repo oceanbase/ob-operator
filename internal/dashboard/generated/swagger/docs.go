@@ -347,6 +347,76 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/ac/password": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Reset user's own password",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "AccessControl"
+                ],
+                "summary": "Reset user's own password",
+                "operationId": "ResetPassword",
+                "parameters": [
+                    {
+                        "description": "reset password",
+                        "name": "resetParam",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/param.ResetPasswordParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ac.Account"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/ac/policies": {
             "get": {
                 "security": [
@@ -5748,6 +5818,9 @@ const docTemplate = `{
                 "lastLoginAt": {
                     "type": "string"
                 },
+                "needReset": {
+                    "type": "boolean"
+                },
                 "nickname": {
                     "type": "string"
                 },
@@ -7100,6 +7173,20 @@ const docTemplate = `{
                 },
                 "unlimited": {
                     "type": "boolean"
+                }
+            }
+        },
+        "param.ResetPasswordParam": {
+            "type": "object",
+            "required": [
+                "password"
+            ],
+            "properties": {
+                "oldPassword": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
                 }
             }
         },

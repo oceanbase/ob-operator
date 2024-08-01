@@ -53,6 +53,9 @@ func Login(c *gin.Context) (*acmodel.Account, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest("username or password is incorrect")
 	}
+	if acc.LastLoginAt == nil || acc.LastLoginAt.IsZero() {
+		acc.NeedReset = true
+	}
 	sess := sessions.Default(c)
 	sess.Set("username", loginParams.Username)
 	sess.Set("expiration", time.Now().Add(constant.DefaultSessionExpiration*time.Second).Unix())
