@@ -87,7 +87,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'access',
       link: '/access',
       icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
-      // accessible: access.acread,
+      accessible: access.acread,
     },
   ];
 
