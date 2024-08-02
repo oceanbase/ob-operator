@@ -1,16 +1,17 @@
 import { access } from '@/api';
-import type { AcCreateAccountParam } from '@/api/generated';
+import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
 import { Type } from '@/pages/Access/type';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import CustomModal from '.';
 
 interface HandleRoleModalProps {
   visible: boolean;
   setVisible: (visible: boolean) => void;
   successCallback?: () => void;
+  editValue?: AcAccount;
   type: Type;
 }
 
@@ -18,6 +19,7 @@ export default function HandleAccountModal({
   visible,
   setVisible,
   successCallback,
+  editValue,
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
@@ -53,6 +55,16 @@ export default function HandleAccountModal({
       setVisible(false);
     }
   };
+
+  useEffect(() => {
+    if (type === Type.EDIT) {
+      form.setFieldsValue({
+        description: editValue?.description,
+        nickname: editValue?.nickname,
+        roles: editValue?.roles,
+      });
+    }
+  }, [type, editValue]);
   return (
     <CustomModal
       title={`${type === Type.EDIT ? '编辑' : '创建'}用户`}

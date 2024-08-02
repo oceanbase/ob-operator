@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useModel, useParams } from '@umijs/max';
+import { history, useAccess, useModel, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Row, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +17,7 @@ import ZoneTable from './ZoneTable';
 
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
+  const access = useAccess();
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
   const { ns, name } = useParams();
@@ -73,54 +74,56 @@ const ClusterOverview: React.FC = () => {
         id: 'Dashboard.Detail.Overview.ClusterOverview',
         defaultMessage: '集群概览',
       }),
-      extra: [
-        <Button
-          onClick={handleAddZone}
-          disabled={
-            clusterDetail?.status === 'operating' ||
-            clusterDetail?.status === 'failed'
-          }
-          key="1"
-        >
-          {intl.formatMessage({
-            id: 'dashboard.Detail.Overview.AddZone',
-            defaultMessage: '新增Zone',
-          })}
-        </Button>,
-        <Button
-          key="2"
-          disabled={
-            clusterDetail?.status === 'operating' ||
-            clusterDetail?.status === 'failed'
-          }
-          onClick={handleUpgrade}
-        >
-          {intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.Upgrade',
-            defaultMessage: '升级',
-          })}
-        </Button>,
-        <Button
-          disabled={clusterDetail?.status === 'operating'}
-          onClick={() =>
-            showDeleteConfirm({
-              onOk: handleDelete,
-              title: intl.formatMessage({
-                id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
-                defaultMessage: '你确定要删除该集群吗？',
-              }),
-            })
-          }
-          key="3"
-          type="primary"
-          danger
-        >
-          {intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.Delete',
-            defaultMessage: '删除',
-          })}
-        </Button>,
-      ],
+      extra: access.obclusterwrite
+        ? [
+            <Button
+              onClick={handleAddZone}
+              disabled={
+                clusterDetail?.status === 'operating' ||
+                clusterDetail?.status === 'failed'
+              }
+              key="1"
+            >
+              {intl.formatMessage({
+                id: 'dashboard.Detail.Overview.AddZone',
+                defaultMessage: '新增Zone',
+              })}
+            </Button>,
+            <Button
+              key="2"
+              disabled={
+                clusterDetail?.status === 'operating' ||
+                clusterDetail?.status === 'failed'
+              }
+              onClick={handleUpgrade}
+            >
+              {intl.formatMessage({
+                id: 'OBDashboard.Detail.Overview.Upgrade',
+                defaultMessage: '升级',
+              })}
+            </Button>,
+            <Button
+              disabled={clusterDetail?.status === 'operating'}
+              onClick={() =>
+                showDeleteConfirm({
+                  onOk: handleDelete,
+                  title: intl.formatMessage({
+                    id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
+                    defaultMessage: '你确定要删除该集群吗？',
+                  }),
+                })
+              }
+              key="3"
+              type="primary"
+              danger
+            >
+              {intl.formatMessage({
+                id: 'OBDashboard.Detail.Overview.Delete',
+                defaultMessage: '删除',
+              })}
+            </Button>,
+          ]
+        : [],
     };
   };
 

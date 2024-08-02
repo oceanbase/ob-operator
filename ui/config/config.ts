@@ -3,8 +3,10 @@ import routes from './routes';
 
 export default defineConfig({
   antd: {},
+  access: {},
   model: {},
   request: {},
+  initialState: {},
   favicons: ['/logo.png'],
   title: 'OceanBase Dashboard',
   layout: false,

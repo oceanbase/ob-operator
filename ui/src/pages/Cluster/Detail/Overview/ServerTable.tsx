@@ -30,39 +30,6 @@ const getServerColums = () => {
       dataIndex: 'address',
       key: 'address',
     },
-    // {
-    //   title: '资源水位',
-    //   dataIndex: 'metrics',
-    //   key: 'metrics',
-    //   width: 300,
-    //   render: (value) => {
-    //     let resources: { percent: string; text: string }[] = [];
-    //     Object.keys(value).forEach((val) => {
-    //       let text: string = '';
-    //       if (val === 'cpuPercent') text = 'CPU';
-    //       if (val === 'memoryPercent') text = '内存';
-    //       if (val === 'diskPercent') text = '磁盘';
-    //       resources.push({
-    //         percent: value[val],
-    //         text,
-    //       });
-    //     });
-    //     return (
-    //       <div>
-    //         {resources.map((resource, idx: number) => (
-    //           <div key={idx} className={styles.resourceContainer}>
-    //             <span className={styles.resourceText}>{resource.text}</span>{' '}
-    //             <Progress
-    //               className={styles.resourceContent}
-    //               strokeLinecap="butt"
-    //               percent={Number(resource.percent)}
-    //             />
-    //           </div>
-    //         ))}
-    //       </div>
-    //     );
-    //   },
-    // },
     {
       title: intl.formatMessage({
         id: 'OBDashboard.Detail.Overview.ServerTable.Status',
@@ -72,23 +39,6 @@ const getServerColums = () => {
       key: 'status',
       render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
     },
-    // 目前不支持删除指定server
-    // {
-    //   title: '操作',
-    //   key: 'action',
-    //   render: (_, record) => (
-    //     <a
-    //       onClick={() => {
-    //         showDeleteConfirm({
-    //           onOk: () => remove(record.name),
-    //           title: '你确定要删除该server吗？',
-    //         });
-    //       }}
-    //     >
-    //       删除
-    //     </a>
-    //   ),
-    // },
   ];
   return serverColums;
 };

@@ -1,18 +1,11 @@
-import { intl } from '@/utils/intl';
-import {
-  Button,
-  Card,
-  Col,
-  Input,
-  InputNumber,
-  Row,
-  Tooltip,
-} from 'antd';
-import { FormInstance } from 'antd/lib/form';
 import { CustomFormItem } from '@/components/CustomFormItem';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
 import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
+import { intl } from '@/utils/intl';
+import { useAccess } from '@umijs/max';
+import { Button, Card, Col, Input, InputNumber, Row, Tooltip } from 'antd';
+import { FormInstance } from 'antd/lib/form';
 import { clone } from 'lodash';
 import styles from './index.less';
 
@@ -68,6 +61,7 @@ export const TooltipItemContent = ({ item }) => {
 };
 
 export default function Observer({ storageClasses, form }: ObserverProps) {
+  const access = useAccess();
   const setMinimalConfiguration = () => {
     const originObserver = clone(form.getFieldsValue());
     form.setFieldsValue({
@@ -205,21 +199,21 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
-                label="storageClass"
-                name={['observer', 'storage', 'data', 'storageClass']}
-              >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    name={['observer', 'storage', 'data', 'storageClass']}
-                    form={form}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-
-                {/* <CustomSelect /> */}
-              </CustomFormItem>
+              {access.systemread && (
+                <CustomFormItem
+                  label="storageClass"
+                  name={['observer', 'storage', 'data', 'storageClass']}
+                >
+                  {storageClasses && (
+                    <SelectWithTooltip
+                      name={['observer', 'storage', 'data', 'storageClass']}
+                      form={form}
+                      selectList={storageClasses}
+                      TooltipItemContent={TooltipItemContent}
+                    />
+                  )}
+                </CustomFormItem>
+              )}
             </div>
           </Col>
           <Col span={8}>
@@ -244,19 +238,21 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
-                label="storageClass"
-                name={['observer', 'storage', 'log', 'storageClass']}
-              >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    form={form}
-                    name={['observer', 'storage', 'log', 'storageClass']}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-              </CustomFormItem>
+              {access.systemread && (
+                <CustomFormItem
+                  label="storageClass"
+                  name={['observer', 'storage', 'log', 'storageClass']}
+                >
+                  {storageClasses && (
+                    <SelectWithTooltip
+                      form={form}
+                      name={['observer', 'storage', 'log', 'storageClass']}
+                      selectList={storageClasses}
+                      TooltipItemContent={TooltipItemContent}
+                    />
+                  )}
+                </CustomFormItem>
+              )}
             </div>
           </Col>
           <Col span={8}>
@@ -276,20 +272,22 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
-                label="storageClass"
-                validateTrigger="onBlur"
-                name={['observer', 'storage', 'redoLog', 'storageClass']}
-              >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    form={form}
-                    name={['observer', 'storage', 'redoLog', 'storageClass']}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-              </CustomFormItem>
+              {access.systemread && (
+                <CustomFormItem
+                  label="storageClass"
+                  validateTrigger="onBlur"
+                  name={['observer', 'storage', 'redoLog', 'storageClass']}
+                >
+                  {storageClasses && (
+                    <SelectWithTooltip
+                      form={form}
+                      name={['observer', 'storage', 'redoLog', 'storageClass']}
+                      selectList={storageClasses}
+                      TooltipItemContent={TooltipItemContent}
+                    />
+                  )}
+                </CustomFormItem>
+              )}
             </div>
           </Col>
         </Row>

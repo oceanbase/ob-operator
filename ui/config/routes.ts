@@ -80,9 +80,9 @@ export default [
                 ],
               },
               {
-                path:'access',
+                path: 'access',
                 component: 'Access',
-                name: '权限控制'
+                name: '权限控制',
               },
               {
                 path: 'overview',

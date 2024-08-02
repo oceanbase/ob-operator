@@ -4,6 +4,7 @@ import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
+import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -13,6 +14,7 @@ import ChannelDrawer from './ChannelDrawer';
 export default function Channel() {
   const [drawerStatus, setDrawerStatus] =
     useState<Alert.DrawerStatus>('create');
+  const access = useAccess();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [clickedChannelName, setClickedChannelName] = useState<string>();
   const { data: listReceiversRes, refresh } = useRequest(alert.listReceivers);
@@ -43,9 +45,15 @@ export default function Channel() {
       dataIndex: 'name',
       key: 'name',
       render: (_, record) => (
-        <Button type="link" onClick={() => openChannel(record.name)}>
-          {record.name}
-        </Button>
+        <>
+          {access.alarmwrite ? (
+            <Button type="link" onClick={() => openChannel(record.name)}>
+              {record.name}
+            </Button>
+          ) : (
+            <span> {record.name}</span>
+          )}
+        </>
       ),
     },
     {
@@ -73,7 +81,11 @@ export default function Channel() {
       dataIndex: 'action',
       render: (_, record) => (
         <>
-          <Button type="link" onClick={() => editChannel(record.name)}>
+          <Button
+            type="link"
+            disabled={!access.alarmwrite}
+            onClick={() => editChannel(record.name)}
+          >
             {intl.formatMessage({
               id: 'src.pages.Alert.Channel.39A85374',
               defaultMessage: '编辑',
@@ -81,6 +93,7 @@ export default function Channel() {
           </Button>
           <Button
             style={{ color: '#ff4b4b' }}
+            disabled={!access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({
                 title: intl.formatMessage({
@@ -125,12 +138,14 @@ export default function Channel() {
   return (
     <Card
       extra={
-        <Button type="primary" onClick={createNewChannel}>
-          {intl.formatMessage({
-            id: 'src.pages.Alert.Channel.DBCB373E',
-            defaultMessage: '新建告警通道',
-          })}
-        </Button>
+        access.alarmwrite ? (
+          <Button type="primary" onClick={createNewChannel}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Channel.DBCB373E',
+              defaultMessage: '新建告警通道',
+            })}
+          </Button>
+        ) : null
       }
       title={
         <h2 style={{ marginBottom: 0 }}>

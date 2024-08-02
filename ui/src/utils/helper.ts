@@ -1,3 +1,4 @@
+import { InitialStateType } from '@/access';
 import type { PoolDetailType } from '@/components/customModal/ModifyUnitDetailModal';
 import { STATISTICS_INTERVAL } from '@/constants';
 import { getAppInfo, getStatistics } from '@/services';
@@ -88,11 +89,14 @@ export const strTrim = (obj: ObjType): ObjType => {
 export const getAppInfoFromStorage = async (): Promise<API.AppInfo> => {
   try {
     let appInfo: API.AppInfo = JSON.parse(sessionStorage.getItem('appInfo'));
-    if (!appInfo) {
-      appInfo = (await getAppInfo()).data;
+    if (appInfo) {
+      return Promise.resolve(appInfo);
     }
+    appInfo = (await getAppInfo()).data;
     return appInfo;
-  } catch {}
+  } catch {
+    return Promise.reject();
+  }
 };
 
 export const isReportTimeExpired = (lastTimestamp: number): boolean => {
@@ -115,4 +119,30 @@ export const reportPollData = async () => {
 
 export function floorToTwoDecimalPlaces(num: number) {
   return Math.floor(num * 100) / 100;
+}
+
+export function initialAccess(
+  accessObj: { [T: string]: boolean },
+  initialState: InitialStateType,
+) {
+  initialState.policies.forEach((policy) => {
+    accessObj[`${policy.domain}${policy.action}`] = false;
+  });
+  for (const role of initialState.accountInfo.roles) {
+    const { policies } = role;
+    for (const policy of policies) {
+      if (policy.domain) {
+        Object.keys(accessObj).forEach((key) => {
+          if (
+            `${policy.domain}${policy.action}` === key ||
+            (key.includes(policy.domain) && policy.action === '*') ||
+            (policy.domain === '*' && key.includes(policy.action)) ||
+            (policy.domain === '*' && policy.action === '*')
+          ) {
+            accessObj[key] = true;
+          }
+        });
+      }
+    }
+  }
 }

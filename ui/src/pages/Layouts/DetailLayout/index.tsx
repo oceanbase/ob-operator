@@ -6,7 +6,7 @@ import { AlertFilled, TeamOutlined } from '@ant-design/icons';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
-import { Outlet, history, useLocation, useModel } from '@umijs/max';
+import { Outlet, history, useLocation, useModel, useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 
@@ -15,62 +15,14 @@ interface DetailLayoutProps {
   menus: MenuItem[];
 }
 
-const subSideMenus: MenuItem[] = [
-  {
-    title: intl.formatMessage({
-      id: 'dashboard.Cluster.Detail.Overview',
-      defaultMessage: '概览',
-    }),
-    key: 'overview',
-    link: '/overview',
-    icon: <IconFont type="overview" />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'dashboard.Cluster.Detail.Cluster',
-      defaultMessage: '集群',
-    }),
-    key: 'cluster',
-    link: '/cluster',
-    icon: <IconFont type="cluster" />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'Dashboard.Cluster.Detail.Tenant',
-      defaultMessage: '租户',
-    }),
-    key: 'tenant',
-    link: '/tenant',
-    icon: <IconFont type="tenant" />,
-  },
-  {
-    title: 'OBProxy',
-    key: 'obproxy',
-    link: '/obproxy',
-    icon: <IconFont type="obproxy" />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'src.pages.Layouts.DetailLayout.BC23B91F',
-      defaultMessage: '告警',
-    }),
-    key: 'alert',
-    link: '/alert',
-    icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
-  },
-  {
-    title: '权限控制',
-    key: 'access',
-    link: '/access',
-    icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
-  },
-];
+
 
 const DetailLayout: React.FC<DetailLayoutProps> = ({
   subSideSelectKey,
   menus,
 }) => {
   const user = localStorage.getItem('user');
+  const access = useAccess();
   const [version, setVersion] = useState<string>('');
   const location = useLocation();
   const { reportDataInterval } = useModel('global');
@@ -83,6 +35,61 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       }
     },
   });
+
+  const subSideMenus: MenuItem[] = [
+    {
+      title: intl.formatMessage({
+        id: 'dashboard.Cluster.Detail.Overview',
+        defaultMessage: '概览',
+      }),
+      key: 'overview',
+      link: '/overview',
+      icon: <IconFont type="overview" />,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'dashboard.Cluster.Detail.Cluster',
+        defaultMessage: '集群',
+      }),
+      key: 'cluster',
+      link: '/cluster',
+      icon: <IconFont type="cluster" />,
+      accessible: access.obclusterread,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'Dashboard.Cluster.Detail.Tenant',
+        defaultMessage: '租户',
+      }),
+      key: 'tenant',
+      link: '/tenant',
+      icon: <IconFont type="tenant" />,
+    },
+    {
+      title: 'OBProxy',
+      key: 'obproxy',
+      link: '/obproxy',
+      icon: <IconFont type="obproxy" />,
+      accessible: access.obproxyread,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.DetailLayout.BC23B91F',
+        defaultMessage: '告警',
+      }),
+      key: 'alert',
+      link: '/alert',
+      icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
+      accessible: access.alarmread,
+    },
+    {
+      title: '权限控制',
+      key: 'access',
+      link: '/access',
+      icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
+      // accessible: access.acread,
+    },
+  ];
 
   const userMenu = (
     <Menu
