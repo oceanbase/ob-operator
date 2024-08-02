@@ -7,11 +7,8 @@ export type InitialStateType = {
 };
 
 export default function (initialState: InitialStateType) {
-  console.log('initialState', initialState);
   const accessObj = Object.create(null);
   if (initialState) initialAccess(accessObj, initialState);
-  console.log('accessObj', accessObj);
-
   return {
     ...accessObj,
   };

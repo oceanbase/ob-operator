@@ -48,8 +48,6 @@ export async function getInitialState() {
     access.listAllPolicies(),
   ]);
   if (res[0].successful && res[1].successful) {
-    console.log('res[0].data',res[0].data);
-    
     return {
       accountInfo: res[0].data,
       policies: res[1].data,
