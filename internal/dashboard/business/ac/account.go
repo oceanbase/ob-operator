@@ -148,14 +148,14 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 	}
 
 	for _, role := range param.Roles {
-		ok, err := enforcer.HasNamedPolicy("p", role)
+		policies, err := enforcer.GetFilteredPolicy(0, role)
 		if err != nil {
 			return nil, err
 		}
-		if !ok {
+		if len(policies) == 0 {
 			return nil, httpErr.NewBadRequest("role does not exist: " + role)
 		}
-		ok, err = enforcer.AddRoleForUser(param.Username, role)
+		ok, err := enforcer.AddRoleForUser(param.Username, role)
 		if err != nil {
 			return nil, err
 		}
@@ -198,9 +198,11 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		return nil, err
 	}
 	if len(param.Roles) > 0 {
-		_, err := enforcer.GetFilteredPolicy(0, param.Roles...)
-		if err != nil {
-			return nil, err
+		for _, role := range param.Roles {
+			_, err := enforcer.GetFilteredPolicy(0, role)
+			if err != nil {
+				return nil, httpErr.NewBadRequest("role does not exist: " + role)
+			}
 		}
 		for _, role := range acc.Roles {
 			ok, err := enforcer.DeleteRoleForUser(username, role.Name)
