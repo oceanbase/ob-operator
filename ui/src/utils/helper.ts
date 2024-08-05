@@ -121,7 +121,7 @@ export function floorToTwoDecimalPlaces(num: number) {
   return Math.floor(num * 100) / 100;
 }
 
-export function initialAccess(
+export function initializeAccess(
   accessObj: { [T: string]: boolean },
   initialState: InitialStateType,
 ) {
