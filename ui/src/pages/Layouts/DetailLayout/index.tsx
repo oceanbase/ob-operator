@@ -64,6 +64,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'tenant',
       link: '/tenant',
       icon: <IconFont type="tenant" />,
+      accessible: access.obclusterread,
     },
     {
       title: 'OBProxy',

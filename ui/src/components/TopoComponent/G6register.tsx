@@ -117,7 +117,7 @@ const reactStyles = {
   radius: 5,
 };
 
-function ReactNode(handleClick?: any, canWrite?: boolean) {
+function ReactNode(handleClick?: any, writable?: boolean) {
   return ({ cfg }: any) => {
     // Zones not included in the tenant will be disabled
     const { label, status, typeText, disable } = cfg;
@@ -190,7 +190,7 @@ function ReactNode(handleClick?: any, canWrite?: boolean) {
           >
             {status}
           </Text>
-          {cfg.type !== 'server' && canWrite ? (
+          {cfg.type !== 'server' && writable ? (
             <Image
               onClick={handleClick}
               id={cfg.label}

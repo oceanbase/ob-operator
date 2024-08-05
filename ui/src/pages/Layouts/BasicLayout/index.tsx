@@ -58,7 +58,7 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/tenant',
       icon: <IconFont type="tenant" />,
-      accessible: true,
+      accessible: access.obclusterread,
     },
     {
       title: 'OBProxy',
@@ -99,7 +99,7 @@ const BasicLayout: React.FC = () => {
   );
 
   useEffect(() => {
-    history.push(menus.find((item) => item.accessible).link);
+    history.replace(menus.find((item) => item.accessible).link);
   }, []);
 
   return (

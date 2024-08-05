@@ -19,13 +19,15 @@ const OverviewPage: React.FC = () => {
       }}
     >
       <Row justify="start" gutter={[16, 16]}>
-        {access.systemread && <OverviewStatus />}
-        {access.systemread && (
-          <Col span={24}>
-            <EventsTable />
-          </Col>
+        {access && (
+          <>
+            <OverviewStatus />
+            <Col span={24}>
+              <EventsTable />
+            </Col>
+            <NodesTable />
+          </>
         )}
-        {access.systemread && <NodesTable />}
       </Row>
     </PageContainer>
   );

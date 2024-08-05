@@ -19,7 +19,6 @@ export default function Accounts({
   refreshAccounts,
 }: AccountsProps) {
   const access = useAccess();
-
   const [editData, setEditData] = useState<AcAccount>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const { run: deleteAccount } = useRequest(accessReq.deleteAccount, {

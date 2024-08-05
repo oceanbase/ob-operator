@@ -199,14 +199,14 @@ export default function TopoComponent({
     const height = container?.scrollHeight || 500;
 
     graph.current = new G6.TreeGraph(config(width, height));
-    const canWrite = tenantReplicas ? true : access.obclusterwrite;
+    const writable = tenantReplicas ? true : access.obclusterwrite;
     G6.registerNode(
       'cluster',
-      createNodeFromReact(ReactNode(handleClick, canWrite)),
+      createNodeFromReact(ReactNode(handleClick, writable)),
     );
     G6.registerNode(
       'zone',
-      createNodeFromReact(ReactNode(handleClick, canWrite)),
+      createNodeFromReact(ReactNode(handleClick, writable)),
     );
     G6.registerNode('server', createNodeFromReact(ReactNode()));
     G6.registerEdge('flow-line', {
