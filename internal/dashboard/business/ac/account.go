@@ -147,15 +147,15 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 		return nil, httpErr.NewBadRequest("username already exists")
 	}
 
-	roles, err := enforcer.GetFilteredPolicy(0, param.Roles...)
-	if err != nil {
-		return nil, err
-	}
-	if len(roles) != len(param.Roles) {
-		return nil, httpErr.NewBadRequest("role does not exist")
-	}
 	for _, role := range param.Roles {
-		ok, err := enforcer.AddRoleForUser(param.Username, role)
+		ok, err := enforcer.HasNamedPolicy("p", role)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, httpErr.NewBadRequest("role does not exist: " + role)
+		}
+		ok, err = enforcer.AddRoleForUser(param.Username, role)
 		if err != nil {
 			return nil, err
 		}
