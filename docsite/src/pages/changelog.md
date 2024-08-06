@@ -1,6 +1,19 @@
 # Changelog
 
-## 2.2.1 
+## 2.2.2 (Release on 2024.06.18)
+
+### New Features
+
+1. Support for default storage class by leaving `storageClass` fields empty. 
+2. Support for pausing reconciling CRD through `/pause-reconciling: "true"` annotation. Which may become a solution of issue. 
+3. Support for changing storage class of running OBClusters. 
+4. New CRD `OBClusterOperation` for common operations of OBClusters. 
+
+### Bug fixes
+
+1. Fixed issue that cluster may get deactivated after being shrunk by half.
+
+## 2.2.1 (Released on 2024.05.15)
 
 ### New features
 
@@ -36,7 +49,7 @@
 1. Accelerated reconciliation when sub resource changes.
 2. Exposed metrics of controller manager through prometheus standard interface.
 
-## 2.1.2 (Released on 2024.01.24) 
+## 2.1.2 (Released on 2024.01.24)
 
 ### New features
 
@@ -79,22 +92,26 @@
 ## 2.1.0 (Released on 2023.11.20)
 
 ### New features
+
 1. Added toleration and affinity options to cluster parameters.
 2. Support for restoring tenant and creating standby tenant from backup data.
 3. The ARM image is now provided.
 
 ### Bug fixes
+
 1. Fixed issues that may be caused by concurrent writes to map.
 2. Fixed the issue where expired database connections were used during tenant backup.
 3. Fixed the issue of SQL syntax compatibility with OceanBase Database 4.2.1.
 
 ### Optimization
+
 1. Optimized failed task retry with backoff.
 2. Added event logging and improved log outputs.
 
 ## 2.0.0 (Released on 2023.09.26)
 
 ### New features
+
 1. Support OceanBase Cluster management.
 2. Support Oceanbase Tenant management.
 3. Support for monitoring OceanBase database with OBAgent.
