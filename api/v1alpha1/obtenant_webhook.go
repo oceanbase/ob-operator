@@ -184,7 +184,7 @@ func (r *OBTenant) validateMutation() error {
 			}
 		} else {
 			if _, ok := secret.Data["password"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("root"), r.Spec.Credentials.Root, "password field not found in given root credential"))
 			}
 		}
 	}
