@@ -5,7 +5,7 @@ import type { ColumnType } from 'antd/es/table';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { COLOR_MAP } from '@/constants';
 import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { useParams } from '@umijs/max';
+import { useAccess, useParams } from '@umijs/max';
 interface ZoneTableProps {
   zones: API.Zone[];
   setVisible: React.Dispatch<React.SetStateAction<boolean>>;
@@ -24,6 +24,7 @@ export default function ZoneTable({
   clusterStatus,
 }: ZoneTableProps) {
   const { ns, name } = useParams();
+  const access = useAccess();
   const getZoneColumns = (remove, clickScale) => {
     const columns: ColumnType<API.Zone> = [
       {
@@ -91,7 +92,7 @@ export default function ZoneTable({
                   clickScale(record.zone);
                   setChooseServerNum(record.replicas);
                 }}
-                disabled={clusterStatus !== 'running'}
+                disabled={clusterStatus !== 'running' || !access.obclusterwrite}
                 type="link"
               >
                 {intl.formatMessage({
@@ -114,7 +115,11 @@ export default function ZoneTable({
                     }),
                   });
                 }}
-                disabled={clusterStatus !== 'running' || zones.length <= 2}
+                disabled={
+                  clusterStatus !== 'running' ||
+                  zones.length <= 2 ||
+                  !access.obclusterwrite
+                }
                 type="link"
               >
                 {intl.formatMessage({

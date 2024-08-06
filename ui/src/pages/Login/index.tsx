@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { useNavigate } from '@umijs/max';
+import { useNavigate, useModel } from '@umijs/max';
 import { Button, Form, Input } from 'antd';
 import React from 'react';
 
@@ -10,6 +10,7 @@ import { user } from '@/api';
 import styles from './index.less';
 
 const Login: React.FC = () => {
+  const { refresh } = useModel('@@initialState');
   const navigate = useNavigate();
   const publicKey = usePublicKey();
 
@@ -19,6 +20,7 @@ const Login: React.FC = () => {
     
     if (res.successful) {
       navigate('/overview');
+      refresh();
       localStorage.setItem('user', values.username);
     }
   };

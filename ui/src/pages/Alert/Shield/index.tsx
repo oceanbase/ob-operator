@@ -9,7 +9,7 @@ import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
-import { useSearchParams } from '@umijs/max';
+import { useAccess, useSearchParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Button,
@@ -39,6 +39,7 @@ type InstancesRender = {
 
 export default function Shield() {
   const [form] = Form.useForm();
+  const access = useAccess();
   const [searchParams, setSearchParams] = useSearchParams();
   const [editShieldId, setEditShieldId] = useState<string>();
   const [drawerOpen, setDrawerOpen] = useState(
@@ -203,7 +204,7 @@ export default function Shield() {
           <Button
             onClick={() => editShield(record.id)}
             style={{ paddingLeft: 0 }}
-            disabled={record.status.state === 'expired'}
+            disabled={record.status.state === 'expired' || !access.alarmwrite}
             type="link"
           >
             {intl.formatMessage({
@@ -216,7 +217,7 @@ export default function Shield() {
             style={
               record.status.state !== 'expired' ? { color: '#ff4b4b' } : {}
             }
-            disabled={record.status.state === 'expired'}
+            disabled={record.status.state === 'expired' || !access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({
                 title: intl.formatMessage({
@@ -286,12 +287,14 @@ export default function Shield() {
           </h2>
         }
         extra={
-          <Button type="primary" onClick={() => setDrawerOpen(true)}>
-            {intl.formatMessage({
-              id: 'src.pages.Alert.Shield.65BD013B',
-              defaultMessage: '新建屏蔽',
-            })}
-          </Button>
+          access.alarmwrite ? (
+            <Button type="primary" onClick={() => setDrawerOpen(true)}>
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Shield.65BD013B',
+                defaultMessage: '新建屏蔽',
+              })}
+            </Button>
+          ) : null
         }
       >
         <Table

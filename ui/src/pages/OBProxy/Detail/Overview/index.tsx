@@ -4,7 +4,7 @@ import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_OBPROXY_TIME } from '@/constants';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useParams } from '@umijs/max';
+import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Row, message } from 'antd';
 import { useEffect, useRef } from 'react';
@@ -14,6 +14,7 @@ import NodeInfo from './NodeInfo';
 
 export default function Overview() {
   const { ns, name } = useParams();
+  const access = useAccess();
   const timer = useRef<NodeJS.Timeout | null>(null);
   const {
     data: obproxyDetailRes,
@@ -66,24 +67,26 @@ export default function Overview() {
         defaultMessage: 'OBProxy 详情',
       })}
       extra={
-        <Button
-          onClick={() =>
-            showDeleteConfirm({
-              onOk: deleteCluster,
-              title: intl.formatMessage({
-                id: 'src.pages.OBProxy.Detail.Overview.A9E634FB',
-                defaultMessage: '确认删除该 OBProxy 吗？',
-              }),
-            })
-          }
-          type="primary"
-          danger
-        >
-          {intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.Delete',
-            defaultMessage: '删除',
-          })}
-        </Button>
+        access.obproxywrite ? (
+          <Button
+            onClick={() =>
+              showDeleteConfirm({
+                onOk: deleteCluster,
+                title: intl.formatMessage({
+                  id: 'src.pages.OBProxy.Detail.Overview.A9E634FB',
+                  defaultMessage: '确认删除该 OBProxy 吗？',
+                }),
+              })
+            }
+            type="primary"
+            danger
+          >
+            {intl.formatMessage({
+              id: 'OBDashboard.Detail.Overview.Delete',
+              defaultMessage: '删除',
+            })}
+          </Button>
+        ) : null
       }
     >
       <Row gutter={[16, 16]}>

@@ -1,7 +1,7 @@
 import type { ObproxyOBProxyOverview } from '@/api/generated';
 import { OBPROXY_COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Link } from '@umijs/max';
+import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -113,6 +113,7 @@ export default function ClusterList({
   loading,
   obproxies,
 }: ClusterListProps) {
+  const access = useAccess();
   return (
     <Card
       title={
@@ -124,12 +125,14 @@ export default function ClusterList({
         </h2>
       }
       extra={
-        <Button onClick={handleAddCluster} type="primary">
-          {intl.formatMessage({
-            id: 'src.pages.OBProxy.EFFF5E84',
-            defaultMessage: '创建 OBProxy 集群',
-          })}
-        </Button>
+        access.obproxywrite ? (
+          <Button onClick={handleAddCluster} type="primary">
+            {intl.formatMessage({
+              id: 'src.pages.OBProxy.EFFF5E84',
+              defaultMessage: '创建 OBProxy 集群',
+            })}
+          </Button>
+        ) : null
       }
     >
       <Table

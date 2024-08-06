@@ -4,6 +4,7 @@ import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
+import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -14,6 +15,7 @@ import SubscripDrawerForm from './SubscripDrawerForm';
 
 export default function Subscriptions() {
   const { data: listRoutesRes, refresh } = useRequest(alert.listRoutes);
+  const access = useAccess();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [channelDrawerOpen, setChannelDrawerOpen] = useState(false);
   const [clickedId, setClickedId] = useState<string>();
@@ -61,9 +63,15 @@ export default function Subscriptions() {
       dataIndex: 'receiver',
       key: 'receiver',
       render: (receiver) => (
-        <Button type="link" onClick={() => showChannelDrawer(receiver)}>
-          {receiver}
-        </Button>
+        <>
+          {access.alarmwrite ? (
+            <Button type="link" onClick={() => showChannelDrawer(receiver)}>
+              {receiver}
+            </Button>
+          ) : (
+            <span>{receiver}</span>
+          )}
+        </>
       ),
     },
     {
@@ -105,6 +113,7 @@ export default function Subscriptions() {
         <>
           <Button
             onClick={() => editConfig(record.id)}
+            disabled={!access.alarmwrite}
             style={{ paddingLeft: 0 }}
             type="link"
           >
@@ -115,6 +124,7 @@ export default function Subscriptions() {
           </Button>
           <Button
             style={{ color: '#ff4b4b' }}
+            disabled={!access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({
                 title: intl.formatMessage({
@@ -149,12 +159,14 @@ export default function Subscriptions() {
   return (
     <Card
       extra={
-        <Button type="primary" onClick={() => editConfig()}>
-          {intl.formatMessage({
-            id: 'src.pages.Alert.Subscriptions.DB2B8DA0',
-            defaultMessage: '新建推送',
-          })}
-        </Button>
+        access.alarmwrite ? (
+          <Button type="primary" onClick={() => editConfig()}>
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Subscriptions.DB2B8DA0',
+              defaultMessage: '新建推送',
+            })}
+          </Button>
+        ) : null
       }
       title={
         <h2 style={{ marginBottom: 0 }}>

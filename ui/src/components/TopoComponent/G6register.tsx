@@ -37,7 +37,7 @@ function config(width: number, height: number) {
     width,
     height,
     linkCenter: true,
-    fitViewPadding: [-350,24,24,24],
+    fitViewPadding: [-350, 24, 24, 24],
     fitView: true,
     maxZoom: 1.6,
     minZoom: 0.2,
@@ -117,7 +117,7 @@ const reactStyles = {
   radius: 5,
 };
 
-function ReactNode(handleClick?: any) {
+function ReactNode(handleClick?: any, writable?: boolean) {
   return ({ cfg }: any) => {
     // Zones not included in the tenant will be disabled
     const { label, status, typeText, disable } = cfg;
@@ -190,9 +190,9 @@ function ReactNode(handleClick?: any) {
           >
             {status}
           </Text>
-          {cfg.type !== 'server' && (
+          {cfg.type !== 'server' && writable ? (
             <Image
-              onClick={ handleClick}
+              onClick={handleClick}
               id={cfg.label}
               style={{
                 position: 'absolute',
@@ -200,12 +200,12 @@ function ReactNode(handleClick?: any) {
                 y: 16,
                 width: 2.5,
                 height: 16,
-                cursor:'pointer',
+                cursor: 'pointer',
                 img: moreImg,
               }}
               name="moreImg"
             />
-          )}
+          ) : null}
         </Rect>
       </Group>
     );

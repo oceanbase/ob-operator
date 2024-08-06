@@ -1,25 +1,39 @@
-import { access } from '@/api';
+import { access as accessReq } from '@/api';
 import type { AcAccount, AcRole } from '@/api/generated';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, Space, Table, message } from 'antd';
 import { useState } from 'react';
 import { Type } from './type';
 
-export default function Accounts() {
-  const { data: allAccountsRes } = useRequest(access.listAllAccounts);
-  const allAccounts = allAccountsRes?.data;
+interface AccountsProps {
+  allAccounts: AcAccount[] | undefined;
+  refreshAccounts: () => void;
+}
+
+export default function Accounts({
+  allAccounts,
+  refreshAccounts,
+}: AccountsProps) {
+  const access = useAccess();
+  const [editData, setEditData] = useState<AcAccount>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const { run: deleteAccount } = useRequest(access.deleteAccount, {
+  const { run: deleteAccount } = useRequest(accessReq.deleteAccount, {
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
         message.success('删除成功');
+        refreshAccounts();
       }
     },
   });
+  const handleEdit = (editData: AcAccount) => {
+    setEditData(editData);
+    setModalVisible(true);
+  };
   const columns: TableProps<AcAccount>['columns'] = [
     {
       title: '用户名',
@@ -53,13 +67,18 @@ export default function Accounts() {
       title: '操作',
       key: 'actinon',
       render: (_, record) => {
-        const disabled = record.roles.some((role) => role.name === 'admin');
+        const disabled =
+          record.roles.some((role) => role.name === 'admin') || !access.acwrite;
         return (
           <Space>
             <Button disabled={disabled} type="link">
               重置
             </Button>
-            <Button disabled={disabled} type="link">
+            <Button
+              onClick={() => handleEdit(record)}
+              disabled={disabled}
+              type="link"
+            >
               编辑
             </Button>
             <Button
@@ -85,6 +104,7 @@ export default function Accounts() {
       <Table dataSource={allAccounts} columns={columns} />
       <HandleAccountModal
         setVisible={setModalVisible}
+        editValue={editData}
         visible={modalVisible}
         type={Type.EDIT}
       />

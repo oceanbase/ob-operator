@@ -1,7 +1,7 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
 import { Type } from '@/pages/Access/type';
-import { useRequest } from 'ahooks';
+import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
@@ -131,15 +131,14 @@ export default function HandleRoleModal({
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
+  const { initialState } = useModel('@@initialState');
   const handleSubmit = async () => {
     try {
       await form.validateFields();
       form.submit();
     } catch (err) {}
   };
-  const { data: allPoliciesRes } = useRequest(access.listAllPolicies);
-
-  const allPolicies = uniqBy(allPoliciesRes?.data, 'domain') || [];
+  const allPolicies = uniqBy(initialState?.policies, 'domain') || [];
   const defaultValue = allPolicies.map((item) => {
     if (type === Type.CREATE) {
       return { ...item, action: '' };

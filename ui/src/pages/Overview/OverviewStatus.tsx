@@ -44,6 +44,7 @@ export default function OverviewStatus() {
   const getStatisticConfig = (statistic: API.StatisticData) => ({
     running: (
       <CustomBadge
+        key={'running'}
         text={intl.formatMessage({
           id: 'Dashboard.pages.Overview.OverviewStatus.Running',
           defaultMessage: '运行中',
@@ -56,6 +57,7 @@ export default function OverviewStatus() {
 
     deleting: (
       <CustomBadge
+        key={'deleting'}
         text={intl.formatMessage({
           id: 'Dashboard.pages.Overview.OverviewStatus.Deleting',
           defaultMessage: '删除中',
@@ -68,6 +70,7 @@ export default function OverviewStatus() {
 
     operating: (
       <CustomBadge
+        key={'operating'}
         text={intl.formatMessage({
           id: 'Dashboard.pages.Overview.OverviewStatus.InOperation',
           defaultMessage: '操作中',
@@ -80,6 +83,7 @@ export default function OverviewStatus() {
 
     failed: (
       <CustomBadge
+        key={'failed'}
         text={intl.formatMessage({
           id: 'Dashboard.pages.Overview.OverviewStatus.AnErrorHasOccurred',
           defaultMessage: '已出错',
