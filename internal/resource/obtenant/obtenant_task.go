@@ -516,7 +516,6 @@ func CheckAndApplyLocality(m *OBTenantManager) tasktypes.TaskError {
 }
 
 func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
-	// TODO: implement this
 	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
 	obcluster, err := m.getOBCluster()
 	if err != nil {
