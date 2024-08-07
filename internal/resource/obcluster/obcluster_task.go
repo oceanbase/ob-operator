@@ -34,11 +34,14 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
+	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
@@ -1113,6 +1116,33 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 			err = m.Client.Patch(m.Ctx, copiedZone, client.MergeFrom(&zone))
 			if err != nil {
 				return errors.Wrap(err, "Patch obzone")
+			}
+		}
+	}
+	return nil
+}
+
+func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
+	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
+	m.Logger.Info("Start to optimize obcluster parameters")
+	jobName := fmt.Sprintf("optimize-cluster-%s-%s", m.OBCluster.Name, rand.String(6))
+	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, jobName, m.OBCluster.Spec.OBServerTemplate.Image, fmt.Sprintf("bin/oceanbase-helper optimize cluster %s", m.OBCluster.Spec.Scenario))
+	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
+		optimizeConfig := &helpermodel.OptimizationResponse{}
+		err := json.Unmarshal([]byte(output), optimizeConfig)
+		if err != nil {
+			m.Logger.Error(err, "Failed to parse optimization config")
+		}
+		conn, err := m.getOceanbaseOperationManager()
+		if err != nil {
+			m.Logger.Error(err, "Get operation manager failed")
+		}
+		// obcluster only need to set parameters
+		for _, parameter := range optimizeConfig.Parameters {
+			m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
+			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
+			if err != nil {
+				m.Logger.Error(err, "Failed to set parameter")
 			}
 		}
 	}

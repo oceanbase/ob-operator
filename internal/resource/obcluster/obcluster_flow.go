@@ -78,6 +78,7 @@ func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.Task
 				tCreateServiceForMonitor,
 				tCreateOBClusterService,
 				tAnnotateOBCluster,
+				tOptimizeClusterByScenario,
 			},
 			TargetStatus: clusterstatus.Running,
 		},

@@ -90,6 +90,10 @@ func (r *OBTenant) Default() {
 	if r.Spec.Credentials.StandbyRO == "" {
 		r.Spec.Credentials.StandbyRO = "standby-ro-" + rand.String(8)
 	}
+
+	if r.Spec.Scenario == "" {
+		r.Spec.Scenario = cluster.Spec.Scenario
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
