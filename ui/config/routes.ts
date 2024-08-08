@@ -205,6 +205,11 @@ export default [
         name: '登录页',
       },
       {
+        path: '/reset',
+        component: 'ResetPwd',
+        name: '重置密码',
+      },
+      {
         component: 'Error/404',
         name: '404 页面不存在',
       },

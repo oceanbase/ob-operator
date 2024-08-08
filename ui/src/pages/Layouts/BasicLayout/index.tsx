@@ -99,7 +99,7 @@ const BasicLayout: React.FC = () => {
   );
 
   useEffect(() => {
-    history.replace(menus.find((item) => item.accessible).link);
+    history.replace(menus.find((item) => item.accessible)?.link || '/overview');
   }, []);
 
   return (

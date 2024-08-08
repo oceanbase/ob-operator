@@ -28,7 +28,16 @@ globalAxios.interceptors.response.use(
       );
       location.href = '/#/login';
     } else {
-      message.error(error?.response?.data?.message || error.message);
+      const { response } = error;
+      if (
+        response?.status === 400 &&
+        response?.config?.url?.split('/')?.pop() === 'password' &&
+        response?.data?.message === 'Error BadRequest: password is incorrect'
+      ) {
+        message.error('原密码输入不正确')
+      }else{
+        message.error(error?.response?.data?.message || error.message);
+      }
     }
     return Promise.reject(error.response);
   },

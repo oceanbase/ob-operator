@@ -42,6 +42,8 @@ export const rootContainer = (element: JSX.Element) => {
   return <>{element}</>;
 };
 
+// If the user is not logged in, jump to the login page 
+// and refresh InitialState after successful login
 export async function getInitialState() {
   const res = await Promise.all([
     access.getAccountInfo(),
