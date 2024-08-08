@@ -5,7 +5,7 @@ PROCESSOR=4
 PWD ?= $(shell pwd)
 
 DASHBOARD_VERSION ?= 0.3.0
-DASHBOARD_IMG ?= oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
+DASHBOARD_IMG ?= quay.io/oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
 INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/dashboard/handler
