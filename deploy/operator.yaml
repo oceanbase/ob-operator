@@ -19072,7 +19072,7 @@ spec:
         - --log-verbosity=0
         command:
         - /manager
-        image: oceanbase/ob-operator:2.2.2
+        image: quay.io/oceanbase/ob-operator:2.2.2
         livenessProbe:
           httpGet:
             path: /healthz
@@ -19111,7 +19111,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
-        image: oceanbase/kube-rbac-proxy:v0.13.1
+        image: quay.io/brancz/kube-rbac-proxy:v0.13.1
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
