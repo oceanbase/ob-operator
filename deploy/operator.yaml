@@ -19072,7 +19072,7 @@ spec:
         - --log-verbosity=0
         command:
         - /manager
-        image: oceanbase/ob-operator:2.2.2
+        image: quay.io/oceanbase/ob-operator:2.2.2
         livenessProbe:
           httpGet:
             path: /healthz
