@@ -99,7 +99,7 @@ const BasicLayout: React.FC = () => {
   );
 
   useEffect(() => {
-    history.replace(menus.find((item) => item.accessible).link);
+    history.replace(menus.find((item) => item.accessible)?.link || '/overview');
   }, []);
 
   return (
@@ -108,7 +108,7 @@ const BasicLayout: React.FC = () => {
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
         menus={menus}
-        defaultSelectedKeys={[menus.find((item) => item.accessible).link]}
+        defaultSelectedKeys={[menus.find((item) => item.accessible)?.link || '/overview']}
         location={location}
         topHeader={{
           username: initialState?.accountInfo?.nickname || 'admin',

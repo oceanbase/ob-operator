@@ -43,16 +43,22 @@ export interface AcAccount {
     'lastLoginAt'?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof AcAccount
+     */
+    'needReset'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof AcAccount
      */
     'nickname'?: string;
     /**
      * 
-     * @type {AcRole}
+     * @type {Array<AcRole>}
      * @memberof AcAccount
      */
-    'roles': AcRole[];
+    'roles': Array<AcRole>;
     /**
      * 
      * @type {string}
@@ -86,10 +92,10 @@ export interface AcCreateAccountParam {
     'password': string;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof AcCreateAccountParam
      */
-    'roles': string[];
+    'roles': Array<string>;
     /**
      * 
      * @type {string}
@@ -148,10 +154,10 @@ export interface AcPatchAccountParam {
     'password'?: string;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof AcPatchAccountParam
      */
-    'roleName'?: string;
+    'roles'?: Array<string>;
 }
 /**
  * 
@@ -3081,6 +3087,25 @@ export interface ParamReplayStandbyLog {
 /**
  * 
  * @export
+ * @interface ParamResetPasswordParam
+ */
+export interface ParamResetPasswordParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamResetPasswordParam
+     */
+    'oldPassword'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamResetPasswordParam
+     */
+    'password': string;
+}
+/**
+ * 
+ * @export
  * @interface ParamResourcePoolSpec
  */
 export interface ParamResourcePoolSpec {
@@ -5119,16 +5144,16 @@ export interface ResponseOBTenantReplica {
     'iopsWeight': number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseOBTenantReplica
      */
-    'logDiskSize': string;
+    'logDiskSize': number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseOBTenantReplica
      */
-    'maxCPU': string;
+    'maxCPU': number;
     /**
      * 
      * @type {number}
@@ -5137,16 +5162,16 @@ export interface ResponseOBTenantReplica {
     'maxIops': number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseOBTenantReplica
      */
-    'memorySize': string;
+    'memorySize': number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseOBTenantReplica
      */
-    'minCPU': string;
+    'minCPU': number;
     /**
      * 
      * @type {number}
@@ -5321,10 +5346,10 @@ export interface ResponseResourceSpecRender {
     'cpu': number;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseResourceSpecRender
      */
-    'memory': string;
+    'memory': number;
 }
 /**
  * 
@@ -5481,10 +5506,10 @@ export interface ResponseStorageClass {
 export interface ResponseStorageSpec {
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof ResponseStorageSpec
      */
-    'size': string;
+    'size': number;
     /**
      * 
      * @type {string}
@@ -6378,6 +6403,45 @@ export const AccessControlApiAxiosParamCreator = function (configuration?: Confi
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Reset user\'s own password
+         * @summary Reset user\'s own password
+         * @param {ParamResetPasswordParam} resetParam reset password
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetPassword: async (resetParam: ParamResetPasswordParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'resetParam' is not null or undefined
+            assertParamExists('resetPassword', 'resetParam', resetParam)
+            const localVarPath = `/api/v1/ac/password`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(resetParam, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -6516,6 +6580,19 @@ export const AccessControlApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['AccessControlApi.patchRole']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Reset user\'s own password
+         * @summary Reset user\'s own password
+         * @param {ParamResetPasswordParam} resetParam reset password
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async resetPassword(resetParam: ParamResetPasswordParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateAccount200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.resetPassword(resetParam, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AccessControlApi.resetPassword']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -6623,6 +6700,16 @@ export const AccessControlApiFactory = function (configuration?: Configuration, 
          */
         patchRole(name: string, role: AcPatchRoleParam, options?: any): AxiosPromise<CreateRole200Response> {
             return localVarFp.patchRole(name, role, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Reset user\'s own password
+         * @summary Reset user\'s own password
+         * @param {ParamResetPasswordParam} resetParam reset password
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resetPassword(resetParam: ParamResetPasswordParam, options?: any): AxiosPromise<CreateAccount200Response> {
+            return localVarFp.resetPassword(resetParam, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -6750,6 +6837,18 @@ export class AccessControlApi extends BaseAPI {
      */
     public patchRole(name: string, role: AcPatchRoleParam, options?: RawAxiosRequestConfig) {
         return AccessControlApiFp(this.configuration).patchRole(name, role, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Reset user\'s own password
+     * @summary Reset user\'s own password
+     * @param {ParamResetPasswordParam} resetParam reset password
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AccessControlApi
+     */
+    public resetPassword(resetParam: ParamResetPasswordParam, options?: RawAxiosRequestConfig) {
+        return AccessControlApiFp(this.configuration).resetPassword(resetParam, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

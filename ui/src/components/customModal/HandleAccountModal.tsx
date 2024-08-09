@@ -1,5 +1,6 @@
 import { access } from '@/api';
 import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
@@ -23,6 +24,7 @@ export default function HandleAccountModal({
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
+  const publicKey = usePublicKey();
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -41,6 +43,7 @@ export default function HandleAccountModal({
   const onFinish = async (
     formData: AcCreateAccountParam & { confirmPassword: string },
   ) => {
+    formData.password = encryptText(formData.password, publicKey) as string;
     const res =
       type === Type.CREATE
         ? await access.createAccount(omit(formData, ['confirmPassword']))
@@ -61,7 +64,7 @@ export default function HandleAccountModal({
       form.setFieldsValue({
         description: editValue?.description,
         nickname: editValue?.nickname,
-        roles: editValue?.roles,
+        roles: editValue?.roles.map((item) => item.name),
       });
     }
   }, [type, editValue]);

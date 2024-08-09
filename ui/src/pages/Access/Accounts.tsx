@@ -1,11 +1,12 @@
 import { access as accessReq } from '@/api';
 import type { AcAccount, AcRole } from '@/api/generated';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
+import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { useAccess } from '@umijs/max';
+import { useAccess, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
-import { Button, Space, Table, message } from 'antd';
+import { Button, Space, Table, Typography, message } from 'antd';
 import { useState } from 'react';
 import { Type } from './type';
 
@@ -14,13 +15,17 @@ interface AccountsProps {
   refreshAccounts: () => void;
 }
 
+const { Text } = Typography;
+
 export default function Accounts({
   allAccounts,
   refreshAccounts,
 }: AccountsProps) {
   const access = useAccess();
+  const { initialState } = useModel('@@initialState');
   const [editData, setEditData] = useState<AcAccount>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
   const { run: deleteAccount } = useRequest(accessReq.deleteAccount, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -39,16 +44,31 @@ export default function Accounts({
       title: '用户名',
       key: 'username',
       dataIndex: 'username',
+      render: (value) => (
+        <Text style={{ maxWidth: 200 }} ellipsis={{ tooltip: value }}>
+          {value}
+        </Text>
+      ),
     },
     {
       title: '昵称',
       key: 'nickname',
       dataIndex: 'nickname',
+      render: (value) => (
+        <Text style={{ maxWidth: 200 }} ellipsis={{ tooltip: value }}>
+          {value}
+        </Text>
+      ),
     },
     {
       title: '描述',
       key: 'description',
       dataIndex: 'description',
+      render: (value) => (
+        <Text style={{ maxWidth: 200 }} ellipsis={{ tooltip: value }}>
+          {value || '-'}
+        </Text>
+      ),
     },
     {
       title: '角色',
@@ -67,23 +87,36 @@ export default function Accounts({
       title: '操作',
       key: 'actinon',
       render: (_, record) => {
-        const disabled =
-          record.roles.some((role) => role.name === 'admin') || !access.acwrite;
+        const myself = initialState?.accountInfo;
+        const isMyself = myself?.username === record.username;
+        const otherAdmin = record.roles.some(
+          (role) =>
+            role.name === 'admin' && record.username !== myself?.username,
+        );
+
         return (
           <Space>
-            <Button disabled={disabled} type="link">
-              重置
+            <Button
+              onClick={() => setResetModalVisible(true)}
+              disabled={otherAdmin || !access.acwrite}
+              type="link"
+            >
+              重置密码
             </Button>
             <Button
               onClick={() => handleEdit(record)}
-              disabled={disabled}
+              disabled={otherAdmin || !access.acwrite}
               type="link"
             >
               编辑
             </Button>
             <Button
-              disabled={disabled}
-              style={disabled ? {} : { color: '#ff4b4b' }}
+              disabled={otherAdmin || !access.acwrite || isMyself}
+              style={
+                otherAdmin || !access.acwrite || isMyself
+                  ? {}
+                  : { color: '#ff4b4b' }
+              }
               type="link"
               onClick={() =>
                 showDeleteConfirm({
@@ -107,6 +140,10 @@ export default function Accounts({
         editValue={editData}
         visible={modalVisible}
         type={Type.EDIT}
+      />
+      <ResetPwdModal
+        visible={resetModalVisible}
+        setVisible={setResetModalVisible}
       />
     </div>
   );
