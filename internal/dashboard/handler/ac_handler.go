@@ -18,6 +18,8 @@ import (
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -40,6 +42,49 @@ func GetAccountInfo(c *gin.Context) (*acmodel.Account, error) {
 		return nil, httpErr.New(httpErr.ErrUnauthorized, "Unauthorized")
 	}
 	return acbiz.GetAccount(c, username.(string))
+}
+
+// @ID ResetPassword
+// @Summary Reset user's own password
+// @Description Reset user's own password
+// @Tags AccessControl
+// @Accept application/json
+// @Produce application/json
+// @Param resetParam body param.ResetPasswordParam true "reset password"
+// @Success 200 object response.APIResponse{data=ac.Account}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/ac/password [POST]
+// @Security ApiKeyAuth
+func ResetPassword(c *gin.Context) (*acmodel.Account, error) {
+	username := c.GetString("username")
+	if username == "" {
+		return nil, httpErr.NewUnauthorized("unauthorized")
+	}
+	param := &param.ResetPasswordParam{}
+	if err := c.BindJSON(param); err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	decryptedPwd, err := crypto.DecryptWithPrivateKey(param.Password)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	param.Password = decryptedPwd
+
+	if param.OldPassword != "" {
+		decryptedPwd, err := crypto.DecryptWithPrivateKey(param.OldPassword)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		param.OldPassword = decryptedPwd
+	}
+
+	acc, err := acbiz.ResetAccountPassword(c, username, param)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
 }
 
 // @ID ListAllAccounts

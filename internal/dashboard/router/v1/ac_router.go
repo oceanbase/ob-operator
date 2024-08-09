@@ -31,5 +31,6 @@ func InitAccessControlRoutes(g *gin.RouterGroup) {
 	g.DELETE("/ac/roles/:name", h.Wrap(h.DeleteRole, acbiz.PathGuard("ac", "*", "write")))
 
 	g.GET("/ac/info", h.Wrap(h.GetAccountInfo))
-	g.GET("/ac/policies", h.Wrap(h.ListAllPolicies, acbiz.PathGuard("ac", "*", "read")))
+	g.GET("/ac/policies", h.Wrap(h.ListAllPolicies))
+	g.POST("/ac/password", h.Wrap(h.ResetPassword))
 }

@@ -6,6 +6,8 @@ definitions:
         type: string
       lastLoginAt:
         type: string
+      needReset:
+        type: boolean
       nickname:
         type: string
       roles:
@@ -937,6 +939,15 @@ definitions:
         type: string
       unlimited:
         type: boolean
+    type: object
+  param.ResetPasswordParam:
+    properties:
+      oldPassword:
+        type: string
+      password:
+        type: string
+    required:
+    - password
     type: object
   param.ResourcePoolSpec:
     properties:
@@ -2706,6 +2717,48 @@ paths:
       security:
       - ApiKeyAuth: []
       summary: get account info
+      tags:
+      - AccessControl
+  /api/v1/ac/password:
+    post:
+      consumes:
+      - application/json
+      description: Reset user's own password
+      operationId: ResetPassword
+      parameters:
+      - description: reset password
+        in: body
+        name: resetParam
+        required: true
+        schema:
+          $ref: '#/definitions/param.ResetPasswordParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ac.Account'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Reset user's own password
       tags:
       - AccessControl
   /api/v1/ac/policies:
