@@ -53,7 +53,11 @@ var _ = Describe("Oceanbase", func() {
 		err := OperationClient.List(context.Background(), "", &operations, metav1.ListOptions{})
 		Expect(err).ShouldNot(HaveOccurred())
 	})
-
+	It("Test OBClusterOperationClient", func() {
+		operations := v1alpha1.OBClusterOperationList{}
+		err := OperationClient.List(context.Background(), "", &operations, metav1.ListOptions{})
+		Expect(err).ShouldNot(HaveOccurred())
+	})
 	It("Test OBServerClinet", func() {
 		servers := v1alpha1.OBServerList{}
 		err := ServerClient.List(context.Background(), "", &servers, metav1.ListOptions{})
