@@ -1,11 +1,11 @@
 import { access } from '@/api';
 import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
 import { useEffect, useMemo } from 'react';
-import { usePublicKey,encryptText } from '@/hook/usePublicKey';
 import CustomModal from '.';
 
 interface HandleRoleModalProps {
@@ -43,7 +43,7 @@ export default function HandleAccountModal({
   const onFinish = async (
     formData: AcCreateAccountParam & { confirmPassword: string },
   ) => {
-    formData.password = encryptText(formData.password,publicKey) as string;
+    formData.password = encryptText(formData.password, publicKey) as string;
     const res =
       type === Type.CREATE
         ? await access.createAccount(omit(formData, ['confirmPassword']))

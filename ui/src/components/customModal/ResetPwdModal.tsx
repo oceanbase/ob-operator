@@ -46,6 +46,7 @@ export default function ResetPwdModal({
     >
       <Form form={form} onFinish={onFinish}>
         <Form.Item
+          labelCol={{ span: 4 }}
           rules={[
             {
               required: true,
@@ -58,6 +59,8 @@ export default function ResetPwdModal({
           <Input type="password" placeholder="请输入" />
         </Form.Item>
         <Form.Item
+          validateFirst
+          labelCol={{ span: 4 }}
           rules={[
             {
               required: true,
@@ -75,6 +78,29 @@ export default function ResetPwdModal({
           ]}
           label="新密码"
           name={'password'}
+        >
+          <Input type="password" placeholder="请输入" />
+        </Form.Item>
+        <Form.Item
+          validateFirst
+          labelCol={{ span: 4 }}
+          rules={[
+            {
+              required: true,
+              message: '请输入',
+            },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                const newPwd = getFieldValue('password');
+                if (newPwd !== value) {
+                  return Promise.reject('两次密码输入不一致');
+                }
+                return Promise.resolve();
+              },
+            }),
+          ]}
+          label="确认密码"
+          name={'confirmPassword'}
         >
           <Input type="password" placeholder="请输入" />
         </Form.Item>

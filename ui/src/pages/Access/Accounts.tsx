@@ -3,7 +3,7 @@ import type { AcAccount, AcRole } from '@/api/generated';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { useAccess } from '@umijs/max';
+import { useAccess, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, Space, Table, Typography, message } from 'antd';
@@ -22,6 +22,7 @@ export default function Accounts({
   refreshAccounts,
 }: AccountsProps) {
   const access = useAccess();
+  const { initialState } = useModel('@@initialState');
   const [editData, setEditData] = useState<AcAccount>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
@@ -86,28 +87,36 @@ export default function Accounts({
       title: '操作',
       key: 'actinon',
       render: (_, record) => {
-        const disabled =
-          record.roles.some((role) => role.name === 'admin') || !access.acwrite;
+        const myself = initialState?.accountInfo;
+        const isMyself = myself?.username === record.username;
+        const otherAdmin = record.roles.some(
+          (role) =>
+            role.name === 'admin' && record.username !== myself?.username,
+        );
 
         return (
           <Space>
             <Button
               onClick={() => setResetModalVisible(true)}
-              disabled={disabled}
+              disabled={otherAdmin || !access.acwrite}
               type="link"
             >
               重置密码
             </Button>
             <Button
               onClick={() => handleEdit(record)}
-              disabled={disabled}
+              disabled={otherAdmin || !access.acwrite}
               type="link"
             >
               编辑
             </Button>
             <Button
-              disabled={disabled}
-              style={disabled ? {} : { color: '#ff4b4b' }}
+              disabled={otherAdmin || !access.acwrite || isMyself}
+              style={
+                otherAdmin || !access.acwrite || isMyself
+                  ? {}
+                  : { color: '#ff4b4b' }
+              }
               type="link"
               onClick={() =>
                 showDeleteConfirm({
