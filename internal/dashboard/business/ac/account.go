@@ -226,7 +226,8 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 
 	accountChanged := false
 	if param.Password != "" && acc.password != param.Password {
-		acc.password = param.Password
+		bts := sha256.Sum256([]byte(param.Password))
+		acc.password = hex.EncodeToString(bts[:])
 		accountChanged = true
 	}
 	if param.Nickname != "" && acc.Nickname != param.Nickname {
@@ -337,6 +338,7 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 		return nil, httpErr.NewInternal("User credentials file is corrupted: user has no role")
 	}
 	lastLoginAt := time.Unix(ts, 0)
+	needReset := ts == 0
 	return &account{
 		Account: acmodel.Account{
 			Username:    username,
@@ -344,6 +346,7 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 			LastLoginAt: &lastLoginAt,
 			Description: parts[3],
 			Roles:       roles,
+			NeedReset:   needReset,
 		},
 		password: parts[0],
 	}, nil

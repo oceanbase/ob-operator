@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/auth"
@@ -53,9 +54,6 @@ func Login(c *gin.Context) (*acmodel.Account, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest("username or password is incorrect")
 	}
-	if acc.LastLoginAt == nil || acc.LastLoginAt.IsZero() {
-		acc.NeedReset = true
-	}
 	sess := sessions.Default(c)
 	sess.Set("username", loginParams.Username)
 	sess.Set("expiration", time.Now().Add(constant.DefaultSessionExpiration*time.Second).Unix())
@@ -63,6 +61,7 @@ func Login(c *gin.Context) (*acmodel.Account, error) {
 		return nil, httpErr.NewInternal(err.Error())
 	}
 	store.GetCache().Store(loginParams.Username, struct{}{})
+	logger.Infof("User logs in, username: %s", loginParams.Username)
 	return acc, nil
 }
 
@@ -87,6 +86,7 @@ func Logout(c *gin.Context) (string, error) {
 	}
 	if usernameEntry != nil {
 		store.GetCache().Delete(usernameEntry.(string))
+		logger.Infof("User logs out, username: %s", usernameEntry)
 	}
 	return "logout successfully", nil
 }
@@ -105,6 +105,8 @@ func Authz(c *gin.Context) (*auth.AuthUser, error) {
 	if !ok {
 		return nil, httpErr.NewUnauthorized("invalid token")
 	}
-
+	logger.
+		WithField("token", urlParam.Token.String()).
+		Infof("User %s is authorized", authUser.Username)
 	return authUser, nil
 }

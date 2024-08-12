@@ -15,6 +15,7 @@ package handler
 import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
@@ -100,7 +101,12 @@ func ResetPassword(c *gin.Context) (*acmodel.Account, error) {
 // @Router /api/v1/ac/accounts [GET]
 // @Security ApiKeyAuth
 func ListAccounts(c *gin.Context) ([]acmodel.Account, error) {
-	return acbiz.ListAccounts(c)
+	accounts, err := acbiz.ListAccounts(c)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("List accounts: %v", accounts)
+	return accounts, nil
 }
 
 // @ID CreateAccount
@@ -122,6 +128,16 @@ func CreateAccount(c *gin.Context) (*acmodel.Account, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	decryptedPwd, err := crypto.DecryptWithPrivateKey(param.Password)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	param.Password = decryptedPwd
+	logger.
+		WithField("Nickname", param.Nickname).
+		WithField("Description", param.Description).
+		WithField("Roles", param.Roles).
+		Infof("Create account: %s", param.Username)
 	return acbiz.CreateAccount(c, &param)
 }
 
@@ -149,6 +165,18 @@ func PatchAccount(c *gin.Context) (*acmodel.Account, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	if param.Password != "" {
+		decryptedPwd, err := crypto.DecryptWithPrivateKey(param.Password)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		param.Password = decryptedPwd
+	}
+	logger.
+		WithField("Nickname", param.Nickname).
+		WithField("Description", param.Description).
+		WithField("Roles", param.Roles).
+		Infof("Patch account: %s", username)
 	return acbiz.PatchAccount(c, username, &param)
 }
 
@@ -175,6 +203,7 @@ func DeleteAccount(c *gin.Context) (*acmodel.Account, error) {
 	if username == "" {
 		return nil, httpErr.NewBadRequest("Username is required")
 	}
+	logger.Infof("Delete account: %s", username)
 	return acbiz.DeleteAccount(c, username)
 }
 
@@ -191,7 +220,12 @@ func DeleteAccount(c *gin.Context) (*acmodel.Account, error) {
 // @Router /api/v1/ac/roles [GET]
 // @Security ApiKeyAuth
 func ListRoles(c *gin.Context) ([]*acmodel.Role, error) {
-	return acbiz.ListRoles(c)
+	roles, err := acbiz.ListRoles(c)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("List roles: %v", roles)
+	return roles, nil
 }
 
 // @ID CreateRole
@@ -213,6 +247,12 @@ func CreateRole(c *gin.Context) (*acmodel.Role, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.
+		WithFields(logger.Fields{
+			"Description": param.Description,
+			"Permissions": param.Permissions,
+		}).
+		Infof("Create role: %s", param.Name)
 	return acbiz.CreateRole(c, &param)
 }
 
@@ -240,6 +280,12 @@ func PatchRole(c *gin.Context) (*acmodel.Role, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	logger.
+		WithFields(logger.Fields{
+			"Description": param.Description,
+			"Permissions": param.Permissions,
+		}).
+		Infof("Patch role: %s", name)
 	return acbiz.PatchRole(c, name, &param)
 }
 
@@ -261,6 +307,7 @@ func DeleteRole(c *gin.Context) (*acmodel.Role, error) {
 	if name == "" {
 		return nil, httpErr.NewBadRequest("Role name is required")
 	}
+	logger.Infof("Delete role: %s", name)
 	return acbiz.DeleteRole(c, name)
 }
 
