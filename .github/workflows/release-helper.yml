@@ -3,6 +3,7 @@ name: release oceanbase-helper
 on: 
   push:
     tags: 
+      - 'helper-[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
@@ -38,6 +39,11 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set Version variables
+        id: set_version_vars
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
+
       - name: Create and push manifests w/o cache
         uses: docker/build-push-action@v6
         with:
@@ -46,9 +52,9 @@ jobs:
           file: build/Dockerfile.obhelper
           push: true
           tags: |
-            ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-helper:${{ github.ref_name }}
+            ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-helper:${{ steps.set_version_vars.outputs.version }}
             ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-helper:latest
-            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/oceanbase-helper:${{ github.ref_name }}
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/oceanbase-helper:${{ steps.set_version_vars.outputs.version }}
             quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/oceanbase-helper:latest
-            ghcr.io/${{ github.repository_owner }}/oceanbase-helper:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/oceanbase-helper:${{ steps.set_version_vars.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/oceanbase-helper:latest
