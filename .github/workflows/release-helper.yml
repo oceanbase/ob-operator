@@ -6,6 +6,9 @@ on:
       - 'helper-[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
 
+env:
+  tagName: ${{ github.ref_name }}
+
 jobs:
   release-oceanbase-helper:
     runs-on: ubuntu-latest
