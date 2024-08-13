@@ -17,7 +17,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -88,11 +87,13 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 		// Update latest login time
 		now := time.Now().Unix()
 		up := &acmodel.UpdateAccountCreds{
-			Username:          username,
-			EncryptedPassword: account.password,
-			Nickname:          account.Nickname,
-			LastLoginAtUnix:   now,
-			Description:       account.Description,
+			Username: username,
+			AccountCreds: acmodel.AccountCreds{
+				EncryptedPassword: account.password,
+				Nickname:          account.Nickname,
+				LastLoginAtUnix:   now,
+				Description:       account.Description,
+			},
 		}
 		err = updateUserCredentials(ctx, credentials, up)
 		if err != nil {
@@ -123,11 +124,13 @@ func ResetAccountPassword(ctx context.Context, username string, resetParam *para
 	newEncryptedPwd := hex.EncodeToString(newBts[:])
 
 	up := &acmodel.UpdateAccountCreds{
-		Username:          username,
-		EncryptedPassword: newEncryptedPwd,
-		Nickname:          account.password,
-		LastLoginAtUnix:   time.Now().Unix(),
-		Description:       account.Description,
+		Username: username,
+		AccountCreds: acmodel.AccountCreds{
+			EncryptedPassword: newEncryptedPwd,
+			Nickname:          account.password,
+			LastLoginAtUnix:   time.Now().Unix(),
+			Description:       account.Description,
+		},
 	}
 	err = updateUserCredentials(ctx, credentials, up)
 	if err != nil {
@@ -166,10 +169,12 @@ func CreateAccount(ctx context.Context, param *acmodel.CreateAccountParam) (*acm
 	bts := sha256.Sum256([]byte(param.Password))
 	sha256EncodedPwd := hex.EncodeToString(bts[:])
 	up := &acmodel.UpdateAccountCreds{
-		Username:          param.Username,
-		EncryptedPassword: sha256EncodedPwd,
-		Nickname:          param.Nickname,
-		Description:       param.Description,
+		Username: param.Username,
+		AccountCreds: acmodel.AccountCreds{
+			EncryptedPassword: sha256EncodedPwd,
+			Nickname:          param.Nickname,
+			Description:       param.Description,
+		},
 	}
 	err = updateUserCredentials(ctx, credentials, up)
 	if err != nil {
@@ -240,11 +245,13 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 	}
 	if accountChanged {
 		up := &acmodel.UpdateAccountCreds{
-			Username:          username,
-			EncryptedPassword: acc.password,
-			Nickname:          acc.Nickname,
-			LastLoginAtUnix:   acc.LastLoginAt.Unix(),
-			Description:       acc.Description,
+			Username: username,
+			AccountCreds: acmodel.AccountCreds{
+				EncryptedPassword: acc.password,
+				Nickname:          acc.Nickname,
+				LastLoginAtUnix:   acc.LastLoginAt.Unix(),
+				Description:       acc.Description,
+			},
 		}
 		err = updateUserCredentials(ctx, credentials, up)
 		if err != nil {
@@ -309,7 +316,7 @@ func updateUserCredentials(c context.Context, credentials *v1.Secret, up *acmode
 	if up.Delete {
 		delete(credentials.Data, up.Username)
 	} else {
-		credentials.Data[up.Username] = []byte(up.String())
+		credentials.Data[up.Username] = []byte(up.ToLine())
 	}
 	clt := client.GetClient()
 	_, err := clt.ClientSet.CoreV1().Secrets(os.Getenv("USER_NAMESPACE")).Update(c, credentials, metav1.UpdateOptions{})
@@ -322,13 +329,9 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 	}
 	infoLine := string(credentials.Data[username])
 
-	parts := strings.SplitN(infoLine, " ", 4)
-	if len(parts) != 4 {
-		return nil, httpErr.NewInternal("User credentials file is corrupted: invalid format")
-	}
-	ts, err := strconv.ParseInt(parts[2], 10, 64)
+	creds, err := acmodel.NewAccountCreds(infoLine)
 	if err != nil {
-		return nil, httpErr.NewInternal("User credentials file is corrupted: last login time is not a valid timestamp")
+		return nil, httpErr.NewInternal(err.Error())
 	}
 	roles, err := getAccountRoles(username)
 	if err != nil {
@@ -337,18 +340,18 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 	if len(roles) == 0 {
 		return nil, httpErr.NewInternal("User credentials file is corrupted: user has no role")
 	}
-	lastLoginAt := time.Unix(ts, 0)
-	needReset := ts == 0
+	lastLoginAt := time.Unix(creds.LastLoginAtUnix, 0)
+	needReset := creds.LastLoginAtUnix == 0
 	return &account{
 		Account: acmodel.Account{
 			Username:    username,
-			Nickname:    parts[1],
+			Nickname:    creds.Nickname,
 			LastLoginAt: &lastLoginAt,
-			Description: parts[3],
+			Description: creds.Description,
 			Roles:       roles,
 			NeedReset:   needReset,
 		},
-		password: parts[0],
+		password: creds.EncryptedPassword,
 	}, nil
 }
 

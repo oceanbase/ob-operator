@@ -13,21 +13,48 @@ See the Mulan PSL v2 for more details.
 package ac
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
-type UpdateAccountCreds struct {
-	Username          string
+const (
+	accountLineSeparator = " <|:SEP:|> "
+)
+
+type AccountCreds struct {
 	EncryptedPassword string
 	Nickname          string
 	LastLoginAtUnix   int64
 	Description       string
-	Delete            bool
 }
 
-// key value format -> admin: pwd nickname lastLogin description
-func (u *UpdateAccountCreds) String() string {
+func NewAccountCreds(infoLine string) (*AccountCreds, error) {
+	parts := strings.SplitN(infoLine, accountLineSeparator, 4)
+	if len(parts) != 4 {
+		return nil, errors.New("User credentials file is corrupted: invalid format")
+	}
+	ts, err := strconv.ParseInt(parts[2], 10, 64)
+	if err != nil {
+		return nil, errors.New("User credentials file is corrupted: last login time is not a valid timestamp")
+	}
+	return &AccountCreds{
+		EncryptedPassword: parts[0],
+		Nickname:          parts[1],
+		LastLoginAtUnix:   ts,
+		Description:       strings.TrimSpace(parts[3]),
+	}, nil
+}
+
+type UpdateAccountCreds struct {
+	AccountCreds
+	Username string
+	Delete   bool
+}
+
+// key value format -> admin: pwd <SEP> nickname <SEP> lastLogin <SEP> description
+func (u *AccountCreds) ToLine() string {
 	lastLoginAtStr := fmt.Sprintf("%d", u.LastLoginAtUnix)
-	return strings.Join([]string{u.EncryptedPassword, u.Nickname, lastLoginAtStr, u.Description}, " ")
+	return strings.Join([]string{u.EncryptedPassword, u.Nickname, lastLoginAtStr, u.Description}, accountLineSeparator)
 }
