@@ -28,6 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
@@ -50,7 +51,9 @@ type JobContainerVolumes struct {
 	Volumes      []corev1.Volume
 }
 
-func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string, jobName string, image string, cmd string, volumeConfigs ...JobContainerVolumes) (output string, exitCode int32, err error) {
+func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
+	jobName string, image string, podFields *apitypes.PodFieldsSpec,
+	cmd string, volumeConfigs ...JobContainerVolumes) (output string, exitCode int32, err error) {
 	fullJobName := fmt.Sprintf("%s-%s", jobName, rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
@@ -78,6 +81,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 					Containers:    []corev1.Container{container},
 					RestartPolicy: corev1.RestartPolicyNever,
 					Volumes:       volumes,
+					SchedulerName: GetSchedulerName(podFields),
 				},
 			},
 			BackoffLimit:            &backoffLimit,

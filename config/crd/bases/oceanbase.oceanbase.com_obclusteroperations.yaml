@@ -4610,6 +4610,11 @@ spec:
                         properties:
                           image:
                             type: string
+                          podFields:
+                            properties:
+                              schedulerName:
+                                type: string
+                            type: object
                           resource:
                             properties:
                               cpu:

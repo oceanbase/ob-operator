@@ -523,7 +523,11 @@ func OptimizeTenantByScenario(m *OBTenantManager) tasktypes.TaskError {
 	}
 	m.Logger.Info("Start to optimize tenant parameter and variable")
 	jobName := fmt.Sprintf("optimize-tenant-%s-%s", m.OBTenant.Name, rand.String(6))
-	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBTenant.Namespace, jobName, obcluster.Spec.OBServerTemplate.Image, fmt.Sprintf("bin/oceanbase-helper optimize tenant %s", m.OBTenant.Spec.Scenario))
+	output, code, _ := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBTenant.Namespace,
+		jobName,
+		obcluster.Spec.OBServerTemplate.Image,
+		obcluster.Spec.OBServerTemplate.PodFields,
+		fmt.Sprintf("bin/oceanbase-helper optimize tenant %s", m.OBTenant.Spec.Scenario))
 	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
 		optimizeConfig := &helpermodel.OptimizationResponse{}
 		err := json.Unmarshal([]byte(output), optimizeConfig)
