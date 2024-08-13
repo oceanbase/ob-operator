@@ -81,7 +81,8 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 		account.Roles = roles
 	}
 
-	if account.LastLoginAt != nil && !account.LastLoginAt.IsZero() {
+	if account.LastLoginAt != nil && account.LastLoginAt.Unix() != 0 {
+		// The account has logged in before
 		enforcer.accMu.Lock()
 		defer enforcer.accMu.Unlock()
 		// Update latest login time
@@ -104,6 +105,7 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 	return &account.Account, nil
 }
 
+// ResetAccountPassword resets account's own password.
 func ResetAccountPassword(ctx context.Context, username string, resetParam *param.ResetPasswordParam) (*acmodel.Account, error) {
 	credentials, err := getDashboardUserCredentials(ctx)
 	if err != nil {
@@ -113,7 +115,7 @@ func ResetAccountPassword(ctx context.Context, username string, resetParam *para
 	if err != nil {
 		return nil, err
 	}
-	if account.LastLoginAt != nil && !account.LastLoginAt.IsZero() {
+	if account.LastLoginAt != nil && account.LastLoginAt.Unix() != 0 {
 		bts := sha256.Sum256([]byte(resetParam.OldPassword))
 		sha256EncodedPwd := hex.EncodeToString(bts[:])
 		if account.password != sha256EncodedPwd {
@@ -127,7 +129,7 @@ func ResetAccountPassword(ctx context.Context, username string, resetParam *para
 		Username: username,
 		AccountCreds: acmodel.AccountCreds{
 			EncryptedPassword: newEncryptedPwd,
-			Nickname:          account.password,
+			Nickname:          account.Nickname,
 			LastLoginAtUnix:   time.Now().Unix(),
 			Description:       account.Description,
 		},
@@ -230,7 +232,7 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 	}
 
 	accountChanged := false
-	if param.Password != "" && acc.password != param.Password {
+	if param.Password != "" {
 		bts := sha256.Sum256([]byte(param.Password))
 		acc.password = hex.EncodeToString(bts[:])
 		accountChanged = true
