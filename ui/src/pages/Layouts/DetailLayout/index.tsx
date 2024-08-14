@@ -1,4 +1,5 @@
 import logoImg from '@/assets/logo1.svg';
+import MyInfoModal from '@/components/customModal/MyInfoModal';
 import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import { logoutReq } from '@/services';
 import { getAppInfoFromStorage } from '@/utils/helper';
@@ -26,6 +27,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
   const location = useLocation();
   const { reportDataInterval } = useModel('global');
   const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
+  const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -96,12 +98,16 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
     <Menu
       onClick={({ key }) => {
         if (key === 'logout') logout();
+        if (key === 'myinfo') {
+          setInfoModalVisible(true);
+        }
         if (key === 'reset') {
           setResetModalVisible(true);
         }
       }}
     >
       <Menu.Item key="reset">修改密码</Menu.Item>
+      <Menu.Item key="myinfo">我的信息</Menu.Item>
       <Menu.Item key="logout">
         {intl.formatMessage({
           id: 'dashboard.Layouts.BasicLayout.LogOut',
@@ -142,6 +148,10 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       <ResetPwdModal
         visible={resetModalVisible}
         setVisible={setResetModalVisible}
+      />
+      <MyInfoModal
+        visible={infoModalVisible}
+        setVisible={setInfoModalVisible}
       />
     </div>
   );

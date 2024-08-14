@@ -17,5 +17,10 @@ export default defineConfig({
   },
   routes,
   history: { type: 'hash' },
-  npmClient: 'yarn'
+  npmClient: 'yarn',
+  proxy:{
+    '/api/v1':{
+      target:"http://11.161.204.4:30681"
+    }
+  }
 });
