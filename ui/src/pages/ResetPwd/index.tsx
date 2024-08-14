@@ -26,7 +26,7 @@ export default function ResetPwd() {
       <div>
         <img className={styles.logo} src={logoSrc} alt="" />
       </div>
-      <Alert 
+      <Alert
         className={styles.alertContent}
         message="您之前没有登录过，当前密码为默认密码长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！"
         type="warning"

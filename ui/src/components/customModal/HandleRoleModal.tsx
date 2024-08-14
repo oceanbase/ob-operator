@@ -38,16 +38,16 @@ function PermissionSelect({
   const [checkedList, setCheckedList] = useState<CheckedList>([]);
   const checkAll = !checkedList.some(
     (item) =>
-      !(item.checked.includes('READ') && item.checked.includes('WRITE')),
+      !(item.checked.includes('read') && item.checked.includes('write')),
   );
   const options = [
-    { label: '读', value: 'READ' },
-    { label: '写', value: 'WRITE' },
+    { label: '读', value: 'read' },
+    { label: '写', value: 'write' },
   ];
   const onCheckAllChange: CheckboxProps['onChange'] = (e) => {
     if (e.target.checked) {
       setCheckedList((preCheckedList) =>
-        preCheckedList.map((item) => ({ ...item, checked: ['READ', 'WRITE'] })),
+        preCheckedList.map((item) => ({ ...item, checked: ['read', 'write'] })),
       );
     } else {
       setCheckedList((preCheckedList) =>
@@ -56,6 +56,8 @@ function PermissionSelect({
     }
   };
   const handleSelected = (val: string[], target: string) => {
+    console.log('handleSelected', val, target);
+
     setCheckedList((preCheckedList) => {
       const newList = [...preCheckedList];
       newList.forEach((item) => {
@@ -63,6 +65,8 @@ function PermissionSelect({
           item.checked = val;
         }
       });
+      console.log('newList', newList);
+
       return newList;
     });
   };
@@ -72,23 +76,30 @@ function PermissionSelect({
       for (const item of defaultValue) {
         newCheckedList.push({
           domain: item.domain,
-          checked: item.action === 'WRITE' ? ['WRITE', 'READ'] : [item.action],
+          checked: item.action === 'write' ? ['write', 'read'] : [item.action],
         });
       }
+      console.log('aaa');
+
       setCheckedList(newCheckedList);
     }
-  }, []);
+  }, [defaultValue]);
 
   useEffect(() => {
     const newValue = [];
+    console.log('checkedList', checkedList);
+
     for (const item of checkedList) {
-      if (!item.checked.length) continue;
+      if (!item.checked.includes('write') && !item.checked.includes('read'))
+        continue;
       newValue.push({
-        action: item.checked.includes('WRITE') ? 'WRITE' : 'READ',
+        action: item.checked.includes('write') ? 'write' : 'read',
         domain: item.domain,
         object: '*',
       });
     }
+    console.log('newValue', newValue);
+
     newValue.length && onChange?.(newValue);
   }, [checkedList]);
   return (
@@ -144,7 +155,7 @@ export default function HandleRoleModal({
       return { ...item, action: '' };
     } else {
       const editItem = editValue?.policies.find(
-        (item) => item.domain === item.domain,
+        (policy) => policy.domain === item.domain,
       );
       return editItem ? { ...editItem } : { ...item, action: '' };
     }
@@ -154,25 +165,24 @@ export default function HandleRoleModal({
       type === Type.CREATE
         ? await access.createRole(formData)
         : await access.patchRole(
-            formData.name,
+            editValue!.name,
             pick(formData, ['description', 'permissions']),
           );
     if (res.successful) {
       message.success('操作成功！');
       if (successCallback) successCallback();
-      form.resetFields();
       setVisible(false);
     }
   };
 
   useEffect(() => {
-    if (type === Type.EDIT) {
+    if (type === Type.EDIT && visible) {
       form.setFieldsValue({
         description: editValue?.description,
         permissions: editValue?.policies,
       });
     }
-  }, [type, editValue]);
+  }, [type, editValue, visible]);
 
   return (
     <CustomModal
@@ -184,7 +194,7 @@ export default function HandleRoleModal({
         setVisible(false);
       }}
     >
-      <Form form={form} onFinish={onFinish}>
+      <Form form={form} onFinish={onFinish} preserve={false}>
         {type === Type.CREATE && (
           <Form.Item
             rules={[{ required: true, message: '请输入角色名称' }]}
@@ -201,7 +211,7 @@ export default function HandleRoleModal({
         >
           <Input placeholder="请输入" />
         </Form.Item>
-        <Form.Item label="权限" name={'permissions'}>
+        <Form.Item required label="权限" name={'permissions'}>
           <PermissionSelect
             fetchData={allPolicies}
             defaultValue={defaultValue}

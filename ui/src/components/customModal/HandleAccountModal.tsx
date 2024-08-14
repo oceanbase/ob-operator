@@ -48,8 +48,8 @@ export default function HandleAccountModal({
       type === Type.CREATE
         ? await access.createAccount(omit(formData, ['confirmPassword']))
         : await access.patchAccount(
-            formData.username,
-            omit(formData, ['confirmPassword', 'username']),
+            editValue!.username,
+            omit(formData, ['confirmPassword', 'username', 'password']),
           );
     if (res.successful) {
       message.success('操作成功！');

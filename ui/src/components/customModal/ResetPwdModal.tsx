@@ -2,6 +2,7 @@ import { access } from '@/api';
 import type { ParamResetPasswordParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Form, Input, message } from 'antd';
+import { omit } from 'lodash';
 import CustomModal from '.';
 
 interface ResetPwdModalProps {
@@ -23,10 +24,12 @@ export default function ResetPwdModal({
       form.submit();
     } catch (err) {}
   };
-  const onFinish = async (values: ParamResetPasswordParam) => {
+  const onFinish = async (
+    values: ParamResetPasswordParam & { confirmPassword: string },
+  ) => {
     values.oldPassword = encryptText(values.oldPassword!, publicKey) as string;
     values.password = encryptText(values.password!, publicKey) as string;
-    const res = await access.resetPassword(values);
+    const res = await access.resetPassword(omit(values, ['confirmPassword']));
     if (res.successful) {
       message.success('操作成功！');
       if (successCallback) successCallback();
@@ -36,7 +39,7 @@ export default function ResetPwdModal({
   };
   return (
     <CustomModal
-      title="重置密码"
+      title="修改密码"
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {

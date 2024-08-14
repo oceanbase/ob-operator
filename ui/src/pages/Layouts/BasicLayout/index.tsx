@@ -1,4 +1,5 @@
 import logoImg from '@/assets/logo1.svg';
+import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import { logoutReq } from '@/services';
 import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
@@ -15,6 +16,7 @@ const BasicLayout: React.FC = () => {
   const { initialState } = useModel('@@initialState');
   const [version, setVersion] = useState<string>('');
   const { reportDataInterval } = useModel('global');
+  const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
   const access = useAccess();
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
@@ -85,10 +87,14 @@ const BasicLayout: React.FC = () => {
 
   const userMenu = (
     <Menu
-      onClick={() => {
-        logout();
+      onClick={({ key }) => {
+        if (key === 'logout') logout();
+        if (key === 'reset') {
+          setResetModalVisible(true);
+        }
       }}
     >
+      <Menu.Item key="reset">修改密码</Menu.Item>
       <Menu.Item key="logout">
         {intl.formatMessage({
           id: 'dashboard.Layouts.BasicLayout.LogOut',
@@ -108,7 +114,9 @@ const BasicLayout: React.FC = () => {
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
         menus={menus}
-        defaultSelectedKeys={[menus.find((item) => item.accessible)?.link || '/overview']}
+        defaultSelectedKeys={[
+          menus.find((item) => item.accessible)?.link || '/overview',
+        ]}
         location={location}
         topHeader={{
           username: initialState?.accountInfo?.nickname || 'admin',
@@ -123,6 +131,10 @@ const BasicLayout: React.FC = () => {
       >
         <Outlet />
       </OBLayout>
+      <ResetPwdModal
+        visible={resetModalVisible}
+        setVisible={setResetModalVisible}
+      />
     </div>
   );
 };

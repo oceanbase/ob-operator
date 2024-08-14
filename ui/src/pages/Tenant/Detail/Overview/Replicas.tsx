@@ -1,8 +1,8 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { useParams } from '@umijs/max';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { useAccess, useParams } from '@umijs/max';
 import { Button, Col, Descriptions, message } from 'antd';
 import styles from './index.less';
 
@@ -50,9 +50,10 @@ export default function Replicas({
   setEditZone,
   operateType,
   cluster,
-  tenantStatus
+  tenantStatus,
 }: ReplicasProps) {
   const { ns, name } = useParams();
+  const access = useAccess();
   const sortKeys = (keys: string[]) => {
     const minCpuIdx = keys.findIndex((key) => key === 'minCPU');
     const memorySizeIdx = keys.findIndex((key) => key === 'memorySize');
@@ -63,7 +64,7 @@ export default function Replicas({
   };
 
   const deleteResourcePool = async (zoneName: string) => {
-    const res = await deleteObtenantPool({ ns:ns!, name:name!, zoneName });
+    const res = await deleteObtenantPool({ ns: ns!, name: name!, zoneName });
     if (res.successful) {
       refreshTenant();
       message.success(
@@ -100,16 +101,21 @@ export default function Replicas({
           </h2>
         }
         extra={
-          <Button
-            type="primary"
-            disabled={cluster?.topology?.length === replicaList.length || tenantStatus !== 'running'}
-            onClick={addResourcePool}
-          >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.Replicas.AddAResourcePool',
-              defaultMessage: '新增资源池',
-            })}
-          </Button>
+          access.obclusterwrite ? (
+            <Button
+              type="primary"
+              disabled={
+                cluster?.topology?.length === replicaList.length ||
+                tenantStatus !== 'running'
+              }
+              onClick={addResourcePool}
+            >
+              {intl.formatMessage({
+                id: 'Dashboard.Detail.Overview.Replicas.AddAResourcePool',
+                defaultMessage: '新增资源池',
+              })}
+            </Button>
+          ) : null
         }
         collapsible={true}
         defaultExpand={true}
@@ -132,7 +138,9 @@ export default function Replicas({
                 <div>
                   <Button
                     onClick={() => editResourcePool(replica.zone)}
-                    disabled={tenantStatus !== 'running'}
+                    disabled={
+                      tenantStatus !== 'running' || !access.obclusterwrite
+                    }
                     type="link"
                   >
                     {intl.formatMessage({
@@ -155,7 +163,9 @@ export default function Replicas({
                       });
                     }}
                     disabled={
-                      replicaList.length <= 2 || tenantStatus !== 'running'
+                      replicaList.length <= 2 ||
+                      tenantStatus !== 'running' ||
+                      !access.obclusterwrite
                     }
                     type="link"
                     danger

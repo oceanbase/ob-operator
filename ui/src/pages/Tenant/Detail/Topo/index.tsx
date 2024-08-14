@@ -1,15 +1,15 @@
 import TopoComponent from '@/components/TopoComponent';
-import { useParams } from '@umijs/max';
-import { getTenant } from '@/services/tenant';
+import { REFRESH_TENANT_TIME, RESULT_STATUS } from '@/constants';
 import {
   getEssentialParameters as getEssentialParametersReq,
   getSimpleClusterList,
-  } from '@/services';
+} from '@/services';
+import { getTenant } from '@/services/tenant';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import BasicInfo from '../Overview/BasicInfo';
-import { REFRESH_TENANT_TIME,RESULT_STATUS } from '@/constants';
+import { useEffect, useRef, useState } from 'react';
 import { getClusterFromTenant } from '../../helper';
-import { useState, useEffect, useRef } from 'react';
+import BasicInfo from '../Overview/BasicInfo';
 
 export default function Topo() {
   const { ns, name } = useParams();
@@ -17,9 +17,13 @@ export default function Topo() {
   const [editZone, setEditZone] = useState<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
   const [defaultUnitCount, setDefaultUnitCount] = useState<number>(1);
-  const { data: tenantResponse,refresh: reGetTenantDetail,loading } = useRequest(getTenant, {
-    defaultParams: [{ ns, name }],
-    onSuccess:({ data, successful }) => {
+  const {
+    data: tenantResponse,
+    refresh: reGetTenantDetail,
+    loading,
+  } = useRequest(getTenant, {
+    defaultParams: [{ ns: ns!, name: name! }],
+    onSuccess: ({ data, successful }) => {
       if (successful) {
         if (data.info.unitNumber) {
           setDefaultUnitCount(data.info.unitNumber);
@@ -32,7 +36,7 @@ export default function Topo() {
           clearTimeout(timerRef.current);
         }
       }
-    }
+    },
   });
 
   useRequest(getSimpleClusterList, {
@@ -48,9 +52,9 @@ export default function Topo() {
     },
   });
   const { data: essentialParameterRes, run: getEssentialParameters } =
-  useRequest(getEssentialParametersReq, {
-    manual: true,
-  });
+    useRequest(getEssentialParametersReq, {
+      manual: true,
+    });
   const tenantTopoData = tenantResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
   useEffect(() => {
