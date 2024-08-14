@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2024 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -12,9 +12,6 @@ See the Mulan PSL v2 for more details.
 
 package types
 
-type OBServerTemplate struct {
-	Image     string                `json:"image"`
-	Resource  *ResourceSpec         `json:"resource"`
-	Storage   *OceanbaseStorageSpec `json:"storage"`
-	PodFields *PodFieldsSpec        `json:"podFields,omitempty"`
+type PodFieldsSpec struct {
+	SchedulerName *string `json:"schedulerName,omitempty"`
 }
