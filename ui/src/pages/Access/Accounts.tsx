@@ -82,6 +82,7 @@ export default function Accounts({
       title: '最近一次登陆时间',
       key: 'lastLoginAt',
       dataIndex: 'lastLoginAt',
+      render: (value) => <span>{value || '-'}</span>,
     },
     {
       title: '操作',

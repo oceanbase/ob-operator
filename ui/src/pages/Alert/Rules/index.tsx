@@ -158,7 +158,7 @@ export default function Rules() {
           </Button>
           <Button
             type="link"
-            style={{ color: '#ff4b4b' }}
+            style={access.alarmwrite ? { color: '#ff4b4b' } : {}}
             disabled={!access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({

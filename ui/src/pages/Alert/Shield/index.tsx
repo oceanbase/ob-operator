@@ -215,7 +215,9 @@ export default function Shield() {
           <Button
             type="link"
             style={
-              record.status.state !== 'expired' ? { color: '#ff4b4b' } : {}
+              record.status.state !== 'expired' && access.alarmwrite
+                ? { color: '#ff4b4b' }
+                : {}
             }
             disabled={record.status.state === 'expired' || !access.alarmwrite}
             onClick={() => {
