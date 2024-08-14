@@ -1,6 +1,6 @@
 initCredentials: true
-# base64 encoded password. If not set, the chart will generate it randomly
-adminPassword: 
+# admin password. If not set, the chart will generate it randomly
+adminPassword: admin
 
 userCredentials: 
 userNamespace: 
