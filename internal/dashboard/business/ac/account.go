@@ -17,6 +17,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -342,13 +343,17 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 	if len(roles) == 0 {
 		return nil, httpErr.NewInternal("User credentials file is corrupted: user has no role")
 	}
-	lastLoginAt := time.Unix(creds.LastLoginAtUnix, 0)
+	var lastLoginAt *time.Time
+	if creds.LastLoginAtUnix != 0 {
+		tmpNow := time.Unix(creds.LastLoginAtUnix, 0)
+		lastLoginAt = &tmpNow
+	}
 	needReset := creds.LastLoginAtUnix == 0
 	return &account{
 		Account: acmodel.Account{
 			Username:    username,
 			Nickname:    creds.Nickname,
-			LastLoginAt: &lastLoginAt,
+			LastLoginAt: lastLoginAt,
 			Description: creds.Description,
 			Roles:       roles,
 			NeedReset:   needReset,
@@ -370,6 +375,9 @@ func fetchAccounts(ctx context.Context) ([]acmodel.Account, error) {
 		}
 		accounts = append(accounts, account.Account)
 	}
+	sort.SliceStable(accounts, func(i, j int) bool {
+		return accounts[i].Username < accounts[j].Username
+	})
 	return accounts, nil
 }
 
