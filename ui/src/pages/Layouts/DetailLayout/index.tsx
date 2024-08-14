@@ -95,7 +95,6 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
   const userMenu = (
     <Menu
       onClick={({ key }) => {
-        console.log('key', key);
         if (key === 'logout') logout();
         if (key === 'reset') {
           setResetModalVisible(true);

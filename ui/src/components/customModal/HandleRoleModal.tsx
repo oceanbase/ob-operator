@@ -56,8 +56,6 @@ function PermissionSelect({
     }
   };
   const handleSelected = (val: string[], target: string) => {
-    console.log('handleSelected', val, target);
-
     setCheckedList((preCheckedList) => {
       const newList = [...preCheckedList];
       newList.forEach((item) => {
@@ -65,8 +63,6 @@ function PermissionSelect({
           item.checked = val;
         }
       });
-      console.log('newList', newList);
-
       return newList;
     });
   };
@@ -79,16 +75,12 @@ function PermissionSelect({
           checked: item.action === 'write' ? ['write', 'read'] : [item.action],
         });
       }
-      console.log('aaa');
-
       setCheckedList(newCheckedList);
     }
   }, [defaultValue]);
 
   useEffect(() => {
     const newValue = [];
-    console.log('checkedList', checkedList);
-
     for (const item of checkedList) {
       if (!item.checked.includes('write') && !item.checked.includes('read'))
         continue;
@@ -98,8 +90,6 @@ function PermissionSelect({
         object: '*',
       });
     }
-    console.log('newValue', newValue);
-
     newValue.length && onChange?.(newValue);
   }, [checkedList]);
   return (
