@@ -16,16 +16,17 @@ Welcome to OceanBase dashboard!
 
   > kubectl port-forward -n {{ .Release.Namespace }} services/oceanbase-dashboard-{{ .Release.Name }} 18081:80 --address 0.0.0.0
 
-then you can visit the dashboard on http://$YOUR_SERVER_IP:18081
+then you can visit the dashboard on http://$YOUR_SERVER_IP:18081 (Take 18081 as an example here)
 
-2. For security reason, it is recommended to use a service to access the dashboard. By default the oceanbase-dashboard helm chart create a service of type NodePort.
+2. For security reason, it is recommended to use a service to access the dashboard. By default the oceanbase-dashboard helm chart creates a service of type NodePort.
    You can use the following command to get the nodePort of the dashboard service:
 
-  > echo $(kubectl get -n {{ .Release.Namespace }} secret/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
+  > export SERVICE_PORT_PORT=$(kubectl get -n {{ .Release.Namespace }} secret/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
 
 then you can visit the dashboard on http://$YOUR_SERVER_IP:$SERVICE_PORT_PORT
 
-3. Login the dashboard with the following default account:
+3. Login the dashboard with the following default account. 
+   For users that log in for the first time, it is required to reset the password.
 
 Username: admin
 Password: <The password you set in values or "admin" by default>

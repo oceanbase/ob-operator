@@ -1,5 +1,5 @@
 initCredentials: true
-# admin password. If not set, the chart will generate it randomly
+# admin's password. If not set, the chart will generate it randomly
 adminPassword: admin
 
 userCredentials: 
