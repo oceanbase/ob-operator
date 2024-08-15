@@ -1,4 +1,6 @@
 import logoImg from '@/assets/logo1.svg';
+import MyInfoModal from '@/components/customModal/MyInfoModal';
+import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import { logoutReq } from '@/services';
 import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
@@ -6,7 +8,7 @@ import { AlertFilled, TeamOutlined } from '@ant-design/icons';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
-import { Outlet, history, useLocation, useModel, useAccess } from '@umijs/max';
+import { Outlet, history, useAccess, useLocation, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 
@@ -15,17 +17,17 @@ interface DetailLayoutProps {
   menus: MenuItem[];
 }
 
-
-
 const DetailLayout: React.FC<DetailLayoutProps> = ({
   subSideSelectKey,
   menus,
 }) => {
-  const user = localStorage.getItem('user');
+  const { initialState } = useModel('@@initialState');
   const access = useAccess();
   const [version, setVersion] = useState<string>('');
   const location = useLocation();
   const { reportDataInterval } = useModel('global');
+  const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
+  const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -94,10 +96,18 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
 
   const userMenu = (
     <Menu
-      onClick={() => {
-        logout();
+      onClick={({ key }) => {
+        if (key === 'logout') logout();
+        if (key === 'myinfo') {
+          setInfoModalVisible(true);
+        }
+        if (key === 'reset') {
+          setResetModalVisible(true);
+        }
       }}
     >
+      <Menu.Item key="reset">修改密码</Menu.Item>
+      <Menu.Item key="myinfo">我的信息</Menu.Item>
       <Menu.Item key="logout">
         {intl.formatMessage({
           id: 'dashboard.Layouts.BasicLayout.LogOut',
@@ -119,7 +129,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
         topHeader={{
-          username: user || '',
+          username: initialState?.accountInfo?.nickname || 'admin',
           userMenu,
           showLocale: true,
           locales: ['zh-CN', 'en-US'],
@@ -135,6 +145,14 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       >
         <Outlet />
       </BasicLayout>
+      <ResetPwdModal
+        visible={resetModalVisible}
+        setVisible={setResetModalVisible}
+      />
+      <MyInfoModal
+        visible={infoModalVisible}
+        setVisible={setInfoModalVisible}
+      />
     </div>
   );
 };

@@ -6,7 +6,7 @@ export const errorHandling = (error: any) => {
     message.warning(
       intl.formatMessage({
         id: 'src.api.2CA64FC6',
-        defaultMessage: '登陆已过期',
+        defaultMessage: '登录已过期',
       }),
     );
     location.href = '/#/login';
@@ -18,6 +18,8 @@ export const errorHandling = (error: any) => {
       response?.data?.message === 'Error BadRequest: password is incorrect'
     ) {
       message.error('原密码输入不正确');
+    } else if (response?.status === 403) {
+      message.warning('无权限访问');
     } else {
       message.error(error?.response?.data?.message || error.message);
     }

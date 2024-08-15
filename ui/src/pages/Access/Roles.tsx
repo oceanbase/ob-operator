@@ -48,7 +48,7 @@ export default function Roles({ allRoles, refreshRoles }: RolesProps) {
           <Space size={[8, 16]} wrap>
             {permission.map((item: AcPolicy) => (
               <span>
-                {item.object}：{item.action}
+                {item.domain}:{item.action}
               </span>
             ))}
           </Space>
@@ -100,6 +100,7 @@ export default function Roles({ allRoles, refreshRoles }: RolesProps) {
         visible={modalVisible}
         editValue={editData}
         setVisible={setModalVisible}
+        successCallback={refreshRoles}
         type={Type.EDIT}
       />
     </div>

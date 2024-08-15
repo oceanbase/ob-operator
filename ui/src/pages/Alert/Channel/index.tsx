@@ -92,7 +92,7 @@ export default function Channel() {
             })}
           </Button>
           <Button
-            style={{ color: '#ff4b4b' }}
+            style={access.alarmwrite ? { color: '#ff4b4b' } : {}}
             disabled={!access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({

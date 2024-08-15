@@ -11,7 +11,7 @@ import { getBackupJobs, getBackupPolicy, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useParams } from '@umijs/max';
+import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Row, Tooltip, message } from 'antd';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -36,6 +36,7 @@ type OperateItemConfigType = {
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
+  const access = useAccess();
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('changeUnitCount');
   const operateTypeRef = useRef<OBTenant.OperateType>();
@@ -220,38 +221,40 @@ export default function TenantOverview() {
         id: 'Dashboard.Detail.Overview.TenantOverview',
         defaultMessage: '租户概览',
       }),
-      extra: [
-        ...operateListConfig
-          .filter((item) => item.show && !item.isMore)
-          .map((item, index) => (
-            <Button
-              type={
-                item.text !==
-                intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.ChangePassword',
-                  defaultMessage: '修改密码',
-                })
-                  ? 'primary'
-                  : 'default'
-              }
-              onClick={item.onClick}
-              danger={item.danger}
-              key={index}
+      extra: access.obclusterwrite
+        ? [
+            ...operateListConfig
+              .filter((item) => item.show && !item.isMore)
+              .map((item, index) => (
+                <Button
+                  type={
+                    item.text !==
+                    intl.formatMessage({
+                      id: 'Dashboard.Detail.Overview.ChangePassword',
+                      defaultMessage: '修改密码',
+                    })
+                      ? 'primary'
+                      : 'default'
+                  }
+                  onClick={item.onClick}
+                  danger={item.danger}
+                  key={index}
+                >
+                  {item.text}
+                </Button>
+              )),
+            <Tooltip
+              getPopupContainer={() => container}
+              title={<OperateListModal />}
+              placement="bottomLeft"
+              key={4}
             >
-              {item.text}
-            </Button>
-          )),
-        <Tooltip
-          getPopupContainer={() => container}
-          title={<OperateListModal />}
-          placement="bottomLeft"
-          key={4}
-        >
-          <Button>
-            <EllipsisOutlined />
-          </Button>
-        </Tooltip>,
-      ],
+              <Button>
+                <EllipsisOutlined />
+              </Button>
+            </Tooltip>,
+          ]
+        : [],
     };
   };
 

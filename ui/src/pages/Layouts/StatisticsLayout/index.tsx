@@ -3,10 +3,12 @@ import { useEffect } from 'react';
 
 import { CHECK_STORAGE_INTERVAL } from '@/constants';
 import { isReportTimeExpired, reportPollData } from '@/utils/helper';
-import { useModel } from '@umijs/max';
+import { useModel, useNavigate } from '@umijs/max';
 
 export default function StatisticsLayout() {
   const { reportDataInterval } = useModel('global');
+  const navigate = useNavigate();
+  const { initialState } = useModel('@@initialState');
   useEffect(() => {
     const lastReportTimestamp = Number(localStorage.getItem('lastReportTime'));
     if (!lastReportTimestamp || isReportTimeExpired(lastReportTimestamp)) {
@@ -26,5 +28,12 @@ export default function StatisticsLayout() {
       clearInterval(reportDataInterval.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (initialState?.accountInfo?.needReset) {
+      navigate('/reset');
+    }
+  }, [initialState]);
+
   return <Outlet />;
 }

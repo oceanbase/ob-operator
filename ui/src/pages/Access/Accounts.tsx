@@ -82,6 +82,7 @@ export default function Accounts({
       title: '最近一次登陆时间',
       key: 'lastLoginAt',
       dataIndex: 'lastLoginAt',
+      render: (value) => <span>{value || '-'}</span>,
     },
     {
       title: '操作',
@@ -98,7 +99,7 @@ export default function Accounts({
           <Space>
             <Button
               onClick={() => setResetModalVisible(true)}
-              disabled={otherAdmin || !access.acwrite}
+              disabled={otherAdmin || (!access.acwrite && !isMyself)}
               type="link"
             >
               重置密码
@@ -139,6 +140,7 @@ export default function Accounts({
         setVisible={setModalVisible}
         editValue={editData}
         visible={modalVisible}
+        successCallback={refreshAccounts}
         type={Type.EDIT}
       />
       <ResetPwdModal

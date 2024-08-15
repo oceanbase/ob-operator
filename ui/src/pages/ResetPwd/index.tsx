@@ -1,7 +1,7 @@
 import { access } from '@/api';
 import logoSrc from '@/assets/oceanbase_logo.svg';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
-import { useNavigate } from '@umijs/max';
+import { useModel, useNavigate } from '@umijs/max';
 import { Alert, Button, Form, Input } from 'antd';
 
 import styles from './index.less';
@@ -14,10 +14,16 @@ interface FormData {
 export default function ResetPwd() {
   const publicKey = usePublicKey();
   const navigate = useNavigate();
+  const { setInitialState, initialState, refresh } = useModel('@@initialState');
   const onFinish = async (values: FormData) => {
     values.password = encryptText(values.password, publicKey) as string;
     const res = await access.resetPassword({ password: values.password });
     if (res.successful) {
+      setInitialState({
+        ...initialState,
+        accountInfo: { ...initialState!.accountInfo, needReset: false },
+      });
+      await refresh()
       navigate('/overview');
     }
   };
@@ -26,7 +32,7 @@ export default function ResetPwd() {
       <div>
         <img className={styles.logo} src={logoSrc} alt="" />
       </div>
-      <Alert 
+      <Alert
         className={styles.alertContent}
         message="您之前没有登录过，当前密码为默认密码长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！"
         type="warning"

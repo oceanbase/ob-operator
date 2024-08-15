@@ -3,18 +3,17 @@ import { getTenant } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
 import { getFilterData } from '@/components/MonitorDetail/helper';
-
 
 export default function Monitor() {
   const { ns, name, tenantName } = useParams();
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([
     {
       key: 'tenant_name',
-      value: tenantName,
+      value: tenantName!,
     },
   ]);
   const [filterData, setFilterData] = useState<Monitor.FilterDataType>({
@@ -34,7 +33,7 @@ export default function Monitor() {
   );
 
   useEffect(() => {
-    getTenantDetail({ ns, name });
+    getTenantDetail({ ns: ns!, name: name! });
   }, []);
   const tenantDetail = tenantDetailResponse?.data;
   return (

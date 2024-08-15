@@ -6,7 +6,7 @@ import {
   editBackupReportWrap,
 } from '@/services/reportRequest/backupReportReq';
 import { intl } from '@/utils/intl';
-import { useParams } from '@umijs/max';
+import { useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Button,
@@ -48,6 +48,7 @@ export default function BackupConfiguration({
   backupPolicyRefresh,
 }: BackupConfigurationProps) {
   const [form] = Form.useForm();
+  const access = useAccess();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [isEdit, setIsEdit] = useState<boolean>(false);
   const curConfig = useRef({});
@@ -208,55 +209,57 @@ export default function BackupConfiguration({
       })}
       style={{ width: '100%' }}
       extra={
-        <Space>
-          <Button type="primary" onClick={changeEditBtnStatus}>
-            {isEdit
-              ? intl.formatMessage({
-                  id: 'Dashboard.Detail.Backup.BackupConfiguration.UpdateConfiguration',
-                  defaultMessage: '更新配置',
+        access.obclusterwrite ? (
+          <Space>
+            <Button type="primary" onClick={changeEditBtnStatus}>
+              {isEdit
+                ? intl.formatMessage({
+                    id: 'Dashboard.Detail.Backup.BackupConfiguration.UpdateConfiguration',
+                    defaultMessage: '更新配置',
+                  })
+                : intl.formatMessage({
+                    id: 'Dashboard.Detail.Backup.BackupConfiguration.Edit',
+                    defaultMessage: '编辑',
+                  })}
+            </Button>
+            <Button
+              disabled={
+                backupPolicy.status !== 'RUNNING' &&
+                backupPolicy.status !== 'PAUSED'
+              }
+              onClick={changeStatus}
+            >
+              {backupPolicy.status === 'PAUSING' ||
+              backupPolicy.status === 'PAUSED'
+                ? intl.formatMessage({
+                    id: 'Dashboard.Detail.Backup.BackupConfiguration.Recovery',
+                    defaultMessage: '恢复',
+                  })
+                : intl.formatMessage({
+                    id: 'Dashboard.Detail.Backup.BackupConfiguration.Pause',
+                    defaultMessage: '暂停',
+                  })}
+            </Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() =>
+                showDeleteConfirm({
+                  onOk: () => deleteBackupPolicyReq({ ns, name }),
+                  title: intl.formatMessage({
+                    id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
+                    defaultMessage: '确定要删除该备份策略吗？',
+                  }),
                 })
-              : intl.formatMessage({
-                  id: 'Dashboard.Detail.Backup.BackupConfiguration.Edit',
-                  defaultMessage: '编辑',
-                })}
-          </Button>
-          <Button
-            disabled={
-              backupPolicy.status !== 'RUNNING' &&
-              backupPolicy.status !== 'PAUSED'
-            }
-            onClick={changeStatus}
-          >
-            {backupPolicy.status === 'PAUSING' ||
-            backupPolicy.status === 'PAUSED'
-              ? intl.formatMessage({
-                  id: 'Dashboard.Detail.Backup.BackupConfiguration.Recovery',
-                  defaultMessage: '恢复',
-                })
-              : intl.formatMessage({
-                  id: 'Dashboard.Detail.Backup.BackupConfiguration.Pause',
-                  defaultMessage: '暂停',
-                })}
-          </Button>
-          <Button
-            type="primary"
-            danger
-            onClick={() =>
-              showDeleteConfirm({
-                onOk: () => deleteBackupPolicyReq({ ns, name }),
-                title: intl.formatMessage({
-                  id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
-                  defaultMessage: '确定要删除该备份策略吗？',
-                }),
-              })
-            }
-          >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
-              defaultMessage: '删除',
-            })}
-          </Button>
-        </Space>
+              }
+            >
+              {intl.formatMessage({
+                id: 'Dashboard.Detail.Backup.BackupConfiguration.Delete',
+                defaultMessage: '删除',
+              })}
+            </Button>
+          </Space>
+        ) : null
       }
     >
       <Form
@@ -282,16 +285,19 @@ export default function BackupConfiguration({
         <Row>
           <Col span={12}>
             <SchduleSelectFormItem
-              disable={!isEdit}
+              disable={!isEdit || !access.obclusterwrite}
               form={form}
               scheduleValue={scheduleValue}
             />
           </Col>
           <Col span={12}>
-            <ScheduleTimeFormItem disable={!isEdit} />
+            <ScheduleTimeFormItem disable={!isEdit || !access.obclusterwrite} />
           </Col>
           <Col span={12}>
-            <BakMethodsList disable={!isEdit} form={form} />
+            <BakMethodsList
+              disable={!isEdit || !access.obclusterwrite}
+              form={form}
+            />
           </Col>
           <Col span={24}>
             <Descriptions>
@@ -308,7 +314,7 @@ export default function BackupConfiguration({
             </Descriptions>
           </Col>
 
-          {isEdit ? (
+          {isEdit || !access.obclusterwrite ? (
             Object.keys(DATE_CONFIG).map((key, index) => (
               <Col span={8} key={index}>
                 <Form.Item label={DATE_CONFIG[key]} name={key}>
