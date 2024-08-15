@@ -1,6 +1,6 @@
 import { useModel } from '@umijs/max';
 import type { DescriptionsProps } from 'antd';
-import { Descriptions } from 'antd';
+import { Button, Descriptions } from 'antd';
 import CustomModal from '.';
 
 export default function MyInfoModal({
@@ -30,19 +30,26 @@ export default function MyInfoModal({
     },
     {
       key: 'lastLoginAt',
-      label: '最近一次登陆',
+      label: '最近一次登录',
       children: `${accountInfo?.lastLoginAt || '-'}`,
     },
   ];
   return (
     <CustomModal
       isOpen={visible}
-      handleOk={() => {
-        setVisible(false);
-      }}
       handleCancel={() => {
         setVisible(false);
       }}
+      footer={
+        <Button
+          type="primary"
+          onClick={() => {
+            setVisible(false);
+          }}
+        >
+          确定
+        </Button>
+      }
     >
       <Descriptions title="我的信息" items={items} />
     </CustomModal>

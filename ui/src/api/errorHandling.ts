@@ -6,7 +6,7 @@ export const errorHandling = (error: any) => {
     message.warning(
       intl.formatMessage({
         id: 'src.api.2CA64FC6',
-        defaultMessage: '登陆已过期',
+        defaultMessage: '登录已过期',
       }),
     );
     location.href = '/#/login';
