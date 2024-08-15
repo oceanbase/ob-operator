@@ -29,6 +29,11 @@ export default function MyInfoModal({
       } `,
     },
     {
+      key:'description',
+      label:'描述',
+      children: `${accountInfo?.description || '-'}`,
+    },
+    {
       key: 'lastLoginAt',
       label: '最近一次登录',
       children: `${accountInfo?.lastLoginAt || '-'}`,
