@@ -32,8 +32,6 @@ export default function StatisticsLayout() {
   useEffect(() => {
     if (initialState?.accountInfo?.needReset) {
       navigate('/reset');
-    } else {
-      navigate('/overview');
     }
   }, [initialState]);
 
