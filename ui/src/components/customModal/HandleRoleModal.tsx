@@ -1,6 +1,7 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
 import { Type } from '@/pages/Access/type';
+import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
@@ -41,9 +42,22 @@ function PermissionSelect({
       !(item.checked.includes('read') && item.checked.includes('write')),
   );
   const options = [
-    { label: '读', value: 'read' },
-    { label: '写', value: 'write' },
+    {
+      label: intl.formatMessage({
+        id: 'src.components.customModal.BFC9AB05',
+        defaultMessage: '读',
+      }),
+      value: 'read',
+    },
+    {
+      label: intl.formatMessage({
+        id: 'src.components.customModal.6FC754B4',
+        defaultMessage: '写',
+      }),
+      value: 'write',
+    },
   ];
+
   const onCheckAllChange: CheckboxProps['onChange'] = (e) => {
     if (e.target.checked) {
       setCheckedList((preCheckedList) =>
@@ -100,7 +114,10 @@ function PermissionSelect({
         onChange={onCheckAllChange}
         checked={checkAll}
       >
-        所有权限
+        {intl.formatMessage({
+          id: 'src.components.customModal.1E76C4F3',
+          defaultMessage: '所有权限',
+        })}
       </Checkbox>
       {fetchData.map((item, index) => (
         <div key={index}>
@@ -159,7 +176,12 @@ export default function HandleRoleModal({
             pick(formData, ['description', 'permissions']),
           );
     if (res.successful) {
-      message.success('操作成功！');
+      message.success(
+        intl.formatMessage({
+          id: 'src.components.customModal.66C28C4A',
+          defaultMessage: '操作成功！',
+        }),
+      );
       if (successCallback) successCallback();
       setVisible(false);
     }
@@ -176,7 +198,24 @@ export default function HandleRoleModal({
 
   return (
     <CustomModal
-      title={`${type === Type.EDIT ? '编辑' : '创建'}角色`}
+      title={intl.formatMessage(
+        {
+          id: 'src.components.customModal.1F81961E',
+          defaultMessage: "${type === Type.EDIT ? '编辑' : '创建'}角色",
+        },
+        {
+          ConditionalExpression0:
+            type === Type.EDIT
+              ? intl.formatMessage({
+                  id: 'src.components.customModal.1920004B',
+                  defaultMessage: '编辑',
+                })
+              : intl.formatMessage({
+                  id: 'src.components.customModal.D7653D14',
+                  defaultMessage: '创建',
+                }),
+        },
+      )}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {
@@ -187,21 +226,61 @@ export default function HandleRoleModal({
       <Form form={form} onFinish={onFinish} preserve={false}>
         {type === Type.CREATE && (
           <Form.Item
-            rules={[{ required: true, message: '请输入角色名称' }]}
-            label="名称"
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'src.components.customModal.FECE2219',
+                  defaultMessage: '请输入角色名称',
+                }),
+              },
+            ]}
+            label={intl.formatMessage({
+              id: 'src.components.customModal.0515E4FE',
+              defaultMessage: '名称',
+            })}
             name={'name'}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.components.customModal.5CDA23D6',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         )}
+
         <Form.Item
-          label="描述"
+          label={intl.formatMessage({
+            id: 'src.components.customModal.75E8B57A',
+            defaultMessage: '描述',
+          })}
           name={'description'}
-          rules={[{ required: true, message: '请输入描述' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.components.customModal.00AA38BD',
+                defaultMessage: '请输入描述',
+              }),
+            },
+          ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.465FF0F1',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
-        <Form.Item required label="权限" name={'permissions'}>
+        <Form.Item
+          required
+          label={intl.formatMessage({
+            id: 'src.components.customModal.D24B8F5C',
+            defaultMessage: '权限',
+          })}
+          name={'permissions'}
+        >
           <PermissionSelect
             fetchData={allPolicies}
             defaultValue={defaultValue}

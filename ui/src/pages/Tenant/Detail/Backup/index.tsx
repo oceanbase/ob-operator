@@ -73,6 +73,7 @@ export default function Backup() {
             alt="empty"
             style={{ marginBottom: 24, height: 100, width: 110 }}
           />
+
           {access.obclusterwrite ? (
             <>
               <p style={{ color: '#8592ad', marginBottom: 24 }}>
@@ -94,8 +95,11 @@ export default function Backup() {
               </Button>
             </>
           ) : (
-            <p style={{ color: '#8592ad'}}>
-              该租户尚未创建备份策略
+            <p style={{ color: '#8592ad' }}>
+              {intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Backup.5F7EA7F3',
+                defaultMessage: '该租户尚未创建备份策略',
+              })}
             </p>
           )}
         </Card>
@@ -109,6 +113,7 @@ export default function Backup() {
               />
             </Col>
           )}
+
           <Col span={24}>
             <BackupConfiguration
               backupPolicy={backupPolicy}

@@ -1,6 +1,7 @@
 import { access } from '@/api';
 import type { ParamResetPasswordParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 import { omit } from 'lodash';
 import CustomModal from '.';
@@ -31,7 +32,12 @@ export default function ResetPwdModal({
     values.password = encryptText(values.password!, publicKey) as string;
     const res = await access.resetPassword(omit(values, ['confirmPassword']));
     if (res.successful) {
-      message.success('操作成功！');
+      message.success(
+        intl.formatMessage({
+          id: 'src.components.customModal.0D1428CF',
+          defaultMessage: '操作成功！',
+        }),
+      );
       if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
@@ -39,7 +45,10 @@ export default function ResetPwdModal({
   };
   return (
     <CustomModal
-      title="修改密码"
+      title={intl.formatMessage({
+        id: 'src.components.customModal.BC49A0BD',
+        defaultMessage: '修改密码',
+      })}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {
@@ -53,13 +62,25 @@ export default function ResetPwdModal({
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.components.customModal.D33CD1F7',
+                defaultMessage: '请输入',
+              }),
             },
           ]}
-          label="原密码"
+          label={intl.formatMessage({
+            id: 'src.components.customModal.ADFC0106',
+            defaultMessage: '原密码',
+          })}
           name={'oldPassword'}
         >
-          <Input type="password" placeholder="请输入" />
+          <Input
+            type="password"
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.E97DEF21',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
           validateFirst
@@ -67,22 +88,39 @@ export default function ResetPwdModal({
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.components.customModal.DF89BC3F',
+                defaultMessage: '请输入',
+              }),
             },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 const oldPwd = getFieldValue('oldPassword');
                 if (oldPwd === value) {
-                  return Promise.reject('新密码不能和原密码相同');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.components.customModal.FC52C4E2',
+                      defaultMessage: '新密码不能和原密码相同',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
             }),
           ]}
-          label="新密码"
+          label={intl.formatMessage({
+            id: 'src.components.customModal.7F950CE6',
+            defaultMessage: '新密码',
+          })}
           name={'password'}
         >
-          <Input type="password" placeholder="请输入" />
+          <Input
+            type="password"
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.8BE441F0',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
           validateFirst
@@ -90,22 +128,39 @@ export default function ResetPwdModal({
           rules={[
             {
               required: true,
-              message: '请输入',
+              message: intl.formatMessage({
+                id: 'src.components.customModal.D7A47B92',
+                defaultMessage: '请输入',
+              }),
             },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 const newPwd = getFieldValue('password');
                 if (newPwd !== value) {
-                  return Promise.reject('两次密码输入不一致');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.components.customModal.B04BBA7E',
+                      defaultMessage: '两次密码输入不一致',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
             }),
           ]}
-          label="确认密码"
+          label={intl.formatMessage({
+            id: 'src.components.customModal.B69BEEA1',
+            defaultMessage: '确认密码',
+          })}
           name={'confirmPassword'}
         >
-          <Input type="password" placeholder="请输入" />
+          <Input
+            type="password"
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.69F2300D',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Form>
     </CustomModal>

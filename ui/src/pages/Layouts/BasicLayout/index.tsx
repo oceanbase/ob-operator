@@ -80,7 +80,10 @@ const BasicLayout: React.FC = () => {
       accessible: access.alarmread,
     },
     {
-      title: '权限控制',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.BasicLayout.64D51552',
+        defaultMessage: '权限控制',
+      }),
       link: '/access',
       icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.acread,
@@ -99,8 +102,18 @@ const BasicLayout: React.FC = () => {
         }
       }}
     >
-      <Menu.Item key="reset">修改密码</Menu.Item>
-      <Menu.Item key="myinfo">我的信息</Menu.Item>
+      <Menu.Item key="reset">
+        {intl.formatMessage({
+          id: 'src.pages.Layouts.BasicLayout.41799E78',
+          defaultMessage: '修改密码',
+        })}
+      </Menu.Item>
+      <Menu.Item key="myinfo">
+        {intl.formatMessage({
+          id: 'src.pages.Layouts.BasicLayout.F837ECD5',
+          defaultMessage: '我的信息',
+        })}
+      </Menu.Item>
       <Menu.Item key="logout">
         {intl.formatMessage({
           id: 'dashboard.Layouts.BasicLayout.LogOut',
@@ -141,6 +154,7 @@ const BasicLayout: React.FC = () => {
         visible={resetModalVisible}
         setVisible={setResetModalVisible}
       />
+
       <MyInfoModal
         visible={infoModalVisible}
         setVisible={setInfoModalVisible}

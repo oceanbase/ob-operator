@@ -1,6 +1,7 @@
 import { access as accessReq } from '@/api';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import HandleRoleModal from '@/components/customModal/HandleRoleModal';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
@@ -31,14 +32,20 @@ export default function Access() {
   const items: TabsProps['items'] = [
     {
       key: ActiveKey.ACCOUNTS,
-      label: '用户',
+      label: intl.formatMessage({
+        id: 'src.pages.Access.D6457915',
+        defaultMessage: '用户',
+      }),
       children: (
         <Accounts allAccounts={allAccounts} refreshAccounts={refreshAccounts} />
       ),
     },
     {
       key: ActiveKey.ROLES,
-      label: '角色',
+      label: intl.formatMessage({
+        id: 'src.pages.Access.FB4D558D',
+        defaultMessage: '角色',
+      }),
       children: <Roles allRoles={allRoles} refreshRoles={refreshRoles} />,
     },
   ];
@@ -52,12 +59,25 @@ export default function Access() {
   };
 
   return (
-    <PageContainer title="权限控制">
+    <PageContainer
+      title={intl.formatMessage({
+        id: 'src.pages.Access.DE5C1B7D',
+        defaultMessage: '权限控制',
+      })}
+    >
       <Tabs
         tabBarExtraContent={
           access.acwrite ? (
             <Button type="primary" onClick={() => create(activeKey)}>
-              {activeKey === ActiveKey.ACCOUNTS ? '创建账户' : '创建角色'}
+              {activeKey === ActiveKey.ACCOUNTS
+                ? intl.formatMessage({
+                    id: 'src.pages.Access.2FC6252B',
+                    defaultMessage: '创建账户',
+                  })
+                : intl.formatMessage({
+                    id: 'src.pages.Access.8D14D739',
+                    defaultMessage: '创建角色',
+                  })}
             </Button>
           ) : null
         }
@@ -65,12 +85,14 @@ export default function Access() {
         items={items}
         onChange={onChange}
       />
+
       <HandleAccountModal
         visible={accountVisible}
         setVisible={setAccountVisible}
         type={Type.CREATE}
         successCallback={refreshAccounts}
       />
+
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
