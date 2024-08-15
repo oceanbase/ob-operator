@@ -52,8 +52,8 @@ const config: Config = {
       { name: 'keywords', content: 'oceanbase, kubernetes, operator, manual, deployment, backup, database, distributed database, mysql, sql, cloud native' },
     ],
     algolia: {
-      appId: '6JQM9QDU5V',
-      apiKey: '75f5591a502e47777a08a02b96bc09a1',
+      appId: "XDTG6XZ6KB",
+      apiKey: "e00ce85f1ff64f2506063bfc111158a8",
       indexName: 'oceanbaseio',
       contextualSearch: false,
       searchPagePath: false,
