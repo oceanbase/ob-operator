@@ -20,6 +20,7 @@ type Account struct {
 	Description string     `json:"description"`
 	Roles       []Role     `json:"roles" binding:"required"`
 	LastLoginAt *time.Time `json:"lastLoginAt"`
+	NeedReset   bool       `json:"needReset"`
 }
 
 type Role struct {
