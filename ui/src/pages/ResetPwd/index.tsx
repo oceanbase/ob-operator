@@ -1,6 +1,7 @@
 import { access } from '@/api';
 import logoSrc from '@/assets/oceanbase_logo.svg';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { intl } from '@/utils/intl';
 import { useModel, useNavigate } from '@umijs/max';
 import { Alert, Button, Form, Input } from 'antd';
 
@@ -23,7 +24,7 @@ export default function ResetPwd() {
         ...initialState,
         accountInfo: { ...initialState!.accountInfo, needReset: false },
       });
-      await refresh()
+      await refresh();
       navigate('/overview');
     }
   };
@@ -34,9 +35,14 @@ export default function ResetPwd() {
       </div>
       <Alert
         className={styles.alertContent}
-        message="您之前没有登录过，当前密码为默认密码长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！"
+        message={intl.formatMessage({
+          id: 'src.pages.ResetPwd.2768C822',
+          defaultMessage:
+            '您之前没有登录过，当前密码为默认密码，长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！',
+        })}
         type="warning"
       />
+
       <Form
         name="normal_login"
         className={styles.loginForm}
@@ -45,32 +51,66 @@ export default function ResetPwd() {
       >
         <Form.Item
           name="password"
-          rules={[{ required: true, message: '请输入新密码' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.pages.ResetPwd.1BCDA661',
+                defaultMessage: '请输入新密码',
+              }),
+            },
+          ]}
         >
-          <Input type="password" placeholder="新密码" />
+          <Input
+            type="password"
+            placeholder={intl.formatMessage({
+              id: 'src.pages.ResetPwd.EB8B735A',
+              defaultMessage: '新密码',
+            })}
+          />
         </Form.Item>
         <Form.Item
           name="passwordConfirm"
           validateFirst
           rules={[
-            { required: true, message: '请确认密码' },
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.pages.ResetPwd.D18DE694',
+                defaultMessage: '请确认密码',
+              }),
+            },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 const newPassword = getFieldValue('password');
                 if (newPassword !== value) {
-                  return Promise.reject('两次密码输入不一致');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.pages.ResetPwd.C17C7281',
+                      defaultMessage: '两次密码输入不一致',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
             }),
           ]}
         >
-          <Input type="password" placeholder="确认密码" />
+          <Input
+            type="password"
+            placeholder={intl.formatMessage({
+              id: 'src.pages.ResetPwd.0D23DF17',
+              defaultMessage: '确认密码',
+            })}
+          />
         </Form.Item>
 
         <Form.Item style={{ display: 'flex', justifyContent: 'center' }}>
           <Button style={{ width: 270 }} type="primary" htmlType="submit">
-            确定
+            {intl.formatMessage({
+              id: 'src.pages.ResetPwd.471AB584',
+              defaultMessage: '确定',
+            })}
           </Button>
         </Form.Item>
       </Form>

@@ -2,6 +2,7 @@ import { access } from '@/api';
 import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
@@ -52,7 +53,12 @@ export default function HandleAccountModal({
             omit(formData, ['confirmPassword', 'username', 'password']),
           );
     if (res.successful) {
-      message.success('操作成功！');
+      message.success(
+        intl.formatMessage({
+          id: 'src.components.customModal.8EA35AF0',
+          defaultMessage: '操作成功！',
+        }),
+      );
       if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
@@ -70,7 +76,24 @@ export default function HandleAccountModal({
   }, [type, editValue]);
   return (
     <CustomModal
-      title={`${type === Type.EDIT ? '编辑' : '创建'}用户`}
+      title={intl.formatMessage(
+        {
+          id: 'src.components.customModal.3487AEC1',
+          defaultMessage: "${type === Type.EDIT ? '编辑' : '创建'}用户",
+        },
+        {
+          ConditionalExpression0:
+            type === Type.EDIT
+              ? intl.formatMessage({
+                  id: 'src.components.customModal.F4E9F1AB',
+                  defaultMessage: '编辑',
+                })
+              : intl.formatMessage({
+                  id: 'src.components.customModal.2EDC3613',
+                  defaultMessage: '创建',
+                }),
+        },
+      )}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {
@@ -81,66 +104,159 @@ export default function HandleAccountModal({
       <Form form={form} labelCol={{ span: 4 }} onFinish={onFinish}>
         {type === Type.CREATE && (
           <Form.Item
-            rules={[{ required: true, message: '请输入用户名' }]}
-            label="用户名"
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'src.components.customModal.7DB0CF1B',
+                  defaultMessage: '请输入用户名',
+                }),
+              },
+            ]}
+            label={intl.formatMessage({
+              id: 'src.components.customModal.94E51D06',
+              defaultMessage: '用户名',
+            })}
             name={'username'}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.components.customModal.05BFF296',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         )}
 
-        <Form.Item label="描述" name={'description'}>
-          <Input placeholder="请输入" />
+        <Form.Item
+          label={intl.formatMessage({
+            id: 'src.components.customModal.CC59F523',
+            defaultMessage: '描述',
+          })}
+          name={'description'}
+        >
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.80E5AC42',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
-          rules={[{ required: true, message: '请输入昵称' }]}
-          label="昵称"
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.components.customModal.449E2A83',
+                defaultMessage: '请输入昵称',
+              }),
+            },
+          ]}
+          label={intl.formatMessage({
+            id: 'src.components.customModal.7374EF1F',
+            defaultMessage: '昵称',
+          })}
           name={'nickname'}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.DA5DFFAE',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
-          rules={[{ required: true, message: '请选择角色' }]}
-          label="角色"
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.components.customModal.806DEA1C',
+                defaultMessage: '请选择角色',
+              }),
+            },
+          ]}
+          label={intl.formatMessage({
+            id: 'src.components.customModal.A9A06567',
+            defaultMessage: '角色',
+          })}
           name={'roles'}
         >
-          <Select mode="multiple" options={rolesOption} placeholder="请选择" />
+          <Select
+            mode="multiple"
+            options={rolesOption}
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.DED9610F',
+              defaultMessage: '请选择',
+            })}
+          />
         </Form.Item>
         {type === Type.CREATE && (
           <Form.Item
             rules={[
               {
                 required: true,
-                message: '请输入',
+                message: intl.formatMessage({
+                  id: 'src.components.customModal.5B73A2BF',
+                  defaultMessage: '请输入',
+                }),
               },
             ]}
-            label="密码"
+            label={intl.formatMessage({
+              id: 'src.components.customModal.966B1EBB',
+              defaultMessage: '密码',
+            })}
             name={'password'}
           >
-            <Input type="password" placeholder="请输入" />
+            <Input
+              type="password"
+              placeholder={intl.formatMessage({
+                id: 'src.components.customModal.263979F5',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         )}
+
         {type === Type.CREATE && (
           <Form.Item
             validateFirst
             rules={[
               {
                 required: true,
-                message: '请输入',
+                message: intl.formatMessage({
+                  id: 'src.components.customModal.13D0A14C',
+                  defaultMessage: '请输入',
+                }),
               },
               ({ getFieldValue }) => ({
                 validator(_, value) {
                   if (getFieldValue('password') !== value) {
-                    return Promise.reject(new Error('两次密码输入不一致'));
+                    return Promise.reject(
+                      new Error(
+                        intl.formatMessage({
+                          id: 'src.components.customModal.A1607740',
+                          defaultMessage: '两次密码输入不一致',
+                        }),
+                      ),
+                    );
                   }
                   return Promise.resolve();
                 },
               }),
             ]}
-            label="确认密码"
+            label={intl.formatMessage({
+              id: 'src.components.customModal.4EF7C449',
+              defaultMessage: '确认密码',
+            })}
             name={'confirmPassword'}
           >
-            <Input type="password" placeholder="请输入" />
+            <Input
+              type="password"
+              placeholder={intl.formatMessage({
+                id: 'src.components.customModal.E903F734',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         )}
       </Form>

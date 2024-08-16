@@ -17,9 +17,19 @@ export const errorHandling = (error: any) => {
       response?.config?.url?.split('/')?.pop() === 'password' &&
       response?.data?.message === 'Error BadRequest: password is incorrect'
     ) {
-      message.error('原密码输入不正确');
+      message.error(
+        intl.formatMessage({
+          id: 'src.api.855C826A',
+          defaultMessage: '原密码输入不正确',
+        }),
+      );
     } else if (response?.status === 403) {
-      message.warning('无权限访问');
+      message.warning(
+        intl.formatMessage({
+          id: 'src.api.1717A275',
+          defaultMessage: '无权限访问',
+        }),
+      );
     } else {
       message.error(error?.response?.data?.message || error.message);
     }

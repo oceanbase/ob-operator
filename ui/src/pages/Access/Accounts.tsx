@@ -3,6 +3,7 @@ import type { AcAccount, AcRole } from '@/api/generated';
 import HandleAccountModal from '@/components/customModal/HandleAccountModal';
 import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { intl } from '@/utils/intl';
 import { useAccess, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
@@ -30,7 +31,12 @@ export default function Accounts({
     manual: true,
     onSuccess: ({ successful }) => {
       if (successful) {
-        message.success('删除成功');
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Access.878AF749',
+            defaultMessage: '删除成功',
+          }),
+        );
         refreshAccounts();
       }
     },
@@ -41,7 +47,10 @@ export default function Accounts({
   };
   const columns: TableProps<AcAccount>['columns'] = [
     {
-      title: '用户名',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.F1077F6F',
+        defaultMessage: '用户名',
+      }),
       key: 'username',
       dataIndex: 'username',
       render: (value) => (
@@ -51,7 +60,10 @@ export default function Accounts({
       ),
     },
     {
-      title: '昵称',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.9A5634B7',
+        defaultMessage: '昵称',
+      }),
       key: 'nickname',
       dataIndex: 'nickname',
       render: (value) => (
@@ -61,7 +73,10 @@ export default function Accounts({
       ),
     },
     {
-      title: '描述',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.7079C362',
+        defaultMessage: '描述',
+      }),
       key: 'description',
       dataIndex: 'description',
       render: (value) => (
@@ -71,7 +86,10 @@ export default function Accounts({
       ),
     },
     {
-      title: '角色',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.058B87F3',
+        defaultMessage: '角色',
+      }),
       key: 'roles',
       dataIndex: 'roles',
       render: (roles: AcRole[]) => (
@@ -79,13 +97,19 @@ export default function Accounts({
       ),
     },
     {
-      title: '最近一次登陆时间',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.B52ED09C',
+        defaultMessage: '最后一次登录时间',
+      }),
       key: 'lastLoginAt',
       dataIndex: 'lastLoginAt',
       render: (value) => <span>{value || '-'}</span>,
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Access.4C7AA3C7',
+        defaultMessage: '操作',
+      }),
       key: 'actinon',
       render: (_, record) => {
         const myself = initialState?.accountInfo;
@@ -102,14 +126,20 @@ export default function Accounts({
               disabled={otherAdmin || (!access.acwrite && !isMyself)}
               type="link"
             >
-              重置密码
+              {intl.formatMessage({
+                id: 'src.pages.Access.B6BC9A53',
+                defaultMessage: '重置密码',
+              })}
             </Button>
             <Button
               onClick={() => handleEdit(record)}
               disabled={otherAdmin || !access.acwrite}
               type="link"
             >
-              编辑
+              {intl.formatMessage({
+                id: 'src.pages.Access.5339CE19',
+                defaultMessage: '编辑',
+              })}
             </Button>
             <Button
               disabled={otherAdmin || !access.acwrite || isMyself}
@@ -121,18 +151,25 @@ export default function Accounts({
               type="link"
               onClick={() =>
                 showDeleteConfirm({
-                  title: '你确定要删除该用户吗？',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Access.68661542',
+                    defaultMessage: '你确定要删除该用户吗？',
+                  }),
                   onOk: () => deleteAccount(record.username),
                 })
               }
             >
-              删除
+              {intl.formatMessage({
+                id: 'src.pages.Access.C77EB99D',
+                defaultMessage: '删除',
+              })}
             </Button>
           </Space>
         );
       },
     },
   ];
+
   return (
     <div>
       <Table dataSource={allAccounts} columns={columns} />
@@ -143,6 +180,7 @@ export default function Accounts({
         successCallback={refreshAccounts}
         type={Type.EDIT}
       />
+
       <ResetPwdModal
         visible={resetModalVisible}
         setVisible={setResetModalVisible}
