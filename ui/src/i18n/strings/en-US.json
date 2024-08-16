@@ -1137,5 +1137,6 @@
   "src.pages.Access.B6BC9A53": "Reset Password",
   "src.pages.Alert.Shield.C4C1B8A3": "Label",
   "src.pages.Alert.Rules.9B28C134": "Default",
-  "src.pages.Alert.Subscriptions.B4AB7DEF": "Create"
+  "src.pages.Alert.Subscriptions.B4AB7DEF": "Create",
+  "src.pages.Access.B52ED09C": "Last Logon Time"
 }

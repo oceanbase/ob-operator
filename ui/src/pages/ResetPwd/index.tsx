@@ -38,7 +38,7 @@ export default function ResetPwd() {
         message={intl.formatMessage({
           id: 'src.pages.ResetPwd.2768C822',
           defaultMessage:
-            '您之前没有登录过，当前密码为默认密码长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！',
+            '您之前没有登录过，当前密码为默认密码，长期使用不安全。请先修改密码再继续使用 oceanbase dashboard！',
         })}
         type="warning"
       />

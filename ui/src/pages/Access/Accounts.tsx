@@ -98,8 +98,8 @@ export default function Accounts({
     },
     {
       title: intl.formatMessage({
-        id: 'src.pages.Access.013B4789',
-        defaultMessage: '最近一次登陆时间',
+        id: 'src.pages.Access.B52ED09C',
+        defaultMessage: '最后一次登录时间',
       }),
       key: 'lastLoginAt',
       dataIndex: 'lastLoginAt',

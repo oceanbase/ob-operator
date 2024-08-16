@@ -49,8 +49,8 @@ export default function MyInfoModal({
     {
       key: 'lastLoginAt',
       label: intl.formatMessage({
-        id: 'src.components.customModal.685C8A0E',
-        defaultMessage: '最近一次登录',
+        id: 'src.pages.Access.B52ED09C',
+        defaultMessage: '最后一次登录时间',
       }),
       children: `${accountInfo?.lastLoginAt || '-'}`,
     },
