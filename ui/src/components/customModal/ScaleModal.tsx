@@ -6,7 +6,6 @@ import { scaleObserverReportWrap } from '@/services/reportRequest/clusterReportR
 import { useParams } from '@umijs/max';
 import { useEffect } from 'react';
 
-
 interface ScaleModalProps {
   params?: {
     zoneName?: string;
@@ -59,8 +58,8 @@ export default function ScaleModal({
   return (
     <CustomModal
       title={intl.formatMessage({
-        id: 'OBDashboard.components.customModal.ScaleModal.ExpandZone',
-        defaultMessage: '扩容Zone',
+        id: 'src.components.customModal.F7DD1D45',
+        defaultMessage: '扩缩容Zone',
       })}
       isOpen={visible}
       handleOk={handleSubmit}

@@ -1,6 +1,6 @@
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
-import { clone,cloneDeep } from 'lodash';
+import { clone, cloneDeep } from 'lodash';
 
 const isExist = (val: string | number | undefined): boolean => {
   if (typeof val === 'number') return true;
@@ -180,9 +180,9 @@ export function checkIsSame(
 }
 
 /**
- * The minimum value of available resources in the currently selected zone 
+ * The minimum value of available resources in the currently selected zone
  * is the maximum value that can be entered in the input box.
- * 
+ *
  * The reason is to ensure that the input resource specifications can be created by each zone
  */
 export function findMinParameter(
@@ -307,12 +307,10 @@ export const getOriginResourceUsages = (
       originResourceUsages.obZoneResourceMap[key].availableCPU += Number(
         current.minCPU,
       );
-      originResourceUsages.obZoneResourceMap[key].availableLogDisk += Number(
-        current.logDiskSize.split('Gi')[0],
-      );
-      originResourceUsages.obZoneResourceMap[key].availableMemory += Number(
-        current.memorySize.split('Gi')[0],
-      );
+      originResourceUsages.obZoneResourceMap[key].availableLogDisk +=
+        current.logDiskSize;
+      originResourceUsages.obZoneResourceMap[key].availableMemory +=
+        current.memorySize;
     }
   });
   return originResourceUsages;
