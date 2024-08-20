@@ -58,7 +58,6 @@ func NewCreateOptions() *CreateOptions {
 	}
 }
 
-
 func (o *CreateOptions) Validate() error {
 	if !utils.CheckPassword(o.RootPassword) {
 		return fmt.Errorf("Password is not secure, must contain at least 2 uppercase and lowercase letters, numbers and special characters")
