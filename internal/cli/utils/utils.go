@@ -44,23 +44,24 @@ func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSe
 		Operator: fmt.Sprintf("%s-%d-operator-%s", clusterName, clusterId, GenerateUUID()),
 	}
 }
+
+// GenerateClusterId generated random cluster id
 func GenerateClusterId() int64 {
 	return time.Now().Unix() % factor
 }
+
 func CheckResourceName(name string) bool {
-	// 定义正则表达式
 	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
 
-	// 编译正则表达式
 	re, err := regexp.Compile(regex)
 	if err != nil {
 		log.Println("Error compiling regex:", err)
 		return false
 	}
 
-	// 检查整个字符串是否符合正则表达式的模式
 	return re.MatchString(name)
 }
+
 func CheckPassword(password string) bool {
 	var (
 		countUppercase   int
@@ -71,7 +72,6 @@ func CheckPassword(password string) bool {
 
 	for _, char := range password {
 		if strings.ContainsRune(characters, char) {
-			// 检查字符并增加相应的计数
 			switch {
 			case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", char):
 				countUppercase++
@@ -85,13 +85,15 @@ func CheckPassword(password string) bool {
 		} else {
 			return false
 		}
-		// 提前返回
+		// if satisfied
 		if countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2 {
 			return true
 		}
 	}
 	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
 }
+
+// MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
 		return nil, fmt.Errorf("Zone value is required") // 无效的zone信息
@@ -131,14 +133,13 @@ func GenerateRandomPassword() string {
 	var sb strings.Builder
 	for countUppercase < minUppercase || countLowercase < minLowercase || countNumber < minNumber || countSpecialChar < minSpecialChar {
 		b := make([]byte, 1)
-		_, err := rand.Read(b) // 随机读取一个字节
+		_, err := rand.Read(b)
 		if err != nil {
-			panic(err) // 处理错误
+			panic(err)
 		}
 
 		randomIndex := int(b[0]) % len(characters)
 		randomChar := characters[randomIndex]
-		// 追加字符到密码
 		if err := sb.WriteByte(randomChar); err != nil {
 			panic(err)
 		}

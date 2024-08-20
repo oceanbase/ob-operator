@@ -39,6 +39,14 @@ type ScaleOptions struct {
 	AddZonesConfig    []apitypes.OBZoneTopology    `json:"addZones,omitempty"`
 }
 
+func NewScaleOptions() *ScaleOptions {
+	return &ScaleOptions{
+		AdjustZonesConfig: make([]v1alpha1.AlterZoneReplicas, 0),
+		AddZonesConfig:    make([]apitypes.OBZoneTopology, 0),
+	}
+}
+
+// GetScaleOperation creates scale opertaions
 func GetScaleOperation(o *ScaleOptions) *v1alpha1.OBClusterOperation {
 	scaleOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
@@ -62,12 +70,6 @@ func GetScaleOperation(o *ScaleOptions) *v1alpha1.OBClusterOperation {
 		scaleOp.Spec.Type = apiconst.ClusterOpTypeAdjustReplicas
 	}
 	return scaleOp
-}
-func NewScaleOptions() *ScaleOptions {
-	return &ScaleOptions{
-		AdjustZonesConfig: make([]v1alpha1.AlterZoneReplicas, 0),
-		AddZonesConfig:    make([]apitypes.OBZoneTopology, 0),
-	}
 }
 
 func (o *ScaleOptions) Parse(_ *cobra.Command, args []string) error {

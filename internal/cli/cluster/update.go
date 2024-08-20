@@ -60,6 +60,7 @@ func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBClusterOperation {
 	}
 	return updateOp
 }
+
 func (o *UpdateOptions) Validate() error {
 	updateTypeCount := 0
 	if o.Resource.Cpu != 0 || o.Resource.MemoryGB != 0 {

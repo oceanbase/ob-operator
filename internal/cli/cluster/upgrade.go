@@ -50,6 +50,7 @@ func GetUpgradeOperations(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
 	}
 	return upgradeOp
 }
+
 func (o *UpgradeOptions) Validate() error {
 	if o.Image == "" {
 		return errors.New("image is required")
@@ -59,7 +60,7 @@ func (o *UpgradeOptions) Validate() error {
 
 // AddFlags for upgrade options
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	// set image to null to avoid downgrade
+	// set image to null, avoid image downgrade
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 	cmd.Flags().StringVar(&o.Image, "image", "", "The image of observer")
 }

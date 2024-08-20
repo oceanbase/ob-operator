@@ -33,17 +33,6 @@ import (
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
-func NewCreateOptions() *CreateOptions {
-	return &CreateOptions{
-		OBServer: &param.OBServerSpec{
-			Storage: &param.OBServerStorageSpec{},
-		},
-		Parameters: make([]modelcommon.KVPair, 0),
-		Zones:      make(map[string]string),
-		Topology:   make([]param.ZoneTopology, 0),
-	}
-}
-
 type CreateOptions struct {
 	ResourceOptions
 	ClusterName  string               `json:"clusterName"`
@@ -57,6 +46,18 @@ type CreateOptions struct {
 	Zones        map[string]string    `json:"zones"`
 	Mode         string               `json:"mode"`
 }
+
+func NewCreateOptions() *CreateOptions {
+	return &CreateOptions{
+		OBServer: &param.OBServerSpec{
+			Storage: &param.OBServerStorageSpec{},
+		},
+		Parameters: make([]modelcommon.KVPair, 0),
+		Zones:      make(map[string]string),
+		Topology:   make([]param.ZoneTopology, 0),
+	}
+}
+
 
 func (o *CreateOptions) Validate() error {
 	if !utils.CheckPassword(o.RootPassword) {
@@ -92,6 +93,7 @@ func (o *CreateOptions) Complete() error {
 	}
 	return nil
 }
+
 func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	// Add base and specific feature flags, Only support observer and zone config
 	o.AddBaseFlags(cmd)

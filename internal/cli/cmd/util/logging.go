@@ -28,12 +28,12 @@ func init() {
 	tbLog = log.New(tbw, "", 0)
 }
 
-// GetDefaultLoggerInstance 返回默认的日志实例
+// GetDefaultLoggerInstance return a default logger instance
 func GetDefaultLoggerInstance() *log.Logger {
 	return fLog
 }
 
-// GetTableLoggerInstance 返回表格日志实例
+// GetTableLoggerInstance return a table logger instance
 func GetTableLoggerInstance() (*tabwriter.Writer, *log.Logger) {
 	return tbw, tbLog
 }
