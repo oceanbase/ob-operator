@@ -16,6 +16,11 @@ package cluster
 import (
 	"errors"
 
+	"github.com/spf13/cobra"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -23,10 +28,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
-	"github.com/spf13/cobra"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 type UpdateOptions struct {

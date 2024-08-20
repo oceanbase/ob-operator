@@ -16,11 +16,12 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
-	"github.com/spf13/cobra"
 )
 
 // NewUpdateCmd update obcluster

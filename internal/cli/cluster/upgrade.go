@@ -16,12 +16,13 @@ package cluster
 import (
 	"errors"
 
-	apiconst "github.com/oceanbase/ob-operator/api/constants"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
+
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 type UpgradeOptions struct {

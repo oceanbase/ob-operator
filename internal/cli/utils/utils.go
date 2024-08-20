@@ -22,8 +22,9 @@ import (
 	"strings"
 	"time"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	k8srand "k8s.io/apimachinery/pkg/util/rand"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 

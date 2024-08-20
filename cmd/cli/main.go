@@ -19,5 +19,5 @@ import (
 
 func main() {
 	rootCmd := cli.NewCliCmd()
-	rootCmd.Execute()
+	_ = rootCmd.Execute()
 }

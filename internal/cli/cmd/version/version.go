@@ -14,8 +14,9 @@ See the Mulan PSL v2 for more details.
 package version
 
 import (
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/spf13/cobra"
+
+	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 )
 
 func NewCmd() *cobra.Command {

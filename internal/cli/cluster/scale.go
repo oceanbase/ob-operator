@@ -16,15 +16,16 @@ package cluster
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 type ScaleOptions struct {
