@@ -2,14 +2,14 @@ import MoreModal from '@/components/moreModal';
 import { intl } from '@/utils/intl';
 import G6, { IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
-import { useParams } from '@umijs/max';
+import { useAccess, useParams } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
 import { Spin, message } from 'antd';
 import _ from 'lodash';
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import OperateModal from '@/components/customModal/OperateModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { RESULT_STATUS } from '@/constants';
 import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
 import {
@@ -23,8 +23,8 @@ import {
   deleteObzoneReportWrap,
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
-import { ReactNode, config } from './G6register';
 import type { Topo } from '@/type/topo';
+import { ReactNode, config } from './G6register';
 import {
   clusterOperate,
   clusterOperateOfTenant,
@@ -52,7 +52,6 @@ interface TopoProps {
   loading?: boolean;
 }
 
-//Cluster topology diagram component
 export default function TopoComponent({
   tenantReplicas,
   header,
@@ -65,6 +64,7 @@ export default function TopoComponent({
   loading,
 }: TopoProps) {
   const { ns: urlNs, name: urlName } = useParams();
+  const access = useAccess();
   const clusterOperateList = tenantReplicas
     ? clusterOperateOfTenant
     : clusterOperate;
@@ -199,8 +199,14 @@ export default function TopoComponent({
     const height = container?.scrollHeight || 500;
 
     graph.current = new G6.TreeGraph(config(width, height));
-    G6.registerNode('cluster', createNodeFromReact(ReactNode(handleClick)));
-    G6.registerNode('zone', createNodeFromReact(ReactNode(handleClick)));
+    G6.registerNode(
+      'cluster',
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+    );
+    G6.registerNode(
+      'zone',
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+    );
     G6.registerNode('server', createNodeFromReact(ReactNode()));
     G6.registerEdge('flow-line', {
       draw(cfg, group) {

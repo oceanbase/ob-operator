@@ -2,7 +2,8 @@ import type { ResponseK8sService } from '@/api/generated';
 import InputLabelComp from '@/components/InputLabelComp';
 import { OBProxy } from '@/type/obproxy';
 import { intl } from '@/utils/intl';
-import { Button, Card, Col, Row,Empty } from 'antd';
+import { useAccess } from '@umijs/max';
+import { Button, Card, Col, Empty, Row } from 'antd';
 import { useState } from 'react';
 import ConfigDrawer from './ConfigDrawer';
 interface DetailConfigProps extends OBProxy.CommonProxyDetail {
@@ -13,7 +14,7 @@ interface DetailConfigProps extends OBProxy.CommonProxyDetail {
 
 export default function DetailConfig({ style, ...props }: DetailConfigProps) {
   const { image, replicas, resource, parameters, service } = props;
-
+  const access = useAccess();
   const [drawerOpen, setDrawerOpen] = useState(false);
   return (
     <Card
@@ -26,12 +27,14 @@ export default function DetailConfig({ style, ...props }: DetailConfigProps) {
         </h2>
       }
       extra={
-        <Button onClick={() => setDrawerOpen(true)} type="primary">
-          {intl.formatMessage({
-            id: 'src.pages.OBProxy.Detail.Overview.6258C614',
-            defaultMessage: '编辑',
-          })}
-        </Button>
+        access.obproxywrite ? (
+          <Button onClick={() => setDrawerOpen(true)} type="primary">
+            {intl.formatMessage({
+              id: 'src.pages.OBProxy.Detail.Overview.6258C614',
+              defaultMessage: '编辑',
+            })}
+          </Button>
+        ) : null
       }
       style={style}
     >

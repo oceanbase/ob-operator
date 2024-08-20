@@ -4,6 +4,7 @@ import { message } from 'antd';
 import dayjs from 'dayjs';
 import localeData from 'dayjs/plugin/localeData';
 import weekday from 'dayjs/plugin/weekday';
+import { access } from './api';
 
 dayjs.extend(weekday);
 dayjs.extend(localeData);
@@ -32,7 +33,6 @@ export const request: RequestConfig = {
       }
     },
   },
-
 };
 export const rootContainer = (element: JSX.Element) => {
   const locale = getLocale() || 'zh-CN';
@@ -41,3 +41,19 @@ export const rootContainer = (element: JSX.Element) => {
   };
   return <>{element}</>;
 };
+
+// If the user is not logged in, jump to the login page 
+// and refresh InitialState after successful login
+export async function getInitialState() {
+  const res = await Promise.all([
+    access.getAccountInfo(),
+    access.listAllPolicies(),
+  ]);
+  if (res[0].successful && res[1].successful) {
+    return {
+      accountInfo: res[0].data,
+      policies: res[1].data,
+    };
+  }
+  return {};
+}

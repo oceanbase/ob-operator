@@ -1,7 +1,8 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
 import { Type } from '@/pages/Access/type';
-import { useRequest } from 'ahooks';
+import { intl } from '@/utils/intl';
+import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
@@ -38,16 +39,29 @@ function PermissionSelect({
   const [checkedList, setCheckedList] = useState<CheckedList>([]);
   const checkAll = !checkedList.some(
     (item) =>
-      !(item.checked.includes('READ') && item.checked.includes('WRITE')),
+      !(item.checked.includes('read') && item.checked.includes('write')),
   );
   const options = [
-    { label: '读', value: 'READ' },
-    { label: '写', value: 'WRITE' },
+    {
+      label: intl.formatMessage({
+        id: 'src.components.customModal.BFC9AB05',
+        defaultMessage: '读',
+      }),
+      value: 'read',
+    },
+    {
+      label: intl.formatMessage({
+        id: 'src.components.customModal.6FC754B4',
+        defaultMessage: '写',
+      }),
+      value: 'write',
+    },
   ];
+
   const onCheckAllChange: CheckboxProps['onChange'] = (e) => {
     if (e.target.checked) {
       setCheckedList((preCheckedList) =>
-        preCheckedList.map((item) => ({ ...item, checked: ['READ', 'WRITE'] })),
+        preCheckedList.map((item) => ({ ...item, checked: ['read', 'write'] })),
       );
     } else {
       setCheckedList((preCheckedList) =>
@@ -72,19 +86,20 @@ function PermissionSelect({
       for (const item of defaultValue) {
         newCheckedList.push({
           domain: item.domain,
-          checked: item.action === 'WRITE' ? ['WRITE', 'READ'] : [item.action],
+          checked: item.action === 'write' ? ['write', 'read'] : [item.action],
         });
       }
       setCheckedList(newCheckedList);
     }
-  }, []);
+  }, [defaultValue]);
 
   useEffect(() => {
     const newValue = [];
     for (const item of checkedList) {
-      if (!item.checked.length) continue;
+      if (!item.checked.includes('write') && !item.checked.includes('read'))
+        continue;
       newValue.push({
-        action: item.checked.includes('WRITE') ? 'WRITE' : 'READ',
+        action: item.checked.includes('write') ? 'write' : 'read',
         domain: item.domain,
         object: '*',
       });
@@ -99,7 +114,10 @@ function PermissionSelect({
         onChange={onCheckAllChange}
         checked={checkAll}
       >
-        所有权限
+        {intl.formatMessage({
+          id: 'src.components.customModal.1E76C4F3',
+          defaultMessage: '所有权限',
+        })}
       </Checkbox>
       {fetchData.map((item, index) => (
         <div key={index}>
@@ -131,21 +149,20 @@ export default function HandleRoleModal({
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
+  const { initialState } = useModel('@@initialState');
   const handleSubmit = async () => {
     try {
       await form.validateFields();
       form.submit();
     } catch (err) {}
   };
-  const { data: allPoliciesRes } = useRequest(access.listAllPolicies);
-
-  const allPolicies = uniqBy(allPoliciesRes?.data, 'domain') || [];
+  const allPolicies = uniqBy(initialState?.policies, 'domain') || [];
   const defaultValue = allPolicies.map((item) => {
     if (type === Type.CREATE) {
       return { ...item, action: '' };
     } else {
       const editItem = editValue?.policies.find(
-        (item) => item.domain === item.domain,
+        (policy) => policy.domain === item.domain,
       );
       return editItem ? { ...editItem } : { ...item, action: '' };
     }
@@ -155,29 +172,50 @@ export default function HandleRoleModal({
       type === Type.CREATE
         ? await access.createRole(formData)
         : await access.patchRole(
-            formData.name,
+            editValue!.name,
             pick(formData, ['description', 'permissions']),
           );
     if (res.successful) {
-      message.success('操作成功！');
+      message.success(
+        intl.formatMessage({
+          id: 'src.components.customModal.66C28C4A',
+          defaultMessage: '操作成功！',
+        }),
+      );
       if (successCallback) successCallback();
-      form.resetFields();
       setVisible(false);
     }
   };
 
   useEffect(() => {
-    if (type === Type.EDIT) {
+    if (type === Type.EDIT && visible) {
       form.setFieldsValue({
         description: editValue?.description,
         permissions: editValue?.policies,
       });
     }
-  }, [type, editValue]);
+  }, [type, editValue, visible]);
 
   return (
     <CustomModal
-      title={`${type === Type.EDIT ? '编辑' : '创建'}角色`}
+      title={intl.formatMessage(
+        {
+          id: 'src.components.customModal.1F81961E',
+          defaultMessage: "${type === Type.EDIT ? '编辑' : '创建'}角色",
+        },
+        {
+          ConditionalExpression0:
+            type === Type.EDIT
+              ? intl.formatMessage({
+                  id: 'src.components.customModal.1920004B',
+                  defaultMessage: '编辑',
+                })
+              : intl.formatMessage({
+                  id: 'src.components.customModal.D7653D14',
+                  defaultMessage: '创建',
+                }),
+        },
+      )}
       isOpen={visible}
       handleOk={handleSubmit}
       handleCancel={() => {
@@ -185,24 +223,64 @@ export default function HandleRoleModal({
         setVisible(false);
       }}
     >
-      <Form form={form} onFinish={onFinish}>
+      <Form form={form} onFinish={onFinish} preserve={false}>
         {type === Type.CREATE && (
           <Form.Item
-            rules={[{ required: true, message: '请输入角色名称' }]}
-            label="名称"
+            rules={[
+              {
+                required: true,
+                message: intl.formatMessage({
+                  id: 'src.components.customModal.FECE2219',
+                  defaultMessage: '请输入角色名称',
+                }),
+              },
+            ]}
+            label={intl.formatMessage({
+              id: 'src.components.customModal.0515E4FE',
+              defaultMessage: '名称',
+            })}
             name={'name'}
           >
-            <Input placeholder="请输入" />
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'src.components.customModal.5CDA23D6',
+                defaultMessage: '请输入',
+              })}
+            />
           </Form.Item>
         )}
+
         <Form.Item
-          label="描述"
+          label={intl.formatMessage({
+            id: 'src.components.customModal.75E8B57A',
+            defaultMessage: '描述',
+          })}
           name={'description'}
-          rules={[{ required: true, message: '请输入描述' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.components.customModal.00AA38BD',
+                defaultMessage: '请输入描述',
+              }),
+            },
+          ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.465FF0F1',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
-        <Form.Item label="权限" name={'permissions'}>
+        <Form.Item
+          required
+          label={intl.formatMessage({
+            id: 'src.components.customModal.D24B8F5C',
+            defaultMessage: '权限',
+          })}
+          name={'permissions'}
+        >
           <PermissionSelect
             fetchData={allPolicies}
             defaultValue={defaultValue}

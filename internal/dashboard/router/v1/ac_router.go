@@ -15,20 +15,22 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitAccessControlRoutes(g *gin.RouterGroup) {
-	g.GET("/ac/accounts", h.Wrap(h.ListAccounts))
-	g.POST("/ac/accounts", h.Wrap(h.CreateAccount))
-	g.PATCH("/ac/accounts/:username", h.Wrap(h.PatchAccount))
-	g.DELETE("/ac/accounts/:username", h.Wrap(h.DeleteAccount))
+	g.GET("/ac/accounts", h.Wrap(h.ListAccounts, acbiz.PathGuard("ac", "*", "read")))
+	g.POST("/ac/accounts", h.Wrap(h.CreateAccount, acbiz.PathGuard("ac", "*", "write")))
+	g.PATCH("/ac/accounts/:username", h.Wrap(h.PatchAccount, acbiz.PathGuard("ac", "*", "write")))
+	g.DELETE("/ac/accounts/:username", h.Wrap(h.DeleteAccount, acbiz.PathGuard("ac", "*", "write")))
 
-	g.GET("/ac/roles", h.Wrap(h.ListRoles))
-	g.POST("/ac/roles", h.Wrap(h.CreateRole))
-	g.PATCH("/ac/roles/:name", h.Wrap(h.PatchRole))
-	g.DELETE("/ac/roles/:name", h.Wrap(h.DeleteRole))
+	g.GET("/ac/roles", h.Wrap(h.ListRoles, acbiz.PathGuard("ac", "*", "read")))
+	g.POST("/ac/roles", h.Wrap(h.CreateRole, acbiz.PathGuard("ac", "*", "write")))
+	g.PATCH("/ac/roles/:name", h.Wrap(h.PatchRole, acbiz.PathGuard("ac", "*", "write")))
+	g.DELETE("/ac/roles/:name", h.Wrap(h.DeleteRole, acbiz.PathGuard("ac", "*", "write")))
 
 	g.GET("/ac/info", h.Wrap(h.GetAccountInfo))
 	g.GET("/ac/policies", h.Wrap(h.ListAllPolicies))
+	g.POST("/ac/password", h.Wrap(h.ResetPassword))
 }

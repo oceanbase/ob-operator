@@ -15,27 +15,29 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.GET("/obtenants", h.Wrap(h.ListAllTenants))
-	g.GET("/obtenants/:namespace/:name", h.Wrap(h.GetTenant))
-	g.PUT("/obtenants", h.Wrap(h.CreateTenant))
-	g.DELETE("/obtenants/:namespace/:name", h.Wrap(h.DeleteTenant))
-	g.PATCH("/obtenants/:namespace/:name", h.Wrap(h.PatchTenant))
-	g.POST("/obtenants/:namespace/:name/userCredentials", h.Wrap(h.ChangeUserPassword))
-	g.POST("/obtenants/:namespace/:name/logreplay", h.Wrap(h.ReplayStandbyLog))
-	g.POST("/obtenants/:namespace/:name/version", h.Wrap(h.UpgradeTenantVersion))
-	g.POST("/obtenants/:namespace/:name/role", h.Wrap(h.ChangeTenantRole))
-	g.GET("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.GetBackupPolicy))
-	g.PUT("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.CreateBackupPolicy))
-	g.PATCH("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.UpdateBackupPolicy))
-	g.DELETE("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.DeleteBackupPolicy))
-	g.GET("/obtenants/:namespace/:name/backup/:type/jobs", h.Wrap(h.ListBackupJobs))
 	g.GET("/obtenants/statistic", h.Wrap(h.GetOBTenantStatistic))
-	g.PUT("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.CreateOBTenantPool))
-	g.DELETE("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.DeleteOBTenantPool))
-	g.PATCH("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.PatchOBTenantPool))
-	g.GET("/obtenants/:namespace/:name/related-events", h.Wrap(h.ListOBTenantRelatedEvents))
+	g.PUT("/obtenants", h.Wrap(h.CreateTenant))
+
+	g.GET("/obtenants/:namespace/:name", h.Wrap(h.GetTenant, oceanbase.TenantGuard(":namespace", ":name", "read")))
+	g.DELETE("/obtenants/:namespace/:name", h.Wrap(h.DeleteTenant, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.PATCH("/obtenants/:namespace/:name", h.Wrap(h.PatchTenant, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.POST("/obtenants/:namespace/:name/userCredentials", h.Wrap(h.ChangeUserPassword, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.POST("/obtenants/:namespace/:name/logreplay", h.Wrap(h.ReplayStandbyLog, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.POST("/obtenants/:namespace/:name/version", h.Wrap(h.UpgradeTenantVersion, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.POST("/obtenants/:namespace/:name/role", h.Wrap(h.ChangeTenantRole, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.GET("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.GetBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "read")))
+	g.PUT("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.CreateBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.PATCH("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.UpdateBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.DELETE("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.DeleteBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.GET("/obtenants/:namespace/:name/backup/:type/jobs", h.Wrap(h.ListBackupJobs, oceanbase.TenantGuard(":namespace", ":name", "read")))
+	g.PUT("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.CreateOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.DELETE("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.DeleteOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.PATCH("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.PatchOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.GET("/obtenants/:namespace/:name/related-events", h.Wrap(h.ListOBTenantRelatedEvents, oceanbase.TenantGuard(":namespace", ":name", "read")))
 }

@@ -1,6 +1,6 @@
 import { MODE_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Link } from '@umijs/max';
+import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -131,6 +131,7 @@ export default function ClusterList({
   clusterList,
   loading,
 }: ClusterListProps) {
+  const access = useAccess();
   return (
     <Card
       title={
@@ -142,12 +143,14 @@ export default function ClusterList({
         </h2>
       }
       extra={
-        <Button onClick={handleAddCluster} type="primary">
-          {intl.formatMessage({
-            id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-            defaultMessage: '创建集群',
-          })}
-        </Button>
+        access.obclusterwrite ? (
+          <Button onClick={handleAddCluster} type="primary">
+            {intl.formatMessage({
+              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+              defaultMessage: '创建集群',
+            })}
+          </Button>
+        ) : null
       }
     >
       <Table

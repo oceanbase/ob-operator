@@ -3,7 +3,11 @@ name: release operator
 on: 
   push:
     tags: 
+      - 'operator-[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  tagName: ${{ github.ref_name }}
 
 jobs:
   release-operator:
@@ -37,6 +41,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Version variables
+        id: set_version_vars
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
       
       - name: Create and push manifests w/o cache
         uses: docker/build-push-action@v6
@@ -46,6 +55,6 @@ jobs:
           file: build/Dockerfile.operator
           push: true
           tags: |
-            ${{ vars.DOCKER_PUSH_BASE }}/ob-operator:${{ github.ref_name }}
-            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/ob-operator:${{ github.ref_name }}
-            ghcr.io/${{ github.repository_owner }}/ob-operator:${{ github.ref_name }}
+            ${{ vars.DOCKER_PUSH_BASE }}/ob-operator:${{ steps.set_version_vars.outputs.version }}
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/ob-operator:${{ steps.set_version_vars.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/ob-operator:${{ steps.set_version_vars.outputs.version }}

@@ -1,3 +1,4 @@
+import { useAccess } from '@umijs/max';
 import { useUpdateEffect } from 'ahooks';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
@@ -34,6 +35,7 @@ export default function MonitorDetail({
 }: MonitorDetailProps) {
   const [isRefresh, setIsRefresh] = useState<boolean>(false);
   const [realTime, setRealTime] = useState<string>(getDate());
+  const access = useAccess();
   const timerRef = useRef<NodeJS.Timeout>();
   const updateTimer = useRef<NodeJS.Timer>();
   const [queryRange, setQueryRange] =
@@ -79,17 +81,19 @@ export default function MonitorDetail({
   return (
     <div style={{ marginTop: 12 }}>
       {basicInfo}
-      <DataFilter
-        realTime={realTime}
-        isRefresh={isRefresh}
-        setIsRefresh={setIsRefresh}
-        filterLabel={filterLabel}
-        setFilterLabel={setFilterLabel}
-        filterData={filterData}
-        setFilterData={setFilterData}
-        queryRange={queryRange}
-        setQueryRange={setQueryRange}
-      />
+      {access.obclusterwrite ? (
+        <DataFilter
+          realTime={realTime}
+          isRefresh={isRefresh}
+          setIsRefresh={setIsRefresh}
+          filterLabel={filterLabel}
+          setFilterLabel={setFilterLabel}
+          filterData={filterData}
+          setFilterData={setFilterData}
+          queryRange={queryRange}
+          setQueryRange={setQueryRange}
+        />
+      ) : null}
       <MonitorComp
         isRefresh={isRefresh}
         queryRange={queryRange}

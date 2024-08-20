@@ -7,7 +7,7 @@ import type {
 } from '@/api/generated';
 import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { history } from '@umijs/max';
+import { history, useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
   Button,
@@ -30,6 +30,7 @@ const { Text } = Typography;
 export default function Event() {
   const [form] = Form.useForm();
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const access = useAccess();
   const [editRuleName, setEditRuleName] = useState<string>();
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
@@ -48,7 +49,7 @@ export default function Event() {
       }),
       dataIndex: 'summary',
       key: 'summary',
-      width:'25%',
+      width: '25%',
       render: (val, record) => {
         return (
           <Button onClick={() => editRule(record.rule)} type="link">
@@ -159,7 +160,7 @@ export default function Event() {
       key: 'action',
       render: (_, record) => (
         <Button
-          disabled={record.status.state !== 'active'}
+          disabled={record.status.state !== 'active' || !access.alarmwrite}
           style={{ paddingLeft: 0 }}
           type="link"
           onClick={() => {

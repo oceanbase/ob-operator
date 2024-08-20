@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useAccess, useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useEffect, useRef, useState } from 'react';
@@ -17,6 +17,7 @@ import TenantsList from './TenantsList';
 // tenant overview page
 export default function TenantPage() {
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([]);
+  const access = useAccess();
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const {
@@ -69,19 +70,23 @@ export default function TenantPage() {
             turnToCreateTenant={handleAddCluster}
           />
         </Col>
-        <Col span={24}>
-          <EventsTable objectType="OBTENANT" collapsible={false} />
-        </Col>
+        {access.systemread && (
+          <Col span={24}>
+            <EventsTable objectType="OBTENANT" collapsible={false} />
+          </Col>
+        )}
       </Row>
-      <MonitorComp
-        filterLabel={filterLabel}
-        queryScope="OBTENANT"
-        type="OVERVIEW"
-        useFor="tenant"
-        groupLabels={['tenant_name', 'ob_cluster_name']}
-        queryRange={DEFAULT_QUERY_RANGE}
-        filterData={tenantsList}
-      />
+      {access.systemread && (
+        <MonitorComp
+          filterLabel={filterLabel}
+          queryScope="OBTENANT"
+          type="OVERVIEW"
+          useFor="tenant"
+          groupLabels={['tenant_name', 'ob_cluster_name']}
+          queryRange={DEFAULT_QUERY_RANGE}
+          filterData={tenantsList}
+        />
+      )}
     </PageContainer>
   );
 }

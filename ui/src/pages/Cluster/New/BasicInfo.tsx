@@ -7,6 +7,7 @@ import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { MODE_MAP } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
+import { useAccess } from '@umijs/max';
 
 interface BasicInfoProps {
   form: FormInstance<API.CreateClusterData>;
@@ -19,6 +20,7 @@ export default function BasicInfo({
   passwordVal,
   setPasswordVal,
 }: BasicInfoProps) {
+  const access = useAccess();
   return (
     <Card
       title={intl.formatMessage({
@@ -27,9 +29,12 @@ export default function BasicInfo({
       })}
     >
       <Row gutter={[16, 32]}>
-        <Col span={8} style={{ height: 48 }}>
-          <SelectNSFromItem form={form} />
-        </Col>
+        {access.systemread ? (
+          <Col span={8} style={{ height: 48 }}>
+            <SelectNSFromItem form={form} />
+          </Col>
+        ) : null}
+
         <Col span={8} style={{ height: 48 }}>
           <PasswordInput
             value={passwordVal}

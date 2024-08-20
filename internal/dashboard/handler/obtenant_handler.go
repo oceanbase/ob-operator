@@ -26,7 +26,9 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
@@ -131,6 +133,21 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	err := c.BindJSON(tenantParam)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	username, ok := c.Get("username")
+	if !ok {
+		return nil, httpErr.NewBadRequest("Unauthorized")
+	}
+	ok, err = acbiz.Enforce(c, username.(string), &acmodel.Policy{
+		Domain: acbiz.DomainOBCluster,
+		Object: acmodel.Object(tenantParam.ClusterName),
+		Action: acbiz.ActionWrite,
+	})
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	if !ok {
+		return nil, httpErr.New(httpErr.ErrPermissionDenied, "Permission denied")
 	}
 
 	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)

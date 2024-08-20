@@ -15,36 +15,37 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitAlarmRoutes(g *gin.RouterGroup) {
 	// alert
-	g.POST("/alarm/alert/alerts", h.Wrap(h.ListAlerts))
+	g.POST("/alarm/alert/alerts", h.Wrap(h.ListAlerts, acbiz.PathGuard("alarm", "*", "read")))
 
 	// silence
-	g.POST("/alarm/silence/silencers", h.Wrap(h.ListSilencers))
-	g.GET("/alarm/silence/silencers/:id", h.Wrap(h.GetSilencer))
-	g.PUT("/alarm/silence/silencers", h.Wrap(h.CreateOrUpdateSilencer))
-	g.DELETE("/alarm/silence/silencers/:id", h.Wrap(h.DeleteSilencer))
+	g.POST("/alarm/silence/silencers", h.Wrap(h.ListSilencers, acbiz.PathGuard("alarm", "*", "read")))
+	g.GET("/alarm/silence/silencers/:id", h.Wrap(h.GetSilencer, acbiz.PathGuard("alarm", "*", "read")))
+	g.PUT("/alarm/silence/silencers", h.Wrap(h.CreateOrUpdateSilencer, acbiz.PathGuard("alarm", "*", "write")))
+	g.DELETE("/alarm/silence/silencers/:id", h.Wrap(h.DeleteSilencer, acbiz.PathGuard("alarm", "*", "write")))
 
 	// rule
-	g.POST("/alarm/rule/rules", h.Wrap(h.ListRules))
-	g.GET("/alarm/rule/rules/:name", h.Wrap(h.GetRule))
-	g.PUT("/alarm/rule/rules", h.Wrap(h.CreateOrUpdateRule))
-	g.DELETE("/alarm/rule/rules/:name", h.Wrap(h.DeleteRule))
+	g.POST("/alarm/rule/rules", h.Wrap(h.ListRules, acbiz.PathGuard("alarm", "*", "read")))
+	g.GET("/alarm/rule/rules/:name", h.Wrap(h.GetRule, acbiz.PathGuard("alarm", "*", "read")))
+	g.PUT("/alarm/rule/rules", h.Wrap(h.CreateOrUpdateRule, acbiz.PathGuard("alarm", "*", "write")))
+	g.DELETE("/alarm/rule/rules/:name", h.Wrap(h.DeleteRule, acbiz.PathGuard("alarm", "*", "write")))
 
 	// receiver
-	g.POST("/alarm/receiver/receivers", h.Wrap(h.ListReceivers))
-	g.GET("/alarm/receiver/receivers/:name", h.Wrap(h.GetReceiver))
-	g.PUT("/alarm/receiver/receivers", h.Wrap(h.CreateOrUpdateReceiver))
-	g.DELETE("/alarm/receiver/receivers/:name", h.Wrap(h.DeleteReceiver))
-	g.POST("/alarm/receiver/templates", h.Wrap(h.ListReceiverTemplates))
-	g.GET("/alarm/receiver/templates/:type", h.Wrap(h.GetReceiverTemplate))
+	g.POST("/alarm/receiver/receivers", h.Wrap(h.ListReceivers, acbiz.PathGuard("alarm", "*", "read")))
+	g.GET("/alarm/receiver/receivers/:name", h.Wrap(h.GetReceiver, acbiz.PathGuard("alarm", "*", "read")))
+	g.PUT("/alarm/receiver/receivers", h.Wrap(h.CreateOrUpdateReceiver, acbiz.PathGuard("alarm", "*", "write")))
+	g.DELETE("/alarm/receiver/receivers/:name", h.Wrap(h.DeleteReceiver, acbiz.PathGuard("alarm", "*", "write")))
+	g.POST("/alarm/receiver/templates", h.Wrap(h.ListReceiverTemplates, acbiz.PathGuard("alarm", "*", "read")))
+	g.GET("/alarm/receiver/templates/:type", h.Wrap(h.GetReceiverTemplate, acbiz.PathGuard("alarm", "*", "write")))
 
 	// route
-	g.POST("/alarm/route/routes", h.Wrap(h.ListRoutes))
-	g.GET("/alarm/route/routes/:id", h.Wrap(h.GetRoute))
-	g.PUT("/alarm/route/routes", h.Wrap(h.CreateOrUpdateRoute))
-	g.DELETE("/alarm/route/routes/:id", h.Wrap(h.DeleteRoute))
+	g.POST("/alarm/route/routes", h.Wrap(h.ListRoutes, acbiz.PathGuard("alarm", "*", "read")))
+	g.GET("/alarm/route/routes/:id", h.Wrap(h.GetRoute, acbiz.PathGuard("alarm", "*", "read")))
+	g.PUT("/alarm/route/routes", h.Wrap(h.CreateOrUpdateRoute, acbiz.PathGuard("alarm", "*", "write")))
+	g.DELETE("/alarm/route/routes/:id", h.Wrap(h.DeleteRoute, acbiz.PathGuard("alarm", "*", "write")))
 }

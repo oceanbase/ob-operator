@@ -42,3 +42,4 @@ log/*
 ./nohup.out
 node_modules/
 ui/dist/
+rbac_policy*.csv

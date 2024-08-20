@@ -14,6 +14,7 @@ package ac
 
 import (
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/casbin/casbin/v2"
@@ -42,14 +43,18 @@ m = g(r.sub, p.sub) && g(r.obj, p.obj) && g(r.act, p.act)
 const (
 	envRBACPolicyPath      = "RBAC_POLICY_PATH"
 	envRBACPolicyConfigMap = "RBAC_POLICY_CONFIG_MAP"
+	envRBACPolicyKey       = "RBAC_POLICY_KEY"
+	envRBACPolicyNamespace = "RBAC_POLICY_NAMESPACE"
 )
 
 type enf struct {
 	*casbin.Enforcer
-	policyMu      sync.RWMutex
-	accMu         sync.RWMutex
-	policyPath    string
-	configMapPath string
+	policyMu        sync.RWMutex
+	accMu           sync.RWMutex
+	policyPath      string
+	policyCmKey     string
+	policyNamespace string
+	configMapPath   string
 }
 
 var enforcer *enf
@@ -58,14 +63,25 @@ func init() {
 	var err error
 	var rbacPolicyPath = os.Getenv(envRBACPolicyPath)
 	var rbacPolicyCm = os.Getenv(envRBACPolicyConfigMap)
+	var policyCmKey = os.Getenv(envRBACPolicyKey)
+	var policyNamespace = os.Getenv(envRBACPolicyNamespace)
 	if rbacPolicyCm == "" {
 		panic("RBAC_POLICY_CONFIG_MAP is required")
 	}
 	if rbacPolicyPath == "" {
 		rbacPolicyPath = "/etc/rbac/rbac_policy.csv"
 	}
+	if policyCmKey == "" {
+		policyCmKey = "rbac_policy.csv"
+	}
+	if policyNamespace == "" {
+		policyNamespace = os.Getenv("NAMESPACE")
+	}
+	if policyNamespace == "" {
+		policyNamespace = "default"
+	}
 
-	enforcer, err = initEnforcer(rbacPolicyPath, rbacPolicyCm)
+	enforcer, err = initEnforcer(rbacPolicyPath, rbacPolicyCm, policyCmKey, policyNamespace)
 	if err != nil {
 		panic(err)
 	}
@@ -81,7 +97,11 @@ func Enforcer() *casbin.Enforcer {
 	return enforcer.Enforcer
 }
 
-func initEnforcer(rbacPolicyPath, rbacPolicyCm string) (*enf, error) {
+func keyMatch(key, pattern string) bool {
+	return (strings.HasPrefix(pattern, key) && strings.HasSuffix(key, "/")) || util.KeyMatch2(key, pattern)
+}
+
+func initEnforcer(rbacPolicyPath, rbacPolicyCm, policyCmKey, policyNamespace string) (*enf, error) {
 	var err error
 	model, err := model.NewModelFromString(modelDefinition)
 	if err != nil {
@@ -94,11 +114,13 @@ func initEnforcer(rbacPolicyPath, rbacPolicyCm string) (*enf, error) {
 		return nil, err
 	}
 	internal := &enf{
-		Enforcer:      e,
-		policyPath:    rbacPolicyPath,
-		configMapPath: rbacPolicyCm,
+		Enforcer:        e,
+		policyPath:      rbacPolicyPath,
+		configMapPath:   rbacPolicyCm,
+		policyCmKey:     policyCmKey,
+		policyNamespace: policyNamespace,
 	}
-	internal.AddNamedMatchingFunc("g", "KeyMatch2", util.KeyMatch2)
+	internal.AddNamedMatchingFunc("g", "keyMatch", keyMatch)
 
 	return internal, nil
 }

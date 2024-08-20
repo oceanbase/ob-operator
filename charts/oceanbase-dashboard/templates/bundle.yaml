@@ -19,7 +19,7 @@ spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
         - name: dashboard
-          image: oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
+          image: quay.io/oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
           resources:
             requests:
               cpu: 100m
@@ -51,8 +51,10 @@ spec:
               value: {{ .Release.Name }}-alertmanager-conf
             - name: RBAC_POLICY_CONFIG_MAP
               value: {{ .Release.Name }}-rbac-policy
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}
         - name: prometheus
-          image: prom/prometheus:v2.51.1
+          image: quay.io/prometheus/prometheus:v2.51.1
           resources:
             requests:
               cpu: 100m
@@ -72,9 +74,8 @@ spec:
               mountPath: /prometheus/
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
-            - name: rbac-policy-volume
         - name: alertmanager
-          image: prom/alertmanager:v0.27.0
+          image: quay.io/prometheus/alertmanager:v0.27.0
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
           ports:
             - name: alertmanager

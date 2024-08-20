@@ -4,15 +4,16 @@ import { ReactNode } from 'react';
 
 interface CustomModalProps {
   isOpen: boolean;
-  title: string;
-  handleOk: () => void;
-  handleCancel: () => void;
+  title?: string;
+  handleOk?: () => void;
+  handleCancel?: () => void;
   children: ReactNode;
+  footer?: React.ReactNode;
   width?: number;
 }
 
 export default function CustomModal(props: CustomModalProps) {
-  const { isOpen, handleOk, handleCancel, title, width = 520 } = props;
+  const { isOpen, handleOk, handleCancel, title, width = 520, footer } = props;
   return (
     <Modal
       width={width}
@@ -28,6 +29,7 @@ export default function CustomModal(props: CustomModalProps) {
         defaultMessage: '取消',
       })}
       onCancel={handleCancel}
+      footer={footer}
     >
       {props.children}
     </Modal>
