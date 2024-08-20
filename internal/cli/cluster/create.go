@@ -68,7 +68,7 @@ func (o *CreateOptions) Validate() error {
 	return nil
 }
 
-func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
+func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	topology, err := utils.MapZonesToTopology(o.Zones)
 	if err != nil {
 		return err
