@@ -14,20 +14,36 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"github.com/spf13/cobra"
+	"errors"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/spf13/cobra"
 )
 
-type ShowOptions struct {
-	BaseOptions
-	Obcluster          *v1alpha1.OBCluster
-	ObclusterOperation *v1alpha1.OBClusterOperationList
+type ResourceOptions struct {
+	Name      string
+	Namespace string
 }
 
-func NewShowOptions() *ShowOptions {
-	return &ShowOptions{}
+// Parse the args in obocli
+func (o *ResourceOptions) Parse(cmd *cobra.Command, args []string) error {
+	o.Name = args[0]
+	return nil
 }
-func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
+
+// Complete the unset params in options
+func (o *ResourceOptions) Complete() error {
+	return nil
+}
+
+// Validate the params in options
+func (o *ResourceOptions) Validate() error {
+	if o.Namespace == "" {
+		return errors.New("namespace not specified")
+	}
+	return nil
+}
+
+// AddFlags add basic flags for cluster management
+func (o *ResourceOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 }

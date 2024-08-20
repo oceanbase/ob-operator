@@ -19,12 +19,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func NewTenantCmd() *cobra.Command {
+// NewCmd is command for tenant management
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tenant",
 		Short: "Command for tenant management",
 		Long:  `Command for tenant management, such as Create, Update, Delete.`,
 		Run: func(cmd *cobra.Command, args []string) {
+			// TODO:
 			log.Println("oceanbase tenant management")
 		},
 	}

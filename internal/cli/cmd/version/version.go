@@ -14,17 +14,17 @@ See the Mulan PSL v2 for more details.
 package version
 
 import (
-	"log"
-
+	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/spf13/cobra"
 )
 
-func NewVersionCmd() *cobra.Command {
+func NewCmd() *cobra.Command {
+	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of oceanbase cli",
 		Run: func(cmd *cobra.Command, args []string) {
-			log.Println("oceanbase cli")
+			logger.Println("Oceanbase cli Version:0.0.1")
 		},
 	}
 	return cmd

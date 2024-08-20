@@ -13,7 +13,10 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
-type BaseOptions struct {
-	Name      string
-	Namespace string
+type ShowOptions struct {
+	ResourceOptions
+}
+
+func NewShowOptions() *ShowOptions {
+	return &ShowOptions{}
 }

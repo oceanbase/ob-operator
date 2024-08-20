@@ -10,8 +10,8 @@ cli-build: cli-dep-install # Build oceanbase-cli
 
 .PHONY: cli-clean
 cli-clean: # Clean build
-	rm -rf bin/cli
-	go clean -i ./..
+	rm -rf bin/obocli
+	go clean -i ./...
 
 .PHONY : cli-dep-install
 cli-dep-install: # Install oceanbase-cli deps

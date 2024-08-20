@@ -17,12 +17,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewClusterCmd is command for cluster management
-func NewClusterCmd() *cobra.Command {
+// NewCmd is command for cluster management
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "cluster <subcommand>",
 		Short: "Command for cluster management",
-		Long:  `Command for cluster management, such as Create, UpGrade, Delete, Scale.`,
+		Long:  `Command for cluster management, such as Create, UpGrade, Delete, Scale, Show.`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())

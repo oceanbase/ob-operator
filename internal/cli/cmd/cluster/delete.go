@@ -16,8 +16,8 @@ package cluster
 import (
 	"github.com/spf13/cobra"
 
+	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	cluster "github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
@@ -30,8 +30,8 @@ func NewDeleteCmd() *cobra.Command {
 		Short:   "Delete ob cluster",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
+		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			o.Name = args[0]
 			err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
 				logger.Fatalln(err)

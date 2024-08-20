@@ -21,12 +21,12 @@ import (
 )
 
 // NewInstallCmd install the ob-operator and other components
-func NewInstallCmd() *cobra.Command {
+func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "install <components>",
 		Short: "Command for ob-operator and components installation",
 		Run: func(cmd *cobra.Command, args []string) {
-			// 如果没提供参数，默认安装所有组件，修改option参数即可
+			// TODO:
 			log.Println("Installing components:", strings.Join(args, ", "))
 		},
 	}

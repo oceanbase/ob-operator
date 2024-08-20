@@ -14,10 +14,12 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
+	"sort"
+
 	"github.com/spf13/cobra"
 
+	"github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/cli/pkg/cluster"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
@@ -27,34 +29,41 @@ func NewShowCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	cmd := &cobra.Command{
-		Use:   "show <cluster_name>",
-		Short: "show overview of ob cluster",
-		Args:  cobra.ExactArgs(1),
+		Use:     "show <cluster_name>",
+		Short:   "show overview of ob cluster",
+		Args:    cobra.ExactArgs(1),
+		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			o.Name = args[0]
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			obclusterOperation, err := clients.ListOBClusterOperations(cmd.Context(), obcluster)
+			obclusterOperation, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			o.Obcluster = obcluster
-			o.ObclusterOperation = obclusterOperation
-			// TODO: 显示operation信息
-			tbLog.Println("Cluster ID \t Cluster Name \t Cluster Status \t Cluster Image")
-			tbLog.Printf("%d \t %s \t %s \t %s \n", o.Obcluster.Spec.ClusterId, o.Obcluster.Spec.ClusterName, o.Obcluster.Status.Status, o.Obcluster.Status.Image)
-			if len(o.Obcluster.Status.OBZoneStatus) > 0 {
+			tbLog.Println("Cluster ID \t Name \t Status \t Image")
+			tbLog.Printf("%d \t %s \t %s \t %s \n\n", obcluster.Spec.ClusterId, obcluster.Spec.ClusterName, obcluster.Status.Status, obcluster.Status.Image)
+			if len(obcluster.Status.OBZoneStatus) > 0 {
 				tbLog.Println("Zone \t Status")
-				for _, zone := range o.Obcluster.Status.OBZoneStatus {
-					tbLog.Printf("%s \t %s \n", zone.Zone, zone.Status)
+				for _, zone := range obcluster.Status.OBZoneStatus {
+					tbLog.Printf("%s \t %s \n\n", zone.Zone, zone.Status)
 				}
 			}
-			if len(o.Obcluster.Status.Parameters) > 0 {
-				tbLog.Println("Parameters: Key \t Value")
-				for _, Parameter := range o.Obcluster.Status.Parameters {
-					tbLog.Printf("%s \t %s \n", Parameter.Name, Parameter.Value)
+			if len(obcluster.Status.Parameters) > 0 {
+				tbLog.Println("Key \t Value")
+				for _, Parameter := range obcluster.Status.Parameters {
+					tbLog.Printf("%s \t %s \n\n", Parameter.Name, Parameter.Value)
+				}
+			}
+
+			if len(obclusterOperation.Items) > 0 {
+				sort.Slice(obclusterOperation.Items, func(i, j int) bool {
+					return obclusterOperation.Items[i].Name < obclusterOperation.Items[j].Name
+				})
+				tbLog.Println("Operation Type \t TTLDays \t Status")
+				for _, op := range obclusterOperation.Items {
+					tbLog.Printf("%s \t %d \t  %s \n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status)
 				}
 			}
 			if err = tbw.Flush(); err != nil {
@@ -62,5 +71,6 @@ func NewShowCmd() *cobra.Command {
 			}
 		},
 	}
+	o.AddFlags(cmd)
 	return cmd
 }

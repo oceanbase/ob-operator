@@ -11,7 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package utils
 
 import (
 	"crypto/rand"
@@ -20,25 +20,32 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/google/uuid"
+	"time"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	k8srand "k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
-func generateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSecrets {
+const (
+	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#%^&*_-+=|(){}[]:;,.?/`$\"<>"
+	factor     = 4294901759
+)
+
+func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSecrets {
 	return &apitypes.OBUserSecrets{
-		Root:     fmt.Sprintf("%s-%d-root-%s", clusterName, clusterId, generateUUID()),
-		ProxyRO:  fmt.Sprintf("%s-%d-proxyro-%s", clusterName, clusterId, generateUUID()),
-		Monitor:  fmt.Sprintf("%s-%d-monitor-%s", clusterName, clusterId, generateUUID()),
-		Operator: fmt.Sprintf("%s-%d-operator-%s", clusterName, clusterId, generateUUID()),
+		Root:     fmt.Sprintf("%s-%d-root-%s", clusterName, clusterId, GenerateUUID()),
+		ProxyRO:  fmt.Sprintf("%s-%d-proxyro-%s", clusterName, clusterId, GenerateUUID()),
+		Monitor:  fmt.Sprintf("%s-%d-monitor-%s", clusterName, clusterId, GenerateUUID()),
+		Operator: fmt.Sprintf("%s-%d-operator-%s", clusterName, clusterId, GenerateUUID()),
 	}
 }
-
+func GenerateClusterId() int64 {
+	return time.Now().Unix() % factor
+}
 func CheckResourceName(name string) bool {
 	// 定义正则表达式
 	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
@@ -61,17 +68,21 @@ func CheckPassword(password string) bool {
 		countSpecialChar int
 	)
 
-	// 遍历密码中的每个字符
 	for _, char := range password {
-		switch {
-		case regexp.MustCompile(`[A-Z]`).MatchString(string(char)):
-			countUppercase++
-		case regexp.MustCompile(`[a-z]`).MatchString(string(char)):
-			countLowercase++
-		case regexp.MustCompile(`[0-9]`).MatchString(string(char)):
-			countNumber++
-		default:
-			countSpecialChar++
+		if strings.ContainsRune(characters, char) {
+			// 检查字符并增加相应的计数
+			switch {
+			case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", char):
+				countUppercase++
+			case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", char):
+				countLowercase++
+			case strings.ContainsRune("0123456789", char):
+				countNumber++
+			default:
+				countSpecialChar++
+			}
+		} else {
+			return false
 		}
 		// 提前返回
 		if countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2 {
@@ -80,7 +91,7 @@ func CheckPassword(password string) bool {
 	}
 	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
 }
-func mapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
+func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
 		return nil, fmt.Errorf("Zone value is required") // 无效的zone信息
 	}
@@ -101,7 +112,7 @@ func mapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	return topology, nil
 }
 
-func generateRandomPassword() string {
+func GenerateRandomPassword() string {
 	const (
 		maxLength      = 32
 		minUppercase   = 2
@@ -109,8 +120,6 @@ func generateRandomPassword() string {
 		minNumber      = 2
 		minSpecialChar = 2
 	)
-
-	characters := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#%^&*_-+=|(){}[]:;,.?/`$\"<>"
 	var (
 		countUppercase   int
 		countLowercase   int
@@ -132,25 +141,25 @@ func generateRandomPassword() string {
 		if err := sb.WriteByte(randomChar); err != nil {
 			panic(err)
 		}
-
 		switch {
-		case regexp.MustCompile(`[A-Z]`).MatchString(string(randomChar)):
+		case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", rune(randomChar)):
 			countUppercase++
-		case regexp.MustCompile(`[a-z]`).MatchString(string(randomChar)):
+		case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", rune(randomChar)):
 			countLowercase++
-		case regexp.MustCompile(`[0-9]`).MatchString(string(randomChar)):
+		case strings.ContainsRune("0123456789", rune(randomChar)):
 			countNumber++
 		default:
 			countSpecialChar++
 		}
 		if len(sb.String()) >= maxLength {
-			return generateRandomPassword()
+			return GenerateRandomPassword()
 		}
 	}
 
 	return sb.String()
 }
-func generateUUID() string {
-	parts := strings.Split(uuid.New().String(), "-")
-	return parts[len(parts)-1]
+
+// GenerateUUID returns uuid
+func GenerateUUID() string {
+	return k8srand.String(12)
 }

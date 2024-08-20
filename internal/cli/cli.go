@@ -14,8 +14,6 @@ See the Mulan PSL v2 for more details.
 package cli
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/cluster"
@@ -32,25 +30,17 @@ func NewCliCmd() *cobra.Command {
 		Long:  "OceanBase Operator CLI tool to manage OceanBase clusters, tenants, and backups.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if cmd.Flags().Changed("version") {
-				versionCmd := version.NewVersionCmd()
+				versionCmd := version.NewCmd()
 				versionCmd.Run(cmd, args)
 			} else {
 				_ = cmd.Help()
 			}
 		},
 	}
-	cmd.AddCommand(version.NewVersionCmd())
-	cmd.AddCommand(cluster.NewClusterCmd())
-	cmd.AddCommand(tenant.NewTenantCmd())
-	cmd.AddCommand(install.NewInstallCmd())
-	cmd.Flags().BoolP("version", "v", false, "Print the version number of oceanbase cli")
+	cmd.AddCommand(version.NewCmd())
+	cmd.AddCommand(cluster.NewCmd())
+	cmd.AddCommand(tenant.NewCmd())
+	cmd.AddCommand(install.NewCmd())
+	cmd.Flags().BoolP("version", "v", false, "Print the version of oceanbase cli")
 	return cmd
-}
-
-func Execute() {
-	rootCmd := NewCliCmd()
-	err := rootCmd.Execute()
-	if err != nil {
-		log.Fatalln(err)
-	}
 }

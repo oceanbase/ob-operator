@@ -43,7 +43,7 @@ func NewListCmd() *cobra.Command {
 				logger.Println("No clusters found")
 				return
 			}
-			tbLog.Println("Namespace \t Pod \t Create Time \t Status")
+			tbLog.Println("Namespace \t Name \t Create Time \t Status")
 			for _, cluster := range obclusterList.Items {
 				tbLog.Printf("%s \t %s \t %s \t %s\n", cluster.Namespace, cluster.Name, cluster.CreationTimestamp, cluster.Status.Status)
 			}

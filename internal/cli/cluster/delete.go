@@ -13,17 +13,10 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
-import (
-	"github.com/spf13/cobra"
-)
-
 type DeleteOptions struct {
-	BaseOptions
+	ResourceOptions
 }
 
 func NewDeleteOptions() *DeleteOptions {
 	return &DeleteOptions{}
-}
-func (o *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 }

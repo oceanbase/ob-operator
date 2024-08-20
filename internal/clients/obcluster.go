@@ -89,17 +89,16 @@ func GetOBCluster(ctx context.Context, namespace, name string) (*v1alpha1.OBClus
 func DeleteOBCluster(ctx context.Context, namespace, name string) error {
 	return ClusterClient.Delete(ctx, namespace, name, metav1.DeleteOptions{})
 }
+
 func CreateOBClusterOperation(ctx context.Context, obclusterOperation *v1alpha1.OBClusterOperation) (*v1alpha1.OBClusterOperation, error) {
 	return ClusterOperationClient.Create(ctx, obclusterOperation, metav1.CreateOptions{})
 }
-func GetOBClusterOperation(ctx context.Context, namespace, name string) (*v1alpha1.OBClusterOperation, error) {
-	return ClusterOperationClient.Get(ctx, namespace, name, metav1.GetOptions{})
-}
-func ListOBClusterOperations(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBClusterOperationList, error) {
+
+func GetOBClusterOperations(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBClusterOperationList, error) {
 	client := client.GetClient()
 	var obclustetOperationList v1alpha1.OBClusterOperationList
 	obj, err := client.DynamicClient.Resource(schema.OBClusterOperationGVR).Namespace(obcluster.Namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, obcluster.Name),
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBClusterOp, obcluster.Name),
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "List obcluster operations")
@@ -110,6 +109,7 @@ func ListOBClusterOperations(ctx context.Context, obcluster *v1alpha1.OBCluster)
 	}
 	return &obclustetOperationList, nil
 }
+
 func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {
 	client := client.GetClient()
 	obj, err := client.DynamicClient.Resource(schema.OBClusterRes).List(ctx, metav1.ListOptions{})
