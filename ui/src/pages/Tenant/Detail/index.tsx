@@ -1,12 +1,12 @@
 import DetailLayout from '@/pages/Layouts/DetailLayout';
 import { intl } from '@/utils/intl';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
-import { useParams } from '@umijs/max';
+import { useAccess, useParams } from '@umijs/max';
 
 export default () => {
   const params = useParams();
   const { ns, name, tenantName } = params;
-
+  const access = useAccess();
   const menus: MenuItem[] = [
     {
       title: intl.formatMessage({
@@ -44,6 +44,7 @@ export default () => {
       }),
       key: 'connection',
       link: `/tenant/${ns}/${name}/${tenantName}/connection`,
+      accessible: access.obclusterwrite,
     },
   ];
   return <DetailLayout menus={menus} subSideSelectKey="tenant" />;

@@ -15,6 +15,7 @@ package ac
 import (
 	"context"
 	"os"
+	"sort"
 	"strings"
 
 	corev1 "k8s.io/api/core/v1"
@@ -81,6 +82,9 @@ func ListRoles(_ context.Context) ([]*acmodel.Role, error) {
 			role.Policies = append(role.Policies, acmodel.NewPolicy(parts[0], parts[1], p[2]))
 		}
 	}
+	sort.Slice(roles, func(i, j int) bool {
+		return roles[i].Name < roles[j].Name
+	})
 	return roles, nil
 }
 
@@ -189,24 +193,26 @@ func persistPolicies(ctx context.Context, targetFile string, extra ...string) er
 	if len(extra) > 0 {
 		clt := client.GetClient()
 		var cm *corev1.ConfigMap
-		cm, err = clt.ClientSet.CoreV1().ConfigMaps("default").Get(ctx, extra[0], metav1.GetOptions{})
+		cm, err = clt.ClientSet.CoreV1().ConfigMaps(enforcer.policyNamespace).Get(ctx, extra[0], metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
-		cm.Data[targetFile] = csv
-		_, err = clt.ClientSet.CoreV1().ConfigMaps("default").Update(ctx, cm, metav1.UpdateOptions{})
+		cm.Data[enforcer.policyCmKey] = csv
+		_, err = clt.ClientSet.CoreV1().ConfigMaps(enforcer.policyNamespace).Update(ctx, cm, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
 	}
-	file, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-	_, err = file.WriteString(csv)
-	if err != nil {
-		return err
+	if os.Getenv("DEBUG_ACCESS_CONTROL") == "true" {
+		file, err := os.OpenFile(targetFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		_, err = file.WriteString(csv)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

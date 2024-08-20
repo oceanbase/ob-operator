@@ -10,14 +10,33 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package converter
 
 import (
-	"github.com/gin-gonic/gin"
-	swaggerfiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
+	"fmt"
+	"math"
 )
 
-func InitDocRoutes(g *gin.RouterGroup) {
-	g.GET("/docs", ginSwagger.WrapHandler(swaggerfiles.Handler))
+func ConvertToString(value any) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case float64:
+		return fmt.Sprintf("%.0f", v)
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+func ConvertFloat(value any) any {
+	switch v := value.(type) {
+	case float64:
+		return int64(math.Round(v))
+	default:
+		return v
+	}
 }

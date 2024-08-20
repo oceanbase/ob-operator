@@ -1,3 +1,4 @@
+Welcome to OceanBase dashboard!
   ___                       ____
  / _ \  ___ ___  __ _ _ __ | __ )  __ _ ___  ___
 | | | |/ __/ _ \/ _` | '_ \|  _ \ / _` / __|/ _ \
@@ -10,18 +11,22 @@
 | |_| | (_| \__ \ | | | |_) | (_) | (_| | | | (_| |
 |____/ \__,_|___/_| |_|_.__/ \___/ \__,_|_|  \__,_|
 
-Welcome to OceanBase dashboard!
 
-1. After installing the dashboard chart, you can use `port-forward` to expose the dashboard outside like:
+1. [Temporary accessing] After installing the dashboard chart, you can use `port-forward` to expose the dashboard outside as following command:
 
   > kubectl port-forward -n {{ .Release.Namespace }} services/oceanbase-dashboard-{{ .Release.Name }} 18081:80 --address 0.0.0.0
 
-then you can visit the dashboard on http://$YOUR_SERVER_IP:18081
+then you can visit the dashboard on http://$YOUR_SERVER_IP:18081 (Take 18081 as an example here)
 
-2. Use the following command to get password for default admin user 
+2. For security reason, it is recommended to use a service to access the dashboard. By default the oceanbase-dashboard helm chart creates a service of type NodePort.
+   You can use the following command to get the nodePort of the dashboard service:
 
-  > echo $(kubectl get -n {{ .Release.Namespace }} secret {{ .Release.Name }}-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+  > export SERVICE_PORT_PORT=$(kubectl get -n {{ .Release.Namespace }} secret/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
 
-Log in as default account:
+then you can visit the dashboard on http://$YOUR_SERVER_IP:$SERVICE_PORT_PORT
+
+3. Login the dashboard with the following default account. 
+   For users that log in for the first time, it is required to reset the password.
+
 Username: admin
-Password: <Get from the above command>
+Password: <The password you set in values or "admin" by default>

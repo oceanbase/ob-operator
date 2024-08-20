@@ -44,13 +44,13 @@ type OBTenantReplica struct {
 	Priority int    `json:"priority" binding:"required"`
 	// Enum: Readonly, Full
 	Type        string `json:"type" binding:"required"`
-	MaxCPU      string `json:"maxCPU" binding:"required"`
-	MemorySize  string `json:"memorySize" binding:"required"`
-	MinCPU      string `json:"minCPU,omitempty" binding:"required"`
+	MaxCPU      int64  `json:"maxCPU" binding:"required"`
+	MemorySize  int64  `json:"memorySize" binding:"required"`
+	MinCPU      int64  `json:"minCPU,omitempty" binding:"required"`
 	MaxIops     int    `json:"maxIops,omitempty" binding:"required"`
 	MinIops     int    `json:"minIops,omitempty" binding:"required"`
 	IopsWeight  int    `json:"iopsWeight,omitempty" binding:"required"`
-	LogDiskSize string `json:"logDiskSize,omitempty" binding:"required"`
+	LogDiskSize int64  `json:"logDiskSize,omitempty" binding:"required"`
 }
 
 type RestoreSource struct {

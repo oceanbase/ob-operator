@@ -3,6 +3,7 @@ import type { AlarmSeverity, RuleRuleResponse } from '@/api/generated';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SEVERITY_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
+import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Form, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -15,6 +16,7 @@ const { Text } = Typography;
 
 export default function Rules() {
   const [form] = Form.useForm();
+  const access = useAccess();
   const {
     data: listRulesRes,
     refresh,
@@ -145,6 +147,7 @@ export default function Rules() {
         <>
           <Button
             onClick={() => editRule(record.name)}
+            disabled={!access.alarmwrite}
             style={{ paddingLeft: 0 }}
             type="link"
           >
@@ -155,7 +158,8 @@ export default function Rules() {
           </Button>
           <Button
             type="link"
-            style={{ color: '#ff4b4b' }}
+            style={access.alarmwrite ? { color: '#ff4b4b' } : {}}
+            disabled={!access.alarmwrite}
             onClick={() => {
               showDeleteConfirm({
                 title: intl.formatMessage(
@@ -198,12 +202,14 @@ export default function Rules() {
       </Card>
       <Card
         extra={
-          <Button onClick={() => setDrawerOpen(true)} type="primary">
-            {intl.formatMessage({
-              id: 'src.pages.Alert.Rules.90D4952A',
-              defaultMessage: '新建告警规则',
-            })}
-          </Button>
+          access.alarmwrite ? (
+            <Button onClick={() => setDrawerOpen(true)} type="primary">
+              {intl.formatMessage({
+                id: 'src.pages.Alert.Rules.90D4952A',
+                defaultMessage: '新建告警规则',
+              })}
+            </Button>
+          ) : null
         }
         title={
           <h2 style={{ marginBottom: 0 }}>

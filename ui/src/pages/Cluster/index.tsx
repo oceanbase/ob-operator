@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useAccess, useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import ClusterList from './ClusterList';
 
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
+  const access = useAccess();
   const [clusterNames, setClusterNames] = useState<Monitor.LabelType[]>([]);
 
   const { data: clusterListRes, loading } = useRequest(getObclusterListReq, {
@@ -39,18 +40,22 @@ const ClusterPage: React.FC = () => {
             handleAddCluster={handleAddCluster}
           />
         </Col>
-        <Col span={24}>
-          <EventsTable objectType="OBCLUSTER" />
-        </Col>
+        {access.systemread && (
+          <Col span={24}>
+            <EventsTable objectType="OBCLUSTER" />
+          </Col>
+        )}
       </Row>
-      <MonitorComp
-        filterLabel={clusterNames}
-        queryScope="OBCLUSTER_OVERVIEW"
-        type="OVERVIEW"
-        groupLabels={['ob_cluster_name']}
-        queryRange={DEFAULT_QUERY_RANGE}
-        filterData={clusterList}
-      />
+      {access.systemread && (
+        <MonitorComp
+          filterLabel={clusterNames}
+          queryScope="OBCLUSTER_OVERVIEW"
+          type="OVERVIEW"
+          groupLabels={['ob_cluster_name']}
+          queryRange={DEFAULT_QUERY_RANGE}
+          filterData={clusterList}
+        />
+      )}
     </PageContainer>
   );
 };

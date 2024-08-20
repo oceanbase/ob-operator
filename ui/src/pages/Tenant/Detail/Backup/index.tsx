@@ -3,7 +3,7 @@ import { BACKUP_RESULT_STATUS, REFRESH_TENANT_TIME } from '@/constants';
 import { getBackupPolicy, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { history, useParams } from '@umijs/max';
+import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Row } from 'antd';
 import { useEffect, useRef, useState } from 'react';
@@ -13,6 +13,7 @@ import BackupJobs from './BackupJobs';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
+  const access = useAccess();
   const [backupPolicy, setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -73,23 +74,34 @@ export default function Backup() {
             style={{ marginBottom: 24, height: 100, width: 110 }}
           />
 
-          <p style={{ color: '#8592ad', marginBottom: 24 }}>
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Backup.TheTenantHasNotCreated',
-              defaultMessage: '该租户尚未创建备份策略，是否立即创建？',
-            })}
-          </p>
-          <Button
-            type="primary"
-            onClick={() =>
-              history.push(`/tenant/${ns}/${name}/${tenantName}/backup/new`)
-            }
-          >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Backup.CreateNow',
-              defaultMessage: '立即创建',
-            })}
-          </Button>
+          {access.obclusterwrite ? (
+            <>
+              <p style={{ color: '#8592ad', marginBottom: 24 }}>
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Backup.TheTenantHasNotCreated',
+                  defaultMessage: '该租户尚未创建备份策略，是否立即创建？',
+                })}
+              </p>
+              <Button
+                type="primary"
+                onClick={() =>
+                  history.push(`/tenant/${ns}/${name}/${tenantName}/backup/new`)
+                }
+              >
+                {intl.formatMessage({
+                  id: 'Dashboard.Detail.Backup.CreateNow',
+                  defaultMessage: '立即创建',
+                })}
+              </Button>
+            </>
+          ) : (
+            <p style={{ color: '#8592ad' }}>
+              {intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Backup.5F7EA7F3',
+                defaultMessage: '该租户尚未创建备份策略',
+              })}
+            </p>
+          )}
         </Card>
       ) : (
         <Row gutter={[16, 16]}>
@@ -101,6 +113,7 @@ export default function Backup() {
               />
             </Col>
           )}
+
           <Col span={24}>
             <BackupConfiguration
               backupPolicy={backupPolicy}

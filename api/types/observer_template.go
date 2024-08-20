@@ -13,7 +13,8 @@ See the Mulan PSL v2 for more details.
 package types
 
 type OBServerTemplate struct {
-	Image    string                `json:"image"`
-	Resource *ResourceSpec         `json:"resource"`
-	Storage  *OceanbaseStorageSpec `json:"storage"`
+	Image     string                `json:"image"`
+	Resource  *ResourceSpec         `json:"resource"`
+	Storage   *OceanbaseStorageSpec `json:"storage"`
+	PodFields *PodFieldsSpec        `json:"podFields,omitempty"`
 }

@@ -1,6 +1,6 @@
 import { COLOR_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
-import { Link } from '@umijs/max';
+import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
@@ -114,6 +114,7 @@ export default function TenantsList({
   turnToCreateTenant,
   loading,
 }: TenantsListProps) {
+  const access = useAccess();
   return (
     <Card
       loading={loading}
@@ -125,12 +126,14 @@ export default function TenantsList({
               defaultMessage: '租户列表',
             })}
           </h2>
-          <Button onClick={turnToCreateTenant} type="primary">
-            {intl.formatMessage({
-              id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
-              defaultMessage: '创建租户',
-            })}
-          </Button>
+          {access.obclusterwrite ? (
+            <Button onClick={turnToCreateTenant} type="primary">
+              {intl.formatMessage({
+                id: 'Dashboard.pages.Tenant.TenantsList.CreateATenant',
+                defaultMessage: '创建租户',
+              })}
+            </Button>
+          ) : null}
         </div>
       }
     >

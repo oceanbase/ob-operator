@@ -80,9 +80,9 @@ export default [
                 ],
               },
               {
-                path:'access',
+                path: 'access',
                 component: 'Access',
-                name: '权限控制'
+                name: '权限控制',
               },
               {
                 path: 'overview',
@@ -203,6 +203,11 @@ export default [
         path: '/login',
         component: 'Login',
         name: '登录页',
+      },
+      {
+        path: '/reset',
+        component: 'ResetPwd',
+        name: '重置密码',
       },
       {
         component: 'Error/404',

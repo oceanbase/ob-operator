@@ -4610,6 +4610,11 @@ spec:
                         properties:
                           image:
                             type: string
+                          podFields:
+                            properties:
+                              schedulerName:
+                                type: string
+                            type: object
                           resource:
                             properties:
                               cpu:
@@ -4690,6 +4695,9 @@ spec:
                           - value
                           type: object
                         type: array
+                      scenario:
+                        default: htap
+                        type: string
                       serviceAccount:
                         default: default
                         type: string

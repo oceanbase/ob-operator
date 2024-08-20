@@ -34,11 +34,14 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
+	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
@@ -366,6 +369,7 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 				Spec: corev1.PodSpec{
 					Containers:    []corev1.Container{container},
 					RestartPolicy: corev1.RestartPolicyNever,
+					SchedulerName: resourceutils.GetSchedulerName(m.OBCluster.Spec.OBServerTemplate.PodFields),
 				},
 			},
 			BackoffLimit:            &backoffLimit,
@@ -763,6 +767,7 @@ func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
 						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
 					}},
 					RestartPolicy: corev1.RestartPolicyNever,
+					SchedulerName: resourceutils.GetSchedulerName(m.OBCluster.Spec.OBServerTemplate.PodFields),
 				},
 			},
 			TTLSecondsAfterFinished: &ttl,
@@ -837,6 +842,7 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
+			m.OBCluster.Spec.OBServerTemplate.PodFields,
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
@@ -847,12 +853,14 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-standalone-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
+					m.OBCluster.Spec.OBServerTemplate.PodFields,
 					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
 				)
 			case oceanbaseconst.ModeService:
 				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-service-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
+					m.OBCluster.Spec.OBServerTemplate.PodFields,
 					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
 				)
 			}
@@ -908,7 +916,11 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	}
 
 	// check version strictly matches
-	targetVersionStr, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace, fmt.Sprintf("%s-version", m.OBCluster.Name), m.OBCluster.Spec.OBServerTemplate.Image, oceanbaseconst.CmdVersion)
+	targetVersionStr, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		fmt.Sprintf("%s-version", m.OBCluster.Name),
+		m.OBCluster.Spec.OBServerTemplate.Image,
+		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		oceanbaseconst.CmdVersion)
 	if err != nil {
 		return errors.Wrap(err, "get target oceanbase version")
 	}
@@ -1055,6 +1067,7 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 		jobName,
 		m.OBCluster.Spec.OBServerTemplate.Image,
+		m.OBCluster.Spec.OBServerTemplate.PodFields,
 		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
 		volumeConfigs,
 	)
@@ -1113,6 +1126,38 @@ func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
 			err = m.Client.Patch(m.Ctx, copiedZone, client.MergeFrom(&zone))
 			if err != nil {
 				return errors.Wrap(err, "Patch obzone")
+			}
+		}
+	}
+	return nil
+}
+
+func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
+	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
+	m.Logger.Info("Start to optimize obcluster parameters")
+	jobName := fmt.Sprintf("optimize-cluster-%s-%s", m.OBCluster.Name, rand.String(6))
+	output, code, _ := resourceutils.RunJob(
+		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		jobName,
+		m.OBCluster.Spec.OBServerTemplate.Image,
+		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		fmt.Sprintf("bin/oceanbase-helper optimize cluster %s", m.OBCluster.Spec.Scenario))
+	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
+		optimizeConfig := &helpermodel.OptimizationResponse{}
+		err := json.Unmarshal([]byte(output), optimizeConfig)
+		if err != nil {
+			m.Logger.Error(err, "Failed to parse optimization config")
+		}
+		conn, err := m.getOceanbaseOperationManager()
+		if err != nil {
+			m.Logger.Error(err, "Get operation manager failed")
+		}
+		// obcluster only need to set parameters
+		for _, parameter := range optimizeConfig.Parameters {
+			m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
+			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
+			if err != nil {
+				m.Logger.Error(err, "Failed to set parameter")
 			}
 		}
 	}

@@ -15,12 +15,20 @@ package ac
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"slices"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Access Control", Ordered, ContinueOnFailure, func() {
+	It("GetFilteredPolicies", func() {
+		roles, err := enforcer.GetFilteredPolicy(0, "admin")
+		Expect(err).To(BeNil())
+		Expect(roles).To(HaveLen(1))
+		GinkgoLogr.Info("roles", "roles", roles)
+	})
+
 	It("GetPolicies", func() {
 		ps, err := enforcer.GetPolicy()
 		Expect(err).To(BeNil())
@@ -37,7 +45,8 @@ var _ = Describe("Access Control", Ordered, ContinueOnFailure, func() {
 	It("GetAccountInfo", func() {
 		roles, err := enforcer.GetRolesForUser("admin")
 		Expect(err).To(BeNil())
-		Expect(roles).To(Equal([]string{"admin2", "admin"}))
+		slices.Sort(roles)
+		Expect(roles).To(Equal([]string{"admin", "admin2"}))
 	})
 
 	It("Enforce some permissions", func() {

@@ -90,6 +90,10 @@ func (r *OBTenant) Default() {
 	if r.Spec.Credentials.StandbyRO == "" {
 		r.Spec.Credentials.StandbyRO = "standby-ro-" + rand.String(8)
 	}
+
+	if r.Spec.Scenario == "" {
+		r.Spec.Scenario = cluster.Spec.Scenario
+	}
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -184,7 +188,7 @@ func (r *OBTenant) validateMutation() error {
 			}
 		} else {
 			if _, ok := secret.Data["password"]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("standbyRo"), r.Spec.Credentials.StandbyRO, "password field not found in given standbyRo credential"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("credentials").Child("root"), r.Spec.Credentials.Root, "password field not found in given root credential"))
 			}
 		}
 	}
