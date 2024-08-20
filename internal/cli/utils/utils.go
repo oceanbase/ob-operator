@@ -47,7 +47,11 @@ func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSe
 
 // GenerateClusterId generated random cluster id
 func GenerateClusterId() int64 {
-	return time.Now().Unix() % factor
+	clusterId := time.Now().Unix() % factor
+	if clusterId != 0 {
+		return clusterId
+	}
+	return GenerateClusterId()
 }
 
 func CheckResourceName(name string) bool {
