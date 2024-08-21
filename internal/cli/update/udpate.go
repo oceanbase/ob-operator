@@ -29,16 +29,16 @@ func NewUpdateOptions() *UpdateOptions {
 	return &UpdateOptions{}
 }
 
-func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
+func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
+	if len(args) == 0 {
 		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
-	if v, ok := o.Components[name]; !ok {
-		return fmt.Errorf("%s update not supported", name)
-	} else {
+	if v, ok := o.Components[name]; ok {
 		o.Components[name] = v
+	} else {
+		return fmt.Errorf("%s update not supported", name)
 	}
 	return nil
 }

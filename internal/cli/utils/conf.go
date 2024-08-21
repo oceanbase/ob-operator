@@ -28,16 +28,16 @@ type ComponentVersions struct {
 var filePath = "internal/cli/LATEST_VERSION.yaml"
 
 func GetComponentsConf() map[string]string {
-	var Components ComponentVersions
+	var components ComponentVersions
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		panic(fmt.Errorf("Error reading LATEST_VERSION file: %v", err))
 	}
 
-	err = yaml.Unmarshal(data, &Components)
+	err = yaml.Unmarshal(data, &components)
 	// panic if file not exists
 	if err != nil {
 		panic(fmt.Errorf("Error decoding LATEST_VERSION file: %v", err))
 	}
-	return Components.Components
+	return components.Components
 }

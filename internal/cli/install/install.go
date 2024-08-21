@@ -35,22 +35,22 @@ func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.version, "version", "", "version of component")
 }
 
-func (o *InstallOptions) Parse(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
+func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
+	if len(args) == 0 {
 		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
-	if v, ok := o.Components[name]; !ok {
-		return fmt.Errorf("%s install not supported", name)
-	} else {
+	if v, ok := o.Components[name]; ok {
 		if o.version != "" {
 			o.Components[name] = o.version
 		} else {
 			o.Components[name] = v
 		}
-		return nil
+	} else {
+		return fmt.Errorf("%s install not supported", name)
 	}
+	return nil
 }
 
 // Install component
