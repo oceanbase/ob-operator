@@ -15,37 +15,15 @@ package install
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 
+	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
 )
-
-type ComponentVersions struct {
-	Components map[string]string `yaml:"components"`
-}
-
-// filePath for test
-var filePath = "internal/cli/LATEST_VERSION.yaml"
-var cv ComponentVersions
 
 type InstallOptions struct {
 	version    string
 	Components map[string]string
-}
-
-func init() {
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		panic(fmt.Errorf("Error reading LATEST_VERSION file: %v", err))
-	}
-
-	err = yaml.Unmarshal(data, &cv)
-	// panic if file not exists
-	if err != nil {
-		panic(fmt.Errorf("Error decoding LATEST_VERSION file: %v", err))
-	}
 }
 
 func NewInstallOptions() *InstallOptions {
@@ -58,7 +36,7 @@ func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 
 func (o *InstallOptions) Parse(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		o.Components = cv.Components
+		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
