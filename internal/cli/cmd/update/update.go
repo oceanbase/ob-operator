@@ -14,9 +14,10 @@ See the Mulan PSL v2 for more details.
 package update
 
 import (
+	"github.com/spf13/cobra"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/update"
-	"github.com/spf13/cobra"
 )
 
 // NewCmd update the ob-operator and other components
@@ -30,6 +31,7 @@ func NewCmd() *cobra.Command {
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Update(); err != nil {
+				// TODO: not implemented
 				logger.Fatalln(err)
 			}
 		},

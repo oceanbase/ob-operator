@@ -16,8 +16,9 @@ package update
 import (
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 type UpdateOptions struct {
@@ -43,5 +44,6 @@ func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
 }
 
 func (o *UpdateOptions) Update() error {
+	// TODO: not implemented
 	return nil
 }

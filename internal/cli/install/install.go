@@ -17,8 +17,9 @@ import (
 	"fmt"
 	"os/exec"
 
-	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/spf13/cobra"
+
+	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 type InstallOptions struct {
@@ -73,7 +74,7 @@ func (o *InstallOptions) Install() error {
 }
 
 func run(url string) error {
-	cmd := exec.Command("kubectl apply", "-f", url)
+	cmd := exec.Command("kubectl", "apply", "-f", url)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("command failed with error: %v, output: %s", err, string(output))
