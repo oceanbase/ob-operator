@@ -182,6 +182,7 @@ export default function Replicas({
             {sortKeys(Object.keys(replica)).map((key, idx) => (
               <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
                 {replica[key]}
+                {key === 'memorySize' || key === 'logDiskSize' ? 'Gi' : null}
               </Descriptions.Item>
             ))}
           </Descriptions>

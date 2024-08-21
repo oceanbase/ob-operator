@@ -1,4 +1,8 @@
-import { formatStatisticData, getInitialObjOfKeys } from '@/utils/helper';
+import {
+  floorToTwoDecimalPlaces,
+  formatStatisticData,
+  getInitialObjOfKeys,
+} from '@/utils/helper';
 import { request } from '@umijs/max';
 
 const tenantPrefix = '/api/v1/obtenants';
@@ -56,6 +60,13 @@ export async function getTenant({
       res.source!.bakDataSource = r.data.restoreSource.bakDataSource;
     if (r.data.restoreSource?.until)
       res.source!.until = r.data.restoreSource.until;
+
+    const formatResourceAttr = ['logDiskSize', 'memorySize'];
+    r.data.topology.forEach((item) => {
+      for (const attr of formatResourceAttr) {
+        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1 << 30));
+      }
+    });
 
     res.replicas = r.data.topology;
     return {

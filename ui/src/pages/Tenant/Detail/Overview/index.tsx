@@ -211,7 +211,7 @@ export default function TenantOverview() {
 
   const operateSuccess = () => {
     setTimeout(() => {
-      getTenantDetail({ ns, name });
+      getTenantDetail({ ns:ns!, name:name! });
     }, 1000);
   };
   const header = () => {

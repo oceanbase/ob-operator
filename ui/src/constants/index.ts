@@ -155,8 +155,8 @@ const MODE_MAP = new Map([
         defaultMessage: 'Service模式',
       }),
       limit: intl.formatMessage({
-        id: 'Dashboard.src.constants.RequiredKernelVersion.1',
-        defaultMessage: '要求内核版本 >= 4.2.3.0',
+        id: 'src.constants.22EDA0DC',
+        defaultMessage: '要求内核版本 >= 4.2.1.4 (4.2.2.x 除外)',
       }),
     },
   ],

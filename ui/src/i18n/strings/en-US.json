@@ -1138,5 +1138,7 @@
   "src.pages.Alert.Shield.C4C1B8A3": "Label",
   "src.pages.Alert.Rules.9B28C134": "Default",
   "src.pages.Alert.Subscriptions.B4AB7DEF": "Create",
-  "src.pages.Access.B52ED09C": "Last Logon Time"
+  "src.pages.Access.B52ED09C": "Last login time",
+  "src.constants.22EDA0DC": "Requires kernel version> = 4.2.1.4 (except 4.2.2.x)",
+  "src.components.customModal.F7DD1D45": "Scaling Zone"
 }
