@@ -79,7 +79,7 @@ export default function HandleAccountModal({
       title={intl.formatMessage(
         {
           id: 'src.components.customModal.3487AEC1',
-          defaultMessage: "${type === Type.EDIT ? '编辑' : '创建'}用户",
+          defaultMessage: '{ConditionalExpression0}用户',
         },
         {
           ConditionalExpression0:
@@ -127,21 +127,6 @@ export default function HandleAccountModal({
             />
           </Form.Item>
         )}
-
-        <Form.Item
-          label={intl.formatMessage({
-            id: 'src.components.customModal.CC59F523',
-            defaultMessage: '描述',
-          })}
-          name={'description'}
-        >
-          <Input
-            placeholder={intl.formatMessage({
-              id: 'src.components.customModal.80E5AC42',
-              defaultMessage: '请输入',
-            })}
-          />
-        </Form.Item>
         <Form.Item
           rules={[
             {
@@ -190,6 +175,21 @@ export default function HandleAccountModal({
             })}
           />
         </Form.Item>
+        <Form.Item
+          label={intl.formatMessage({
+            id: 'src.components.customModal.CC59F523',
+            defaultMessage: '描述',
+          })}
+          name={'description'}
+        >
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.80E5AC42',
+              defaultMessage: '请输入',
+            })}
+          />
+        </Form.Item>
+
         {type === Type.CREATE && (
           <Form.Item
             rules={[
