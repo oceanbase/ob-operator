@@ -37,7 +37,7 @@ g = _, _
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub, p.sub) && g(r.obj, p.obj) && g(r.act, p.act)
+m = g(r.sub, p.sub) && g(r.obj, p.obj) && (p.act == "write" || g(r.act, p.act))
 `
 
 const (

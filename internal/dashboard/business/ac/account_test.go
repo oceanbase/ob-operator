@@ -67,11 +67,11 @@ var _ = Describe("Access Control", Ordered, ContinueOnFailure, func() {
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeFalse())
 
-		ok, err = enforcer.Enforce("admin2", "book/*", "READ")
+		ok, err = enforcer.Enforce("admin2", "book/*", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 
-		ok, err = enforcer.Enforce("admin2", "book/2", "READ")
+		ok, err = enforcer.Enforce("admin2", "book/2", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 	})
