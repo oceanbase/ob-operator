@@ -70,13 +70,13 @@ export default function TenantPage() {
             turnToCreateTenant={handleAddCluster}
           />
         </Col>
-        {access.systemread && (
+        {access.systemread || access.systemwrite ? (
           <Col span={24}>
             <EventsTable objectType="OBTENANT" collapsible={false} />
           </Col>
-        )}
+        ) : null}
       </Row>
-      {access.systemread && (
+      {access.systemread || access.systemwrite ? (
         <MonitorComp
           filterLabel={filterLabel}
           queryScope="OBTENANT"
@@ -86,7 +86,7 @@ export default function TenantPage() {
           queryRange={DEFAULT_QUERY_RANGE}
           filterData={tenantsList}
         />
-      )}
+      ) : null}
     </PageContainer>
   );
 }

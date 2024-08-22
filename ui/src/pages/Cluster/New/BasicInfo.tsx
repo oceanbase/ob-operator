@@ -29,7 +29,7 @@ export default function BasicInfo({
       })}
     >
       <Row gutter={[16, 32]}>
-        {access.systemread ? (
+        {access.systemread || access.systemwrite ? (
           <Col span={8} style={{ height: 48 }}>
             <SelectNSFromItem form={form} />
           </Col>

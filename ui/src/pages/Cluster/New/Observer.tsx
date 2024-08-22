@@ -199,7 +199,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              {access.systemread && (
+              {access.systemread || access.systemwrite ? (
                 <CustomFormItem
                   label="storageClass"
                   name={['observer', 'storage', 'data', 'storageClass']}
@@ -213,7 +213,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     />
                   )}
                 </CustomFormItem>
-              )}
+              ) : null}
             </div>
           </Col>
           <Col span={8}>
@@ -238,7 +238,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              {access.systemread && (
+              {access.systemread || access.systemwrite ? (
                 <CustomFormItem
                   label="storageClass"
                   name={['observer', 'storage', 'log', 'storageClass']}
@@ -252,7 +252,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     />
                   )}
                 </CustomFormItem>
-              )}
+              ) : null}
             </div>
           </Col>
           <Col span={8}>
@@ -272,7 +272,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              {access.systemread && (
+              {access.systemread || access.systemwrite ? (
                 <CustomFormItem
                   label="storageClass"
                   validateTrigger="onBlur"
@@ -287,7 +287,7 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                     />
                   )}
                 </CustomFormItem>
-              )}
+              ) : null}
             </div>
           </Col>
         </Row>
