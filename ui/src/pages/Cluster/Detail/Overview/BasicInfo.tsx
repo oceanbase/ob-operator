@@ -1,4 +1,5 @@
 import { COLOR_MAP, MODE_MAP } from '@/constants';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { Card, Descriptions, Switch, Tag, Typography } from 'antd';
 import { useState } from 'react';
@@ -32,7 +33,7 @@ export default function BasicInfo({
         },
         {
           label: 'Memory',
-          value: resource.memory,
+          value: floorToTwoDecimalPlaces(resource.memory / (1 << 30)) + 'Gi',
         },
         {
           label: intl.formatMessage({
@@ -46,7 +47,9 @@ export default function BasicInfo({
             id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageSize',
             defaultMessage: 'Datafile 存储大小',
           }),
-          value: storage.dataStorage.size,
+          value:
+            floorToTwoDecimalPlaces(storage.dataStorage.size / (1 << 30)) +
+            'Gi',
         },
         {
           label: intl.formatMessage({
@@ -60,7 +63,9 @@ export default function BasicInfo({
             id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
             defaultMessage: 'RedoLog 大小',
           }),
-          value: storage.redoLogStorage.size,
+          value:
+            floorToTwoDecimalPlaces(storage.redoLogStorage.size / (1 << 30)) +
+            'Gi',
         },
         {
           label: intl.formatMessage({
@@ -74,7 +79,9 @@ export default function BasicInfo({
             id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageSize',
             defaultMessage: '系统日志存储大小',
           }),
-          value: storage.sysLogStorage.size,
+          value:
+            floorToTwoDecimalPlaces(storage.sysLogStorage.size / (1 << 30)) +
+            'Gi',
         },
       ]
     : [];
