@@ -44,7 +44,7 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/overview',
       icon: <IconFont type="overview" />,
-      accessible: access.systemread,
+      accessible: access.systemread || access.systemwrite,
     },
     {
       title: intl.formatMessage({
@@ -53,7 +53,7 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/cluster',
       icon: <IconFont type="cluster" />,
-      accessible: access.obclusterread,
+      accessible: access.obclusterread || access.obclusterwrite,
     },
     {
       title: intl.formatMessage({
@@ -62,13 +62,13 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/tenant',
       icon: <IconFont type="tenant" />,
-      accessible: access.obclusterread,
+      accessible: access.obclusterread || access.obclusterwrite,
     },
     {
       title: 'OBProxy',
       link: '/obproxy',
       icon: <IconFont type="obproxy" />,
-      accessible: access.obproxyread,
+      accessible: access.obproxyread || access.obproxywrite,
     },
     {
       title: intl.formatMessage({
@@ -77,7 +77,7 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.alarmread,
+      accessible: access.alarmread || access.alarmwrite,
     },
     {
       title: intl.formatMessage({
@@ -86,7 +86,7 @@ const BasicLayout: React.FC = () => {
       }),
       link: '/access',
       icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.acread,
+      accessible: access.acread || access.acwrite,
     },
   ];
 

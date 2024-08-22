@@ -56,7 +56,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'cluster',
       link: '/cluster',
       icon: <IconFont type="cluster" />,
-      accessible: access.obclusterread,
+      accessible: access.obclusterread || access.obclusterwrite,
     },
     {
       title: intl.formatMessage({
@@ -66,14 +66,14 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'tenant',
       link: '/tenant',
       icon: <IconFont type="tenant" />,
-      accessible: access.obclusterread,
+      accessible: access.obclusterread || access.obclusterwrite,
     },
     {
       title: 'OBProxy',
       key: 'obproxy',
       link: '/obproxy',
       icon: <IconFont type="obproxy" />,
-      accessible: access.obproxyread,
+      accessible: access.obproxyread || access.obproxywrite,
     },
     {
       title: intl.formatMessage({
@@ -83,7 +83,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'alert',
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.alarmread,
+      accessible: access.alarmread || access.alarmwrite,
     },
     {
       title: intl.formatMessage({
@@ -93,7 +93,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'access',
       link: '/access',
       icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.acread,
+      accessible: access.acread || access.acwrite,
     },
   ];
 

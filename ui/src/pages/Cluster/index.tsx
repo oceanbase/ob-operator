@@ -40,13 +40,13 @@ const ClusterPage: React.FC = () => {
             handleAddCluster={handleAddCluster}
           />
         </Col>
-        {access.systemread && (
+        {access.systemread || access.systemwrite ? (
           <Col span={24}>
             <EventsTable objectType="OBCLUSTER" />
           </Col>
-        )}
+        ) : null}
       </Row>
-      {access.systemread && (
+      {access.systemread || access.systemwrite ? (
         <MonitorComp
           filterLabel={clusterNames}
           queryScope="OBCLUSTER_OVERVIEW"
@@ -55,7 +55,7 @@ const ClusterPage: React.FC = () => {
           queryRange={DEFAULT_QUERY_RANGE}
           filterData={clusterList}
         />
-      )}
+      ) : null}
     </PageContainer>
   );
 };
