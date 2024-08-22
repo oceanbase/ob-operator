@@ -108,6 +108,10 @@ var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 
+		ok, err = enforcer.Enforce("test", "test/", "read")
+		Expect(err).To(BeNil())
+		Expect(ok).To(BeTrue())
+
 		ok, err = enforcer.Enforce("test", "test/1", "write")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeFalse())
