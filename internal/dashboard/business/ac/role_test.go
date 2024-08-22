@@ -63,7 +63,7 @@ var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 		Expect(roles[1].Policies).To(HaveLen(1))
 		Expect(roles[1].Policies[0].Domain).To(BeEquivalentTo("book"))
 		Expect(roles[1].Policies[0].Object).To(BeEquivalentTo("*"))
-		Expect(roles[1].Policies[0].Action).To(BeEquivalentTo("READ"))
+		Expect(roles[1].Policies[0].Action).To(BeEquivalentTo("read"))
 	})
 
 	It("Create role", func() {
@@ -73,15 +73,19 @@ var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 			Permissions: []acmodel.Policy{{
 				Domain: "test",
 				Object: "1",
-				Action: "READ",
+				Action: "read",
 			}, {
 				Domain: "test",
 				Object: "2",
-				Action: "READ",
+				Action: "read",
 			}, {
 				Domain: "test2",
 				Object: "*",
 				Action: "*",
+			}, {
+				Domain: "test",
+				Object: "3",
+				Action: "write",
 			}},
 		}
 		role, err := CreateRole(context.TODO(), createParam, "no-persist")
@@ -91,33 +95,47 @@ var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 		Expect(role.Description).To(Equal(createParam.Description))
 		policyCsv, err := policiesToCsv()
 		Expect(err).To(BeNil())
-		Expect(strings.Contains(policyCsv, "p, test, test/1, READ")).To(BeTrue())
-		Expect(strings.Contains(policyCsv, "p, test, test/2, READ")).To(BeTrue())
+		Expect(strings.Contains(policyCsv, "p, test, test/1, read")).To(BeTrue())
+		Expect(strings.Contains(policyCsv, "p, test, test/2, read")).To(BeTrue())
 		Expect(strings.Contains(policyCsv, "p, test, test2/*, *")).To(BeTrue())
+		Expect(strings.Contains(policyCsv, "p, test, test/3, write")).To(BeTrue())
 
-		ok, err := enforcer.Enforce("test", "test/1", "READ")
+		ok, err := enforcer.Enforce("test", "test/1", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 
-		ok, err = enforcer.Enforce("test", "test/2", "READ")
+		ok, err = enforcer.Enforce("test", "test/2", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 
-		ok, err = enforcer.Enforce("test", "test2/1", "READ")
+		ok, err = enforcer.Enforce("test", "test/", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
 
-		ok, err = enforcer.Enforce("test", "test/3", "READ")
+		ok, err = enforcer.Enforce("test", "test/1", "write")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeFalse())
+
+		ok, err = enforcer.Enforce("test", "test2/1", "read")
+		Expect(err).To(BeNil())
+		Expect(ok).To(BeTrue())
+
+		ok, err = enforcer.Enforce("test", "test/3", "read")
+		Expect(err).To(BeNil())
+		Expect(ok).To(BeTrue())
+
+		ok, err = enforcer.Enforce("test", "test/3", "write")
+		Expect(err).To(BeNil())
+		Expect(ok).To(BeTrue())
 
 		Expect(err).To(BeNil())
 		expectedCSV := `
 p, admin, *, *, "Super admin"
-p, admin2, book/*, READ, "Book reader"
-p, test, test/1, READ, "test"
-p, test, test/2, READ, "test"
+p, admin2, book/*, read, "Book reader"
+p, test, test/1, read, "test"
+p, test, test/2, read, "test"
 p, test, test2/*, *, "test"
+p, test, test/3, write, "test"
 g, admin, admin
 g, admin, admin2
 `
@@ -133,11 +151,11 @@ g, admin, admin2
 		Expect(role).ToNot(BeNil())
 		Expect(role.Name).To(Equal("test"))
 		Expect(role.Description).To(Equal("test"))
-		Expect(role.Policies).To(HaveLen(3))
+		Expect(role.Policies).To(HaveLen(4))
 
 		expectedCSV := `
 p, admin, *, *, "Super admin"
-p, admin2, book/*, READ, "Book reader"
+p, admin2, book/*, read, "Book reader"
 g, admin, admin
 g, admin, admin2
 `

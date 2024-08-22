@@ -22,7 +22,7 @@ import (
 /**
 rbac_policy.csv
 p, admin, *, *, "Super admin"
-p, admin2, book/*, READ, "Book reader"
+p, admin2, book/*, read, "Book reader"
 g, admin, admin
 g, admin, admin2
 */
