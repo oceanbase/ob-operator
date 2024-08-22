@@ -201,7 +201,7 @@ export default function HandleRoleModal({
       title={intl.formatMessage(
         {
           id: 'src.components.customModal.1F81961E',
-          defaultMessage: "${type === Type.EDIT ? '编辑' : '创建'}角色",
+          defaultMessage: "{ConditionalExpression0}角色",
         },
         {
           ConditionalExpression0:
