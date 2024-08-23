@@ -119,9 +119,9 @@ func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	return topology, nil
 }
 
-func GenerateRandomPassword() string {
+// GenerateRandomPassword generated random password in range [minLength,maxLength]
+func GenerateRandomPassword(minLength int, maxLength int) string {
 	const (
-		maxLength      = 32
 		minUppercase   = 2
 		minLowercase   = 2
 		minNumber      = 2
@@ -157,11 +157,10 @@ func GenerateRandomPassword() string {
 		default:
 			countSpecialChar++
 		}
-		if len(sb.String()) >= maxLength {
-			return GenerateRandomPassword()
-		}
 	}
-
+	if len(sb.String()) < minLength || len(sb.String()) > maxLength {
+		return GenerateRandomPassword(minLength, maxLength)
+	}
 	return sb.String()
 }
 

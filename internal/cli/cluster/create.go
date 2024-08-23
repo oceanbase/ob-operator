@@ -83,9 +83,9 @@ func (o *CreateOptions) Complete() error {
 	if o.ClusterId == 0 {
 		o.ClusterId = utils.GenerateClusterId()
 	}
-	// if not specific password, using random password
+	// if not specific password, using random password, range [8,32]
 	if o.RootPassword == "" {
-		o.RootPassword = utils.GenerateRandomPassword()
+		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
 	if o.ClusterName == "" {
 		o.ClusterName = o.Name

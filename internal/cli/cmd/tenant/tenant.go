@@ -26,7 +26,7 @@ func NewCmd() *cobra.Command {
 		Short: "Command for tenant management",
 		Long:  `Command for tenant management, such as Create, Update, Delete.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO:
+			// TODO: not implemented
 			log.Println("oceanbase tenant management")
 		},
 	}

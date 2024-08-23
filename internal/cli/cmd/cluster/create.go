@@ -49,7 +49,7 @@ func NewCreateCmd() *cobra.Command {
 				logger.Fatalln(oberr.NewInternal(err.Error()))
 			}
 			logger.Printf("Create obcluster instance: %s", o.ClusterName)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)$` to get the secrets", obcluster.Spec.UserSecrets.Root)
+			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obcluster.Spec.UserSecrets.Root)
 		},
 	}
 	o.AddFlags(cmd)
