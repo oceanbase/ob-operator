@@ -58,7 +58,6 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 // Install component
 func (o *InstallOptions) Install() error {
 	var url string
-	fmt.Println(o.Components)
 	baseUrl := "https://raw.githubusercontent.com/oceanbase/ob-operator/"
 	for component, version := range o.Components {
 		switch component {

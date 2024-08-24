@@ -17,8 +17,9 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/internal/cli/generated/bindata"
 	"github.com/spf13/viper"
+
+	"github.com/oceanbase/ob-operator/internal/cli/generated/bindata"
 )
 
 // component config for test
@@ -34,7 +35,7 @@ func GetComponentsConf() map[string]string {
 	viper.SetConfigType("yaml")
 	err = viper.ReadConfig(bytes.NewBuffer(fileobj))
 	if err != nil {
-		panic(fmt.Errorf("Read Config err:%v\n", err))
+		panic(fmt.Errorf("Read Config err:%v", err))
 	}
 	if err := viper.UnmarshalKey("components", &components); err != nil {
 		panic(fmt.Errorf("Error decoding component config file: %v", err))
