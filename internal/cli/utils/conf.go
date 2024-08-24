@@ -14,30 +14,30 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
+	"bytes"
 	"fmt"
-	"os"
 
-	"gopkg.in/yaml.v2"
+	"github.com/oceanbase/ob-operator/internal/cli/generated/bindata"
+	"github.com/spf13/viper"
 )
 
-type ComponentVersions struct {
-	Components map[string]string `yaml:"components"`
-}
-
-// filePath for test
-var filePath = "internal/cli/LATEST_VERSION.yaml"
+// component config for test
+var component_conf = "internal/assets/cli-templates/component_config.yaml"
 
 func GetComponentsConf() map[string]string {
-	var components ComponentVersions
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		panic(fmt.Errorf("Error reading LATEST_VERSION file: %v", err))
-	}
-
-	err = yaml.Unmarshal(data, &components)
+	components := make(map[string]string)
+	fileobj, err := bindata.Asset(component_conf)
 	// panic if file not exists
 	if err != nil {
-		panic(fmt.Errorf("Error decoding LATEST_VERSION file: %v", err))
+		panic(fmt.Errorf("Error reading component config file: %v", err))
 	}
-	return components.Components
+	viper.SetConfigType("yaml")
+	err = viper.ReadConfig(bytes.NewBuffer(fileobj))
+	if err != nil {
+		panic(fmt.Errorf("Read Config err:%v\n", err))
+	}
+	if err := viper.UnmarshalKey("components", &components); err != nil {
+		panic(fmt.Errorf("Error decoding component config file: %v", err))
+	}
+	return components
 }

@@ -24,38 +24,41 @@ import (
 
 type InstallOptions struct {
 	version    string
+	name       string
 	Components map[string]string
 }
 
 func NewInstallOptions() *InstallOptions {
-	return &InstallOptions{}
+	return &InstallOptions{
+		Components: utils.GetComponentsConf(),
+	}
 }
 
 func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.version, "version", "", "version of component")
+	// cmd.Flags().StringToStringVar(&o.Components, "components", utils.GetComponentsConf(), "components config")
 }
 
 func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
 	if v, ok := o.Components[name]; ok {
 		if o.version != "" {
-			o.Components[name] = o.version
+			o.Components = map[string]string{name: o.version}
 		} else {
-			o.Components[name] = v
+			o.Components = map[string]string{name: v}
 		}
-	} else {
-		return fmt.Errorf("%s install not supported", name)
+		return nil
 	}
-	return nil
+	return fmt.Errorf("%s install not supported", name)
 }
 
 // Install component
 func (o *InstallOptions) Install() error {
 	var url string
+	fmt.Println(o.Components)
 	baseUrl := "https://raw.githubusercontent.com/oceanbase/ob-operator/"
 	for component, version := range o.Components {
 		switch component {
