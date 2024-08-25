@@ -90,6 +90,26 @@ func DeleteOBCluster(ctx context.Context, namespace, name string) error {
 	return ClusterClient.Delete(ctx, namespace, name, metav1.DeleteOptions{})
 }
 
+func CreateOBClusterOperation(ctx context.Context, obclusterOperation *v1alpha1.OBClusterOperation) (*v1alpha1.OBClusterOperation, error) {
+	return ClusterOperationClient.Create(ctx, obclusterOperation, metav1.CreateOptions{})
+}
+
+func GetOBClusterOperations(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBClusterOperationList, error) {
+	client := client.GetClient()
+	var obclustetOperationList v1alpha1.OBClusterOperationList
+	obj, err := client.DynamicClient.Resource(schema.OBClusterOperationGVR).Namespace(obcluster.Namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBClusterOp, obcluster.Name),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "List obcluster operations")
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &obclustetOperationList)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured to obcluster list")
+	}
+	return &obclustetOperationList, nil
+}
+
 func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {
 	client := client.GetClient()
 	obj, err := client.DynamicClient.Resource(schema.OBClusterRes).List(ctx, metav1.ListOptions{})
