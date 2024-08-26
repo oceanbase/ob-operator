@@ -27,6 +27,9 @@ export default function Accounts({
   const [editData, setEditData] = useState<AcAccount>();
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
+  const [showOriginPwd, setShowOriginPwd] = useState(true);
+  const [targetUser, setTargetUser] = useState('');
+
   const { run: deleteAccount } = useRequest(accessReq.deleteAccount, {
     manual: true,
     onSuccess: ({ successful }) => {
@@ -122,7 +125,18 @@ export default function Accounts({
         return (
           <Space>
             <Button
-              onClick={() => setResetModalVisible(true)}
+              onClick={() => {
+                setResetModalVisible(true);
+                if (
+                  !isMyself &&
+                  myself?.roles.some((role) => role.name === 'admin')
+                ) {
+                  setShowOriginPwd(false);
+                  setTargetUser(record.username);
+                } else {
+                  setShowOriginPwd(true);
+                }
+              }}
               disabled={otherAdmin || (!access.acwrite && !isMyself)}
               type="link"
             >
@@ -183,6 +197,8 @@ export default function Accounts({
 
       <ResetPwdModal
         visible={resetModalVisible}
+        showOriginPwd={showOriginPwd}
+        targetUser={targetUser}
         setVisible={setResetModalVisible}
       />
     </div>

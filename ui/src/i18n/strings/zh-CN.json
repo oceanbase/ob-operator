@@ -1139,5 +1139,6 @@
   "src.api.1717A275": "无权限访问",
   "src.pages.Access.B52ED09C": "最后一次登录时间",
   "src.constants.22EDA0DC": "要求内核版本 >= 4.2.1.4 (4.2.2.x 除外)",
-  "src.components.customModal.F7DD1D45": "扩缩容Zone"
+  "src.components.customModal.F7DD1D45": "扩缩容Zone",
+  "src.components.customModal.08DC5F92": "角色已存在"
 }

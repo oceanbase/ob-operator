@@ -1,5 +1,5 @@
 import { access as accessReq } from '@/api';
-import type { AcPolicy, AcRole } from '@/api/generated';
+import type { AcAccount, AcPolicy, AcRole } from '@/api/generated';
 import HandleRoleModal from '@/components/customModal/HandleRoleModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { intl } from '@/utils/intl';
@@ -7,15 +7,21 @@ import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TableProps } from 'antd';
 import { Button, Space, Table, message } from 'antd';
-import { useState } from 'react';
+import { uniq } from 'lodash';
+import { useMemo, useState } from 'react';
 import { Type } from './type';
 
 interface RolesProps {
+  allAccounts: AcAccount[] | undefined;
   allRoles: AcRole[] | undefined;
   refreshRoles: () => void;
 }
 
-export default function Roles({ allRoles, refreshRoles }: RolesProps) {
+export default function Roles({
+  allRoles,
+  refreshRoles,
+  allAccounts,
+}: RolesProps) {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const access = useAccess();
   const [editData, setEditData] = useState<AcRole>();
@@ -91,9 +97,13 @@ export default function Roles({ allRoles, refreshRoles }: RolesProps) {
               })}
             </Button>
             <Button
-              disabled={disabled}
+              disabled={disabled || existingRole.includes(record.name)}
               type="link"
-              style={disabled ? {} : { color: '#ff4b4b' }}
+              style={
+                disabled || existingRole.includes(record.name)
+                  ? {}
+                  : { color: '#ff4b4b' }
+              }
               onClick={() =>
                 showDeleteConfirm({
                   title: intl.formatMessage({
@@ -119,6 +129,16 @@ export default function Roles({ allRoles, refreshRoles }: RolesProps) {
     setEditData(editData);
     setModalVisible(true);
   };
+
+  const existingRole = useMemo(() => {
+    return (
+      uniq(
+        allAccounts
+          ?.map((account) => account.roles.map((role) => role.name))
+          .flat(),
+      ) || []
+    );
+  }, [allAccounts]);
 
   return (
     <div>

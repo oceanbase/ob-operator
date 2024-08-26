@@ -7,7 +7,9 @@ import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Button, Tabs } from 'antd';
-import { useState } from 'react';
+import { uniq } from 'lodash';
+
+import { useMemo, useState } from 'react';
 import Accounts from './Accounts';
 import Roles from './Roles';
 import { ActiveKey, Type } from './type';
@@ -46,7 +48,13 @@ export default function Access() {
         id: 'src.pages.Access.FB4D558D',
         defaultMessage: '角色',
       }),
-      children: <Roles allRoles={allRoles} refreshRoles={refreshRoles} />,
+      children: (
+        <Roles
+          allRoles={allRoles}
+          allAccounts={allAccounts}
+          refreshRoles={refreshRoles}
+        />
+      ),
     },
   ];
 
@@ -57,6 +65,16 @@ export default function Access() {
       setModalVisible(true);
     }
   };
+
+  const existingRole = useMemo(() => {
+    return (
+      uniq(
+        allAccounts
+          ?.map((account) => account.roles.map((role) => role.name))
+          .flat(),
+      ) || []
+    );
+  }, [allAccounts]);
 
   return (
     <PageContainer
@@ -96,6 +114,7 @@ export default function Access() {
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
+        existingRole={existingRole}
         type={Type.CREATE}
         successCallback={refreshRoles}
       />

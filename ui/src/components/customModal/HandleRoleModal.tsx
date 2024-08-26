@@ -14,6 +14,7 @@ interface HandleRoleModalProps {
   setVisible: (visible: boolean) => void;
   successCallback?: () => void;
   editValue?: AcRole;
+  existingRole?: string[];
   type: Type;
 }
 
@@ -146,6 +147,7 @@ export default function HandleRoleModal({
   setVisible,
   successCallback,
   editValue,
+  existingRole,
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
@@ -168,6 +170,15 @@ export default function HandleRoleModal({
     }
   });
   const onFinish = async (formData: AcCreateRoleParam) => {
+    if (type === Type.CREATE && existingRole?.includes(formData.name)) {
+      message.warning(
+        intl.formatMessage({
+          id: 'src.components.customModal.08DC5F92',
+          defaultMessage: '角色已存在',
+        }),
+      );
+      return;
+    }
     const res =
       type === Type.CREATE
         ? await access.createRole(formData)
@@ -201,7 +212,7 @@ export default function HandleRoleModal({
       title={intl.formatMessage(
         {
           id: 'src.components.customModal.1F81961E',
-          defaultMessage: "{ConditionalExpression0}角色",
+          defaultMessage: '{ConditionalExpression0}角色',
         },
         {
           ConditionalExpression0:
