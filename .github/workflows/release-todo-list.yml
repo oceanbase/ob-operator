@@ -58,8 +58,11 @@ jobs:
           file: ./distribution/oceanbase-todo/Dockerfile
           push: true
           tags: |
+            ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-todo:latest
             ${{ vars.DOCKER_PUSH_BASE }}/oceanbase-todo:${{ steps.set_version_vars.outputs.version }}
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/oceanbase-todo:latest
             quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/oceanbase-todo:${{ steps.set_version_vars.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/oceanbase-todo:latest
             ghcr.io/${{ github.repository_owner }}/oceanbase-todo:${{ steps.set_version_vars.outputs.version }}
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}
