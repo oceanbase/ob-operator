@@ -112,9 +112,9 @@ done
 if [[ $LIST == true ]]; then
   echo -e "\nOBProxy Deployments: \n"
   if [[ $LIST_ALL == true ]]; then
-    kubectl get deployment -A -l obproxy.oceanbase.com/obproxy -L obproxy.oceanbase.com/for-obcluster -o wide
+    kubectl get deployment -A -l obproxy.oceanbase.com/obproxy-from-setup -L obproxy.oceanbase.com/for-obcluster -o wide
   else
-    kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obproxy -L obproxy.oceanbase.com/for-obcluster -o wide
+    kubectl get deployment -n $NAMESPACE -l obproxy.oceanbase.com/obproxy-from-setup -L obproxy.oceanbase.com/for-obcluster -o wide
   fi
   exit 0
 fi
@@ -204,7 +204,7 @@ metadata:
   name: $DEPLOY_NAME
   namespace: $NAMESPACE
   labels:
-    obproxy.oceanbase.com/obproxy: "$DEPLOY_NAME"
+    obproxy.oceanbase.com/obproxy-from-setup: "$DEPLOY_NAME"
     obproxy.oceanbase.com/for-obcluster: "$OB_CLUSTER"
     obproxy.oceanbase.com/for-namespace: "$NAMESPACE"
 spec:
