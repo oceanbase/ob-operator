@@ -29,7 +29,7 @@ export default function AddZoneModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => {
+  const onCancel = () => {
     form.resetFields();
     setVisible(false);
   };
@@ -62,9 +62,9 @@ export default function AddZoneModal({
         id: 'OBDashboard.components.customModal.AddZoneModal.AddZone',
         defaultMessage: '新增Zone',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}

@@ -23,7 +23,7 @@ export default function UpgradeModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
   const onFinish = async ({ image }: any) => {
     const res = await upgradeClusterReportWrap({ ns, name, image });
     if (res.successful) {
@@ -45,9 +45,9 @@ export default function UpgradeModal({
         id: 'OBDashboard.components.customModal.UpgradeModal.VersionUpgrade',
         defaultMessage: '版本升级',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form form={form} onFinish={onFinish}>
         <Form.Item<FieldType>

@@ -18,11 +18,14 @@ const Login: React.FC = () => {
     values.password = encryptText(values.password, publicKey) as string;
     const res = await user.login(values);
     if (res.successful) {
-      if (res.data.needReset) {
-        navigate('/reset');
-      } else {
-        navigate('/overview');
-      }
+      // Set a timer to wait for permissions to update
+      setTimeout(() => {
+        if (res.data.needReset) {
+          navigate('/reset');
+        } else {
+          navigate('/overview');
+        }
+      }, 500);
       refresh();
       localStorage.setItem('user', values.username);
     }

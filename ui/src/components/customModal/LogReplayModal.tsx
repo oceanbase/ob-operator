@@ -24,7 +24,7 @@ export default function LogReplayModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const res = await replayLogOfTenant({ namespace, name, ...values });
     if (res.successful) {
@@ -46,9 +46,9 @@ export default function LogReplayModal({
         id: 'Dashboard.components.customModal.LogReplayModal.StandbyTenantLogPlayback',
         defaultMessage: '备租户日志回放',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}
