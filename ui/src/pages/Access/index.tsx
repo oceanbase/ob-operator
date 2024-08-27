@@ -30,6 +30,15 @@ export default function Access() {
   const onChange = (key: ActiveKey) => {
     setActiveKey(key);
   };
+  const existingRoles = useMemo(() => {
+    return (
+      uniq(
+        allAccounts
+          ?.map((account) => account.roles.map((role) => role.name))
+          .flat(),
+      ) || []
+    );
+  }, [allAccounts]);
 
   const items: TabsProps['items'] = [
     {
@@ -51,8 +60,8 @@ export default function Access() {
       children: (
         <Roles
           allRoles={allRoles}
-          allAccounts={allAccounts}
           refreshRoles={refreshRoles}
+          existingRoles={existingRoles}
         />
       ),
     },
@@ -65,16 +74,6 @@ export default function Access() {
       setModalVisible(true);
     }
   };
-
-  const existingRole = useMemo(() => {
-    return (
-      uniq(
-        allAccounts
-          ?.map((account) => account.roles.map((role) => role.name))
-          .flat(),
-      ) || []
-    );
-  }, [allAccounts]);
 
   return (
     <PageContainer
@@ -114,7 +113,7 @@ export default function Access() {
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
-        existingRole={existingRole}
+        existingRole={existingRoles}
         type={Type.CREATE}
         successCallback={refreshRoles}
       />
