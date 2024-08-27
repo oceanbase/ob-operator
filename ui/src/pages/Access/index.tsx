@@ -7,7 +7,9 @@ import { useAccess } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Button, Tabs } from 'antd';
-import { useState } from 'react';
+import { uniq } from 'lodash';
+
+import { useMemo, useState } from 'react';
 import Accounts from './Accounts';
 import Roles from './Roles';
 import { ActiveKey, Type } from './type';
@@ -28,6 +30,15 @@ export default function Access() {
   const onChange = (key: ActiveKey) => {
     setActiveKey(key);
   };
+  const existingRoles = useMemo(() => {
+    return (
+      uniq(
+        allAccounts
+          ?.map((account) => account.roles.map((role) => role.name))
+          .flat(),
+      ) || []
+    );
+  }, [allAccounts]);
 
   const items: TabsProps['items'] = [
     {
@@ -46,7 +57,13 @@ export default function Access() {
         id: 'src.pages.Access.FB4D558D',
         defaultMessage: '角色',
       }),
-      children: <Roles allRoles={allRoles} refreshRoles={refreshRoles} />,
+      children: (
+        <Roles
+          allRoles={allRoles}
+          refreshRoles={refreshRoles}
+          existingRoles={existingRoles}
+        />
+      ),
     },
   ];
 
@@ -96,6 +113,7 @@ export default function Access() {
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
+        existingRole={existingRoles}
         type={Type.CREATE}
         successCallback={refreshRoles}
       />

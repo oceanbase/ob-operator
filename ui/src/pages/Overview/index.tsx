@@ -19,7 +19,7 @@ const OverviewPage: React.FC = () => {
       }}
     >
       <Row justify="start" gutter={[16, 16]}>
-        {access && (
+        {access.systemread || access.systemwrite ? (
           <>
             <OverviewStatus />
             <Col span={24}>
@@ -27,7 +27,7 @@ const OverviewPage: React.FC = () => {
             </Col>
             <NodesTable />
           </>
-        )}
+        ) : null}
       </Row>
     </PageContainer>
   );

@@ -13,9 +13,14 @@ import { Type } from './type';
 interface RolesProps {
   allRoles: AcRole[] | undefined;
   refreshRoles: () => void;
+  existingRoles: string[];
 }
 
-export default function Roles({ allRoles, refreshRoles }: RolesProps) {
+export default function Roles({
+  allRoles,
+  refreshRoles,
+  existingRoles,
+}: RolesProps) {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
   const access = useAccess();
   const [editData, setEditData] = useState<AcRole>();
@@ -91,9 +96,13 @@ export default function Roles({ allRoles, refreshRoles }: RolesProps) {
               })}
             </Button>
             <Button
-              disabled={disabled}
+              disabled={disabled || existingRoles.includes(record.name)}
               type="link"
-              style={disabled ? {} : { color: '#ff4b4b' }}
+              style={
+                disabled || existingRoles.includes(record.name)
+                  ? {}
+                  : { color: '#ff4b4b' }
+              }
               onClick={() =>
                 showDeleteConfirm({
                   title: intl.formatMessage({

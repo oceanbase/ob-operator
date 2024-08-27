@@ -32,7 +32,9 @@ export default function HandleAccountModal({
       form.submit();
     } catch (err) {}
   };
-  const { data: allRolesRes } = useRequest(access.listAllRoles);
+  const { data: allRolesRes } = useRequest(access.listAllRoles, {
+    refreshDeps: [visible],
+  });
   const rolesOption = useMemo(() => {
     return (
       allRolesRes?.data.map((role) => ({
@@ -73,7 +75,8 @@ export default function HandleAccountModal({
         roles: editValue?.roles.map((item) => item.name),
       });
     }
-  }, [type, editValue]);
+  }, [type, editValue, visible]);
+
   return (
     <CustomModal
       title={intl.formatMessage(
