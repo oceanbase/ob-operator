@@ -28,7 +28,7 @@ spec:
     spec:
       containers:
         - name: oceanbase-todo
-          image: oceanbasedev/oceanbase-todo
+          image: oceanbase/oceanbase-todo
           imagePullPolicy: IfNotPresent
           ports:
             - name: "http"
