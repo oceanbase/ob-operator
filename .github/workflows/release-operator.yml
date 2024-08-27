@@ -58,3 +58,6 @@ jobs:
             ${{ vars.DOCKER_PUSH_BASE }}/ob-operator:${{ steps.set_version_vars.outputs.version }}
             quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/ob-operator:${{ steps.set_version_vars.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/ob-operator:${{ steps.set_version_vars.outputs.version }}
+            ${{ vars.DOCKER_PUSH_BASE }}/ob-operator:latest
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/ob-operator:latest
+            ghcr.io/${{ github.repository_owner }}/ob-operator:latest
