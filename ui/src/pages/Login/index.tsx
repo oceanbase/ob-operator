@@ -2,7 +2,7 @@ import { intl } from '@/utils/intl';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useModel, useNavigate } from '@umijs/max';
 import { Button, Form, Input } from 'antd';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { user } from '@/api';
 import logoSrc from '@/assets/oceanbase_logo.svg';
@@ -13,8 +13,10 @@ const Login: React.FC = () => {
   const { refresh } = useModel('@@initialState');
   const navigate = useNavigate();
   const publicKey = usePublicKey();
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values: API.User) => {
+    setLoading(true);
     values.password = encryptText(values.password, publicKey) as string;
     const res = await user.login(values);
     if (res.successful) {
@@ -25,6 +27,7 @@ const Login: React.FC = () => {
         } else {
           navigate('/overview');
         }
+        setLoading(false);
       }, 500);
       refresh();
       localStorage.setItem('user', values.username);
@@ -64,7 +67,12 @@ const Login: React.FC = () => {
         </Form.Item>
 
         <Form.Item style={{ display: 'flex', justifyContent: 'center' }}>
-          <Button style={{ width: 270 }} type="primary" htmlType="submit">
+          <Button
+            loading={loading}
+            style={{ width: 270 }}
+            type="primary"
+            htmlType="submit"
+          >
             {intl.formatMessage({
               id: 'dashboard.pages.Login.Login',
               defaultMessage: '登录',
