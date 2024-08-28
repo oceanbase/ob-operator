@@ -247,7 +247,7 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		accountChanged = true
 	}
 	if accountChanged {
-		var lastLoginUnix int64 = 0
+		var lastLoginUnix int64
 		if acc.LastLoginAt != nil {
 			lastLoginUnix = acc.LastLoginAt.Unix()
 		}
