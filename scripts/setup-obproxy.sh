@@ -175,16 +175,18 @@ function check_requirements {
 
 check_requirements
 
-if [[ $CONFIG_MAP == "" ]]; then
-  # Create ConfigMap
-  CONFIG_MAP="cm-obproxy-$OB_CLUSTER"
-  # ENV_VARS is an key=value array
-  env_list="--from-literal=DEPLOYED_TIME=$(date +'%Y-%m-%d.%H:%M:%S')"
-  for env in "${ENV_VARS[@]}"; do
-    env_list="$env_list --from-literal=$env"
-  done
-  kubectl create configmap $CONFIG_MAP -n $NAMESPACE $env_list
-fi
+function create_config_map {
+  if [[ $CONFIG_MAP == "" ]]; then
+    # Create ConfigMap
+    CONFIG_MAP="cm-obproxy-$OB_CLUSTER"
+    # ENV_VARS is an key=value array
+    env_list="--from-literal=DEPLOYED_TIME=$(date +'%Y-%m-%d.%H:%M:%S')"
+    for env in "${ENV_VARS[@]}"; do
+      env_list="$env_list --from-literal=$env"
+    done
+    kubectl create configmap $CONFIG_MAP -n $NAMESPACE $env_list
+  fi
+}
 
 # Check whether the OBCluster exists
 kubectl get obcluster $OB_CLUSTER -n $NAMESPACE &> /dev/null
@@ -204,7 +206,12 @@ if [[ -z $DEPLOY_NAME ]]; then
   DEPLOY_NAME="obproxy-$OB_CLUSTER"
 fi
 
+function get_config_map_name {
+  CONFIG_MAP=$(kubectl get deployment $DEPLOY_NAME -n $NAMESPACE -o jsonpath='{.metadata.labels.obproxy\.oceanbase\.com/with-config-map}')
+}
+
 function display_info {
+  get_config_map_name
   echo "[OBProxy Deployment]"
   kubectl get deployment $DEPLOY_NAME -n $NAMESPACE
 
@@ -213,6 +220,9 @@ function display_info {
 
   echo -e "\n[OBProxy Service]"
   kubectl get service svc-$DEPLOY_NAME -n $NAMESPACE
+
+  echo -e "\n[OBProxy ConfigMap]"
+  kubectl get cm $CONFIG_MAP -n $NAMESPACE -o wide
 }
 
 function create_deployment {
@@ -310,7 +320,8 @@ elif [[ $DESTROY == true ]]; then
   else
     echo "Destroying the obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\"..."
   fi
-
+  get_config_map_name
+  kubectl delete cm $CONFIG_MAP -n $NAMESPACE
   kubectl delete deployment $DEPLOY_NAME -n $NAMESPACE
   kubectl delete service svc-$DEPLOY_NAME -n $NAMESPACE
 
@@ -333,7 +344,7 @@ else
     echo "Error: The obproxy deployment \"$DEPLOY_NAME\" in namespace \"$NAMESPACE\" already exists."
     exit 1
   fi
-
+  create_config_map
   create_deployment
 
   display_info
