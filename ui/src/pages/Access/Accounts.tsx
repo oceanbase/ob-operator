@@ -102,7 +102,7 @@ export default function Accounts({
     {
       title: intl.formatMessage({
         id: 'src.pages.Access.B52ED09C',
-        defaultMessage: '最后一次登录时间',
+        defaultMessage: '上次登录于',
       }),
       key: 'lastLoginAt',
       dataIndex: 'lastLoginAt',
@@ -125,6 +125,7 @@ export default function Accounts({
         return (
           <Space>
             <Button
+              style={{ paddingLeft: 0 }}
               onClick={() => {
                 setResetModalVisible(true);
                 if (

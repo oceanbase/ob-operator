@@ -31,7 +31,7 @@ export default function SwitchTenantModal({
   const handleSubmit = async () => {
     await activateTenant({ ns, name, switchover: true });
   };
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
 
   return (
     <CustomModal
@@ -39,9 +39,9 @@ export default function SwitchTenantModal({
         id: 'Dashboard.components.customModal.SwitchTenantModal.ActiveStandbySwitchover',
         defaultMessage: '主备切换',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <p>
         {intl.formatMessage({

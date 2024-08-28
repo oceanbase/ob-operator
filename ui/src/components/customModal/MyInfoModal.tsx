@@ -1,5 +1,5 @@
 import { intl } from '@/utils/intl';
-import { useModel } from '@umijs/max';
+import { getLocale, useModel } from '@umijs/max';
 import type { DescriptionsProps } from 'antd';
 import { Button, Descriptions } from 'antd';
 import CustomModal from '.';
@@ -10,7 +10,7 @@ export default function MyInfoModal({
 }: API.CommonModalType) {
   const { initialState = {} } = useModel('@@initialState');
   const { accountInfo } = initialState;
-
+  const locale = getLocale();
   const items: DescriptionsProps['items'] = [
     {
       key: 'nickname',
@@ -50,18 +50,19 @@ export default function MyInfoModal({
       key: 'lastLoginAt',
       label: intl.formatMessage({
         id: 'src.pages.Access.B52ED09C',
-        defaultMessage: '最后一次登录时间',
+        defaultMessage: '上次登录于',
       }),
       children: `${accountInfo?.lastLoginAt || '-'}`,
     },
   ];
-
+  const labelWidth = locale === 'en-US' ? 110 : 84;
   return (
     <CustomModal
-      isOpen={visible}
-      handleCancel={() => {
+      open={visible}
+      onCancel={() => {
         setVisible(false);
       }}
+      maskClosable={true}
       footer={
         <Button
           type="primary"
@@ -81,6 +82,8 @@ export default function MyInfoModal({
           id: 'src.components.customModal.FCCAF16C',
           defaultMessage: '我的信息',
         })}
+        labelStyle={{ width: labelWidth, justifyContent: 'end' }}
+        column={1}
         items={items}
       />
     </CustomModal>

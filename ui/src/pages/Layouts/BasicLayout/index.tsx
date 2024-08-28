@@ -124,7 +124,14 @@ const BasicLayout: React.FC = () => {
   );
 
   useEffect(() => {
-    history.replace(menus.find((item) => item.accessible)?.link || '/overview');
+    const path = window.location.hash.split('#')[1];
+    const allLink = menus
+      .filter((item) => item.accessible)
+      .map((accItem) => accItem?.link);
+    const targetPath = allLink.find((item) => path.includes(item));
+    history.replace(
+      targetPath || menus.find((item) => item.accessible)?.link || '/overview',
+    );
   }, []);
 
   return (

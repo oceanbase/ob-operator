@@ -86,6 +86,7 @@ export default function Roles({
         return (
           <Space>
             <Button
+              style={{ paddingLeft: 0 }}
               onClick={() => handleEdit(record)}
               disabled={disabled}
               type="link"

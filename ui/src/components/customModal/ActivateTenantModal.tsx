@@ -31,7 +31,7 @@ export default function ActivateTenantModal({
   const handleSubmit = async () => {
     await activateTenant({ ns, name, failover: true });
   };
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
 
   return (
     <CustomModal
@@ -39,9 +39,9 @@ export default function ActivateTenantModal({
         id: 'Dashboard.components.customModal.ActivateTenantModal.ActivateASecondaryTenant',
         defaultMessage: '激活备租户',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <p>
         {intl.formatMessage({

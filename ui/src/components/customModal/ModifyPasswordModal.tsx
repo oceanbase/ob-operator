@@ -26,7 +26,7 @@ export default function ModifyPasswordModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const res = await changeTenantPassword({
       ns,
@@ -53,9 +53,9 @@ export default function ModifyPasswordModal({
         id: 'Dashboard.components.customModal.ModifyPasswordModal.ModifyRootPassword',
         defaultMessage: '修改 root 密码',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}

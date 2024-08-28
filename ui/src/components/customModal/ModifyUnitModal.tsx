@@ -28,7 +28,7 @@ export default function ModifyUnitModal({
     } catch (err) {}
   };
 
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
   const onFinish = async (values: any) => {
     const res = await modifyUnitNumReportWrap({
       ns,
@@ -61,9 +61,9 @@ export default function ModifyUnitModal({
         id: 'Dashboard.components.customModal.ModifyUnitModal.ModifyTheNumberOfUnits',
         defaultMessage: '修改 Unit 数量',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}

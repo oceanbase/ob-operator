@@ -247,12 +247,16 @@ func PatchAccount(ctx context.Context, username string, param *acmodel.PatchAcco
 		accountChanged = true
 	}
 	if accountChanged {
+		var lastLoginUnix int64
+		if acc.LastLoginAt != nil {
+			lastLoginUnix = acc.LastLoginAt.Unix()
+		}
 		up := &acmodel.UpdateAccountCreds{
 			Username: username,
 			AccountCreds: acmodel.AccountCreds{
 				EncryptedPassword: acc.password,
 				Nickname:          acc.Nickname,
-				LastLoginAtUnix:   acc.LastLoginAt.Unix(),
+				LastLoginAtUnix:   lastLoginUnix,
 				Description:       acc.Description,
 			},
 		}

@@ -22,7 +22,7 @@ import (
 func InitOBClusterRoutes(g *gin.RouterGroup) {
 	g.GET("/obclusters/statistic", h.Wrap(h.GetOBClusterStatistic, acbiz.PathGuard("obcluster", "", "read")))
 	g.GET("/obclusters", h.Wrap(h.ListOBClusters, acbiz.PathGuard("obcluster", "", "read")))
-	g.POST("/obclusters", h.Wrap(h.CreateOBCluster, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/obclusters", h.Wrap(h.CreateOBCluster, acbiz.PathGuard("obcluster", "*", "write")))
 	g.GET("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.GetOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
 	g.POST("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.UpgradeOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
 	g.DELETE("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.DeleteOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))

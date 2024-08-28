@@ -61,9 +61,9 @@ export default function ResetPwdModal({
         id: 'src.components.customModal.BC49A0BD',
         defaultMessage: '修改密码',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={() => {
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={() => {
         form.resetFields();
         setVisible(false);
       }}
