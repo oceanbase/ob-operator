@@ -1,0 +1,16 @@
+conf:
+  neutron:
+    DEFAULT:
+      l3_ha: False
+      max_l3_agents_per_router: 1
+  # <provider_interface_name> will be attached to the br-ex bridge.
+  # The IP assigned to the interface will be moved to the bridge.
+  auto_bridge_add:
+    br-ex: ${PROVIDER_INTERFACE}
+  plugins:
+    ml2_conf:
+      ml2_type_flat:
+        flat_networks: public
+    openvswitch_agent:
+      ovs:
+        bridge_mappings: public:br-ex

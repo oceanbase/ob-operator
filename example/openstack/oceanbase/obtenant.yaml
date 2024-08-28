@@ -1,0 +1,40 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: openstack
+  namespace: openstack
+spec:
+  obcluster: openstack
+  tenantName: openstack
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  credentials:
+    root: root-password
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 4
+        memorySize: 8Gi
+    - zone: zone2
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 4
+        memorySize: 8Gi
+    - zone: zone3
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      priority: 3
+      resource:
+        maxCPU: 4
+        memorySize: 8Gi
