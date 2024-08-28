@@ -3,6 +3,7 @@ import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
+import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
@@ -25,6 +26,7 @@ export default function HandleAccountModal({
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
+  const { refresh } = useModel('@@initialState');
   const publicKey = usePublicKey();
   const handleSubmit = async () => {
     try {
@@ -55,6 +57,7 @@ export default function HandleAccountModal({
             omit(formData, ['confirmPassword', 'username', 'password']),
           );
     if (res.successful) {
+      if (type === Type.EDIT) await refresh();
       message.success(
         intl.formatMessage({
           id: 'src.components.customModal.8EA35AF0',

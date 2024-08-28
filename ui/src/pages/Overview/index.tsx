@@ -19,9 +19,11 @@ const OverviewPage: React.FC = () => {
       }}
     >
       <Row justify="start" gutter={[16, 16]}>
+        {access.obclusterread || access.obclusterwrite ? (
+          <OverviewStatus />
+        ) : null}
         {access.systemread || access.systemwrite ? (
           <>
-            <OverviewStatus />
             <Col span={24}>
               <EventsTable />
             </Col>

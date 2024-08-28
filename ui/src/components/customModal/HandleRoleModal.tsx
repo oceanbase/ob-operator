@@ -14,7 +14,7 @@ interface HandleRoleModalProps {
   setVisible: (visible: boolean) => void;
   successCallback?: () => void;
   editValue?: AcRole;
-  existingRole?: string[];
+  createdRoles?: string[];
   type: Type;
 }
 
@@ -147,7 +147,7 @@ export default function HandleRoleModal({
   setVisible,
   successCallback,
   editValue,
-  existingRole,
+  createdRoles,
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
@@ -170,7 +170,7 @@ export default function HandleRoleModal({
     }
   });
   const onFinish = async (formData: AcCreateRoleParam) => {
-    if (type === Type.CREATE && existingRole?.includes(formData.name)) {
+    if (type === Type.CREATE && createdRoles?.includes(formData.name)) {
       message.warning(
         intl.formatMessage({
           id: 'src.components.customModal.08DC5F92',
