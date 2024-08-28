@@ -15,13 +15,14 @@ package v1
 import (
 	"github.com/gin-gonic/gin"
 
+	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.GET("/obtenants", h.Wrap(h.ListAllTenants))
-	g.GET("/obtenants/statistic", h.Wrap(h.GetOBTenantStatistic))
+	g.GET("/obtenants/statistic", h.Wrap(h.GetOBTenantStatistic, acbiz.PathGuard("obcluster", "", "read")))
 	g.PUT("/obtenants", h.Wrap(h.CreateTenant))
 
 	g.GET("/obtenants/:namespace/:name", h.Wrap(h.GetTenant, oceanbase.TenantGuard(":namespace", ":name", "read")))
