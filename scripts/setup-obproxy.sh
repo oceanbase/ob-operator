@@ -12,6 +12,8 @@ SVC_TYPE=ClusterIP
 DISPLAY_INFO=false
 LIST=false
 LIST_ALL=false
+ENV_VARS=()
+CONFIG_MAP=""
 
 function print_help {
   echo "setup-obproxy.sh - Set up obproxy for an OBCluster in a Kubernetes cluster"
@@ -26,6 +28,8 @@ function print_help {
   echo "  -d, --deploy-name <Name>  Name of the obproxy deployment. Default is obproxy-<OBCluster>."
   echo "  -r, --replicas <Number>   Number of replicas of the obproxy deployment. Default is 2."
   echo "  --destroy                 Destroy the obproxy deployment."
+  echo "  -e, --env <key=value>     Environment variable of the obproxy deployment."
+  echo "  --cm <ConfigMap>          ConfigMap of the obproxy deployment."
   echo "  --cpu <CPU>               CPU limit of the obproxy deployment. Default is 1."
   echo "  --memory <Memory>         Memory limit of the obproxy deployment. Default is 2Gi."
   echo "  --svc-type <Type>         Service type of the obproxy deployment. Default is ClusterIP. Valid values are ClusterIP, NodePort, LoadBalancer."
@@ -71,6 +75,28 @@ while [[ $# -gt 0 ]]; do
       ;;
     -r|--replicas)
       REPLICAS=$2
+      shift
+      ;;
+    -e|--env)
+      if [[ $CONFIG_MAP != "" ]]; then
+        echo "Error: Environment variables and ConfigMap cannot be set at the same time."
+        exit 1
+      fi
+      echo "-e" "$2"
+      ENV_VARS+=("$2")
+      shift
+      ;;
+    --cm)
+      if [[ $2 == "" ]]; then
+        echo "Error: ConfigMap name is empty."
+        exit 1
+      fi
+      # if length of ENV_VARS > 0
+      if [[ ${#ENV_VARS[@]} -gt 0 ]]; then
+        echo "Error: Environment variables and ConfigMap cannot be set at the same time."
+        exit 1
+      fi
+      CONFIG_MAP=$2
       shift
       ;;
     --svc-type)
@@ -149,6 +175,17 @@ function check_requirements {
 
 check_requirements
 
+if [[ ${#ENV_VARS[@]} -gt 0 && $CONFIG_MAP == "" ]]; then
+  # Create ConfigMap
+  CONFIG_MAP="cm-obproxy-$OB_CLUSTER"
+  # ENV_VARS is an key=value array
+  env_list="--from-literal=DEPLOYED_TIME=$(date +'%Y-%m-%d.%H:%M:%S')"
+  for env in "${ENV_VARS[@]}"; do
+    env_list="$env_list --from-literal=$env"
+  done
+  kubectl create configmap $CONFIG_MAP -n $NAMESPACE $env_list
+fi
+
 # Check whether the OBCluster exists
 kubectl get obcluster $OB_CLUSTER -n $NAMESPACE &> /dev/null
 if [[ $? -ne 0 ]]; then
@@ -207,6 +244,7 @@ metadata:
     obproxy.oceanbase.com/obproxy-from-setup: "$DEPLOY_NAME"
     obproxy.oceanbase.com/for-obcluster: "$OB_CLUSTER"
     obproxy.oceanbase.com/for-namespace: "$NAMESPACE"
+    obproxy.oceanbase.com/with-config-map: "$CONFIG_MAP"
 spec:
   selector:
     matchLabels:
@@ -225,6 +263,9 @@ spec:
               name: "sql"
             - containerPort: 2884
               name: "prometheus"
+          envFrom:
+            - configMapRef:
+                name: $CONFIG_MAP
           env:
             - name: APP_NAME
               value: $DEPLOY_NAME
