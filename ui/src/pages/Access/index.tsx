@@ -40,6 +40,10 @@ export default function Access() {
     );
   }, [allAccounts]);
 
+  const createdRoles = useMemo(() => {
+    return allRoles?.map((item) => item.name) || [];
+  }, [allRolesRes]);
+
   const items: TabsProps['items'] = [
     {
       key: ActiveKey.ACCOUNTS,
@@ -61,7 +65,7 @@ export default function Access() {
         <Roles
           allRoles={allRoles}
           refreshRoles={refreshRoles}
-          existingRoles={existingRoles}
+          existingRoles={existingRoles} // A role in use cannot be deleted
         />
       ),
     },
@@ -113,8 +117,8 @@ export default function Access() {
       <HandleRoleModal
         visible={modalVisible}
         setVisible={setModalVisible}
-        existingRole={existingRoles}
         type={Type.CREATE}
+        createdRoles={createdRoles} // Duplicate roles cannot be created
         successCallback={refreshRoles}
       />
     </PageContainer>

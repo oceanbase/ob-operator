@@ -87,7 +87,7 @@ export default function ResetPwdModal({
             })}
             name={'oldPassword'}
           >
-            <Input
+            <Input.Password
               type="password"
               placeholder={intl.formatMessage({
                 id: 'src.components.customModal.E97DEF21',
@@ -129,7 +129,7 @@ export default function ResetPwdModal({
           })}
           name={'password'}
         >
-          <Input
+          <Input.Password
             type="password"
             placeholder={intl.formatMessage({
               id: 'src.components.customModal.8BE441F0',
@@ -169,7 +169,7 @@ export default function ResetPwdModal({
           })}
           name={'confirmPassword'}
         >
-          <Input
+          <Input.Password
             type="password"
             placeholder={intl.formatMessage({
               id: 'src.components.customModal.69F2300D',

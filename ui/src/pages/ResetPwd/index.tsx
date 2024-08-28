@@ -61,7 +61,7 @@ export default function ResetPwd() {
             },
           ]}
         >
-          <Input
+          <Input.Password
             type="password"
             placeholder={intl.formatMessage({
               id: 'src.pages.ResetPwd.EB8B735A',
@@ -96,7 +96,7 @@ export default function ResetPwd() {
             }),
           ]}
         >
-          <Input
+          <Input.Password
             type="password"
             placeholder={intl.formatMessage({
               id: 'src.pages.ResetPwd.0D23DF17',
