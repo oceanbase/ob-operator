@@ -175,7 +175,7 @@ function check_requirements {
 
 check_requirements
 
-if [[ ${#ENV_VARS[@]} -gt 0 && $CONFIG_MAP == "" ]]; then
+if [[ $CONFIG_MAP == "" ]]; then
   # Create ConfigMap
   CONFIG_MAP="cm-obproxy-$OB_CLUSTER"
   # ENV_VARS is an key=value array
