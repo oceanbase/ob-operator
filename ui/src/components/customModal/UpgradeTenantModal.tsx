@@ -31,7 +31,7 @@ export default function UpgradeTenantModal({
   const handleSubmit = async () => {
     await upgradeTenant({ ns, name });
   };
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
 
   return (
     <CustomModal
@@ -39,9 +39,9 @@ export default function UpgradeTenantModal({
         id: 'Dashboard.components.customModal.UpgradeTenantModal.TenantVersionUpgrade',
         defaultMessage: '租户版本升级',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <p>
         {intl.formatMessage({

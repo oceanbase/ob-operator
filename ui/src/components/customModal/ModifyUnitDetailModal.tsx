@@ -100,7 +100,7 @@ export default function ModifyUnitDetailModal({
       form.submit();
     } catch (err) {}
   };
-  const handleCancel = () => {
+  const onCancel = () => {
     if (setEditZone) {
       setEditZone('');
       setSelectZones([]);
@@ -255,9 +255,9 @@ export default function ModifyUnitDetailModal({
               defaultMessage: '编辑资源池',
             })
       }
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form
         form={form}

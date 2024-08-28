@@ -61,9 +61,9 @@ export default function ScaleModal({
         id: 'src.components.customModal.F7DD1D45',
         defaultMessage: '扩缩容Zone',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={() => {
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={() => {
         setVisible(false);
         form.resetFields();
       }}

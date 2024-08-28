@@ -227,9 +227,9 @@ export default function HandleRoleModal({
                 }),
         },
       )}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={() => {
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={() => {
         form.resetFields();
         setVisible(false);
       }}

@@ -39,7 +39,7 @@ export default function AddNSModal({
       form.submit();
     } catch (err) {}
   };
-  const handleCancel = () => setVisible(false);
+  const onCancel = () => setVisible(false);
   const onFinish = async (val: FormData) => {
     newNamespace.current = val.namespace;
     await createNS(val.namespace);
@@ -50,9 +50,9 @@ export default function AddNSModal({
         id: 'OBDashboard.components.customModal.AddNSModal.AddNamespace',
         defaultMessage: '新增命名空间',
       })}
-      isOpen={visible}
-      handleOk={handleSubmit}
-      handleCancel={handleCancel}
+      open={visible}
+      onOk={handleSubmit}
+      onCancel={onCancel}
     >
       <Form form={form} onFinish={onFinish}>
         <Form.Item
