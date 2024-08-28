@@ -19,7 +19,13 @@ Deploy the ob-operator using the command below. Wait until all pods are running:
 ```
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.2_release/deploy/cert-manager.yaml
 ```
-3. deploy obcluster
+3. create secret
+Create secret using the following command
+```
+kubectl create secret generic root-password --from-literal=password='password' -n openstack
+```
+
+4. deploy obcluster
 Deploy the obcluster using the following command:
 ```
 kubectl apply -f oceanbase/obcluster.yaml
@@ -29,7 +35,7 @@ Wait until the obcluster status changes to `running`. You can check the status u
 kubectl get obcluster openstack -n openstack -o wide 
 ```
 
-4. deploy obtenant
+5. deploy obtenant
 Deploy the obtenant using the command below:
 ```
 kubectl apply -f oceanbase/obtenant.yaml
@@ -39,7 +45,7 @@ Wait until the obtenant status changes to `running`. You can verify this using:
 kubectl get obtenant openstack -n openstack -o wide 
 ```
 
-5. deploy obproxy
+6. deploy obproxy
 A script is provided to set up obproxy. Download the script with the following command:
 ```
 wget https://raw.githubusercontent.com/oceanbase/ob-operator/master/scripts/setup-obproxy.sh
@@ -49,7 +55,7 @@ Run the script to set up obproxy:
 bash setup-obproxy.sh -n openstack --proxy-version 4.2.3.0-3 --env ODP_MYSQL_VERSION=8.0.30 --env ODP_PROXY_TENANT_NAME=openstack -d openstack  openstack
 ```
 
-6. Configure Tenant Variables
+7. Configure Tenant Variables
 Connect to the openstack tenant using the command below (${ip} need to be replaced with the obproxy ip, root@openstack is the root user of openstack tenant, and the default password is password):
 ```
 mysql -h${ip} -P2883 -uroot@openstack -p

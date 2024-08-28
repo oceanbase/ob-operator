@@ -72,9 +72,11 @@ endpoints:
     port:
       mysql:
         default: 2883
-conf:
-  nova:
-    libvirt:
-      virt_type: qemu
+
+# uncomment the following config if your server doesn't support KVM
+# conf:
+#   nova:
+#     libvirt:
+#       virt_type: qemu
 
 ...
