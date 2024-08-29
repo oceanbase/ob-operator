@@ -148,7 +148,9 @@ export default function Accounts({
             </Button>
             <Button
               onClick={() => handleEdit(record)}
-              disabled={otherAdmin || !access.acwrite}
+              disabled={
+                otherAdmin || !access.acwrite || record.username === 'admin'
+              }
               type="link"
             >
               {intl.formatMessage({
