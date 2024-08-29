@@ -426,16 +426,21 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrap(err, "Delete old observer")
 		}
+		var deleted bool
 		for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 			time.Sleep(time.Second)
 			oldServer := &v1alpha1.OBServer{}
 			err = m.Client.Get(m.Ctx, m.generateNamespacedName(server.Name), oldServer)
 			if err != nil {
 				if kubeerrors.IsNotFound(err) {
+					deleted = true
 					break
 				}
 				return errors.Wrap(err, "Get old observer")
 			}
+		}
+		if !deleted {
+			m.Logger.Error(errors.New("Delete old observer timeout"), "observer", server.Name)
 		}
 	}
 	return nil
