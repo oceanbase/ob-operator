@@ -126,6 +126,10 @@ func ResetAccountPassword(ctx context.Context, username string, resetParam *para
 	newBts := sha256.Sum256([]byte(resetParam.Password))
 	newEncryptedPwd := hex.EncodeToString(newBts[:])
 
+	if account.password == newEncryptedPwd {
+		return nil, httpErr.NewBadRequest("new password is the same as the old password")
+	}
+
 	up := &acmodel.UpdateAccountCreds{
 		Username: username,
 		AccountCreds: acmodel.AccountCreds{
