@@ -151,7 +151,7 @@ export default function HandleRoleModal({
   type,
 }: HandleRoleModalProps) {
   const [form] = Form.useForm();
-  const { initialState } = useModel('@@initialState');
+  const { initialState, refresh } = useModel('@@initialState');
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -187,6 +187,9 @@ export default function HandleRoleModal({
             pick(formData, ['description', 'permissions']),
           );
     if (res.successful) {
+      if (type == Type.EDIT) {
+        await refresh();
+      }
       message.success(
         intl.formatMessage({
           id: 'src.components.customModal.66C28C4A',
