@@ -190,6 +190,7 @@ export default function HandleRoleModal({
       if (type == Type.EDIT) {
         await refresh();
       }
+      form.resetFields();
       message.success(
         intl.formatMessage({
           id: 'src.components.customModal.66C28C4A',
