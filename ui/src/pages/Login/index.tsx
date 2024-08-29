@@ -18,19 +18,23 @@ const Login: React.FC = () => {
   const onFinish = async (values: API.User) => {
     setLoading(true);
     values.password = encryptText(values.password, publicKey) as string;
-    const res = await user.login(values);
-    if (res.successful) {
-      // Set a timer to wait for permissions to update
-      setTimeout(() => {
-        if (res.data.needReset) {
-          navigate('/reset');
-        } else {
-          navigate('/overview');
-        }
-        setLoading(false);
-      }, 500);
-      refresh();
-      localStorage.setItem('user', values.username);
+    try {
+      const res = await user.login(values);
+      if (res.successful) {
+        // Set a timer to wait for permissions to update
+        setTimeout(() => {
+          if (res.data.needReset) {
+            navigate('/reset');
+          } else {
+            navigate('/overview');
+          }
+          setLoading(false);
+        }, 500);
+        refresh();
+        localStorage.setItem('user', values.username);
+      }
+    } catch (e) {
+      setLoading(false);
     }
   };
 

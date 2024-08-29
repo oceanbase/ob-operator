@@ -14,15 +14,29 @@ export const errorHandling = (error: any) => {
     const { response } = error;
     if (
       response?.status === 400 &&
-      response?.config?.url?.split('/')?.pop() === 'password' &&
-      response?.data?.message === 'Error BadRequest: password is incorrect'
+      response?.config?.url?.split('/')?.pop() === 'password'
     ) {
-      message.error(
-        intl.formatMessage({
-          id: 'src.api.855C826A',
-          defaultMessage: '原密码输入不正确',
-        }),
-      );
+      if (
+        response?.data?.message === 'Error BadRequest: password is incorrect'
+      ) {
+        message.error(
+          intl.formatMessage({
+            id: 'src.api.855C826A',
+            defaultMessage: '原密码输入不正确',
+          }),
+        );
+      }
+      if (
+        response?.data?.message ===
+        'Error BadRequest: new password is the same as the old password'
+      ) {
+        message.error(
+          intl.formatMessage({
+            id: 'src.api.5D7E1724',
+            defaultMessage: '新密码不能和初始密码一致',
+          }),
+        );
+      }
     } else if (response?.status === 403) {
       message.warning(
         intl.formatMessage({

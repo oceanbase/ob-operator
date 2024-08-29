@@ -1141,5 +1141,6 @@
   "src.pages.Access.B52ED09C": "Last login time",
   "src.constants.22EDA0DC": "Requires kernel version> = 4.2.1.4 (except 4.2.2.x)",
   "src.components.customModal.F7DD1D45": "Scaling Zone",
-  "src.components.customModal.08DC5F92": "Role already exists"
+  "src.components.customModal.08DC5F92": "Role already exists",
+  "src.api.5D7E1724": "new password is the same as the old password"
 }
