@@ -248,10 +248,13 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			m.Recorder.Event(m.OBCluster, "Normal", "RollingUpdateOBZone", "Rolling update OBZone "+obzone.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				targetZone := v1alpha1.OBZone{}
-				m.Client.Get(m.Ctx, types.NamespacedName{
+				err := m.Client.Get(m.Ctx, types.NamespacedName{
 					Namespace: m.OBCluster.Namespace,
 					Name:      obzone.Name,
 				}, &targetZone)
+				if err != nil {
+					return errors.Wrap(err, "get obzone")
+				}
 				changer(&targetZone)
 				return m.Client.Update(m.Ctx, &targetZone)
 			})
