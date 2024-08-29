@@ -426,7 +426,7 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrap(err, "Delete old observer")
 		}
-		for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
+		for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 			time.Sleep(time.Second)
 			oldServer := &v1alpha1.OBServer{}
 			err = m.Client.Get(m.Ctx, m.generateNamespacedName(server.Name), oldServer)
