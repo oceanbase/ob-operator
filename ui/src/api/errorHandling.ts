@@ -33,7 +33,7 @@ export const errorHandling = (error: any) => {
         message.error(
           intl.formatMessage({
             id: 'src.api.5D7E1724',
-            defaultMessage: '新密码不能和初始密码一致',
+            defaultMessage: '新密码不能和当前密码一致',
           }),
         );
       }
