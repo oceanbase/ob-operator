@@ -135,7 +135,7 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 			ns := resMeta.GetNamespace()
 			resVersion := resMeta.GetResourceVersion()
 			resName := resMeta.GetName()
-			loggingPairs := []interface{}{
+			loggingPairs := []any{
 				"flowName", f.OperationContext.Name,
 				"taskId", f.OperationContext.TaskId,
 				"taskName", f.OperationContext.Task,
