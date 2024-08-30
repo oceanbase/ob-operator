@@ -130,19 +130,33 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 	case taskstatus.Running:
 		// check task status and update cr status
 		taskResult, err := task.GetTaskManager().GetTaskResult(f.OperationContext.TaskId)
-
-		if err != nil {
-			c.Logger.Error(err, "Get task result got error", "task id", f.OperationContext.TaskId)
-			c.Manager.PrintErrEvent(err)
-			f.OperationContext.TaskStatus = taskstatus.Failed
-		} else if taskResult != nil {
-			c.Logger.V(1).Info("Task finished", "task id", f.OperationContext.TaskId, "task result", taskResult)
-			f.OperationContext.TaskStatus = taskResult.Status
-			if taskResult.Error != nil {
-				c.Manager.PrintErrEvent(taskResult.Error)
+		if err != nil || taskResult != nil {
+			resMeta := c.Manager.GetMeta()
+			ns := resMeta.GetNamespace()
+			resVersion := resMeta.GetResourceVersion()
+			resName := resMeta.GetName()
+			loggingPairs := []any{
+				"flowName", f.OperationContext.Name,
+				"taskId", f.OperationContext.TaskId,
+				"taskName", f.OperationContext.Task,
+				"namespace", ns,
+				"resourceVersion", resVersion,
+				"resourceName", resName,
+			}
+			if err != nil {
+				c.Logger.Error(err, "Get task result got error", loggingPairs...)
+				c.Manager.PrintErrEvent(err)
+				f.OperationContext.TaskStatus = taskstatus.Failed
+			} else if taskResult != nil {
+				f.OperationContext.TaskStatus = taskResult.Status
+				if taskResult.Error != nil {
+					c.Logger.Error(taskResult.Error, "Task failed", loggingPairs...)
+					c.Manager.PrintErrEvent(taskResult.Error)
+				} else {
+					c.Logger.V(1).Info("Task finished successfully", loggingPairs...)
+				}
 			}
 		}
-		// Didn't get task result, task is still running
 	case taskstatus.Successful:
 		// clean operation context and set status to target status
 		if !f.HasNext() {
