@@ -1,0 +1,45 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: openstack
+  namespace: openstack
+  annotations:
+    "oceanbase.oceanbase.com/mode": "service"
+spec:
+  clusterName: openstack
+  clusterId: 1001
+  serviceAccount: "default"
+  userSecrets:
+    root: root-password
+  topology:
+    - zone: zone1
+      replica: 1
+    - zone: zone2
+      replica: 1
+    - zone: zone3
+      replica: 1
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.2.1.7-107000162024060611
+    resource:
+      cpu: 4
+      memory: 16Gi
+    storage:
+      dataStorage:
+        storageClass: general
+        size: 100Gi
+      redoLogStorage:
+        storageClass: general
+        size: 100Gi
+      logStorage:
+        storageClass: general
+        size: 40Gi
+  monitor:
+    image: oceanbase/obagent:4.2.1-100000092023101717
+    resource:
+      cpu: 1
+      memory: 1Gi
+  parameters:
+    - name: system_memory
+      value: 2G
+    - name: __min_full_resource_pool_memory
+      value: "2147483648"

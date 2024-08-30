@@ -1,0 +1,82 @@
+---
+images:
+  tags:
+    bootstrap: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    db_drop: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    db_init: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    ks_user: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    ks_service: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    ks_endpoints: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    nova_api: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_cell_setup: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_cell_setup_init: "docker.io/openstackhelm/heat:2024.1-ubuntu_jammy"
+    nova_compute: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_compute_ssh: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_conductor: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_db_sync: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_novncproxy: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_novncproxy_assets: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_scheduler: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_spiceproxy: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_spiceproxy_assets: "docker.io/openstackhelm/nova:2024.1-ubuntu_jammy"
+    nova_service_cleaner: "docker.io/openstackhelm/ceph-config-helper:latest-ubuntu_jammy"
+endpoints:
+  oslo_db:
+    auth:
+      admin:
+        username: root
+        password: password
+      nova:
+        username: nova
+        password: password
+    hosts:
+      default: svc-openstack
+    host_fqdn_override:
+      default: null
+    path: /nova
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 2883
+  oslo_db_api:
+    auth:
+      admin:
+        username: root
+        password: password
+      nova:
+        username: nova
+        password: password
+    hosts:
+      default: svc-openstack
+    host_fqdn_override:
+      default: null
+    path: /nova_api
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 2883
+  oslo_db_cell0:
+    auth:
+      admin:
+        username: root
+        password: password
+      nova:
+        username: nova
+        password: password
+    hosts:
+      default: svc-openstack
+    host_fqdn_override:
+      default: null
+    path: /nova_cell0
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 2883
+
+# uncomment the following config if your server doesn't support KVM
+# conf:
+#   nova:
+#     libvirt:
+#       virt_type: qemu
+
+...

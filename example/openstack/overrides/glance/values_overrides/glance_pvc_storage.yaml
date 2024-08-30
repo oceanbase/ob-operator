@@ -1,0 +1,4 @@
+storage: pvc
+volume:
+  class_name: general
+  size: 10Gi
