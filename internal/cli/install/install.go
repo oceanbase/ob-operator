@@ -58,25 +58,54 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 // Install component
 func (o *InstallOptions) Install() error {
 	var url string
-	baseUrl := "https://raw.githubusercontent.com/oceanbase/ob-operator/"
+	var cmd *exec.Cmd
+	obUrl := "https://raw.githubusercontent.com/oceanbase/ob-operator/"
+	localPathUrl := "https://raw.githubusercontent.com/rancher/local-path-provisioner/"
 	for component, version := range o.Components {
 		switch component {
 		case "cert-manager":
 			componentFile := "cert-manager.yaml"
-			url = fmt.Sprintf("%s%s/deploy/%s", baseUrl, version, componentFile)
+			url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
+			cmd = exec.Command("kubectl", "apply", "-f", url)
 		case "ob-operator":
 			componentFile := "operator.yaml"
-			url = fmt.Sprintf("%s%s/deploy/%s", baseUrl, version, componentFile)
+			url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
+			cmd = exec.Command("kubectl", "apply", "-f", url)
+		case "local-path-provisioner":
+			componentFile := "local-path-storage.yaml"
+			url = fmt.Sprintf("%s%s/deploy/%s", localPathUrl, version, componentFile)
+			cmd = exec.Command("kubectl", "apply", "-f", url)
+		case "ob-dashboard":
+			if err := preRunCmd(); err != nil {
+				return err
+			}
+			versionFlag := fmt.Sprintf("--version=%s", version)
+			cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
 		}
-		if err := run(url); err != nil {
+		if err := runCmd(cmd); err != nil {
 			return err
 		}
 	}
 	return nil
 }
+func preRunCmd() error {
+	// add helm repo
+	cmdAddRepo := exec.Command("helm", "repo", "add", "ob-operator", "https://oceanbase.github.io/ob-operator/")
+	output, err := cmdAddRepo.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("adding repo failed: %s, %s", err, output)
+	}
 
-func run(url string) error {
-	cmd := exec.Command("kubectl", "apply", "-f", url)
+	// update helm repo
+	cmdUpdateRepo := exec.Command("helm", "repo", "update", "ob-operator")
+	output, err = cmdUpdateRepo.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("updating repo failed: %s, %s", err, output)
+	}
+
+	return nil
+}
+func runCmd(cmd *exec.Cmd) error {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("command failed with error: %v, output: %s", err, string(output))
