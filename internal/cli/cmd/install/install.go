@@ -27,12 +27,21 @@ func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "install <components>",
 		Short:   "Command for ob-operator and components installation",
+		Long:    "Command for ob-operator and components installation, support ob-operator, ob-dashboard, local-path-provisioner, cert-manager",
 		PreRunE: o.Parse,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Install(); err != nil {
-				logger.Fatalln(err)
+			if len(args) == 0 {
+				logger.Println("Install all the components")
 			}
+			for component, version := range o.Components {
+				if err := install.Install(component, version); err != nil {
+					logger.Fatalln(err)
+				} else {
+					logger.Printf("%s install success", component)
+				}
+			}
+
 		},
 	}
 	return cmd

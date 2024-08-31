@@ -2,5 +2,7 @@
 components:
   cert-manager: "2.2.2_release"
   local-path-provisioner: "v0.0.28"
+  local-path-provisioner-dev: "master"
   ob-dashboard: "0.2.1"
   ob-operator: "2.2.2_release"
+  ob-operator-dev: "master"

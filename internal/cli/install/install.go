@@ -15,6 +15,7 @@ package install
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/spf13/cobra"
@@ -36,7 +37,6 @@ func NewInstallOptions() *InstallOptions {
 
 func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.version, "version", "", "version of component")
-	// cmd.Flags().StringToStringVar(&o.Components, "components", utils.GetComponentsConf(), "components config")
 }
 
 func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
@@ -56,35 +56,33 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 }
 
 // Install component
-func (o *InstallOptions) Install() error {
+func Install(component string, version string) error {
 	var url string
 	var cmd *exec.Cmd
 	obUrl := "https://raw.githubusercontent.com/oceanbase/ob-operator/"
 	localPathUrl := "https://raw.githubusercontent.com/rancher/local-path-provisioner/"
-	for component, version := range o.Components {
-		switch component {
-		case "cert-manager":
-			componentFile := "cert-manager.yaml"
-			url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
-			cmd = exec.Command("kubectl", "apply", "-f", url)
-		case "ob-operator":
-			componentFile := "operator.yaml"
-			url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
-			cmd = exec.Command("kubectl", "apply", "-f", url)
-		case "local-path-provisioner":
-			componentFile := "local-path-storage.yaml"
-			url = fmt.Sprintf("%s%s/deploy/%s", localPathUrl, version, componentFile)
-			cmd = exec.Command("kubectl", "apply", "-f", url)
-		case "ob-dashboard":
-			if err := preRunCmd(); err != nil {
-				return err
-			}
-			versionFlag := fmt.Sprintf("--version=%s", version)
-			cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
-		}
-		if err := runCmd(cmd); err != nil {
+	switch component {
+	case "cert-manager":
+		componentFile := "cert-manager.yaml"
+		url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
+		cmd = exec.Command("kubectl", "apply", "-f", url)
+	case "ob-operator", "ob-operator-dev":
+		componentFile := "operator.yaml"
+		url = fmt.Sprintf("%s%s/deploy/%s", obUrl, version, componentFile)
+		cmd = exec.Command("kubectl", "apply", "-f", url)
+	case "local-path-provisioner", "local-path-provisioner-dev":
+		componentFile := "local-path-storage.yaml"
+		url = fmt.Sprintf("%s%s/deploy/%s", localPathUrl, version, componentFile)
+		cmd = exec.Command("kubectl", "apply", "-f", url)
+	case "ob-dashboard":
+		if err := preRunCmd(); err != nil {
 			return err
 		}
+		versionFlag := fmt.Sprintf("--version=%s", version)
+		cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
+	}
+	if err := runCmd(cmd); err != nil {
+		return err
 	}
 	return nil
 }
@@ -106,9 +104,11 @@ func preRunCmd() error {
 	return nil
 }
 func runCmd(cmd *exec.Cmd) error {
-	output, err := cmd.CombinedOutput()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("command failed with error: %v, output: %s", err, string(output))
+		return fmt.Errorf("command failed with error: %v", err)
 	}
 	return nil
 }
