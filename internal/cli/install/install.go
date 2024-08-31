@@ -86,6 +86,8 @@ func Install(component string, version string) error {
 	}
 	return nil
 }
+
+// preRunCmd preRun two commands for ob-dashboard installation
 func preRunCmd() error {
 	// add helm repo
 	cmdAddRepo := exec.Command("helm", "repo", "add", "ob-operator", "https://oceanbase.github.io/ob-operator/")
@@ -103,6 +105,7 @@ func preRunCmd() error {
 
 	return nil
 }
+
 func runCmd(cmd *exec.Cmd) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

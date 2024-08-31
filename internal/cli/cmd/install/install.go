@@ -25,9 +25,17 @@ func NewCmd() *cobra.Command {
 	o := install.NewInstallOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "install <components>",
-		Short:   "Command for ob-operator and components installation",
-		Long:    "Command for ob-operator and components installation, support ob-operator, ob-dashboard, local-path-provisioner, cert-manager",
+		Use:   "install <component>",
+		Short: "Command for ob-operator and components installation",
+		Long: `Command for ob-operator and components installation.
+
+Currently support:
+- ob-operator, 
+- ob-dashboard, 
+- local-path-provisioner,
+- cert-manager
+
+if not specified, install all the components`,
 		PreRunE: o.Parse,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -38,11 +46,12 @@ func NewCmd() *cobra.Command {
 				if err := install.Install(component, version); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Printf("%s install success", component)
+					logger.Printf("%s install successfully", component)
 				}
 			}
 
 		},
 	}
+	o.AddFlags(cmd)
 	return cmd
 }
