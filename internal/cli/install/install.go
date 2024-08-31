@@ -80,10 +80,7 @@ func Install(component string, version string) error {
 		versionFlag := fmt.Sprintf("--version=%s", version)
 		cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
 	}
-	if err := runCmd(cmd); err != nil {
-		return err
-	}
-	return nil
+	return runCmd(cmd)
 }
 
 // preRunCmd preRun two commands for ob-dashboard installation

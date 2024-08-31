@@ -49,7 +49,6 @@ if not specified, install all the components`,
 					logger.Printf("%s install successfully", component)
 				}
 			}
-
 		},
 	}
 	o.AddFlags(cmd)
