@@ -26,24 +26,19 @@ type UpdateOptions struct {
 }
 
 func NewUpdateOptions() *UpdateOptions {
-	return &UpdateOptions{}
+	return &UpdateOptions{
+		Components: utils.GetComponentsConf(),
+	}
 }
 
 func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
 	if v, ok := o.Components[name]; ok {
-		o.Components[name] = v
-	} else {
-		return fmt.Errorf("%s update not supported", name)
+		o.Components = map[string]string{name: v}
+		return nil
 	}
-	return nil
-}
-
-func (o *UpdateOptions) Update() error {
-	// TODO: not implemented
-	return nil
+	return fmt.Errorf("%s update not supported", name)
 }

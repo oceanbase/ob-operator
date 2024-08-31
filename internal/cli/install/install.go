@@ -25,7 +25,6 @@ import (
 
 type InstallOptions struct {
 	version    string
-	name       string
 	Components map[string]string
 }
 
