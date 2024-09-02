@@ -32,6 +32,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
+	"github.com/oceanbase/ob-operator/pkg/errors"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -816,4 +817,40 @@ func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 
 	logger.Debugf("Get related events of obtenant: %v", nn)
 	return events, nil
+}
+
+// @ID ListOBTenantUsers
+// @Tags OBTenant
+// @Summary List obtenant users
+// @Description List all the users under obtenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]string}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/users [GET]
+// @Security ApiKeyAuth
+func ListOBTenantUsers(c *gin.Context) ([]string, error) {
+	return nil, errors.NewNotImplemented("")
+}
+
+// @ID ListOBTenantDatabases
+// @Tags OBTenant
+// @Summary List obtenant databases
+// @Description List all the databases under obtenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=[]string}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/databases [GET]
+// @Security ApiKeyAuth
+func ListOBTenantDatabases(c *gin.Context) ([]string, error) {
+	return nil, errors.NewNotImplemented("")
 }
