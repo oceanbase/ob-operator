@@ -47,8 +47,8 @@ type OBTenantReplica struct {
 	MaxCPU      int64  `json:"maxCPU" binding:"required"`
 	MemorySize  int64  `json:"memorySize" binding:"required"`
 	MinCPU      int64  `json:"minCPU,omitempty" binding:"required"`
-	MaxIops     int    `json:"maxIops,omitempty" binding:"required"`
-	MinIops     int    `json:"minIops,omitempty" binding:"required"`
+	MaxIops     int64  `json:"maxIops,omitempty" binding:"required"`
+	MinIops     int64  `json:"minIops,omitempty" binding:"required"`
 	IopsWeight  int    `json:"iopsWeight,omitempty" binding:"required"`
 	LogDiskSize int64  `json:"logDiskSize,omitempty" binding:"required"`
 }
