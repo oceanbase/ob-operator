@@ -15,11 +15,11 @@ ob-operator depends on [kubebuilder](https://kubebuilder.io/introduction), an op
 
 ### Modify definition of CRDs
 
-`ob-operator` uses kubebuilder as operator framework, which generates CRD definition in YAML format from Go code lies in `api/v1alpha1` directory. If you have modified the Go code, for example adding a new field to `OBClusterSpec` in `api/v1alpha1/obcluster_types.go`, you need to regenerate the CRD definition by running `make generate manifests fmt`. Then you will see changes in `config/crd/bases/oceanbase.oceanbase.com_xxx.yaml` files.
+`ob-operator` uses kubebuilder as operator framework, which generates CRDs in YAML format from Go code lies in `api/v1alpha1` directory. If you have modified the Go code, for example adding a new field to `OBClusterSpec` in `api/v1alpha1/obcluster_types.go`, you need to regenerate the CRDs by running `make generate manifests fmt`. Then you will see changes in `config/crd/bases/oceanbase.oceanbase.com_xxx.yaml` files.
 
 ### Apply the Changes
 
-You can apply the changes of CRDs to kubernetes cluster by running `make install`. This command will apply the CRD definition to the kubernetes cluster.
+You can apply the changes of CRDs to kubernetes cluster by running `make install`. This command will apply the CRDs to the kubernetes cluster.
 
 You will see output like the following after executing `kubectl get crds` command if the CRDs are successfully applied:
 
@@ -60,7 +60,7 @@ If the developing machine and the deploying machine is the same one, you can ski
 
 ### Run locally
 
-Building docker image and pushing it to a registry is time-consuming, especially when you are developing and debugging. We can run controller manager locally to accelerate the development process.
+Building docker image and pushing it to a registry is time-consuming, especially when you are developing and debugging. You can run controller manager locally to accelerate the development process.
 
 :::tip
 In this step, we'll disable webhook validation and run controller manager on the developing machine. The controller manager will communicate with kubernetes cluster by local .kube/config configuration file.
@@ -105,7 +105,7 @@ make run-local &> bin/run.log
 
 Though print debugging is enough for most cases, there are quite some cases that are not obvious from printed information. We could debug with go debugging tool [delve](https://github.com/go-delve/delve).
 
-`install-delve` command is declared in `make/debug.mk`, we can type `make install-delve` to get it. The help message of it can be glanced,
+`install-delve` command is declared in `make/debug.mk`, you can type `make install-delve` to get it. The help message of it can be glanced,
 
 ```shell dlv help
 Delve is a source level debugger for Go programs.
