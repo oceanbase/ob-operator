@@ -371,7 +371,8 @@ func UpdateOBTenantResource(m *ObTenantOperationManager) tasktypes.TaskError {
 		}
 	case constants.TenantOpModifyResourcePools:
 		modifiedPools := make(map[string]*v1alpha1.ResourcePoolSpec)
-		for _, pool := range m.Resource.Spec.ModifyResourcePools {
+		for i := range m.Resource.Spec.ModifyResourcePools {
+			pool := m.Resource.Spec.ModifyResourcePools[i]
 			modifiedPools[pool.Zone] = &pool
 		}
 		for i := range obtenant.Spec.Pools {
