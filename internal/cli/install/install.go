@@ -25,7 +25,6 @@ import (
 )
 
 type InstallOptions struct {
-	component    string
 	version      string
 	Components   map[string]string
 	obUrl        string
@@ -45,66 +44,64 @@ func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 }
 
 func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
+	// if not specified, use default config
 	if len(args) == 0 {
+		defaultComponents := o.getDefaultComponents()
+		// update Components to default config
+		o.Components = defaultComponents
 		return nil
 	}
 	name := args[0]
-	if _, ok := o.Components[name]; !ok {
-		return fmt.Errorf("%s install not supported", name)
-	}
-	if o.version != "" {
-		o.Components[name] = o.version
-	}
-	return nil
-}
-
-// InstallAll installs all related components, and checks the cert-manager in the environment
-func (o *InstallOptions) InstallAll() error {
-	components := []string{"cert-manager", "ob-operator", "ob-dashboard"}
-	for _, component := range components {
-		if component == "cert-manager" && !checkCertManager() {
-			// If cert-manager is installed, skip its installation
-			continue
+	if v, ok := o.Components[name]; ok {
+		if o.version == "" {
+			o.Components = map[string]string{name: v}
+		} else {
+			o.Components = map[string]string{name: o.version}
 		}
-		o.component = component
-		o.version = o.Components[component]
-		if err := o.Install(); err != nil {
-			return err
-		}
+		return nil
 	}
-	return nil
+	return fmt.Errorf("component `%v` is not supported", name)
 }
 
 // Install component
-func (o *InstallOptions) Install() error {
-	var (
-		cmd *exec.Cmd
-		url string
-	)
-	switch o.component {
+func (o *InstallOptions) Install(component, version string) error {
+	cmd, err := o.buildCmd(component, version)
+	if err != nil {
+		return err
+	}
+	return runCmd(cmd)
+}
+
+// buildCmd build cmd for installation
+func (o *InstallOptions) buildCmd(component, version string) (*exec.Cmd, error) {
+	var cmd *exec.Cmd
+	var url string
+	switch component {
 	case "cert-manager":
 		componentFile := "cert-manager.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "ob-operator", "ob-operator-dev":
 		componentFile := "operator.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "local-path-provisioner", "local-path-provisioner-dev":
 		componentFile := "local-path-storage.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.localPathUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.localPathUrl, version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "ob-dashboard":
 		if err := addHelmRepo(); err != nil {
-			return err
+			return nil, err
 		}
 		if err := updateHelmRepo(); err != nil {
-			return err
+			return nil, err
 		}
-		versionFlag := fmt.Sprintf("--version=%s", o.version)
+		versionFlag := fmt.Sprintf("--version=%s", version)
 		cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
+	default:
+		return nil, fmt.Errorf("unknown component: %s", component)
 	}
-	return runCmd(cmd)
+	return cmd, nil
 }
 
 // checkCertManager checks cert-manager in the environment
@@ -136,6 +133,20 @@ func checkCertManager() bool {
 	return true
 }
 
+func (o *InstallOptions) getDefaultComponents() map[string]string {
+	defaultComponents := make(map[string]string) // Initialize the map
+	var componentsList []string
+	if !checkCertManager() {
+		componentsList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
+	} else {
+		componentsList = []string{"ob-operator", "ob-dashboard"}
+	}
+	for _, component := range componentsList {
+		defaultComponents[component] = o.Components[component]
+	}
+	return defaultComponents
+}
+
 // addHelmRepo add ob-operator helm repo
 func addHelmRepo() error {
 	cmdAddRepo := exec.Command("helm", "repo", "add", "ob-operator", "https://oceanbase.github.io/ob-operator/")
@@ -158,6 +169,7 @@ func updateHelmRepo() error {
 
 // runCmd run cmd for components' installation
 func runCmd(cmd *exec.Cmd) error {
+	fmt.Println(cmd)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()

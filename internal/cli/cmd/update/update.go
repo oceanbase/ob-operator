@@ -40,16 +40,13 @@ if not specified, update ob-operator and ob-dashboard by default`,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				if err := o.InstallAll(); err != nil {
+				logger.Println("update ob-operator and ob-dashboard by default")
+			}
+			for component, version := range o.Components {
+				if err := o.Install(component, version); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Println("")
-				}
-			} else {
-				if err := o.Install(); err != nil {
-					logger.Fatalln(err)
-				} else {
-					logger.Printf("%s install successfully", args[0])
+					logger.Printf("%s update successfully", component)
 				}
 			}
 		},
