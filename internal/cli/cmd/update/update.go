@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/cli/install"
 	"github.com/oceanbase/ob-operator/internal/cli/update"
 )
 
@@ -36,18 +35,21 @@ Currently support:
 - local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 		
-if not specified, update all the components`,
+if not specified, update ob-operator and ob-dashboard by default`,
 		PreRunE: o.Parse,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
-				logger.Println("Update all the components")
-			}
-			for component, version := range o.Components {
-				if err := install.Install(component, version); err != nil {
+				if err := o.InstallAll(); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Printf("%s update successfully", component)
+					logger.Println("")
+				}
+			} else {
+				if err := o.Install(args[0]); err != nil {
+					logger.Fatalln(err)
+				} else {
+					logger.Printf("%s install successfully", args[0])
 				}
 			}
 		},
