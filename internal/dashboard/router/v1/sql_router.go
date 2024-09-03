@@ -20,10 +20,10 @@ import (
 )
 
 func InitSqlRoutes(g *gin.RouterGroup) {
-	g.GET("/sql/metrics", h.Wrap(h.ListSqlMetrics, acbiz.PathGuard("sql", "*", "read")))
-	g.POST("/sql/topSqls", h.Wrap(h.ListTopSqls, acbiz.PathGuard("sql", "*", "read")))
-	g.POST("/sql/suspiciousSqls", h.Wrap(h.ListSuspiciousSqls, acbiz.PathGuard("sql", "*", "read")))
-	g.POST("/sql/requestStatistics", h.Wrap(h.RequestStatistics, acbiz.PathGuard("sql", "*", "read")))
-	g.POST("/sql/querySqlDetailInfo", h.Wrap(h.QuerySqlDetailInfo, acbiz.PathGuard("sql", "*", "read")))
-	g.POST("/sql/queryPlanDetailInfo", h.Wrap(h.QueryPlanDetailInfo, acbiz.PathGuard("sql", "*", "read")))
+	g.GET("/sql/metrics", h.Wrap(h.ListSqlMetrics, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/topSqls", h.Wrap(h.ListTopSqls, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/suspiciousSqls", h.Wrap(h.ListSuspiciousSqls, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/requestStatistics", h.Wrap(h.RequestStatistics, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/querySqlDetailInfo", h.Wrap(h.QuerySqlDetailInfo, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/queryPlanDetailInfo", h.Wrap(h.QueryPlanDetailInfo, acbiz.PathGuard("obcluster", "*", "read")))
 }
