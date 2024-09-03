@@ -20,6 +20,6 @@ import (
 )
 
 func InitMetricRoutes(g *gin.RouterGroup) {
-	g.GET("/metrics", h.Wrap(h.ListMetricMetas, acbiz.PathGuard("system", "*", "read")))
-	g.POST("/metrics/query", h.Wrap(h.QueryMetrics, acbiz.PathGuard("system", "*", "read")))
+	g.GET("/metrics", h.Wrap(h.ListMetricMetas, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/metrics/query", h.Wrap(h.QueryMetrics, acbiz.PathGuard("obcluster", "*", "read")))
 }
