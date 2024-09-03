@@ -14,6 +14,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/sql"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
@@ -30,7 +31,7 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/metrics [GET]
 // @Security ApiKeyAuth
-func ListSqlMetrics(c *gin.Context) ([]sql.SqlMetricMetaCategory, error) {
+func ListSqlMetrics(_ *gin.Context) ([]sql.SqlMetricMetaCategory, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
 
@@ -47,7 +48,7 @@ func ListSqlMetrics(c *gin.Context) ([]sql.SqlMetricMetaCategory, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/topSqls [POST]
 // @Security ApiKeyAuth
-func ListTopSqls(c *gin.Context) ([]sql.SqlInfo, error) {
+func ListTopSqls(_ *gin.Context) ([]sql.SqlInfo, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
 
@@ -64,7 +65,7 @@ func ListTopSqls(c *gin.Context) ([]sql.SqlInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/suspiciousSqls [POST]
 // @Security ApiKeyAuth
-func ListSuspiciousSqls(c *gin.Context) ([]sql.SqlInfo, error) {
+func ListSuspiciousSqls(_ *gin.Context) ([]sql.SqlInfo, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
 
@@ -81,7 +82,7 @@ func ListSuspiciousSqls(c *gin.Context) ([]sql.SqlInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/requestStatistics [POST]
 // @Security ApiKeyAuth
-func RequestStatistics(c *gin.Context) ([]sql.RequestStatisticInfo, error) {
+func RequestStatistics(_ *gin.Context) ([]sql.RequestStatisticInfo, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
 
@@ -98,7 +99,7 @@ func RequestStatistics(c *gin.Context) ([]sql.RequestStatisticInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/querySqlDetailInfo [POST]
 // @Security ApiKeyAuth
-func QuerySqlDetailInfo(c *gin.Context) (*sql.SqlDetailedInfo, error) {
+func QuerySqlDetailInfo(_ *gin.Context) (*sql.SqlDetailedInfo, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
 
@@ -115,6 +116,6 @@ func QuerySqlDetailInfo(c *gin.Context) (*sql.SqlDetailedInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/queryPlanDetailInfo [POST]
 // @Security ApiKeyAuth
-func QueryPlanDetailInfo(c *gin.Context) (*sql.PlanDetail, error) {
+func QueryPlanDetailInfo(_ *gin.Context) (*sql.PlanDetail, error) {
 	return nil, httpErr.NewNotImplemented("")
 }

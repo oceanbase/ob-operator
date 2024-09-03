@@ -833,7 +833,7 @@ func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenants/{namespace}/{name}/users [GET]
 // @Security ApiKeyAuth
-func ListOBTenantUsers(c *gin.Context) ([]string, error) {
+func ListOBTenantUsers(_ *gin.Context) ([]string, error) {
 	return nil, errors.NewNotImplemented("")
 }
 
@@ -851,6 +851,6 @@ func ListOBTenantUsers(c *gin.Context) ([]string, error) {
 // @Param name path string true "obtenant name"
 // @Router /api/v1/obtenants/{namespace}/{name}/databases [GET]
 // @Security ApiKeyAuth
-func ListOBTenantDatabases(c *gin.Context) ([]string, error) {
+func ListOBTenantDatabases(_ *gin.Context) ([]string, error) {
 	return nil, errors.NewNotImplemented("")
 }
