@@ -46,7 +46,7 @@ if not specified, update ob-operator and ob-dashboard by default`,
 					logger.Println("")
 				}
 			} else {
-				if err := o.Install(args[0]); err != nil {
+				if err := o.Install(); err != nil {
 					logger.Fatalln(err)
 				} else {
 					logger.Printf("%s install successfully", args[0])

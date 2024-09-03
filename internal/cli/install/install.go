@@ -25,13 +25,18 @@ import (
 )
 
 type InstallOptions struct {
-	version    string
-	Components map[string]string
+	component    string
+	version      string
+	Components   map[string]string
+	obUrl        string
+	localPathUrl string
 }
 
 func NewInstallOptions() *InstallOptions {
 	return &InstallOptions{
-		Components: utils.GetComponentsConf(),
+		Components:   utils.GetComponentsConf(),
+		obUrl:        "https://raw.githubusercontent.com/oceanbase/ob-operator/",
+		localPathUrl: "https://raw.githubusercontent.com/rancher/local-path-provisioner/",
 	}
 }
 
@@ -53,44 +58,41 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 	return nil
 }
 
-// InstallAll install ob related components, and check the cert-manager in the environment
+// InstallAll installs all related components, and checks the cert-manager in the environment
 func (o *InstallOptions) InstallAll() error {
-	if !checkCertManager() {
-		if err := o.Install("cert-manager"); err != nil {
+	components := []string{"cert-manager", "ob-operator", "ob-dashboard"}
+	for _, component := range components {
+		if component == "cert-manager" && !checkCertManager() {
+			// If cert-manager is installed, skip its installation
+			continue
+		}
+		o.component = component
+		o.version = o.Components[component]
+		if err := o.Install(); err != nil {
 			return err
 		}
-	}
-	if err := o.Install("ob-operator"); err != nil {
-		return err
-	}
-	if err := o.Install("ob-dashboard"); err != nil {
-		return err
 	}
 	return nil
 }
 
 // Install component
-func (o *InstallOptions) Install(component string) error {
+func (o *InstallOptions) Install() error {
 	var (
-		cmd          *exec.Cmd
-		url          string
-		obUrl        string
-		localPathUrl string
+		cmd *exec.Cmd
+		url string
 	)
-	obUrl = "https://raw.githubusercontent.com/oceanbase/ob-operator/"
-	localPathUrl = "https://raw.githubusercontent.com/rancher/local-path-provisioner/"
-	switch component {
+	switch o.component {
 	case "cert-manager":
 		componentFile := "cert-manager.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", obUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, o.version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "ob-operator", "ob-operator-dev":
 		componentFile := "operator.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", obUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, o.version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "local-path-provisioner", "local-path-provisioner-dev":
 		componentFile := "local-path-storage.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", localPathUrl, o.version, componentFile)
+		url = fmt.Sprintf("%s%s/deploy/%s", o.localPathUrl, o.version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
 	case "ob-dashboard":
 		if err := addHelmRepo(); err != nil {
@@ -112,7 +114,6 @@ func checkCertManager() bool {
 	cmd.Stdout = &out
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("Error executing command:", err)
 		return false
 	}
 
@@ -161,7 +162,7 @@ func runCmd(cmd *exec.Cmd) error {
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("command failed with error: %v", err)
+		return fmt.Errorf("%s command failed with error: %v", cmd.String(), err)
 	}
 	return nil
 }

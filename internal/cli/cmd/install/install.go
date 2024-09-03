@@ -43,10 +43,10 @@ if not specified, install ob-operator and ob-dashboard by default`,
 				if err := o.InstallAll(); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Println("")
+					logger.Println("install ob-operator and ob-dashboard by default")
 				}
 			} else {
-				if err := o.Install(args[0]); err != nil {
+				if err := o.Install(); err != nil {
 					logger.Fatalln(err)
 				} else {
 					logger.Printf("%s install successfully", args[0])
