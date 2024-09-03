@@ -59,8 +59,8 @@ type RestoreSourceSpec struct {
 type UnitConfig struct {
 	CPUCount    string `json:"cpuCount" binding:"required"`
 	MemorySize  string `json:"memorySize" binding:"required"`
-	MaxIops     int    `json:"maxIops,omitempty"`
-	MinIops     int    `json:"minIops,omitempty"`
+	MaxIops     int64  `json:"maxIops,omitempty"`
+	MinIops     int64  `json:"minIops,omitempty"`
 	IopsWeight  int    `json:"iopsWeight,omitempty"`
 	LogDiskSize string `json:"logDiskSize,omitempty"`
 }

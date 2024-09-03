@@ -247,6 +247,9 @@ func CreateRole(c *gin.Context) (*acmodel.Role, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	if len(param.Permissions) == 0 {
+		return nil, httpErr.NewBadRequest("no permissions provided")
+	}
 	logger.
 		WithFields(logger.Fields{
 			"Description": param.Description,
@@ -279,6 +282,9 @@ func PatchRole(c *gin.Context) (*acmodel.Role, error) {
 	err := c.BindJSON(&param)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if len(param.Permissions) == 0 {
+		return nil, httpErr.NewBadRequest("no permissions provided")
 	}
 	logger.
 		WithFields(logger.Fields{
