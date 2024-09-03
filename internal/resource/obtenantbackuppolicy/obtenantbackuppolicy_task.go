@@ -79,7 +79,7 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 		}
 	} else {
 		archiveSpec := m.BackupPolicy.Spec.LogArchive
-		archivePath := m.getArchiveDestPath()
+		archivePath := m.getDestPath(archiveSpec.Destination)
 		for _, config := range configs {
 			switch {
 			case config.Name == "path" && config.Value != archivePath:
@@ -108,7 +108,7 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 			return err
 		}
 		if latestRunning == nil {
-			err = con.SetDataBackupDestForTenant(m.Ctx, m.getBackupDestPath())
+			err = con.SetDataBackupDestForTenant(m.Ctx, m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination))
 			if err != nil {
 				return err
 			}
@@ -121,7 +121,7 @@ func ConfigureServerForBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskErro
 	if err != nil {
 		return err
 	}
-	backupPath := m.getBackupDestPath()
+	backupPath := m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination)
 	if len(backupConfigs) == 0 {
 		err = setBackupDest()
 		if err != nil {
@@ -218,10 +218,11 @@ func StopBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 
 func CheckAndSpawnJobs(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	var backupPath string
-	if m.BackupPolicy.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+	if m.BackupPolicy.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS {
+		// TODO: check if &s3_region=? part should be removed
 		backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 	} else {
-		backupPath = m.getBackupDestPath()
+		backupPath = m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination)
 	}
 	// Avoid backup failure due to destination modification
 	latestFull, err := m.getLatestBackupJobOfTypeAndPath(constants.BackupJobTypeFull, backupPath)

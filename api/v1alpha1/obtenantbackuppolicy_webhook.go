@@ -81,10 +81,10 @@ func (r *OBTenantBackupPolicy) Default() {
 	// only "default" is permitted
 	r.Spec.DataClean.Name = "default"
 
-	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS {
+	if r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS {
 		r.Spec.DataBackup.Destination.Path = strings.ReplaceAll(r.Spec.DataBackup.Destination.Path, "/?", "?")
 	}
-	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS {
+	if r.Spec.LogArchive.Destination.Type != constants.BackupDestTypeNFS {
 		r.Spec.LogArchive.Destination.Path = strings.ReplaceAll(r.Spec.LogArchive.Destination.Path, "/?", "?")
 	}
 	if r.Labels == nil {
@@ -221,8 +221,6 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		return err
 	}
 
-	ossPathPattern := regexp.MustCompile("^oss://[^/]+/[^/].*\\?host=.+$")
-
 	if r.Spec.DataBackup.EncryptionSecret != "" {
 		sec := &v1.Secret{}
 		err := bakClt.Get(context.Background(), types.NamespacedName{
@@ -241,105 +239,12 @@ func (r *OBTenantBackupPolicy) validateBackupPolicy() error {
 		return field.Invalid(field.NewPath("spec").Child("logArchive").Child("binding"), r.Spec.LogArchive.Binding, "invalid binding, only optional and mandatory are supported")
 	}
 
-	// Check types of destinations are legal
-	if r.Spec.LogArchive.Destination.Type != constants.BackupDestTypeNFS && r.Spec.LogArchive.Destination.Type != constants.BackupDestTypeOSS {
-		return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("type"), r.Spec.LogArchive.Destination.Type, "invalid destination type, only NFS and OSS are supported")
-	}
-	if r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS && r.Spec.DataBackup.Destination.Type != constants.BackupDestTypeOSS {
-		return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("type"), r.Spec.DataBackup.Destination.Type, "invalid destination type, only NFS and OSS are supported")
-	}
+	destErrs := errors.Join(
+		r.validateDestination(cluster, &r.Spec.DataBackup.Destination, "dataBackup"),
+		r.validateDestination(cluster, &r.Spec.LogArchive.Destination, "logArchive"),
+	)
 
-	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeNFS ||
-		r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeNFS {
-		if cluster.Spec.BackupVolume == nil {
-			return field.Invalid(field.NewPath("spec").Child("clusterName"), r.Spec.ObClusterName, "backupVolume of obcluster is required when using NFS")
-		}
-	}
-
-	// Check oss access of destinations
-	if r.Spec.DataBackup.Destination.Type == constants.BackupDestTypeOSS && r.Spec.DataBackup.Destination.OSSAccessSecret != "" {
-		if !ossPathPattern.MatchString(r.Spec.DataBackup.Destination.Path) {
-			return field.Invalid(field.NewPath("spec").Child("dataBackup").Child("destination").Child("path"), r.Spec.DataBackup.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
-		}
-
-		secret := &v1.Secret{}
-		err := bakClt.Get(context.Background(), types.NamespacedName{
-			Namespace: r.GetNamespace(),
-			Name:      r.Spec.DataBackup.Destination.OSSAccessSecret,
-		}, secret)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return field.Invalid(
-					field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
-					r.Spec.DataBackup.Destination.OSSAccessSecret,
-					"Given OSSAccessSecret not found",
-				)
-			}
-			return err
-		}
-		var allErrs field.ErrorList
-
-		if _, ok := secret.Data["accessId"]; !ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
-				r.Spec.DataBackup.Destination.OSSAccessSecret,
-				"accessId field not found in given OSSAccessSecret",
-			))
-		}
-		if _, ok := secret.Data["accessKey"]; !ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec").Child("dataBackup").Child("destination").Child("ossAccessSecret"),
-				r.Spec.DataBackup.Destination.OSSAccessSecret,
-				"accessKey field not found in given OSSAccessSecret",
-			))
-		}
-		if len(allErrs) != 0 {
-			return allErrs.ToAggregate()
-		}
-	}
-
-	if r.Spec.LogArchive.Destination.Type == constants.BackupDestTypeOSS && r.Spec.LogArchive.Destination.OSSAccessSecret != "" {
-		if !ossPathPattern.MatchString(r.Spec.LogArchive.Destination.Path) {
-			return field.Invalid(field.NewPath("spec").Child("logArchive").Child("destination").Child("path"), r.Spec.LogArchive.Destination.Path, "invalid path, pattern: ^oss://[^/]+/[^/].*\\?host=.+$")
-		}
-
-		secret := &v1.Secret{}
-		err := bakClt.Get(context.Background(), types.NamespacedName{
-			Namespace: r.GetNamespace(),
-			Name:      r.Spec.LogArchive.Destination.OSSAccessSecret,
-		}, secret)
-		if err != nil {
-			if apierrors.IsNotFound(err) {
-				return field.Invalid(
-					field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
-					r.Spec.LogArchive.Destination.OSSAccessSecret,
-					"Given OSSAccessSecret not found",
-				)
-			}
-			return err
-		}
-
-		var allErrs field.ErrorList
-		if _, ok := secret.Data["accessId"]; !ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
-				r.Spec.LogArchive.Destination.OSSAccessSecret,
-				"accessId field not found in given OSSAccessSecret",
-			))
-		}
-		if _, ok := secret.Data["accessKey"]; !ok {
-			allErrs = append(allErrs, field.Invalid(
-				field.NewPath("spec").Child("logArchive").Child("destination").Child("ossAccessSecret"),
-				r.Spec.LogArchive.Destination.OSSAccessSecret,
-				"accessKey field not found in given OSSAccessSecret",
-			))
-		}
-		if len(allErrs) != 0 {
-			return allErrs.ToAggregate()
-		}
-	}
-
-	return nil
+	return destErrs
 }
 
 func (r *OBTenantBackupPolicy) validateInterval() error {
@@ -384,6 +289,49 @@ func (r *OBTenantBackupPolicy) validateBackupCrontab() error {
 func validateScheduleFormat(schedule string, fldPath *field.Path) *field.Error {
 	if _, err := cron.ParseStandard(schedule); err != nil {
 		return field.Invalid(fldPath, schedule, err.Error())
+	}
+	return nil
+}
+
+func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *apitypes.BackupDestination, fieldName string) *field.Error {
+	if dest.Type == constants.BackupDestTypeNFS && cluster.Spec.BackupVolume == nil {
+		return field.Invalid(field.NewPath("spec").Child("backupVolume"), cluster.Spec.BackupVolume, "backupVolume of obcluster is required when backing up data to NFS")
+	}
+	pattern, ok := constants.DestPathPatternMapping[dest.Type]
+	if !ok {
+		return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.Type, "invalid backup destination type")
+	}
+	if !pattern.MatchString(dest.Path) {
+		return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.Path, "invalid backup destination path, the path format should be "+pattern.String())
+	}
+	if dest.Type != constants.BackupDestTypeNFS && dest.OSSAccessSecret == "" {
+		return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.OSSAccessSecret, "OSSAccessSecret is required when backing up data to OSS, COS or S3")
+	}
+	secret := &v1.Secret{}
+	err := bakClt.Get(context.Background(), types.NamespacedName{
+		Namespace: r.GetNamespace(),
+		Name:      dest.OSSAccessSecret,
+	}, secret)
+	fieldPath := field.NewPath("spec").Child(fieldName).Child("destination").Child("ossAccessSecret")
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "Given OSSAccessSecret not found")
+		}
+		return field.InternalError(fieldPath, err)
+	}
+	switch dest.Type {
+	case constants.BackupDestTypeCOS:
+		if _, ok := secret.Data["appId"]; !ok {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+		}
+		fallthrough
+	case constants.BackupDestTypeOSS, constants.BackupDestTypeS3, constants.BackupDestTypeS3Compatible:
+		if _, ok := secret.Data["accessId"]; !ok {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+		}
+		if _, ok := secret.Data["accessKey"]; !ok {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret")
+		}
 	}
 	return nil
 }

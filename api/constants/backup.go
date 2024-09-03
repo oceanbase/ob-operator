@@ -12,7 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package constants
 
-import "github.com/oceanbase/ob-operator/api/types"
+import (
+	"regexp"
+
+	"github.com/oceanbase/ob-operator/api/types"
+)
 
 const (
 	BackupJobTypeFull    types.BackupJobType = "FULL"
@@ -45,8 +49,11 @@ const (
 )
 
 const (
-	BackupDestTypeOSS types.BackupDestType = "OSS"
-	BackupDestTypeNFS types.BackupDestType = "NFS"
+	BackupDestTypeOSS          types.BackupDestType = "OSS"
+	BackupDestTypeNFS          types.BackupDestType = "NFS"
+	BackupDestTypeCOS          types.BackupDestType = "COS"
+	BackupDestTypeS3           types.BackupDestType = "S3"
+	BackupDestTypeS3Compatible types.BackupDestType = "S3_COMPATIBLE"
 )
 
 const (
@@ -58,3 +65,11 @@ const (
 	ArchiveBindingOptional  types.ArchiveBinding = "Optional"
 	ArchiveBindingMandatory types.ArchiveBinding = "Mandatory"
 )
+
+var DestPathPatternMapping = map[types.BackupDestType]*regexp.Regexp{
+	BackupDestTypeOSS:          regexp.MustCompile(`^oss://[^/]+/[^/].*\\?host=.+$`),
+	BackupDestTypeCOS:          regexp.MustCompile(`^cos://[^/]+/[^/].*\\?host=.+$`),
+	BackupDestTypeS3:           regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+&s3_region=.+$`),
+	BackupDestTypeS3Compatible: regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+$`),
+	BackupDestTypeNFS:          regexp.MustCompile(`^\S+$`),
+}
