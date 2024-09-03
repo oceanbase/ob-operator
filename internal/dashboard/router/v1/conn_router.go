@@ -16,11 +16,12 @@ import (
 	"github.com/gin-gonic/gin"
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
+	obbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
 func InitTerminalRoutes(g *gin.RouterGroup) {
 	g.PUT("/obclusters/namespace/:namespace/name/:name/terminal", h.Wrap(h.CreateOBClusterConnTerminal, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
-	g.PUT("/obtenants/:namespace/:name/terminal", h.Wrap(h.CreateOBTenantConnTerminal, acbiz.PathGuard("obtenant", ":namespace+:name", "write")))
+	g.PUT("/obtenants/:namespace/:name/terminal", h.Wrap(h.CreateOBTenantConnTerminal, obbiz.TenantGuard(":namespace", ":name", "write")))
 	g.GET("/terminal/:terminalId", h.Wrap(h.ConnectDatabase))
 }
