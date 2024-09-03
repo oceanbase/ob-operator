@@ -83,11 +83,14 @@ func (m *ObTenantOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) err
 type statusMatcher func(t *v1alpha1.OBTenant) bool
 
 func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, matcher statusMatcher) error {
+	if m.Resource.Spec.TargetTenant == nil {
+		return errors.New("target tenant is nil")
+	}
 	for i := 0; i < waitSeconds; i++ {
 		tenant := &v1alpha1.OBTenant{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
-			Name:      m.Resource.Name,
+			Name:      *m.Resource.Spec.TargetTenant,
 		}, tenant)
 		if err != nil {
 			return errors.Wrap(err, "get tenant")
