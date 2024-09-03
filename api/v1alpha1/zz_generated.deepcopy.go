@@ -1190,8 +1190,8 @@ func (in *OBTenantOperationSpec) DeepCopyInto(out *OBTenantOperationSpec) {
 		*out = new(string)
 		**out = **in
 	}
-	if in.AuxillaryTenant != nil {
-		in, out := &in.AuxillaryTenant, &out.AuxillaryTenant
+	if in.AuxiliaryTenant != nil {
+		in, out := &in.AuxiliaryTenant, &out.AuxiliaryTenant
 		*out = new(string)
 		**out = **in
 	}

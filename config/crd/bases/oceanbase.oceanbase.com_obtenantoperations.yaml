@@ -59,7 +59,75 @@ spec:
           spec:
             description: OBTenantOperationSpec defines the desired state of OBTenantOperation
             properties:
-              auxillaryTenant:
+              addResourcePools:
+                items:
+                  properties:
+                    priority:
+                      default: 1
+                      type: integer
+                    resource:
+                      description: TODO Split UnitConfig struct to SpecUnitConfig
+                        and StatusUnitConfig
+                      properties:
+                        iopsWeight:
+                          type: integer
+                        logDiskSize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        maxIops:
+                          type: integer
+                        memorySize:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minCPU:
+                          anyOf:
+                          - type: integer
+                          - type: string
+                          pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                          x-kubernetes-int-or-string: true
+                        minIops:
+                          type: integer
+                      required:
+                      - maxCPU
+                      - memorySize
+                      type: object
+                    type:
+                      description: TODO Split LocalityType struct to SpecLocalityType
+                        and StatusLocalityType
+                      properties:
+                        isActive:
+                          description: TODO move isActive to ResourcePoolSpec And
+                            ResourcePoolStatus
+                          type: boolean
+                        name:
+                          type: string
+                        replica:
+                          type: integer
+                      required:
+                      - isActive
+                      - name
+                      - replica
+                      type: object
+                    zone:
+                      type: string
+                  required:
+                  - resource
+                  - zone
+                  type: object
+                type: array
+              auxiliaryTenant:
                 type: string
               changePwd:
                 properties:
@@ -71,6 +139,14 @@ spec:
                 - secretRef
                 - tenant
                 type: object
+              charset:
+                type: string
+              connectWhiteList:
+                type: string
+              deleteResourcePools:
+                items:
+                  type: string
+                type: array
               failover:
                 properties:
                   standbyTenant:
@@ -78,6 +154,11 @@ spec:
                 required:
                 - standbyTenant
                 type: object
+              force:
+                description: Auxiliary
+                type: boolean
+              forceDelete:
+                type: boolean
               replayUntil:
                 properties:
                   scn:
@@ -101,6 +182,8 @@ spec:
                 type: string
               type:
                 type: string
+              unitNumber:
+                type: integer
             required:
             - type
             type: object
