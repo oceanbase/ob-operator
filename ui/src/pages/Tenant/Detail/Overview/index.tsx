@@ -211,7 +211,7 @@ export default function TenantOverview() {
 
   const operateSuccess = () => {
     setTimeout(() => {
-      getTenantDetail({ ns:ns!, name:name! });
+      getTenantDetail({ ns: ns!, name: name! });
     }, 1000);
   };
   const header = () => {
@@ -317,7 +317,7 @@ export default function TenantOverview() {
               operateType={operateTypeRef}
             />
           )}
-          {tenantDetail && (
+          {tenantDetail && (access.systemread || access.systemwrite) ? (
             <Col span={24}>
               <EventsTable
                 defaultExpand={true}
@@ -326,7 +326,7 @@ export default function TenantOverview() {
                 name={tenantDetail?.info.name}
               />
             </Col>
-          )}
+          ) : null}
 
           <Backups
             loading={loading}

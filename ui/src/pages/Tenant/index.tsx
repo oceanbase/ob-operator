@@ -76,17 +76,15 @@ export default function TenantPage() {
           </Col>
         ) : null}
       </Row>
-      {access.systemread || access.systemwrite ? (
-        <MonitorComp
-          filterLabel={filterLabel}
-          queryScope="OBTENANT"
-          type="OVERVIEW"
-          useFor="tenant"
-          groupLabels={['tenant_name', 'ob_cluster_name']}
-          queryRange={DEFAULT_QUERY_RANGE}
-          filterData={tenantsList}
-        />
-      ) : null}
+      <MonitorComp
+        filterLabel={filterLabel}
+        queryScope="OBTENANT"
+        type="OVERVIEW"
+        useFor="tenant"
+        groupLabels={['tenant_name', 'ob_cluster_name']}
+        queryRange={DEFAULT_QUERY_RANGE}
+        filterData={tenantsList}
+      />
     </PageContainer>
   );
 }

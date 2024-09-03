@@ -5,13 +5,14 @@ import TenantsList from '@/pages/Tenant/TenantsList';
 import { getClusterDetailReq } from '@/services';
 import { getAllTenants } from '@/services/tenant';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate, useParams } from '@umijs/max';
+import { useAccess, useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import BasicInfo from '../Overview/BasicInfo';
 
 export default function Tenant() {
   const { ns, name, clusterName } = useParams();
+  const access = useAccess();
   const navigate = useNavigate();
   const { data: tenantsListResponse, run: getTenantsList } = useRequest(
     getAllTenants,
@@ -43,9 +44,12 @@ export default function Tenant() {
             />
           </Col>
         )}
-        <Col span={24}>
-          <EventsTable objectType="OBTENANT" />
-        </Col>
+        {access.systemread || access.systemwrite ? (
+          <Col span={24}>
+            <EventsTable objectType="OBTENANT" />
+          </Col>
+        ) : null}
+
         {tenantsList && (
           <Col span={24}>
             <MonitorComp

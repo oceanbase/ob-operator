@@ -3,10 +3,10 @@ import { createClusterReportWrap } from '@/services/reportRequest/clusterReportR
 import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useNavigate } from '@umijs/max';
+import { useAccess, useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Form, Row, message } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import BackUp from './BackUp';
@@ -18,26 +18,31 @@ import Topo from './Topo';
 
 export default function New() {
   const navigate = useNavigate();
+  const access = useAccess();
   const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState('');
-  const { data: storageClassesRes } = useRequest(getStorageClasses, {
-    onSuccess: ({ successful, data }) => {
-      if (successful && data.length === 1) {
-        const { value } = data[0];
-        form.setFieldValue(['observer', 'storage'], {
-          data: {
-            storageClass: value,
-          },
-          log: {
-            storageClass: value,
-          },
-          redoLog: {
-            storageClass: value,
-          },
-        });
-      }
+  const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
+    getStorageClasses,
+    {
+      onSuccess: ({ successful, data }) => {
+        if (successful && data.length === 1) {
+          const { value } = data[0];
+          form.setFieldValue(['observer', 'storage'], {
+            data: {
+              storageClass: value,
+            },
+            log: {
+              storageClass: value,
+            },
+            redoLog: {
+              storageClass: value,
+            },
+          });
+        }
+      },
+      manual: true,
     },
-  });
+  );
   const publicKey = usePublicKey();
   const storageClasses = storageClassesRes?.data;
   const onFinish = async (values: API.CreateClusterData) => {
@@ -69,6 +74,12 @@ export default function New() {
       },
     ],
   };
+
+  useEffect(() => {
+    if (access.systemread || access.systemwrite) {
+      fetchStorageClasses();
+    }
+  }, []);
   return (
     <PageContainer
       header={{

@@ -7,7 +7,7 @@ import {
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
-import { useModel } from '@umijs/max';
+import { useAccess, useModel } from '@umijs/max';
 import { useDebounceFn, useUpdateEffect } from 'ahooks';
 import type { FormInstance } from 'antd';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Tag } from 'antd';
@@ -32,6 +32,7 @@ const DEFAULT_VISIBLE_CONFIG = {
 export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
   const { clusterList, tenantList } = useModel('alarm');
   const [isExpand, setIsExpand] = useState(true);
+  const access = useAccess();
   const [visibleConfig, setVisibleConfig] = useState(DEFAULT_VISIBLE_CONFIG);
   const getOptionsFromType = (type: OceanbaseOBInstanceType) => {
     if (!type || !clusterList || (type === 'obtenant' && !tenantList))
@@ -100,24 +101,34 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
   };
   useEffect(() => {
     if (type === 'event') {
-      setVisibleConfig({
+      const tempConfig = {
         objectType: true,
         object: true,
         level: true,
         keyword: true,
         startTime: true,
         endTime: true,
-      });
+      };
+      if (!access.obclusterread && !access.obclusterwrite) {
+        tempConfig.objectType = false;
+        tempConfig.object = false;
+      }
+      setVisibleConfig(tempConfig);
     }
     if (type === 'shield') {
-      setVisibleConfig({
+      const tempConfig = {
         objectType: true,
         object: true,
         keyword: true,
         startTime: false,
         endTime: false,
         level: false,
-      });
+      };
+      if (!access.obclusterread && !access.obclusterwrite) {
+        tempConfig.objectType = false;
+        tempConfig.object = false;
+      }
+      setVisibleConfig(tempConfig);
     }
     if (type === 'rules') {
       setVisibleConfig({
