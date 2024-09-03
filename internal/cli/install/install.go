@@ -169,7 +169,6 @@ func updateHelmRepo() error {
 
 // runCmd run cmd for components' installation
 func runCmd(cmd *exec.Cmd) error {
-	fmt.Println(cmd)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
