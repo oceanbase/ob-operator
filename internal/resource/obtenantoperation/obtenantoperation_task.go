@@ -19,11 +19,13 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	obtenantresource "github.com/oceanbase/ob-operator/internal/resource/obtenant"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
@@ -336,4 +338,75 @@ func ReplayLogOfStandby(m *ObTenantOperationManager) tasktypes.TaskError {
 		return err
 	}
 	return nil
+}
+
+func UpdateOBTenantResource(m *ObTenantOperationManager) tasktypes.TaskError {
+	obtenant := &v1alpha1.OBTenant{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.Resource.Namespace,
+		Name:      *m.Resource.Spec.TargetTenant,
+	}, obtenant)
+	if err != nil {
+		return err
+	}
+	if m.Resource.Spec.Force {
+		obtenant.Status.Status = tenantstatus.Running
+		obtenant.Status.OperationContext = nil
+	} else if obtenant.Status.Status != tenantstatus.Running {
+		return errors.New("obtenant is not running")
+	}
+	origin := obtenant.DeepCopy()
+	switch m.Resource.Spec.Type {
+	case constants.TenantOpSetUnitNumber:
+		obtenant.Spec.UnitNumber = m.Resource.Spec.UnitNumber
+	case constants.TenantOpSetForceDelete:
+		obtenant.Spec.ForceDelete = *m.Resource.Spec.ForceDelete
+	case constants.TenantOpSetConnectWhiteList:
+		obtenant.Spec.ConnectWhiteList = m.Resource.Spec.ConnectWhiteList
+	case constants.TenantOpSetCharset:
+		obtenant.Spec.Charset = m.Resource.Spec.Charset
+	case constants.TenantOpAddResourcePools:
+		for _, pool := range m.Resource.Spec.AddResourcePools {
+			obtenant.Spec.Pools = append(obtenant.Spec.Pools, pool)
+		}
+	case constants.TenantOpDeleteResourcePools:
+		deletedPools := make(map[string]any)
+		for _, pool := range m.Resource.Spec.DeleteResourcePools {
+			deletedPools[pool] = struct{}{}
+		}
+		newPools := make([]v1alpha1.ResourcePoolSpec, 0)
+		for i := range obtenant.Spec.Pools {
+			pool := obtenant.Spec.Pools[i]
+			if _, ok := deletedPools[pool.Zone]; !ok {
+				newPools = append(newPools, pool)
+			}
+		}
+		obtenant.Spec.Pools = newPools
+	}
+	oldResourceVersion := obtenant.ResourceVersion
+	err = m.Client.Patch(m.Ctx, obtenant, client.MergeFrom(origin))
+	if err != nil {
+		m.Logger.Error(err, "Failed to patch obtenant")
+		return err
+	}
+	newResourceVersion := obtenant.ResourceVersion
+	if oldResourceVersion == newResourceVersion {
+		m.Logger.Info("obcluster not changed")
+		return nil
+	}
+	if m.Resource.Spec.Type == constants.TenantOpSetForceDelete {
+		// This type of operation only affects the spec of the CRD, and the status won't change.
+		return nil
+	}
+	notRunningMatcher := func(t *v1alpha1.OBTenant) bool {
+		return t.Status.Status != tenantstatus.Running
+	}
+	return m.waitForOBTenantToBeStatus(obcfg.GetConfig().Time.DefaultStateWaitTimeout, notRunningMatcher)
+}
+
+func WaitForOBTenantReturnRunning(m *ObTenantOperationManager) tasktypes.TaskError {
+	runningMatcher := func(t *v1alpha1.OBTenant) bool {
+		return t.Status.Status == tenantstatus.Running
+	}
+	return m.waitForOBTenantToBeStatus(obcfg.GetConfig().Time.DefaultStateWaitTimeout, runningMatcher)
 }

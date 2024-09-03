@@ -79,3 +79,22 @@ func (m *ObTenantOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) err
 		return m.Client.Status().Update(m.Ctx, tenant)
 	})
 }
+
+type statusMatcher func(t *v1alpha1.OBTenant) bool
+
+func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, matcher statusMatcher) error {
+	for i := 0; i < waitSeconds; i++ {
+		tenant := &v1alpha1.OBTenant{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.Namespace,
+			Name:      m.Resource.Name,
+		}, tenant)
+		if err != nil {
+			return errors.Wrap(err, "get tenant")
+		}
+		if matcher(tenant) {
+			return nil
+		}
+	}
+	return errors.Errorf("wait for tenant %s to be in desired status timeout", m.Resource.Name)
+}
