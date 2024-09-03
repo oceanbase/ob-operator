@@ -66,9 +66,7 @@ Building docker image and pushing it to a registry is time-consuming, especially
 In this step, we'll disable webhook validation and run controller manager on the developing machine. The controller manager will communicate with kubernetes cluster by local .kube/config configuration file.
 :::
 
-#### Prerequisites
-
-##### Disable Webhook and CertManager
+#### Disable Webhook and CertManager
 
 There are many configuration items that marked by `[CERTMANAGER]` and `[WEBHOOK]` in the two files `config/crd/kustomization.yaml` and `config/default/kustomization.yaml`. They are used to enable and configure webhooks in real kubernetes deployment. Because we want to run controller manager locally, we need to disable them.
 
@@ -81,7 +79,7 @@ kubectl delete -n oceanbase-system svc oceanbase-webhook-service
 kubectl delete -n oceanbase-system deployments.apps oceanbase-controller-manager
 ```
 
-##### Generate Self-signed Certificates
+#### Generate Self-signed Certificates
 
 It's necessary for node hosting controller manager to have a TLS certificate. In the real kubernetes cluster, the cert-manager will inject the sign into the controller manager pod. On our laptop, we need self-sign one:
 
