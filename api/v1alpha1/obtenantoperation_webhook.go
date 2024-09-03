@@ -304,6 +304,20 @@ func (r *OBTenantOperation) validateMutation() error {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The resource pool does not exist in the cluster"))
 			}
 		}
+	case constants.TenantOpModifyResourcePools:
+		if len(r.Spec.ModifyResourcePools) == 0 {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("modifyResourcePools"), "modifyResourcePools is required"))
+			break
+		}
+		pools := make(map[string]any)
+		for _, pool := range obtenant.Spec.Pools {
+			pools[pool.Zone] = struct{}{}
+		}
+		for _, pool := range r.Spec.ModifyResourcePools {
+			if _, ok := pools[pool.Zone]; !ok {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("modifyResourcePools"), r.Spec.ModifyResourcePools, "The resource pool does not exist"))
+			}
+		}
 	case constants.TenantOpDeleteResourcePools:
 		if len(r.Spec.DeleteResourcePools) == 0 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("deleteResourcePools"), "deleteResourcePools is required"))

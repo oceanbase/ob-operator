@@ -44,6 +44,7 @@ type OBTenantOperationSpec struct {
 	UnitNumber          int                `json:"unitNumber,omitempty"`
 	ConnectWhiteList    string             `json:"connectWhiteList,omitempty"`
 	Charset             string             `json:"charset,omitempty"`
+	ModifyResourcePools []ResourcePoolSpec `json:"modifyResourcePools,omitempty"`
 	AddResourcePools    []ResourcePoolSpec `json:"addResourcePools,omitempty"`
 	DeleteResourcePools []string           `json:"deleteResourcePools,omitempty"`
 	ForceDelete         *bool              `json:"forceDelete,omitempty"`
