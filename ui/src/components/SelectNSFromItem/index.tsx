@@ -8,7 +8,7 @@ import AddNSModal from '@/components/customModal/AddNSModal';
 import { resourceNameRule } from '@/constants/rules';
 import { getNameSpaces } from '@/services';
 import { useAccess } from '@umijs/max';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 export default function SelectNSFromItem({
   form,
 }: {
@@ -16,7 +16,7 @@ export default function SelectNSFromItem({
 }) {
   // control the modal for adding a new namespace
   const [visible, setVisible] = useState(false);
-  const { data, run: getNS } = useRequest(getNameSpaces, {
+  const { data: namespaces, run: getNS } = useRequest(getNameSpaces, {
     manual: true,
   });
   const access = useAccess();
@@ -55,6 +55,10 @@ export default function SelectNSFromItem({
     if (hasSysAccess) getNS();
   };
 
+  useEffect(() => {
+    if (hasSysAccess) getNS();
+  }, []);
+
   return (
     <>
       <Form.Item
@@ -87,7 +91,7 @@ export default function SelectNSFromItem({
           filterOption={filterOption}
           dropdownRender={DropDownComponent}
           options={
-            hasSysAccess ? data : [{ label: 'default', value: 'default' }]
+            hasSysAccess ? namespaces : [{ label: 'default', value: 'default' }]
           }
         />
       </Form.Item>
