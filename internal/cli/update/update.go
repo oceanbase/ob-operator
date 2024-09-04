@@ -18,32 +18,26 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/oceanbase/ob-operator/internal/cli/utils"
+	"github.com/oceanbase/ob-operator/internal/cli/install"
 )
 
 type UpdateOptions struct {
-	Components map[string]string
+	install.InstallOptions
 }
 
 func NewUpdateOptions() *UpdateOptions {
-	return &UpdateOptions{}
+	return &UpdateOptions{
+		InstallOptions: *install.NewInstallOptions(),
+	}
 }
 
 func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		o.Components = utils.GetComponentsConf()
 		return nil
 	}
 	name := args[0]
-	if v, ok := o.Components[name]; ok {
-		o.Components[name] = v
-	} else {
+	if _, ok := o.Components[name]; !ok {
 		return fmt.Errorf("%s update not supported", name)
 	}
-	return nil
-}
-
-func (o *UpdateOptions) Update() error {
-	// TODO: not implemented
 	return nil
 }
