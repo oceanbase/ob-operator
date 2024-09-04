@@ -12,5 +12,9 @@ See the Mulan PSL v2 for more details.
 
 package inspection
 
-type Job struct {
-}
+type JobStatus string
+
+const (
+	JobStatusSuccessful JobStatus = "successful"
+	JobStatusFailed     JobStatus = "failed"
+)

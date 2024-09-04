@@ -103,34 +103,34 @@ func TriggerInspection(_ *gin.Context) (*inspection.Policy, error) {
 	return nil, errors.NewNotImplemented("")
 }
 
-// @ID ListInspectionJobs
-// @Summary list inspection jobs
-// @Description list inspection jobs
+// @ID ListInspectionReports
+// @Summary list inspection reports
+// @Description list inspection reports
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=[]inspection.Job}
+// @Success 200 object response.APIResponse{data=[]inspection.ReportBriefInfo}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/inspection/jobs [GET]
+// @Router /api/v1/inspection/reports [GET]
 // @Security ApiKeyAuth
-func ListInspectionJobs(_ *gin.Context) ([]inspection.Job, error) {
+func ListInspectionReports(_ *gin.Context) ([]inspection.ReportBriefInfo, error) {
 	return nil, errors.NewNotImplemented("")
 }
 
-// @ID GetInspectionJob
-// @Summary get inspection job
-// @Description get inspection job
+// @ID GetInspectionReport
+// @Summary get inspection report
+// @Description get inspection report
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=inspection.Job}
+// @Success 200 object response.APIResponse{data=inspection.Report}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/inspection/jobs/{id} [GET]
+// @Router /api/v1/inspection/reports/{id} [GET]
 // @Security ApiKeyAuth
-func GetInspectionJob(_ *gin.Context) (*inspection.Job, error) {
+func GetInspectionReport(_ *gin.Context) (*inspection.Report, error) {
 	return nil, errors.NewNotImplemented("")
 }
