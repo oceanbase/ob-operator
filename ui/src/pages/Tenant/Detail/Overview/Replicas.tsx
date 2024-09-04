@@ -1,5 +1,6 @@
 import CollapsibleCard from '@/components/CollapsibleCard';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { MAX_IOPS } from '@/constants';
 import { deleteObtenantPool } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useAccess, useParams } from '@umijs/max';
@@ -181,8 +182,16 @@ export default function Replicas({
           >
             {sortKeys(Object.keys(replica)).map((key, idx) => (
               <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
-                {replica[key]}
-                {key === 'memorySize' || key === 'logDiskSize' ? 'Gi' : null}
+                {key.includes('Iops') && replica[key] > MAX_IOPS ? (
+                  '无限制'
+                ) : (
+                  <>
+                    {replica[key]}
+                    {key === 'memorySize' || key === 'logDiskSize'
+                      ? 'Gi'
+                      : null}
+                  </>
+                )}
               </Descriptions.Item>
             ))}
           </Descriptions>

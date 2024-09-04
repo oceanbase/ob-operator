@@ -30,18 +30,39 @@ type CheckedList = {
   checked: string[];
 }[];
 
+function isHavePermissions(checkedList: CheckedList) {
+  for (const item of checkedList) {
+    if (item.checked.some((val) => Boolean(val))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isHaveAllPermissions(checkedList: CheckedList) {
+  for (const item of checkedList) {
+    if (!item.checked.includes('read') || !item.checked.includes('write')) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function PermissionSelect({
   fetchData,
   onChange,
   defaultValue,
   value = [],
 }: PermissionSelectProps) {
-  const indeterminate = value.length < fetchData.length && value.length > 0;
   const [checkedList, setCheckedList] = useState<CheckedList>([]);
-  const checkAll = !checkedList.some(
-    (item) =>
-      !(item.checked.includes('read') && item.checked.includes('write')),
+  const checkAll = checkedList.every(
+    (item) => item.checked.includes('read') && item.checked.includes('write'),
   );
+  const indeterminate =
+    value.length > 0 &&
+    isHavePermissions(checkedList) &&
+    !isHaveAllPermissions(checkedList);
+
   const options = [
     {
       label: intl.formatMessage({
@@ -105,8 +126,9 @@ function PermissionSelect({
         object: '*',
       });
     }
-    newValue.length && onChange?.(newValue);
+    onChange?.(newValue);
   }, [checkedList]);
+
   return (
     <div style={{ padding: 5 }}>
       <Checkbox
@@ -294,6 +316,16 @@ export default function HandleRoleModal({
             id: 'src.components.customModal.D24B8F5C',
             defaultMessage: '权限',
           })}
+          rules={[
+            {
+              validator: (_, permissions) => {
+                if (!permissions || !permissions.length) {
+                  return Promise.reject('权限不能为空！');
+                }
+                return Promise.resolve();
+              },
+            },
+          ]}
           name={'permissions'}
         >
           <PermissionSelect

@@ -1,5 +1,5 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT, getMinResource } from '@/constants';
+import { MAX_IOPS, SUFFIX_UNIT, getMinResource } from '@/constants';
 import { RULER_ZONE } from '@/constants/rules';
 import { TooltipItemContent } from '@/pages/Cluster/New/Observer';
 import ZoneItem from '@/pages/Tenant/ZoneItem';
@@ -159,9 +159,9 @@ export default function ModifyUnitDetailModal({
       cpuCount: zone?.minCPU,
       iopsWeight: zone?.iopsWeight,
       logDiskSize: zone?.logDiskSize,
-      maxIops: zone?.maxIops,
+      maxIops: zone?.maxIops >= MAX_IOPS ? MAX_IOPS : zone?.maxIops,
       memorySize: zone?.memorySize,
-      minIops: zone?.minIops,
+      minIops: zone?.minIops >= MAX_IOPS ? MAX_IOPS : zone?.minIops,
     };
     if (newResourcePool) {
       result.priority = zone?.priority;
@@ -328,12 +328,6 @@ export default function ModifyUnitDetailModal({
           <>
             {targetZoneList && essentialParameter && (
               <Row>
-                <h3>
-                  {intl.formatMessage({
-                    id: 'Dashboard.Tenant.New.ResourcePools.ZonePriority',
-                    defaultMessage: 'Zone优先级',
-                  })}
-                </h3>
                 {targetZoneList.map((item, index) => (
                   <div key={index}>
                     <ZoneItem
@@ -501,30 +495,30 @@ export default function ModifyUnitDetailModal({
             </Form.Item>
           </Col>
           <Col span={8}>
-            <Row gutter={24}>
-              <Col>
-                <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
-                  <InputNumber
-                    min={minResource.minIops}
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
-                      defaultMessage: '请输入',
-                    })}
-                  />
-                </Form.Item>
-              </Col>
-              <Col>
-                <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
-                  <InputNumber
-                    min={minResource.maxIops}
-                    placeholder={intl.formatMessage({
-                      id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
-                      defaultMessage: '请输入',
-                    })}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
+            <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
+              <InputNumber
+                style={{ width: 217 }}
+                min={minResource.minIops}
+                max={MAX_IOPS}
+                placeholder={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={8}>
+            <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
+              <InputNumber
+                style={{ width: 222 }}
+                min={minResource.maxIops}
+                max={MAX_IOPS}
+                placeholder={intl.formatMessage({
+                  id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item
@@ -535,6 +529,7 @@ export default function ModifyUnitDetailModal({
               name={['unitConfig', 'iopsWeight']}
             >
               <InputNumber
+                style={{ width: 222 }}
                 placeholder={intl.formatMessage({
                   id: 'Dashboard.components.customModal.ModifyUnitDetailModal.PleaseEnter',
                   defaultMessage: '请输入',

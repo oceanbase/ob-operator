@@ -1,6 +1,7 @@
 import {
   BADGE_IMG_MAP,
   CLUSTER_IMG_MAP,
+  MAX_IOPS,
   SERVER_IMG_MAP,
   TOPO_INFO_CONFIG,
   ZONE_IMG_MAP,
@@ -56,15 +57,18 @@ function getZoneTypeText(
   return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
 }
 
-function getTooltipInfo(zone: Pick<API.ReplicaDetailType,'zone'>, tenantTopoData: API.ReplicaDetailType[]) {
+function getTooltipInfo(
+  zone: Pick<API.ReplicaDetailType, 'zone'>,
+  tenantTopoData: API.ReplicaDetailType[],
+) {
   const targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
   if (targetZone) {
     return {
       maxCPU: targetZone.maxCPU,
       minCPU: targetZone.minCPU,
       memorySize: targetZone.memorySize,
-      minIops: targetZone.minIops,
-      maxIops: targetZone.maxIops,
+      minIops: targetZone.minIops >= MAX_IOPS ? '无限制' : targetZone.minIops,
+      maxIops: targetZone.maxIops >= MAX_IOPS ? '无限制' : targetZone.maxIops,
     };
   }
   return;

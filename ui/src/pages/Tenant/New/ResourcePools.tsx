@@ -1,5 +1,5 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT, getMinResource } from '@/constants';
+import { SUFFIX_UNIT, getMinResource, MAX_IOPS } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card, Col, Form, Row, Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
@@ -298,6 +298,7 @@ export default function ResourcePools({
               <Form.Item label="min iops" name={['unitConfig', 'minIops']}>
                 <InputNumber
                   min={minResource.minIops}
+                  max={MAX_IOPS}
                   placeholder="min"
                   style={{ width: '100%' }}
                 />
@@ -307,6 +308,7 @@ export default function ResourcePools({
               <Form.Item label="max iops" name={['unitConfig', 'maxIops']}>
                 <InputNumber
                   min={minResource.maxIops}
+                  max={MAX_IOPS}
                   placeholder="max"
                   style={{ width: '100%' }}
                 />
