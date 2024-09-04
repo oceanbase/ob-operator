@@ -60,15 +60,13 @@ export default function OBProxy() {
           </Col>
         ) : null}
       </Row>
-      {access.systemread || access.systemwrite ? (
-        <MonitorComp
-          filterLabel={[]}
-          queryScope="OBPROXY"
-          type="OVERVIEW"
-          groupLabels={['cluster']}
-          queryRange={DEFAULT_QUERY_RANGE}
-        />
-      ) : null}
+      <MonitorComp
+        filterLabel={[]}
+        queryScope="OBPROXY"
+        type="OVERVIEW"
+        groupLabels={['cluster']}
+        queryRange={DEFAULT_QUERY_RANGE}
+      />
     </PageContainer>
   );
 }

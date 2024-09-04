@@ -29,7 +29,7 @@ export default function SelectNSFromItem({
     return (
       <div>
         {menu}
-        {hasSysAccess ? (
+        {access.systemwrite ? (
           <>
             <Divider style={{ margin: '10px 0' }} />
             <div

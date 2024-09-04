@@ -293,7 +293,7 @@ export default function Shield() {
           </h2>
         }
         extra={
-          access.alarmwrite || !access.obclusterread ? (
+          access.alarmwrite && !access.obclusterread ? (
             <Button type="primary" onClick={() => setDrawerOpen(true)}>
               {intl.formatMessage({
                 id: 'src.pages.Alert.Shield.65BD013B',
