@@ -16,7 +16,7 @@ To get started with developing for our project, please refer to our [Development
 
 ## Deploying Changes
 
-If you are working on changes that require deployment, look at our [Deployment Guide](develop-locally.md) for detailed instructions on how to deploy and test your changes in a production-like environment. This ensures that all changes are vetted for stability and compatibility before being integrated.
+If you are working on changes that require deployment, look at our [Deployment Guide](deploy-locally.md) for detailed instructions on how to deploy and test your changes in a production-like environment. This ensures that all changes are vetted for stability and compatibility before being integrated.
 
 ## How to Contribute
 
