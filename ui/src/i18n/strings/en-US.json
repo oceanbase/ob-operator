@@ -1151,5 +1151,5 @@
   "src.components.customModal.EA420EE1": "system: read permission involves obtaining k8s cluster nodes, events, namespaces, and storage classes, and write permission involves creating namespaces and modifying system configurations",
   "src.components.customModal.CC80EAD4": "alarm: read permission involves reading alarms, Silencers, Rules, Receivers, and Routes, and write permission involves creating, updating, and deleting them",
   "src.components.customModal.C97E041E": "obproxy: read permission involves obtaining OBProxy, and write permission involves creating, updating, and deleting OBProxy",
-  "src.components.customModal.2169D3CC": "ac: read permission involves obtaining accounts and roles, and write permission involves creating, updating, and deleting them",
+  "src.components.customModal.2169D3CC": "ac: read permission involves obtaining accounts and roles, and write permission involves creating, updating, and deleting them"
 }
