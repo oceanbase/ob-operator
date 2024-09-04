@@ -28,15 +28,15 @@ type PlanMeta struct {
 }
 
 type PlanStatistic struct {
-	PlanMeta
-	CpuTime int64 `json:"cpuTime" binding:"required"`
-	Cost    int64 `json:"cost" binding:"required"`
+	PlanMeta `json:",inline"`
+	CpuTime  int64 `json:"cpuTime" binding:"required"`
+	Cost     int64 `json:"cost" binding:"required"`
 }
 
 type PlanStatisticByServer struct {
-	PlanStatistic
-	Server string `json:"server" binding:"required"`
-	PlanId int64  `json:"planId" binding:"required"`
+	PlanStatistic `json:",inline"`
+	Server        string `json:"server" binding:"required"`
+	PlanId        int64  `json:"planId" binding:"required"`
 }
 
 type PlanOperator struct {
@@ -49,7 +49,7 @@ type PlanOperator struct {
 }
 
 type PlanDetail struct {
-	PlanMeta
+	PlanMeta       `json:",inline"`
 	PlanStatistics []PlanStatisticByServer `json:"planStatistics" binding:"required"`
 	PlanDetail     *PlanOperator           `json:"planDetail" binding:"required"`
 }

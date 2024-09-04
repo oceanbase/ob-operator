@@ -38,7 +38,7 @@ type SqlMetaInfo struct {
 }
 
 type SqlInfo struct {
-	SqlMetaInfo
+	SqlMetaInfo         `json:",inline"`
 	ExecutionStatistics []SqlStatisticMetric `json:"executionStatistics" binding:"required"`
 	LatencyStatistics   []SqlStatisticMetric `json:"latencyStatistics" binding:"required"`
 	DiagnoseInfo        []SqlDiagnoseInfo    `json:"diagnoseInfo,omitempty"`

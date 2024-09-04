@@ -23,23 +23,23 @@ type BaseSqlRequestParam struct {
 }
 
 type SqlFilter struct {
-	BaseSqlRequestParam
-	Keyword         string `json:"keyword,omitempty"`
-	IncludeInnerSql bool   `json:"includeInnerSql,omitempty"`
+	BaseSqlRequestParam `json:",inline"`
+	Keyword             string `json:"keyword,omitempty"`
+	IncludeInnerSql     bool   `json:"includeInnerSql,omitempty"`
 }
 
 type SqlRequestStatisticParam struct {
-	BaseSqlRequestParam
-	StatisticScopes []string `json:"statisticScopes" binding:"required"`
+	BaseSqlRequestParam `json:",inline"`
+	StatisticScopes     []string `json:"statisticScopes" binding:"required"`
 }
 
 type SqlDetailParam struct {
-	BaseSqlRequestParam
-	Interval int    `json:"interval" binding:"required"`
-	SqlId    string `json:"sqlId" binding:"required"`
+	BaseSqlRequestParam `json:",inline"`
+	Interval            int    `json:"interval" binding:"required"`
+	SqlId               string `json:"sqlId" binding:"required"`
 }
 
 type PlanDetailParam struct {
-	BaseSqlRequestParam
-	PlanHash string `json:"planHash" binding:"required"`
+	BaseSqlRequestParam `json:",inline"`
+	PlanHash            string `json:"planHash" binding:"required"`
 }
