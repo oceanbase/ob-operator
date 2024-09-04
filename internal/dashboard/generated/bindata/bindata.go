@@ -108,7 +108,7 @@ func internalAssetsCliTemplatesComponent_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/cli-templates/component_config.yaml", size: 163, mode: os.FileMode(420), modTime: time.Unix(1724724442, 0)}
+	info := bindataFileInfo{name: "internal/assets/cli-templates/component_config.yaml", size: 163, mode: os.FileMode(420), modTime: time.Unix(1725263522, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -128,7 +128,7 @@ func internalAssetsMetric_en_usYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 27520, mode: os.FileMode(420), modTime: time.Unix(1715839515, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_en_US.yaml", size: 27520, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -148,7 +148,7 @@ func internalAssetsMetric_exprYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 37653, mode: os.FileMode(420), modTime: time.Unix(1715839515, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_expr.yaml", size: 37653, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -168,7 +168,7 @@ func internalAssetsMetric_zh_cnYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 31134, mode: os.FileMode(420), modTime: time.Unix(1719989335, 0)}
+	info := bindataFileInfo{name: "internal/assets/metric_zh_CN.yaml", size: 31134, mode: os.FileMode(420), modTime: time.Unix(1718871532, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -188,7 +188,7 @@ func internalAssetsReceiver_templatesDiscord_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/discord_config.yaml", size: 228, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/discord_config.yaml", size: 228, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -208,7 +208,7 @@ func internalAssetsReceiver_templatesEmail_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/email_config.yaml", size: 351, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/email_config.yaml", size: 351, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -228,7 +228,7 @@ func internalAssetsReceiver_templatesMsteams_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/msteams_config.yaml", size: 197, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/msteams_config.yaml", size: 197, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -248,7 +248,7 @@ func internalAssetsReceiver_templatesOpsgenie_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/opsgenie_config.yaml", size: 774, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/opsgenie_config.yaml", size: 774, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -268,7 +268,7 @@ func internalAssetsReceiver_templatesPagerduty_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/pagerduty_config.yaml", size: 1065, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/pagerduty_config.yaml", size: 1065, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -288,7 +288,7 @@ func internalAssetsReceiver_templatesPushover_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/pushover_config.yaml", size: 940, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/pushover_config.yaml", size: 940, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -308,7 +308,7 @@ func internalAssetsReceiver_templatesSlack_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/slack_config.yaml", size: 254, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/slack_config.yaml", size: 254, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -328,7 +328,7 @@ func internalAssetsReceiver_templatesSns_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/sns_config.yaml", size: 477, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/sns_config.yaml", size: 477, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -348,7 +348,7 @@ func internalAssetsReceiver_templatesTelegram_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/telegram_config.yaml", size: 441, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/telegram_config.yaml", size: 441, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -368,7 +368,7 @@ func internalAssetsReceiver_templatesVictorops_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/victorops_config.yaml", size: 534, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/victorops_config.yaml", size: 534, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -388,7 +388,7 @@ func internalAssetsReceiver_templatesWebex_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/webex_config.yaml", size: 313, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/webex_config.yaml", size: 313, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -408,7 +408,7 @@ func internalAssetsReceiver_templatesWebhook_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/webhook_config.yaml", size: 183, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/webhook_config.yaml", size: 183, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -428,7 +428,7 @@ func internalAssetsReceiver_templatesWechat_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/receiver_templates/wechat_config.yaml", size: 491, mode: os.FileMode(420), modTime: time.Unix(1717645444, 0)}
+	info := bindataFileInfo{name: "internal/assets/receiver_templates/wechat_config.yaml", size: 491, mode: os.FileMode(420), modTime: time.Unix(1717678285, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

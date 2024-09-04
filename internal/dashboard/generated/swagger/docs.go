@@ -4929,6 +4929,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/obtenants/{namespace}/{name}/databases": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List all the databases under obtenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBTenant"
+                ],
+                "summary": "List obtenant databases",
+                "operationId": "ListOBTenantDatabases",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants/{namespace}/{name}/logreplay": {
             "post": {
                 "security": [
@@ -5604,6 +5682,84 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/obtenants/{namespace}/{name}/users": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "List all the users under obtenant",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "OBTenant"
+                ],
+                "summary": "List obtenant users",
+                "operationId": "ListOBTenantUsers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "obtenant namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "obtenant name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/obtenants/{namespace}/{name}/version": {
             "post": {
                 "security": [
@@ -5652,6 +5808,427 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/response.OBTenantDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/metrics": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list sqls metrics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "list sql metrics",
+                "operationId": "ListSqlMetrics",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/sql.SqlMetricMetaCategory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/queryPlanDetailInfo": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "query detailed statistic info of a plan",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "query plan detail info",
+                "operationId": "QueryPlanDetailInfo",
+                "parameters": [
+                    {
+                        "description": "param for query detailed plan info",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sql.PlanDetailParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/sql.PlanDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/querySqlDetailInfo": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "query detailed statistic info of a SQL",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "query SQL detail info",
+                "operationId": "QuerySqlDetailInfo",
+                "parameters": [
+                    {
+                        "description": "param for query detailed sql info",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sql.SqlDetailParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/sql.SqlDetailedInfo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/requestStatistics": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list request statistics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "list request statistics",
+                "operationId": "RequestStatistics",
+                "parameters": [
+                    {
+                        "description": "sql request statistic param",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sql.SqlRequestStatisticParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/sql.RequestStatisticInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/suspiciousSqls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list suspicious sqls",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "list suspicious sqls",
+                "operationId": "ListSuspiciousSqls",
+                "parameters": [
+                    {
+                        "description": "sql filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sql.SqlFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/sql.SqlInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/sql/topSqls": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list top sqls ordering by spcecific metrics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sql"
+                ],
+                "summary": "list top sqls",
+                "operationId": "ListTopSqls",
+                "parameters": [
+                    {
+                        "description": "sql filter",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sql.SqlFilter"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/sql.SqlInfo"
+                                            }
                                         }
                                     }
                                 }
@@ -9396,6 +9973,589 @@ const docTemplate = `{
             "properties": {
                 "state": {
                     "$ref": "#/definitions/silence.State"
+                }
+            }
+        },
+        "sql.IndexCategory": {
+            "type": "string",
+            "enum": [
+                "primaryKey",
+                "globalNormal",
+                "globalUnique",
+                "localNormal",
+                "localUnique"
+            ],
+            "x-enum-varnames": [
+                "IndexCategoryPrimaryKey",
+                "IndexCategoryGlobalNormal",
+                "IndexCategoryGlobalUnique",
+                "IndexCategoryLocalNormal",
+                "IndexCategoryLocalUnique"
+            ]
+        },
+        "sql.IndexInfo": {
+            "type": "object",
+            "required": [
+                "category",
+                "columns",
+                "indexName",
+                "status",
+                "tableName"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.IndexCategory"
+                },
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "indexName": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/sql.IndexStatus"
+                },
+                "tableName": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.IndexStatus": {
+            "type": "string",
+            "enum": [
+                "creating",
+                "available",
+                "error"
+            ],
+            "x-enum-varnames": [
+                "IndexStatusCreating",
+                "IndexStatusAvailable",
+                "IndexStatusError"
+            ]
+        },
+        "sql.MetricCategory": {
+            "type": "string",
+            "enum": [
+                "meta",
+                "latency",
+                "execution"
+            ],
+            "x-enum-varnames": [
+                "Meta",
+                "Latency",
+                "Execution"
+            ]
+        },
+        "sql.PlanCategory": {
+            "type": "string",
+            "enum": [
+                "local",
+                "remote",
+                "distributed"
+            ],
+            "x-enum-varnames": [
+                "PlanCategoryLocal",
+                "PlanCategoryRemote",
+                "PlanCategoryDistributed"
+            ]
+        },
+        "sql.PlanDetail": {
+            "type": "object",
+            "required": [
+                "category",
+                "generatedTime",
+                "mergedVersion",
+                "planDetail",
+                "planHash",
+                "planStatistics"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.PlanCategory"
+                },
+                "generatedTime": {
+                    "type": "integer"
+                },
+                "mergedVersion": {
+                    "type": "integer"
+                },
+                "planDetail": {
+                    "$ref": "#/definitions/sql.PlanOperator"
+                },
+                "planHash": {
+                    "type": "string"
+                },
+                "planStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.PlanStatisticByServer"
+                    }
+                }
+            }
+        },
+        "sql.PlanDetailParam": {
+            "type": "object",
+            "required": [
+                "namespace",
+                "obcluster",
+                "planHash"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "integer"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obcluster": {
+                    "type": "string"
+                },
+                "obtenant": {
+                    "type": "string"
+                },
+                "planHash": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.PlanOperator": {
+            "type": "object",
+            "required": [
+                "cost",
+                "estimatedRows",
+                "operator"
+            ],
+            "properties": {
+                "childOperators": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.PlanOperator"
+                    }
+                },
+                "cost": {
+                    "type": "integer"
+                },
+                "estimatedRows": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "operator": {
+                    "type": "string"
+                },
+                "outputOrFilter": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.PlanStatistic": {
+            "type": "object",
+            "required": [
+                "category",
+                "cost",
+                "cpuTime",
+                "generatedTime",
+                "mergedVersion",
+                "planHash"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.PlanCategory"
+                },
+                "cost": {
+                    "type": "integer"
+                },
+                "cpuTime": {
+                    "type": "integer"
+                },
+                "generatedTime": {
+                    "type": "integer"
+                },
+                "mergedVersion": {
+                    "type": "integer"
+                },
+                "planHash": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.PlanStatisticByServer": {
+            "type": "object",
+            "required": [
+                "category",
+                "cost",
+                "cpuTime",
+                "generatedTime",
+                "mergedVersion",
+                "planHash",
+                "planId",
+                "server"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.PlanCategory"
+                },
+                "cost": {
+                    "type": "integer"
+                },
+                "cpuTime": {
+                    "type": "integer"
+                },
+                "generatedTime": {
+                    "type": "integer"
+                },
+                "mergedVersion": {
+                    "type": "integer"
+                },
+                "planHash": {
+                    "type": "string"
+                },
+                "planId": {
+                    "type": "integer"
+                },
+                "server": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.RequestStatisticInfo": {
+            "type": "object",
+            "required": [
+                "database",
+                "executionStatistics",
+                "executionTrend",
+                "latencyStatistics",
+                "latencyTrend",
+                "planCategoryStatistics",
+                "tenant",
+                "user"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "executionStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlStatisticMetric"
+                    }
+                },
+                "executionTrend": {
+                    "$ref": "#/definitions/response.MetricData"
+                },
+                "latencyStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlStatisticMetric"
+                    }
+                },
+                "latencyTrend": {
+                    "$ref": "#/definitions/response.MetricData"
+                },
+                "planCategoryStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlStatisticMetric"
+                    }
+                },
+                "tenant": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlDetailParam": {
+            "type": "object",
+            "required": [
+                "interval",
+                "namespace",
+                "obcluster",
+                "sqlId"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "integer"
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obcluster": {
+                    "type": "string"
+                },
+                "obtenant": {
+                    "type": "string"
+                },
+                "sqlId": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlDetailedInfo": {
+            "type": "object",
+            "required": [
+                "executionTrend",
+                "latencyTrend",
+                "plans"
+            ],
+            "properties": {
+                "diagnoseInfo": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlDiagnoseInfo"
+                    }
+                },
+                "executionTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.MetricData"
+                    }
+                },
+                "indexies": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.IndexInfo"
+                    }
+                },
+                "latencyTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/response.MetricData"
+                    }
+                },
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.PlanStatistic"
+                    }
+                }
+            }
+        },
+        "sql.SqlDiagnoseInfo": {
+            "type": "object",
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string"
+                },
+                "suggestion": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlFilter": {
+            "type": "object",
+            "required": [
+                "namespace",
+                "obcluster"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "integer"
+                },
+                "includeInnerSql": {
+                    "type": "boolean"
+                },
+                "keyword": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obcluster": {
+                    "type": "string"
+                },
+                "obtenant": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlInfo": {
+            "type": "object",
+            "required": [
+                "database",
+                "executionStatistics",
+                "isInner",
+                "latencyStatistics",
+                "observer",
+                "sqlID",
+                "sqlText",
+                "sqlType",
+                "tenant",
+                "user"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "diagnoseInfo": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlDiagnoseInfo"
+                    }
+                },
+                "executionStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlStatisticMetric"
+                    }
+                },
+                "isInner": {
+                    "type": "boolean"
+                },
+                "latencyStatistics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlStatisticMetric"
+                    }
+                },
+                "observer": {
+                    "type": "string"
+                },
+                "sqlID": {
+                    "type": "string"
+                },
+                "sqlText": {
+                    "type": "string"
+                },
+                "sqlType": {
+                    "type": "string"
+                },
+                "tenant": {
+                    "type": "string"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlMetricMeta": {
+            "type": "object",
+            "required": [
+                "category",
+                "description",
+                "displayByDefault",
+                "name"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.MetricCategory"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "displayByDefault": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlMetricMetaCategory": {
+            "type": "object",
+            "required": [
+                "category",
+                "metrics"
+            ],
+            "properties": {
+                "category": {
+                    "$ref": "#/definitions/sql.MetricCategory"
+                },
+                "metrics": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sql.SqlMetricMeta"
+                    }
+                }
+            }
+        },
+        "sql.SqlRequestStatisticParam": {
+            "type": "object",
+            "required": [
+                "namespace",
+                "obcluster",
+                "statisticScopes"
+            ],
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "integer"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "obcluster": {
+                    "type": "string"
+                },
+                "obtenant": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "statisticScopes": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "sql.SqlStatisticMetric": {
+            "type": "object",
+            "required": [
+                "name",
+                "value"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
                 }
             }
         }
