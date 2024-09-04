@@ -319,18 +319,29 @@ func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *api
 		}
 		return field.InternalError(fieldPath, err)
 	}
+	// All the following types need accessId and accessKey
 	switch dest.Type {
-	case constants.BackupDestTypeCOS:
-		if _, ok := secret.Data["appId"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
-		}
-		fallthrough
-	case constants.BackupDestTypeOSS, constants.BackupDestTypeS3, constants.BackupDestTypeS3Compatible:
+	case
+		constants.BackupDestTypeCOS,
+		constants.BackupDestTypeOSS,
+		constants.BackupDestTypeS3,
+		constants.BackupDestTypeS3Compatible:
 		if _, ok := secret.Data["accessId"]; !ok {
 			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
 		}
 		if _, ok := secret.Data["accessKey"]; !ok {
 			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret")
+		}
+	}
+	// The following types need additional fields
+	switch dest.Type {
+	case constants.BackupDestTypeCOS:
+		if _, ok := secret.Data["appId"]; !ok {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+		}
+	case constants.BackupDestTypeS3:
+		if _, ok := secret.Data["s3Region"]; !ok {
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
 		}
 	}
 	return nil

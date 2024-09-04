@@ -133,6 +133,8 @@ func (m *ObTenantBackupPolicyManager) getDestPath(dest apitypes.BackupDestinatio
 	destPath := strings.Join([]string{dest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
 	if dest.Type == constants.BackupDestTypeCOS {
 		destPath += ("&appid=" + string(secret.Data["appId"]))
+	} else if dest.Type == constants.BackupDestTypeS3 {
+		destPath += ("&s3_region=" + string(secret.Data["s3Region"]))
 	}
 	return destPath
 }

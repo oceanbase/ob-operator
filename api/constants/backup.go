@@ -69,7 +69,7 @@ const (
 var DestPathPatternMapping = map[types.BackupDestType]*regexp.Regexp{
 	BackupDestTypeOSS:          regexp.MustCompile(`^oss://[^/]+/[^/].*\\?host=.+$`),
 	BackupDestTypeCOS:          regexp.MustCompile(`^cos://[^/]+/[^/].*\\?host=.+$`),
-	BackupDestTypeS3:           regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+&s3_region=.+$`),
+	BackupDestTypeS3:           regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+$`),
 	BackupDestTypeS3Compatible: regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+$`),
 	BackupDestTypeNFS:          regexp.MustCompile(`^\S+$`),
 }
