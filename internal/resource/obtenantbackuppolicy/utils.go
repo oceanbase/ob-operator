@@ -102,27 +102,8 @@ func (m *ObTenantBackupPolicyManager) getOperationManager() (*operation.Oceanbas
 	return con, nil
 }
 
-func (m *ObTenantBackupPolicyManager) getArchiveDestPath() string {
-	targetDest := m.BackupPolicy.Spec.LogArchive.Destination
-	if targetDest.Type == constants.BackupDestTypeNFS || resourceutils.IsZero(targetDest.Type) {
-		return "file://" + path.Join(oceanbaseconst.BackupPath, targetDest.Path)
-	} else if targetDest.Type == constants.BackupDestTypeOSS && targetDest.OSSAccessSecret != "" {
-		secret := &v1.Secret{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.BackupPolicy.GetNamespace(),
-			Name:      targetDest.OSSAccessSecret,
-		}, secret)
-		if err != nil {
-			m.PrintErrEvent(err)
-			return ""
-		}
-		return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
-	}
-	return targetDest.Path
-}
-
 func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
-	path := m.getArchiveDestPath()
+	path := m.getDestPath(m.BackupPolicy.Spec.LogArchive.Destination)
 	archiveSpec := m.BackupPolicy.Spec.LogArchive
 	if archiveSpec.SwitchPieceInterval != "" {
 		path += fmt.Sprintf(" PIECE_SWITCH_INTERVAL=%s", archiveSpec.SwitchPieceInterval)
@@ -133,23 +114,29 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
 	return "LOCATION=" + path
 }
 
-func (m *ObTenantBackupPolicyManager) getBackupDestPath() string {
-	targetDest := m.BackupPolicy.Spec.DataBackup.Destination
-	if targetDest.Type == constants.BackupDestTypeNFS || resourceutils.IsZero(targetDest.Type) {
-		return "file://" + path.Join(oceanbaseconst.BackupPath, targetDest.Path)
-	} else if targetDest.Type == constants.BackupDestTypeOSS && targetDest.OSSAccessSecret != "" {
-		secret := &v1.Secret{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.BackupPolicy.GetNamespace(),
-			Name:      targetDest.OSSAccessSecret,
-		}, secret)
-		if err != nil {
-			m.PrintErrEvent(err)
-			return ""
-		}
-		return strings.Join([]string{targetDest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
+func (m *ObTenantBackupPolicyManager) getDestPath(dest apitypes.BackupDestination) string {
+	if dest.Type == constants.BackupDestTypeNFS || resourceutils.IsZero(dest.Type) {
+		return "file://" + path.Join(oceanbaseconst.BackupPath, dest.Path)
 	}
-	return targetDest.Path
+	if dest.OSSAccessSecret == "" {
+		return ""
+	}
+	secret := &v1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.BackupPolicy.GetNamespace(),
+		Name:      dest.OSSAccessSecret,
+	}, secret)
+	if err != nil {
+		m.PrintErrEvent(err)
+		return ""
+	}
+	destPath := strings.Join([]string{dest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
+	if dest.Type == constants.BackupDestTypeCOS {
+		destPath += ("&appid=" + string(secret.Data["appId"]))
+	} else if dest.Type == constants.BackupDestTypeS3 {
+		destPath += ("&s3_region=" + string(secret.Data["s3Region"]))
+	}
+	return destPath
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {
@@ -160,10 +147,10 @@ func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJob
 	case constants.BackupJobTypeIncr:
 		fallthrough
 	case constants.BackupJobTypeFull:
-		path = m.getBackupDestPath()
+		path = m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination)
 
 	case constants.BackupJobTypeArchive:
-		path = m.getArchiveDestPath()
+		path = m.getDestPath(m.BackupPolicy.Spec.LogArchive.Destination)
 	}
 	var tenantRecordName string
 	var tenantSecret string
