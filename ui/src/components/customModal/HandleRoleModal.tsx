@@ -1,7 +1,10 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
+import { ACCESS_ROLES_LIST } from '@/constants/access';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
+import { ContentWithQuestion } from '@oceanbase/ui';
+import { findByValue } from '@oceanbase/util';
 import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
@@ -145,7 +148,15 @@ function PermissionSelect({
       {fetchData.map((item, index) => (
         <div key={index}>
           <Row gutter={[8, 16]}>
-            <Col span={8}> {item.domain}</Col>
+            <Col span={8}>
+              <ContentWithQuestion
+                content={findByValue(ACCESS_ROLES_LIST, item.domain).label}
+                tooltip={{
+                  title: findByValue(ACCESS_ROLES_LIST, item.domain)
+                    .descriptions,
+                }}
+              />
+            </Col>
             <Col span={16}>
               <Checkbox.Group
                 options={options}
@@ -320,10 +331,16 @@ export default function HandleRoleModal({
             {
               validator: (_, permissions) => {
                 if (!permissions || !permissions.length) {
-                  return Promise.reject('权限不能为空！');
+                  return Promise.reject(
+                    intl.formatMessage({
+                      id: 'src.components.customModal.2389B108',
+                      defaultMessage: '权限不能为空！',
+                    }),
+                  );
                 }
                 return Promise.resolve();
               },
+              validateTrigger: 'onBlur',
             },
           ]}
           name={'permissions'}
