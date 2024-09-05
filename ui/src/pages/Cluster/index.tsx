@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useAccess, useNavigate } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useState } from 'react';
@@ -12,7 +12,6 @@ import ClusterList from './ClusterList';
 
 const ClusterPage: React.FC = () => {
   const navigate = useNavigate();
-  const access = useAccess();
   const [clusterNames, setClusterNames] = useState<Monitor.LabelType[]>([]);
 
   const { data: clusterListRes, loading } = useRequest(getObclusterListReq, {
@@ -40,11 +39,9 @@ const ClusterPage: React.FC = () => {
             handleAddCluster={handleAddCluster}
           />
         </Col>
-        {access.systemread || access.systemwrite ? (
-          <Col span={24}>
-            <EventsTable objectType="OBCLUSTER" />
-          </Col>
-        ) : null}
+        <Col span={24}>
+          <EventsTable objectType="OBCLUSTER" />
+        </Col>
       </Row>
       <MonitorComp
         filterLabel={clusterNames}

@@ -20,7 +20,7 @@ export default function SelectNSFromItem({
     manual: true,
   });
   const access = useAccess();
-  const hasSysAccess = access.systemread || access.systemwrite;
+  const hasAccess = access.obclusterwrite || access.obproxywrite;
   const filterOption = (
     input: string,
     option: { label: string; value: string },
@@ -52,11 +52,11 @@ export default function SelectNSFromItem({
   const addNSCallback = (newNS: string) => {
     form.setFieldValue('namespace', newNS);
     form.validateFields(['namespace']);
-    if (hasSysAccess) getNS();
+    if (hasAccess) getNS();
   };
 
   useEffect(() => {
-    if (hasSysAccess) getNS();
+    if (hasAccess) getNS();
   }, []);
 
   return (
@@ -91,7 +91,7 @@ export default function SelectNSFromItem({
           filterOption={filterOption}
           dropdownRender={DropDownComponent}
           options={
-            hasSysAccess ? namespaces : [{ label: 'default', value: 'default' }]
+            hasAccess ? namespaces : [{ label: 'default', value: 'default' }]
           }
         />
       </Form.Item>

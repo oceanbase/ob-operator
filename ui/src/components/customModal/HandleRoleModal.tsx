@@ -94,12 +94,23 @@ function PermissionSelect({
       );
     }
   };
+
   const handleSelected = (val: string[], target: string) => {
+    let permissions = [...val];
     setCheckedList((preCheckedList) => {
       const newList = [...preCheckedList];
       newList.forEach((item) => {
         if (item.domain === target) {
-          item.checked = val;
+          if (val.length === 1 && val[0] === 'write') {
+            if (item.checked.length === 2) {
+              // Selected Read
+              permissions = [];
+            } else {
+              // Selected Write
+              permissions.push('read');
+            }
+          }
+          item.checked = permissions;
         }
       });
       return newList;
