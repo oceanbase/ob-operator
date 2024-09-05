@@ -22,6 +22,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/route"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	"github.com/oceanbase/ob-operator/pkg/errors"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -45,6 +47,23 @@ func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	return alarm.ListAlerts(ctx, filter)
+}
+
+// @ID DiagnoseAlert
+// @Tags Alarm
+// @Summary Diagnose alert
+// @Description Diagnose alert, trigger a job to do data collection and analization on background.
+// @Accept application/json
+// @Produce application/json
+// @Param body body alert.AnalyzeParam true "alert analyze param"
+// @Success 200 object response.APIResponse{data=job.Job}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/alarm/alert/diagnose [POST]
+// @Security ApiKeyAuth
+func DiagnoseAlert(_ *gin.Context) (*job.Job, error) {
+	return nil, errors.NewNotImplemented("")
 }
 
 // @ID ListSilencers

@@ -19,9 +19,15 @@ import (
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
+var diagnoseGuard = acbiz.AND(
+	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", string(acbiz.ActionRead)),
+	acbiz.PathGuard(string(acbiz.DomainSystem), "*", string(acbiz.ActionWrite)),
+)
+
 func InitAlarmRoutes(g *gin.RouterGroup) {
 	// alert
 	g.POST("/alarm/alert/alerts", h.Wrap(h.ListAlerts, acbiz.PathGuard("alarm", "*", "read")))
+	g.POST("/alarm/alert/diagnose", h.Wrap(h.DiagnoseAlert, diagnoseGuard))
 
 	// silence
 	g.POST("/alarm/silence/silencers", h.Wrap(h.ListSilencers, acbiz.PathGuard("alarm", "*", "read")))

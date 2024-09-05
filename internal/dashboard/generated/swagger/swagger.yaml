@@ -175,6 +175,24 @@ definitions:
       startTime:
         type: integer
     type: object
+  alert.AnalyzeParam:
+    properties:
+      endsAt:
+        type: integer
+      instance:
+        $ref: '#/definitions/oceanbase.OBInstance'
+      resultPath:
+        type: string
+      rule:
+        type: string
+      startsAt:
+        type: integer
+    required:
+    - endsAt
+    - instance
+    - rule
+    - startsAt
+    type: object
   alert.State:
     enum:
     - active
@@ -273,13 +291,13 @@ definitions:
     - ScenarioPerformance
   inspection.InspectionScheduleConfig:
     properties:
+      crontab:
+        type: string
       scenario:
         $ref: '#/definitions/inspection.InspectionScenario'
-      scheduleExpr:
-        type: string
     required:
+    - crontab
     - scenario
-    - scheduleExpr
     type: object
   inspection.InspectionScheduleStatus:
     enum:
@@ -289,14 +307,6 @@ definitions:
     x-enum-varnames:
     - ScheduleEnabled
     - ScheduleDisabled
-  inspection.JobStatus:
-    enum:
-    - successful
-    - failed
-    type: string
-    x-enum-varnames:
-    - JobStatusSuccessful
-    - JobStatusFailed
   inspection.Policy:
     properties:
       latestReports:
@@ -332,11 +342,12 @@ definitions:
       startTime:
         type: integer
       status:
-        $ref: '#/definitions/inspection.JobStatus'
+        $ref: '#/definitions/job.JobStatus'
     required:
     - id
     - obCluster
     - resultStatistics
+    - scenario
     - status
     type: object
   inspection.ReportBriefInfo:
@@ -354,11 +365,12 @@ definitions:
       startTime:
         type: integer
       status:
-        $ref: '#/definitions/inspection.JobStatus'
+        $ref: '#/definitions/job.JobStatus'
     required:
     - id
     - obCluster
     - resultStatistics
+    - scenario
     - status
     type: object
   inspection.ResultDetail:
@@ -391,6 +403,47 @@ definitions:
       negligibleCount:
         type: integer
     type: object
+  job.Job:
+    properties:
+      finishTime:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+      result:
+        $ref: '#/definitions/job.JobResult'
+      startTime:
+        type: integer
+      status:
+        $ref: '#/definitions/job.JobStatus'
+    required:
+    - id
+    - name
+    type: object
+  job.JobResult:
+    properties:
+      attachmentId:
+        type: string
+      exitCode:
+        type: integer
+      output:
+        type: string
+    required:
+    - exitCode
+    type: object
+  job.JobStatus:
+    enum:
+    - successful
+    - failed
+    - running
+    - pending
+    type: string
+    x-enum-varnames:
+    - JobStatusSuccessful
+    - JobStatusFailed
+    - JobStatusRunning
+    - JobStatusPending
   models.K8sEvent:
     properties:
       count:
@@ -3575,6 +3628,51 @@ paths:
       summary: List alerts
       tags:
       - Alarm
+  /api/v1/alarm/alert/diagnose:
+    post:
+      consumes:
+      - application/json
+      description: Diagnose alert, trigger a job to do data collection and analization
+        on background.
+      operationId: DiagnoseAlert
+      parameters:
+      - description: alert analyze param
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/alert.AnalyzeParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/job.Job'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Diagnose alert
+      tags:
+      - Alarm
   /api/v1/alarm/receiver/receivers:
     post:
       consumes:
@@ -4738,7 +4836,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/inspection.Policy'
+                  type: boolean
               type: object
         "400":
           description: Bad Request
@@ -4863,6 +4961,75 @@ paths:
       summary: get inspection report
       tags:
       - Inspection
+  /api/v1/jobs/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a job by id
+      operationId: DeleteJob
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Delete a job
+      tags:
+      - Job
+    get:
+      consumes:
+      - application/json
+      description: Get job by id
+      operationId: GetJob
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/job.Job'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get job
+      tags:
+      - Job
   /api/v1/login:
     post:
       consumes:
@@ -7230,6 +7397,36 @@ paths:
       summary: get statistic data
       tags:
       - Info
+  /api/v1/storage/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get file by id
+      operationId: GetFile
+      produces:
+      - application/zip
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get file
+      tags:
+      - Storage
   /api/v1/webhook/alert/log:
     post:
       consumes:

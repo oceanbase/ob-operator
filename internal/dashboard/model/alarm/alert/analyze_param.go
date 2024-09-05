@@ -10,13 +10,16 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package inspection
+package alert
 
-type JobStatus string
-
-const (
-	JobStatusSuccessful JobStatus = "successful"
-	JobStatusFailed     JobStatus = "failed"
-	JobStatusRunning    JobStatus = "running"
-	JobStatusPending    JobStatus = "pending"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
+
+type AnalyzeParam struct {
+	Rule       string                `json:"rule" binding:"required"`
+	Instance   *oceanbase.OBInstance `json:"instance" binding:"required"`
+	StartsAt   int64                 `json:"startsAt" binding:"required"`
+	EndsAt     int64                 `json:"endsAt" binding:"required"`
+	ResultPath string                `json:"resultPath,omitempty"`
+}
