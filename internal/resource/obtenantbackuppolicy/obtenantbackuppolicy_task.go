@@ -219,7 +219,6 @@ func StopBackup(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 func CheckAndSpawnJobs(m *ObTenantBackupPolicyManager) tasktypes.TaskError {
 	var backupPath string
 	if m.BackupPolicy.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS {
-		// TODO: check if &s3_region=? part should be removed
 		backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 	} else {
 		backupPath = m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination)

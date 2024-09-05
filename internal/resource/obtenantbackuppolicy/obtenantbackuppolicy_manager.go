@@ -191,7 +191,6 @@ func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
 			}
 			var backupPath string
 			if m.BackupPolicy.Spec.DataBackup.Destination.Type != constants.BackupDestTypeNFS {
-				// TODO: check if &s3_region=? part should be removed
 				backupPath = m.BackupPolicy.Spec.DataBackup.Destination.Path
 			} else {
 				backupPath = m.getDestPath(m.BackupPolicy.Spec.DataBackup.Destination)
