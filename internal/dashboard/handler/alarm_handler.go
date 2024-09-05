@@ -56,7 +56,7 @@ func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body alert.AnalyzeParam true "alert analyze param"
-// @Success 200 object response.APIResponse{data=[]job.Job}
+// @Success 200 object response.APIResponse{data=job.Job}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
