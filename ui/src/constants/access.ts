@@ -31,20 +31,20 @@ export const ACCESS_ROLES_LIST = [
       defaultMessage: '监控告警',
     }),
     value: 'alarm',
-    descriptions: {
+    descriptions: intl.formatMessage({
       id: 'src.components.customModal.CC80EAD4',
       defaultMessage:
         '监控告警: 读权限涉及告警、Silencer、Rule、Receiver和Route的读取，写权限则涉及它们的着创建、更新和删除',
-    },
+    }),
   },
   {
     label: 'OBProxy',
     value: 'obproxy',
-    descriptions: {
+    descriptions: intl.formatMessage({
       id: 'src.components.customModal.C97E041E',
       defaultMessage:
         'OBProxy: 读权限涉及OBProxy的获取，写权限涉及OBProxy的创建、更新和删除',
-    },
+    }),
   },
   {
     label: intl.formatMessage({
@@ -52,10 +52,10 @@ export const ACCESS_ROLES_LIST = [
       defaultMessage: '权限控制',
     }),
     value: 'ac',
-    descriptions: {
+    descriptions: intl.formatMessage({
       id: 'src.components.customModal.2169D3CC',
       defaultMessage:
         '权限控制: 读权限涉及账号和角色的获取，写权限涉及它们的创建、更新和删除',
-    },
+    }),
   },
 ];
