@@ -2490,6 +2490,452 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/inspection/policies": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list inspection policies",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "list inspection policies",
+                "operationId": "ListInspectionPolicies",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Object name",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "obcluster name",
+                        "name": "obclusterName",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/inspection.Policy"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "create or update inspection policy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "create or update inspection policy",
+                "operationId": "CreateOrUpdateInspectionPolicy",
+                "parameters": [
+                    {
+                        "description": "inspection policy",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/inspection.Policy"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inspection.Policy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/inspection/policies/{namespace}/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "get inspection policy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "get inspection policy",
+                "operationId": "GetInspectionPolicy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inspection.Policy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/inspection/policies/{namespace}/{name}/{scenario}": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "trigger inspection",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "trigger inspection",
+                "operationId": "TriggerInspection",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inspection.Policy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "delete inspection policy",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "delete inspection policy",
+                "operationId": "DeleteInspectionPolicy",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inspection.Policy"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/inspection/reports": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "list inspection reports",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "list inspection reports",
+                "operationId": "ListInspectionReports",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/inspection.ReportBriefInfo"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/inspection/reports/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "get inspection report",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Inspection"
+                ],
+                "summary": "get inspection report",
+                "operationId": "GetInspectionReport",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/inspection.Report"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/login": {
             "post": {
                 "description": "User login and return access token with cookie.",
@@ -6750,6 +7196,211 @@ const docTemplate = `{
                 }
             }
         },
+        "inspection.InspectionItem": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "results": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "inspection.InspectionScenario": {
+            "type": "string",
+            "enum": [
+                "basic",
+                "performance"
+            ],
+            "x-enum-varnames": [
+                "ScenarioBasic",
+                "ScenarioPerformance"
+            ]
+        },
+        "inspection.InspectionScheduleConfig": {
+            "type": "object",
+            "required": [
+                "scenario",
+                "scheduleExpr"
+            ],
+            "properties": {
+                "scenario": {
+                    "$ref": "#/definitions/inspection.InspectionScenario"
+                },
+                "scheduleExpr": {
+                    "type": "string"
+                }
+            }
+        },
+        "inspection.InspectionScheduleStatus": {
+            "type": "string",
+            "enum": [
+                "enabled",
+                "disabled"
+            ],
+            "x-enum-varnames": [
+                "ScheduleEnabled",
+                "ScheduleDisabled"
+            ]
+        },
+        "inspection.JobStatus": {
+            "type": "string",
+            "enum": [
+                "successful",
+                "failed"
+            ],
+            "x-enum-varnames": [
+                "JobStatusSuccessful",
+                "JobStatusFailed"
+            ]
+        },
+        "inspection.Policy": {
+            "type": "object",
+            "required": [
+                "obCluster",
+                "status"
+            ],
+            "properties": {
+                "latestReports": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.ReportBriefInfo"
+                    }
+                },
+                "obCluster": {
+                    "$ref": "#/definitions/response.OBClusterMeta"
+                },
+                "scheduleConfig": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.InspectionScheduleConfig"
+                    }
+                },
+                "status": {
+                    "$ref": "#/definitions/inspection.InspectionScheduleStatus"
+                }
+            }
+        },
+        "inspection.Report": {
+            "type": "object",
+            "required": [
+                "id",
+                "obCluster",
+                "resultStatistics",
+                "status"
+            ],
+            "properties": {
+                "finishTime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "obCluster": {
+                    "$ref": "#/definitions/response.OBClusterMeta"
+                },
+                "resultDetail": {
+                    "$ref": "#/definitions/inspection.ResultDetail"
+                },
+                "resultStatistics": {
+                    "$ref": "#/definitions/inspection.ResultStatistics"
+                },
+                "scenario": {
+                    "$ref": "#/definitions/inspection.InspectionScenario"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/inspection.JobStatus"
+                }
+            }
+        },
+        "inspection.ReportBriefInfo": {
+            "type": "object",
+            "required": [
+                "id",
+                "obCluster",
+                "resultStatistics",
+                "status"
+            ],
+            "properties": {
+                "finishTime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "obCluster": {
+                    "$ref": "#/definitions/response.OBClusterMeta"
+                },
+                "resultStatistics": {
+                    "$ref": "#/definitions/inspection.ResultStatistics"
+                },
+                "scenario": {
+                    "$ref": "#/definitions/inspection.InspectionScenario"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/inspection.JobStatus"
+                }
+            }
+        },
+        "inspection.ResultDetail": {
+            "type": "object",
+            "properties": {
+                "criticalItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.InspectionItem"
+                    }
+                },
+                "failedItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.InspectionItem"
+                    }
+                },
+                "moderateItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.InspectionItem"
+                    }
+                },
+                "negligibleItems": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/inspection.InspectionItem"
+                    }
+                }
+            }
+        },
+        "inspection.ResultStatistics": {
+            "type": "object",
+            "properties": {
+                "criticalCount": {
+                    "type": "integer"
+                },
+                "failedCount": {
+                    "type": "integer"
+                },
+                "moderateCount": {
+                    "type": "integer"
+                },
+                "negligibleCount": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.K8sEvent": {
             "type": "object",
             "properties": {
@@ -8868,6 +9519,37 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.OBClusterMeta": {
+            "type": "object",
+            "required": [
+                "clusterId",
+                "clusterName",
+                "mode",
+                "name",
+                "namespace",
+                "uid"
+            ],
+            "properties": {
+                "clusterId": {
+                    "type": "integer"
+                },
+                "clusterName": {
+                    "type": "string"
+                },
+                "mode": {
+                    "$ref": "#/definitions/common.ClusterMode"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "uid": {
                     "type": "string"
                 }
             }

@@ -85,17 +85,19 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		}
 	}
 	return &response.OBClusterOverview{
-		UID:          string(obcluster.UID),
-		Namespace:    obcluster.Namespace,
-		Name:         obcluster.Name,
-		ClusterName:  obcluster.Spec.ClusterName,
-		ClusterId:    obcluster.Spec.ClusterId,
+		OBClusterMeta: response.OBClusterMeta{
+			UID:         string(obcluster.UID),
+			Namespace:   obcluster.Namespace,
+			Name:        obcluster.Name,
+			ClusterName: obcluster.Spec.ClusterName,
+			ClusterId:   obcluster.Spec.ClusterId,
+			Mode:        clusterMode,
+		},
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
 		CreateTime:   obcluster.ObjectMeta.CreationTimestamp.Unix(),
 		Image:        obcluster.Status.Image,
 		Topology:     topology,
-		Mode:         clusterMode,
 	}, nil
 }
 
