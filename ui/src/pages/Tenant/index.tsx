@@ -1,5 +1,5 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { useAccess, useNavigate } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useEffect, useRef, useState } from 'react';
@@ -17,7 +17,6 @@ import TenantsList from './TenantsList';
 // tenant overview page
 export default function TenantPage() {
   const [filterLabel, setFilterLabel] = useState<Monitor.LabelType[]>([]);
-  const access = useAccess();
   const navigate = useNavigate();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const {
@@ -70,11 +69,9 @@ export default function TenantPage() {
             turnToCreateTenant={handleAddCluster}
           />
         </Col>
-        {access.systemread || access.systemwrite ? (
-          <Col span={24}>
-            <EventsTable objectType="OBTENANT" collapsible={false} />
-          </Col>
-        ) : null}
+        <Col span={24}>
+          <EventsTable objectType="OBTENANT" collapsible={false} />
+        </Col>
       </Row>
       <MonitorComp
         filterLabel={filterLabel}

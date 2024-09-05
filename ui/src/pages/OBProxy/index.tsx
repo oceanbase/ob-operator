@@ -3,7 +3,7 @@ import EventsTable from '@/components/EventsTable';
 import MonitorComp from '@/components/MonitorComp';
 import { DEFAULT_QUERY_RANGE, REFRESH_OBPROXY_TIME } from '@/constants';
 import { PageContainer } from '@ant-design/pro-components';
-import { useAccess, useNavigate } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Col, Row } from 'antd';
 import { useEffect, useRef } from 'react';
@@ -12,7 +12,6 @@ import ClusterList from './ClusterList';
 export default function OBProxy() {
   const navigate = useNavigate();
   const handleAddCluster = () => navigate('new');
-  const access = useAccess();
   const timer = useRef<NodeJS.Timeout | null>(null);
   const {
     data: obproxiesRes,
@@ -54,11 +53,9 @@ export default function OBProxy() {
             handleAddCluster={handleAddCluster}
           />
         </Col>
-        {access.systemread || access.systemwrite ? (
-          <Col span={24}>
-            <EventsTable objectType="OBPROXY" />
-          </Col>
-        ) : null}
+        <Col span={24}>
+          <EventsTable objectType="OBPROXY" />
+        </Col>
       </Row>
       <MonitorComp
         filterLabel={[]}
