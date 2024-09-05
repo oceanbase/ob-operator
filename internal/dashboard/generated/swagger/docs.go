@@ -824,6 +824,79 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/alarm/alert/diagnose": {
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Diagnose alert, trigger a job to do data collection and analization on background.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Alarm"
+                ],
+                "summary": "Diagnose alert",
+                "operationId": "DiagnoseAlert",
+                "parameters": [
+                    {
+                        "description": "alert analyze param",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/alert.AnalyzeParam"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/job.Job"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/alarm/receiver/receivers": {
             "put": {
                 "security": [
@@ -2787,7 +2860,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/inspection.Policy"
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -2909,6 +2982,122 @@ const docTemplate = `{
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/inspection.Report"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/jobs/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get job by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Get job",
+                "operationId": "GetJob",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/job.Job"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Delete a job by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Job"
+                ],
+                "summary": "Delete a job",
+                "operationId": "DeleteJob",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
                                         }
                                     }
                                 }
@@ -6761,6 +6950,53 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/storage/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "description": "Get file by id",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/zip"
+                ],
+                "tags": [
+                    "Storage"
+                ],
+                "summary": "Get file",
+                "operationId": "GetFile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/webhook/alert/log": {
             "post": {
                 "description": "Log alerts sent by alertmanager.",
@@ -7085,6 +7321,32 @@ const docTemplate = `{
                 }
             }
         },
+        "alert.AnalyzeParam": {
+            "type": "object",
+            "required": [
+                "endsAt",
+                "instance",
+                "rule",
+                "startsAt"
+            ],
+            "properties": {
+                "endsAt": {
+                    "type": "integer"
+                },
+                "instance": {
+                    "$ref": "#/definitions/oceanbase.OBInstance"
+                },
+                "resultPath": {
+                    "type": "string"
+                },
+                "rule": {
+                    "type": "string"
+                },
+                "startsAt": {
+                    "type": "integer"
+                }
+            }
+        },
         "alert.State": {
             "type": "string",
             "enum": [
@@ -7227,15 +7489,15 @@ const docTemplate = `{
         "inspection.InspectionScheduleConfig": {
             "type": "object",
             "required": [
-                "scenario",
-                "scheduleExpr"
+                "crontab",
+                "scenario"
             ],
             "properties": {
+                "crontab": {
+                    "type": "string"
+                },
                 "scenario": {
                     "$ref": "#/definitions/inspection.InspectionScenario"
-                },
-                "scheduleExpr": {
-                    "type": "string"
                 }
             }
         },
@@ -7248,17 +7510,6 @@ const docTemplate = `{
             "x-enum-varnames": [
                 "ScheduleEnabled",
                 "ScheduleDisabled"
-            ]
-        },
-        "inspection.JobStatus": {
-            "type": "string",
-            "enum": [
-                "successful",
-                "failed"
-            ],
-            "x-enum-varnames": [
-                "JobStatusSuccessful",
-                "JobStatusFailed"
             ]
         },
         "inspection.Policy": {
@@ -7294,6 +7545,7 @@ const docTemplate = `{
                 "id",
                 "obCluster",
                 "resultStatistics",
+                "scenario",
                 "status"
             ],
             "properties": {
@@ -7319,7 +7571,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/inspection.JobStatus"
+                    "$ref": "#/definitions/job.JobStatus"
                 }
             }
         },
@@ -7329,6 +7581,7 @@ const docTemplate = `{
                 "id",
                 "obCluster",
                 "resultStatistics",
+                "scenario",
                 "status"
             ],
             "properties": {
@@ -7351,7 +7604,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "status": {
-                    "$ref": "#/definitions/inspection.JobStatus"
+                    "$ref": "#/definitions/job.JobStatus"
                 }
             }
         },
@@ -7400,6 +7653,65 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "job.Job": {
+            "type": "object",
+            "required": [
+                "id",
+                "name"
+            ],
+            "properties": {
+                "finishTime": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "result": {
+                    "$ref": "#/definitions/job.JobResult"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "status": {
+                    "$ref": "#/definitions/job.JobStatus"
+                }
+            }
+        },
+        "job.JobResult": {
+            "type": "object",
+            "required": [
+                "exitCode"
+            ],
+            "properties": {
+                "attachmentId": {
+                    "type": "string"
+                },
+                "exitCode": {
+                    "type": "integer"
+                },
+                "output": {
+                    "type": "string"
+                }
+            }
+        },
+        "job.JobStatus": {
+            "type": "string",
+            "enum": [
+                "successful",
+                "failed",
+                "running",
+                "pending"
+            ],
+            "x-enum-varnames": [
+                "JobStatusSuccessful",
+                "JobStatusFailed",
+                "JobStatusRunning",
+                "JobStatusPending"
+            ]
         },
         "models.K8sEvent": {
             "type": "object",
