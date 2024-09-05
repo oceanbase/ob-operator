@@ -54,7 +54,6 @@ export default function Tenant() {
           <Col span={24}>
             <MonitorComp
               queryRange={DEFAULT_QUERY_RANGE}
-              type="OVERVIEW"
               queryScope="OBTENANT"
               groupLabels={['tenant_name']}
               useFor="tenant"
