@@ -31,8 +31,8 @@ const (
 )
 
 type InspectionScheduleConfig struct {
-	Scenario     InspectionScenario `json:"scenario" binding:"required"`
-	ScheduleExpr string             `json:"scheduleExpr" binding:"required"`
+	Scenario InspectionScenario `json:"scenario" binding:"required"`
+	Crontab  string             `json:"crontab" binding:"required"`
 }
 
 type Policy struct {
