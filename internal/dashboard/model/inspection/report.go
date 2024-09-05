@@ -24,7 +24,7 @@ type ResultStatistics struct {
 type ReportBriefInfo struct {
 	Id               string                 `json:"id" binding:"required"`
 	OBCluster        response.OBClusterMeta `json:"obCluster" binding:"required"`
-	Scenario         InspectionScenario     `json:"scenario" binding:"requried"`
+	Scenario         InspectionScenario     `json:"scenario" binding:"required"`
 	ResultStatistics ResultStatistics       `json:"resultStatistics" binding:"required"`
 	Status           JobStatus              `json:"status" binding:"required"`
 	StartTime        int64                  `json:"startTime,omitempty"`
