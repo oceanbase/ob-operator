@@ -17,4 +17,6 @@ type JobStatus string
 const (
 	JobStatusSuccessful JobStatus = "successful"
 	JobStatusFailed     JobStatus = "failed"
+	JobStatusRunning    JobStatus = "running"
+	JobStatusPending    JobStatus = "pending"
 )
