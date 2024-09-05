@@ -1,16 +1,16 @@
 import { access } from '@/api';
 import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
-import { ACCESS_ROLES_LIST } from '@/constants/access';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
-import { ContentWithQuestion } from '@oceanbase/ui';
-import { findByValue } from '@oceanbase/util';
 import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
 import { Checkbox, Col, Form, Input, Row, message } from 'antd';
 import { pick, uniqBy } from 'lodash';
 import { useEffect, useState } from 'react';
 import CustomModal from '.';
+import { ACCESS_ROLES_LIST } from '@/constants/access';
+import { findByValue, } from '@oceanbase/util';
+import { ContentWithQuestion } from '@oceanbase/ui';
 
 interface HandleRoleModalProps {
   visible: boolean;
@@ -152,10 +152,10 @@ function PermissionSelect({
               <ContentWithQuestion
                 content={findByValue(ACCESS_ROLES_LIST, item.domain).label}
                 tooltip={{
-                  title: findByValue(ACCESS_ROLES_LIST, item.domain)
-                    .descriptions,
+                  title: findByValue(ACCESS_ROLES_LIST, item.domain).descriptions,
                 }}
               />
+              
             </Col>
             <Col span={16}>
               <Checkbox.Group
