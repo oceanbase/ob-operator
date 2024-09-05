@@ -3,7 +3,6 @@ import type { AcCreateRoleParam, AcPolicy, AcRole } from '@/api/generated';
 import { ACCESS_ROLES_LIST } from '@/constants/access';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
-import { ContentWithQuestion } from '@oceanbase/ui';
 import { findByValue } from '@oceanbase/util';
 import { useModel } from '@umijs/max';
 import type { CheckboxProps } from 'antd';
