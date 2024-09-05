@@ -62,7 +62,7 @@ func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/alert/diagnose [POST]
 // @Security ApiKeyAuth
-func DiagnoseAlert(ctx *gin.Context) (*job.Job, error) {
+func DiagnoseAlert(_ *gin.Context) (*job.Job, error) {
 	return nil, errors.NewNotImplemented("")
 }
 
