@@ -337,11 +337,11 @@ func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *api
 	switch dest.Type {
 	case constants.BackupDestTypeCOS:
 		if _, ok := secret.Data["appId"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "appId field not found in given OSSAccessSecret")
 		}
 	case constants.BackupDestTypeS3:
 		if _, ok := secret.Data["s3Region"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+			return field.Invalid(fieldPath, dest.OSSAccessSecret, "s3Region field not found in given OSSAccessSecret")
 		}
 	}
 	return nil
