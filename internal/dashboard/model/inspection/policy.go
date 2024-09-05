@@ -36,7 +36,7 @@ type InspectionScheduleConfig struct {
 }
 
 type Policy struct {
-	OBCluster       response.OBCluster         `json:"obCluster" binding:"required"`
+	OBCluster       response.OBClusterMeta     `json:"obCluster" binding:"required"`
 	Status          InspectionScheduleStatus   `json:"status" binding:"required"`
 	ScheduleConfigs []InspectionScheduleConfig `json:"scheduleConfig,omitempty"`
 	LatestReports   []ReportBriefInfo          `json:"latestReports,omitempty"`

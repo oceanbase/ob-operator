@@ -51,19 +51,21 @@ type OBMetrics struct {
 	DiskPercent   int `json:"diskPercent" binding:"required"`
 }
 
+type OBClusterMeta struct {
+	UID         string             `json:"uid" binding:"required"`
+	Name        string             `json:"name" binding:"required"`
+	Namespace   string             `json:"namespace" binding:"required"`
+	ClusterName string             `json:"clusterName" binding:"required"`
+	ClusterId   int64              `json:"clusterId" binding:"required"`
+	Mode        common.ClusterMode `json:"mode" binding:"required"`
+}
 type OBClusterOverview struct {
-	UID          string   `json:"uid" binding:"required"`
-	Name         string   `json:"name" binding:"required"`
-	Namespace    string   `json:"namespace" binding:"required"`
-	ClusterName  string   `json:"clusterName" binding:"required"`
-	ClusterId    int64    `json:"clusterId" binding:"required"`
-	Status       string   `json:"status" binding:"required"`
-	StatusDetail string   `json:"statusDetail" binding:"required"`
-	CreateTime   int64    `json:"createTime" binding:"required"`
-	Image        string   `json:"image" binding:"required"`
-	Topology     []OBZone `json:"topology" binding:"required"`
-
-	Mode common.ClusterMode `json:"mode" binding:"required"`
+	OBClusterMeta `json:",inline"`
+	Status        string   `json:"status" binding:"required"`
+	StatusDetail  string   `json:"statusDetail" binding:"required"`
+	CreateTime    int64    `json:"createTime" binding:"required"`
+	Image         string   `json:"image" binding:"required"`
+	Topology      []OBZone `json:"topology" binding:"required"`
 }
 
 type OBCluster struct {

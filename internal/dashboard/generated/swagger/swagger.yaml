@@ -252,6 +252,145 @@ definitions:
       storageClass:
         type: string
     type: object
+  inspection.InspectionItem:
+    properties:
+      name:
+        type: string
+      results:
+        items:
+          type: string
+        type: array
+    required:
+    - name
+    type: object
+  inspection.InspectionScenario:
+    enum:
+    - basic
+    - performance
+    type: string
+    x-enum-varnames:
+    - ScenarioBasic
+    - ScenarioPerformance
+  inspection.InspectionScheduleConfig:
+    properties:
+      scenario:
+        $ref: '#/definitions/inspection.InspectionScenario'
+      scheduleExpr:
+        type: string
+    required:
+    - scenario
+    - scheduleExpr
+    type: object
+  inspection.InspectionScheduleStatus:
+    enum:
+    - enabled
+    - disabled
+    type: string
+    x-enum-varnames:
+    - ScheduleEnabled
+    - ScheduleDisabled
+  inspection.JobStatus:
+    enum:
+    - successful
+    - failed
+    type: string
+    x-enum-varnames:
+    - JobStatusSuccessful
+    - JobStatusFailed
+  inspection.Policy:
+    properties:
+      latestReports:
+        items:
+          $ref: '#/definitions/inspection.ReportBriefInfo'
+        type: array
+      obCluster:
+        $ref: '#/definitions/response.OBClusterMeta'
+      scheduleConfig:
+        items:
+          $ref: '#/definitions/inspection.InspectionScheduleConfig'
+        type: array
+      status:
+        $ref: '#/definitions/inspection.InspectionScheduleStatus'
+    required:
+    - obCluster
+    - status
+    type: object
+  inspection.Report:
+    properties:
+      finishTime:
+        type: integer
+      id:
+        type: string
+      obCluster:
+        $ref: '#/definitions/response.OBClusterMeta'
+      resultDetail:
+        $ref: '#/definitions/inspection.ResultDetail'
+      resultStatistics:
+        $ref: '#/definitions/inspection.ResultStatistics'
+      scenario:
+        $ref: '#/definitions/inspection.InspectionScenario'
+      startTime:
+        type: integer
+      status:
+        $ref: '#/definitions/inspection.JobStatus'
+    required:
+    - id
+    - obCluster
+    - resultStatistics
+    - status
+    type: object
+  inspection.ReportBriefInfo:
+    properties:
+      finishTime:
+        type: integer
+      id:
+        type: string
+      obCluster:
+        $ref: '#/definitions/response.OBClusterMeta'
+      resultStatistics:
+        $ref: '#/definitions/inspection.ResultStatistics'
+      scenario:
+        $ref: '#/definitions/inspection.InspectionScenario'
+      startTime:
+        type: integer
+      status:
+        $ref: '#/definitions/inspection.JobStatus'
+    required:
+    - id
+    - obCluster
+    - resultStatistics
+    - status
+    type: object
+  inspection.ResultDetail:
+    properties:
+      criticalItems:
+        items:
+          $ref: '#/definitions/inspection.InspectionItem'
+        type: array
+      failedItems:
+        items:
+          $ref: '#/definitions/inspection.InspectionItem'
+        type: array
+      moderateItems:
+        items:
+          $ref: '#/definitions/inspection.InspectionItem'
+        type: array
+      negligibleItems:
+        items:
+          $ref: '#/definitions/inspection.InspectionItem'
+        type: array
+    type: object
+  inspection.ResultStatistics:
+    properties:
+      criticalCount:
+        type: integer
+      failedCount:
+        type: integer
+      moderateCount:
+        type: integer
+      negligibleCount:
+        type: integer
+    type: object
   models.K8sEvent:
     properties:
       count:
@@ -1729,6 +1868,28 @@ definitions:
     - topology
     - uid
     type: object
+  response.OBClusterMeta:
+    properties:
+      clusterId:
+        type: integer
+      clusterName:
+        type: string
+      mode:
+        $ref: '#/definitions/common.ClusterMode'
+      name:
+        type: string
+      namespace:
+        type: string
+      uid:
+        type: string
+    required:
+    - clusterId
+    - clusterName
+    - mode
+    - name
+    - namespace
+    - uid
+    type: object
   response.OBClusterOverview:
     properties:
       clusterId:
@@ -2512,6 +2673,414 @@ definitions:
         $ref: '#/definitions/silence.State'
     required:
     - state
+    type: object
+  sql.IndexCategory:
+    enum:
+    - primaryKey
+    - globalNormal
+    - globalUnique
+    - localNormal
+    - localUnique
+    type: string
+    x-enum-varnames:
+    - IndexCategoryPrimaryKey
+    - IndexCategoryGlobalNormal
+    - IndexCategoryGlobalUnique
+    - IndexCategoryLocalNormal
+    - IndexCategoryLocalUnique
+  sql.IndexInfo:
+    properties:
+      category:
+        $ref: '#/definitions/sql.IndexCategory'
+      columns:
+        items:
+          type: string
+        type: array
+      indexName:
+        type: string
+      status:
+        $ref: '#/definitions/sql.IndexStatus'
+      tableName:
+        type: string
+    required:
+    - category
+    - columns
+    - indexName
+    - status
+    - tableName
+    type: object
+  sql.IndexStatus:
+    enum:
+    - creating
+    - available
+    - error
+    type: string
+    x-enum-varnames:
+    - IndexStatusCreating
+    - IndexStatusAvailable
+    - IndexStatusError
+  sql.MetricCategory:
+    enum:
+    - meta
+    - latency
+    - execution
+    type: string
+    x-enum-varnames:
+    - Meta
+    - Latency
+    - Execution
+  sql.PlanCategory:
+    enum:
+    - local
+    - remote
+    - distributed
+    type: string
+    x-enum-varnames:
+    - PlanCategoryLocal
+    - PlanCategoryRemote
+    - PlanCategoryDistributed
+  sql.PlanDetail:
+    properties:
+      category:
+        $ref: '#/definitions/sql.PlanCategory'
+      generatedTime:
+        type: integer
+      mergedVersion:
+        type: integer
+      planDetail:
+        $ref: '#/definitions/sql.PlanOperator'
+      planHash:
+        type: string
+      planStatistics:
+        items:
+          $ref: '#/definitions/sql.PlanStatisticByServer'
+        type: array
+    required:
+    - category
+    - generatedTime
+    - mergedVersion
+    - planDetail
+    - planHash
+    - planStatistics
+    type: object
+  sql.PlanDetailParam:
+    properties:
+      database:
+        type: string
+      endTime:
+        type: integer
+      namespace:
+        type: string
+      obcluster:
+        type: string
+      obtenant:
+        type: string
+      planHash:
+        type: string
+      startTime:
+        type: integer
+      user:
+        type: string
+    required:
+    - namespace
+    - obcluster
+    - planHash
+    type: object
+  sql.PlanOperator:
+    properties:
+      childOperators:
+        items:
+          $ref: '#/definitions/sql.PlanOperator'
+        type: array
+      cost:
+        type: integer
+      estimatedRows:
+        type: integer
+      name:
+        type: string
+      operator:
+        type: string
+      outputOrFilter:
+        type: string
+    required:
+    - cost
+    - estimatedRows
+    - operator
+    type: object
+  sql.PlanStatistic:
+    properties:
+      category:
+        $ref: '#/definitions/sql.PlanCategory'
+      cost:
+        type: integer
+      cpuTime:
+        type: integer
+      generatedTime:
+        type: integer
+      mergedVersion:
+        type: integer
+      planHash:
+        type: string
+    required:
+    - category
+    - cost
+    - cpuTime
+    - generatedTime
+    - mergedVersion
+    - planHash
+    type: object
+  sql.PlanStatisticByServer:
+    properties:
+      category:
+        $ref: '#/definitions/sql.PlanCategory'
+      cost:
+        type: integer
+      cpuTime:
+        type: integer
+      generatedTime:
+        type: integer
+      mergedVersion:
+        type: integer
+      planHash:
+        type: string
+      planId:
+        type: integer
+      server:
+        type: string
+    required:
+    - category
+    - cost
+    - cpuTime
+    - generatedTime
+    - mergedVersion
+    - planHash
+    - planId
+    - server
+    type: object
+  sql.RequestStatisticInfo:
+    properties:
+      database:
+        type: string
+      executionStatistics:
+        items:
+          $ref: '#/definitions/sql.SqlStatisticMetric'
+        type: array
+      executionTrend:
+        $ref: '#/definitions/response.MetricData'
+      latencyStatistics:
+        items:
+          $ref: '#/definitions/sql.SqlStatisticMetric'
+        type: array
+      latencyTrend:
+        $ref: '#/definitions/response.MetricData'
+      planCategoryStatistics:
+        items:
+          $ref: '#/definitions/sql.SqlStatisticMetric'
+        type: array
+      tenant:
+        type: string
+      user:
+        type: string
+    required:
+    - database
+    - executionStatistics
+    - executionTrend
+    - latencyStatistics
+    - latencyTrend
+    - planCategoryStatistics
+    - tenant
+    - user
+    type: object
+  sql.SqlDetailParam:
+    properties:
+      database:
+        type: string
+      endTime:
+        type: integer
+      interval:
+        type: integer
+      namespace:
+        type: string
+      obcluster:
+        type: string
+      obtenant:
+        type: string
+      sqlId:
+        type: string
+      startTime:
+        type: integer
+      user:
+        type: string
+    required:
+    - interval
+    - namespace
+    - obcluster
+    - sqlId
+    type: object
+  sql.SqlDetailedInfo:
+    properties:
+      diagnoseInfo:
+        items:
+          $ref: '#/definitions/sql.SqlDiagnoseInfo'
+        type: array
+      executionTrend:
+        items:
+          $ref: '#/definitions/response.MetricData'
+        type: array
+      indexies:
+        items:
+          $ref: '#/definitions/sql.IndexInfo'
+        type: array
+      latencyTrend:
+        items:
+          $ref: '#/definitions/response.MetricData'
+        type: array
+      plans:
+        items:
+          $ref: '#/definitions/sql.PlanStatistic'
+        type: array
+    required:
+    - executionTrend
+    - latencyTrend
+    - plans
+    type: object
+  sql.SqlDiagnoseInfo:
+    properties:
+      reason:
+        type: string
+      suggestion:
+        type: string
+    required:
+    - reason
+    type: object
+  sql.SqlFilter:
+    properties:
+      database:
+        type: string
+      endTime:
+        type: integer
+      includeInnerSql:
+        type: boolean
+      keyword:
+        type: string
+      namespace:
+        type: string
+      obcluster:
+        type: string
+      obtenant:
+        type: string
+      startTime:
+        type: integer
+      user:
+        type: string
+    required:
+    - namespace
+    - obcluster
+    type: object
+  sql.SqlInfo:
+    properties:
+      database:
+        type: string
+      diagnoseInfo:
+        items:
+          $ref: '#/definitions/sql.SqlDiagnoseInfo'
+        type: array
+      executionStatistics:
+        items:
+          $ref: '#/definitions/sql.SqlStatisticMetric'
+        type: array
+      isInner:
+        type: boolean
+      latencyStatistics:
+        items:
+          $ref: '#/definitions/sql.SqlStatisticMetric'
+        type: array
+      observer:
+        type: string
+      sqlID:
+        type: string
+      sqlText:
+        type: string
+      sqlType:
+        type: string
+      tenant:
+        type: string
+      user:
+        type: string
+    required:
+    - database
+    - executionStatistics
+    - isInner
+    - latencyStatistics
+    - observer
+    - sqlID
+    - sqlText
+    - sqlType
+    - tenant
+    - user
+    type: object
+  sql.SqlMetricMeta:
+    properties:
+      category:
+        $ref: '#/definitions/sql.MetricCategory'
+      description:
+        type: string
+      displayByDefault:
+        type: boolean
+      name:
+        type: string
+    required:
+    - category
+    - description
+    - displayByDefault
+    - name
+    type: object
+  sql.SqlMetricMetaCategory:
+    properties:
+      category:
+        $ref: '#/definitions/sql.MetricCategory'
+      metrics:
+        items:
+          $ref: '#/definitions/sql.SqlMetricMeta'
+        type: array
+    required:
+    - category
+    - metrics
+    type: object
+  sql.SqlRequestStatisticParam:
+    properties:
+      database:
+        type: string
+      endTime:
+        type: integer
+      namespace:
+        type: string
+      obcluster:
+        type: string
+      obtenant:
+        type: string
+      startTime:
+        type: integer
+      statisticScopes:
+        items:
+          type: string
+        type: array
+      user:
+        type: string
+    required:
+    - namespace
+    - obcluster
+    - statisticScopes
+    type: object
+  sql.SqlStatisticMetric:
+    properties:
+      name:
+        type: string
+      value:
+        type: number
+    required:
+    - name
+    - value
     type: object
 info:
   contact: {}
@@ -4027,6 +4596,273 @@ paths:
       summary: Get process info
       tags:
       - Info
+  /api/v1/inspection/policies:
+    get:
+      consumes:
+      - application/json
+      description: list inspection policies
+      operationId: ListInspectionPolicies
+      parameters:
+      - description: Namespace
+        in: query
+        name: namespace
+        type: string
+      - description: Object name
+        in: query
+        name: name
+        type: string
+      - description: obcluster name
+        in: query
+        name: obclusterName
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/inspection.Policy'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list inspection policies
+      tags:
+      - Inspection
+    put:
+      consumes:
+      - application/json
+      description: create or update inspection policy
+      operationId: CreateOrUpdateInspectionPolicy
+      parameters:
+      - description: inspection policy
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/inspection.Policy'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inspection.Policy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: create or update inspection policy
+      tags:
+      - Inspection
+  /api/v1/inspection/policies/{namespace}/{name}:
+    get:
+      consumes:
+      - application/json
+      description: get inspection policy
+      operationId: GetInspectionPolicy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inspection.Policy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get inspection policy
+      tags:
+      - Inspection
+  /api/v1/inspection/policies/{namespace}/{name}/{scenario}:
+    delete:
+      consumes:
+      - application/json
+      description: delete inspection policy
+      operationId: DeleteInspectionPolicy
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inspection.Policy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: delete inspection policy
+      tags:
+      - Inspection
+    post:
+      consumes:
+      - application/json
+      description: trigger inspection
+      operationId: TriggerInspection
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inspection.Policy'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: trigger inspection
+      tags:
+      - Inspection
+  /api/v1/inspection/reports:
+    get:
+      consumes:
+      - application/json
+      description: list inspection reports
+      operationId: ListInspectionReports
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/inspection.ReportBriefInfo'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list inspection reports
+      tags:
+      - Inspection
+  /api/v1/inspection/reports/{id}:
+    get:
+      consumes:
+      - application/json
+      description: get inspection report
+      operationId: GetInspectionReport
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/inspection.Report'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: get inspection report
+      tags:
+      - Inspection
   /api/v1/login:
     post:
       consumes:
@@ -5504,6 +6340,54 @@ paths:
       summary: Create backup policy of specific tenant
       tags:
       - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/databases:
+    get:
+      consumes:
+      - application/json
+      description: List all the databases under obtenant
+      operationId: ListOBTenantDatabases
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List obtenant databases
+      tags:
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/logreplay:
     post:
       consumes:
@@ -5926,6 +6810,54 @@ paths:
       summary: Change root password of specific tenant
       tags:
       - OBTenant
+  /api/v1/obtenants/{namespace}/{name}/users:
+    get:
+      consumes:
+      - application/json
+      description: List all the users under obtenant
+      operationId: ListOBTenantUsers
+      parameters:
+      - description: obtenant namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: obtenant name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    type: string
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: List obtenant users
+      tags:
+      - OBTenant
   /api/v1/obtenants/{namespace}/{name}/version:
     post:
       consumes:
@@ -6010,6 +6942,259 @@ paths:
       summary: List statistics information of tenants
       tags:
       - OBTenant
+  /api/v1/sql/metrics:
+    get:
+      consumes:
+      - application/json
+      description: list sqls metrics
+      operationId: ListSqlMetrics
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/sql.SqlMetricMetaCategory'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list sql metrics
+      tags:
+      - Sql
+  /api/v1/sql/queryPlanDetailInfo:
+    post:
+      consumes:
+      - application/json
+      description: query detailed statistic info of a plan
+      operationId: QueryPlanDetailInfo
+      parameters:
+      - description: param for query detailed plan info
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sql.PlanDetailParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/sql.PlanDetail'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: query plan detail info
+      tags:
+      - Sql
+  /api/v1/sql/querySqlDetailInfo:
+    post:
+      consumes:
+      - application/json
+      description: query detailed statistic info of a SQL
+      operationId: QuerySqlDetailInfo
+      parameters:
+      - description: param for query detailed sql info
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sql.SqlDetailParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/sql.SqlDetailedInfo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: query SQL detail info
+      tags:
+      - Sql
+  /api/v1/sql/requestStatistics:
+    post:
+      consumes:
+      - application/json
+      description: list request statistics
+      operationId: RequestStatistics
+      parameters:
+      - description: sql request statistic param
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sql.SqlRequestStatisticParam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/sql.RequestStatisticInfo'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list request statistics
+      tags:
+      - Sql
+  /api/v1/sql/suspiciousSqls:
+    post:
+      consumes:
+      - application/json
+      description: list suspicious sqls
+      operationId: ListSuspiciousSqls
+      parameters:
+      - description: sql filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sql.SqlFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/sql.SqlInfo'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list suspicious sqls
+      tags:
+      - Sql
+  /api/v1/sql/topSqls:
+    post:
+      consumes:
+      - application/json
+      description: list top sqls ordering by spcecific metrics
+      operationId: ListTopSqls
+      parameters:
+      - description: sql filter
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/sql.SqlFilter'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/sql.SqlInfo'
+                  type: array
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: list top sqls
+      tags:
+      - Sql
   /api/v1/statistics:
     get:
       consumes:

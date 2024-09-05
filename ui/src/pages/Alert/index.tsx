@@ -2,7 +2,7 @@ import { getSimpleClusterList } from '@/services';
 import { getAllTenants } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { Outlet, history, useModel } from '@umijs/max';
+import { Outlet, history, useAccess, useModel } from '@umijs/max';
 import type { TabsProps } from 'antd';
 import { Divider, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
@@ -65,6 +65,7 @@ const getInitialActiveKey = () => {
 
 export default function Alert() {
   const { setClusterList, setTenantList } = useModel('alarm');
+  const access = useAccess();
   const [activeKey, setActiveKey] = useState<string>(getInitialActiveKey());
   const onChange = (key: string) => {
     setActiveKey(key);
@@ -72,12 +73,14 @@ export default function Alert() {
   };
 
   useEffect(() => {
-    getSimpleClusterList().then(({ successful, data }) => {
-      if (successful) setClusterList(data);
-    });
-    getAllTenants().then(({ successful, data }) => {
-      if (successful) setTenantList(data);
-    });
+    if (access.obclusterread || access.obclusterwrite) {
+      getSimpleClusterList().then(({ successful, data }) => {
+        if (successful) setClusterList(data);
+      });
+      getAllTenants().then(({ successful, data }) => {
+        if (successful) setTenantList(data);
+      });
+    }
     const unlisten = history.listen(({ location }) => {
       const curKey =
         location.pathname.split('/')[location.pathname.split('/').length - 1];

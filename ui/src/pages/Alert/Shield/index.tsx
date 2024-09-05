@@ -204,7 +204,11 @@ export default function Shield() {
           <Button
             onClick={() => editShield(record.id)}
             style={{ paddingLeft: 0 }}
-            disabled={record.status.state === 'expired' || !access.alarmwrite}
+            disabled={
+              record.status.state === 'expired' ||
+              !access.alarmwrite ||
+              !access.obclusterread
+            }
             type="link"
           >
             {intl.formatMessage({
@@ -289,7 +293,7 @@ export default function Shield() {
           </h2>
         }
         extra={
-          access.alarmwrite ? (
+          access.alarmwrite && access.obclusterread ? (
             <Button type="primary" onClick={() => setDrawerOpen(true)}>
               {intl.formatMessage({
                 id: 'src.pages.Alert.Shield.65BD013B',

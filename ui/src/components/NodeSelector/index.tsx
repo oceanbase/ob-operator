@@ -4,6 +4,7 @@ import { Button, Col, Form, Row, Select } from 'antd';
 import _ from 'lodash';
 
 import { getNodeLabelsReq } from '@/services';
+import { useAccess } from '@umijs/max';
 import { useEffect, useRef, useState } from 'react';
 
 type ListType = { label: string; value: string };
@@ -18,6 +19,7 @@ export default function NodeSelector({
   formName,
   getNowNodeSelector,
 }: NodeSelectorProps) {
+  const access = useAccess();
   const [keyList, setKeyList] = useState<ListType[]>([]);
   const [valList, setValList] = useState<ListType[]>([]);
   const originLabels = useRef<{ key: string; value: string }[]>([]);
@@ -110,12 +112,14 @@ export default function NodeSelector({
     }
   };
   useEffect(() => {
-    const promise = getNodeLabelsReq();
-    promise.then((data) => {
-      setKeyList(data.key);
-      setValList(data.value);
-      originLabels.current = data.originLabels;
-    });
+    if (access.systemread || access.systemwrite) {
+      const promise = getNodeLabelsReq();
+      promise.then((data) => {
+        setKeyList(data.key);
+        setValList(data.value);
+        originLabels.current = data.originLabels;
+      });
+    }
   }, []);
   return (
     <Form.Item label={showLabel && 'nodeSelector'}>
@@ -175,12 +179,7 @@ export default function NodeSelector({
                     ]}
                   >
                     <Select
-                      onFocus={() =>
-                        handleFocusKey(
-                          selectorIdx,
-                          'value',
-                        )
-                      }
+                      onFocus={() => handleFocusKey(selectorIdx, 'value')}
                       showSearch
                       placeholder={intl.formatMessage({
                         id: 'OBDashboard.components.NodeSelector.PleaseSelect',

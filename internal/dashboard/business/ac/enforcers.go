@@ -58,3 +58,34 @@ func PathGuard(domain, resource, action string) EnforceFunc {
 		return true, nil
 	}
 }
+
+type unionLogic string
+
+const (
+	unionOr  unionLogic = "OR"
+	unionAnd unionLogic = "AND"
+)
+
+func unionHelper(logic unionLogic, enforces ...EnforceFunc) EnforceFunc {
+	allPass := logic == unionAnd
+	return func(c *gin.Context) (bool, error) {
+		for _, enforce := range enforces {
+			ok, err := enforce(c)
+			if err != nil {
+				return false, err
+			}
+			if ok == !allPass {
+				return !allPass, nil
+			}
+		}
+		return allPass, nil
+	}
+}
+
+func OR(enforces ...EnforceFunc) EnforceFunc {
+	return unionHelper(unionOr, enforces...)
+}
+
+func AND(enforces ...EnforceFunc) EnforceFunc {
+	return unionHelper(unionAnd, enforces...)
+}

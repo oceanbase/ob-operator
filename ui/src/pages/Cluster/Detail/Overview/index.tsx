@@ -158,14 +158,14 @@ const ClusterOverview: React.FC = () => {
         {clusterDetail && (
           <ServerTable servers={clusterDetail.servers as API.Server[]} />
         )}
-        {clusterDetail && (
+        {clusterDetail && (access.systemread || access.systemwrite) ? (
           <Col span={24}>
             <EventsTable
               objectType="OBCLUSTER"
               name={clusterDetail?.info?.name}
             />
           </Col>
-        )}
+        ) : null}
       </Row>
       <OperateModal
         type={modalType.current}

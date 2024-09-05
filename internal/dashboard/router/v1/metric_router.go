@@ -19,7 +19,12 @@ import (
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
+var metricGuard = acbiz.OR(
+	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", "read"),
+	acbiz.PathGuard(string(acbiz.DomainOBProxy), "*", "read"),
+)
+
 func InitMetricRoutes(g *gin.RouterGroup) {
-	g.GET("/metrics", h.Wrap(h.ListMetricMetas, acbiz.PathGuard("system", "*", "read")))
-	g.POST("/metrics/query", h.Wrap(h.QueryMetrics, acbiz.PathGuard("system", "*", "read")))
+	g.GET("/metrics", h.Wrap(h.ListMetricMetas, metricGuard))
+	g.POST("/metrics/query", h.Wrap(h.QueryMetrics, metricGuard))
 }

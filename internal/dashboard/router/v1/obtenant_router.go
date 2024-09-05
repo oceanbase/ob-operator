@@ -32,6 +32,8 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.POST("/obtenants/:namespace/:name/logreplay", h.Wrap(h.ReplayStandbyLog, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.POST("/obtenants/:namespace/:name/version", h.Wrap(h.UpgradeTenantVersion, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.POST("/obtenants/:namespace/:name/role", h.Wrap(h.ChangeTenantRole, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.GET("/obtenants/:namespace/:name/users", h.Wrap(h.ListOBTenantUsers, oceanbase.TenantGuard(":namespace", ":name", "read")))
+	g.GET("/obtenants/:namespace/:name/databases", h.Wrap(h.ListOBTenantDatabases, oceanbase.TenantGuard(":namespace", ":name", "read")))
 	g.GET("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.GetBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "read")))
 	g.PUT("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.CreateBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.PATCH("/obtenants/:namespace/:name/backupPolicy", h.Wrap(h.UpdateBackupPolicy, oceanbase.TenantGuard(":namespace", ":name", "write")))

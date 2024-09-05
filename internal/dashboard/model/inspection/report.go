@@ -22,13 +22,13 @@ type ResultStatistics struct {
 }
 
 type ReportBriefInfo struct {
-	Id               string             `json:"id" binding:"required"`
-	OBCluster        response.OBCluster `json:"obCluster" binding:"required"`
-	Scenario         InspectionScenario `json:"scenario" binding:"requried"`
-	ResultStatistics ResultStatistics   `json:"resultStatistics" binding:"required"`
-	Status           JobStatus          `json:"status" binding:"required"`
-	StartTime        int64              `json:"startTime,omitempty"`
-	FinishTime       int64              `json:"finishTime,omitempty"`
+	Id               string                 `json:"id" binding:"required"`
+	OBCluster        response.OBClusterMeta `json:"obCluster" binding:"required"`
+	Scenario         InspectionScenario     `json:"scenario" binding:"requried"`
+	ResultStatistics ResultStatistics       `json:"resultStatistics" binding:"required"`
+	Status           JobStatus              `json:"status" binding:"required"`
+	StartTime        int64                  `json:"startTime,omitempty"`
+	FinishTime       int64                  `json:"finishTime,omitempty"`
 }
 
 type InspectionItem struct {

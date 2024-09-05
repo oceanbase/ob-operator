@@ -16,12 +16,14 @@ import (
 	"github.com/gin-gonic/gin"
 
 	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
-	obbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
-func InitTerminalRoutes(g *gin.RouterGroup) {
-	g.PUT("/obclusters/namespace/:namespace/name/:name/terminal", h.Wrap(h.CreateOBClusterConnTerminal, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
-	g.PUT("/obtenants/:namespace/:name/terminal", h.Wrap(h.CreateOBTenantConnTerminal, obbiz.TenantGuard(":namespace", ":name", "write")))
-	g.GET("/terminal/:terminalId", h.Wrap(h.ConnectDatabase))
+func InitSqlRoutes(g *gin.RouterGroup) {
+	g.GET("/sql/metrics", h.Wrap(h.ListSqlMetrics, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/topSqls", h.Wrap(h.ListTopSqls, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/suspiciousSqls", h.Wrap(h.ListSuspiciousSqls, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/requestStatistics", h.Wrap(h.RequestStatistics, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/querySqlDetailInfo", h.Wrap(h.QuerySqlDetailInfo, acbiz.PathGuard("obcluster", "*", "read")))
+	g.POST("/sql/queryPlanDetailInfo", h.Wrap(h.QueryPlanDetailInfo, acbiz.PathGuard("obcluster", "*", "read")))
 }

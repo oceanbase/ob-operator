@@ -339,6 +339,9 @@ const LABELNAME_REG = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
 const VALIDATE_DEBOUNCE = 1000;
 
+// Greater than or equal to 1073741824 means no limit
+const MAX_IOPS = 1073741824;
+
 export {
   ALERT_STATE_MAP,
   BACKUP_RESULT_STATUS,
@@ -351,6 +354,7 @@ export {
   DEFAULT_QUERY_RANGE,
   LABELNAME_REG,
   LEVER_OPTIONS_ALARM,
+  MAX_IOPS,
   MINIMAL_CONFIG,
   MIN_RESOURCE_CONFIG,
   MODE_MAP,

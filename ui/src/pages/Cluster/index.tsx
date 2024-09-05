@@ -46,16 +46,14 @@ const ClusterPage: React.FC = () => {
           </Col>
         ) : null}
       </Row>
-      {access.systemread || access.systemwrite ? (
-        <MonitorComp
-          filterLabel={clusterNames}
-          queryScope="OBCLUSTER_OVERVIEW"
-          type="OVERVIEW"
-          groupLabels={['ob_cluster_name']}
-          queryRange={DEFAULT_QUERY_RANGE}
-          filterData={clusterList}
-        />
-      ) : null}
+      <MonitorComp
+        filterLabel={clusterNames}
+        queryScope="OBCLUSTER_OVERVIEW"
+        type="OVERVIEW"
+        groupLabels={['ob_cluster_name']}
+        queryRange={DEFAULT_QUERY_RANGE}
+        filterData={clusterList}
+      />
     </PageContainer>
   );
 };
