@@ -257,10 +257,6 @@ func (r *OBTenantOperation) validateMutation() error {
 		if r.Spec.UnitNumber == 0 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("unitNumber"), "unitNumber is required"))
 		}
-	case constants.TenantOpSetForceDelete:
-		if r.Spec.ForceDelete == nil {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("forceDelete"), "forceDelete is required"))
-		}
 	case constants.TenantOpSetConnectWhiteList:
 		if r.Spec.ConnectWhiteList == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("connectWhiteList"), "connectWhiteList is required"))
@@ -280,11 +276,11 @@ func (r *OBTenantOperation) validateMutation() error {
 			if !apierrors.IsNotFound(err) {
 				allErrs = append(allErrs, field.InternalError(field.NewPath("spec").Child("targetTenant"), err))
 			} else {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant does not exist"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant's cluster "+obtenant.Spec.ClusterName+" does not exist"))
 			}
 		}
 		if obcluster.Spec.Topology == nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant does not have a topology"))
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("targetTenant"), r.Spec.TargetTenant, "The target tenant's cluster "+obtenant.Spec.ClusterName+" does not have a topology"))
 		}
 		pools := make(map[string]any)
 		for _, pool := range obtenant.Spec.Pools {
@@ -295,12 +291,12 @@ func (r *OBTenantOperation) validateMutation() error {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The resource pool already exists"))
 			}
 		}
-		poolsInCluster := make(map[string]any, len(obcluster.Spec.Topology))
+		zonesInOBCluster := make(map[string]any, len(obcluster.Spec.Topology))
 		for _, zone := range obcluster.Spec.Topology {
-			poolsInCluster[zone.Zone] = struct{}{}
+			zonesInOBCluster[zone.Zone] = struct{}{}
 		}
 		for _, pool := range r.Spec.AddResourcePools {
-			if _, ok := poolsInCluster[pool.Zone]; !ok {
+			if _, ok := zonesInOBCluster[pool.Zone]; !ok {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The resource pool does not exist in the cluster"))
 			}
 		}
@@ -315,7 +311,7 @@ func (r *OBTenantOperation) validateMutation() error {
 		}
 		for _, pool := range r.Spec.ModifyResourcePools {
 			if _, ok := pools[pool.Zone]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("modifyResourcePools"), r.Spec.ModifyResourcePools, "The resource pool does not exist"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("modifyResourcePools"), r.Spec.ModifyResourcePools, "The target resource pool in zone "+pool.Zone+" does not exist"))
 			}
 		}
 	case constants.TenantOpDeleteResourcePools:
@@ -328,7 +324,7 @@ func (r *OBTenantOperation) validateMutation() error {
 		}
 		for _, pool := range r.Spec.DeleteResourcePools {
 			if _, ok := pools[pool]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("deleteResourcePools"), r.Spec.DeleteResourcePools, "The resource pool does not exist"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("deleteResourcePools"), r.Spec.DeleteResourcePools, "The target resource pool in zone "+pool+" does not exist"))
 			}
 		}
 	default:

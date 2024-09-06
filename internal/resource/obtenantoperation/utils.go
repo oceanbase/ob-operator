@@ -80,9 +80,9 @@ func (m *ObTenantOperationManager) retryUpdateTenant(obj *v1alpha1.OBTenant) err
 	})
 }
 
-type statusMatcher func(t *v1alpha1.OBTenant) bool
+type tenantConditionMatcher func(t *v1alpha1.OBTenant) bool
 
-func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, matcher statusMatcher) error {
+func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, matcher tenantConditionMatcher) error {
 	if m.Resource.Spec.TargetTenant == nil {
 		return errors.New("target tenant is nil")
 	}

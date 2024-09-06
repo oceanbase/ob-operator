@@ -359,8 +359,6 @@ func UpdateOBTenantResource(m *ObTenantOperationManager) tasktypes.TaskError {
 	switch m.Resource.Spec.Type {
 	case constants.TenantOpSetUnitNumber:
 		obtenant.Spec.UnitNumber = m.Resource.Spec.UnitNumber
-	case constants.TenantOpSetForceDelete:
-		obtenant.Spec.ForceDelete = *m.Resource.Spec.ForceDelete
 	case constants.TenantOpSetConnectWhiteList:
 		obtenant.Spec.ConnectWhiteList = m.Resource.Spec.ConnectWhiteList
 	case constants.TenantOpSetCharset:
@@ -403,11 +401,7 @@ func UpdateOBTenantResource(m *ObTenantOperationManager) tasktypes.TaskError {
 	}
 	newResourceVersion := obtenant.ResourceVersion
 	if oldResourceVersion == newResourceVersion {
-		m.Logger.Info("obcluster not changed")
-		return nil
-	}
-	if m.Resource.Spec.Type == constants.TenantOpSetForceDelete {
-		// This type of operation only affects the spec of the CRD, and the status won't change.
+		m.Logger.Info("obtenant not changed")
 		return nil
 	}
 	notRunningMatcher := func(t *v1alpha1.OBTenant) bool {

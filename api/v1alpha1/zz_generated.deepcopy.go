@@ -1195,6 +1195,13 @@ func (in *OBTenantOperationSpec) DeepCopyInto(out *OBTenantOperationSpec) {
 		*out = new(string)
 		**out = **in
 	}
+	if in.ModifyResourcePools != nil {
+		in, out := &in.ModifyResourcePools, &out.ModifyResourcePools
+		*out = make([]ResourcePoolSpec, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
 	if in.AddResourcePools != nil {
 		in, out := &in.AddResourcePools, &out.AddResourcePools
 		*out = make([]ResourcePoolSpec, len(*in))
@@ -1206,11 +1213,6 @@ func (in *OBTenantOperationSpec) DeepCopyInto(out *OBTenantOperationSpec) {
 		in, out := &in.DeleteResourcePools, &out.DeleteResourcePools
 		*out = make([]string, len(*in))
 		copy(*out, *in)
-	}
-	if in.ForceDelete != nil {
-		in, out := &in.ForceDelete, &out.ForceDelete
-		*out = new(bool)
-		**out = **in
 	}
 }
 

@@ -47,7 +47,6 @@ type OBTenantOperationSpec struct {
 	ModifyResourcePools []ResourcePoolSpec `json:"modifyResourcePools,omitempty"`
 	AddResourcePools    []ResourcePoolSpec `json:"addResourcePools,omitempty"`
 	DeleteResourcePools []string           `json:"deleteResourcePools,omitempty"`
-	ForceDelete         *bool              `json:"forceDelete,omitempty"`
 }
 
 type OBTenantOpSwitchoverSpec struct {
