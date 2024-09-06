@@ -9,4 +9,6 @@ func init() {
 	taskMap.Register(tSetTenantLogRestoreSource, SetTenantLogRestoreSource)
 	taskMap.Register(tUpgradeTenant, UpgradeTenant)
 	taskMap.Register(tReplayLogOfStandby, ReplayLogOfStandby)
+	taskMap.Register(tUpdateOBTenantResource, UpdateOBTenantResource)
+	taskMap.Register(tWaitForOBTenantReturnRunning, WaitForOBTenantReturnRunning)
 }
