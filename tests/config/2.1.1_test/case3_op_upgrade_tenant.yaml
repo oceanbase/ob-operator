@@ -1,0 +1,9 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  name: ${OP_UPGRADE_TENANT}
+  namespace: ${NAMESPACE}
+spec:
+  type: "UPGRADE"
+  targetTenant: ${OBTENANT_STANDBY_OSS} 
+

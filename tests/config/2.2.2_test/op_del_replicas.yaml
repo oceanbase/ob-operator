@@ -1,0 +1,12 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_DEL_REPLICAS}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: AdjustReplicas
+  adjustReplicas:
+    - zones: [zone1]
+      to: 1
+

@@ -1,0 +1,56 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${TENANT_WITH_THREE_NODE}
+  namespace: ${NS_DEFAULT}
+spec:
+  obcluster: ${OBCLUSTER_RECOVERY}
+  tenantName: ${TENANT_WITH_THREE_NODE}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: "%"
+  forceDelete: true
+  credentials:
+    root: ${OB_ROOT_SECRET}
+    standbyRo: ${OB_ROOT_SECRET}
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 10Gi
+    - zone: zone2
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 10Gi
+    - zone: zone3
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 10Gi
+

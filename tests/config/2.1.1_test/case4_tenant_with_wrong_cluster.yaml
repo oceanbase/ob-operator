@@ -1,0 +1,27 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: tenant-wrong-cluster
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: test-cluster-not-exist # which does not exist
+  tenantName: tenantwrongcluster
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 12Gi
+

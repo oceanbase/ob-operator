@@ -1,0 +1,34 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  labels:
+    ref-obcluster: ${OBCLUSTER_NAME}
+    app.kubernetes.io/name: obtenantbackuppolicy
+    app.kubernetes.io/instance: obtenantbackuppolicy-oss
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator
+  name: ${BACKUP_OSS_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  obClusterName: "${OBCLUSTER_NAME}"
+  #tenantName: "${OBTENANT_NAME}"
+  #tenantSecret: "${BACKUP_OSS_SERECT}"
+  tenantCRName: ${OBTENANT_NAME}
+  jobKeepWindow: "1d"
+  dataClean:
+    recoveryWindow: "8d"
+  logArchive:
+    destination:
+      type: "OSS"
+      path: "${OSS_HOST}/${OSS_ARCHIVE_PATH}?host=${OSS_AREA}"
+      ossAccessSecret: "${OSS_ACCESS}"
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "OSS"
+      path: "${OSS_HOST}/${OSS_BACPUP_PATH}?host=${OSS_AREA}"
+      ossAccessSecret: "${OSS_ACCESS}"
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"
+    encryptionSecret: "${BACK_ENCRYPTION_SERECT}"

@@ -1,0 +1,25 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  name: ${OBTENANT_DEFAULT_BACK_POLICY}
+  namespace: ${NS_DEFAULT}
+spec:
+  obClusterName: "${OBCLUSTER_DEFAULT_ONE}"
+  tenantCRName: "${TENANT_DEFAULT_ONE}"
+  jobKeepWindow: "1d"
+  dataClean:
+    recoveryWindow: "8d"
+  logArchive:
+    destination:
+      type: "OSS"
+      path: "${OSS_HOST}/${OSS_ARCHIVE_PATH}?host=${OSS_AREA}"
+      ossAccessSecret: "${OSS_ACCESS}"
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "OSS"
+      path: "${OSS_HOST}/${OSS_BACPUP_PATH}?host=${OSS_AREA}"
+      ossAccessSecret: "${OSS_ACCESS}"
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"
+

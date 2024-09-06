@@ -1,0 +1,30 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_NAME}
+  namespace: ${NAMESPACE}
+  annotations:
+    "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
+spec:
+  clusterName: ${OBCLUSTER_NAME}
+  clusterId: ${OB_CLUSTER_ID}
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  topology:
+    - zone: zone1
+      replica: 1
+  observer:
+    image: ${OB_IMAGE}
+    resource:
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+

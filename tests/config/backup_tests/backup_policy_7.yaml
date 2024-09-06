@@ -1,0 +1,32 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  labels:
+    ref-obcluster: ${OBCLUSTER_NAME}
+    app.kubernetes.io/name: obtenantbackuppolicy
+    app.kubernetes.io/instance: obtenantbackuppolicy-test
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator
+  name: ${OBTENANT_BACKUPPOLICY_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  obClusterName: ${OBCLUSTER_NAME}
+  suspend: true
+  tenantName: ${OBTENANT_NAME}
+  tenantSecret: ${BACKUP_ROOT_SECRET}
+  jobKeepWindow: "3d"
+  dataClean:
+    recoveryWindow: "14d"
+  logArchive:
+    destination:
+      type: "NFS"
+      path: ${LOG_ARCHIVE_CUSTOM}
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "NFS"
+      path: ${DATA_BACKUP_CUSTOM_MODIFY}
+    fullCrontab: "*/10 * * * *"
+    incrementalCrontab: "*/3 * * * *"
+

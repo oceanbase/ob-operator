@@ -1,0 +1,10 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBResourceRescue
+metadata:
+  generateName: ${RESCUE_RETRY}
+  namespace: ${NAMESPACE}
+spec:
+  targetKind: OBCluster
+  targetResName: ${OBCLUSTER_NAME_WRONG}
+  type: retry
+

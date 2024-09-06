@@ -1,0 +1,15 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_ADD_MONITOR}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: ModifyOBServers
+  modifyOBServers:
+    addingMonitor:
+      image: ${OBAGENT_IMAGE}
+      resource:
+        cpu: 1
+        memory: 1Gi
+

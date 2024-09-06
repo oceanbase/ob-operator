@@ -1,0 +1,11 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_RESTART_OBSERVERS}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: RestartOBServers
+  restartOBServers:
+    all: true
+
