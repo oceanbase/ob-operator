@@ -297,7 +297,7 @@ func (r *OBTenantOperation) validateMutation() error {
 		}
 		for _, pool := range r.Spec.AddResourcePools {
 			if _, ok := zonesInOBCluster[pool.Zone]; !ok {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The target zone " +pool.Zone+ " does not exist in the cluster"))
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("addResourcePools"), r.Spec.AddResourcePools, "The target zone "+pool.Zone+" does not exist in the cluster"))
 			}
 		}
 	case constants.TenantOpModifyResourcePools:
