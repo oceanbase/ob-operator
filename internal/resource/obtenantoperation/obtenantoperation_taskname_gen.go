@@ -11,4 +11,6 @@ const (
 	tSetTenantLogRestoreSource      ttypes.TaskName = "set tenant log restore source"
 	tUpgradeTenant                  ttypes.TaskName = "upgrade tenant"
 	tReplayLogOfStandby             ttypes.TaskName = "replay log of standby"
+	tUpdateOBTenantResource         ttypes.TaskName = "update obtenant resource"
+	tWaitForOBTenantReturnRunning   ttypes.TaskName = "wait for obtenant return running"
 )

@@ -58,16 +58,17 @@ func (m *ObTenantOperationManager) CheckAndUpdateFinalizers() error {
 
 func (m *ObTenantOperationManager) InitStatus() {
 	var err error
+	var tenant *v1alpha1.OBTenant
 	switch m.Resource.Spec.Type {
 	case constants.TenantOpChangePwd:
-		tenant, err := m.getTenantCR(m.Resource.Spec.ChangePwd.Tenant)
+		tenant, err = m.getTenantCR(m.Resource.Spec.ChangePwd.Tenant)
 		if err != nil {
 			m.Logger.Error(err, "Failed to find tenant")
 			break
 		}
 		m.Resource.Status.PrimaryTenant = tenant
 	case constants.TenantOpFailover:
-		tenant, err := m.getTenantCR(m.Resource.Spec.Failover.StandbyTenant)
+		tenant, err = m.getTenantCR(m.Resource.Spec.Failover.StandbyTenant)
 		if err != nil {
 			m.Logger.Error(err, "Failed to find activating tenant")
 			break
@@ -79,7 +80,7 @@ func (m *ObTenantOperationManager) InitStatus() {
 		}
 		m.Resource.Status.PrimaryTenant = tenant
 	case constants.TenantOpSwitchover:
-		tenant, err := m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)
+		tenant, err = m.getTenantCR(m.Resource.Spec.Switchover.PrimaryTenant)
 		if err != nil {
 			m.Logger.Error(err, "Failed to find primary tenant")
 			break
@@ -92,15 +93,12 @@ func (m *ObTenantOperationManager) InitStatus() {
 		m.Resource.Status.PrimaryTenant = tenant
 		m.Resource.Status.SecondaryTenant = standbyTenant
 	case constants.TenantOpUpgrade, constants.TenantOpReplayLog:
-		tenant, err := m.getTenantCR(*m.Resource.Spec.TargetTenant)
+		tenant, err = m.getTenantCR(*m.Resource.Spec.TargetTenant)
 		if err != nil {
 			m.Logger.Error(err, "Failed to find target tenant")
 			break
 		}
 		m.Resource.Status.PrimaryTenant = tenant
-	default:
-		err = errors.New("unknown tenant operation type")
-		m.Logger.Error(err, "InitStatus")
 	}
 	if err != nil {
 		m.PrintErrEvent(err)
@@ -192,6 +190,8 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			taskFlow = genUpgradeTenantFlow(m)
 		case constants.TenantOpReplayLog:
 			taskFlow = genReplayLogOfStandbyFlow(m)
+		default:
+			taskFlow = genUpdateOBTenantResourceFlow(m)
 		}
 	case constants.TenantOpReverting:
 		switch m.Resource.Spec.Type {
@@ -200,9 +200,7 @@ func (m *ObTenantOperationManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		default:
 			err = errors.New("unsupported operation type")
 		}
-	case constants.TenantOpSuccessful:
-		fallthrough
-	case constants.TenantOpFailed:
+	case constants.TenantOpSuccessful, constants.TenantOpFailed:
 		fallthrough
 	default:
 		return nil, nil

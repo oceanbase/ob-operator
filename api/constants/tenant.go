@@ -25,6 +25,13 @@ const (
 	TenantOpChangePwd  types.TenantOperationType = "CHANGE_PASSWORD"
 	TenantOpUpgrade    types.TenantOperationType = "UPGRADE"
 	TenantOpReplayLog  types.TenantOperationType = "REPLAY_LOG"
+
+	TenantOpSetUnitNumber       types.TenantOperationType = "SET_UNIT_NUMBER"
+	TenantOpSetConnectWhiteList types.TenantOperationType = "SET_CONNECT_WHITE_LIST"
+	TenantOpAddResourcePools    types.TenantOperationType = "ADD_RESOURCE_POOLS"
+	TenantOpDeleteResourcePools types.TenantOperationType = "DELETE_RESOURCE_POOLS"
+	TenantOpModifyResourcePools types.TenantOperationType = "MODIFY_RESOURCE_POOLS"
+	TenantOpSetCharset          types.TenantOperationType = "SET_CHARSET"
 )
 
 const (

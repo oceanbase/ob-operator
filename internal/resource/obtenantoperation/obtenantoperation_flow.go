@@ -108,3 +108,19 @@ func genReplayLogOfStandbyFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow 
 		},
 	}
 }
+
+func genUpdateOBTenantResourceFlow(_ *ObTenantOperationManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name: "update obtenant resource",
+			Tasks: []tasktypes.TaskName{
+				tUpdateOBTenantResource,
+				tWaitForOBTenantReturnRunning,
+			},
+			TargetStatus: string(constants.TenantOpSuccessful),
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: string(constants.TenantOpFailed),
+			},
+		},
+	}
+}
