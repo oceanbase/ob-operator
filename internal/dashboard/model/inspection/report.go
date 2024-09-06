@@ -12,7 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package inspection
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+)
 
 type ResultStatistics struct {
 	FailedCount     int `json:"failedCount"`
@@ -26,7 +29,7 @@ type ReportBriefInfo struct {
 	OBCluster        response.OBClusterMeta `json:"obCluster" binding:"required"`
 	Scenario         InspectionScenario     `json:"scenario" binding:"required"`
 	ResultStatistics ResultStatistics       `json:"resultStatistics" binding:"required"`
-	Status           JobStatus              `json:"status" binding:"required"`
+	Status           job.JobStatus          `json:"status" binding:"required"`
 	StartTime        int64                  `json:"startTime,omitempty"`
 	FinishTime       int64                  `json:"finishTime,omitempty"`
 }

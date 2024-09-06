@@ -77,14 +77,14 @@ func GetInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) {
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=inspection.Policy}
+// @Success 200 object response.APIResponse{data=bool}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/inspection/policies/{namespace}/{name}/{scenario} [DELETE]
 // @Security ApiKeyAuth
-func DeleteInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) {
-	return nil, errors.NewNotImplemented("")
+func DeleteInspectionPolicy(_ *gin.Context) (bool, error) {
+	return true, errors.NewNotImplemented("")
 }
 
 // @ID TriggerInspection

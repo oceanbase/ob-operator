@@ -3,7 +3,7 @@ import { createClusterReportWrap } from '@/services/reportRequest/clusterReportR
 import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
-import { useAccess, useNavigate } from '@umijs/max';
+import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Form, Row, message } from 'antd';
 import { useEffect, useState } from 'react';
@@ -18,7 +18,6 @@ import Topo from './Topo';
 
 export default function New() {
   const navigate = useNavigate();
-  const access = useAccess();
   const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState('');
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
@@ -76,9 +75,7 @@ export default function New() {
   };
 
   useEffect(() => {
-    if (access.systemread || access.systemwrite) {
-      fetchStorageClasses();
-    }
+    fetchStorageClasses();
   }, []);
   return (
     <PageContainer
