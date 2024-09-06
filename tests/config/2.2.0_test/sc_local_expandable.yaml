@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ${LOCAL_PATH_EXPANDABLE}
+  namespace: ${NAMESPACE}
+allowVolumeExpansion: true
+provisioner: rancher.io/local-path
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+

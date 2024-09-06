@@ -1,0 +1,14 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_ADD_ZONE}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: AddZones
+  addZones:
+    - zone: zone2
+      replica: 1
+    - zone: zone3
+      replica: 1
+

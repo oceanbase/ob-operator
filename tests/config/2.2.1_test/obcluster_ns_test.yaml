@@ -1,0 +1,35 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_OCEANBASE_TEST}
+  namespace: ${NS_OCEANBASE_TEST}
+spec:
+  clusterName: ${OBCLUSTER_OCEANBASE_TEST}
+  clusterId: ${CLUSTER_ID_TEST}
+  serviceAccount: "${SA_DEFAULT}"
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  topology:
+    - zone: zone1
+      replica: 1
+  observer:
+    image: ${OB_IMAGE}
+    resource:
+      cpu: 2
+      memory: 16Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 60Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 60Gi
+      logStorage:
+        storageClass: local-path
+        size: 60Gi
+  parameters:
+  - name: system_memory
+    value: 1G
+  - name: "__min_full_resource_pool_memory"
+    value: "2147483648" # 2G
+

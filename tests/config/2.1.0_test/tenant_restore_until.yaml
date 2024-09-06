@@ -1,0 +1,47 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${OBTENANT_STANDBY_OSS}
+  namespace: ${NAMESPACE} 
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${OBTENANT_STANDBY_OSS}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  tenantRole: STANDBY
+  credentials:
+    root: ${OBTENANT_ROOT_OSS_SECRET}
+    standbyRo: ${OBTENANT_STANDBY_OSS_SECRET}
+  source:
+    restore:
+      bakDataSource:
+        type: "OSS"
+        path: "${OSS_HOST}/${OSS_BACPUP_PATH}?host=${OSS_AREA}"
+        ossAccessSecret: "${OSS_ACCESS}"
+      archiveSource:
+        type: "OSS"
+        path: "${OSS_HOST}/${OSS_ARCHIVE_PATH}?host=${OSS_AREA}"
+        ossAccessSecret: "${OSS_ACCESS}"
+      bakEncryptionSecret: "${BACK_ENCRYPTION_SERECT}"
+      until:
+        timestamp: "${OSS_UNTIL_TIMESTAMP}"
+      replayEnabled: false
+      replayLogUntil:
+        unlimited: true
+    tenant: ${OBTENANT_NAME}
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1000m
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        logDiskSize: 5Gi
+

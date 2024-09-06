@@ -1,0 +1,17 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_ADD_BACK_VOL}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: ModifyOBServers
+  modifyOBServers:
+    addingBackupVolume:
+      volume:
+        name: backup
+        nfs:
+          server: ${NFS_SERVER}
+          path: ${NFS_BASE_PATH}
+          readOnly: false
+

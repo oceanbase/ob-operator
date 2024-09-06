@@ -1,0 +1,37 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${PRIMARY_RESTORES}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${OBTENANT_PRIMARY}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  tenantRole: PRIMARY
+  source:
+    restore:
+      sourceUri: "file:///ob-backup/${DATA_BACKUP_CUSTOM},file:///ob-backup/${LOG_ARCHIVE_CUSTOM}"
+      until:
+        unlimited: true
+      replayLogUntil:
+        unlimited: true
+  credentials:
+    root: ${BACKUP_ROOT_SECRET}
+    standbyRo: ${BACKUP_STANDBY_SECRET}
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        logDiskSize:
+
