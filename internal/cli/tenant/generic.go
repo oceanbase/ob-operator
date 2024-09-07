@@ -13,19 +13,14 @@ See the Mulan PSL v2 for more details.
 */
 package tenant
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
-// NewCmd is command for tenant management
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "tenant",
-		Short: "Command for tenant management",
-		Long:  `Command for tenant management, such as Create, Update, Delete.`,
-	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewListCmd())
-	return cmd
+type ResourceOptions struct {
+	Name      string
+	Namespace string
+}
+
+// AddFlags add basic flags for cluster management
+func (o *ResourceOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 }

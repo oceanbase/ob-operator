@@ -13,19 +13,18 @@ See the Mulan PSL v2 for more details.
 */
 package tenant
 
-import (
-	"github.com/spf13/cobra"
-)
+import "github.com/spf13/cobra"
 
-// NewCmd is command for tenant management
-func NewCmd() *cobra.Command {
+// NewListCmd list all ob tenants
+func NewListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "tenant",
-		Short: "Command for tenant management",
-		Long:  `Command for tenant management, such as Create, Update, Delete.`,
+		Use:     "list",
+		Short:   "List ob tenants",
+		Long:    `List ob tenants.`,
+		Aliases: []string{"ls", "l"},
+		Run: func(cmd *cobra.Command, args []string) {
+			// TODO: wait for development
+		},
 	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewListCmd())
 	return cmd
 }

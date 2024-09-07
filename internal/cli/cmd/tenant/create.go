@@ -11,32 +11,37 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
-	"github.com/spf13/cobra"
-
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/spf13/cobra"
 )
 
-// NewDeleteCmd delete ob cluster
-func NewDeleteCmd() *cobra.Command {
-	o := cluster.NewDeleteOptions()
+// NewCreateCmd create an ob tenant
+func NewCreateCmd() *cobra.Command {
+	o := tenant.NewCreateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "delete <cluster_name>",
-		Short:   "Delete ob cluster",
-		Aliases: []string{"d"},
-		Args:    cobra.ExactArgs(1),
+		Use:     "create <tenant_name>",
+		Short:   "Create ob tenant",
+		Aliases: []string{"c"},
 		PreRunE: o.Parse,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, o.Name)
-			if err != nil {
+			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob cluster %s success", o.Name)
+			if err := o.Validate(); err != nil {
+				logger.Fatalln(err)
+			}
+			_, err := tenant.CreateOBTenant(cmd.Context(), o)
+			if err != nil {
+				logger.Fatalln(oberr.NewInternal(err.Error()))
+			}
+			logger.Printf("Create obtenant instance: %s", o.TenantName)
 		},
 	}
 	o.AddFlags(cmd)

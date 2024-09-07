@@ -13,19 +13,10 @@ See the Mulan PSL v2 for more details.
 */
 package tenant
 
-import (
-	"github.com/spf13/cobra"
-)
+type DeleteOptions struct {
+	ResourceOptions
+}
 
-// NewCmd is command for tenant management
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "tenant",
-		Short: "Command for tenant management",
-		Long:  `Command for tenant management, such as Create, Update, Delete.`,
-	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewListCmd())
-	return cmd
+func NewDeleteOptions() *DeleteOptions {
+	return &DeleteOptions{}
 }

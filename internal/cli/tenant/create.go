@@ -1,0 +1,382 @@
+/*
+Copyright (c) 2024 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+
+	http://license.coscl.org.cn/MulanPSL2
+
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+package tenant
+
+import (
+	"context"
+	"math"
+	"strings"
+
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/clients/schema"
+	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
+)
+
+func NewCreateOptions() *CreateOptions {
+	return &CreateOptions{}
+}
+
+type CreateOptions struct {
+	ResourceOptions
+	Name             string `json:"name" binding:"required"`
+	ClusterName      string `json:"obcluster" binding:"required"`
+	TenantName       string `json:"tenantName" binding:"required"`
+	UnitNumber       int    `json:"unitNum" binding:"required"`
+	RootPassword     string `json:"rootPassword" binding:"required"`
+	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
+	Charset          string `json:"charset,omitempty"`
+
+	UnitConfig *param.UnitConfig        `json:"unitConfig" binding:"required"`
+	Pools      []param.ResourcePoolSpec `json:"pools" binding:"required"`
+
+	// Enum: Primary, Standby
+	TenantRole string                  `json:"tenantRole,omitempty"`
+	Source     *param.TenantSourceSpec `json:"source,omitempty"`
+	From       string                  `json:"from,omitempty"`
+}
+
+func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
+	o.Name = args[0]
+	return nil
+}
+
+func (o *CreateOptions) Validate() error {
+	return nil
+}
+
+func (o *CreateOptions) Complete() error {
+	if o.TenantName == "" {
+		o.TenantName = o.Name
+	}
+	return nil
+}
+
+func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, error) {
+	nn := types.NamespacedName{
+		Namespace: p.Namespace,
+		Name:      p.TenantName,
+	}
+	t, err := buildOBTenantApiType(nn, p)
+	if err != nil {
+		return nil, err
+	}
+	if p.RootPassword != "" {
+		t.Spec.Credentials.Root = p.Name + "-root-" + rand.String(6)
+	}
+
+	k8sclient := client.GetClient()
+
+	if p.Source != nil && p.Source.Tenant != nil {
+		// Check primary tenant
+		ns := nn.Namespace
+		tenantCR := *p.Source.Tenant
+		if strings.Contains(*p.Source.Tenant, "/") {
+			splits := strings.Split(*p.Source.Tenant, "/")
+			if len(splits) != 2 {
+				return nil, oberr.NewBadRequest("invalid tenant name")
+			}
+			ns, tenantCR = splits[0], splits[1]
+		}
+		existing, err := clients.GetOBTenant(ctx, types.NamespacedName{
+			Namespace: ns,
+			Name:      tenantCR,
+		})
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				return nil, oberr.NewBadRequest("primary tenant not found")
+			}
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
+			return nil, oberr.NewBadRequest("the target tenant is not primary tenant")
+		}
+
+		// Match root password
+		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if pwd, ok := rootSecret.Data["password"]; ok {
+			if p.RootPassword != string(pwd) {
+				return nil, oberr.NewBadRequest("root password not match")
+			}
+			if t.Spec.Credentials.Root != "" {
+				err = createPasswordSecret(ctx, types.NamespacedName{
+					Namespace: nn.Namespace,
+					Name:      t.Spec.Credentials.Root,
+				}, p.RootPassword)
+				if err != nil {
+					return nil, oberr.NewInternal(err.Error())
+				}
+			}
+		}
+
+		// Fetch standbyro password
+		standbyroSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.StandbyRO, v1.GetOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if pwd, ok := standbyroSecret.Data["password"]; ok {
+			t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
+			err = createPasswordSecret(ctx, types.NamespacedName{
+				Namespace: nn.Namespace,
+				Name:      t.Spec.Credentials.StandbyRO,
+			}, string(pwd))
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+	} else {
+		if t.Spec.Credentials.Root != "" {
+			err = createPasswordSecret(ctx, types.NamespacedName{
+				Namespace: nn.Namespace,
+				Name:      t.Spec.Credentials.Root,
+			}, p.RootPassword)
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+		t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
+		err = createPasswordSecret(ctx, types.NamespacedName{
+			Namespace: nn.Namespace,
+			Name:      t.Spec.Credentials.StandbyRO,
+		}, rand.String(32))
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+	}
+
+	if p.Source != nil && p.Source.Restore != nil {
+		if p.Source.Restore.BakEncryptionPassword != "" {
+			secretName := p.Name + "-bak-encryption-" + rand.String(6)
+			t.Spec.Source.Restore.BakEncryptionSecret = secretName
+			_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      secretName,
+					Namespace: nn.Namespace,
+				},
+				StringData: map[string]string{
+					"password": p.Source.Restore.BakEncryptionPassword,
+				},
+			}, v1.CreateOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+
+		if p.Source.Restore.OSSAccessID != "" && p.Source.Restore.OSSAccessKey != "" {
+			ossSecretName := p.Name + "-oss-access-" + rand.String(6)
+			t.Spec.Source.Restore.ArchiveSource.OSSAccessSecret = ossSecretName
+			t.Spec.Source.Restore.BakDataSource.OSSAccessSecret = ossSecretName
+			_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+				ObjectMeta: v1.ObjectMeta{
+					Name:      ossSecretName,
+					Namespace: nn.Namespace,
+				},
+				StringData: map[string]string{
+					"accessId":  p.Source.Restore.OSSAccessID,
+					"accessKey": p.Source.Restore.OSSAccessKey,
+				},
+			}, v1.CreateOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+		}
+	}
+
+	tenant, err := clients.CreateOBTenant(ctx, t)
+	if err != nil {
+		return nil, err
+	}
+	return tenant, nil
+}
+
+func buildOBTenantApiType(nn types.NamespacedName, p *CreateOptions) (*v1alpha1.OBTenant, error) {
+	t := &v1alpha1.OBTenant{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      nn.Name,
+			Namespace: nn.Namespace,
+		},
+		TypeMeta: v1.TypeMeta{
+			Kind:       schema.OBTenantKind,
+			APIVersion: schema.OBTenantGroup + "/" + schema.OBTenantVersion,
+		},
+		Spec: v1alpha1.OBTenantSpec{
+			ClusterName:      p.ClusterName,
+			TenantName:       p.TenantName,
+			UnitNumber:       p.UnitNumber,
+			Charset:          p.Charset,
+			ConnectWhiteList: p.ConnectWhiteList,
+			TenantRole:       apitypes.TenantRole(p.TenantRole),
+
+			// guard non-nil
+			Pools: []v1alpha1.ResourcePoolSpec{},
+		},
+	}
+
+	if len(p.Pools) == 0 {
+		return nil, oberr.NewBadRequest("pools is empty")
+	}
+	if p.UnitConfig == nil {
+		return nil, oberr.NewBadRequest("unit config is nil")
+	}
+
+	cpuCount, err := resource.ParseQuantity(p.UnitConfig.CPUCount)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+	}
+	memorySize, err := resource.ParseQuantity(p.UnitConfig.MemorySize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
+	}
+	logDiskSize, err := resource.ParseQuantity(p.UnitConfig.LogDiskSize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+	}
+	var maxIops, minIops int
+	if p.UnitConfig.MaxIops > math.MaxInt32 {
+		maxIops = math.MaxInt32
+	} else {
+		maxIops = int(p.UnitConfig.MaxIops)
+	}
+	if p.UnitConfig.MinIops > math.MaxInt32 {
+		minIops = math.MaxInt32
+	} else {
+		minIops = int(p.UnitConfig.MinIops)
+	}
+
+	t.Spec.Pools = make([]v1alpha1.ResourcePoolSpec, 0, len(p.Pools))
+	for i := range p.Pools {
+		apiPool := v1alpha1.ResourcePoolSpec{
+			Zone:       p.Pools[i].Zone,
+			Priority:   p.Pools[i].Priority,
+			Type:       &v1alpha1.LocalityType{},
+			UnitConfig: &v1alpha1.UnitConfig{},
+		}
+		apiPool.Type = &v1alpha1.LocalityType{
+			Name:     p.Pools[i].Type,
+			Replica:  1,
+			IsActive: true,
+		}
+		apiPool.UnitConfig = &v1alpha1.UnitConfig{
+			MaxCPU:      cpuCount,
+			MemorySize:  memorySize,
+			MinCPU:      cpuCount,
+			LogDiskSize: logDiskSize,
+			MaxIops:     maxIops,
+			MinIops:     minIops,
+			IopsWeight:  p.UnitConfig.IopsWeight,
+		}
+		t.Spec.Pools = append(t.Spec.Pools, apiPool)
+	}
+
+	if p.Source != nil {
+		t.Spec.Source = &v1alpha1.TenantSourceSpec{
+			Tenant: p.Source.Tenant,
+		}
+		if p.Source.Restore != nil {
+			t.Spec.Source.Restore = &v1alpha1.RestoreSourceSpec{
+				ArchiveSource: &apitypes.BackupDestination{},
+				BakDataSource: &apitypes.BackupDestination{},
+				// BakEncryptionSecret: p.Source.Restore.BakEncryptionSecret,
+				Until: v1alpha1.RestoreUntilConfig{},
+			}
+
+			t.Spec.Source.Restore.ArchiveSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
+			t.Spec.Source.Restore.ArchiveSource.Path = p.Source.Restore.ArchiveSource
+			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
+			t.Spec.Source.Restore.BakDataSource.Path = p.Source.Restore.BakDataSource
+
+			if p.Source.Restore.Until != nil && !p.Source.Restore.Until.Unlimited {
+				t.Spec.Source.Restore.Until.Timestamp = p.Source.Restore.Until.Timestamp
+			} else {
+				t.Spec.Source.Restore.Until.Unlimited = true
+			}
+		}
+	}
+	return t, nil
+}
+func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
+	k8sclient := client.GetClient()
+	_, err := k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      nn.Name,
+			Namespace: nn.Namespace,
+		},
+		StringData: map[string]string{
+			"password": password,
+		},
+	}, v1.CreateOptions{})
+	return err
+}
+
+func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
+	// Add base and unit flags.
+	o.AddBaseFlags(cmd)
+	o.AddUnitFlags(cmd)
+	o.AddZoneFlags(cmd)
+}
+
+func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
+	baseFlags := cmd.Flags()
+	baseFlags.StringVar(&o.Name, "name", "", "The name in k8s, if not specified, use tenant name")
+	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
+	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
+	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")
+	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
+	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
+	baseFlags.StringVar(&o.From, "from", "tenant", "restore from data source")
+	baseFlags.StringVar(&o.TenantRole, "role", "primary", "The role of tenant")
+}
+
+func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
+	zoneFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
+	cmd.Flags().AddFlagSet(zoneFlags)
+}
+
+// AddUnitFlags add unit flags
+func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
+	unitFlags := pflag.NewFlagSet("unit", pflag.ContinueOnError)
+	unitFlags.Int64Var(&o.UnitConfig.MaxIops, "max-iops", 1024, "The max iops of unit")
+	unitFlags.Int64Var(&o.UnitConfig.MinIops, "min-iops", 1024, "The min iops of unit")
+	unitFlags.IntVar(&o.UnitConfig.IopsWeight, "iops-weight", 1, "The iops weight of unit")
+	unitFlags.StringVar(&o.UnitConfig.CPUCount, "cpu-count", "1", "The cpu count of unit")
+	unitFlags.StringVar(&o.UnitConfig.MemorySize, "memory-size", "2Gi", "The memory size of unit")
+	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, "log-disk-size", "4Gi", "The log disk size of unit")
+	cmd.Flags().AddFlagSet(unitFlags)
+}
+
+// AddRestoreFlags add restore flags
+// func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
+// 	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
+// 	restoreFlags.StringVar(&o.Source.Restore.Type, "type", "oss", "The type of restore source")
+// 	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "", "The archive source of restore")
+// 	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "", "The bak data source of restore")
+// 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
+// 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
+// 	cmd.Flags().AddFlagSet(restoreFlags)
+// }
