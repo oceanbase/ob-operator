@@ -11,41 +11,43 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
 	"sort"
 
 	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewListCmd list all ob clusters
+// NewListCmd list all ob tenants
 func NewListCmd() *cobra.Command {
+	o := tenant.NewListOptions()
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "list",
-		Short:   "List ob clusters",
-		Long:    `List ob clusters.`,
+		Short:   "List ob tenants",
 		Aliases: []string{"ls", "l"},
 		Run: func(cmd *cobra.Command, args []string) {
-			obclusterList, err := clients.ListAllOBClusters(cmd.Context())
+			obtenantList, err := clients.ListAllOBTenants(cmd.Context(), o.Namespace, v1.ListOptions{})
 			if err != nil {
 				logger.Fatalln(err.Error())
 			}
-			sort.Slice(obclusterList.Items, func(i, j int) bool {
-				return obclusterList.Items[i].Name < obclusterList.Items[j].Name
+			sort.Slice(obtenantList.Items, func(i, j int) bool {
+				return obtenantList.Items[i].Name < obtenantList.Items[j].Name
 			})
-			if len(obclusterList.Items) == 0 {
-				logger.Println("No OBClusters found")
+			if len(obtenantList.Items) == 0 {
+				logger.Println("No OBTenants found")
 				return
 			}
-			tbLog.Println("NAMESPACE \t NAME \t CREATE TIME \t STATUS")
-			for _, cluster := range obclusterList.Items {
-				tbLog.Printf("%s \t %s \t %s \t %s\n", cluster.Namespace, cluster.Name, cluster.CreationTimestamp, cluster.Status.Status)
+			tbLog.Println("NAMESPACE \t NAME \t CLUSTERNAME \t TENANTNAME \t TENANTROLE \t CREATETIME \t STATUS")
+			for _, tenant := range obtenantList.Items {
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.ObjectMeta.Name, tenant.Spec.ClusterName, tenant.Spec.TenantName, tenant.Status.TenantRole, tenant.CreationTimestamp, tenant.Status.Status)
 			}
 			if err := tbw.Flush(); err != nil {
 				logger.Fatalln(err)

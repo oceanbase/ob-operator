@@ -11,48 +11,50 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewScaleCmd scale zones in ob cluster
-func NewScaleCmd() *cobra.Command {
-	o := cluster.NewScaleOptions()
+// NewChangePwdCmd changes password of an obtenant
+func NewChangePwdCmd() *cobra.Command {
+	o := tenant.NewChangePwdOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "scale <cluster_name>",
-		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"sa"},
-		Short:   "Scale ob cluster",
-		Long:    `Scale ob cluster, support add/adjust/delete of zones.`,
+		Use:     "changepwd <tenant_name> --password=<password>",
+		Short:   "Change password of an ob tenant",
 		PreRunE: o.Parse,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
-			if err != nil {
-				logger.Fatalln(err)
-			}
-			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
-				logger.Fatalln(err)
-			} else {
-				o.OldTopology = obcluster.Spec.Topology
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := o.Complete(); err != nil {
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
+				Name:      o.Name,
+				Namespace: o.Namespace,
+			})
+			if err != nil {
 				logger.Fatalln(err)
 			}
-			op := cluster.GetScaleOperation(o)
-			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
+			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obcluster %s success", op.Spec.OBCluster)
+			if err := tenant.GenerateNewPwd(cmd.Context(), o); err != nil {
+				logger.Fatalln(err)
+			} else {
+				logger.Println("New password generated success")
+			}
+			op := tenant.GetChangePwdOperation(o)
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
+				logger.Fatalln(err)
+			}
+			logger.Printf("Create changepwd operation for obtenant %s success", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

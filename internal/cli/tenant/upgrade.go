@@ -11,11 +11,9 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
-	"errors"
-
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -28,40 +26,31 @@ import (
 
 type UpgradeOptions struct {
 	generic.ResourceOptions
-	Image string `json:"image"`
+	force bool
 }
 
 func NewUpgradeOptions() *UpgradeOptions {
 	return &UpgradeOptions{}
 }
 
-// GetUpgradeOperation creates upgrade opertaions
-func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
-	upgradeOp := &v1alpha1.OBClusterOperation{
+func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBTenantOperation {
+	upgradeOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-upgrade-" + rand.String(6),
 			Namespace: o.Namespace,
-			Labels:    map[string]string{oceanbaseconst.LabelRefOBClusterOp: o.Name},
+			Labels:    map[string]string{oceanbaseconst.LabelRefOBTenantOp: o.Name},
 		},
-		Spec: v1alpha1.OBClusterOperationSpec{
-			OBCluster: o.Name,
-			Type:      apiconst.ClusterOpTypeUpgrade,
-			Upgrade:   &v1alpha1.UpgradeConfig{Image: o.Image},
+		Spec: v1alpha1.OBTenantOperationSpec{
+			Type:         apiconst.TenantOpUpgrade,
+			TargetTenant: &o.Name,
+			Force:        o.force,
 		},
 	}
 	return upgradeOp
 }
 
-func (o *UpgradeOptions) Validate() error {
-	if o.Image == "" {
-		return errors.New("image is required")
-	}
-	return nil
-}
-
-// AddFlags for upgrade options
+// AddFlags add basic flags for tenant management
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	// set image to null, avoid image downgrade
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
-	cmd.Flags().StringVar(&o.Image, "image", "", "The image of observer")
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
+	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 }

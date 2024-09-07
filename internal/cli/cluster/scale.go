@@ -23,13 +23,14 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 type ScaleOptions struct {
-	ResourceOptions
+	generic.ResourceOptions
 	Zones             map[string]string            `json:"zones"`
 	Topology          []param.ZoneTopology         `json:"topology"`
 	OldTopology       []apitypes.OBZoneTopology    `json:"oldTopology"`
@@ -138,7 +139,7 @@ func (o *ScaleOptions) Validate() error {
 		if !found {
 			typeAdd = true
 		}
-		if typeDelete && zoneNum-deleteNum < maxDeleteNum {
+		if typeDelete && deleteNum > maxDeleteNum {
 			return fmt.Errorf("Obcluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
 		}
 	}
@@ -156,7 +157,7 @@ func (o *ScaleOptions) Validate() error {
 		o.ScaleType = "addZones"
 	}
 	if trueCount > 1 {
-		return fmt.Errorf("Only one type of scale is allower at a time")
+		return fmt.Errorf("Only one type of scale is allowed at a time")
 	}
 	if trueCount == 0 {
 		return fmt.Errorf("No scale type specified")

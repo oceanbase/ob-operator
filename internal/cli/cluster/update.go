@@ -24,6 +24,7 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
@@ -31,7 +32,7 @@ import (
 )
 
 type UpdateOptions struct {
-	ResourceOptions
+	generic.ResourceOptions
 	Resource     common.ResourceSpec             `json:"resource"`
 	Storage      *param.OBServerStorageSpec      `json:"storage"`
 	UpdateType   string                          `json:"updateType"`
@@ -44,8 +45,8 @@ func NewUpdateOptions() *UpdateOptions {
 	}
 }
 
-// GetUpdateOperations creates update opertaions
-func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBClusterOperation {
+// GetUpdateOperation creates update opertaions
+func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBClusterOperation {
 	updateOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-update-" + rand.String(6),

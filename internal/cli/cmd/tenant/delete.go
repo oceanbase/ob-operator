@@ -11,32 +11,36 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewDeleteCmd delete ob cluster
+// NewDeleteCmd delete ob tenant
 func NewDeleteCmd() *cobra.Command {
-	o := cluster.NewDeleteOptions()
+	o := tenant.NewDeleteOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "delete <cluster_name>",
-		Short:   "Delete ob cluster",
+		Use:     "delete <tenant_name>",
+		Short:   "Delete ob tenant",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, o.Name)
+			err := clients.DeleteOBTenant(cmd.Context(), types.NamespacedName{
+				Namespace: o.Namespace,
+				Name:      o.Name,
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob cluster %s success", o.Name)
+			logger.Printf("Delete ob tenant %s success", o.Name)
 		},
 	}
 	o.AddFlags(cmd)
