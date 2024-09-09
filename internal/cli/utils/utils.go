@@ -100,7 +100,7 @@ func CheckPassword(password string) bool {
 // MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
-		return nil, fmt.Errorf("Zone value is required") // 无效的zone信息
+		return nil, fmt.Errorf("Zone value is required")
 	}
 	topology := make([]param.ZoneTopology, 0)
 	for zoneName, replicaStr := range zones {
@@ -117,6 +117,18 @@ func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 		})
 	}
 	return topology, nil
+}
+
+// MapParameters map --parameters to parameters
+func MapParameters(parameters map[string]string) ([]common.KVPair, error) {
+	kvMap := make([]common.KVPair, 0)
+	for k, v := range parameters {
+		kvMap = append(kvMap, common.KVPair{
+			Key:   k,
+			Value: v,
+		})
+	}
+	return kvMap, nil
 }
 
 // GenerateRandomPassword generated random password in range [minLength,maxLength]
