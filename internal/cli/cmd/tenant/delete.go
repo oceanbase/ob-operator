@@ -30,6 +30,7 @@ func NewDeleteCmd() *cobra.Command {
 		Short:   "Delete ob tenant",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
+		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			nn := types.NamespacedName{
 				Namespace: o.Namespace,
