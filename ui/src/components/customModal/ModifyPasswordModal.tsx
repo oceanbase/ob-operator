@@ -1,10 +1,12 @@
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { changeTenantPassword } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { passwordRules } from '@/utils';
 import { useParams } from '@umijs/max';
 import { Form, Input, message } from 'antd';
 
 import CustomModal from '.';
+
 
 type FieldType = {
   Password: string;
@@ -69,15 +71,7 @@ export default function ModifyPasswordModal({
             defaultMessage: '输入新密码',
           })}
           name="password"
-          rules={[
-            {
-              required: true,
-              message: intl.formatMessage({
-                id: 'Dashboard.components.customModal.ModifyPasswordModal.PleaseEnter',
-                defaultMessage: '请输入',
-              }),
-            },
-          ]}
+          rules={passwordRules}
         >
           <Input.Password
             placeholder={intl.formatMessage({

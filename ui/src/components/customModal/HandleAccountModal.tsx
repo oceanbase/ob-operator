@@ -3,12 +3,14 @@ import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
 import { intl } from '@/utils/intl';
+import { passwordRules } from '@/utils';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import CustomModal from '.';
+
 
 interface HandleRoleModalProps {
   visible: boolean;
@@ -28,6 +30,7 @@ export default function HandleAccountModal({
   const [form] = Form.useForm();
   const { refresh } = useModel('@@initialState');
   const publicKey = usePublicKey();
+
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -198,15 +201,7 @@ export default function HandleAccountModal({
 
         {type === Type.CREATE && (
           <Form.Item
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'src.components.customModal.5B73A2BF',
-                  defaultMessage: '请输入',
-                }),
-              },
-            ]}
+            rules={passwordRules}
             label={intl.formatMessage({
               id: 'src.components.customModal.966B1EBB',
               defaultMessage: '密码',

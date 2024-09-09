@@ -2,7 +2,7 @@ import IconTip from '@/components/IconTip';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { resourceNameRule } from '@/constants/rules';
-import { passwordRules } from '@/pages/Cluster/New/helper';
+import { passwordRules } from '@/utils';
 import { getSimpleClusterList } from '@/services';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
