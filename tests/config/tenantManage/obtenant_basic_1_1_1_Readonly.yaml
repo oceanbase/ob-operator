@@ -1,0 +1,39 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${OBTENANT_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${OBTENANT_NAME}
+  unitNum: 1
+  charset: utf8mb4
+  collate:
+  connectWhiteList: '%'
+  forceDelete: true
+  pools:
+    - zone: zone1
+      type:
+        name: FUll
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+    - zone: zone2
+      type:
+        name: Readonly
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+    - zone: zone3
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+

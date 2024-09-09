@@ -1,0 +1,53 @@
+clusterName: obcluster
+clusterId: 1
+
+obAgentVersion: 4.2.1-100000092023101717
+
+annotations: 
+  # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
+  # "oceanbase.oceanbase.com/single-pvc": "true"
+  # "oceanbase.oceanbase.com/mode": "standalone"
+
+storageClass: local-path
+
+observerConfig:
+  resource:
+    cpu: 2
+    memory: 10Gi
+  storages:
+    dataStorage: 50Gi
+    redoLogStorage: 50Gi
+    logStorage: 20Gi
+
+monitorEnabled: true
+monitorResource:
+  cpu: 500m
+  memory: 2Gi
+
+parameters:
+  - name: system_memory
+    value: 2G
+  - name: "__min_full_resource_pool_memory"
+    value: "2147483648" # 2G
+
+backupVolumeEnabled: false # set true and config volume if you want to enable backup volume
+backupVolume:
+  nfs:
+    server: 1.1.1.1
+    path: /opt/nfs
+    readOnly: false
+
+generateUserSecrets: true # if set true, all system user secrets will be generated automatically
+userSecrets:
+  root: ob-user-root
+  proxyro: ob-user-proxyro
+  monitor: ob-user-monitor
+  operator: ob-user-operator
+
+topology:
+  - zone: zone1
+    replica: 1
+  # - zone: zone2
+  #   replica: 1
+  # - zone: zone3
+  #   replica: 1

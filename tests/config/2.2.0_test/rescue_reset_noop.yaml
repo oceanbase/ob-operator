@@ -1,0 +1,11 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBResourceRescue
+metadata:
+  generateName: ${RESCUE_RESET_NOOP}
+  namespace: ${NAMESPACE}
+spec:
+  targetKind: OBTenant
+  targetResName: ${OBTENANT_NAME}
+  type: reset
+  targetStatus: noop
+

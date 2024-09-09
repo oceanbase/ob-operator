@@ -1,0 +1,29 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${TENANT_PRIMARY}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${TENANT_PRIMARY}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  credentials:
+    standbyRo: ${SERECT_DOES_NOT_EXIT}
+  pools:
+    - zone: zone1
+      type:
+        name: FUll
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 10Gi
+

@@ -1,0 +1,16 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  labels:
+    ref-obcluster: ${OBCLUSTER_NAME}
+    app.kubernetes.io/name: obtenantoperation
+    app.kubernetes.io/instance: op-activate
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator
+  name: ${OP_ACTIVATE}
+  namespace: ${NAMESPACE}
+spec:
+  type: "FAILOVER"
+  failover:
+    standbyTenant: "${OBTENANT_STANDBY}"

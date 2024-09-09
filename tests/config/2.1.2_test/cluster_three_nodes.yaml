@@ -1,0 +1,41 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_NAME_THREE_NODE}
+  namespace: ${NAMESPACE}
+spec:
+  clusterId: 1
+  clusterName: ${OBCLUSTER_NAME_THREE_NODE}
+  observer:
+    image: ${OB_IMAGE_STANDALONE}
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        size: 50Gi
+        storageClass: local-path
+      logStorage:
+        size: 20Gi
+        storageClass: local-path
+      redoLogStorage:
+        size: 50Gi
+        storageClass: local-path
+  topology:
+  - replica: 1
+    zone: zone1
+  - replica: 1
+    zone: zone2
+  - replica: 1
+    zone: zone3
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  monitor:
+    image: ${OBAGENT_IMAGE}
+    resource:
+      cpu: 1
+      memory: 1Gi
+  parameters:
+    - name: system_memory
+      value: 2G
+

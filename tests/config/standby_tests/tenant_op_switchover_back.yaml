@@ -1,0 +1,18 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  labels:
+    ref-obcluster: ${OBCLUSTER_NAME}
+    app.kubernetes.io/name: obtenantoperation
+    app.kubernetes.io/instance: op-switchover
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator
+  name: ${OP_SWITCHOVER_BACK}
+  namespace: ${NAMESPACE}
+spec:
+  type: "SWITCHOVER"
+  switchover:
+    primaryTenant: "${OBTENANT_STANDBY_EMPTY}"
+    standbyTenant: "${OBTENANT_NAME}"
+

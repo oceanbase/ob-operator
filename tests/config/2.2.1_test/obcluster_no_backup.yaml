@@ -1,0 +1,37 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_RECOVERY}
+  namespace: ${NS_DEFAULT}
+  annotations:
+    "oceanbase.oceanbase.com/mode": "service"
+spec:
+  clusterName: ${OBCLUSTER_RECOVERY}
+  clusterId: ${CLUSTER_ID_RECOVERY}
+  serviceAccount: "${SA_DEFAULT}"
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  topology:
+    - zone: zone1
+      replica: 1
+  observer:
+    image: ${OB_IMAGE}
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 30Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 30Gi
+      logStorage:
+        storageClass: local-path
+        size: 30Gi
+  parameters:
+  - name: system_memory
+    value: 1G
+  - name: "__min_full_resource_pool_memory"
+    value: "2147483648" # 2G
+

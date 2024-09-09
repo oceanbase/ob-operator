@@ -1,0 +1,14 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_SET_PARAMETERS}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: SetParameters
+  setParameters:
+    - name: __min_full_resource_pool_memory
+      value: "3221225472"
+    - name: enable_syslog_recycle
+      value: "True"
+

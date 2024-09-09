@@ -1,0 +1,31 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_NAME_NO_SC}
+  namespace: ${NAMESPACE}
+  annotations:
+    oceanbase.oceanbase.com/mode: "service"
+spec:
+  clusterId: 1
+  clusterName: ${OBCLUSTER_NAME_NO_SC}
+  serviceAccount: "${NAMESPACE}"
+  observer:
+    image: ${OB_IMAGE}
+    resource:
+      memory: 10Gi
+    storage:
+      dataStorage:
+        size: 50Gi
+      logStorage:
+        size: 20Gi
+      redoLogStorage:
+        size: 50Gi
+  topology:
+  - replica: 1
+    zone: zone1
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  parameters:
+    - name: system_memory
+      value: 2G
+

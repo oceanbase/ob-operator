@@ -1,0 +1,13 @@
+apiVersion: "oceanbase.oceanbase.com/v1alpha1"
+kind: OBClusterOperation
+metadata:
+  generateName: ${OP_SCALE_RESOURCE}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  type: ModifyOBServers
+  modifyOBServers:
+    resource:
+      cpu: 3
+      memory: 11Gi
+

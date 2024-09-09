@@ -1,0 +1,33 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${OBTENANT_STANDBY_EMPTY}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${OBTENANT_STANDBY_EMPTY}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  credentials:
+    root: ${BACKUP_ROOT_SECRET}
+    standbyRo: ${BACKUP_STANDBY_SECRET}
+  source:
+    tenant: ${OBTENANT_NAME}
+  tenantRole: STANDBY
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1000m
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize:
+

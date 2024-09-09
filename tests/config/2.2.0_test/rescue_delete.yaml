@@ -1,0 +1,10 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBResourceRescue
+metadata:
+  generateName: ${RESCUE_DELETE}
+  namespace: ${NAMESPACE}
+spec:
+  targetKind: OBTenant
+  targetResName: ${OBTENANT_NAME}
+  type: delete
+

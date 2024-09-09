@@ -1,0 +1,18 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  labels:
+    ref-obcluster: ${OBCLUSTER_NAME}
+    app.kubernetes.io/name: obtenantoperation
+    app.kubernetes.io/instance: op-chg-pwd
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ob-operator
+  name: ${OP_CHG_PWD}
+  namespace: ${NAMESPACE}
+spec:
+  type: "CHANGE_PASSWORD"
+  changePwd:
+    tenant: "${OBTENANT_NAME}"
+    secretRef: "${TENANT_PWD_NEW}"
+

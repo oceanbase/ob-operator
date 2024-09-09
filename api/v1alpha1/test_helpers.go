@@ -207,7 +207,7 @@ func newTenantOperation(tenantName string) *OBTenantOperation {
 			ChangePwd:       &OBTenantOpChangePwdSpec{},
 			ReplayUntil:     &RestoreUntilConfig{},
 			TargetTenant:    &tenantName,
-			AuxillaryTenant: &tenantName,
+			AuxiliaryTenant: &tenantName,
 		},
 	}
 }

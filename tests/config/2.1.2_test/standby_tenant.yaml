@@ -1,0 +1,30 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${TENANT_STANDBY}
+  namespace: ${NAMESPACE}
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${TENANT_STANDBY}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  source:
+    tenant: ${TENANT_PRIMARY}
+  tenantRole: Standby
+  pools:
+    - zone: zone1
+      type:
+        name: FUll
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 5Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 5Gi
+
