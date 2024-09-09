@@ -2645,6 +2645,8 @@ spec:
                 type: integer
               clusterName:
                 type: string
+              k8sCluster:
+                type: string
               monitorTemplate:
                 properties:
                   image:

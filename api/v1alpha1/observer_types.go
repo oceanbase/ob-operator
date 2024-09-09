@@ -44,6 +44,7 @@ type OBServerSpec struct {
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 	//+kubebuilder:default=default
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+	K8sCluster     string `json:"k8sCluster,omitempty"`
 }
 
 // OBServerStatus defines the observed state of OBServer
