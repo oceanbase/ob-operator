@@ -126,7 +126,7 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 		},
 		Spec: observerPodSpec,
 	}
-	err = m.Client.Create(m.Ctx, observerPod)
+	err = m.K8sResClient.Create(m.Ctx, observerPod)
 	if err != nil {
 		m.Logger.Error(err, "failed to create pod")
 		return errors.Wrap(err, "failed to create pod")
@@ -166,7 +166,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			},
 			Spec: m.generatePVCSpec(storageSpec),
 		}
-		err := m.Client.Create(m.Ctx, pvc)
+		err := m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
 			return errors.Wrap(err, "Create single pvc of observer")
 		}
@@ -181,7 +181,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			ObjectMeta: objectMeta,
 			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
 		}
-		err := m.Client.Create(m.Ctx, pvc)
+		err := m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
 			return errors.Wrap(err, "Create pvc of data file")
 		}
@@ -196,7 +196,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			ObjectMeta: objectMeta,
 			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
 		}
-		err = m.Client.Create(m.Ctx, pvc)
+		err = m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
 			return errors.Wrap(err, "Create pvc of data log")
 		}
@@ -211,7 +211,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			ObjectMeta: objectMeta,
 			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
 		}
-		err = m.Client.Create(m.Ctx, pvc)
+		err = m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
 			return errors.Wrap(err, "Create pvc of log")
 		}
@@ -259,7 +259,7 @@ func AnnotateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 		m.Logger.Info("Update pod annotation, cni is calico")
 		observerPod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 	}
-	err = m.Client.Update(m.Ctx, observerPod)
+	err = m.K8sResClient.Update(m.Ctx, observerPod)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to update pod annotation of observer %s", m.OBServer.Name)
 	}
@@ -277,7 +277,7 @@ func UpgradeOBServerImage(m *OBServerManager) tasktypes.TaskError {
 			break
 		}
 	}
-	err = m.Client.Update(m.Ctx, observerPod)
+	err = m.K8sResClient.Update(m.Ctx, observerPod)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to update pod of observer %s", m.OBServer.Name)
 	}
@@ -383,7 +383,7 @@ func DeletePod(m *OBServerManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
 	}
-	err = m.Client.Delete(m.Ctx, pod)
+	err = m.K8sResClient.Delete(m.Ctx, pod)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to delete pod of observer %s", m.OBServer.Name)
 	}
@@ -395,7 +395,7 @@ func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.Info("Wait for observer pod being deleted")
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
-		err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
+		err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
 		if err != nil && kubeerrors.IsNotFound(err) {
 			return nil
 		}
@@ -413,19 +413,19 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 		switch pvc.Name {
 		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size
-			err = m.Client.Update(m.Ctx, &pvc)
+			err = m.K8sResClient.Update(m.Ctx, &pvc)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
 			}
 		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-			err = m.Client.Update(m.Ctx, &pvc)
+			err = m.K8sResClient.Update(m.Ctx, &pvc)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
 			}
 		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size
-			err = m.Client.Update(m.Ctx, &pvc)
+			err = m.K8sResClient.Update(m.Ctx, &pvc)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
 			}
@@ -435,7 +435,7 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = sum
-			err = m.Client.Update(m.Ctx, &pvc)
+			err = m.K8sResClient.Update(m.Ctx, &pvc)
 			if err != nil {
 				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
 			}
@@ -520,7 +520,7 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 				}},
 			},
 		}
-		err := m.Client.Create(m.Ctx, svc)
+		err := m.K8sResClient.Create(m.Ctx, svc)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to create observer service")
 		}

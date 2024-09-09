@@ -12,9 +12,17 @@ See the Mulan PSL v2 for more details.
 
 package schema
 
-const (
-	Group   = "oceanbase.oceanbase.com"
-	Version = "v1alpha1"
+import "k8s.io/apimachinery/pkg/runtime/schema"
 
-	VersionV1Alpha2 = "v1alpha2"
+const (
+	K8sClusterCredentialKind     = "K8sClusterCredential"
+	K8sClusterCredentialResource = "k8sclustercredentials"
+)
+
+var (
+	K8sClusterCredentialRes = schema.GroupVersionResource{
+		Group:    Group,
+		Version:  VersionV1Alpha2,
+		Resource: K8sClusterCredentialResource,
+	}
 )

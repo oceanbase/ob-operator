@@ -14,6 +14,7 @@ package clients
 
 import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha2"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -29,4 +30,6 @@ var (
 	RescueClient           = client.NewDynamicResourceClient[*v1alpha1.OBResourceRescue](schema.OBResourceRescueGVR, schema.OBResourceRescueKind)
 	RestoreJobClient       = client.NewDynamicResourceClient[*v1alpha1.OBTenantRestore](schema.OBTenantRestoreGVR, schema.OBTenantRestoreKind)
 	ClusterOperationClient = client.NewDynamicResourceClient[*v1alpha1.OBClusterOperation](schema.OBClusterOperationGVR, schema.OBClusterOperationKind)
+
+	K8sClusterCredentialClient = client.NewDynamicResourceClient[*v1alpha2.K8sClusterCredential](schema.K8sClusterCredentialRes, schema.K8sClusterCredentialKind)
 )

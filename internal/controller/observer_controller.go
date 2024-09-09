@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clientcache"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resobserver "github.com/oceanbase/ob-operator/internal/resource/observer"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -80,11 +81,25 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// create observer manager
 	observerManager := &resobserver.OBServerManager{
-		Ctx:      ctx,
-		OBServer: observer,
-		Client:   r.Client,
-		Logger:   &logger,
-		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+		Ctx:          ctx,
+		OBServer:     observer,
+		Client:       r.Client,
+		Logger:       &logger,
+		Recorder:     telemetry.NewRecorder(ctx, r.Recorder),
+		K8sResClient: r.Client,
+	}
+
+	if observer.Spec.K8sCluster != "" {
+		// clt, err := m.k8sResClient()
+		// if err != nil {
+		// 	return nil, err
+		// }
+		resClient, err := clientcache.GetCachedCtrlRuntimeClientFromK8sCluster(ctx, observer.Spec.K8sCluster)
+		if err != nil {
+			logger.Error(err, "Failed to get get client from k8s cluster "+observer.Spec.K8sCluster)
+			return ctrl.Result{}, err
+		}
+		observerManager.K8sResClient = resClient
 	}
 
 	// execute finalizers

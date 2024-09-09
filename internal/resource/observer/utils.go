@@ -69,7 +69,7 @@ func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedNa
 func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 	// this label always exists
 	pod := &corev1.Pod{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
+	err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
 	if err != nil {
 		return nil, errors.Wrap(err, "get pod")
 	}
@@ -78,7 +78,7 @@ func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 
 func (m *OBServerManager) getSvc() (*corev1.Service, error) {
 	svc := &corev1.Service{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+	err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 	if err != nil {
 		return nil, errors.Wrap(err, "get svc")
 	}
@@ -140,7 +140,7 @@ func (m *OBServerManager) setRecoveryStatus() {
 
 func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
-	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
+	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
 	if err != nil {
 		return nil, errors.Wrap(err, "list pvc")
 	}

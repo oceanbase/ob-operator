@@ -27,4 +27,6 @@ const (
 	LabelSecondaryTenant = "oceanbase.oceanbase.com/secondary-tenant"
 	LabelBackupType      = "oceanbase.oceanbase.com/backup-type"
 	LabelOBServerUID     = "oceanbase.oceanbase.com/observer-uid"
+
+	LabelK8sCluster = "oceanbase.oceanbase.com/k8s-cluster"
 )
