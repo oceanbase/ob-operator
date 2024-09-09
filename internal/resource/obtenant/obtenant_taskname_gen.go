@@ -23,6 +23,6 @@ const (
 	tCheckAndApplyWhiteList          ttypes.TaskName = "check and apply white list"
 	tCheckAndApplyPrimaryZone        ttypes.TaskName = "check and apply primary zone"
 	tCheckAndApplyLocality           ttypes.TaskName = "check and apply locality"
-	tCreateUserWithCredentialSecrets ttypes.TaskName = "create user with credential secrets"
 	tOptimizeTenantByScenario        ttypes.TaskName = "optimize tenant by scenario"
+	tCreateUserWithCredentialSecrets ttypes.TaskName = "create user with credential secrets"
 )
