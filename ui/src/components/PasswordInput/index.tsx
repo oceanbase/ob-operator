@@ -1,7 +1,9 @@
 import {
   generateRandomPassword,
-  passwordRules,
 } from '@/pages/Cluster/New/helper';
+import {
+  passwordRules,
+} from '@/utils';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
 import { Button, Col, Form, Input, Row, Tooltip, message } from 'antd';
