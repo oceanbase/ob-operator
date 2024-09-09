@@ -11,22 +11,34 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package generic
 
 import (
-	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"errors"
+
 	"github.com/spf13/cobra"
 )
 
-type DeleteOptions struct {
-	generic.ResourceOptions
+type ResourceOptions struct {
+	Name      string
+	Namespace string
 }
 
-func NewDeleteOptions() *DeleteOptions {
-	return &DeleteOptions{}
+// Parse the args in obocli
+func (o *ResourceOptions) Parse(_ *cobra.Command, args []string) error {
+	o.Name = args[0]
+	return nil
 }
 
-// AddFlags add basic flags for cluster management
-func (o *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
+// Complete the unset params in options
+func (o *ResourceOptions) Complete() error {
+	return nil
+}
+
+// Validate the params in options
+func (o *ResourceOptions) Validate() error {
+	if o.Namespace == "" {
+		return errors.New("namespace not specified")
+	}
+	return nil
 }

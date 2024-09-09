@@ -22,11 +22,12 @@ import (
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 type UpgradeOptions struct {
-	ResourceOptions
+	generic.ResourceOptions
 	Image string `json:"image"`
 }
 

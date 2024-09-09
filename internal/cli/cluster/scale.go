@@ -23,13 +23,14 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 type ScaleOptions struct {
-	ResourceOptions
+	generic.ResourceOptions
 	Zones             map[string]string            `json:"zones"`
 	Topology          []param.ZoneTopology         `json:"topology"`
 	OldTopology       []apitypes.OBZoneTopology    `json:"oldTopology"`

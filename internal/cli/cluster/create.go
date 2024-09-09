@@ -28,13 +28,14 @@ import (
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
 type CreateOptions struct {
-	ResourceOptions
+	generic.ResourceOptions
 	ClusterName  string               `json:"clusterName"`
 	ClusterId    int64                `json:"clusterId"`
 	RootPassword string               `json:"rootPassword"`
@@ -44,6 +45,7 @@ type CreateOptions struct {
 	Parameters   []modelcommon.KVPair `json:"parameters"`
 	BackupVolume *param.NFSVolumeSpec `json:"backupVolume"`
 	Zones        map[string]string    `json:"zones"`
+	KvParameters map[string]string    `json:"kvParameters"`
 	Mode         string               `json:"mode"`
 }
 
@@ -73,6 +75,11 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	parameters, err := utils.MapParameters(o.KvParameters)
+	if err != nil {
+		return err
+	}
+	o.Parameters = parameters
 	o.Topology = topology
 	o.Name = args[0]
 	return nil
@@ -93,11 +100,12 @@ func (o *CreateOptions) Complete() error {
 	return nil
 }
 
+// AddFlags adds base and specific feature flags, Only support observer and zone config
 func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
-	// Add base and specific feature flags, Only support observer and zone config
 	o.AddBaseFlags(cmd)
 	o.AddObserverFlags(cmd)
 	o.AddZoneFlags(cmd)
+	o.AddParameterFlags(cmd)
 }
 
 // AddZoneFlags adds the zone-related flags to the command.
@@ -147,6 +155,13 @@ func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 	backupVolumeFlags.StringVar(&o.BackupVolume.Address, "backup-storage-class", "local-path", "The storage class of the backup storage")
 	backupVolumeFlags.StringVar(&o.BackupVolume.Path, "backup-storage-size", "/opt/nfs", "The size of the backup storage")
 	cmd.Flags().AddFlagSet(backupVolumeFlags)
+}
+
+// AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
+func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
+	parameterFlags := pflag.NewFlagSet("parameters", pflag.ContinueOnError)
+	parameterFlags.StringToStringVar(&o.KvParameters, "parameters", map[string]string{"__min_full_resource_pool_memory": "2147483648", "system_memory": "1G"}, "Other parameter settings in obcluster, e.g., __min_full_resource_pool_memory")
+	cmd.Flags().AddFlagSet(parameterFlags)
 }
 
 func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerTemplate {
