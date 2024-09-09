@@ -1,9 +1,5 @@
-import {
-  generateRandomPassword,
-} from '@/pages/Cluster/New/helper';
-import {
-  passwordRules,
-} from '@/utils';
+import { generateRandomPassword } from '@/pages/Cluster/New/helper';
+import { passwordRules } from '@/utils';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
 import { Button, Col, Form, Input, Row, Tooltip, message } from 'antd';
@@ -116,15 +112,13 @@ export default function PasswordInput({
                 {intl.formatMessage({
                   id: 'Dashboard.components.PasswordInput.PleaseRememberThePasswordOr',
                   defaultMessage: '请牢记密码，也可',
-                })}
-                {' '}
+                })}{' '}
                 <a onClick={passwordCopy}>
                   {intl.formatMessage({
                     id: 'Dashboard.components.PasswordInput.CopyPassword',
                     defaultMessage: '复制密码',
                   })}
-                </a>
-                {' '}
+                </a>{' '}
                 {intl.formatMessage({
                   id: 'Dashboard.components.PasswordInput.AndKeepItProperly',
                   defaultMessage: '并妥善保存',

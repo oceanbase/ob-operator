@@ -1,6 +1,5 @@
 import { intl } from '@/utils/intl';
 
-
 export const passwordRules = [
   {
     required: true,

@@ -1,11 +1,11 @@
 import { access } from '@/api';
 import type { ParamResetPasswordParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { passwordRules } from '@/utils';
 import { intl } from '@/utils/intl';
 import { Form, Input, message } from 'antd';
 import { omit } from 'lodash';
 import CustomModal from '.';
-import { passwordRules } from '@/utils';
 
 interface ResetPwdModalProps {
   visible: boolean;
@@ -116,7 +116,7 @@ export default function ResetPwdModal({
                 }
                 return Promise.resolve();
               },
-            }), 
+            }),
           ]}
           label={intl.formatMessage({
             id: 'src.components.customModal.7F950CE6',

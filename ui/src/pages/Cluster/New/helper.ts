@@ -1,5 +1,4 @@
-
-function generateRandomPassword() {
+export function generateRandomPassword() {
   const length = Math.floor(Math.random() * 25) + 8; // 生成8到32之间的随机长度
   const characters =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#%^&*_-+=|(){}[]:;,.?/`$"<>'; // 可用字符集合
@@ -40,5 +39,3 @@ function generateRandomPassword() {
 
   return password;
 }
-
-export { generateRandomPassword};

@@ -1,12 +1,11 @@
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { changeTenantPassword } from '@/services/tenant';
-import { intl } from '@/utils/intl';
 import { passwordRules } from '@/utils';
+import { intl } from '@/utils/intl';
 import { useParams } from '@umijs/max';
 import { Form, Input, message } from 'antd';
 
 import CustomModal from '.';
-
 
 type FieldType = {
   Password: string;

@@ -2,15 +2,14 @@ import { access } from '@/api';
 import type { AcAccount, AcCreateAccountParam } from '@/api/generated';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { Type } from '@/pages/Access/type';
-import { intl } from '@/utils/intl';
 import { passwordRules } from '@/utils';
+import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Form, Input, Select, message } from 'antd';
 import { omit } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import CustomModal from '.';
-
 
 interface HandleRoleModalProps {
   visible: boolean;
