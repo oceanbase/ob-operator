@@ -13,17 +13,45 @@ See the Mulan PSL v2 for more details.
 */
 package tenant
 
-import "github.com/spf13/cobra"
+import (
+	"sort"
+
+	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
 
 // NewListCmd list all ob tenants
 func NewListCmd() *cobra.Command {
+	o := tenant.NewListOptions()
+	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
+	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List ob tenants",
 		Long:    `List ob tenants.`,
 		Aliases: []string{"ls", "l"},
 		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: wait for development
+			obtenantList, err := clients.ListAllOBTenants(cmd.Context(), o.Namespace, v1.ListOptions{})
+			if err != nil {
+				logger.Fatalln(err.Error())
+			}
+			sort.Slice(obtenantList.Items, func(i, j int) bool {
+				return obtenantList.Items[i].Name < obtenantList.Items[j].Name
+			})
+			if len(obtenantList.Items) == 0 {
+				logger.Println("No ob tenants found")
+				return
+			}
+			tbLog.Println("Namespace \t Cluster Name \t Name \t Create Time \t Status")
+			for _, tenant := range obtenantList.Items {
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.Spec.ClusterName, tenant.Name, tenant.CreationTimestamp, tenant.Status.Status)
+			}
+			if err := tbw.Flush(); err != nil {
+				logger.Fatalln(err)
+			}
 		},
 	}
 	return cmd

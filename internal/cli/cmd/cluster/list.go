@@ -40,7 +40,7 @@ func NewListCmd() *cobra.Command {
 				return obclusterList.Items[i].Name < obclusterList.Items[j].Name
 			})
 			if len(obclusterList.Items) == 0 {
-				logger.Println("No clusters found")
+				logger.Println("No ob clusters found")
 				return
 			}
 			tbLog.Println("Namespace \t Name \t Create Time \t Status")
