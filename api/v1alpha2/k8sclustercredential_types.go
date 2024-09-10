@@ -37,8 +37,9 @@ type K8sClusterCredentialStatus struct {
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster,shortName=kcc
 
 // K8sClusterCredential is the Schema for the k8sclustercredentials API
 type K8sClusterCredential struct {
