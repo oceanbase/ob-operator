@@ -1,16 +1,13 @@
 ##@ cli
 
 PROJECT=oceanbase-cli
-PROCESSOR=4
-PWD ?= $(shell pwd)
 CLI_VERSION ?= 0.1.0
 CLI_IMG ?= quay.io/oceanbase/oceanbase-cli:${CLI_VERSION}
 
-BUILD_FLAG      := -p $(PROCESSOR)
-GOBUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build $(BUILD_FLAG)
+CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build
 .PHONY: cli-build
 cli-build: cli-bindata-gen cli-dep-install # Build oceanbase-cli
-	$(GOBUILD) -o bin/obocli cmd/cli/main.go
+	$(CLI_BUILD) -o bin/obocli cmd/cli/main.go
 
 .PHONY: cli-bindata-gen
 cli-bindata-gen: # Generate bindata
@@ -28,7 +25,7 @@ cli-dep-install: # Install oceanbase-cli deps
 	
 .PHONY : cli-run
 cli-run: ## Run oceanbase-cli in dev mode
-	go run $(BUILD_FLAG) ./cmd/cli/main.go
+	go run -p 4 ./cmd/cli/main.go
 
 .PHONY: cli-docker-build
 cli-docker-build: cli-bindata-gen ## build oceanbase-cli image
