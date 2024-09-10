@@ -21,6 +21,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -523,6 +524,29 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 		err := m.K8sResClient.Create(m.Ctx, svc)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to create observer service")
+		}
+	}
+	return nil
+}
+
+func CheckAndCreateNs(m *OBServerManager) tasktypes.TaskError {
+	if m.OBServer.Spec.K8sCluster != "" {
+		ns := &corev1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: m.OBServer.Namespace,
+			},
+		}
+		err := m.K8sResClient.Get(m.Ctx, types.NamespacedName{Name: m.OBServer.Namespace}, ns)
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				m.Logger.Info("Create namespace", "namespace", m.OBServer.Namespace, "k8sCluster", m.OBServer.Spec.K8sCluster)
+				err = m.K8sResClient.Create(m.Ctx, ns)
+				if err != nil {
+					return errors.Wrapf(err, "Failed to create namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sCluster)
+				}
+			} else {
+				return errors.Wrapf(err, "Failed to get namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sCluster)
+			}
 		}
 	}
 	return nil

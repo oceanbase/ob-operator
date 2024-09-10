@@ -51,7 +51,7 @@ func GetCachedCtrlRuntimeClientFromK8sCluster(ctx context.Context, k8sCluster st
 	return GetCachedCtrlRuntimeClient(ctx, &cred)
 }
 
-func GetCachedCtrlRuntimeClientFromName(ctx context.Context, credentialName string) (ctrlruntime.Client, error) {
+func GetCachedCtrlRuntimeClientFromCredName(ctx context.Context, credentialName string) (ctrlruntime.Client, error) {
 	cred, err := clients.K8sClusterCredentialClient.Get(ctx, "", credentialName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get k8s cluster credential")

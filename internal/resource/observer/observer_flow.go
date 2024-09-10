@@ -22,7 +22,7 @@ func genPrepareOBServerForBootstrapFlow(_ *OBServerManager) *tasktypes.TaskFlow 
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "prepare observer for bootstrap",
-			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady},
+			Tasks:        []tasktypes.TaskName{tCheckAndCreateNs, tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady},
 			TargetStatus: serverstatus.BootstrapReady,
 		},
 	}
@@ -42,7 +42,7 @@ func genCreateOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "create observer",
-			Tasks:        []tasktypes.TaskName{tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
+			Tasks:        []tasktypes.TaskName{tCheckAndCreateNs, tCreateOBServerSvc, tCreateOBServerPVC, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: "Failed",
@@ -75,7 +75,7 @@ func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "recover observer",
-			Tasks:        []tasktypes.TaskName{tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
+			Tasks:        []tasktypes.TaskName{tCheckAndCreateNs, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				Strategy: strategy.RetryFromCurrent,
