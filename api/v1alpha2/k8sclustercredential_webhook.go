@@ -21,14 +21,12 @@ import (
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/api/resource/v1alpha2"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -66,7 +64,7 @@ func (r *K8sClusterCredential) validateMutation() (admission.Warnings, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get config from kubeconfig field of %s", r.Name)
 	}
-	client, err := k8sclient.GetCtrlRuntimeClient(config, v1alpha1.AddToScheme, v1alpha2.AddToScheme)
+	client, err := k8sclient.GetCtrlRuntimeClient(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create k8s client")
 	}

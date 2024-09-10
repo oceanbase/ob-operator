@@ -37,6 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha2"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
@@ -313,6 +314,15 @@ func (r *OBCluster) validateMutation() error {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology"), r.Spec.Topology, "empty topology is not permitted"))
 	}
 
+	for i := range r.Spec.Topology {
+		topo := &r.Spec.Topology[i]
+		if topo.K8sCluster != "" {
+			if err := validateK8sClusterCredential(topo.K8sCluster); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology").Index(i).Child("k8sCluster"), topo.K8sCluster, err.Error()))
+			}
+		}
+	}
+
 	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
 	}
@@ -498,4 +508,12 @@ func validateStorageClassAllowExpansion(storageClassName string) error {
 		return fmt.Errorf("storage class %s does not allow volume expansion", storageClassName)
 	}
 	return nil
+}
+
+func validateK8sClusterCredential(credName string) error {
+	cred := &v1alpha2.K8sClusterCredential{}
+	return clt.Get(context.Background(), types.NamespacedName{
+		Namespace: "",
+		Name:      credName,
+	}, cred)
 }

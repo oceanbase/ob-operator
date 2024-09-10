@@ -287,7 +287,44 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
 		SchedulerName:      resourceutils.GetSchedulerName(m.OBServer.Spec.OBServerTemplate.PodFields),
 	}
+	podFields := m.OBServer.Spec.OBServerTemplate.PodFields
+	if podFields != nil {
+		if podFields.PriorityClassName != nil && *podFields.PriorityClassName != "" {
+			podSpec.PriorityClassName = *podFields.PriorityClassName
+		}
+		if podFields.RuntimeClassName != nil && *podFields.RuntimeClassName != "" {
+			podSpec.RuntimeClassName = podFields.RuntimeClassName
+		}
+		if podFields.PreemptionPolicy != nil && *podFields.PreemptionPolicy != "" {
+			podSpec.PreemptionPolicy = podFields.PreemptionPolicy
+		}
+		if podFields.Priority != nil {
+			podSpec.Priority = podFields.Priority
+		}
+		if podFields.SecurityContext != nil {
+			podSpec.SecurityContext = podFields.SecurityContext
+		}
+		if podFields.DNSPolicy != nil && *podFields.DNSPolicy != "" {
+			podSpec.DNSPolicy = *podFields.DNSPolicy
+		}
+	}
 	return podSpec
+}
+
+func (m *OBServerManager) getVarsReplacer(obcluster *v1alpha1.OBCluster) *strings.Replacer {
+	replacePairs := []string{
+		"${observer-name}", m.OBServer.Name,
+		"${obzone-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBZone],
+		"${obcluster-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBZone],
+	}
+
+	if obcluster != nil {
+		replacePairs = append(replacePairs,
+			"${obcluster-cluster-name}", obcluster.Spec.ClusterName,
+			"${obcluster-cluster-id}", string(obcluster.Spec.ClusterId),
+		)
+	}
+	return strings.NewReplacer(replacePairs...)
 }
 
 func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) corev1.Container {

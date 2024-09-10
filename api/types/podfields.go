@@ -12,6 +12,20 @@ See the Mulan PSL v2 for more details.
 
 package types
 
+import corev1 "k8s.io/api/core/v1"
+
 type PodFieldsSpec struct {
 	SchedulerName *string `json:"schedulerName,omitempty"`
+
+	PriorityClassName *string                    `json:"priorityClassName,omitempty"`
+	RuntimeClassName  *string                    `json:"runtimeClassName,omitempty"`
+	PreemptionPolicy  *corev1.PreemptionPolicy   `json:"preemptionPolicy,omitempty"`
+	Priority          *int32                     `json:"priority,omitempty"`
+	SecurityContext   *corev1.PodSecurityContext `json:"securityContext,omitempty"`
+	DNSPolicy         *corev1.DNSPolicy          `json:"dnsPolicy,omitempty"`
+	HostName          *string                    `json:"hostName,omitempty"`
+	Subdomain         *string                    `json:"subdomain,omitempty"`
+
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
 }

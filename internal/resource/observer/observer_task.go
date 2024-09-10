@@ -114,9 +114,29 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	annotations := m.generateStaticIpAnnotation()
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	observerPodSpec := m.createOBPodSpec(obcluster)
-	// create pod
 	originLabels := m.OBServer.Labels
 	originLabels[oceanbaseconst.LabelOBServerUID] = string(m.OBServer.UID)
+
+	podFields := m.OBServer.Spec.OBServerTemplate.PodFields
+	varsReplacer := m.getVarsReplacer(obcluster)
+	if podFields.HostName != nil && *podFields.HostName != "" {
+		observerPodSpec.Hostname = varsReplacer.Replace(*podFields.HostName)
+	}
+	if podFields.Subdomain != nil && *podFields.Subdomain != "" {
+		observerPodSpec.Subdomain = varsReplacer.Replace(*podFields.Subdomain)
+	}
+	for k := range podFields.Labels {
+		if _, exist := originLabels[k]; !exist {
+			originLabels[k] = varsReplacer.Replace(podFields.Labels[k])
+		}
+	}
+	for k := range podFields.Annotations {
+		if _, exist := annotations[k]; !exist {
+			annotations[k] = varsReplacer.Replace(podFields.Annotations[k])
+		}
+	}
+
+	// create pod
 	observerPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            m.OBServer.Name,
