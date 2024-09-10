@@ -118,21 +118,23 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	originLabels[oceanbaseconst.LabelOBServerUID] = string(m.OBServer.UID)
 
 	podFields := m.OBServer.Spec.OBServerTemplate.PodFields
-	varsReplacer := m.getVarsReplacer(obcluster)
-	if podFields.HostName != nil && *podFields.HostName != "" {
-		observerPodSpec.Hostname = varsReplacer.Replace(*podFields.HostName)
-	}
-	if podFields.Subdomain != nil && *podFields.Subdomain != "" {
-		observerPodSpec.Subdomain = varsReplacer.Replace(*podFields.Subdomain)
-	}
-	for k := range podFields.Labels {
-		if _, exist := originLabels[k]; !exist {
-			originLabels[k] = varsReplacer.Replace(podFields.Labels[k])
+	if podFields != nil {
+		varsReplacer := m.getVarsReplacer(obcluster)
+		if podFields.HostName != nil && *podFields.HostName != "" {
+			observerPodSpec.Hostname = varsReplacer.Replace(*podFields.HostName)
 		}
-	}
-	for k := range podFields.Annotations {
-		if _, exist := annotations[k]; !exist {
-			annotations[k] = varsReplacer.Replace(podFields.Annotations[k])
+		if podFields.Subdomain != nil && *podFields.Subdomain != "" {
+			observerPodSpec.Subdomain = varsReplacer.Replace(*podFields.Subdomain)
+		}
+		for k := range podFields.Labels {
+			if _, exist := originLabels[k]; !exist {
+				originLabels[k] = varsReplacer.Replace(podFields.Labels[k])
+			}
+		}
+		for k := range podFields.Annotations {
+			if _, exist := annotations[k]; !exist {
+				annotations[k] = varsReplacer.Replace(podFields.Annotations[k])
+			}
 		}
 	}
 
