@@ -38,13 +38,6 @@ type OBTenantOperationReconciler struct {
 	Recorder record.EventRecorder
 }
 
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantoperations,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantoperations/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantoperations/finalizers,verbs=update
-
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenant,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenant/status,verbs=get;update;patch
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 //
