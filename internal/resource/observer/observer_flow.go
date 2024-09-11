@@ -55,7 +55,7 @@ func genDeleteOBServerFinalizerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "delete observer finalizer",
-			Tasks:        []tasktypes.TaskName{tDeleteOBServerInCluster, tWaitOBServerDeletedInCluster},
+			Tasks:        []tasktypes.TaskName{tDeleteOBServerInCluster, tWaitOBServerDeletedInCluster, tCleanOwnedResources},
 			TargetStatus: serverstatus.FinalizerFinished,
 		},
 	}

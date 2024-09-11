@@ -21,4 +21,5 @@ const (
 	tWaitForPvcResized            ttypes.TaskName = "wait for pvc resized"
 	tCreateOBServerSvc            ttypes.TaskName = "create observer svc"
 	tCheckAndCreateNs             ttypes.TaskName = "check and create ns"
+	tCleanOwnedResources          ttypes.TaskName = "clean owned resources"
 )

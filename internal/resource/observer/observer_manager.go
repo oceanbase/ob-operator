@@ -177,6 +177,15 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 		finalizerFinished = m.OBServer.Status.Status == serverstatus.FinalizerFinished
 	}
 	if finalizerFinished {
+		if !m.inMasterK8s() {
+			err = m.cleanWorkerK8sResource()
+			if err != nil {
+				m.Logger.Error(err, "failed to clean resources in worker k8s cluster",
+					"observer", m.OBServer.Name,
+					"k8sCluster", m.OBServer.Spec.K8sCluster,
+				)
+			}
+		}
 		m.Logger.Info("Finalizer finished")
 		m.OBServer.ObjectMeta.Finalizers = make([]string, 0)
 		err := m.Client.Update(m.Ctx, m.OBServer)
