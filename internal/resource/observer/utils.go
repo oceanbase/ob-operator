@@ -645,7 +645,7 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to get svc"))
 		}
 	} else {
-		if err := m.Client.Delete(m.Ctx, svc); err != nil {
+		if err := m.K8sResClient.Delete(m.Ctx, svc); err != nil {
 			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete svc"))
 		}
 	}
@@ -659,14 +659,14 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to get pod"))
 		}
 	} else {
-		if err := m.Client.Delete(m.Ctx, pod); err != nil {
+		if err := m.K8sResClient.Delete(m.Ctx, pod); err != nil {
 			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete pod"))
 		}
 	}
 
 	// delete pvc
 	pvc := &corev1.PersistentVolumeClaim{}
-	if err := m.Client.DeleteAllOf(m.Ctx, pvc,
+	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
 		client.InNamespace(m.OBServer.Namespace),
 		client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]},
 	); err != nil {
