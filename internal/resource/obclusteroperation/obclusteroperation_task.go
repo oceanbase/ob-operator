@@ -23,6 +23,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clientcache"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
@@ -327,7 +328,15 @@ func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
 
 	for _, observer := range restartingServers {
 		pod := corev1.Pod{}
-		err = m.Client.Get(m.Ctx, types.NamespacedName{
+		clt := m.Client
+		if !observer.InMasterK8s() {
+			clt, err = clientcache.GetCachedCtrlRuntimeClientFromCredName(m.Ctx, observer.Spec.K8sCluster)
+			if err != nil {
+				m.Logger.Error(err, "Failed to get client")
+				return err
+			}
+		}
+		err = clt.Get(m.Ctx, types.NamespacedName{
 			Namespace: observer.Namespace,
 			Name:      observer.Name,
 		}, &pod)

@@ -117,3 +117,7 @@ func (s *OBServer) SupportStaticIP() bool {
 		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
 	}
 }
+
+func (s *OBServer) InMasterK8s() bool {
+	return s.Spec.K8sCluster == ""
+}

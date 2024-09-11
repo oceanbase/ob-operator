@@ -308,6 +308,9 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		if podFields.DNSPolicy != nil && *podFields.DNSPolicy != "" {
 			podSpec.DNSPolicy = *podFields.DNSPolicy
 		}
+		if podFields.ServiceAccountName != nil && *podFields.ServiceAccountName != "" {
+			podSpec.ServiceAccountName = *podFields.ServiceAccountName
+		}
 	}
 	return podSpec
 }
@@ -627,10 +630,6 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
 	return resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
-}
-
-func (m *OBServerManager) inMasterK8s() bool {
-	return m.OBServer.Spec.K8sCluster == ""
 }
 
 func (m *OBServerManager) cleanWorkerK8sResource() error {

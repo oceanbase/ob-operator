@@ -1987,6 +1987,8 @@ spec:
                                 type: string
                             type: object
                         type: object
+                      serviceAccountName:
+                        type: string
                       subdomain:
                         type: string
                     type: object
@@ -3198,6 +3200,8 @@ spec:
                                     type: string
                                 type: object
                             type: object
+                          serviceAccountName:
+                            type: string
                           subdomain:
                             type: string
                         type: object

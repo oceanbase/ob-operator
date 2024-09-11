@@ -552,7 +552,7 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 }
 
 func CheckAndCreateNs(m *OBServerManager) tasktypes.TaskError {
-	if !m.inMasterK8s() {
+	if !m.OBServer.InMasterK8s() {
 		ns := &corev1.Namespace{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: m.OBServer.Namespace,
@@ -575,7 +575,7 @@ func CheckAndCreateNs(m *OBServerManager) tasktypes.TaskError {
 }
 
 func CleanOwnedResources(m *OBServerManager) tasktypes.TaskError {
-	if !m.inMasterK8s() {
+	if !m.OBServer.InMasterK8s() {
 		err := m.cleanWorkerK8sResource()
 		if err != nil {
 			m.Logger.Error(err, "Failed to clean worker k8s resources",

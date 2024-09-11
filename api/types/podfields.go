@@ -28,4 +28,6 @@ type PodFieldsSpec struct {
 
 	Labels      map[string]string `json:"labels,omitempty"`
 	Annotations map[string]string `json:"annotations,omitempty"`
+
+	ServiceAccountName *string `json:"serviceAccountName,omitempty"`
 }
