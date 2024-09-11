@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
+	"errors"
 	"fmt"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
@@ -61,6 +62,9 @@ func NewCreateOptions() *CreateOptions {
 }
 
 func (o *CreateOptions) Validate() error {
+	if o.Namespace == "" {
+		return errors.New("namespace not specified")
+	}
 	if !utils.CheckPassword(o.RootPassword) {
 		return fmt.Errorf("Password is not secure, must contain at least 2 uppercase and lowercase letters, numbers and special characters")
 	}
@@ -88,7 +92,7 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 func (o *CreateOptions) Complete() error {
 	// if not specific id, using timestamp
 	if o.ClusterId == 0 {
-		o.ClusterId = utils.GenerateClusterId()
+		o.ClusterId = utils.GenerateClusterID()
 	}
 	// if not specific password, using random password, range [8,32]
 	if o.RootPassword == "" {
@@ -111,7 +115,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 // AddZoneFlags adds the zone-related flags to the command.
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
-	zoneFlags.StringToStringVarP(&o.Zones, "zones", "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'zone=value', multiple values can be provided separated by commas")
+	zoneFlags.StringToStringVarP(&o.Zones, "zones", "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'Zone=Replica', multiple values can be provided separated by commas")
 	cmd.Flags().AddFlagSet(zoneFlags)
 }
 

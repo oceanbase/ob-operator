@@ -16,7 +16,6 @@ package utils
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -45,27 +44,28 @@ func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSe
 	}
 }
 
-// GenerateClusterId generated random cluster id
-func GenerateClusterId() int64 {
-	clusterId := time.Now().Unix() % factor
-	if clusterId != 0 {
-		return clusterId
+// GenerateClusterID generated random cluster ID
+func GenerateClusterID() int64 {
+	clusterID := time.Now().Unix() % factor
+	if clusterID != 0 {
+		return clusterID
 	}
-	return GenerateClusterId()
+	return GenerateClusterID()
 }
 
+// CheckResourceName checks resource name in k8s
 func CheckResourceName(name string) bool {
 	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
 
 	re, err := regexp.Compile(regex)
 	if err != nil {
-		log.Println("Error compiling regex:", err)
-		return false
+		panic("error when compiling regex expressions")
 	}
 
 	return re.MatchString(name)
 }
 
+// CheckPassword checks password when creating cluster
 func CheckPassword(password string) bool {
 	var (
 		countUppercase   int
@@ -97,10 +97,22 @@ func CheckPassword(password string) bool {
 	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
 }
 
+// CheckTenantName check Tenant name when creating tenant
+func CheckTenantName(name string) bool {
+	regex := `/^[_a-zA-Z][^-\n]*$/`
+
+	re, err := regexp.Compile(regex)
+	if err != nil {
+		panic("error when compiling regex expressions")
+	}
+
+	return re.MatchString(name)
+}
+
 // MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
-		return nil, fmt.Errorf("Zone value is required")
+		return nil, fmt.Errorf("Zone replica is required")
 	}
 	topology := make([]param.ZoneTopology, 0)
 	for zoneName, replicaStr := range zones {
@@ -117,6 +129,26 @@ func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 		})
 	}
 	return topology, nil
+}
+
+// MapZonesToPools map --zones to []resourcePool
+func MapZonesToPools(zones map[string]string) ([]param.ResourcePoolSpec, error) {
+	if zones == nil {
+		return nil, fmt.Errorf("Zone priority is required")
+	}
+	resourcePool := make([]param.ResourcePoolSpec, 0)
+	for zoneName, priorityStr := range zones {
+		priority, err := strconv.Atoi(priorityStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for zone %s: %s", zoneName, priorityStr)
+		}
+		resourcePool = append(resourcePool, param.ResourcePoolSpec{
+			Zone:     zoneName,
+			Priority: priority,
+			Type:     "Full",
+		})
+	}
+	return resourcePool, nil
 }
 
 // MapParameters map --parameters to parameters

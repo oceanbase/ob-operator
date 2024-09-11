@@ -15,12 +15,16 @@ package tenant
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math"
 	"strings"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -37,12 +41,16 @@ import (
 )
 
 func NewCreateOptions() *CreateOptions {
-	return &CreateOptions{}
+	return &CreateOptions{
+		UnitConfig: &param.UnitConfig{},
+		Pools:      make([]param.ResourcePoolSpec, 0),
+		Source:     &param.TenantSourceSpec{},
+		Zones:      make(map[string]string),
+	}
 }
 
 type CreateOptions struct {
-	ResourceOptions
-	Name             string `json:"name" binding:"required"`
+	generic.ResourceOptions
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
@@ -57,14 +65,17 @@ type CreateOptions struct {
 	TenantRole string                  `json:"tenantRole,omitempty"`
 	Source     *param.TenantSourceSpec `json:"source,omitempty"`
 	From       string                  `json:"from,omitempty"`
+	Zones      map[string]string       `json:"zones"`
 }
 
-func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
+func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+	pools, err := utils.MapZonesToPools(o.Zones)
+	if err != nil {
+		return err
+	}
+	o.Pools = pools
 	o.Name = args[0]
-	return nil
-}
-
-func (o *CreateOptions) Validate() error {
+	// TODO: add tenant from config
 	return nil
 }
 
@@ -75,6 +86,21 @@ func (o *CreateOptions) Complete() error {
 	return nil
 }
 
+func (o *CreateOptions) Validate() error {
+	if o.Namespace == "" {
+		return errors.New("namespace not specified")
+	}
+	if o.ClusterName == "" {
+		return errors.New("cluster name not specified")
+	}
+	if !utils.CheckResourceName(o.Name) {
+		return fmt.Errorf("invalid resource name in k8s: %s", o.Name)
+	}
+	if !utils.CheckTenantName(o.TenantName) {
+		return fmt.Errorf("invalid tenant name: %s, The first letter must be a letter or an underscore and cannot contain -", o.TenantName)
+	}
+	return nil
+}
 func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, error) {
 	nn := types.NamespacedName{
 		Namespace: p.Namespace,
@@ -349,18 +375,21 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
-	baseFlags.StringVar(&o.From, "from", "tenant", "restore from data source")
+	baseFlags.StringVar(&o.From, "from", "", "restore from data source")
 	baseFlags.StringVar(&o.TenantRole, "role", "primary", "The role of tenant")
 }
 
+// AddZoneFlags add zone-related flags
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
+	zoneFlags.StringToStringVarP(&o.Zones, "zones", "z", map[string]string{"z1": "1"}, "The zones of the tenant in the format 'Zone=Priority', multiple values can be provided separated by commas")
 	cmd.Flags().AddFlagSet(zoneFlags)
 }
 
-// AddUnitFlags add unit flags
+// AddUnitFlags add unit-resource-related flags
 func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 	unitFlags := pflag.NewFlagSet("unit", pflag.ContinueOnError)
+	unitFlags.IntVar(&o.UnitNumber, "unit-number", 1, "unit number of the OBTenant")
 	unitFlags.Int64Var(&o.UnitConfig.MaxIops, "max-iops", 1024, "The max iops of unit")
 	unitFlags.Int64Var(&o.UnitConfig.MinIops, "min-iops", 1024, "The min iops of unit")
 	unitFlags.IntVar(&o.UnitConfig.IopsWeight, "iops-weight", 1, "The iops weight of unit")
