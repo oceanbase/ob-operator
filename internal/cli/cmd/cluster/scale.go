@@ -22,7 +22,6 @@ import (
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
-	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // NewScaleCmd scale zones in ob cluster
@@ -52,7 +51,7 @@ func NewScaleCmd() *cobra.Command {
 			scaleOp := cluster.GetScaleOperation(o)
 			op, err := clients.CreateOBClusterOperation(cmd.Context(), scaleOp)
 			if err != nil {
-				logger.Fatalln(oberr.NewInternal(err.Error()))
+				logger.Fatalln(err)
 			}
 			logger.Printf("Create scale operation for obcluster %s success", op.Spec.OBCluster)
 		},

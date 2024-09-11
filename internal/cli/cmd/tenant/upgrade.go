@@ -19,28 +19,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCreateCmd create an ob tenant
-func NewCreateCmd() *cobra.Command {
-	o := tenant.NewCreateOptions()
+// NewUpgradeCmd upgrade obtenant
+func NewUpgradeCmd() *cobra.Command {
+	o := tenant.NewUpgradeOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "create <tenant_name>",
-		Short:   "Create ob tenant",
-		Aliases: []string{"c"},
-		PreRunE: o.Parse,
+		Use:     "upgrade <tenant_name>",
+		Short:   "Upgrade ob tenant",
+		Long:    "Upgrade ob tenant",
 		Args:    cobra.ExactArgs(1),
+		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			_, err := tenant.CreateOBTenant(cmd.Context(), o)
-			if err != nil {
+			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create obtenant instance: %s", o.TenantName)
+			// TODO: need be implemented
 		},
 	}
 	o.AddFlags(cmd)

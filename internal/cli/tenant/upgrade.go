@@ -18,16 +18,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type ListOptions struct {
+type UpgradeOptions struct {
 	generic.ResourceOptions
-	ClusterName string
 }
 
-func NewListOptions() *ListOptions {
-	return &ListOptions{}
+func NewUpgradeOptions() *UpgradeOptions {
+	return &UpgradeOptions{}
 }
 
-func (o *ListOptions) AddFlags(cmd *cobra.Command) {
-	// These flags are used for further list options, but not used yet.
-	cmd.Flags().StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
+// AddFlags for upgrade options
+func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
 }

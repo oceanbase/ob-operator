@@ -97,10 +97,12 @@ func (o *CreateOptions) Validate() error {
 		return fmt.Errorf("invalid resource name in k8s: %s", o.Name)
 	}
 	if !utils.CheckTenantName(o.TenantName) {
-		return fmt.Errorf("invalid tenant name: %s, The first letter must be a letter or an underscore and cannot contain -", o.TenantName)
+		return fmt.Errorf("invalid tenant name: %s, the first letter must be a letter or an underscore and cannot contain -", o.TenantName)
 	}
 	return nil
 }
+
+// CreateOBTenant create an obtenant with configs
 func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, error) {
 	nn := types.NamespacedName{
 		Namespace: p.Namespace,
@@ -346,6 +348,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *CreateOptions) (*v1alpha1.
 	}
 	return t, nil
 }
+
 func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
 	k8sclient := client.GetClient()
 	_, err := k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
@@ -372,11 +375,11 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVar(&o.TenantName, "tenant-name", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
-	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")
+	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
 	baseFlags.StringVar(&o.From, "from", "", "restore from data source")
-	baseFlags.StringVar(&o.TenantRole, "role", "primary", "The role of tenant")
+	baseFlags.StringVarP(&o.TenantRole, "role", "r", "primary", "The role of tenant")
 }
 
 // AddZoneFlags add zone-related flags

@@ -104,70 +104,6 @@ func (o *CreateOptions) Complete() error {
 	return nil
 }
 
-// AddFlags adds base and specific feature flags, Only support observer and zone config
-func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
-	o.AddBaseFlags(cmd)
-	o.AddObserverFlags(cmd)
-	o.AddZoneFlags(cmd)
-	o.AddParameterFlags(cmd)
-}
-
-// AddZoneFlags adds the zone-related flags to the command.
-func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
-	zoneFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
-	zoneFlags.StringToStringVarP(&o.Zones, "zones", "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'Zone=Replica', multiple values can be provided separated by commas")
-	cmd.Flags().AddFlagSet(zoneFlags)
-}
-
-// AddBaseFlags adds the base flags to the command.
-func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
-	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "Cluster name, if not specifed, use resource name in k8s instead")
-	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
-	baseFlags.Int64Var(&o.ClusterId, "id", 0, "The id of the cluster")
-	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")
-	baseFlags.StringVar(&o.Mode, "mode", "", "The mode of the cluster")
-}
-
-// AddObserverFlags adds the observer-related flags to the command.
-func (o *CreateOptions) AddObserverFlags(cmd *cobra.Command) {
-	observerFlags := pflag.NewFlagSet("observer", pflag.ContinueOnError)
-	observerFlags.StringVar(&o.OBServer.Image, "image", "oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515", "The image of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, "cpu", 2, "The cpu of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, "memory", 10, "The memory of the observer")
-	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, "data-storage-class", "local-path", "The storage class of the data storage")
-	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, "redo-log-storage-class", "local-path", "The storage class of the redo log storage")
-	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, "log-storage-class", "local-path", "The storage class of the log storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.Data.SizeGB, "data-storage-size", 50, "The size of the data storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.RedoLog.SizeGB, "redo-log-storage-size", 50, "The size of the redo log storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.Log.SizeGB, "log-storage-size", 20, "The size of the log storage")
-	cmd.Flags().AddFlagSet(observerFlags)
-}
-
-// AddMonitorFlags adds the monitor-related flags to the command.
-func (o *CreateOptions) AddMonitorFlags(cmd *cobra.Command) {
-	monitorFlags := pflag.NewFlagSet("monitor", pflag.ContinueOnError)
-	monitorFlags.StringVar(&o.Monitor.Image, "monitor-image", "oceanbase/obagent:4.2.1-100000092023101717", "The image of the monitor")
-	monitorFlags.Int64Var(&o.Monitor.Resource.Cpu, "monitor-cpu", 1, "The cpu of the monitor")
-	monitorFlags.Int64Var(&o.Monitor.Resource.MemoryGB, "monitor-memory", 1, "The memory of the monitor")
-	cmd.Flags().AddFlagSet(monitorFlags)
-}
-
-// AddBackupVolumeFlags adds the backup-volume-related flags to the command.
-func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
-	backupVolumeFlags := pflag.NewFlagSet("backup-volume", pflag.ContinueOnError)
-	backupVolumeFlags.StringVar(&o.BackupVolume.Address, "backup-storage-class", "local-path", "The storage class of the backup storage")
-	backupVolumeFlags.StringVar(&o.BackupVolume.Path, "backup-storage-size", "/opt/nfs", "The size of the backup storage")
-	cmd.Flags().AddFlagSet(backupVolumeFlags)
-}
-
-// AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
-func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
-	parameterFlags := pflag.NewFlagSet("parameters", pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, "parameters", map[string]string{"__min_full_resource_pool_memory": "2147483648", "system_memory": "1G"}, "Other parameter settings in obcluster, e.g., __min_full_resource_pool_memory")
-	cmd.Flags().AddFlagSet(parameterFlags)
-}
-
 func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerTemplate {
 	if observerSpec == nil {
 		return nil
@@ -352,4 +288,68 @@ func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
 	default:
 	}
 	return obcluster
+}
+
+// AddFlags adds base and specific feature flags, Only support observer and zone config
+func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
+	o.AddBaseFlags(cmd)
+	o.AddObserverFlags(cmd)
+	o.AddZoneFlags(cmd)
+	o.AddParameterFlags(cmd)
+}
+
+// AddZoneFlags adds the zone-related flags to the command.
+func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
+	zoneFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
+	zoneFlags.StringToStringVarP(&o.Zones, "zones", "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'Zone=Replica', multiple values can be provided separated by commas")
+	cmd.Flags().AddFlagSet(zoneFlags)
+}
+
+// AddBaseFlags adds the base flags to the command.
+func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
+	baseFlags := cmd.Flags()
+	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "Cluster name, if not specifed, use resource name in k8s instead")
+	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
+	baseFlags.Int64Var(&o.ClusterId, "id", 0, "The id of the cluster")
+	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
+	baseFlags.StringVar(&o.Mode, "mode", "", "The mode of the cluster")
+}
+
+// AddObserverFlags adds the observer-related flags to the command.
+func (o *CreateOptions) AddObserverFlags(cmd *cobra.Command) {
+	observerFlags := pflag.NewFlagSet("observer", pflag.ContinueOnError)
+	observerFlags.StringVar(&o.OBServer.Image, "image", "oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515", "The image of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, "cpu", 2, "The cpu of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, "memory", 10, "The memory of the observer")
+	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, "data-storage-class", "local-path", "The storage class of the data storage")
+	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, "redo-log-storage-class", "local-path", "The storage class of the redo log storage")
+	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, "log-storage-class", "local-path", "The storage class of the log storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.Data.SizeGB, "data-storage-size", 50, "The size of the data storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.RedoLog.SizeGB, "redo-log-storage-size", 50, "The size of the redo log storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.Log.SizeGB, "log-storage-size", 20, "The size of the log storage")
+	cmd.Flags().AddFlagSet(observerFlags)
+}
+
+// AddMonitorFlags adds the monitor-related flags to the command.
+func (o *CreateOptions) AddMonitorFlags(cmd *cobra.Command) {
+	monitorFlags := pflag.NewFlagSet("monitor", pflag.ContinueOnError)
+	monitorFlags.StringVar(&o.Monitor.Image, "monitor-image", "oceanbase/obagent:4.2.1-100000092023101717", "The image of the monitor")
+	monitorFlags.Int64Var(&o.Monitor.Resource.Cpu, "monitor-cpu", 1, "The cpu of the monitor")
+	monitorFlags.Int64Var(&o.Monitor.Resource.MemoryGB, "monitor-memory", 1, "The memory of the monitor")
+	cmd.Flags().AddFlagSet(monitorFlags)
+}
+
+// AddBackupVolumeFlags adds the backup-volume-related flags to the command.
+func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
+	backupVolumeFlags := pflag.NewFlagSet("backup-volume", pflag.ContinueOnError)
+	backupVolumeFlags.StringVar(&o.BackupVolume.Address, "backup-storage-class", "local-path", "The storage class of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Path, "backup-storage-size", "/opt/nfs", "The size of the backup storage")
+	cmd.Flags().AddFlagSet(backupVolumeFlags)
+}
+
+// AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
+func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
+	parameterFlags := pflag.NewFlagSet("parameters", pflag.ContinueOnError)
+	parameterFlags.StringToStringVar(&o.KvParameters, "parameters", map[string]string{"__min_full_resource_pool_memory": "2147483648", "system_memory": "1G"}, "Other parameter settings in obcluster, e.g., __min_full_resource_pool_memory")
+	cmd.Flags().AddFlagSet(parameterFlags)
 }

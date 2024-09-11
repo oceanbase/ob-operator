@@ -20,7 +20,6 @@ import (
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // NewCreateCmd create an ob cluster
@@ -46,7 +45,7 @@ func NewCreateCmd() *cobra.Command {
 			}
 			_, err := clients.CreateOBCluster(cmd.Context(), obcluster)
 			if err != nil {
-				logger.Fatalln(oberr.NewInternal(err.Error()))
+				logger.Fatalln(err)
 			}
 			logger.Printf("Create obcluster instance: %s", o.ClusterName)
 			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obcluster.Spec.UserSecrets.Root)
