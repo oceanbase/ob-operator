@@ -99,7 +99,7 @@ func CheckPassword(password string) bool {
 
 // CheckTenantName check Tenant name when creating tenant
 func CheckTenantName(name string) bool {
-	regex := `/^[_a-zA-Z][^-\n]*$/`
+	regex := `^[_a-zA-Z][^-]*$`
 
 	re, err := regexp.Compile(regex)
 	if err != nil {

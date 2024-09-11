@@ -104,7 +104,7 @@ func (o *CreateOptions) Validate() error {
 func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, error) {
 	nn := types.NamespacedName{
 		Namespace: p.Namespace,
-		Name:      p.TenantName,
+		Name:      p.Name,
 	}
 	t, err := buildOBTenantApiType(nn, p)
 	if err != nil {
@@ -369,7 +369,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Name, "name", "", "The name in k8s, if not specified, use tenant name")
+	baseFlags.StringVar(&o.TenantName, "tenant-name", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
 	baseFlags.StringVar(&o.RootPassword, "root-password", "", "The root password of the cluster")
