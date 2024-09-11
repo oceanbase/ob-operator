@@ -330,9 +330,10 @@ func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
 		pod := corev1.Pod{}
 		clt := m.Client
 		if !observer.InMasterK8s() {
+			m.Logger.Info("OBServer not in master k8s cluster", "observer", observer.Name)
 			clt, err = clientcache.GetCachedCtrlRuntimeClientFromCredName(m.Ctx, observer.Spec.K8sCluster)
 			if err != nil {
-				m.Logger.Error(err, "Failed to get client")
+				m.Logger.Error(err, "Failed to get client", "observer", observer.Name, "k8sCluster", observer.Spec.K8sCluster)
 				return err
 			}
 		}
@@ -344,7 +345,7 @@ func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
 			m.Logger.Error(err, "Failed to find pod")
 			return err
 		}
-		err = m.Client.Delete(m.Ctx, &pod)
+		err = clt.Delete(m.Ctx, &pod)
 		if err != nil {
 			m.Logger.Error(err, "Failed to delete pod")
 			return err
