@@ -23,12 +23,15 @@ func NewCmd() *cobra.Command {
 		Use:     "tenant",
 		Aliases: []string{"t"},
 		Short:   "Command for tenant management",
-		Long:    `Command for tenant management, such as Create, Update, Delete.`,
+		Long:    `Command for tenant management, such as Create, Update, Delete, Switchover.`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())
 	cmd.AddCommand(NewListCmd())
 	cmd.AddCommand(NewChangePwdCmd())
 	cmd.AddCommand(NewUpgradeCmd())
+	cmd.AddCommand(NewSwitchOverCmd())
+	cmd.AddCommand(NewActivateCmd())
+	cmd.AddCommand(NewShowCmd())
 	return cmd
 }

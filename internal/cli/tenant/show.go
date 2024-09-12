@@ -18,15 +18,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type DeleteOptions struct {
+type ShowOptions struct {
 	generic.ResourceOptions
 }
 
-func NewDeleteOptions() *DeleteOptions {
-	return &DeleteOptions{}
+func NewShowOptions() *ShowOptions {
+	return &ShowOptions{}
 }
 
 // AddFlags add basic flags for tenant management
-func (o *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
+func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
 }

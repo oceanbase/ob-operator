@@ -39,7 +39,7 @@ func NewChangePwdOptions() *ChangePwdOptions {
 	return &ChangePwdOptions{}
 }
 
-func GetChangePwdOperations(o *ChangePwdOptions) *v1alpha1.OBTenantOperation {
+func GetChangePwdOperation(o *ChangePwdOptions) *v1alpha1.OBTenantOperation {
 	changePwdOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-change-root-pwd-" + rand.String(6),

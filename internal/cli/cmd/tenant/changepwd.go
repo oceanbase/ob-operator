@@ -29,7 +29,7 @@ func NewChangePwdCmd() *cobra.Command {
 	o := tenant.NewChangePwdOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "changepwd <tenant_name>",
+		Use:     "changepwd <tenant_name> --password=<password>",
 		Short:   "Change password of ob tenant",
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
@@ -56,8 +56,8 @@ func NewChangePwdCmd() *cobra.Command {
 			} else {
 				logger.Println("New password generated success")
 			}
-			changePwdOp := tenant.GetChangePwdOperations(o)
-			_, err = clients.CreateOBTenantOperation(cmd.Context(), changePwdOp)
+			op := tenant.GetChangePwdOperation(o)
+			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
 			if err != nil {
 				logger.Fatalln(err)
 			}

@@ -14,31 +14,31 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"errors"
+	"fmt"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewUpgradeCmd upgrade obtenant
-func NewUpgradeCmd() *cobra.Command {
-	o := tenant.NewUpgradeOptions()
+// NewActivateCmd activates a standby obtenant
+func NewActivateCmd() *cobra.Command {
+	o := tenant.NewActivateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "upgrade <tenant_name>",
-		Short:   "Upgrade ob tenant to compatible version to the cluster",
-		Long:    "Upgrade ob tenant to higher version, suitable for restoring low-version backup data to a high-version cluster",
-		Args:    cobra.ExactArgs(1),
+		Use:     "activate <standby_tenant_name>",
+		Short:   "Activate a standby tenant",
 		PreRunE: o.Parse,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Validate(); err != nil {
+			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := o.Complete(); err != nil {
+			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
 			nn := types.NamespacedName{
@@ -49,15 +49,18 @@ func NewUpgradeCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.TenantRole != apiconst.TenantRolePrimary {
-				logger.Fatalln(errors.New("The tenant is not primary tenant"))
+			if obtenant.Status.Status != tenantstatus.Running {
+				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
 			}
-			op := tenant.GetUpgradeOperation(o)
+			if obtenant.Status.TenantRole == apiconst.TenantRolePrimary {
+				logger.Fatalf("Obtenant %s is already PRIMARY", o.Name)
+			}
+			op := tenant.GetActivateOperation(o)
 			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create upgrade operation for obtenant %s success", o.Name)
+			logger.Printf("Create activate operation for tenant %s success", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

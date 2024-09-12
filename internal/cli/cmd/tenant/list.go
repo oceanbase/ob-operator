@@ -31,7 +31,6 @@ func NewListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List ob tenants",
-		Long:    `List ob tenants.`,
 		Aliases: []string{"ls", "l"},
 		Run: func(cmd *cobra.Command, args []string) {
 			obtenantList, err := clients.ListAllOBTenants(cmd.Context(), o.Namespace, v1.ListOptions{})
@@ -45,9 +44,9 @@ func NewListCmd() *cobra.Command {
 				logger.Println("No ob tenants found")
 				return
 			}
-			tbLog.Println("Namespace \t Cluster Name \t Name \t Create Time \t Status")
+			tbLog.Println("NAMESPACE \t NAME \t CLUSTERNAME \t TENANTNAME \t TENANTROLE \t CREATETIME \t STATUS")
 			for _, tenant := range obtenantList.Items {
-				tbLog.Printf("%s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.Spec.ClusterName, tenant.Name, tenant.CreationTimestamp, tenant.Status.Status)
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.ObjectMeta.Name, tenant.Spec.ClusterName, tenant.Spec.TenantName, tenant.Spec.TenantRole, tenant.CreationTimestamp, tenant.Status.Status)
 			}
 			if err := tbw.Flush(); err != nil {
 				logger.Fatalln(err)

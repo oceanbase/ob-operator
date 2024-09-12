@@ -48,8 +48,8 @@ func NewUpdateCmd() *cobra.Command {
 			if obcluster.Status.Status != clusterstatus.Running {
 				logger.Fatalln(fmt.Errorf("Obcluster status invalid, Status:%s", obcluster.Status.Status))
 			}
-			updateOp := cluster.GetUpdateOperations(o)
-			op, err := clients.CreateOBClusterOperation(cmd.Context(), updateOp)
+			op := cluster.GetUpdateOperation(o)
+			_, err = clients.CreateOBClusterOperation(cmd.Context(), op)
 			if err != nil {
 				logger.Fatalln(err)
 			}

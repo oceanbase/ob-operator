@@ -44,8 +44,12 @@ func NewCreateOptions() *CreateOptions {
 	return &CreateOptions{
 		UnitConfig: &param.UnitConfig{},
 		Pools:      make([]param.ResourcePoolSpec, 0),
-		Source:     &param.TenantSourceSpec{},
-		Zones:      make(map[string]string),
+		Source: &param.TenantSourceSpec{
+			Restore: &param.RestoreSourceSpec{
+				Until: &param.RestoreUntilConfig{},
+			},
+		},
+		Zones: make(map[string]string),
 	}
 }
 
@@ -62,10 +66,11 @@ type CreateOptions struct {
 	Pools      []param.ResourcePoolSpec `json:"pools" binding:"required"`
 
 	// Enum: Primary, Standby
-	TenantRole string                  `json:"tenantRole,omitempty"`
-	Source     *param.TenantSourceSpec `json:"source,omitempty"`
-	From       string                  `json:"from,omitempty"`
-	Zones      map[string]string       `json:"zones"`
+	TenantRole  string                  `json:"tenantRole,omitempty"`
+	Source      *param.TenantSourceSpec `json:"source,omitempty"`
+	From        string                  `json:"from,omitempty"`
+	Zones       map[string]string       `json:"zones"`
+	RestoreType string                  `json:"restoreType"`
 }
 
 func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
@@ -75,13 +80,19 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	}
 	o.Pools = pools
 	o.Name = args[0]
-	// TODO: add tenant from config
+	if o.From != "" {
+		o.Source.Tenant = &o.From
+		o.TenantRole = "STANDBY"
+	}
 	return nil
 }
 
 func (o *CreateOptions) Complete() error {
 	if o.TenantName == "" {
 		o.TenantName = o.Name
+	}
+	if o.RootPassword == "" {
+		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
 	return nil
 }
@@ -98,6 +109,9 @@ func (o *CreateOptions) Validate() error {
 	}
 	if !utils.CheckTenantName(o.TenantName) {
 		return fmt.Errorf("invalid tenant name: %s, the first letter must be a letter or an underscore and cannot contain -", o.TenantName)
+	}
+	if o.Source != nil && o.Source.Tenant != nil && o.TenantRole == "PRIMARY" {
+		return fmt.Errorf("invalid tenant role")
 	}
 	return nil
 }
@@ -142,7 +156,6 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
 			return nil, oberr.NewBadRequest("the target tenant is not primary tenant")
 		}
-
 		// Match root password
 		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
 		if err != nil {
@@ -168,6 +181,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}
+
 		if pwd, ok := standbyroSecret.Data["password"]; ok {
 			t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
 			err = createPasswordSecret(ctx, types.NamespacedName{
@@ -197,7 +211,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 			return nil, oberr.NewInternal(err.Error())
 		}
 	}
-
+	// Restore
 	if p.Source != nil && p.Source.Restore != nil {
 		if p.Source.Restore.BakEncryptionPassword != "" {
 			secretName := p.Name + "-bak-encryption-" + rand.String(6)
@@ -334,9 +348,9 @@ func buildOBTenantApiType(nn types.NamespacedName, p *CreateOptions) (*v1alpha1.
 				Until: v1alpha1.RestoreUntilConfig{},
 			}
 
-			t.Spec.Source.Restore.ArchiveSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
+			t.Spec.Source.Restore.ArchiveSource.Type = apitypes.BackupDestType(p.RestoreType)
 			t.Spec.Source.Restore.ArchiveSource.Path = p.Source.Restore.ArchiveSource
-			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.Source.Restore.Type)
+			t.Spec.Source.Restore.BakDataSource.Type = apitypes.BackupDestType(p.RestoreType)
 			t.Spec.Source.Restore.BakDataSource.Path = p.Source.Restore.BakDataSource
 
 			if p.Source.Restore.Until != nil && !p.Source.Restore.Until.Unlimited {
@@ -368,18 +382,19 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBaseFlags(cmd)
 	o.AddUnitFlags(cmd)
 	o.AddZoneFlags(cmd)
+	o.AddRestoreFlags(cmd)
 }
 
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
 	baseFlags.StringVar(&o.TenantName, "tenant-name", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
-	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
+	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
 	baseFlags.StringVar(&o.From, "from", "", "restore from data source")
-	baseFlags.StringVarP(&o.TenantRole, "role", "r", "primary", "The role of tenant")
+	baseFlags.StringVarP(&o.TenantRole, "role", "r", "PRIMARY", "The role of tenant")
 }
 
 // AddZoneFlags add zone-related flags
@@ -403,12 +418,14 @@ func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 }
 
 // AddRestoreFlags add restore flags
-// func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
-// 	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
-// 	restoreFlags.StringVar(&o.Source.Restore.Type, "type", "oss", "The type of restore source")
-// 	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "", "The archive source of restore")
-// 	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "", "The bak data source of restore")
-// 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
-// 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
-// 	cmd.Flags().AddFlagSet(restoreFlags)
-// }
+func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
+	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
+	restoreFlags.StringVar(&o.RestoreType, "type", "oss", "The type of restore source")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "", "The archive source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, "bak-encryption-password", "", "The backup encryption password of obtenant")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "", "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
+	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
+	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, "until-unlimited", true, "time limited for restore")
+	cmd.Flags().AddFlagSet(restoreFlags)
+}

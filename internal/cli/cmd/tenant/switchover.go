@@ -14,50 +14,52 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"errors"
+	"fmt"
 
-	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewUpgradeCmd upgrade obtenant
-func NewUpgradeCmd() *cobra.Command {
-	o := tenant.NewUpgradeOptions()
+// NewSwitchOverCmd switchover two tenants
+func NewSwitchOverCmd() *cobra.Command {
+	o := tenant.NewSwitchOverOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "upgrade <tenant_name>",
-		Short:   "Upgrade ob tenant to compatible version to the cluster",
-		Long:    "Upgrade ob tenant to higher version, suitable for restoring low-version backup data to a high-version cluster",
-		Args:    cobra.ExactArgs(1),
+		Use:     "switchover <primary_tenant_name> <standby_tenant_name>",
+		Short:   "Switchover of primary tenant and standby tenant",
 		PreRunE: o.Parse,
+		Args:    cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Validate(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
+			if err := o.Validate(); err != nil {
+				logger.Fatalln(err)
+			}
 			nn := types.NamespacedName{
-				Name:      o.Name,
+				Name:      o.StandbyTenant,
 				Namespace: o.Namespace,
 			}
 			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.TenantRole != apiconst.TenantRolePrimary {
-				logger.Fatalln(errors.New("The tenant is not primary tenant"))
+			if obtenant.Status.Status != tenantstatus.Running {
+				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
 			}
-			op := tenant.GetUpgradeOperation(o)
+			if obtenant.Status.Source == nil || obtenant.Status.Source.Tenant == nil {
+				logger.Fatalf("Obtenant %s has no primary tenant", o.StandbyTenant)
+			}
+			op := tenant.GetSwitchOverOperation(o)
 			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create upgrade operation for obtenant %s success", o.Name)
+			logger.Printf("Create switchover operation for primary tenant %s and standby tenant %s success", o.PrimaryTenant, o.StandbyTenant)
 		},
 	}
 	o.AddFlags(cmd)

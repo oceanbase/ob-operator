@@ -35,8 +35,8 @@ func NewUpgradeOptions() *UpgradeOptions {
 	return &UpgradeOptions{}
 }
 
-// GetUpgradeOperations creates upgrade opertaions
-func GetUpgradeOperations(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
+// GetUpgradeOperation creates upgrade opertaions
+func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
 	upgradeOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-upgrade-" + rand.String(6),

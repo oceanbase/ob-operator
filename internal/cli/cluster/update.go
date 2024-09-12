@@ -45,8 +45,8 @@ func NewUpdateOptions() *UpdateOptions {
 	}
 }
 
-// GetUpdateOperations creates update opertaions
-func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBClusterOperation {
+// GetUpdateOperation creates update opertaions
+func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBClusterOperation {
 	updateOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-update-" + rand.String(6),

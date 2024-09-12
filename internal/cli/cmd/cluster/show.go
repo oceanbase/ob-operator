@@ -30,7 +30,7 @@ func NewShowCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <cluster_name>",
-		Short:   "show overview of ob cluster",
+		Short:   "Show overview of ob cluster",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -42,16 +42,16 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			tbLog.Println("Cluster ID \t Name \t Status \t Image")
+			tbLog.Println("ClUSTER ID \t NAME \t STATUS \t IMAGE")
 			tbLog.Printf("%d \t %s \t %s \t %s \n\n", obcluster.Spec.ClusterId, obcluster.Spec.ClusterName, obcluster.Status.Status, obcluster.Status.Image)
 			if len(obcluster.Status.OBZoneStatus) > 0 {
-				tbLog.Println("Zone \t Status")
+				tbLog.Println("ZONE \t STATUS")
 				for _, zone := range obcluster.Status.OBZoneStatus {
 					tbLog.Printf("%s \t %s \n\n", zone.Zone, zone.Status)
 				}
 			}
 			if len(obcluster.Status.Parameters) > 0 {
-				tbLog.Println("Key \t Value")
+				tbLog.Println("KEY \t VALUE")
 				for _, Parameter := range obcluster.Status.Parameters {
 					tbLog.Printf("%s \t %s \n\n", Parameter.Name, Parameter.Value)
 				}

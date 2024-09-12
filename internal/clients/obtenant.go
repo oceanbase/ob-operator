@@ -14,14 +14,17 @@ package clients
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 func CreateOBTenant(ctx context.Context, tenant *v1alpha1.OBTenant) (*v1alpha1.OBTenant, error) {
@@ -51,6 +54,22 @@ func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
 
 func CreateOBTenantOperation(ctx context.Context, op *v1alpha1.OBTenantOperation) (*v1alpha1.OBTenantOperation, error) {
 	return OperationClient.Create(ctx, op, metav1.CreateOptions{})
+}
+
+func GetOBTenantOperations(ctx context.Context, obtenant *v1alpha1.OBTenant) (*v1alpha1.OBTenantOperationList, error) {
+	client := client.GetClient()
+	var obtenantOperationList v1alpha1.OBTenantOperationList
+	obj, err := client.DynamicClient.Resource(schema.OBTenantOperationGVR).Namespace(obtenant.Namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBTenantOp, obtenant.Name),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "List obtenant operations")
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &obtenantOperationList)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured to obtenant list")
+	}
+	return &obtenantOperationList, nil
 }
 
 func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*v1alpha1.OBTenantBackupPolicy, error) {

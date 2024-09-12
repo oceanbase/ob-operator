@@ -17,34 +17,38 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-type UpgradeOptions struct {
+type ActivateOptions struct {
 	generic.ResourceOptions
 }
 
-func NewUpgradeOptions() *UpgradeOptions {
-	return &UpgradeOptions{}
+func NewActivateOptions() *ActivateOptions {
+	return &ActivateOptions{}
 }
 
-func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBTenantOperation {
-	upgradeOp := &v1alpha1.OBTenantOperation{
+func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
+	activateOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      o.Name + "-upgrade-" + rand.String(6),
+			Name:      o.Name + "-change-role-" + rand.String(6),
 			Namespace: o.Namespace,
+			Labels:    map[string]string{oceanbaseconst.LabelRefOBTenantOp: o.Name},
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
-			Type:         apiconst.TenantOpUpgrade,
-			TargetTenant: &o.Name,
+			Type: apiconst.TenantOpFailover,
+			Failover: &v1alpha1.OBTenantOpFailoverSpec{
+				StandbyTenant: o.Name,
+			},
 		},
 	}
-	return upgradeOp
+	return activateOp
 }
 
 // AddFlags add basic flags for tenant management
-func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
+func (o *ActivateOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
 }

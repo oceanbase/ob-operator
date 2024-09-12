@@ -24,7 +24,7 @@ func NewCreateCmd() *cobra.Command {
 	o := tenant.NewCreateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "create <tenant_name>",
+		Use:     "create <tenant_name> --cluster=<cluster_name> ",
 		Short:   "Create ob tenant",
 		Aliases: []string{"c"},
 		PreRunE: o.Parse,
@@ -36,11 +36,12 @@ func NewCreateCmd() *cobra.Command {
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			_, err := tenant.CreateOBTenant(cmd.Context(), o)
+			obtenant, err := tenant.CreateOBTenant(cmd.Context(), o)
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create obtenant instance: %s", o.TenantName)
+			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root)
 		},
 	}
 	o.AddFlags(cmd)
