@@ -59,7 +59,7 @@ func GetCachedCtrlRuntimeClientFromCredName(ctx context.Context, credentialName 
 	return GetCachedCtrlRuntimeClient(ctx, cred)
 }
 
-func GetCachedCtrlRuntimeClient(ctx context.Context, cred *v1alpha2.K8sClusterCredential) (ctrlruntime.Client, error) {
+func GetCachedCtrlRuntimeClient(_ context.Context, cred *v1alpha2.K8sClusterCredential) (ctrlruntime.Client, error) {
 	if client, ok := K8sClientCache.Load(cred.Name); ok {
 		entry := client.(cacheEntry)
 		if entry.LatestGeneration >= cred.Generation {

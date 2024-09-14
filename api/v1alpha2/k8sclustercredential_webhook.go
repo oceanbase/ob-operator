@@ -83,7 +83,7 @@ func (r *K8sClusterCredential) ValidateCreate() (admission.Warnings, error) {
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *K8sClusterCredential) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+func (r *K8sClusterCredential) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
 	k8sclustercredentiallog.Info("validate update", "name", r.Name)
 	return r.validateMutation()
 }

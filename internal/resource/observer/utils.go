@@ -325,7 +325,7 @@ func (m *OBServerManager) getVarsReplacer(obcluster *v1alpha1.OBCluster) *string
 	if obcluster != nil {
 		replacePairs = append(replacePairs,
 			"${obcluster-cluster-name}", obcluster.Spec.ClusterName,
-			"${obcluster-cluster-id}", string(obcluster.Spec.ClusterId),
+			"${obcluster-cluster-id}", fmt.Sprint(obcluster.Spec.ClusterId),
 		)
 	}
 	return strings.NewReplacer(replacePairs...)
